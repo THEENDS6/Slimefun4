@@ -1,0 +1,117 @@
+plugins {
+    id 'java'
+}
+
+group = 'cc.theends6'
+version = '2026.05.08c'
+
+description = 'SlimeFunX restored single-module workspace.'
+
+ext {
+    paperApiVersion = '1.21.8-R0.1-SNAPSHOT'
+    pluginJarName = 'SlimeFunX.jar'
+    paperRuntimeJarName = 'paper-1.21.8-60.jar'
+    foliaRuntimeJarName = 'folia-1.21.8-6.jar'
+    serverEncodingJvmArgs = [
+            '-Dfile.encoding=UTF-8',
+            '-Dstdout.encoding=UTF-8',
+            '-Dstderr.encoding=UTF-8',
+            '-Dsun.stdout.encoding=UTF-8',
+            '-Dsun.stderr.encoding=UTF-8'
+    ]
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'papermc'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar()
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ['main/java']
+        resources.srcDirs = ['main/resources']
+    }
+}
+
+dependencies {
+    compileOnly "io.papermc.paper:paper-api:${rootProject.ext.paperApiVersion}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+processResources {
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand(version: project.version)
+    }
+}
+
+tasks.named('jar') {
+    archiveBaseName.set('SlimeFunX')
+    archiveVersion.set('')
+}
+
+tasks.register('prepareRuntimeDirs') {
+    group = 'application'
+    description = 'Creates runtime plugin directories for Paper and Folia.'
+    doLast {
+        file('run-paper-1.21.8/plugins').mkdirs()
+        file('run-folia-1.21.8/plugins').mkdirs()
+    }
+}
+
+tasks.register('deployToPaperRuntime', Copy) {
+    group = 'deployment'
+    description = 'Builds the plugin and copies it to run-paper-1.21.8/plugins.'
+    dependsOn 'prepareRuntimeDirs', 'jar'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(layout.projectDirectory.dir('run-paper-1.21.8/plugins'))
+    rename { rootProject.ext.pluginJarName }
+}
+
+tasks.register('deployToFoliaRuntime', Copy) {
+    group = 'deployment'
+    description = 'Builds the plugin and copies it to run-folia-1.21.8/plugins.'
+    dependsOn 'prepareRuntimeDirs', 'jar'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(layout.projectDirectory.dir('run-folia-1.21.8/plugins'))
+    rename { rootProject.ext.pluginJarName }
+}
+
+def preferredJavaExecutable = {
+    def java21 = file('C:/Program Files/Java/jdk-21/bin/java.exe')
+    java21.exists() ? java21.absolutePath : 'java'
+}
+
+tasks.register('runPaper', Exec) {
+    group = 'application'
+    description = 'Builds the plugin, deploys it to the Paper runtime, and starts Paper 1.21.8.'
+    dependsOn 'deployToPaperRuntime'
+    workingDir layout.projectDirectory.dir('run-paper-1.21.8').asFile
+    executable preferredJavaExecutable()
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui']
+}
+
+tasks.register('runFolia', Exec) {
+    group = 'application'
+    description = 'Builds the plugin, deploys it to the Folia runtime, and starts Folia 1.21.8.'
+    dependsOn 'deployToFoliaRuntime'
+    workingDir layout.projectDirectory.dir('run-folia-1.21.8').asFile
+    executable preferredJavaExecutable()
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.foliaRuntimeJarName, 'nogui']
+}

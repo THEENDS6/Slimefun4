@@ -1,0 +1,20 @@
+language: 'zh-CN'
+
+messages:
+  prefix: '<dark_gray>[<green>SFX</green><dark_gray>] '
+
+guide:
+  allow-right-click-open: true
+  allow-left-click-open: false
+  shift-right-click-settings: true
+  survival-title: '<dark_green>SFX 科技书</dark_green>'
+  cheat-title: '<dark_red>SFX 作弊科技书</dark_red>'
+
+
+debug-text:
+  enabled: true
+
+options:
+  
+  
+  fire-breaking-chance: 34

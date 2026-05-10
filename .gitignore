@@ -1,0 +1,7 @@
+.gradle/
+.idea/
+build/
+out/
+run-paper-1.21.8/
+run-folia-1.21.8/
+*.zip
