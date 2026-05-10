@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.listener;
 
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.runtime.SfxRuntime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -40,10 +41,12 @@ public final class SfxTalismanListener implements Listener {
     );
 
     private final JavaPlugin plugin;
+    private final SfxRuntime runtime;
     private final SfxItems items;
 
-    public SfxTalismanListener(JavaPlugin plugin, SfxItems items) {
+    public SfxTalismanListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items) {
         this.plugin = plugin;
+        this.runtime = runtime;
         this.items = items;
     }
 
@@ -107,14 +110,14 @@ public final class SfxTalismanListener implements Listener {
             damageable.setDamage(0);
             restored.setItemMeta(meta);
         }
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+        runtime.executeForPlayerLater(event.getPlayer(), 1L, () -> {
             ItemStack main = inventory.getItemInMainHand();
             if (main.getType().isAir()) {
                 inventory.setItemInMainHand(restored);
             } else {
                 event.getPlayer().getWorld().dropItemNaturally(event.getPlayer().getLocation(), restored);
             }
-        }, 1L);
+        });
     }
 
     @EventHandler(ignoreCancelled = true)

@@ -22,6 +22,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -120,6 +121,13 @@ public final class SfxArmorEffectListener implements Listener {
             player.setFallDistance(0.0f);
             addPotion(player, "SLOW_FALLING", 20 * 3, 0);
         }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+        lastEffectTick.remove(uuid);
+        recentGlideUntil.remove(uuid);
     }
 
     private void addPotion(Player player, String typeName, int durationTicks, int amplifier) {

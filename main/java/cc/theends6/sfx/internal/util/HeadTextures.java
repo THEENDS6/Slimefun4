@@ -4,11 +4,15 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 public final class HeadTextures {
+    private static final Logger LOGGER = Logger.getLogger(HeadTextures.class.getName());
+
     private HeadTextures() {
     }
 
@@ -29,8 +33,8 @@ public final class HeadTextures {
             if (!invokeBest(skullMeta, "setPlayerProfile", profile)) {
                 invokeBest(skullMeta, "setOwnerProfile", profile);
             }
-        } catch (Throwable ignored) {
-            // Texture assignment is best-effort only. Failing here must not break item creation.
+        } catch (Throwable ex) {
+            LOGGER.log(Level.FINE, "Failed to apply head texture via reflection", ex);
         }
     }
 
@@ -50,7 +54,8 @@ public final class HeadTextures {
                 return null;
             }
             return matched.invoke(null, args);
-        } catch (Throwable ignored) {
+        } catch (Throwable ex) {
+            LOGGER.log(Level.FINE, "Failed reflective static call: " + owner.getName() + "#" + method, ex);
             return null;
         }
     }
@@ -62,13 +67,24 @@ public final class HeadTextures {
                 return null;
             }
             return matched.invoke(target, args);
-        } catch (Throwable ignored) {
+        } catch (Throwable ex) {
+            LOGGER.log(Level.FINE, "Failed reflective call: " + target.getClass().getName() + "#" + method, ex);
             return null;
         }
     }
 
     private static boolean invokeBest(Object target, String method, Object... args) {
-        return invoke(target, method, args) != null || findMethod(target.getClass(), method, args) != null;
+        Method matched = findMethod(target.getClass(), method, args);
+        if (matched == null) {
+            return false;
+        }
+        try {
+            matched.invoke(target, args);
+            return true;
+        } catch (Throwable ex) {
+            LOGGER.log(Level.FINE, "Failed reflective call: " + target.getClass().getName() + "#" + method, ex);
+            return false;
+        }
     }
 
     private static Method findMethod(Class<?> owner, String name, Object... args) {

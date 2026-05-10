@@ -26,6 +26,13 @@ public final class PaperSfxRuntime implements SfxRuntime {
     }
 
     @Override
+    public void executeForPlayerLater(Player player, long delayTicks, Runnable task) {
+        Objects.requireNonNull(player, "player");
+        Objects.requireNonNull(task, "task");
+        player.getScheduler().runDelayed(plugin, scheduledTask -> task.run(), null, Math.max(1L, delayTicks));
+    }
+
+    @Override
     public void executeAt(Location location, Runnable task) {
         Objects.requireNonNull(location, "location");
         Objects.requireNonNull(location.getWorld(), "location.world");
@@ -34,9 +41,23 @@ public final class PaperSfxRuntime implements SfxRuntime {
     }
 
     @Override
+    public void executeAtLater(Location location, long delayTicks, Runnable task) {
+        Objects.requireNonNull(location, "location");
+        Objects.requireNonNull(location.getWorld(), "location.world");
+        Objects.requireNonNull(task, "task");
+        plugin.getServer().getRegionScheduler().runDelayed(plugin, location, scheduledTask -> task.run(), Math.max(1L, delayTicks));
+    }
+
+    @Override
     public void executeGlobal(Runnable task) {
         Objects.requireNonNull(task, "task");
         plugin.getServer().getGlobalRegionScheduler().run(plugin, scheduledTask -> task.run());
+    }
+
+    @Override
+    public void executeGlobalLater(long delayTicks, Runnable task) {
+        Objects.requireNonNull(task, "task");
+        plugin.getServer().getGlobalRegionScheduler().runDelayed(plugin, scheduledTask -> task.run(), Math.max(1L, delayTicks));
     }
 
     @Override

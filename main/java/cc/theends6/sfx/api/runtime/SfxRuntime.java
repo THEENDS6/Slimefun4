@@ -9,9 +9,15 @@ public interface SfxRuntime {
 
     void executeForPlayer(Player player, Runnable task);
 
+    void executeForPlayerLater(Player player, long delayTicks, Runnable task);
+
     void executeAt(Location location, Runnable task);
 
+    void executeAtLater(Location location, long delayTicks, Runnable task);
+
     void executeGlobal(Runnable task);
+
+    void executeGlobalLater(long delayTicks, Runnable task);
 
     void executeAsync(Runnable task);
 

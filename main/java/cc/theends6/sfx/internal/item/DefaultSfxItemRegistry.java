@@ -49,6 +49,11 @@ public final class DefaultSfxItemRegistry implements SfxItemRegistry {
         items.put(definition.id(), definition);
     }
 
+    public void clear() {
+        categories.clear();
+        items.clear();
+    }
+
     @Override
     public Optional<SfxItemCategory> category(String id) {
         return Optional.ofNullable(categories.get(SfxItemCategory.normalizeId(id)));

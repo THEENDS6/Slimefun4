@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.listener;
 
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
@@ -118,6 +119,7 @@ public final class SfxLegacyCombatToolListener implements Listener {
     );
 
     private final JavaPlugin plugin;
+    private final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxLegacyItemBehaviorConfig behaviorConfig;
@@ -125,8 +127,9 @@ public final class SfxLegacyCombatToolListener implements Listener {
     private final NamespacedKey bowEffectKey;
     private final Set<UUID> climbingCooldown = new HashSet<>();
 
-    public SfxLegacyCombatToolListener(JavaPlugin plugin, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig) {
+    public SfxLegacyCombatToolListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
+        this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.behaviorConfig = Objects.requireNonNull(behaviorConfig, "behaviorConfig");
@@ -378,7 +381,7 @@ public final class SfxLegacyCombatToolListener implements Listener {
         if (!climbingCooldown.add(player.getUniqueId())) {
             return;
         }
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> climbingCooldown.remove(player.getUniqueId()), 4L);
+        runtime.executeForPlayerLater(player, 4L, () -> climbingCooldown.remove(player.getUniqueId()));
 
         player.setVelocity(new Vector(0, power, 0));
         player.setFallDistance(0.0f);

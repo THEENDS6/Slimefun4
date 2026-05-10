@@ -10,7 +10,7 @@ load: POSTWORLD
 commands:
   slimefunx:
     description: SlimeFunX main command
-    usage: /slimefunx <guide|cheatguide|book|give|inspect|list|reload>
+    usage: /slimefunx <guide|cheatguide|book|give|inspect|list|reload [all]>
     aliases: [sfx, sf, x]
 
 permissions:

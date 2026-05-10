@@ -37,9 +37,9 @@ public final class SfxRecipeYamlLoader {
         this.logger = plugin.getLogger();
     }
 
-    public void ensureDefaultFiles() {
+    public void ensureDefaultFiles(boolean overwriteExisting) {
         for (String resourcePath : DEFAULT_RECIPE_FILES) {
-            syncBundledFile(resourcePath);
+            syncBundledFile(resourcePath, overwriteExisting);
         }
     }
 
@@ -245,7 +245,7 @@ public final class SfxRecipeYamlLoader {
         return String.valueOf(raw);
     }
 
-    private void syncBundledFile(String resourcePath) {
+    private void syncBundledFile(String resourcePath, boolean overwriteExisting) {
         File target = new File(plugin.getDataFolder(), resourcePath);
         File parent = target.getParentFile();
         if (parent != null && !parent.exists() && !parent.mkdirs()) {
@@ -253,8 +253,11 @@ public final class SfxRecipeYamlLoader {
             return;
         }
         try {
-            plugin.saveResource(resourcePath, true);
+            plugin.saveResource(resourcePath, overwriteExisting);
         } catch (IllegalArgumentException ignored) {
+            if (target.exists() && !overwriteExisting) {
+                return;
+            }
             try (var stream = plugin.getResource(resourcePath)) {
                 if (stream == null) {
                     return;
