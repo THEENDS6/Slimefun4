@@ -1,0 +1,20 @@
+language: 'zh-CN'
+
+messages:
+  prefix: '<dark_gray>[<green>SFX</green><dark_gray>] '
+
+guide:
+  allow-right-click-open: true
+  allow-left-click-open: false
+  shift-right-click-settings: true
+  survival-title: '<dark_green>SFX 科技书</dark_green>'
+  cheat-title: '<dark_red>SFX 作弊科技书</dark_red>'
+
+# 开发期调试文本。enabled 为 true 时，玩家进服会收到 TESTING.md 内容。
+debug-text:
+  enabled: true
+
+options:
+  # Slimefun classic smeltery behavior: the makeshift smeltery always consumes fire after a successful craft;
+  # the normal smeltery consumes fire by chance after a successful craft.
+  fire-breaking-chance: 34

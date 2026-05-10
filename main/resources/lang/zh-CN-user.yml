@@ -1,0 +1,3297 @@
+machines:
+  structure-changed: <red>结构已经变化，机器触发已取消。</red>
+  missing-dispenser: <red>结构不完整：未找到机器对应的发射器。</red>
+  smeltery-not-lit: <red>这台冶炼炉还没有点火，请在发射器下方点燃火焰或灵魂火。</red>
+  no-recipes: <gray>这台机器已经识别，但当前还没有注册可执行配方。</gray>
+  inventory-empty: <gray>发射器中没有 3x3 配方输入。</gray>
+  empty: <gray>发射器里没有可处理的物品。</gray>
+  pattern-not-found: <red>输入物品存在，但没有匹配的 3x3 配方。</red>
+  unknown-material: <red>没有找到这台机器可以处理的材料。</red>
+  output-full: <red>输出位置空间不足，无法产出物品。</red>
+  no-match: <red>没有匹配的配方。</red>
+  cheat-machine-pack: <green>已获取基础机器部署包：</green><gray>{item}</gray>
+  cheat-machine-kit: <green>已获取基础机器整套材料：</green><gray>{item}</gray>
+  deploy-no-space: <red>空间不足，无法自动部署这台基础机器。</red>
+  deploy-success: <green>基础机器已自动部署完成。</green>
+  cheat-item: <green>已获取：</green><gray>{item} x{amount}</gray>
+  deploy-pack:
+    name: <gold>基础机器部署包</gold> <gray>- {machine}</gray>
+    lore:
+    - <gray>放置后会自动部署完整基础机器。</gray>
+    - <gray>部署前会检查空间是否足够。</gray>
+    - <dark_gray>这是 SFX 的作弊辅助物品。</dark_gray>
+  deploy-pack-unsupported: <yellow>这台基础机器当前不支持部署包，已发放整套结构材料：</yellow><gray>{item}</gray>
+guide:
+  errors:
+    no-open: <red>你没有打开这本科技书的权限。</red>
+    no-settings: <red>你没有打开科技书设置的权限。</red>
+    missing-category: <red>这个 SFX 分类不存在。</red>
+    missing-item: <red>这个 SFX 物品不存在。</red>
+    no-cheat-access: <red>你没有使用作弊科技书的权限，或该物品不可直接获取。</red>
+  mode:
+    survival:
+      title: <dark_green>粘液科技书</dark_green>
+      name: <dark_green>粘液科技书</dark_green>
+      lore: <gray>点击物品会查看配方。</gray>
+    cheat:
+      title: <dark_red>粘液作弊书</dark_red>
+      name: <dark_red>粘液作弊书</dark_red>
+      lore: <gray>点击物品会直接获取。</gray>
+  main:
+    title: 主菜单
+  settings:
+    title: 设置
+    open-survival:
+      name: <green>打开普通科技书</green>
+      lore: <gray>经典科技书入口。</gray>
+    open-cheat:
+      name: <red>打开作弊科技书</red>
+      lore: <gray>需要作弊科技书权限。</gray>
+    preferences:
+      name: <yellow>显示偏好</yellow>
+      lore: <gray>当前保留设置入口。</gray>
+      todo: <gray>科技书设置入口已保留，后续再补详细选项。</gray>
+  cheat:
+    machine-pack: <red>作弊模式：点击获取部署包</red>
+    machine-kit: <red>按住 Shift 点击获取整套机器材料</red>
+    take-one: <red>作弊模式：点击获取 1 个</red>
+    take-stack: <red>按住 Shift 点击获取 64 个</red>
+  actions:
+    open-category: <gray>点击打开分类</gray>
+    open-recipe: <gray>点击查看配方</gray>
+    back-guide: 返回科技书
+    back-main: 返回主菜单
+    back-category: 返回分类
+    close: <dark_gray>点击关闭。</dark_gray>
+    settings:
+      name: <yellow>科技书设置</yellow>
+      lore: <gray>也可以 按住 Shift + 右键科技书打开。</gray>
+    search:
+      name: <yellow>搜索</yellow>
+      lore: <gray>搜索入口已预留。</gray>
+      todo: <gray>搜索入口已预留，后续补聊天搜索结果页。</gray>
+  recipe:
+    title: 配方详情
+    output: <green>目标产物</green>
+    output-short: <green>产物</green>
+    structure: 多方块结构
+    page: <gray>当前配方 {current} / {total}</gray>
+    no-recipe:
+      name: <red>暂无配方</red>
+      lore: <gray>这个物品目前只是注册表样品或系统物品。</gray>
+  pagination:
+    prev:
+      active: <yellow>上一页</yellow>
+      inactive: <dark_gray>上一页</dark_gray>
+    next:
+      active: <yellow>下一页</yellow>
+      inactive: <dark_gray>下一页</dark_gray>
+    page: <gray>页码 {current} / {total}</gray>
+  structure:
+    dispenser-up: <yellow>发射器</yellow> <gray>(朝上)</gray>
+    dispenser-down: <yellow>发射器</yellow> <gray>(朝下)</gray>
+    ignition:
+      name: <gold>打火石</gold>
+      lore: <gray>用于点燃该多方块机器。</gray>
+items:
+  sfx.guide:
+    name: <green>粘液科技书</green>
+    lore:
+    - <gray>右键或左键打开科技书。</gray>
+    - <gray>按住 Shift + 右键打开设置界面。</gray>
+  sfx.cheat_guide:
+    name: <red>粘液作弊书</red>
+    lore:
+    - <gray>右键打开作弊科技书。</gray>
+    - <gray>按住 Shift + 右键打开设置界面。</gray>
+  sf.portable_crafter:
+    name: '&6便携工作台'
+    lore:
+    - '&a&o一个便携工作台'
+    - ''
+    - '&e右键&7打开'
+  sf.portable_dustbin:
+    name: '&6便携垃圾桶'
+    lore:
+    - '&f你的便携物品销毁器'
+    - ''
+    - '&e右键&7打开'
+  sf.ender_backpack:
+    name: '&6末影背包'
+    lore:
+    - '&a&o一个便携末影箱'
+    - ''
+    - '&e右键&7打开'
+  sf.magic_eye_of_ender:
+    name: '&6&l魔法末影之眼'
+    lore:
+    - '&4&l需要完整的末影护甲'
+    - ''
+    - '&e右键&7发射一颗末影珍珠'
+  sf.broken_spawner:
+    name: '&c损坏的刷怪笼'
+    lore:
+    - '&7类型：&b<Type>'
+    - ''
+    - '&c已破损，必须在远古祭坛中修复'
+  sf.reinforced_spawner:
+    name: '&b强化刷怪笼'
+    lore:
+    - '&7类型：&b<Type>'
+  sf.infernal_bonemeal:
+    name: '&4地狱骨粉'
+    lore:
+    - ''
+    - '&c加快植物生长速度'
+    - '&c也适用于下界疣'
+  sf.tape_measure:
+    name: '&6卷尺'
+    lore:
+    - ''
+    - '&e潜行并右键&7设置锚点'
+    - '&e右键&7测量'
+  sf.gold_pan:
+    name: '&6淘金盘'
+    lore:
+    - ''
+    - '&e右键&7收集资源'
+    - '&7来自沙砾'
+  sf.nether_gold_pan:
+    name: '&4下界淘金盘'
+    lore:
+    - ''
+    - '&e右键&7收集资源'
+    - '&7来自灵魂沙'
+  sf.parachute:
+    name: '&f&l降落伞'
+    lore:
+    - ''
+    - '&e潜行&7使用'
+  sf.grappling_hook:
+    name: '&6抓钩'
+    lore:
+    - ''
+    - '&e右键&7使用'
+  sf.solar_helmet:
+    name: '&b太阳能头盔'
+    lore:
+    - ''
+    - '&a&o为手持物品和护甲充电'
+  sf.cloth:
+    name: '&b布料'
+  sf.reinforced_cloth:
+    name: '&b强化布料'
+    lore:
+    - ''
+    - '&f这块布料已被加固'
+    - '&f并加入了 &b铅 &f用于抵御'
+    - '&f放射性物质'
+  sf.can:
+    name: '&f锡罐'
+  sf.night_vision_goggles:
+    name: '&a夜视护目镜'
+    lore:
+    - ''
+    - '&9+ 夜视'
+  sf.elytra_cap:
+    name: '&5鞘翅帽'
+    lore:
+    - ''
+    - '&7这顶头盔可以保护你免受'
+    - '&7使用鞘翅飞行时撞击伤害。'
+  sf.farmer_shoes:
+    name: '&e农夫鞋'
+    lore:
+    - ''
+    - '&6&o防止你踩坏作物'
+  sf.infused_magnet:
+    name: '&a灌注磁铁'
+    lore:
+    - ''
+    - '&f被魔法灌注的磁铁'
+    - '&f会吸引附近的物品'
+    - '&f只要它位于你的'
+    - '&f背包中即可生效'
+    - ''
+    - '&7按住 &eShift&7 吸取附近物品'
+  sf.rag:
+    name: '&c破布'
+    lore:
+    - ''
+    - '&aI 级医疗用品'
+    - ''
+    - '&f恢复 2 颗心'
+    - '&f扑灭火焰'
+    - ''
+    - '&e右键&7使用'
+  sf.bandage:
+    name: '&c绷带'
+    lore:
+    - ''
+    - '&aII 级医疗用品'
+    - ''
+    - '&f恢复 4 颗心'
+    - '&f扑灭火焰'
+    - ''
+    - '&e右键&7使用'
+  sf.splint:
+    name: '&c夹板'
+    lore:
+    - ''
+    - '&aI 级医疗用品'
+    - ''
+    - '&f恢复 2 颗心'
+    - ''
+    - '&e右键&7使用'
+  sf.vitamins:
+    name: '&c维生素'
+    lore:
+    - ''
+    - '&aIII 级医疗用品'
+    - ''
+    - '&f恢复 4 颗心'
+    - '&f扑灭火焰'
+    - '&f治愈中毒/凋零/辐射'
+    - ''
+    - '&e右键&7使用'
+  sf.medicine:
+    name: '&c药剂'
+    lore:
+    - ''
+    - '&aIII 级医疗用品'
+    - ''
+    - '&f恢复 4 颗心'
+    - '&f扑灭火焰'
+    - '&f治愈中毒/凋零/辐射'
+  sf.magical_zombie_pills:
+    name: '&6魔法僵尸药丸'
+    lore:
+    - ''
+    - '&e右键&7僵尸村民'
+    - '&7或僵尸猪灵'
+    - '&7立即解除其诅咒并使其恢复'
+  sf.flask_of_knowledge:
+    name: '&c学识烧瓶'
+    lore:
+    - ''
+    - '&f允许你将一部分'
+    - '&f经验存入瓶中'
+    - '&7消耗：&a1 级经验'
+  sf.filled_flask_of_knowledge:
+    name: '&a装满的学识烧瓶'
+  sf.small_backpack:
+    name: '&e小型背包'
+    lore:
+    - ''
+    - '&7容量：&e9'
+    - '&7编号：<ID>'
+    - ''
+    - '&e右键&7打开'
+  sf.medium_backpack:
+    name: '&e背包'
+    lore:
+    - ''
+    - '&7容量：&e18'
+    - '&7编号：<ID>'
+    - ''
+    - '&e右键&7打开'
+  sf.large_backpack:
+    name: '&e大型背包'
+    lore:
+    - ''
+    - '&7容量：&e27'
+    - '&7编号：<ID>'
+    - ''
+    - '&e右键&7打开'
+  sf.woven_backpack:
+    name: '&e编织背包'
+    lore:
+    - ''
+    - '&7容量：&e36'
+    - '&7编号：<ID>'
+    - ''
+    - '&e右键&7打开'
+  sf.gilded_backpack:
+    name: '&e镀金背包'
+    lore:
+    - ''
+    - '&7容量：&e45'
+    - '&7编号：<ID>'
+    - ''
+    - '&e右键&7打开'
+  sf.radiant_backpack:
+    name: '&e辉光背包'
+    lore:
+    - ''
+    - '&7容量：&e54 (双箱)'
+    - '&7编号：<ID>'
+    - ''
+    - '&e右键&7打开'
+  sf.bound_backpack:
+    name: '&c灵魂绑定背包'
+    lore:
+    - ''
+    - '&7容量：&e36'
+    - '&7编号：<ID>'
+    - ''
+    - '&e右键&7打开'
+  sf.cooler:
+    name: '&b冷藏箱'
+    lore:
+    - '&f可存放果汁/奶昔'
+    - '&f并会在你饥饿时自动饮用'
+    - '&f前提是它在你的背包里'
+    - ''
+    - '&7容量：&e27'
+    - '&7编号：<ID>'
+    - ''
+    - '&e右键&7打开'
+  sf.restored_backpack:
+    name: '&e修复的背包'
+    lore:
+    - ''
+    - '&7取回你遗失的物品'
+    - '&7编号：<ID>'
+    - ''
+    - '&e右键&7打开'
+  sf.duralumin_jetpack:
+    name: '&9电动喷气背包 &7- &eI'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b硬铝'
+    - '&8⇨ &e⚡ &70 / 20 J'
+    - '&8⇨ &7推力：&c0.35'
+    - ''
+    - '&e潜行&7使用'
+  sf.solder_jetpack:
+    name: '&9电动喷气背包 &7- &eII'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b焊料'
+    - '&8⇨ &e⚡ &70 / 30 J'
+    - '&8⇨ &7推力：&c0.4'
+    - ''
+    - '&e潜行&7使用'
+  sf.billon_jetpack:
+    name: '&9电动喷气背包 &7- &eIII'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b银铜合金'
+    - '&8⇨ &e⚡ &70 / 45 J'
+    - '&8⇨ &7推力：&c0.45'
+    - ''
+    - '&e潜行&7使用'
+  sf.steel_jetpack:
+    name: '&9电动喷气背包 &7- &eIV'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b钢'
+    - '&8⇨ &e⚡ &70 / 60 J'
+    - '&8⇨ &7推力：&c0.5'
+    - ''
+    - '&e潜行&7使用'
+  sf.damascus_steel_jetpack:
+    name: '&9电动喷气背包 &7- &eV'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b水纹钢'
+    - '&8⇨ &e⚡ &70 / 75 J'
+    - '&8⇨ &7推力：&c0.55'
+    - ''
+    - '&e潜行&7使用'
+  sf.reinforced_alloy_jetpack:
+    name: '&9电动喷气背包 &7- &eVI'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b强化合金'
+    - '&8⇨ &e⚡ &70 / 100 J'
+    - '&8⇨ &7推力：&c0.6'
+    - ''
+    - '&e潜行&7使用'
+  sf.carbonado_jetpack:
+    name: '&9电动喷气背包 &7- &eVII'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b黑钻'
+    - '&8⇨ &e⚡ &70 / 150 J'
+    - '&8⇨ &7推力：&c0.7'
+    - ''
+    - '&e潜行&7使用'
+  sf.armored_jetpack:
+    name: '&9装甲喷气背包'
+    lore:
+    - '&8⇨ &7材质：&b钢'
+    - ''
+    - '&8⇨ &e⚡ &70 / 50 J'
+    - '&8⇨ &7推力：&c0.5'
+    - ''
+    - '&e潜行&7使用'
+  sf.duralumin_jetboots:
+    name: '&9喷气靴 &7- &eI'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b硬铝'
+    - '&8⇨ &e⚡ &70 / 20 J'
+    - '&8⇨ &b⚡ &7速度：&b0.35x'
+    - '&8⇨ &7精度：&c50%'
+    - ''
+    - '&e潜行&7使用'
+  sf.solder_jetboots:
+    name: '&9喷气靴 &7- &eII'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b焊料'
+    - '&8⇨ &e⚡ &70 / 30 J'
+    - '&8⇨ &b⚡ &7速度：&b0.4x'
+    - '&8⇨ &7精度：&660%'
+    - ''
+    - '&e潜行&7使用'
+  sf.billon_jetboots:
+    name: '&9喷气靴 &7- &eIII'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b银铜合金'
+    - '&8⇨ &e⚡ &70 / 40 J'
+    - '&8⇨ &b⚡ &7速度：&b0.45x'
+    - '&8⇨ &7精度：&665%'
+    - ''
+    - '&e潜行&7使用'
+  sf.steel_jetboots:
+    name: '&9喷气靴 &7- &eIV'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b钢'
+    - '&8⇨ &e⚡ &70 / 50 J'
+    - '&8⇨ &b⚡ &7速度：&b0.5x'
+    - '&8⇨ &7精度：&e70%'
+    - ''
+    - '&e潜行&7使用'
+  sf.damascus_steel_jetboots:
+    name: '&9喷气靴 &7- &eV'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b水纹钢'
+    - '&8⇨ &e⚡ &70 / 75 J'
+    - '&8⇨ &b⚡ &7速度：&b0.55x'
+    - '&8⇨ &7精度：&a75%'
+    - ''
+    - '&e潜行&7使用'
+  sf.reinforced_alloy_jetboots:
+    name: '&9喷气靴 &7- &eVI'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b强化合金'
+    - '&8⇨ &e⚡ &70 / 100 J'
+    - '&8⇨ &b⚡ &7速度：&b0.6x'
+    - '&8⇨ &7精度：&c80%'
+    - ''
+    - '&e潜行&7使用'
+  sf.carbonado_jetboots:
+    name: '&9喷气靴 &7- &eVII'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b黑钻'
+    - '&8⇨ &e⚡ &70 / 125 J'
+    - '&8⇨ &b⚡ &7速度：&b0.7x'
+    - '&8⇨ &7精度：&c99.9%'
+    - ''
+    - '&e潜行&7使用'
+  sf.armored_jetboots:
+    name: '&9装甲喷气靴'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b钢'
+    - '&8⇨ &e⚡ &70 / 50 J'
+    - '&8⇨ &b⚡ &7速度：&b0.45x'
+    - '&8⇨ &7精度：&e70%'
+    - ''
+    - '&e潜行&7使用'
+  sf.duralumin_multi_tool:
+    name: '&9多功能工具 &7- &eI'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b硬铝'
+    - '&8⇨ &e⚡ &70 / 20 J'
+    - ''
+    - '&e右键&7使用'
+    - '&e潜行并右键&7切换模式'
+  sf.solder_multi_tool:
+    name: '&9多功能工具 &7- &eII'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b焊料'
+    - '&8⇨ &e⚡ &70 / 30 J'
+    - ''
+    - '&e右键&7使用'
+    - '&e潜行并右键&7切换模式'
+  sf.billon_multi_tool:
+    name: '&9多功能工具 &7- &eIII'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b银铜合金'
+    - '&8⇨ &e⚡ &70 / 40 J'
+    - ''
+    - '&e右键&7使用'
+    - '&e潜行并右键&7切换模式'
+  sf.steel_multi_tool:
+    name: '&9多功能工具 &7- &eIV'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b钢'
+    - '&8⇨ &e⚡ &70 / 50 J'
+    - ''
+    - '&e右键&7使用'
+    - '&e潜行并右键&7切换模式'
+  sf.damascus_steel_multi_tool:
+    name: '&9多功能工具 &7- &eV'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b水纹钢'
+    - '&8⇨ &e⚡ &70 / 60 J'
+    - ''
+    - '&e右键&7使用'
+    - '&e潜行并右键&7切换模式'
+  sf.reinforced_alloy_multi_tool:
+    name: '&9多功能工具 &7- &eVI'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b强化合金'
+    - '&8⇨ &e⚡ &70 / 75 J'
+    - ''
+    - '&e右键&7使用'
+    - '&e潜行并右键&7切换模式'
+  sf.carbonado_multi_tool:
+    name: '&9多功能工具 &7- &eVII'
+    lore:
+    - ''
+    - '&8⇨ &7材质：&b黑钻'
+    - '&8⇨ &e⚡ &70 / 100 J'
+    - ''
+    - '&e右键&7使用'
+    - '&e潜行并右键&7切换模式'
+  sf.fortune_cookie:
+    name: '&6幸运饼干'
+    lore:
+    - ''
+    - '&a&o告诉你一些未来的事情 :o'
+  sf.diet_cookie:
+    name: '&6低卡饼干'
+    lore:
+    - ''
+    - '&a一块非常 &o轻盈的 &f&a饼干。'
+  sf.magic_sugar:
+    name: '&6魔法糖'
+    lore:
+    - ''
+    - '&a&o感受赫尔墨斯的力量！'
+  sf.monster_jerky:
+    name: '&6怪物肉干'
+    lore:
+    - ''
+    - '&a&o不再饥饿'
+  sf.apple_juice:
+    name: '&c苹果汁'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o3.0 &7&o饱食度'
+  sf.melon_juice:
+    name: '&c西瓜汁'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o3.0 &7&o饱食度'
+  sf.carrot_juice:
+    name: '&6胡萝卜汁'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o3.0 &7&o饱食度'
+  sf.pumpkin_juice:
+    name: '&6南瓜汁'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o3.0 &7&o饱食度'
+  sf.sweet_berry_juice:
+    name: '&c甜浆果汁'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o3.0 &7&o饱食度'
+  sf.glow_berry_juice:
+    name: '&6发光浆果汁'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o3.0 &7&o饱食度'
+  sf.golden_apple_juice:
+    name: '&b金色苹果汁'
+  sf.beef_jerky:
+    name: '&6牛肉干'
+    lore:
+    - ''
+    - '&f更高的饱和度！'
+  sf.pork_jerky:
+    name: '&6猪肉干'
+    lore:
+    - ''
+    - '&f更高的饱和度！'
+  sf.chicken_jerky:
+    name: '&6鸡肉干'
+    lore:
+    - ''
+    - '&f更高的饱和度！'
+  sf.mutton_jerky:
+    name: '&6羊肉干'
+    lore:
+    - ''
+    - '&f更高的饱和度！'
+  sf.rabbit_jerky:
+    name: '&6兔肉干'
+    lore:
+    - ''
+    - '&f更高的饱和度！'
+  sf.fish_jerky:
+    name: '&6鱼肉干'
+    lore:
+    - ''
+    - '&f更高的饱和度！'
+  sf.kelp_cookie:
+    name: '&2海带饼干'
+  sf.christmas_milk:
+    name: '&6牛奶'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o2.5 &7&o饱食度'
+  sf.christmas_chocolate_milk:
+    name: '&6巧克力牛奶'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o6.0 &7&o饱食度'
+  sf.christmas_egg_nog:
+    name: '&a蛋奶酒'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o3.5 &7&o饱食度'
+  sf.christmas_apple_cider:
+    name: '&c苹果汽酒'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o7.0 &7&o饱食度'
+  sf.christmas_cookie:
+    name: '&a&c圣&a诞&c曲&a奇'
+  sf.christmas_fruit_cake:
+    name: '&a&c水&a果&c蛋&a糕'
+  sf.christmas_apple_pie:
+    name: '&f苹果派'
+  sf.christmas_hot_chocolate:
+    name: '&6热巧克力'
+    lore:
+    - ''
+    - '&7&o恢复 &b&o7.0 &7&o饱食度'
+  sf.christmas_cake:
+    name: '&a&c圣&a诞&c蛋&a糕'
+  sf.christmas_caramel:
+    name: '&6焦糖'
+  sf.christmas_caramel_apple:
+    name: '&6焦糖苹果'
+  sf.christmas_chocolate_apple:
+    name: '&6巧克力苹果'
+  sf.christmas_present:
+    name: '&a&c圣&a诞&c礼&a物'
+    lore:
+    - '&7来自：&cTheBusyBiscuit'
+    - '&7送给：&e你'
+    - ''
+    - '&e右键&7打开'
+  sf.easter_egg:
+    name: '&f复活节彩蛋'
+    lore:
+    - '&d复活节快乐！来点惊喜吧。'
+  sf.carrot_pie:
+    name: '&6胡萝卜派'
+  sf.easter_apple_pie:
+    name: '&f苹果派'
+  sf.grandmas_walking_stick:
+    name: '&7奶奶的拐杖'
+  sf.grandpas_walking_stick:
+    name: '&7爷爷的拐杖'
+  sf.sword_of_beheading:
+    name: '&6斩首之剑'
+    lore:
+    - '&7斩首 II'
+    - ''
+    - '&f有概率斩下生物的头颅'
+    - '&f（凋灵骷髅的概率更高）'
+  sf.blade_of_vampires:
+    name: '&c吸血鬼之刃'
+    lore:
+    - '&7生命偷取 I'
+    - ''
+    - '&f每次你攻击生物时'
+    - '&f都有 45% 概率'
+    - '&f恢复 2 颗心生命值'
+  sf.seismic_axe:
+    name: '&a地震斧'
+    lore:
+    - ''
+    - '&7&o一场便携式地震……'
+    - ''
+    - '&e右键&7使用'
+  sf.explosive_bow:
+    name: '&c爆裂弓'
+    lore:
+    - '&f用这把弓射出的箭矢'
+    - '&f会把命中的敌人击飞到空中'
+  sf.icy_bow:
+    name: '&b寒冰弓'
+    lore:
+    - '&f用这把弓射出的箭矢'
+    - '&f会让命中的敌人无法移动'
+    - '&f持续 2 秒'
+  sf.smelters_pickaxe:
+    name: '&6熔炼镐'
+    lore:
+    - '&c&l自动烧炼'
+    - ''
+    - '&9可与时运配合'
+  sf.lumber_axe:
+    name: '&6伐木斧'
+    lore:
+    - '&a&o一次砍倒整棵树……'
+  sf.pickaxe_of_containment:
+    name: '&c收容镐'
+    lore:
+    - ''
+    - '&9可以拾取刷怪笼'
+  sf.explosive_pickaxe:
+    name: '&e爆裂镐'
+    lore:
+    - ''
+    - '&f允许你一次开采大量'
+    - '&f方块……'
+    - ''
+    - '&9可与时运配合'
+  sf.explosive_shovel:
+    name: '&e爆裂铲'
+    lore:
+    - ''
+    - '&f允许你一次开采大量'
+    - '&f可挖掘方块……'
+  sf.pickaxe_of_the_seeker:
+    name: '&a觅矿镐'
+    lore:
+    - '&f总会指向最近的矿石'
+    - '&f但这样做时可能会受损'
+    - ''
+    - '&7&e右键&7 指向最近的矿石'
+  sf.cobalt_pickaxe:
+    name: '&9钴镐'
+  sf.pickaxe_of_vein_mining:
+    name: '&e矿脉镐'
+    lore:
+    - ''
+    - '&f这把镐会挖出'
+    - '&f整条矿脉……'
+  sf.climbing_pick:
+    name: '&b攀岩镐'
+    lore:
+    - ''
+    - '&f允许你攀爬特定表面'
+    - '&f通过右键。'
+    - '&f给这把镐附魔效率即可'
+    - '&f攀爬得更快！'
+  sf.glowstone_helmet:
+    name: '&e&l萤石头盔'
+    lore:
+    - ''
+    - '&a&o像太阳一样闪耀！'
+    - ''
+    - '&9+ 夜视'
+  sf.glowstone_chestplate:
+    name: '&e&l萤石胸甲'
+    lore:
+    - ''
+    - '&a&o像太阳一样闪耀！'
+    - ''
+    - '&9+ 夜视'
+  sf.glowstone_leggings:
+    name: '&e&l萤石护腿'
+    lore:
+    - ''
+    - '&a&o像太阳一样闪耀！'
+    - ''
+    - '&9+ 夜视'
+  sf.glowstone_boots:
+    name: '&e&l萤石靴子'
+    lore:
+    - ''
+    - '&a&o像太阳一样闪耀！'
+    - ''
+    - '&9+ 夜视'
+  sf.rainbow_leather:
+    name: '&d彩虹皮革'
+    lore:
+    - ''
+    - '&f可用于制作彩虹护甲'
+  sf.rainbow_helmet:
+    name: '&d&l彩虹头盔'
+    lore:
+    - ''
+    - '&d在彩虹的所有颜色间循环！'
+  sf.rainbow_chestplate:
+    name: '&d&l彩虹胸甲'
+    lore:
+    - ''
+    - '&d在彩虹的所有颜色间循环！'
+  sf.rainbow_leggings:
+    name: '&d&l彩虹护腿'
+    lore:
+    - ''
+    - '&d在彩虹的所有颜色间循环！'
+  sf.rainbow_boots:
+    name: '&d&l彩虹靴子'
+    lore:
+    - ''
+    - '&d在彩虹的所有颜色间循环！'
+  sf.ender_helmet:
+    name: '&5&l末影头盔'
+    lore:
+    - ''
+    - '&a&o时而在此，时而在彼！'
+  sf.ender_chestplate:
+    name: '&5&l末影胸甲'
+    lore:
+    - ''
+    - '&a&o时而在此，时而在彼！'
+  sf.ender_leggings:
+    name: '&5&l末影护腿'
+    lore:
+    - ''
+    - '&a&o时而在此，时而在彼！'
+  sf.ender_boots:
+    name: '&5&l末影靴子'
+    lore:
+    - ''
+    - '&a&o时而在此，时而在彼！'
+    - ''
+    - '&9+ 免疫末影珍珠伤害'
+  sf.slime_helmet:
+    name: '&a&l黏液头盔'
+    lore:
+    - ''
+    - '&a&o充满弹性'
+  sf.slime_chestplate:
+    name: '&a&l黏液胸甲'
+    lore:
+    - ''
+    - '&a&o充满弹性'
+  sf.slime_leggings:
+    name: '&a&l黏液护腿'
+    lore:
+    - ''
+    - '&a&o充满弹性'
+    - ''
+    - '&9+ 速度'
+  sf.slime_boots:
+    name: '&a&l黏液靴子'
+    lore:
+    - ''
+    - '&a&o充满弹性'
+    - ''
+    - '&9+ 跳跃提升'
+    - '&9+ 免疫摔落伤害'
+  sf.cactus_helmet:
+    name: '&2仙人掌头盔'
+  sf.cactus_chestplate:
+    name: '&2仙人掌胸甲'
+  sf.cactus_leggings:
+    name: '&2仙人掌护腿'
+  sf.cactus_boots:
+    name: '&2仙人掌靴子'
+  sf.damascus_steel_helmet:
+    name: '&7水纹钢头盔'
+  sf.damascus_steel_chestplate:
+    name: '&7水纹钢胸甲'
+  sf.damascus_steel_leggings:
+    name: '&7水纹钢护腿'
+  sf.damascus_steel_boots:
+    name: '&7水纹钢靴子'
+  sf.reinforced_alloy_helmet:
+    name: '&b强化头盔'
+  sf.reinforced_alloy_chestplate:
+    name: '&b强化胸甲'
+  sf.reinforced_alloy_leggings:
+    name: '&b强化护腿'
+  sf.reinforced_alloy_boots:
+    name: '&b强化靴子'
+  sf.scuba_helmet:
+    name: '&c潜水头盔'
+    lore:
+    - ''
+    - '&7允许你在水下呼吸'
+  sf.hazmat_chestplate:
+    name: '&c防化服'
+    lore:
+    - ''
+    - '&7允许你穿越火焰与岩浆'
+  sf.hazmat_leggings:
+    name: '&c防化服护腿'
+    lore:
+    - ''
+    - '&6整套效果：'
+    - '&e- 辐射免疫'
+    - '&e- 蜜蜂蜇伤防护'
+  sf.rubber_boots:
+    name: '&c防化靴子'
+    lore:
+    - ''
+    - '&6整套效果：'
+    - '&e- 辐射免疫'
+    - '&e- 蜜蜂蜇伤防护'
+  sf.gilded_iron_helmet:
+    name: '&6镀金铁头盔'
+  sf.gilded_iron_chestplate:
+    name: '&6镀金铁胸甲'
+  sf.gilded_iron_leggings:
+    name: '&6镀金铁护腿'
+  sf.gilded_iron_boots:
+    name: '&6镀金铁靴子'
+  sf.gold_12k_helmet:
+    name: '&6金头盔 &7(12 克拉)'
+  sf.gold_12k_chestplate:
+    name: '&6金胸甲 &7(12 克拉)'
+  sf.gold_12k_leggings:
+    name: '&6金护腿 &7(12 克拉)'
+  sf.gold_12k_boots:
+    name: '&6金靴子 &7(12 克拉)'
+  sf.slime_steel_helmet:
+    name: '&a&l黏液钢头盔'
+    lore:
+    - '&7&o强化'
+    - ''
+    - '&a&o充满弹性'
+  sf.slime_steel_chestplate:
+    name: '&a&l黏液钢胸甲'
+    lore:
+    - '&7&o强化'
+    - ''
+    - '&a&o充满弹性'
+  sf.slime_steel_leggings:
+    name: '&a&l黏液钢护腿'
+    lore:
+    - '&7&o强化'
+    - ''
+    - '&a&o充满弹性'
+    - ''
+    - '&9+ 速度'
+  sf.slime_steel_boots:
+    name: '&a&l黏液钢靴子'
+    lore:
+    - '&7&o强化'
+    - ''
+    - '&a&o充满弹性'
+    - ''
+    - '&9+ 跳跃提升'
+    - '&9+ 免疫摔落伤害'
+  sf.boots_of_the_stomper:
+    name: '&b践踏者之靴'
+    lore:
+    - ''
+    - '&9你受到的所有摔落伤害'
+    - '&9都会转移给附近的生物/玩家'
+    - ''
+    - '&9+ 免疫摔落伤害'
+  sf.bee_helmet:
+    name: '&e&l蜜蜂头盔'
+    lore:
+    - ' '
+    - '&f嗡嗡嗡'
+  sf.bee_wings:
+    name: '&e&l蜜蜂翅膀'
+    lore:
+    - ' '
+    - '&f嗡嗡嗡'
+    - ' '
+    - '&9接近地面时获得缓降'
+    - '&9在靠近地面时生效'
+  sf.bee_leggings:
+    name: '&e&l蜜蜂护腿'
+    lore:
+    - ' '
+    - '&f嗡嗡嗡'
+  sf.bee_boots:
+    name: '&e&l蜜蜂靴子'
+    lore:
+    - ''
+    - '&f嗡嗡嗡'
+    - ''
+    - '&9+ 跳跃提升'
+    - '&9+ 免疫摔落伤害'
+  sf.magic_lump_1:
+    name: '&6魔法团块 &7- &eI'
+    lore:
+    - ''
+    - '&c&o等级：I'
+  sf.magic_lump_2:
+    name: '&6魔法团块 &7- &eII'
+    lore:
+    - ''
+    - '&c&o等级：II'
+  sf.magic_lump_3:
+    name: '&6魔法团块 &7- &eIII'
+    lore:
+    - ''
+    - '&c&o等级：III'
+  sf.ender_lump_1:
+    name: '&5末影团块 &7- &eI'
+    lore:
+    - ''
+    - '&c&o等级：I'
+  sf.ender_lump_2:
+    name: '&5末影团块 &7- &eII'
+    lore:
+    - ''
+    - '&c&o等级：II'
+  sf.ender_lump_3:
+    name: '&5末影团块 &7- &eIII'
+    lore:
+    - ''
+    - '&c&o等级：III'
+  sf.magical_book_cover:
+    name: '&6魔法书封'
+    lore:
+    - ''
+    - '&a&o用于制作各种魔法书'
+  sf.magical_glass:
+    name: '&6魔法玻璃'
+    lore:
+    - ''
+    - '&a&o用于制作各种魔法装置'
+  sf.synthetic_shulker_shell:
+    name: '&d人造潜影壳'
+    lore:
+    - ''
+    - '&f该物品可在'
+    - '&f工作台中像普通潜影壳一样使用'
+  sf.basic_circuit_board:
+    name: '&b基础电路板'
+  sf.advanced_circuit_board:
+    name: '&b高级电路板'
+  sf.wheat_flour:
+    name: '&f面粉'
+  sf.steel_plate:
+    name: '&7&l钢板'
+  sf.battery:
+    name: '&6电池'
+  sf.carbon:
+    name: '&e碳'
+  sf.compressed_carbon:
+    name: '&c压缩碳'
+  sf.carbon_chunk:
+    name: '&4碳块'
+  sf.steel_thruster:
+    name: '&7&l钢制推进器'
+  sf.power_crystal:
+    name: '&c&l能量水晶'
+  sf.chain:
+    name: '&b锁链'
+  sf.hook:
+    name: '&b钩爪'
+  sf.sifted_ore:
+    name: '&6筛矿物'
+  sf.stone_chunk:
+    name: '&6石块碎片'
+  sf.lava_crystal:
+    name: '&4熔岩水晶'
+  sf.salt:
+    name: '&f盐'
+  sf.cheese:
+    name: '&f奶酪'
+  sf.butter:
+    name: '&f黄油'
+  sf.duct_tape:
+    name: '&8强力胶带'
+    lore:
+    - ''
+    - '&f你可以用它修复物品'
+    - '&f需要在自动铁砧中进行'
+  sf.heavy_cream:
+    name: '&f浓奶油'
+  sf.crushed_ore:
+    name: '&6碎矿'
+  sf.pulverized_ore:
+    name: '&6粉碎矿'
+  sf.pure_ore_cluster:
+    name: '&6纯净矿簇'
+  sf.small_uranium:
+    name: '&c小块铀'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&e中等'
+    - '&8⇨ &4需要防化服！'
+  sf.tiny_uranium:
+    name: '&c微量铀堆'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&e低'
+  sf.solar_panel:
+    name: '&9光伏电池'
+    lore:
+    - ''
+    - '&7用于制作'
+    - '&7&b太阳能发电机 &7的重要组件'
+  sf.plastic_sheet:
+    name: '&f塑料板'
+  sf.magnet:
+    name: '&c磁铁'
+  sf.necrotic_skull:
+    name: '&c死灵头骨'
+  sf.essence_of_afterlife:
+    name: '&4来世精华'
+  sf.strange_nether_goo:
+    name: '&5奇异下界黏液'
+    lore:
+    - ''
+    - '&f一种奇怪的生物质，'
+    - '&f可以通过以下方式获得：'
+    - '&f与猪灵交易'
+  sf.electro_magnet:
+    name: '&c电磁铁'
+  sf.heating_coil:
+    name: '&c发热线圈'
+  sf.cooling_unit:
+    name: '&b冷却单元'
+  sf.electric_motor:
+    name: '&c电动机'
+  sf.cargo_motor:
+    name: '&3运输马达'
+    lore:
+    - ''
+    - '&7是以下物品的重要材料'
+    - '&7与运输管理相关'
+  sf.scroll_of_dimensional_teleposition:
+    name: '&6次元转位卷轴'
+    lore:
+    - ''
+    - '&c这张卷轴能够创造'
+    - '&c一个临时黑洞，会将'
+    - '&c附近实体吸入其中，并送往'
+    - '&c另一个维度，在那里'
+    - '&c一切都会被颠倒'
+    - ''
+    - '&f换句话说：让实体转向 180 度'
+  sf.tome_of_knowledge_sharing:
+    name: '&6学识之书'
+    lore:
+    - '&7拥有者：&b无'
+    - ''
+    - '&e右键&7将这本典籍绑定给自己'
+    - ''
+    - '&7绑定后可通过'
+    - '&e右键&7获得先前拥有者的全部研究'
+    - '&7来自先前指定的拥有者'
+  sf.hardened_glass:
+    name: '&7硬化玻璃'
+    lore:
+    - ''
+    - '&f可承受爆炸'
+  sf.wither_proof_obsidian:
+    name: '&5抗凋零黑曜石'
+    lore:
+    - ''
+    - '&f可承受爆炸'
+    - '&f可抵御凋灵'
+  sf.wither_proof_glass:
+    name: '&5抗凋零玻璃'
+    lore:
+    - ''
+    - '&f可承受爆炸'
+    - '&f可抵御凋灵'
+  sf.reinforced_plate:
+    name: '&7强化板'
+  sf.ancient_pedestal:
+    name: '&d远古基座'
+    lore:
+    - ''
+    - '&5远古祭坛的一部分'
+  sf.ancient_altar:
+    name: '&d远古祭坛'
+    lore:
+    - ''
+    - '&5用于以下用途的多方块祭坛：'
+    - '&5魔法合成流程'
+  sf.copper_wire:
+    name: '&6铜线'
+    lore:
+    - ''
+    - '&6电力模块中的关键组件'
+  sf.crafting_motor:
+    name: '&6合成马达'
+    lore:
+    - ''
+    - '&7自动合成机的重要组件'
+  sf.rainbow_wool:
+    name: '&5彩虹羊毛'
+    lore:
+    - ''
+    - '&d在彩虹的所有颜色间循环！'
+  sf.rainbow_glass:
+    name: '&5彩虹玻璃'
+    lore:
+    - ''
+    - '&d在彩虹的所有颜色间循环！'
+  sf.rainbow_clay:
+    name: '&5彩虹黏土'
+    lore:
+    - ''
+    - '&d在彩虹的所有颜色间循环！'
+  sf.rainbow_glass_pane:
+    name: '&5彩虹玻璃板'
+    lore:
+    - ''
+    - '&d在彩虹的所有颜色间循环！'
+  sf.rainbow_concrete:
+    name: '&5彩虹混凝土'
+    lore:
+    - ''
+    - '&d在彩虹的所有颜色间循环！'
+  sf.rainbow_glazed_terracotta:
+    name: '&5彩虹带釉陶瓦'
+    lore:
+    - ''
+    - '&d在彩虹的所有颜色间循环！'
+  sf.rainbow_wool_xmas:
+    name: '&5彩虹羊毛 &7(圣诞节)'
+    lore:
+    - ''
+    - '&2[圣诞节 限定版]'
+  sf.rainbow_glass_xmas:
+    name: '&5彩虹玻璃 &7(圣诞节)'
+    lore:
+    - ''
+    - '&2[圣诞节 限定版]'
+  sf.rainbow_clay_xmas:
+    name: '&5彩虹黏土 &7(圣诞节)'
+    lore:
+    - ''
+    - '&2[圣诞节 限定版]'
+  sf.rainbow_glass_pane_xmas:
+    name: '&5彩虹玻璃板 &7(圣诞节)'
+    lore:
+    - ''
+    - '&2[圣诞节 限定版]'
+  sf.rainbow_concrete_xmas:
+    name: '&5彩虹混凝土 &7(圣诞节)'
+    lore:
+    - ''
+    - '&2[圣诞节 限定版]'
+  sf.rainbow_glazed_terracotta_xmas:
+    name: '&5彩虹带釉陶瓦 &7(圣诞节)'
+    lore:
+    - ''
+    - '&2[圣诞节 限定版]'
+  sf.rainbow_wool_valentine:
+    name: '&5彩虹羊毛 &7(情人节)'
+    lore:
+    - ''
+    - '&5[&d情人节 限定版&5]'
+  sf.rainbow_glass_valentine:
+    name: '&5彩虹玻璃 &7(情人节)'
+    lore:
+    - ''
+    - '&5[&d情人节 限定版&5]'
+  sf.rainbow_clay_valentine:
+    name: '&5彩虹黏土 &7(情人节)'
+    lore:
+    - ''
+    - '&5[&d情人节 限定版&5]'
+  sf.rainbow_glass_pane_valentine:
+    name: '&5彩虹玻璃板 &7(情人节)'
+    lore:
+    - ''
+    - '&5[&d情人节 限定版&5]'
+  sf.rainbow_concrete_valentine:
+    name: '&5彩虹混凝土 &7(情人节)'
+    lore:
+    - ''
+    - '&5[&d情人节 限定版&5]'
+  sf.rainbow_glazed_terracotta_valentine:
+    name: '&5彩虹带釉陶瓦 &7(情人节)'
+    lore:
+    - ''
+    - '&5[&d情人节 限定版&5]'
+  sf.rainbow_wool_halloween:
+    name: '&5彩虹羊毛 &7(万圣节)'
+    lore:
+    - ''
+    - '&c[&6万圣节 限定版&c]'
+  sf.rainbow_glass_halloween:
+    name: '&5彩虹玻璃 &7(万圣节)'
+    lore:
+    - ''
+    - '&c[&6万圣节 限定版&c]'
+  sf.rainbow_clay_halloween:
+    name: '&5彩虹黏土 &7(万圣节)'
+    lore:
+    - ''
+    - '&c[&6万圣节 限定版&c]'
+  sf.rainbow_glass_pane_halloween:
+    name: '&5彩虹玻璃板 &7(万圣节)'
+    lore:
+    - ''
+    - '&c[&6万圣节 限定版&c]'
+  sf.rainbow_concrete_halloween:
+    name: '&5彩虹混凝土 &7(万圣节)'
+    lore:
+    - ''
+    - '&c[&6万圣节 限定版&c]'
+  sf.rainbow_glazed_terracotta_halloween:
+    name: '&5彩虹带釉陶瓦 &7(万圣节)'
+    lore:
+    - ''
+    - '&c[&6万圣节 限定版&c]'
+  sf.copper_ingot:
+    name: '&b铜锭'
+  sf.tin_ingot:
+    name: '&b锡锭'
+  sf.silver_ingot:
+    name: '&b银锭'
+  sf.aluminum_ingot:
+    name: '&b铝锭'
+  sf.lead_ingot:
+    name: '&b铅锭'
+  sf.zinc_ingot:
+    name: '&b锌锭'
+  sf.magnesium_ingot:
+    name: '&b镁锭'
+  sf.steel_ingot:
+    name: '&b钢锭'
+  sf.bronze_ingot:
+    name: '&b青铜锭'
+  sf.duralumin_ingot:
+    name: '&b硬铝锭'
+  sf.billon_ingot:
+    name: '&b银铜合金锭'
+  sf.brass_ingot:
+    name: '&b黄铜锭'
+  sf.aluminum_brass_ingot:
+    name: '&b铝黄铜锭'
+  sf.aluminum_bronze_ingot:
+    name: '&b铝青铜锭'
+  sf.corinthian_bronze_ingot:
+    name: '&b科林斯青铜锭'
+  sf.solder_ingot:
+    name: '&b焊料锭'
+  sf.damascus_steel_ingot:
+    name: '&b水纹钢锭'
+  sf.hardened_metal_ingot:
+    name: '&b&l硬化金属'
+  sf.reinforced_alloy_ingot:
+    name: '&b&l强化合金锭'
+  sf.ferrosilicon:
+    name: '&b硅铁'
+  sf.gilded_iron:
+    name: '&6&l镀金铁'
+  sf.redstone_alloy:
+    name: '&c红石合金锭'
+  sf.nickel_ingot:
+    name: '&b镍锭'
+  sf.cobalt_ingot:
+    name: '&9钴锭'
+  sf.gold_4k:
+    name: '&f金锭 &7(4克拉)'
+  sf.gold_6k:
+    name: '&f金锭 &7(6克拉)'
+  sf.gold_8k:
+    name: '&f金锭 &7(8克拉)'
+  sf.gold_10k:
+    name: '&f金锭 &7(10克拉)'
+  sf.gold_12k:
+    name: '&f金锭 &7(12克拉)'
+  sf.gold_14k:
+    name: '&f金锭 &7(14克拉)'
+  sf.gold_16k:
+    name: '&f金锭 &7(16克拉)'
+  sf.gold_18k:
+    name: '&f金锭 &7(18克拉)'
+  sf.gold_20k:
+    name: '&f金锭 &7(20克拉)'
+  sf.gold_22k:
+    name: '&f金锭 &7(22克拉)'
+  sf.gold_24k:
+    name: '&f金锭 &7(24克拉)'
+  sf.iron_dust:
+    name: '&6铁粉'
+  sf.gold_dust:
+    name: '&6金粉'
+  sf.tin_dust:
+    name: '&6锡粉'
+  sf.copper_dust:
+    name: '&6铜粉'
+  sf.silver_dust:
+    name: '&6银粉'
+  sf.aluminum_dust:
+    name: '&6铝粉'
+  sf.lead_dust:
+    name: '&6铅粉'
+  sf.zinc_dust:
+    name: '&6锌粉'
+  sf.magnesium_dust:
+    name: '&6镁粉'
+  sf.sulfate:
+    name: '&6硫酸盐'
+  sf.silicon:
+    name: '&6硅'
+  sf.gold_24k_block:
+    name: '&f金块 &7(24克拉)'
+  sf.synthetic_diamond:
+    name: '&b人造钻石'
+    lore:
+    - ''
+    - '&f该物品可在'
+    - '&f工作台中像普通钻石一样使用'
+  sf.synthetic_emerald:
+    name: '&b人造绿宝石'
+    lore:
+    - ''
+    - '&f该物品可用于'
+    - '&f与村民交易'
+  sf.synthetic_sapphire:
+    name: '&b人造蓝宝石'
+    lore:
+    - ''
+    - '&f该物品可在'
+    - '&f工作台中像青金石一样使用'
+  sf.carbonado:
+    name: '&b&l黑钻'
+    lore:
+    - ''
+    - '&7&o"黑钻"'
+  sf.raw_carbonado:
+    name: '&b生黑钻'
+  sf.uranium:
+    name: '&4铀'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&e高'
+    - '&8⇨ &4需要防化服！'
+  sf.neptunium:
+    name: '&a镎'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&e高'
+    - '&8⇨ &4需要防化服！'
+  sf.plutonium:
+    name: '&4钚'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&4极高'
+    - '&8⇨ &4需要防化服！'
+  sf.boosted_uranium:
+    name: '&4浓缩铀'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&4极高'
+    - '&8⇨ &4需要防化服！'
+  sf.common_talisman:
+    name: '&6普通护符'
+  sf.ender_talisman:
+    name: '&5末影护符'
+  sf.anvil_talisman:
+    name: '&a铁砧护符'
+    lore:
+    - ''
+    - '&f每个护符可以阻止'
+    - '&f1 件工具损坏，但随后会'
+    - '&f被消耗'
+    - ''
+    - '&4&l警告：'
+    - '&4该护符对以下物品无效：'
+    - '&4过于强大的工具'
+    - '&4因为它们过于复杂'
+  sf.miner_talisman:
+    name: '&a矿工护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它有'
+    - '&f有 20% 几率使以下收益翻倍：'
+    - '&f你挖掘的所有矿石'
+  sf.farmer_talisman:
+    name: '&a农夫护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它有'
+    - '&f有 20% 几率使以下收益翻倍：'
+    - '&f你收获的所有作物'
+  sf.hunter_talisman:
+    name: '&a猎人护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它有'
+    - '&f有 20% 几率使以下收益翻倍：'
+    - '&f你击杀生物获得的所有掉落物'
+  sf.lava_talisman:
+    name: '&a岩浆行者护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它会'
+    - '&f给予你抗火效果'
+    - '&f当你接触岩浆时立即生效'
+    - '&f随后该护符会被消耗'
+  sf.water_talisman:
+    name: '&a潜水者护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它会'
+    - '&f赋予你能力'
+    - '&f让你能够在水下呼吸，'
+    - '&f在你开始溺水时立刻生效'
+    - '&f随后该护符会被消耗'
+  sf.angel_talisman:
+    name: '&a天使护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它有'
+    - '&f有 75% 几率阻止你'
+    - '&f受到摔落伤害'
+  sf.fire_talisman:
+    name: '&a消防员护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它会'
+    - '&f给予你抗火效果'
+    - '&f当你开始燃烧时立即生效'
+    - '&f随后该护符会被消耗'
+  sf.magician_talisman:
+    name: '&a法师护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它会给予你'
+    - '&f附魔时获得 80% 幸运加成'
+    - '&f你有时会额外获得一个附魔'
+  sf.traveller_talisman:
+    name: '&a旅行者护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它会给予你'
+    - '&f有 60% 几率获得不错的'
+    - '&f在开始疾跑时获得速度增益'
+  sf.warrior_talisman:
+    name: '&a战士护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它会给予你'
+    - '&f在被击中时获得力量 III'
+    - '&f随后该护符会被消耗'
+  sf.knight_talisman:
+    name: '&a骑士护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它会给予你'
+    - '&f有 30% 几率获得 5 秒再生'
+    - '&f在你被击中时'
+    - '&f随后该护符会被消耗'
+  sf.whirlwind_talisman:
+    name: '&a旋风护符'
+    lore:
+    - ''
+    - '&f携带此护符时'
+    - '&f在你的背包中时，会反弹'
+    - '&f将 60% 射向你的抛射物反弹回去。'
+    - '&e&o只有投出的三叉戟可以穿透'
+    - '&e&o这层防护'
+  sf.wizard_talisman:
+    name: '&a巫师护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它允许你'
+    - '&f获得时运 IV/V，但'
+    - '&f它也有几率降低'
+    - '&f你物品上部分附魔的等级'
+  sf.caveman_talisman:
+    name: '&a穴居人护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它会给予你'
+    - '&f有 50% 几率获得不错的'
+    - '&f挖掘任意矿石时获得急迫增益'
+  sf.wise_talisman:
+    name: '&a智者护符'
+    lore:
+    - ''
+    - '&f当你携带此护符时'
+    - '&f在你的背包中时，它会给予你'
+    - '&f有 20% 几率使以下经验翻倍：'
+    - '&f你获得的任意经验'
+  sf.ender_anvil_talisman:
+    name: '&5末影铁砧护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_miner_talisman:
+    name: '&5末影矿工护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_farmer_talisman:
+    name: '&5末影农夫护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_hunter_talisman:
+    name: '&5末影猎人护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_lava_talisman:
+    name: '&5末影岩浆行者护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_water_talisman:
+    name: '&5末影潜水者护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_angel_talisman:
+    name: '&5末影天使护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_fire_talisman:
+    name: '&5末影消防员护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_magician_talisman:
+    name: '&5末影法师护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_traveller_talisman:
+    name: '&5末影旅行者护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_warrior_talisman:
+    name: '&5末影战士护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_knight_talisman:
+    name: '&5末影骑士护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_whirlwind_talisman:
+    name: '&5末影旋风护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_wizard_talisman:
+    name: '&5末影巫师护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_caveman_talisman:
+    name: '&5末影穴居人护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.ender_wise_talisman:
+    name: '&5末影智者护符'
+    lore:
+    - '&7&o末影注能'
+    - ''
+    - '&7可从末影箱触发。'
+  sf.staff_elemental:
+    name: '&5元素法杖'
+  sf.staff_elemental_wind:
+    name: '&5元素法杖 &7- &b风'
+    lore:
+    - ''
+    - '&7元素：&b风'
+    - ''
+    - '&e右键&7将自己向前发射'
+  sf.staff_elemental_fire:
+    name: '&5元素法杖 &7- &c火'
+    lore:
+    - ''
+    - '&7元素：&c火'
+  sf.staff_elemental_water:
+    name: '&5元素法杖 &7- &9水'
+    lore:
+    - ''
+    - '&7元素：&9水'
+    - ''
+    - '&e右键&7熄灭自身火焰'
+  sf.staff_elemental_storm:
+    name: '&5元素法杖 &7- &e雷暴'
+    lore:
+    - ''
+    - '&7元素：&e雷暴'
+    - ''
+    - '&e右键&7召唤一道闪电'
+    - '&78 次剩余使用次数'
+  sf.enhanced_crafting_table:
+    name: '&e增强型工作台'
+    lore:
+    - ''
+    - '&7普通工作台无法'
+    - '&7承受如此强大的力量……'
+  sf.grind_stone:
+    name: '&b磨石'
+    lore:
+    - ''
+    - '&7将物品研磨成其他物品'
+  sf.armor_forge:
+    name: '&6护甲锻造台'
+    lore:
+    - ''
+    - '&7让你能够制作强力护甲'
+  sf.makeshift_smeltery:
+    name: '&c简易冶炼炉'
+    lore:
+    - ''
+    - '&7冶炼炉的简易版本'
+    - '&7它只允许你'
+    - '&7把粉末熔炼成锭'
+  sf.smeltery:
+    name: '&6冶炼炉'
+    lore:
+    - ''
+    - '&7高温熔炉'
+    - '&7可让你将粉末熔炼'
+    - '&7成锭，并制作合金。'
+  sf.ore_crusher:
+    name: '&6矿石粉碎机'
+    lore:
+    - ''
+    - '&7粉碎矿石以实现双倍产出'
+  sf.compressor:
+    name: '&6压缩机'
+    lore:
+    - ''
+    - '&7压缩物品'
+  sf.pressure_chamber:
+    name: '&6压力室'
+    lore:
+    - ''
+    - '&7进一步压缩物品'
+  sf.magic_workbench:
+    name: '&5魔法工作台'
+    lore:
+    - ''
+    - '&7为物品注入魔法能量'
+  sf.ore_washer:
+    name: '&6洗矿机'
+    lore:
+    - ''
+    - '&7清洗筛矿物并过滤出矿粉'
+    - '&7并给你少量石块碎片'
+  sf.table_saw:
+    name: '&6桌锯'
+    lore:
+    - ''
+    - '&7让你用 1 根原木获得 8 块木板'
+  sf.juicer:
+    name: '&6榨汁机'
+    lore:
+    - ''
+    - '&7用于制作美味果汁'
+  sf.automated_panning_machine:
+    name: '&6自动淘金机'
+    lore:
+    - ''
+    - '&7淘金盘的多方块版本'
+    - '&7并与下界淘金盘整合为一台机器。'
+  sf.industrial_miner:
+    name: '&b工业采矿机'
+    lore:
+    - ''
+    - '&7这个多方块机器会开采任何矿石'
+    - '&7范围为其下方 7x7 区域。'
+    - '&7将煤炭或类似燃料放入其箱子中'
+    - '&7为这台机器提供燃料。'
+  sf.advanced_industrial_miner:
+    name: '&c高级工业采矿机'
+    lore:
+    - ''
+    - '&7这个多方块机器会开采任何矿石'
+    - '&7范围为其下方 11x11 区域。'
+    - '&7将燃料桶或岩浆桶放入'
+    - '&7其箱子中，为这台机器提供燃料。'
+    - ''
+    - '&9+ 精准采集'
+  sf.composter:
+    name: '&6堆肥机'
+    lore:
+    - ''
+    - '&7能够随着时间将多种材料转化……'
+  sf.crucible:
+    name: '&6坩埚'
+    lore:
+    - ''
+    - '&7用于将物品熔炼成液体'
+  sf.output_chest:
+    name: '&6输出箱'
+    lore:
+    - ''
+    - '&7基础机器会尝试把'
+    - '&7物品放入这个箱子，如果它被放在'
+    - '&7发射器相邻的位置。'
+  sf.ignition_chamber:
+    name: '&6自动点火室'
+    lore:
+    - ''
+    - '&7防止冶炼炉持续消耗火种。'
+    - '&7只需放入“打火石”'
+    - '&7并将其放在冶炼炉发射器的相邻位置'
+  sf.hologram_projector:
+    name: '&b全息投影仪'
+    lore:
+    - ''
+    - '&7投射一个可编辑的全息投影'
+  sf.block_placer:
+    name: '&6方块放置器'
+    lore:
+    - ''
+    - '&7这个发射器中的所有方块'
+    - '&7都会被自动放置'
+  sf.enhanced_furnace:
+    name: '&7强化熔炉 &7- &eI'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f1x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f1x'
+  sf.enhanced_furnace_2:
+    name: '&7强化熔炉 &7- &eII'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f2x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f1x'
+  sf.enhanced_furnace_3:
+    name: '&7强化熔炉 &7- &eIII'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f2x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f1x'
+  sf.enhanced_furnace_4:
+    name: '&7强化熔炉 &7- &eIV'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f3x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f1x'
+  sf.enhanced_furnace_5:
+    name: '&7强化熔炉 &7- &eV'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f3x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f2x'
+  sf.enhanced_furnace_6:
+    name: '&7强化熔炉 &7- &eVI'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f3x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f2x'
+  sf.enhanced_furnace_7:
+    name: '&7强化熔炉 &7- &eVII'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f4x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f2x'
+  sf.enhanced_furnace_8:
+    name: '&7强化熔炉 &7- &eVIII'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f4x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f2x'
+  sf.enhanced_furnace_9:
+    name: '&7强化熔炉 &7- &eIX'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f5x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f2x'
+  sf.enhanced_furnace_10:
+    name: '&7强化熔炉 &7- &eX'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f5x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f2x'
+  sf.enhanced_furnace_11:
+    name: '&7强化熔炉 &7- &eXI'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f5x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f3x'
+  sf.reinforced_furnace:
+    name: '&b强化熔炉'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f10x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f3x'
+  sf.carbonado_edged_furnace:
+    name: '&b黑钻熔炉'
+    lore:
+    - ''
+    - '&8⇨ &b处理速度：&f20x'
+    - ''
+    - '&8⇨ &d幸运倍率：&f3x'
+  sf.soulbound_sword:
+    name: '&c灵魂绑定剑'
+  sf.soulbound_bow:
+    name: '&c灵魂绑定弓'
+  sf.soulbound_pickaxe:
+    name: '&c灵魂绑定镐'
+  sf.soulbound_axe:
+    name: '&c灵魂绑定斧'
+  sf.soulbound_shovel:
+    name: '&c灵魂绑定铲'
+  sf.soulbound_hoe:
+    name: '&c灵魂绑定锄'
+  sf.soulbound_trident:
+    name: '&c灵魂绑定三叉戟'
+  sf.soulbound_helmet:
+    name: '&c灵魂绑定头盔'
+  sf.soulbound_chestplate:
+    name: '&c灵魂绑定胸甲'
+  sf.soulbound_leggings:
+    name: '&c灵魂绑定护腿'
+  sf.soulbound_boots:
+    name: '&c灵魂绑定靴子'
+  sf.blank_rune:
+    name: '&f空白符文'
+  sf.ancient_rune_air:
+    name: '&f远古符文：空气'
+  sf.ancient_rune_water:
+    name: '&f远古符文：水'
+  sf.ancient_rune_fire:
+    name: '&f远古符文：火'
+  sf.ancient_rune_earth:
+    name: '&f远古符文：地'
+  sf.ancient_rune_ender:
+    name: '&f远古符文：末影'
+  sf.ancient_rune_rainbow:
+    name: '&f远古符文：彩虹'
+  sf.ancient_rune_lightning:
+    name: '&f远古符文：雷电'
+  sf.ancient_rune_soulbound:
+    name: '&f远古符文：灵魂绑定'
+  sf.ancient_rune_enchantment:
+    name: '&f远古符文：附魔'
+  sf.ancient_rune_villagers:
+    name: '&f远古符文：村民'
+  sf.solar_generator:
+    name: '&b太阳能发电机'
+    lore:
+    - ''
+    - '&e基础发电机'
+    - '&8⇨ &e⚡ &70 J 储能'
+    - '&8⇨ &e⚡ &74 J/s'
+  sf.solar_generator_2:
+    name: '&c高级太阳能发电机'
+    lore:
+    - ''
+    - '&a中型发电机'
+    - '&8⇨ &e⚡ &70 J 储能'
+    - '&8⇨ &e⚡ &716 J/s'
+  sf.solar_generator_3:
+    name: '&4黑钻太阳能发电机'
+    lore:
+    - ''
+    - '&4终极发电机'
+    - '&8⇨ &e⚡ &70 J 储能'
+    - '&8⇨ &e⚡ &764 J/s'
+  sf.solar_generator_4:
+    name: '&e充能太阳能发电机'
+    lore:
+    - ''
+    - '&9可在夜间工作'
+    - ''
+    - '&4终极发电机'
+    - '&8⇨ &e⚡ &70 J 储能'
+    - '&8⇨ &e⚡ &7256 J/s（白天）'
+    - '&8⇨ &e⚡ &7128 J/s（夜晚）'
+  sf.coal_generator:
+    name: '&c煤炭发电机'
+    lore:
+    - ''
+    - '&6普通发电机'
+    - '&8⇨ &e⚡ &764 J 储能'
+    - '&8⇨ &e⚡ &716 J/s'
+  sf.coal_generator_2:
+    name: '&c煤炭发电机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&6高级发电机'
+    - '&8⇨ &e⚡ &7256 J 储能'
+    - '&8⇨ &e⚡ &730 J/s'
+  sf.lava_generator:
+    name: '&4熔岩发电机'
+    lore:
+    - ''
+    - '&6普通发电机'
+    - '&8⇨ &e⚡ &7512 J 储能'
+    - '&8⇨ &e⚡ &720 J/s'
+  sf.lava_generator_2:
+    name: '&4熔岩发电机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&6高级发电机'
+    - '&8⇨ &e⚡ &71024 J 储能'
+    - '&8⇨ &e⚡ &740 J/s'
+  sf.electric_furnace:
+    name: '&c电力熔炉'
+    lore:
+    - ''
+    - '&e基础机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &74 J/s'
+  sf.electric_furnace_2:
+    name: '&c电力熔炉 &7- &eII'
+    lore:
+    - ''
+    - '&a中型机器'
+    - '&8⇨ &b⚡ &7速度：&b2x'
+    - '&8⇨ &e⚡ &76 J/s'
+  sf.electric_furnace_3:
+    name: '&c电力熔炉 &7- &eIII'
+    lore:
+    - ''
+    - '&a中型机器'
+    - '&8⇨ &b⚡ &7速度：&b4x'
+    - '&8⇨ &e⚡ &710 J/s'
+  sf.electric_ore_grinder:
+    name: '&c电力碎矿机'
+    lore:
+    - ''
+    - '&f兼具碎矿机与磨石的功能'
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &712 J/s'
+  sf.electric_ore_grinder_2:
+    name: '&c电力碎矿机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&f兼具碎矿机与磨石的功能'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b4x'
+    - '&8⇨ &e⚡ &730 J/s'
+  sf.electric_ore_grinder_3:
+    name: '&c电力碎矿机 &7(&eIII&7)'
+    lore:
+    - ''
+    - '&f兼具碎矿机与磨石的功能'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b10x'
+    - '&8⇨ &e⚡ &790 J/s'
+  sf.electric_ingot_pulverizer:
+    name: '&c电力锭粉碎机'
+    lore:
+    - ''
+    - '&f可将金属锭粉碎为粉末'
+    - ''
+    - '&a中型机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &714 J/s'
+  sf.auto_drier:
+    name: '&6自动烘干机'
+    lore:
+    - ''
+    - '&a中型机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &710 J/s'
+  sf.auto_enchanter:
+    name: '&5自动附魔机'
+    lore:
+    - ''
+    - '&a中型机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &718 J/s'
+  sf.auto_enchanter_2:
+    name: '&5自动附魔机 &7- &eII'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b3x'
+    - '&8⇨ &e⚡ &748 J/s'
+  sf.auto_disenchanter:
+    name: '&5自动祛魔机'
+    lore:
+    - ''
+    - '&a中型机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &718 J/s'
+  sf.auto_disenchanter_2:
+    name: '&5自动祛魔机 &7- &eII'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b3x'
+    - '&8⇨ &e⚡ &748 J/s'
+  sf.auto_anvil:
+    name: '&7自动铁砧'
+    lore:
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &7修复系数：10%'
+    - '&8⇨ &e⚡ &724 J/s'
+  sf.auto_anvil_2:
+    name: '&7自动铁砧 Mk.II'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &7修复系数：25%'
+    - '&8⇨ &e⚡ &732 J/s'
+  sf.auto_brewer:
+    name: '&6自动酿造机'
+    lore:
+    - ''
+    - '&a中型机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &712 J/s'
+  sf.book_binder:
+    name: '&6附魔书装订机'
+    lore:
+    - ''
+    - '&f可将多本附魔书合并为一本。'
+    - ''
+    - '&a中型机器'
+    - '&8⇨ &e⚡ &716 J/s'
+  sf.bio_reactor:
+    name: '&2生物反应器'
+    lore:
+    - ''
+    - '&6普通发电机'
+    - '&8⇨ &e⚡ &7128 J 储能'
+    - '&8⇨ &e⚡ &78 J/s'
+  sf.multimeter:
+    name: '&e万用表'
+    lore:
+    - ''
+    - '&f用于测量方块内存储的'
+    - '&f能量数值'
+  sf.small_capacitor:
+    name: '&a小型能源电容'
+    lore:
+    - '&7范围：&c6 格'
+    - ''
+    - '&e基础电容'
+    - '&8⇨ &e⚡ &7128 J 容量'
+  sf.medium_capacitor:
+    name: '&a中型能源电容'
+    lore:
+    - '&7范围：&c6 格'
+    - ''
+    - '&6普通电容'
+    - '&8⇨ &e⚡ &7512 J 容量'
+  sf.big_capacitor:
+    name: '&a大号能源电容'
+    lore:
+    - '&7范围：&c6 格'
+    - ''
+    - '&a中型电容'
+    - '&8⇨ &e⚡ &71024 J 容量'
+  sf.large_capacitor:
+    name: '&a巨型能源电容'
+    lore:
+    - '&7范围：&c6 格'
+    - ''
+    - '&2大型电容'
+    - '&8⇨ &e⚡ &78192 J 容量'
+  sf.carbonado_edged_capacitor:
+    name: '&a黑钻镶边能源电容'
+    lore:
+    - '&7范围：&c6 格'
+    - ''
+    - '&4终极电容'
+    - '&8⇨ &e⚡ &765536 J 容量'
+  sf.energized_capacitor:
+    name: '&a充能能源电容'
+    lore:
+    - '&7范围：&c6 格'
+    - ''
+    - '&4终极电容'
+    - '&8⇨ &e⚡ &7524288 J 容量'
+  sf.programmable_android:
+    name: '&c可编程机器人 &7(普通型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：无'
+    - '&8⇨ &7燃料效率：1.0x'
+  sf.programmable_android_farmer:
+    name: '&c可编程机器人 &7(农夫型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：耕作'
+    - '&8⇨ &7燃料效率：1.0x'
+  sf.programmable_android_miner:
+    name: '&c可编程机器人 &7(矿工型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：采矿'
+    - '&8⇨ &7燃料效率：1.0x'
+  sf.programmable_android_woodcutter:
+    name: '&c可编程机器人 &7(伐木工型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：伐木'
+    - '&8⇨ &7燃料效率：1.0x'
+  sf.programmable_android_butcher:
+    name: '&c可编程机器人 &7(屠夫型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：屠宰'
+    - '&8⇨ &7伤害：4'
+    - '&8⇨ &7燃料效率：1.0x'
+  sf.programmable_android_fisherman:
+    name: '&c可编程机器人 &7(渔夫型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：钓鱼'
+    - '&8⇨ &7成功率：10%'
+    - '&8⇨ &7燃料效率：1.0x'
+  sf.programmable_android_2:
+    name: '&c高级可编程机器人 &7(普通型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：无'
+    - '&8⇨ &7燃料效率：1.5x'
+  sf.programmable_android_2_fisherman:
+    name: '&c高级可编程机器人 &7(渔夫型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：钓鱼'
+    - '&8⇨ &7成功率：20%'
+    - '&8⇨ &7燃料效率：1.5x'
+  sf.programmable_android_2_farmer:
+    name: '&c高级可编程机器人 &7(农夫型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：耕作'
+    - '&8⇨ &7燃料效率：1.5x'
+    - '&8⇨ &7也可收获 ExoticGarden 的植物'
+  sf.programmable_android_2_butcher:
+    name: '&c高级可编程机器人 &7(屠夫型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：屠宰'
+    - '&8⇨ &7伤害：8'
+    - '&8⇨ &7燃料效率：1.5x'
+  sf.programmable_android_3:
+    name: '&e可授权式编程机器人 &7(普通型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：无'
+    - '&8⇨ &7燃料效率：3.0x'
+  sf.programmable_android_3_fisherman:
+    name: '&e可授权式编程机器人 &7(渔夫型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：钓鱼'
+    - '&8⇨ &7成功率：30%'
+    - '&8⇨ &7燃料效率：8.0x'
+  sf.programmable_android_3_butcher:
+    name: '&e可授权式编程机器人 &7(屠夫型)'
+    lore:
+    - ''
+    - '&8⇨ &7功能：屠宰'
+    - '&8⇨ &7伤害：20'
+    - '&8⇨ &7燃料效率：8.0x'
+  sf.gps_transmitter:
+    name: '&bGPS 发射器'
+    lore:
+    - ''
+    - '&8⇨ &e⚡ &716 J 储能'
+    - '&8⇨ &e⚡ &72 J/s'
+  sf.gps_transmitter_2:
+    name: '&c高级 GPS 发射器'
+    lore:
+    - ''
+    - '&8⇨ &e⚡ &764 J 储能'
+    - '&8⇨ &e⚡ &76 J/s'
+  sf.gps_transmitter_3:
+    name: '&4黑钻 GPS 发射器'
+    lore:
+    - ''
+    - '&8⇨ &e⚡ &7256 J 储能'
+    - '&8⇨ &e⚡ &722 J/s'
+  sf.gps_transmitter_4:
+    name: '&e充能 GPS 发射器'
+    lore:
+    - ''
+    - '&8⇨ &e⚡ &71024 J 储能'
+    - '&8⇨ &e⚡ &792 J/s'
+  sf.gps_marker_tool:
+    name: '&bGPS 标记工具'
+    lore:
+    - ''
+    - '&f允许你在'
+    - '&f放置的位置设置一个坐标点'
+  sf.gps_control_panel:
+    name: '&bGPS 控制面板'
+    lore:
+    - ''
+    - '&f允许你追踪自己的卫星'
+    - '&f并管理你的坐标点'
+  sf.gps_emergency_transmitter:
+    name: '&cGPS 应急发射器'
+    lore:
+    - ''
+    - '&f将其放在物品栏中时'
+    - '&f会在你死亡时自动设置一个坐标点'
+    - '&f记录你死亡的位置。'
+  sf.android_interface_fuel:
+    name: '&7机器人接口 &c(燃料)'
+    lore:
+    - ''
+    - '&f存放在此接口中的物品'
+    - '&f会在脚本指示时被放入机器人的燃料槽'
+    - '&f以供机器人使用'
+  sf.android_interface_items:
+    name: '&7机器人接口 &9(物品)'
+    lore:
+    - ''
+    - '&f机器人背包中的物品'
+    - '&f会在脚本指示时被转移到该接口中'
+    - '&f以供机器人使用'
+  sf.gps_geo_scanner:
+    name: '&bGPS 地质扫描仪'
+    lore:
+    - ''
+    - '&f扫描区块中的自然资源'
+    - '&f例如 &8石油'
+  sf.portable_geo_scanner:
+    name: '&b便携地质扫描仪'
+    lore:
+    - ''
+    - '&f扫描区块中的自然资源'
+    - ''
+    - '&e右键&7进行扫描'
+  sf.geo_miner:
+    name: '&6GEO 采矿机'
+    lore:
+    - ''
+    - '&e从当前区块开采资源'
+    - '&e这些资源无法用镐子直接挖掘'
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &748 J/s'
+    - ''
+    - '&c&l! &c请先对该区块进行地质扫描'
+  sf.oil_pump:
+    name: '&4石油泵'
+    lore:
+    - ''
+    - '&7抽取石油并装入桶中'
+    - ''
+    - '&c&l! &c请先对该区块进行地质扫描'
+  sf.bucket_of_oil:
+    name: '&f石油桶'
+  sf.bucket_of_fuel:
+    name: '&f燃料桶'
+  sf.refinery:
+    name: '&c精炼厂'
+    lore:
+    - ''
+    - '&f将石油精炼为燃料'
+  sf.combustion_reactor:
+    name: '&c燃烧反应堆'
+    lore:
+    - ''
+    - '&6高级发电机'
+    - '&8⇨ &e⚡ &7256 J 储能'
+    - '&8⇨ &e⚡ &724 J/s'
+  sf.android_memory_core:
+    name: '&b机器人记忆核心'
+  sf.gps_teleporter_pylon:
+    name: '&5GPS 传送基柱'
+    lore:
+    - ''
+    - '&7传送器组件'
+  sf.gps_teleportation_matrix:
+    name: '&bGPS 传送矩阵'
+    lore:
+    - ''
+    - '&f这是传送器的主组件'
+    - '&f该矩阵允许玩家从所有'
+    - '&f由放置者创建的坐标点中进行选择'
+    - '&f来进行传送。'
+  sf.gps_activation_device_shared:
+    name: '&fGPS 激活装置 &3(共享)'
+    lore:
+    - ''
+    - '&f将其放置在传送矩阵上'
+    - '&f然后站上该压力板以启动'
+    - '&f传送流程'
+  sf.gps_activation_device_personal:
+    name: '&fGPS 激活装置 &a(个人)'
+    lore:
+    - ''
+    - '&f将其放置在传送矩阵上'
+    - '&f然后站上该压力板以启动'
+    - '&f传送流程'
+    - ''
+    - '&f此版本仅允许放置者'
+    - '&f放置该装置的人使用'
+  sf.portable_teleporter:
+    name: '&b便携传送器'
+    lore:
+    - ''
+    - '&f该装置允许你从任意位置传送'
+    - '&f到已记录的坐标点'
+    - ''
+    - '&8⇨ &e⚡ &70 / 50 J'
+    - ''
+    - '&e右键&7使用'
+  sf.elevator_plate:
+    name: '&b电梯板'
+    lore:
+    - ''
+    - '&f在每一层放置一块电梯板'
+    - '&f你就可以在它们之间传送。'
+    - ''
+    - '&e右键此方块 &7为其命名'
+  sf.infused_hopper:
+    name: '&5注魔漏斗'
+    lore:
+    - ''
+    - '&f放置后会自动拾取周围 7x7x7 范围内的物品'
+    - '&f范围内的掉落物。'
+  sf.heated_pressure_chamber:
+    name: '&c热压力室'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &710 J/s'
+  sf.heated_pressure_chamber_2:
+    name: '&c热压力室 &7- &eII'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b5x'
+    - '&8⇨ &e⚡ &744 J/s'
+  sf.electric_smeltery:
+    name: '&c电力冶炼炉'
+    lore:
+    - ''
+    - '&4仅用于合金，不会将粉末熔炼成锭'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &720 J/s'
+  sf.electric_smeltery_2:
+    name: '&c电力冶炼炉 &7- &eII'
+    lore:
+    - ''
+    - '&4仅用于合金，不会将粉末熔炼成锭'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b3x'
+    - '&8⇨ &e⚡ &740 J/s'
+  sf.electric_press:
+    name: '&e电力压缩机'
+    lore:
+    - ''
+    - '&a中型机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &716 J/s'
+  sf.electric_press_2:
+    name: '&e电力压缩机 &7- &eII'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b3x'
+    - '&8⇨ &e⚡ &740 J/s'
+  sf.electrified_crucible:
+    name: '&c电力坩埚'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &748 J/s'
+  sf.electrified_crucible_2:
+    name: '&c电力坩埚 &7- &eII'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b2x'
+    - '&8⇨ &e⚡ &780 J/s'
+  sf.electrified_crucible_3:
+    name: '&c电力坩埚 &7- &eIII'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b4x'
+    - '&8⇨ &e⚡ &7120 J/s'
+  sf.carbon_press:
+    name: '&c碳压缩机'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &720 J/s'
+  sf.carbon_press_2:
+    name: '&c碳压缩机 &7- &eII'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b3x'
+    - '&8⇨ &e⚡ &750 J/s'
+  sf.carbon_press_3:
+    name: '&c碳压缩机 &7- &eIII'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b15x'
+    - '&8⇨ &e⚡ &7180 J/s'
+  sf.blistering_ingot:
+    name: '&6发泡锭 &7(33%)'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&6高'
+    - '&8⇨ &4防化服 必需！'
+  sf.blistering_ingot_2:
+    name: '&6发泡锭 &7(66%)'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&c极高'
+    - '&8⇨ &4防化服 必需！'
+  sf.blistering_ingot_3:
+    name: '&6发泡锭'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&c极高'
+    - '&8⇨ &4防化服 必需！'
+  sf.energy_regulator:
+    name: '&6能量调度器'
+    lore:
+    - ''
+    - '&f能源网络的核心组件'
+  sf.energy_connector:
+    name: '&e能源连接器'
+    lore:
+    - '&7范围：&c6 格'
+    - ''
+    - '&f将其放置在机器与发电机之间'
+    - '&f以将它们连接起来'
+    - '&f并接入你的调节器。'
+  sf.debug_fish:
+    name: '&3鱼值多少钱？'
+    lore:
+    - ''
+    - '&e右键 &f任意方块以查看其 方块数据'
+    - '&e左键 &f破坏方块'
+    - '&eShift + 左键 &f任意方块以清除其 方块数据'
+    - '&e按住 Shift + 右键 &f放置一个占位方块'
+  sf.nether_ice:
+    name: '&e下界玄冰'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&e中等'
+    - '&8⇨ &4防化服 必需！'
+  sf.enriched_nether_ice:
+    name: '&e浓缩下界玄冰'
+    lore:
+    - ''
+    - '&a☢&7 辐射等级：&c极高'
+    - '&8⇨ &4防化服 必需！'
+  sf.nether_ice_coolant_cell:
+    name: '&6下界冰冷却单元'
+  sf.cargo_manager:
+    name: '&6运输调度器'
+    lore:
+    - ''
+    - '&f物品运输网络的核心组件'
+  sf.cargo_node:
+    name: '&7运输节点 &c(连接器)'
+    lore:
+    - ''
+    - '&f运输连接管道'
+  sf.cargo_node_input:
+    name: '&7运输节点 &c(输入)'
+    lore:
+    - ''
+    - '&f运输输入管道'
+  sf.cargo_node_output:
+    name: '&7运输节点 &c(输出)'
+    lore:
+    - ''
+    - '&f运输输出管道'
+  sf.cargo_node_output_advanced:
+    name: '&6高级运输节点 &c(输出)'
+    lore:
+    - ''
+    - '&f运输输出管道'
+  sf.auto_breeder:
+    name: '&e自动繁殖机'
+    lore:
+    - ''
+    - '&f使用 &a有机食物 &f运行'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &e⚡ &71024 J 储能'
+    - '&8⇨ &e⚡ &760 J/动物'
+  sf.produce_collector:
+    name: '&b产物收集器'
+    lore:
+    - ''
+    - '&f这台机器可让你'
+    - '&f收集附近动物的产物。'
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &e⚡ &7512 J 储能'
+    - '&8⇨ &e⚡ &732 J/s'
+  sf.organic_food:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9???'
+  sf.organic_food_wheat:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9小麦'
+  sf.organic_food_carrot:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9胡萝卜'
+  sf.organic_food_potato:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9马铃薯'
+  sf.organic_food_seeds:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9种子'
+  sf.organic_food_beetroot:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9甜菜根'
+  sf.organic_food_melon:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9西瓜'
+  sf.organic_food_apple:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9苹果'
+  sf.organic_food_sweet_berries:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9甜浆果'
+  sf.organic_food_kelp:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9干海带'
+  sf.organic_food_cocoa:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9可可豆'
+  sf.organic_food_seagrass:
+    name: '&a有机食物'
+    lore:
+    - '&7内容： &9海草'
+  sf.fertilizer:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9???'
+  sf.fertilizer_wheat:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9小麦'
+  sf.fertilizer_carrot:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9胡萝卜'
+  sf.fertilizer_potato:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9马铃薯'
+  sf.fertilizer_seeds:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9种子'
+  sf.fertilizer_beetroot:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9甜菜根'
+  sf.fertilizer_melon:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9西瓜'
+  sf.fertilizer_apple:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9苹果'
+  sf.fertilizer_sweet_berries:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9甜浆果'
+  sf.fertilizer_kelp:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9干海带'
+  sf.fertilizer_cocoa:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9可可豆'
+  sf.fertilizer_seagrass:
+    name: '&a有机肥料'
+    lore:
+    - '&7内容： &9海草'
+  sf.animal_growth_accelerator:
+    name: '&b动物生长加速器'
+    lore:
+    - ''
+    - '&f使用 &a有机食物 &f运行'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &e⚡ &71024 J 储能'
+    - '&8⇨ &e⚡ &728 J/s'
+  sf.crop_growth_accelerator:
+    name: '&a作物生长加速器'
+    lore:
+    - ''
+    - '&f使用 &a有机肥料 &f运行'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &7范围：7x7'
+    - '&8⇨ &7速度：&a3/次'
+    - '&8⇨ &e⚡ &71024 J 储能'
+    - '&8⇨ &e⚡ &750 J/s'
+  sf.crop_growth_accelerator_2:
+    name: '&a作物生长加速器 &7(&eII&7)'
+    lore:
+    - ''
+    - '&f使用 &a有机肥料 &f运行'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &7范围：9x9'
+    - '&8⇨ &7速度：&a4/次'
+    - '&8⇨ &e⚡ &71024 J 储能'
+    - '&8⇨ &e⚡ &760 J/s'
+  sf.tree_growth_accelerator:
+    name: '&a树木生长加速器'
+    lore:
+    - ''
+    - '&f使用 &a有机肥料 &f运行'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &7范围：9x9'
+    - '&8⇨ &7速度：&a4/次'
+    - '&8⇨ &e⚡ &71024 J 储能'
+    - '&8⇨ &e⚡ &748 J/s'
+  sf.food_fabricator:
+    name: '&c食物合成机'
+    lore:
+    - ''
+    - '&f产出&a有机食物'
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &7256 J 储能'
+    - '&8⇨ &e⚡ &714 J/s'
+  sf.food_fabricator_2:
+    name: '&c食物合成机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&f产出&a有机食物'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b6x'
+    - '&8⇨ &e⚡ &7512 J 储能'
+    - '&8⇨ &e⚡ &748 J/s'
+  sf.food_composter:
+    name: '&c食物堆肥机'
+    lore:
+    - ''
+    - '&f产出&a有机肥料'
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &7256 J 储能'
+    - '&8⇨ &e⚡ &716 J/s'
+  sf.food_composter_2:
+    name: '&c食物堆肥机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&f产出&a有机肥料'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b10x'
+    - '&8⇨ &e⚡ &7512 J 储能'
+    - '&8⇨ &e⚡ &752 J/s'
+  sf.xp_collector:
+    name: '&a经验收集器'
+    lore:
+    - ''
+    - '&f收集附近的经验并将其储存起来'
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &e⚡ &71024 J 储能'
+    - '&8⇨ &e⚡ &720 J/s'
+  sf.reactor_collant_cell:
+    name: '&b反应堆冷却单元'
+  sf.nuclear_reactor:
+    name: '&2核反应堆'
+    lore:
+    - ''
+    - '&f需要冷却！'
+    - '&8⇨ &b必须被水包围'
+    - '&8⇨ &b必须供应反应堆冷却单元'
+    - ''
+    - '&4终极发电机'
+    - '&8⇨ &e⚡ &716384 J 储能'
+    - '&8⇨ &e⚡ &7500 J/s'
+  sf.netherstar_reactor:
+    name: '&f下界之星反应堆'
+    lore:
+    - ''
+    - '&f使用下界之星运行'
+    - '&8⇨ &b必须被水包围'
+    - '&8⇨ &b必须供应下界冰冷却单元'
+    - ''
+    - '&4终极发电机'
+    - '&8⇨ &e⚡ &732768 J 储能'
+    - '&8⇨ &e⚡ &71024 J/s'
+    - '&8⇨ &4使附近实体获得凋零效果'
+  sf.reactor_access_port:
+    name: '&2反应堆访问端口'
+    lore:
+    - ''
+    - '&f允许你与反应堆交互'
+    - '&f可通过运输节点连接，也可用于'
+    - '&f缓存使用端口'
+    - ''
+    - '&8⇨ &e必须放置在反应堆上方 &a3 格 &e处'
+  sf.freezer:
+    name: '&b冷冻机'
+    lore:
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &7256 J 储能'
+    - '&8⇨ &e⚡ &718 J/s'
+  sf.freezer_2:
+    name: '&b冷冻机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b2x'
+    - '&8⇨ &e⚡ &7256 J 储能'
+    - '&8⇨ &e⚡ &730 J/s'
+  sf.freezer_3:
+    name: '&b冷冻机 &7(&eIII&7)'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b3x'
+    - '&8⇨ &e⚡ &7256 J 储能'
+    - '&8⇨ &e⚡ &742 J/s'
+  sf.electric_gold_pan:
+    name: '&6电力洗淘机'
+    lore:
+    - ''
+    - '&e基础机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &72 J/s'
+  sf.electric_gold_pan_2:
+    name: '&6电力洗淘机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&e基础机器'
+    - '&8⇨ &b⚡ &7速度：&b3x'
+    - '&8⇨ &e⚡ &74 J/s'
+  sf.electric_gold_pan_3:
+    name: '&6电力洗淘机 &7(&eIII&7)'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b10x'
+    - '&8⇨ &e⚡ &714 J/s'
+  sf.electric_dust_washer:
+    name: '&3电力洗粉机'
+    lore:
+    - ''
+    - '&e基础机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &76 J/s'
+  sf.electric_dust_washer_2:
+    name: '&3电力洗粉机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&e基础机器'
+    - '&8⇨ &b⚡ &7速度：&b2x'
+    - '&8⇨ &e⚡ &710 J/s'
+  sf.electric_dust_washer_3:
+    name: '&3电力洗粉机 &7(&eIII&7)'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b10x'
+    - '&8⇨ &e⚡ &730 J/s'
+  sf.electric_ingot_factory:
+    name: '&c电力制锭机'
+    lore:
+    - ''
+    - '&e基础机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &78 J/s'
+  sf.electric_ingot_factory_2:
+    name: '&c电力制锭机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&e基础机器'
+    - '&8⇨ &b⚡ &7速度：&b2x'
+    - '&8⇨ &e⚡ &714 J/s'
+  sf.electric_ingot_factory_3:
+    name: '&c电力制锭机 &7(&eIII&7)'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b8x'
+    - '&8⇨ &e⚡ &740 J/s'
+  sf.fluid_pump:
+    name: '&9流体泵'
+    lore:
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &e⚡ &732 J/方块'
+  sf.charging_bench:
+    name: '&6充电台'
+    lore:
+    - ''
+    - '&f为喷气背包等物品充电'
+    - ''
+    - '&e基础机器'
+    - '&8⇨ &e⚡ &7128 J 储能'
+    - '&8⇨ &e⚡ &7能量损耗：&c50%'
+  sf.vanilla_auto_crafter:
+    name: '&2自动合成机 &8(原版)'
+    lore:
+    - ''
+    - '&f将此机器放置在一个'
+    - '&f箱子或类似容器上方，即可自动合成'
+    - '&f任何可通过以下方式合成的物品：'
+    - '&f普通&e工作台'
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &e⚡ &716 J/物品'
+  sf.enhanced_auto_crafter:
+    name: '&2自动合成机 &8(增强型)'
+    lore:
+    - ''
+    - '&f将此机器放置在一个'
+    - '&f箱子或类似容器上方，即可自动合成'
+    - '&f任何可通过以下方式合成的物品：'
+    - '&e增强型工作台'
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &e⚡ &716 J/物品'
+  sf.armor_auto_crafter:
+    name: '&2自动合成机 &8(护甲锻造台)'
+    lore:
+    - ''
+    - '&f将此机器放置在一个'
+    - '&f箱子或类似容器上方，即可自动合成'
+    - '&f任何可通过以下方式合成的物品：'
+    - '&e护甲锻造台'
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &e⚡ &732 J/物品'
+  sf.iron_golem_assembler:
+    name: '&6铁傀儡组装机'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &7冷却： &b30 秒'
+    - '&8⇨ &e⚡ &74096 J 储能'
+    - '&8⇨ &e⚡ &72048 J/铁傀儡'
+  sf.wither_assembler:
+    name: '&5凋零组装机'
+    lore:
+    - ''
+    - '&4终极机器'
+    - '&8⇨ &7冷却： &b30 秒'
+    - '&8⇨ &e⚡ &74096 J 储能'
+    - '&8⇨ &e⚡ &74096 J/凋灵'
+  sf.trash_can_block:
+    name: '&3垃圾桶'
+    lore:
+    - ''
+    - '&f会销毁放入其中的所有物品'
+  sf.elytra_scale:
+    name: '&b鞘翅鳞片'
+  sf.infused_elytra:
+    name: '&5灌注鞘翅'
+  sf.soulbound_elytra:
+    name: '&c灵魂绑定鞘翅'
+  sf.magnesium_salt:
+    name: '&c镁盐'
+    lore:
+    - ''
+    - '&7一种特殊燃料，可用于'
+    - '&7可用于镁盐发电机'
+  sf.magnesium_generator:
+    name: '&c镁盐发电机'
+    lore:
+    - ''
+    - '&a中型发电机'
+    - '&8⇨ &e⚡ &7128 J 储能'
+    - '&8⇨ &e⚡ &736 J/s'
+  sf.birthday_cake:
+    name: '&b生日蛋糕'
+debug:
+  header: <dark_gray>====================</dark_gray> <green>SFX 调试信息</green> <dark_gray>====================</dark_gray>
+  footer: <dark_gray>====================</dark_gray> <green>结束</green> <dark_gray>====================</dark_gray>
+  missing-testing: TESTING.md 未被打包进插件。
+  failed-testing: 读取 TESTING.md 失败：{error}
+command:
+  errors:
+    players-only-guide: 只有玩家可以打开科技书。
+    no-cheat-guide: <red>你没有打开作弊科技书的权限。</red>
+    no-guide: <red>你没有打开科技书的权限。</red>
+    players-only-book: 只有玩家可以领取科技书。
+    no-cheat-book: <red>你没有领取作弊科技书的权限。</red>
+    no-book: <red>你没有领取科技书的权限。</red>
+    players-only-give: 只有玩家可以获取 SFX 物品。
+    no-give: <red>你没有直接获取 SFX 物品的权限。</red>
+    players-only-inspect: 只有玩家可以检查 SFX 物品。
+    no-inspect: <red>你没有检查 SFX PDC 标记的权限。</red>
+    no-list: <red>你没有查看 SFX 物品列表的权限。</red>
+    no-reload: <red>你没有重载 SFX 的权限。</red>
+  book:
+    received: <green>已领取科技书。</green>
+    received-cheat: <green>已领取作弊科技书。</green>
+  give:
+    usage: '<red>用法: /slimefunx give <id> [amount]</red>'
+    unknown: '<red>未知的 SFX 物品：</red><gray>{id}</gray>'
+    not-giveable: <red>这个 SFX 物品不能直接给予。</red>
+    no-space: <red>背包空间不足，未能给予任何物品。</red>
+    partial: <yellow>背包空间不足，仅给予：</yellow><gray>{item} x{amount}</gray>
+    success: <green>已给予：</green><gray>{item} x{amount}</gray>
+  inspect:
+    no-marker: <gray>手中物品没有 SFX PDC 身份标记。</gray>
+    header: <green>SFX 物品标记</green>
+    field:
+      item-id: '<gray>item_id: </gray><white>{value}</white>'
+      item-version: '<gray>item_version: </gray><white>{value}</white>'
+      item-schema: '<gray>item_schema: </gray><white>{value}</white>'
+      item-variant: '<gray>item_variant: </gray><white>{value}</white>'
+      item-kind: '<gray>item_kind: </gray><white>{value}</white>'
+      item-flags: '<gray>item_flags: </gray><white>{value}</white>'
+      guide-mode: '<gray>guide_mode: </gray><white>{value}</white>'
+  list:
+    header: <green>SFX 已注册可见物品：</green><gray>{count} 个，页码 {page} / {pages}</gray>
+    menu-title: <dark_green>SFX 物品列表</dark_green> <gray>{page} / {pages}</gray>
+    registry-name: <green>SFX 已注册物品</green>
+    registry-entry: 注册表展示项
+    registry-lore:
+      0: <gray>当前只展示玩家可见物品。</gray>
+      1: <gray>共 {count} 个。</gray>
+  reload:
+    success: <green>SFX 配置与语言文件已重载。</green>
+  help:
+    header: <green>SFX 命令</green>
+    line:
+      guide: <gray>/{label} guide</gray> <dark_gray>- 打开普通科技书</dark_gray>
+      book: <gray>/{label} book [cheat]</gray> <dark_gray>- 领取科技书</dark_gray>
+      cheatguide: <gray>/{label} cheatguide</gray> <dark_gray>- 打开作弊科技书</dark_gray>
+      give: <gray>/{label} give <id> [amount]</gray> <dark_gray>- 直接获取 SFX 物品</dark_gray>
+      inspect: <gray>/{label} inspect</gray> <dark_gray>- 检查手中物品 PDC 标记</dark_gray>
+      list: <gray>/{label} list [page]</gray> <dark_gray>- 打开已注册物品列表</dark_gray>
+      reload: <gray>/{label} reload</gray> <dark_gray>- 重载配置</dark_gray>
+categories:
+  sf.items:
+    name: '&f物品'
+  sf.gadgets:
+    name: '&f装置'
+  sf.backpacks:
+    name: '&f背包'
+  sf.jetpacks:
+    name: '&f喷气背包'
+  sf.jetboots:
+    name: '&f喷气靴'
+  sf.multi_tools:
+    name: '&f多功能工具'
+  sf.food:
+    name: '&f食物'
+  sf.christmas:
+    name: '&f圣诞节'
+  sf.easter:
+    name: '&f复活节'
+  sf.weapons:
+    name: '&f武器'
+  sf.bows:
+    name: '&f弓箭'
+  sf.tools:
+    name: '&f工具'
+  sf.armor:
+    name: '&f护甲'
+  sf.magical_components:
+    name: '&f魔法组件'
+  sf.technical_components:
+    name: '&f技术组件'
+  sf.rainbow_blocks:
+    name: '&f彩虹方块'
+  sf.seasonal:
+    name: '&f节日物品'
+  sf.ingots:
+    name: '&f锭'
+  sf.alloy_carbon_iron:
+    name: '&f合金（碳 + 铁）'
+  sf.alloy_copper_tin:
+    name: '&f合金（铜 + 锡）'
+  sf.alloy_copper_aluminum:
+    name: '&f合金（铜 + 铝）'
+  sf.alloy_copper_silver:
+    name: '&f合金（铜 + 银）'
+  sf.alloy_copper_zinc:
+    name: '&f合金（铜 + 锌）'
+  sf.alloy_aluminum_brass:
+    name: '&f合金（铝 + 黄铜）'
+  sf.alloy_aluminum_bronze:
+    name: '&f合金（铝 + 青铜）'
+  sf.alloy_gold_silver_copper:
+    name: '&f合金（金 + 银 + 铜）'
+  sf.alloy_lead_tin:
+    name: '&f合金（铅 + 锡）'
+  sf.alloy_steel_iron_carbon:
+    name: '&f合金（钢 + 铁 + 碳）'
+  sf.alloy_damascus_steel_duralumin_compressed_carbon_aluminium_bronze:
+    name: '&f合金（水纹钢 + 硬铝 + 压缩碳 + 铝青铜）'
+  sf.alloy_hardened_metal_corinthian_bronze_solder_billon_damascus_steel:
+    name: '&f合金（硬化金属 + 科林斯青铜 + 焊料 + 银铜合金 + 水纹钢）'
+  sf.alloy_iron_silicon:
+    name: '&f合金（铁 + 硅）'
+  sf.alloy_iron_gold:
+    name: '&f合金（铁 + 金）'
+  sf.alloy_redstone_ferrosilicon:
+    name: '&f合金（红石 + 硅铁）'
+  sf.alloy_iron_copper:
+    name: '&f合金（铁 + 铜）'
+  sf.alloy_nickel_iron_copper:
+    name: '&f合金（镍 + 铁 + 铜）'
+  sf.gold:
+    name: '&f黄金'
+  sf.dusts:
+    name: '&f粉末'
+  sf.gems:
+    name: '&f宝石'
+  sf.talisman:
+    name: '&f护符'
+  sf.staves:
+    name: '&f法杖'
+  sf.multiblocks:
+    name: '&f多方块机器'
+  sf.machines:
+    name: '&f机器'
+  sf.enhanced_furnaces:
+    name: '&f强化熔炉'
+  sf.soulbound_items:
+    name: '&f灵魂绑定物品'
+  sf.runes:
+    name: '&f符文'
+  sf.electricity:
+    name: '&f电力'
+  sf.robots:
+    name: '&f机器人'
+  sf.gps:
+    name: '&fGPS'
+  guide.sf.weapons:
+    name: '&7武器'
+  guide.sf.tools:
+    name: '&7工具'
+  guide.sf.useful_items:
+    name: '&7实用物品'
+  guide.sf.basic_machines:
+    name: '&7基础机器'
+  guide.sf.food:
+    name: '&7食物'
+  guide.sf.armor:
+    name: '&7护甲'
+  guide.sf.magical_items:
+    name: '&7魔法物品'
+  guide.sf.talismans:
+    name: '&7护身符 - &a一阶'
+  guide.sf.ender_talismans:
+    name: '&7护身符 - &5二阶'
+  guide.sf.magical_gadgets:
+    name: '&7魔法装置'
+  guide.sf.magical_armor:
+    name: '&7魔法护甲'
+  guide.sf.misc:
+    name: '&7杂项'
+  guide.sf.technical_components:
+    name: '&7技术组件'
+  guide.sf.technical_gadgets:
+    name: '&7技术装置'
+  guide.sf.resources:
+    name: '&7资源'
+  guide.sf.electricity:
+    name: '&b能源与电力'
+  guide.sf.androids:
+    name: '&c可编程机器人'
+  guide.sf.cargo:
+    name: '&c运输管理'
+  guide.sf.gps:
+    name: '&bGPS 机器'
+  guide.sf.christmas:
+    name: '&c圣诞节'
+  guide.sf.valentines_day:
+    name: '&d情人节'
+  guide.sf.easter:
+    name: '&6复活节'
+  guide.sf.birthday:
+    name: '&a&lTheBusyBiscuit 的生日'
+  guide.sf.halloween:
+    name: '&6&l万圣节'
+recipes: {}
+materials:
+  crafting_table: 工作台
+  dispenser: 发射器
+  oak_fence: 木栅栏
+  nether_brick_fence: 地狱砖栅栏
+  piston: 活塞
+  iron_bars: 铁栏杆
+  cauldron: 炼药锅

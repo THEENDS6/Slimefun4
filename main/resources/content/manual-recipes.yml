@@ -1,0 +1,16 @@
+# Additive manual machine recipes.
+# operation: shaped | single
+# For shaped recipes, provide exactly 9 matrix entries.
+# Slots can be:
+#   - AIR / empty
+#   - VANILLA_MATERIAL_NAME
+#   - namespaced:item_id (for SFX items)
+#   - {type: vanilla, material: IRON_INGOT, amount: 2}
+#   - {type: sfx, id: sf:example_item, amount: 1}
+# outputs entries can be:
+#   - sf:example_item*1
+#   - IRON_INGOT*2
+#   - {type: sfx, id: sf:example_item, amount: 1}
+#   - {type: vanilla, material: IRON_INGOT, amount: 2}
+
+manual-recipes: []

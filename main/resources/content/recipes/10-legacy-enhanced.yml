@@ -1,0 +1,4713 @@
+recipes:
+  - id: custom:cargo_node_input
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 1
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - HOPPER
+      - empty
+      - sf:billon_ingot
+      - sf:cargo_node
+      - sf:billon_ingot
+      - empty
+      - HOPPER
+      - empty
+    outputs:
+      - sf:cargo_node_input*2
+  - id: custom:cargo_node_output
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 2
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - HOPPER
+      - empty
+      - sf:brass_ingot
+      - sf:cargo_node
+      - sf:brass_ingot
+      - empty
+      - HOPPER
+      - empty
+    outputs:
+      - sf:cargo_node_output*2
+  - id: custom:cargo_node_output_advanced
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 3
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:cargo_motor
+      - empty
+      - sf:cobalt_ingot
+      - sf:cargo_node_output
+      - sf:cobalt_ingot
+      - empty
+      - sf:cargo_motor
+      - empty
+    outputs:
+      - sf:cargo_node_output_advanced
+  - id: legacy:advanced_circuit_board
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 4
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - LAPIS_BLOCK
+      - LAPIS_BLOCK
+      - LAPIS_BLOCK
+      - REDSTONE_BLOCK
+      - sf:basic_circuit_board
+      - REDSTONE_BLOCK
+      - LAPIS_BLOCK
+      - LAPIS_BLOCK
+      - LAPIS_BLOCK
+    outputs:
+      - sf:advanced_circuit_board
+  - id: legacy:android_interface_fuel
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 5
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:plastic_sheet
+      - sf:steel_ingot
+      - sf:plastic_sheet
+      - RED_STAINED_GLASS
+      - sf:basic_circuit_board
+      - sf:steel_ingot
+      - sf:plastic_sheet
+      - sf:steel_ingot
+      - sf:plastic_sheet
+    outputs:
+      - sf:android_interface_fuel
+  - id: legacy:android_interface_items
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 6
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:plastic_sheet
+      - sf:steel_ingot
+      - sf:plastic_sheet
+      - sf:steel_ingot
+      - sf:basic_circuit_board
+      - BLUE_STAINED_GLASS
+      - sf:plastic_sheet
+      - sf:steel_ingot
+      - sf:plastic_sheet
+    outputs:
+      - sf:android_interface_items
+  - id: legacy:android_memory_core
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 7
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:brass_ingot
+      - ORANGE_STAINED_GLASS
+      - sf:brass_ingot
+      - sf:power_crystal
+      - sf:tin_dust
+      - sf:power_crystal
+      - sf:brass_ingot
+      - ORANGE_STAINED_GLASS
+      - sf:brass_ingot
+    outputs:
+      - sf:android_memory_core
+  - id: legacy:animal_growth_accelerator
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 8
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:blistering_ingot_3
+      - empty
+      - sf:electric_motor
+      - sf:organic_food_wheat
+      - sf:electric_motor
+      - sf:reinforced_alloy_ingot
+      - sf:auto_breeder
+      - sf:reinforced_alloy_ingot
+    outputs:
+      - sf:animal_growth_accelerator
+  - id: legacy:armor_auto_crafter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 9
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:crafting_motor
+      - empty
+      - DISPENSER
+      - ANVIL
+      - DISPENSER
+      - CRAFTING_TABLE
+      - sf:electric_motor
+      - CRAFTING_TABLE
+    outputs:
+      - sf:armor_auto_crafter
+  - id: legacy:armored_jetboots
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 10
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - sf:steel_plate
+      - sf:power_crystal
+      - sf:steel_plate
+      - sf:steel_thruster
+      - sf:medium_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:armored_jetboots
+  - id: legacy:armored_jetpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 11
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:steel_plate
+      - empty
+      - sf:steel_plate
+      - sf:steel_plate
+      - sf:power_crystal
+      - sf:steel_plate
+      - sf:steel_thruster
+      - sf:medium_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:armored_jetpack
+  - id: legacy:auto_anvil
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 12
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - ANVIL
+      - empty
+      - sf:reinforced_alloy_ingot
+      - sf:electric_motor
+      - sf:reinforced_alloy_ingot
+      - IRON_BLOCK
+      - IRON_BLOCK
+      - IRON_BLOCK
+    outputs:
+      - sf:auto_anvil
+  - id: legacy:auto_anvil_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 13
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:auto_anvil
+      - empty
+      - sf:steel_plate
+      - sf:heating_coil
+      - sf:steel_plate
+      - IRON_BLOCK
+      - IRON_BLOCK
+      - IRON_BLOCK
+    outputs:
+      - sf:auto_anvil_2
+  - id: legacy:auto_breeder
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 14
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gold_18k
+      - sf:can
+      - sf:gold_18k
+      - sf:electric_motor
+      - HAY_BLOCK
+      - sf:electric_motor
+      - sf:lead_ingot
+      - sf:food_fabricator
+      - sf:lead_ingot
+    outputs:
+      - sf:auto_breeder
+  - id: legacy:auto_brewer
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 15
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:heating_coil
+      - empty
+      - sf:reinforced_plate
+      - BREWING_STAND
+      - sf:reinforced_plate
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:auto_brewer
+  - id: legacy:auto_disenchanter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 16
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - REDSTONE
+      - ANVIL
+      - REDSTONE
+      - sf:carbonado
+      - sf:auto_enchanter
+      - sf:carbonado
+      - sf:wither_proof_obsidian
+      - sf:wither_proof_obsidian
+      - sf:wither_proof_obsidian
+    outputs:
+      - sf:auto_disenchanter
+  - id: legacy:auto_disenchanter_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 17
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:reinforced_plate
+      - ANVIL
+      - sf:reinforced_plate
+      - sf:blistering_ingot_3
+      - sf:auto_disenchanter
+      - sf:blistering_ingot_3
+      - sf:wither_proof_obsidian
+      - sf:big_capacitor
+      - sf:wither_proof_obsidian
+    outputs:
+      - sf:auto_disenchanter_2
+  - id: legacy:auto_drier
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 18
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - sf:heating_coil
+      - SMOKER
+      - sf:heating_coil
+      - empty
+      - CAMPFIRE
+      - empty
+    outputs:
+      - sf:auto_drier
+  - id: legacy:auto_enchanter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 19
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - ENCHANTING_TABLE
+      - empty
+      - sf:carbonado
+      - sf:electric_motor
+      - sf:carbonado
+      - sf:wither_proof_obsidian
+      - sf:wither_proof_obsidian
+      - sf:wither_proof_obsidian
+    outputs:
+      - sf:auto_enchanter
+  - id: legacy:auto_enchanter_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 20
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:reinforced_plate
+      - sf:big_capacitor
+      - sf:reinforced_plate
+      - sf:blistering_ingot_3
+      - sf:auto_enchanter
+      - sf:blistering_ingot_3
+      - sf:wither_proof_obsidian
+      - sf:synthetic_diamond
+      - sf:wither_proof_obsidian
+    outputs:
+      - sf:auto_enchanter_2
+  - id: legacy:bandage
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 21
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:rag
+      - STRING
+      - sf:rag
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:bandage*4
+  - id: legacy:battery
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 22
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - REDSTONE
+      - empty
+      - sf:zinc_ingot
+      - sf:sulfate
+      - sf:copper_ingot
+      - sf:zinc_ingot
+      - sf:sulfate
+      - sf:copper_ingot
+    outputs:
+      - sf:battery
+  - id: legacy:beef_jerky
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 23
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:salt
+      - COOKED_BEEF
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:beef_jerky
+  - id: legacy:big_capacitor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 24
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:steel_ingot
+      - sf:redstone_alloy
+      - sf:steel_ingot
+      - REDSTONE
+      - sf:medium_capacitor
+      - REDSTONE
+      - sf:steel_ingot
+      - sf:redstone_alloy
+      - sf:steel_ingot
+    outputs:
+      - sf:big_capacitor
+  - id: legacy:billon_jetboots
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 25
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - sf:billon_ingot
+      - sf:power_crystal
+      - sf:billon_ingot
+      - sf:steel_thruster
+      - sf:small_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:billon_jetboots
+  - id: legacy:billon_jetpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 26
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:billon_ingot
+      - empty
+      - sf:billon_ingot
+      - sf:billon_ingot
+      - sf:power_crystal
+      - sf:billon_ingot
+      - sf:steel_thruster
+      - sf:small_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:billon_jetpack
+  - id: legacy:billon_multi_tool
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 27
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:billon_ingot
+      - empty
+      - sf:billon_ingot
+      - sf:billon_ingot
+      - sf:small_capacitor
+      - sf:billon_ingot
+      - empty
+      - sf:billon_ingot
+      - empty
+    outputs:
+      - sf:billon_multi_tool
+  - id: legacy:bio_reactor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 28
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:heating_coil
+      - sf:composter
+      - sf:heating_coil
+      - sf:aluminum_brass_ingot
+      - sf:electric_motor
+      - sf:aluminum_brass_ingot
+      - empty
+      - sf:aluminum_brass_ingot
+      - empty
+    outputs:
+      - sf:bio_reactor
+  - id: legacy:block_placer
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 29
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gold_4k
+      - PISTON
+      - sf:gold_4k
+      - IRON_INGOT
+      - sf:electric_motor
+      - IRON_INGOT
+      - sf:gold_4k
+      - PISTON
+      - sf:gold_4k
+    outputs:
+      - sf:block_placer
+  - id: legacy:book_binder
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 30
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - ENCHANTING_TABLE
+      - empty
+      - BOOKSHELF
+      - sf:hardened_metal_ingot
+      - BOOKSHELF
+      - sf:synthetic_sapphire
+      - sf:small_capacitor
+      - sf:synthetic_sapphire
+    outputs:
+      - sf:book_binder
+  - id: legacy:butter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 31
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:heavy_cream
+      - sf:salt
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:butter
+  - id: legacy:can
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 32
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:tin_ingot
+      - sf:tin_ingot
+      - sf:tin_ingot
+      - sf:tin_ingot
+      - empty
+      - sf:tin_ingot
+      - sf:tin_ingot
+      - sf:tin_ingot
+      - sf:tin_ingot
+    outputs:
+      - sf:can*8
+  - id: legacy:carbon_chunk
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 33
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:compressed_carbon
+      - sf:compressed_carbon
+      - sf:compressed_carbon
+      - sf:compressed_carbon
+      - FLINT
+      - sf:compressed_carbon
+      - sf:compressed_carbon
+      - sf:compressed_carbon
+      - sf:compressed_carbon
+    outputs:
+      - sf:carbon_chunk
+  - id: legacy:carbon_press
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 34
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:carbon
+      - sf:electric_motor
+      - sf:carbon
+      - sf:carbon
+      - sf:heated_pressure_chamber
+      - sf:carbon
+      - sf:heating_coil
+      - sf:carbonado
+      - sf:heating_coil
+    outputs:
+      - sf:carbon_press
+  - id: legacy:carbon_press_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 35
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:carbonado
+      - sf:electric_motor
+      - sf:carbonado
+      - sf:carbon
+      - sf:carbon_press
+      - sf:carbon
+      - sf:heating_coil
+      - sf:electro_magnet
+      - sf:heating_coil
+    outputs:
+      - sf:carbon_press_2
+  - id: legacy:carbon_press_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 36
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:carbonado
+      - sf:electric_motor
+      - sf:carbonado
+      - sf:reinforced_alloy_ingot
+      - sf:carbon_press_2
+      - sf:reinforced_alloy_ingot
+      - sf:heating_coil
+      - sf:electro_magnet
+      - sf:heating_coil
+    outputs:
+      - sf:carbon_press_3
+  - id: legacy:carbonado_edged_capacitor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 37
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:carbonado
+      - sf:redstone_alloy
+      - sf:carbonado
+      - REDSTONE
+      - sf:large_capacitor
+      - REDSTONE
+      - sf:carbonado
+      - sf:redstone_alloy
+      - sf:carbonado
+    outputs:
+      - sf:carbonado_edged_capacitor
+  - id: legacy:carbonado_edged_furnace
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 38
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:carbonado
+      - sf:basic_circuit_board
+      - sf:carbonado
+      - sf:heating_coil
+      - sf:reinforced_furnace
+      - sf:heating_coil
+      - sf:carbonado
+      - sf:electric_motor
+      - sf:carbonado
+    outputs:
+      - sf:carbonado_edged_furnace
+  - id: legacy:carbonado_jetboots
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 39
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - sf:carbonado
+      - sf:power_crystal
+      - sf:carbonado
+      - sf:steel_thruster
+      - sf:large_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:carbonado_jetboots
+  - id: legacy:carbonado_jetpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 40
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:carbon_chunk
+      - empty
+      - sf:carbon_chunk
+      - sf:carbonado
+      - sf:power_crystal
+      - sf:carbonado
+      - sf:steel_thruster
+      - sf:large_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:carbonado_jetpack
+  - id: legacy:carbonado_multi_tool
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 41
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:carbonado
+      - empty
+      - sf:carbonado
+      - sf:carbonado
+      - sf:large_capacitor
+      - sf:carbonado
+      - empty
+      - sf:carbonado
+      - empty
+    outputs:
+      - sf:carbonado_multi_tool
+  - id: legacy:cargo_manager
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 42
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:hologram_projector
+      - empty
+      - sf:reinforced_plate
+      - sf:cargo_motor
+      - sf:reinforced_plate
+      - sf:aluminum_bronze_ingot
+      - sf:android_memory_core
+      - sf:aluminum_bronze_ingot
+    outputs:
+      - sf:cargo_manager
+  - id: legacy:cargo_motor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 43
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:hardened_glass
+      - sf:electro_magnet
+      - sf:hardened_glass
+      - sf:silver_ingot
+      - sf:electric_motor
+      - sf:silver_ingot
+      - sf:hardened_glass
+      - sf:electro_magnet
+      - sf:hardened_glass
+    outputs:
+      - sf:cargo_motor*4
+  - id: legacy:chain
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 44
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:steel_ingot
+      - empty
+      - empty
+    outputs:
+      - sf:chain*8
+  - id: legacy:charging_bench
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 45
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:electro_magnet
+      - empty
+      - sf:battery
+      - CRAFTING_TABLE
+      - sf:battery
+      - empty
+      - sf:small_capacitor
+      - empty
+    outputs:
+      - sf:charging_bench
+  - id: legacy:cheese
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 46
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - MILK_BUCKET
+      - sf:salt
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:cheese
+  - id: legacy:chicken_jerky
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 47
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:salt
+      - COOKED_CHICKEN
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:chicken_jerky
+  - id: legacy:christmas_apple_cider
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 48
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:apple_juice
+      - SUGAR
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:christmas_apple_cider*2
+  - id: legacy:christmas_apple_pie
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 49
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - SUGAR
+      - APPLE
+      - EGG
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:christmas_apple_pie*2
+  - id: legacy:christmas_cake
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 50
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - EGG
+      - SUGAR
+      - sf:wheat_flour
+      - MILK_BUCKET
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:christmas_cake*4
+  - id: legacy:christmas_caramel_apple
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 51
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:christmas_caramel
+      - empty
+      - empty
+      - APPLE
+      - empty
+      - empty
+      - STICK
+      - empty
+    outputs:
+      - sf:christmas_caramel_apple*2
+  - id: legacy:christmas_chocolate_apple
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 52
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - COCOA_BEANS
+      - empty
+      - empty
+      - APPLE
+      - empty
+      - empty
+      - STICK
+      - empty
+    outputs:
+      - sf:christmas_chocolate_apple*2
+  - id: legacy:christmas_chocolate_milk
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 53
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:christmas_milk
+      - COCOA_BEANS
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:christmas_chocolate_milk*2
+  - id: legacy:christmas_cookie
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 54
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - COOKIE
+      - SUGAR
+      - LIME_DYE
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:christmas_cookie*16
+  - id: legacy:christmas_egg_nog
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 55
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:christmas_milk
+      - EGG
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:christmas_egg_nog*2
+  - id: legacy:christmas_fruit_cake
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 56
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - EGG
+      - APPLE
+      - MELON
+      - SUGAR
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:christmas_fruit_cake*4
+  - id: legacy:christmas_milk
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 57
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - MILK_BUCKET
+      - GLASS_BOTTLE
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:christmas_milk*4
+  - id: legacy:climbing_pick
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 58
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:steel_ingot
+      - sf:hardened_metal_ingot
+      - sf:steel_ingot
+      - empty
+      - STICK
+      - empty
+      - empty
+      - STICK
+      - empty
+    outputs:
+      - sf:climbing_pick
+  - id: legacy:cloth
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 59
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - WHITE_WOOL
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:cloth*8
+  - id: legacy:coal_generator
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 60
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:heating_coil
+      - FURNACE
+      - sf:heating_coil
+      - sf:nickel_ingot
+      - sf:electric_motor
+      - sf:nickel_ingot
+      - empty
+      - sf:nickel_ingot
+      - empty
+    outputs:
+      - sf:coal_generator
+  - id: legacy:coal_generator_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 61
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - MAGMA_BLOCK
+      - sf:heating_coil
+      - MAGMA_BLOCK
+      - sf:hardened_metal_ingot
+      - sf:coal_generator
+      - sf:hardened_metal_ingot
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:coal_generator_2
+  - id: legacy:cobalt_pickaxe
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 62
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:cobalt_ingot
+      - sf:cobalt_ingot
+      - sf:cobalt_ingot
+      - empty
+      - sf:nickel_ingot
+      - empty
+      - empty
+      - sf:nickel_ingot
+      - empty
+    outputs:
+      - sf:cobalt_pickaxe
+  - id: legacy:combustion_reactor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 63
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:steel_ingot
+      - sf:electric_motor
+      - sf:steel_ingot
+      - sf:heating_coil
+      - sf:steel_ingot
+      - sf:heating_coil
+    outputs:
+      - sf:combustion_reactor
+  - id: legacy:composter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 64
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - OAK_SLAB
+      - empty
+      - OAK_SLAB
+      - OAK_SLAB
+      - empty
+      - OAK_SLAB
+      - OAK_SLAB
+      - CAULDRON
+      - OAK_SLAB
+    outputs:
+      - sf:composter
+  - id: legacy:cooler
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 65
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:cloth
+      - sf:cloth
+      - sf:cloth
+      - sf:aluminum_ingot
+      - sf:cooling_unit
+      - sf:aluminum_ingot
+      - sf:aluminum_ingot
+      - sf:aluminum_ingot
+      - sf:aluminum_ingot
+    outputs:
+      - sf:cooler
+  - id: legacy:cooling_unit
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 66
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - ICE
+      - ICE
+      - ICE
+      - sf:aluminum_ingot
+      - sf:electric_motor
+      - sf:aluminum_ingot
+      - ICE
+      - ICE
+      - ICE
+    outputs:
+      - sf:cooling_unit
+  - id: legacy:copper_wire
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 67
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - sf:copper_ingot
+      - sf:copper_ingot
+      - sf:copper_ingot
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:copper_wire*8
+  - id: legacy:crafting_motor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 68
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - CRAFTING_TABLE
+      - sf:blistering_ingot_3
+      - CRAFTING_TABLE
+      - sf:redstone_alloy
+      - sf:cargo_motor
+      - sf:redstone_alloy
+      - CRAFTING_TABLE
+      - sf:blistering_ingot_3
+      - CRAFTING_TABLE
+    outputs:
+      - sf:crafting_motor*2
+  - id: legacy:crop_growth_accelerator
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 69
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:blistering_ingot_3
+      - empty
+      - sf:electric_motor
+      - sf:programmable_android_farmer
+      - sf:electric_motor
+      - sf:electro_magnet
+      - sf:animal_growth_accelerator
+      - sf:electro_magnet
+    outputs:
+      - sf:crop_growth_accelerator
+  - id: legacy:crop_growth_accelerator_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 70
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:blistering_ingot_3
+      - empty
+      - sf:electric_motor
+      - sf:crop_growth_accelerator
+      - sf:electric_motor
+      - sf:electro_magnet
+      - sf:advanced_circuit_board
+      - sf:electro_magnet
+    outputs:
+      - sf:crop_growth_accelerator_2
+  - id: legacy:crucible
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 71
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - TERRACOTTA
+      - empty
+      - TERRACOTTA
+      - TERRACOTTA
+      - empty
+      - TERRACOTTA
+      - TERRACOTTA
+      - FLINT_AND_STEEL
+      - TERRACOTTA
+    outputs:
+      - sf:crucible
+  - id: legacy:damascus_steel_jetboots
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 72
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - sf:damascus_steel_ingot
+      - sf:power_crystal
+      - sf:damascus_steel_ingot
+      - sf:steel_thruster
+      - sf:small_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:damascus_steel_jetboots
+  - id: legacy:damascus_steel_jetpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 73
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:damascus_steel_ingot
+      - empty
+      - sf:damascus_steel_ingot
+      - sf:damascus_steel_ingot
+      - sf:power_crystal
+      - sf:damascus_steel_ingot
+      - sf:steel_thruster
+      - sf:small_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:damascus_steel_jetpack
+  - id: legacy:damascus_steel_multi_tool
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 74
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:damascus_steel_ingot
+      - empty
+      - sf:damascus_steel_ingot
+      - sf:damascus_steel_ingot
+      - sf:small_capacitor
+      - sf:damascus_steel_ingot
+      - empty
+      - sf:damascus_steel_ingot
+      - empty
+    outputs:
+      - sf:damascus_steel_multi_tool
+  - id: legacy:duct_tape
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 75
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:aluminum_dust
+      - sf:aluminum_dust
+      - sf:aluminum_dust
+      - SLIME_BALL
+      - WHITE_WOOL
+      - SLIME_BALL
+      - PAPER
+      - PAPER
+      - PAPER
+    outputs:
+      - sf:duct_tape*2
+  - id: legacy:duralumin_jetboots
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 76
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - sf:duralumin_ingot
+      - sf:power_crystal
+      - sf:duralumin_ingot
+      - sf:steel_thruster
+      - sf:small_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:duralumin_jetboots
+  - id: legacy:duralumin_jetpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 77
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:duralumin_ingot
+      - empty
+      - sf:duralumin_ingot
+      - sf:duralumin_ingot
+      - sf:power_crystal
+      - sf:duralumin_ingot
+      - sf:steel_thruster
+      - sf:small_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:duralumin_jetpack
+  - id: legacy:duralumin_multi_tool
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 78
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:duralumin_ingot
+      - empty
+      - sf:duralumin_ingot
+      - sf:duralumin_ingot
+      - sf:small_capacitor
+      - sf:duralumin_ingot
+      - empty
+      - sf:duralumin_ingot
+      - empty
+    outputs:
+      - sf:duralumin_multi_tool
+  - id: legacy:easter_apple_pie
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 79
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - SUGAR
+      - APPLE
+      - EGG
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:easter_apple_pie*2
+  - id: legacy:easter_egg
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 80
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - LIME_DYE
+      - EGG
+      - PURPLE_DYE
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:easter_egg*2
+  - id: legacy:electric_dust_washer
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 81
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - WATER_BUCKET
+      - empty
+      - sf:electro_magnet
+      - sf:electric_gold_pan
+      - sf:electro_magnet
+      - sf:copper_ingot
+      - sf:copper_ingot
+      - sf:copper_ingot
+    outputs:
+      - sf:electric_dust_washer
+  - id: legacy:electric_dust_washer_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 82
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - WATER_BUCKET
+      - empty
+      - sf:electro_magnet
+      - sf:electric_dust_washer
+      - sf:electro_magnet
+      - sf:damascus_steel_ingot
+      - sf:damascus_steel_ingot
+      - sf:damascus_steel_ingot
+    outputs:
+      - sf:electric_dust_washer_2
+  - id: legacy:electric_dust_washer_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 83
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - WATER_BUCKET
+      - empty
+      - sf:electro_magnet
+      - sf:electric_dust_washer_2
+      - sf:electro_magnet
+      - sf:corinthian_bronze_ingot
+      - sf:blistering_ingot_3
+      - sf:corinthian_bronze_ingot
+    outputs:
+      - sf:electric_dust_washer_3
+  - id: legacy:electric_furnace
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 84
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - FURNACE
+      - empty
+      - sf:gilded_iron
+      - sf:heating_coil
+      - sf:gilded_iron
+      - sf:gilded_iron
+      - sf:electric_motor
+      - sf:gilded_iron
+    outputs:
+      - sf:electric_furnace
+  - id: legacy:electric_furnace_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 85
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:electric_motor
+      - empty
+      - sf:gilded_iron
+      - sf:electric_furnace
+      - sf:gilded_iron
+      - sf:gilded_iron
+      - sf:heating_coil
+      - sf:gilded_iron
+    outputs:
+      - sf:electric_furnace_2
+  - id: legacy:electric_furnace_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 86
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:electric_motor
+      - empty
+      - sf:steel_ingot
+      - sf:electric_furnace_2
+      - sf:steel_ingot
+      - sf:gilded_iron
+      - sf:heating_coil
+      - sf:gilded_iron
+    outputs:
+      - sf:electric_furnace_3
+  - id: legacy:electric_gold_pan
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 87
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:gold_pan
+      - empty
+      - FLINT
+      - sf:electric_motor
+      - FLINT
+      - sf:aluminum_ingot
+      - sf:aluminum_ingot
+      - sf:aluminum_ingot
+    outputs:
+      - sf:electric_gold_pan
+  - id: legacy:electric_gold_pan_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 88
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:gold_pan
+      - empty
+      - IRON_INGOT
+      - sf:electric_gold_pan
+      - IRON_INGOT
+      - sf:duralumin_ingot
+      - sf:duralumin_ingot
+      - sf:duralumin_ingot
+    outputs:
+      - sf:electric_gold_pan_2
+  - id: legacy:electric_gold_pan_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 89
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:gold_pan
+      - empty
+      - sf:electric_motor
+      - sf:electric_gold_pan_2
+      - sf:electric_motor
+      - sf:cobalt_ingot
+      - sf:blistering_ingot_3
+      - sf:cobalt_ingot
+    outputs:
+      - sf:electric_gold_pan_3
+  - id: legacy:electric_ingot_factory
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 90
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - FLINT_AND_STEEL
+      - empty
+      - sf:heating_coil
+      - sf:electric_dust_washer
+      - sf:heating_coil
+      - sf:damascus_steel_ingot
+      - sf:electric_motor
+      - sf:damascus_steel_ingot
+    outputs:
+      - sf:electric_ingot_factory
+  - id: legacy:electric_ingot_factory_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 91
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gilded_iron
+      - FLINT_AND_STEEL
+      - sf:gilded_iron
+      - sf:heating_coil
+      - sf:electric_ingot_factory
+      - sf:heating_coil
+      - sf:brass_ingot
+      - sf:electric_motor
+      - sf:brass_ingot
+    outputs:
+      - sf:electric_ingot_factory_2
+  - id: legacy:electric_ingot_factory_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 92
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gilded_iron
+      - FLINT_AND_STEEL
+      - sf:gilded_iron
+      - sf:heating_coil
+      - sf:electric_ingot_factory_2
+      - sf:heating_coil
+      - sf:brass_ingot
+      - sf:blistering_ingot_3
+      - sf:brass_ingot
+    outputs:
+      - sf:electric_ingot_factory_3
+  - id: legacy:electric_ingot_pulverizer
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 93
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:electric_ore_grinder
+      - empty
+      - sf:lead_ingot
+      - sf:medium_capacitor
+      - sf:lead_ingot
+      - sf:lead_ingot
+      - sf:heating_coil
+      - sf:lead_ingot
+    outputs:
+      - sf:electric_ingot_pulverizer
+  - id: legacy:electric_motor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 94
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:copper_wire
+      - sf:copper_wire
+      - sf:copper_wire
+      - empty
+      - sf:electro_magnet
+      - empty
+      - sf:copper_wire
+      - sf:copper_wire
+      - sf:copper_wire
+    outputs:
+      - sf:electric_motor
+  - id: legacy:electric_ore_grinder
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 95
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - DIAMOND_PICKAXE
+      - empty
+      - sf:gilded_iron
+      - sf:heating_coil
+      - sf:gilded_iron
+      - sf:gilded_iron
+      - sf:electric_motor
+      - sf:gilded_iron
+    outputs:
+      - sf:electric_ore_grinder
+  - id: legacy:electric_ore_grinder_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 96
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - DIAMOND_PICKAXE
+      - empty
+      - sf:heating_coil
+      - sf:electric_ore_grinder
+      - sf:heating_coil
+      - sf:gilded_iron
+      - sf:blistering_ingot_3
+      - sf:gilded_iron
+    outputs:
+      - sf:electric_ore_grinder_2
+  - id: legacy:electric_ore_grinder_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 97
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:reinforced_plate
+      - sf:heating_coil
+      - sf:reinforced_plate
+      - empty
+      - sf:electric_ore_grinder_2
+      - empty
+      - sf:reinforced_plate
+      - sf:blistering_ingot_3
+      - sf:reinforced_plate
+    outputs:
+      - sf:electric_ore_grinder_3
+  - id: legacy:electric_press
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 98
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - PISTON
+      - sf:electric_motor
+      - PISTON
+      - empty
+      - sf:medium_capacitor
+      - empty
+      - sf:damascus_steel_ingot
+      - sf:damascus_steel_ingot
+      - sf:damascus_steel_ingot
+    outputs:
+      - sf:electric_press
+  - id: legacy:electric_press_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 99
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - STICKY_PISTON
+      - sf:electric_press
+      - STICKY_PISTON
+      - sf:damascus_steel_ingot
+      - sf:big_capacitor
+      - sf:damascus_steel_ingot
+      - sf:damascus_steel_ingot
+      - sf:damascus_steel_ingot
+      - sf:damascus_steel_ingot
+    outputs:
+      - sf:electric_press_2
+  - id: legacy:electric_smeltery
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 100
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - NETHER_BRICKS
+      - sf:electric_motor
+      - NETHER_BRICKS
+      - sf:heating_coil
+      - sf:electric_ingot_factory
+      - sf:heating_coil
+      - sf:gilded_iron
+      - sf:electric_motor
+      - sf:gilded_iron
+    outputs:
+      - sf:electric_smeltery
+  - id: legacy:electric_smeltery_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 101
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:damascus_steel_ingot
+      - sf:power_crystal
+      - sf:damascus_steel_ingot
+      - sf:heating_coil
+      - sf:electric_smeltery
+      - sf:heating_coil
+      - sf:gilded_iron
+      - sf:electric_motor
+      - sf:gilded_iron
+    outputs:
+      - sf:electric_smeltery_2
+  - id: legacy:electrified_crucible
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 102
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:lead_ingot
+      - sf:crucible
+      - sf:lead_ingot
+      - sf:damascus_steel_ingot
+      - sf:heating_coil
+      - sf:damascus_steel_ingot
+      - sf:lead_ingot
+      - sf:large_capacitor
+      - sf:lead_ingot
+    outputs:
+      - sf:electrified_crucible
+  - id: legacy:electrified_crucible_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 103
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:corinthian_bronze_ingot
+      - sf:electrified_crucible
+      - sf:corinthian_bronze_ingot
+      - sf:damascus_steel_ingot
+      - sf:electric_motor
+      - sf:damascus_steel_ingot
+      - sf:lead_ingot
+      - sf:heating_coil
+      - sf:lead_ingot
+    outputs:
+      - sf:electrified_crucible_2
+  - id: legacy:electrified_crucible_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 104
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:corinthian_bronze_ingot
+      - sf:electrified_crucible_2
+      - sf:corinthian_bronze_ingot
+      - sf:steel_plate
+      - sf:power_crystal
+      - sf:steel_plate
+      - sf:lead_ingot
+      - sf:lead_ingot
+      - sf:lead_ingot
+    outputs:
+      - sf:electrified_crucible_3
+  - id: legacy:electro_magnet
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 105
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:nickel_ingot
+      - sf:magnet
+      - sf:cobalt_ingot
+      - empty
+      - sf:battery
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:electro_magnet
+  - id: legacy:elevator_plate
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 106
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - STONE_PRESSURE_PLATE
+      - empty
+      - PISTON
+      - sf:electric_motor
+      - PISTON
+      - sf:aluminum_bronze_ingot
+      - sf:aluminum_bronze_ingot
+      - sf:aluminum_bronze_ingot
+    outputs:
+      - sf:elevator_plate*2
+  - id: legacy:ender_lump_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 107
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:ender_lump_1
+      - sf:ender_lump_1
+      - empty
+      - sf:ender_lump_1
+      - sf:ender_lump_1
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:ender_lump_2
+  - id: legacy:ender_lump_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 108
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:ender_lump_2
+      - sf:ender_lump_2
+      - empty
+      - sf:ender_lump_2
+      - sf:ender_lump_2
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:ender_lump_3
+  - id: legacy:energized_capacitor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 109
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:carbonado
+      - sf:redstone_alloy
+      - sf:carbonado
+      - NETHER_STAR
+      - sf:carbonado_edged_capacitor
+      - NETHER_STAR
+      - sf:carbonado
+      - sf:redstone_alloy
+      - sf:carbonado
+    outputs:
+      - sf:energized_capacitor
+  - id: legacy:energy_connector
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 110
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:carbon
+      - sf:copper_wire
+      - sf:carbon
+      - sf:copper_wire
+      - REDSTONE_BLOCK
+      - sf:copper_wire
+      - sf:carbon
+      - sf:copper_wire
+      - sf:carbon
+    outputs:
+      - sf:energy_connector*8
+  - id: legacy:energy_regulator
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 111
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:silver_ingot
+      - sf:damascus_steel_ingot
+      - sf:silver_ingot
+      - sf:damascus_steel_ingot
+      - sf:electric_motor
+      - sf:damascus_steel_ingot
+      - sf:silver_ingot
+      - sf:damascus_steel_ingot
+      - sf:silver_ingot
+    outputs:
+      - sf:energy_regulator
+  - id: legacy:enhanced_auto_crafter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 112
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:crafting_motor
+      - empty
+      - CRAFTING_TABLE
+      - DISPENSER
+      - CRAFTING_TABLE
+      - empty
+      - sf:cargo_motor
+      - empty
+    outputs:
+      - sf:enhanced_auto_crafter
+  - id: legacy:enhanced_furnace
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 113
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - FURNACE
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace
+  - id: legacy:enhanced_furnace_10
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 114
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - sf:enhanced_furnace_9
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace_10
+  - id: legacy:enhanced_furnace_11
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 115
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - sf:enhanced_furnace_10
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace_11
+  - id: legacy:enhanced_furnace_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 116
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - sf:enhanced_furnace
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace_2
+  - id: legacy:enhanced_furnace_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 117
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - sf:enhanced_furnace_2
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace_3
+  - id: legacy:enhanced_furnace_4
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 118
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - sf:enhanced_furnace_3
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace_4
+  - id: legacy:enhanced_furnace_5
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 119
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - sf:enhanced_furnace_4
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace_5
+  - id: legacy:enhanced_furnace_6
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 120
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - sf:enhanced_furnace_5
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace_6
+  - id: legacy:enhanced_furnace_7
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 121
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - sf:enhanced_furnace_6
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace_7
+  - id: legacy:enhanced_furnace_8
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 122
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - sf:enhanced_furnace_7
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace_8
+  - id: legacy:enhanced_furnace_9
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 123
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:basic_circuit_board
+      - sf:enhanced_furnace_8
+      - sf:heating_coil
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:enhanced_furnace_9
+  - id: legacy:fish_jerky
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 124
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:salt
+      - COOKED_COD
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:fish_jerky
+  - id: legacy:fluid_pump
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 125
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:medium_capacitor
+      - empty
+      - BUCKET
+      - sf:cargo_motor
+      - BUCKET
+      - empty
+      - sf:oil_pump
+      - empty
+    outputs:
+      - sf:fluid_pump
+  - id: legacy:food_composter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 126
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:damascus_steel_ingot
+      - sf:food_fabricator
+      - sf:damascus_steel_ingot
+      - sf:can
+      - sf:medium_capacitor
+      - sf:can
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:food_composter
+  - id: legacy:food_composter_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 127
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:hardened_metal_ingot
+      - sf:reinforced_alloy_ingot
+      - sf:hardened_metal_ingot
+      - sf:electric_motor
+      - sf:food_composter
+      - sf:electric_motor
+      - empty
+      - sf:electro_magnet
+      - empty
+    outputs:
+      - sf:food_composter_2
+  - id: legacy:food_fabricator
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 128
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:billon_ingot
+      - sf:silver_ingot
+      - sf:billon_ingot
+      - sf:can
+      - sf:small_capacitor
+      - sf:can
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:food_fabricator
+  - id: legacy:food_fabricator_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 129
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:hardened_metal_ingot
+      - sf:reinforced_alloy_ingot
+      - sf:hardened_metal_ingot
+      - sf:electric_motor
+      - sf:food_fabricator
+      - sf:electric_motor
+      - empty
+      - sf:electro_magnet
+      - empty
+    outputs:
+      - sf:food_fabricator_2
+  - id: legacy:fortune_cookie
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 130
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - COOKIE
+      - PAPER
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:fortune_cookie
+  - id: legacy:freezer
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 131
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:silver_ingot
+      - empty
+      - sf:electric_motor
+      - PACKED_ICE
+      - sf:electric_motor
+      - sf:cooling_unit
+      - sf:medium_capacitor
+      - sf:cooling_unit
+    outputs:
+      - sf:freezer
+  - id: legacy:freezer_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 132
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:silver_ingot
+      - empty
+      - sf:electro_magnet
+      - sf:freezer
+      - sf:electro_magnet
+      - sf:cooling_unit
+      - sf:aluminum_brass_ingot
+      - sf:cooling_unit
+    outputs:
+      - sf:freezer_2
+  - id: legacy:freezer_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 133
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:reinforced_alloy_ingot
+      - sf:reinforced_alloy_ingot
+      - sf:reinforced_alloy_ingot
+      - sf:electro_magnet
+      - sf:freezer_2
+      - sf:electro_magnet
+      - sf:cooling_unit
+      - sf:cooling_unit
+      - sf:cooling_unit
+    outputs:
+      - sf:freezer_3
+  - id: legacy:geo_miner
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 134
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - DIAMOND_PICKAXE
+      - sf:medium_capacitor
+      - DIAMOND_PICKAXE
+      - sf:reinforced_alloy_ingot
+      - sf:oil_pump
+      - sf:reinforced_alloy_ingot
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:geo_miner
+  - id: legacy:gilded_backpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 135
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gold_22k
+      - empty
+      - sf:gold_22k
+      - LEATHER
+      - sf:woven_backpack
+      - LEATHER
+      - sf:gold_22k
+      - empty
+      - sf:gold_22k
+    outputs:
+      - sf:gilded_backpack
+  - id: legacy:gold_24k_block
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 136
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gold_24k
+      - sf:gold_24k
+      - sf:gold_24k
+      - sf:gold_24k
+      - sf:gold_24k
+      - sf:gold_24k
+      - sf:gold_24k
+      - sf:gold_24k
+      - sf:gold_24k
+    outputs:
+      - sf:gold_24k_block
+  - id: legacy:gold_24k_block#2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 137
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+      - APPLE
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+    outputs:
+      - ENCHANTED_GOLDEN_APPLE
+  - id: legacy:gold_pan
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 138
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - STONE
+      - BOWL
+      - STONE
+      - STONE
+      - STONE
+      - STONE
+    outputs:
+      - sf:gold_pan
+  - id: legacy:gps_activation_device_personal
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 139
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:lead_ingot
+      - empty
+      - sf:cobalt_ingot
+      - sf:gps_activation_device_shared
+      - sf:cobalt_ingot
+      - empty
+      - sf:lead_ingot
+      - empty
+    outputs:
+      - sf:gps_activation_device_personal
+  - id: legacy:gps_activation_device_shared
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 140
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - STONE_PRESSURE_PLATE
+      - empty
+      - REDSTONE
+      - sf:gps_transmitter
+      - REDSTONE
+      - sf:billon_ingot
+      - sf:billon_ingot
+      - sf:billon_ingot
+    outputs:
+      - sf:gps_activation_device_shared
+  - id: legacy:gps_control_panel
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 141
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - sf:electro_magnet
+      - sf:cobalt_ingot
+      - sf:advanced_circuit_board
+      - sf:cobalt_ingot
+      - sf:aluminum_brass_ingot
+      - sf:aluminum_brass_ingot
+      - sf:aluminum_brass_ingot
+    outputs:
+      - sf:gps_control_panel
+  - id: legacy:gps_emergency_transmitter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 142
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:electro_magnet
+      - empty
+      - empty
+      - sf:gps_transmitter
+      - empty
+      - empty
+      - sf:essence_of_afterlife
+      - empty
+    outputs:
+      - sf:gps_emergency_transmitter
+  - id: legacy:gps_geo_scanner
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 143
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - sf:electro_magnet
+      - empty
+      - sf:steel_ingot
+      - sf:steel_ingot
+      - sf:electro_magnet
+      - sf:electric_motor
+      - sf:electro_magnet
+    outputs:
+      - sf:gps_geo_scanner
+  - id: legacy:gps_marker_tool
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 144
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:electro_magnet
+      - empty
+      - LAPIS_LAZULI
+      - sf:basic_circuit_board
+      - LAPIS_LAZULI
+      - REDSTONE
+      - sf:redstone_alloy
+      - REDSTONE
+    outputs:
+      - sf:gps_marker_tool
+  - id: legacy:gps_teleportation_matrix
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 145
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gps_teleporter_pylon
+      - sf:reinforced_alloy_ingot
+      - sf:gps_teleporter_pylon
+      - sf:electro_magnet
+      - sf:gps_control_panel
+      - sf:electro_magnet
+      - sf:gps_teleporter_pylon
+      - sf:reinforced_alloy_ingot
+      - sf:gps_teleporter_pylon
+    outputs:
+      - sf:gps_teleportation_matrix
+  - id: legacy:gps_teleporter_pylon
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 146
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:zinc_ingot
+      - GLASS
+      - sf:zinc_ingot
+      - GLASS
+      - sf:heating_coil
+      - GLASS
+      - sf:zinc_ingot
+      - GLASS
+      - sf:zinc_ingot
+    outputs:
+      - sf:gps_teleporter_pylon*8
+  - id: legacy:gps_transmitter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 147
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - sf:electro_magnet
+      - sf:steel_ingot
+      - sf:advanced_circuit_board
+      - sf:steel_ingot
+      - sf:steel_ingot
+      - sf:electric_motor
+      - sf:steel_ingot
+    outputs:
+      - sf:gps_transmitter
+  - id: legacy:gps_transmitter_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 148
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gps_transmitter
+      - sf:bronze_ingot
+      - sf:gps_transmitter
+      - sf:bronze_ingot
+      - sf:carbon
+      - sf:bronze_ingot
+      - sf:gps_transmitter
+      - sf:bronze_ingot
+      - sf:gps_transmitter
+    outputs:
+      - sf:gps_transmitter_2
+  - id: legacy:gps_transmitter_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 149
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gps_transmitter_2
+      - sf:corinthian_bronze_ingot
+      - sf:gps_transmitter_2
+      - sf:corinthian_bronze_ingot
+      - sf:carbonado
+      - sf:corinthian_bronze_ingot
+      - sf:gps_transmitter_2
+      - sf:corinthian_bronze_ingot
+      - sf:gps_transmitter_2
+    outputs:
+      - sf:gps_transmitter_3
+  - id: legacy:gps_transmitter_4
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 150
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gps_transmitter_3
+      - sf:blistering_ingot_3
+      - sf:gps_transmitter_3
+      - sf:nickel_ingot
+      - sf:carbonado
+      - sf:nickel_ingot
+      - sf:gps_transmitter_3
+      - sf:blistering_ingot_3
+      - sf:gps_transmitter_3
+    outputs:
+      - sf:gps_transmitter_4
+  - id: legacy:grandpas_walking_stick
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 151
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - LEATHER
+      - OAK_LOG
+      - LEATHER
+      - empty
+      - OAK_LOG
+      - empty
+      - empty
+      - OAK_LOG
+      - empty
+    outputs:
+      - sf:grandpas_walking_stick
+  - id: legacy:grappling_hook
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 152
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - sf:hook
+      - empty
+      - sf:chain
+      - empty
+      - sf:chain
+      - empty
+      - empty
+    outputs:
+      - sf:grappling_hook
+  - id: legacy:hardened_glass
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 153
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - GLASS
+      - GLASS
+      - GLASS
+      - GLASS
+      - sf:reinforced_plate
+      - GLASS
+      - GLASS
+      - GLASS
+      - GLASS
+    outputs:
+      - sf:hardened_glass*16
+  - id: legacy:heated_pressure_chamber
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 154
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:lead_ingot
+      - sf:electric_motor
+      - sf:lead_ingot
+      - sf:lead_ingot
+      - GLASS
+      - sf:lead_ingot
+      - sf:lead_ingot
+      - sf:heating_coil
+      - sf:lead_ingot
+    outputs:
+      - sf:heated_pressure_chamber
+  - id: legacy:heated_pressure_chamber_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 155
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:lead_ingot
+      - sf:electric_motor
+      - sf:lead_ingot
+      - sf:lead_ingot
+      - sf:heated_pressure_chamber
+      - sf:lead_ingot
+      - sf:reinforced_alloy_ingot
+      - sf:heating_coil
+      - sf:reinforced_alloy_ingot
+    outputs:
+      - sf:heated_pressure_chamber_2
+  - id: legacy:heating_coil
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 156
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:copper_wire
+      - sf:copper_wire
+      - sf:copper_wire
+      - sf:copper_wire
+      - sf:electric_motor
+      - sf:copper_wire
+      - sf:copper_wire
+      - sf:copper_wire
+      - sf:copper_wire
+    outputs:
+      - sf:heating_coil
+  - id: legacy:heavy_cream
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 157
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - MILK_BUCKET
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:heavy_cream*2
+  - id: legacy:hologram_projector
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 158
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:power_crystal
+      - empty
+      - sf:aluminum_brass_ingot
+      - sf:electric_motor
+      - sf:aluminum_brass_ingot
+      - empty
+      - sf:aluminum_brass_ingot
+      - empty
+    outputs:
+      - sf:hologram_projector*3
+  - id: legacy:hook
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 159
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:steel_ingot
+      - empty
+      - sf:steel_ingot
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:hook
+  - id: legacy:ignition_chamber
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 160
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - IRON_INGOT
+      - FLINT_AND_STEEL
+      - IRON_INGOT
+      - IRON_INGOT
+      - sf:basic_circuit_board
+      - IRON_INGOT
+      - empty
+      - OBSERVER
+      - empty
+    outputs:
+      - sf:ignition_chamber
+  - id: legacy:iron_golem_assembler
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 161
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:blistering_ingot_3
+      - sf:advanced_circuit_board
+      - sf:blistering_ingot_3
+      - IRON_BLOCK
+      - sf:android_memory_core
+      - IRON_BLOCK
+      - sf:electric_motor
+      - sf:reinforced_alloy_ingot
+      - sf:carbonado_edged_capacitor
+    outputs:
+      - sf:iron_golem_assembler
+  - id: legacy:kelp_cookie
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 162
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - DRIED_KELP
+      - empty
+      - DRIED_KELP
+      - SUGAR
+      - DRIED_KELP
+      - empty
+      - DRIED_KELP
+      - empty
+    outputs:
+      - sf:kelp_cookie*2
+  - id: legacy:large_backpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 163
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - LEATHER
+      - empty
+      - LEATHER
+      - sf:gold_14k
+      - sf:medium_backpack
+      - sf:gold_14k
+      - LEATHER
+      - LEATHER
+      - LEATHER
+    outputs:
+      - sf:large_backpack
+  - id: legacy:large_capacitor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 164
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:reinforced_alloy_ingot
+      - sf:redstone_alloy
+      - sf:reinforced_alloy_ingot
+      - REDSTONE
+      - sf:big_capacitor
+      - REDSTONE
+      - sf:reinforced_alloy_ingot
+      - sf:redstone_alloy
+      - sf:reinforced_alloy_ingot
+    outputs:
+      - sf:large_capacitor
+  - id: legacy:lava_crystal
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 165
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:magic_lump_1
+      - BLAZE_POWDER
+      - sf:magic_lump_1
+      - BLAZE_POWDER
+      - sf:ancient_rune_fire
+      - BLAZE_POWDER
+      - sf:magic_lump_1
+      - BLAZE_POWDER
+      - sf:magic_lump_1
+    outputs:
+      - sf:lava_crystal
+  - id: legacy:lava_generator
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 166
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:gold_16k
+      - empty
+      - sf:damascus_steel_ingot
+      - sf:electric_motor
+      - sf:damascus_steel_ingot
+      - sf:heating_coil
+      - sf:damascus_steel_ingot
+      - sf:heating_coil
+    outputs:
+      - sf:lava_generator
+  - id: legacy:lava_generator_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 167
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:corinthian_bronze_ingot
+      - sf:corinthian_bronze_ingot
+      - sf:corinthian_bronze_ingot
+      - sf:compressed_carbon
+      - sf:lava_generator
+      - sf:compressed_carbon
+      - sf:heating_coil
+      - sf:compressed_carbon
+      - sf:heating_coil
+    outputs:
+      - sf:lava_generator_2
+  - id: legacy:magic_lump_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 168
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:magic_lump_1
+      - sf:magic_lump_1
+      - empty
+      - sf:magic_lump_1
+      - sf:magic_lump_1
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:magic_lump_2
+  - id: legacy:magic_lump_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 169
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:magic_lump_2
+      - sf:magic_lump_2
+      - empty
+      - sf:magic_lump_2
+      - sf:magic_lump_2
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:magic_lump_3
+  - id: legacy:magic_sugar
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 170
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - SUGAR
+      - REDSTONE
+      - GLOWSTONE_DUST
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:magic_sugar
+  - id: legacy:magical_book_cover
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 171
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:magic_lump_2
+      - empty
+      - sf:magic_lump_2
+      - BOOK
+      - sf:magic_lump_2
+      - empty
+      - sf:magic_lump_2
+      - empty
+    outputs:
+      - sf:magical_book_cover
+  - id: legacy:magnesium_generator
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 172
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:electric_motor
+      - empty
+      - sf:compressed_carbon
+      - WATER_BUCKET
+      - sf:compressed_carbon
+      - sf:duralumin_ingot
+      - sf:duralumin_ingot
+      - sf:duralumin_ingot
+    outputs:
+      - sf:magnesium_generator
+  - id: legacy:medicine
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 173
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:vitamins
+      - GLASS_BOTTLE
+      - sf:heavy_cream
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:medicine
+  - id: legacy:medium_backpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 174
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - LEATHER
+      - empty
+      - LEATHER
+      - sf:gold_10k
+      - sf:small_backpack
+      - sf:gold_10k
+      - LEATHER
+      - LEATHER
+      - LEATHER
+    outputs:
+      - sf:medium_backpack
+  - id: legacy:medium_capacitor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 175
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:billon_ingot
+      - sf:redstone_alloy
+      - sf:billon_ingot
+      - REDSTONE
+      - sf:small_capacitor
+      - REDSTONE
+      - sf:billon_ingot
+      - sf:redstone_alloy
+      - sf:billon_ingot
+    outputs:
+      - sf:medium_capacitor
+  - id: legacy:monster_jerky
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 176
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:salt
+      - ROTTEN_FLESH
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:monster_jerky
+  - id: legacy:multimeter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 177
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:copper_ingot
+      - empty
+      - sf:copper_ingot
+      - empty
+      - sf:redstone_alloy
+      - empty
+      - empty
+      - sf:gold_6k
+      - empty
+    outputs:
+      - sf:multimeter
+  - id: legacy:mutton_jerky
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 178
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:salt
+      - COOKED_MUTTON
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:mutton_jerky
+  - id: legacy:nether_gold_pan
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 179
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - NETHER_BRICK
+      - sf:gold_pan
+      - NETHER_BRICK
+      - NETHER_BRICK
+      - NETHER_BRICK
+      - NETHER_BRICK
+    outputs:
+      - sf:nether_gold_pan
+  - id: legacy:netherstar_reactor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 180
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:boosted_uranium
+      - sf:carbonado_edged_capacitor
+      - sf:boosted_uranium
+      - sf:reinforced_plate
+      - NETHER_STAR
+      - sf:reinforced_plate
+      - sf:corinthian_bronze_ingot
+      - sf:reinforced_plate
+      - sf:corinthian_bronze_ingot
+    outputs:
+      - sf:netherstar_reactor
+  - id: legacy:nuclear_reactor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 181
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:blistering_ingot_3
+      - sf:carbonado_edged_capacitor
+      - sf:blistering_ingot_3
+      - sf:reinforced_plate
+      - sf:cooling_unit
+      - sf:reinforced_plate
+      - sf:lead_ingot
+      - sf:reinforced_plate
+      - sf:lead_ingot
+    outputs:
+      - sf:nuclear_reactor
+  - id: legacy:oil_pump
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 182
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:steel_ingot
+      - sf:medium_capacitor
+      - sf:steel_ingot
+      - sf:steel_ingot
+      - sf:electric_motor
+      - sf:steel_ingot
+      - empty
+      - BUCKET
+      - empty
+    outputs:
+      - sf:oil_pump
+  - id: legacy:output_chest
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 183
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:lead_ingot
+      - HOPPER
+      - sf:lead_ingot
+      - sf:lead_ingot
+      - CHEST
+      - sf:lead_ingot
+      - empty
+      - sf:lead_ingot
+      - empty
+    outputs:
+      - sf:output_chest
+  - id: legacy:parachute
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 184
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:cloth
+      - sf:cloth
+      - sf:cloth
+      - sf:chain
+      - empty
+      - sf:chain
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:parachute
+  - id: legacy:pork_jerky
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 185
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:salt
+      - COOKED_PORKCHOP
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:pork_jerky
+  - id: legacy:portable_crafter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 186
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - BOOK
+      - CRAFTING_TABLE
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:portable_crafter
+  - id: legacy:portable_dustbin
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 187
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - IRON_INGOT
+      - IRON_INGOT
+      - IRON_INGOT
+      - IRON_INGOT
+      - empty
+      - IRON_INGOT
+      - IRON_INGOT
+      - IRON_INGOT
+      - IRON_INGOT
+    outputs:
+      - sf:portable_dustbin
+  - id: legacy:portable_geo_scanner
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 188
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:electro_magnet
+      - COMPASS
+      - sf:electro_magnet
+      - sf:steel_ingot
+      - sf:gps_marker_tool
+      - sf:steel_ingot
+      - sf:solder_ingot
+      - sf:electric_motor
+      - sf:solder_ingot
+    outputs:
+      - sf:portable_geo_scanner
+  - id: legacy:portable_teleporter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 189
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:electro_magnet
+      - sf:gps_transmitter_3
+      - sf:electro_magnet
+      - sf:reinforced_plate
+      - sf:gps_teleportation_matrix
+      - sf:reinforced_plate
+      - sf:blistering_ingot_3
+      - sf:medium_capacitor
+      - sf:blistering_ingot_3
+    outputs:
+      - sf:portable_teleporter
+  - id: legacy:power_crystal
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 190
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - REDSTONE
+      - sf:synthetic_sapphire
+      - REDSTONE
+      - sf:synthetic_sapphire
+      - sf:synthetic_diamond
+      - sf:synthetic_sapphire
+      - REDSTONE
+      - sf:synthetic_sapphire
+      - REDSTONE
+    outputs:
+      - sf:power_crystal
+  - id: legacy:produce_collector
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 191
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - HAY_BLOCK
+      - empty
+      - BUCKET
+      - sf:medium_capacitor
+      - BUCKET
+      - sf:aluminum_brass_ingot
+      - sf:electric_motor
+      - sf:aluminum_brass_ingot
+    outputs:
+      - sf:produce_collector
+  - id: legacy:programmable_android
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 192
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:plastic_sheet
+      - sf:android_memory_core
+      - sf:plastic_sheet
+      - sf:coal_generator
+      - sf:electric_motor
+      - CHEST
+      - sf:plastic_sheet
+      - sf:plastic_sheet
+      - sf:plastic_sheet
+    outputs:
+      - sf:programmable_android
+  - id: legacy:programmable_android_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 193
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:plastic_sheet
+      - sf:android_memory_core
+      - sf:plastic_sheet
+      - sf:combustion_reactor
+      - sf:programmable_android
+      - CHEST
+      - sf:plastic_sheet
+      - sf:power_crystal
+      - sf:plastic_sheet
+    outputs:
+      - sf:programmable_android_2
+  - id: legacy:programmable_android_2_butcher
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 194
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:gps_transmitter
+      - empty
+      - DIAMOND_SWORD
+      - sf:programmable_android_2
+      - DIAMOND_SWORD
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:programmable_android_2_butcher
+  - id: legacy:programmable_android_2_farmer
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 195
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:gps_transmitter
+      - empty
+      - DIAMOND_HOE
+      - sf:programmable_android_2
+      - DIAMOND_HOE
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:programmable_android_2_farmer
+  - id: legacy:programmable_android_2_fisherman
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 196
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - FISHING_ROD
+      - sf:programmable_android_2
+      - FISHING_ROD
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:programmable_android_2_fisherman
+  - id: legacy:programmable_android_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 197
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:plastic_sheet
+      - sf:android_memory_core
+      - sf:plastic_sheet
+      - sf:nuclear_reactor
+      - sf:programmable_android_2
+      - CHEST
+      - sf:blistering_ingot_3
+      - sf:power_crystal
+      - sf:blistering_ingot_3
+    outputs:
+      - sf:programmable_android_3
+  - id: legacy:programmable_android_3_butcher
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 198
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:gps_transmitter_3
+      - empty
+      - DIAMOND_SWORD
+      - sf:programmable_android_3
+      - DIAMOND_SWORD
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:programmable_android_3_butcher
+  - id: legacy:programmable_android_3_fisherman
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 199
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - FISHING_ROD
+      - sf:programmable_android_3
+      - FISHING_ROD
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:programmable_android_3_fisherman
+  - id: legacy:programmable_android_butcher
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 200
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:gps_transmitter
+      - empty
+      - DIAMOND_SWORD
+      - sf:programmable_android
+      - DIAMOND_SWORD
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:programmable_android_butcher
+  - id: legacy:programmable_android_farmer
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 201
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - DIAMOND_HOE
+      - sf:programmable_android
+      - DIAMOND_HOE
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:programmable_android_farmer
+  - id: legacy:programmable_android_fisherman
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 202
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - FISHING_ROD
+      - sf:programmable_android
+      - FISHING_ROD
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:programmable_android_fisherman
+  - id: legacy:programmable_android_miner
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 203
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - DIAMOND_PICKAXE
+      - sf:programmable_android
+      - DIAMOND_PICKAXE
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:programmable_android_miner
+  - id: legacy:programmable_android_woodcutter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 204
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - DIAMOND_AXE
+      - sf:programmable_android
+      - DIAMOND_AXE
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:programmable_android_woodcutter
+  - id: legacy:rabbit_jerky
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 205
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:salt
+      - COOKED_RABBIT
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:rabbit_jerky
+  - id: legacy:radiant_backpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 206
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:gold_24k
+      - empty
+      - sf:gold_24k
+      - LEATHER
+      - sf:gilded_backpack
+      - LEATHER
+      - sf:gold_24k
+      - empty
+      - sf:gold_24k
+    outputs:
+      - sf:radiant_backpack
+  - id: legacy:rag
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 207
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:cloth
+      - sf:cloth
+      - sf:cloth
+      - STRING
+      - empty
+      - STRING
+      - sf:cloth
+      - sf:cloth
+      - sf:cloth
+    outputs:
+      - sf:rag*2
+  - id: legacy:reactor_access_port
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 208
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:blistering_ingot_3
+      - empty
+      - sf:lead_ingot
+      - sf:cargo_motor
+      - sf:lead_ingot
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:reactor_access_port
+  - id: legacy:refinery
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 209
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:hardened_glass
+      - sf:redstone_alloy
+      - sf:hardened_glass
+      - sf:hardened_glass
+      - sf:redstone_alloy
+      - sf:hardened_glass
+      - PISTON
+      - sf:electric_motor
+      - PISTON
+    outputs:
+      - sf:refinery
+  - id: legacy:reinforced_alloy_jetboots
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 210
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - sf:reinforced_alloy_ingot
+      - sf:power_crystal
+      - sf:reinforced_alloy_ingot
+      - sf:steel_thruster
+      - sf:medium_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:reinforced_alloy_jetboots
+  - id: legacy:reinforced_alloy_jetpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 211
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:reinforced_alloy_ingot
+      - empty
+      - sf:reinforced_alloy_ingot
+      - sf:reinforced_alloy_ingot
+      - sf:power_crystal
+      - sf:reinforced_alloy_ingot
+      - sf:steel_thruster
+      - sf:medium_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:reinforced_alloy_jetpack
+  - id: legacy:reinforced_alloy_multi_tool
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 212
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:reinforced_alloy_ingot
+      - empty
+      - sf:reinforced_alloy_ingot
+      - sf:reinforced_alloy_ingot
+      - sf:medium_capacitor
+      - sf:reinforced_alloy_ingot
+      - empty
+      - sf:reinforced_alloy_ingot
+      - empty
+    outputs:
+      - sf:reinforced_alloy_multi_tool
+  - id: legacy:reinforced_cloth
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 213
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:cloth
+      - empty
+      - sf:cloth
+      - sf:lead_ingot
+      - sf:cloth
+      - empty
+      - sf:cloth
+      - empty
+    outputs:
+      - sf:reinforced_cloth*2
+  - id: legacy:reinforced_furnace
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 214
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:reinforced_alloy_ingot
+      - sf:basic_circuit_board
+      - sf:reinforced_alloy_ingot
+      - sf:heating_coil
+      - sf:enhanced_furnace_11
+      - sf:heating_coil
+      - sf:reinforced_alloy_ingot
+      - sf:electric_motor
+      - sf:reinforced_alloy_ingot
+    outputs:
+      - sf:reinforced_furnace
+  - id: legacy:small_backpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 215
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - LEATHER
+      - empty
+      - LEATHER
+      - sf:gold_6k
+      - CHEST
+      - sf:gold_6k
+      - LEATHER
+      - LEATHER
+      - LEATHER
+    outputs:
+      - sf:small_backpack
+  - id: legacy:small_capacitor
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 216
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:duralumin_ingot
+      - sf:sulfate
+      - sf:duralumin_ingot
+      - sf:redstone_alloy
+      - sf:energy_connector
+      - sf:redstone_alloy
+      - sf:duralumin_ingot
+      - REDSTONE
+      - sf:duralumin_ingot
+    outputs:
+      - sf:small_capacitor
+  - id: legacy:small_uranium
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 217
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:tiny_uranium
+      - sf:tiny_uranium
+      - sf:tiny_uranium
+      - sf:tiny_uranium
+      - sf:tiny_uranium
+      - sf:tiny_uranium
+      - sf:tiny_uranium
+      - sf:tiny_uranium
+      - sf:tiny_uranium
+    outputs:
+      - sf:small_uranium
+  - id: legacy:smelters_pickaxe
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 218
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:lava_crystal
+      - sf:lava_crystal
+      - sf:lava_crystal
+      - empty
+      - sf:ferrosilicon
+      - empty
+      - empty
+      - sf:ferrosilicon
+      - empty
+    outputs:
+      - sf:smelters_pickaxe
+  - id: legacy:solar_generator
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 219
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:solar_panel
+      - sf:solar_panel
+      - sf:solar_panel
+      - sf:aluminum_ingot
+      - sf:electric_motor
+      - sf:aluminum_ingot
+      - empty
+      - sf:aluminum_ingot
+      - empty
+    outputs:
+      - sf:solar_generator
+  - id: legacy:solar_generator_2
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 220
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:solar_generator
+      - sf:aluminum_ingot
+      - sf:solar_generator
+      - sf:aluminum_ingot
+      - REDSTONE
+      - sf:aluminum_ingot
+      - sf:solar_generator
+      - sf:aluminum_ingot
+      - sf:solar_generator
+    outputs:
+      - sf:solar_generator_2
+  - id: legacy:solar_generator_3
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 221
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:solar_generator_2
+      - sf:aluminum_ingot
+      - sf:solar_generator_2
+      - sf:aluminum_ingot
+      - sf:carbonado
+      - sf:aluminum_ingot
+      - sf:solar_generator_2
+      - sf:aluminum_ingot
+      - sf:solar_generator_2
+    outputs:
+      - sf:solar_generator_3
+  - id: legacy:solar_generator_4
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 222
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:solar_generator_3
+      - sf:blistering_ingot_3
+      - sf:solar_generator_3
+      - sf:blistering_ingot_3
+      - sf:electro_magnet
+      - sf:blistering_ingot_3
+      - sf:solar_generator_3
+      - sf:blistering_ingot_3
+      - sf:solar_generator_3
+    outputs:
+      - sf:solar_generator_4
+  - id: legacy:solar_helmet
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 223
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:reinforced_alloy_ingot
+      - sf:solar_panel
+      - sf:reinforced_alloy_ingot
+      - sf:reinforced_alloy_ingot
+      - empty
+      - sf:reinforced_alloy_ingot
+      - sf:medium_capacitor
+      - empty
+      - sf:medium_capacitor
+    outputs:
+      - sf:solar_helmet
+  - id: legacy:solar_panel
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 224
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - GLASS
+      - GLASS
+      - GLASS
+      - sf:silicon
+      - sf:silicon
+      - sf:silicon
+      - sf:ferrosilicon
+      - sf:ferrosilicon
+      - sf:ferrosilicon
+    outputs:
+      - sf:solar_panel
+  - id: legacy:solder_jetboots
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 225
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - sf:solder_ingot
+      - sf:power_crystal
+      - sf:solder_ingot
+      - sf:steel_thruster
+      - sf:small_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:solder_jetboots
+  - id: legacy:solder_jetpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 226
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:solder_ingot
+      - empty
+      - sf:solder_ingot
+      - sf:solder_ingot
+      - sf:power_crystal
+      - sf:solder_ingot
+      - sf:steel_thruster
+      - sf:small_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:solder_jetpack
+  - id: legacy:solder_multi_tool
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 227
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:solder_ingot
+      - empty
+      - sf:solder_ingot
+      - sf:solder_ingot
+      - sf:small_capacitor
+      - sf:solder_ingot
+      - empty
+      - sf:solder_ingot
+      - empty
+    outputs:
+      - sf:solder_multi_tool
+  - id: legacy:splint
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 228
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - IRON_INGOT
+      - empty
+      - STICK
+      - STICK
+      - STICK
+      - empty
+      - IRON_INGOT
+      - empty
+    outputs:
+      - sf:splint*4
+  - id: legacy:steel_jetboots
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 229
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - empty
+      - empty
+      - sf:steel_ingot
+      - sf:power_crystal
+      - sf:steel_ingot
+      - sf:steel_thruster
+      - sf:small_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:steel_jetboots
+  - id: legacy:steel_jetpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 230
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:steel_ingot
+      - empty
+      - sf:steel_ingot
+      - sf:steel_ingot
+      - sf:power_crystal
+      - sf:steel_ingot
+      - sf:steel_thruster
+      - sf:small_capacitor
+      - sf:steel_thruster
+    outputs:
+      - sf:steel_jetpack
+  - id: legacy:steel_multi_tool
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 231
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:steel_ingot
+      - empty
+      - sf:steel_ingot
+      - sf:steel_ingot
+      - sf:small_capacitor
+      - sf:steel_ingot
+      - empty
+      - sf:steel_ingot
+      - empty
+    outputs:
+      - sf:steel_multi_tool
+  - id: legacy:steel_thruster
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 232
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - REDSTONE
+      - empty
+      - sf:aluminum_bronze_ingot
+      - sf:aluminum_bronze_ingot
+      - sf:aluminum_bronze_ingot
+      - sf:steel_plate
+      - FIRE_CHARGE
+      - sf:steel_plate
+    outputs:
+      - sf:steel_thruster
+  - id: legacy:sword_of_beheading
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 233
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - EMERALD
+      - empty
+      - sf:magic_lump_2
+      - EMERALD
+      - sf:magic_lump_2
+      - empty
+      - BLAZE_ROD
+      - empty
+    outputs:
+      - sf:sword_of_beheading
+  - id: legacy:tape_measure
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 234
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:silicon
+      - YELLOW_DYE
+      - sf:silicon
+      - YELLOW_DYE
+      - STRING
+      - YELLOW_DYE
+      - sf:gilded_iron
+      - YELLOW_DYE
+      - sf:silicon
+    outputs:
+      - sf:tape_measure
+  - id: legacy:trash_can_block
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 235
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:portable_dustbin
+      - empty
+      - sf:lead_ingot
+      - sf:cargo_motor
+      - sf:lead_ingot
+      - sf:aluminum_ingot
+      - sf:lead_ingot
+      - sf:aluminum_ingot
+    outputs:
+      - sf:trash_can_block
+  - id: legacy:tree_growth_accelerator
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 236
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:carbonado
+      - empty
+      - sf:electric_motor
+      - DIAMOND_AXE
+      - sf:electric_motor
+      - sf:magnesium_salt
+      - sf:big_capacitor
+      - sf:magnesium_salt
+    outputs:
+      - sf:tree_growth_accelerator
+  - id: legacy:uranium
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 237
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:small_uranium
+      - sf:small_uranium
+      - empty
+      - sf:small_uranium
+      - sf:small_uranium
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:uranium
+  - id: legacy:vanilla_auto_crafter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 238
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:cargo_motor
+      - empty
+      - CRAFTING_TABLE
+      - sf:crafting_motor
+      - CRAFTING_TABLE
+      - empty
+      - sf:electric_motor
+      - empty
+    outputs:
+      - sf:vanilla_auto_crafter
+  - id: legacy:vitamins
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 239
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:can
+      - APPLE
+      - RED_MUSHROOM
+      - SUGAR
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:vitamins
+  - id: legacy:wither_assembler
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 240
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:blistering_ingot_3
+      - NETHER_STAR
+      - sf:blistering_ingot_3
+      - sf:wither_proof_obsidian
+      - sf:android_memory_core
+      - sf:wither_proof_obsidian
+      - sf:electric_motor
+      - sf:reinforced_alloy_ingot
+      - sf:carbonado_edged_capacitor
+    outputs:
+      - sf:wither_assembler
+  - id: legacy:wither_proof_glass
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 241
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:lead_ingot
+      - sf:wither_proof_obsidian
+      - sf:lead_ingot
+      - sf:wither_proof_obsidian
+      - sf:hardened_glass
+      - sf:wither_proof_obsidian
+      - sf:lead_ingot
+      - sf:wither_proof_obsidian
+      - sf:lead_ingot
+    outputs:
+      - sf:wither_proof_glass*4
+  - id: legacy:wither_proof_obsidian
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 242
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:lead_ingot
+      - OBSIDIAN
+      - sf:lead_ingot
+      - OBSIDIAN
+      - sf:hardened_glass
+      - OBSIDIAN
+      - sf:lead_ingot
+      - OBSIDIAN
+      - sf:lead_ingot
+    outputs:
+      - sf:wither_proof_obsidian*4
+  - id: legacy:woven_backpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 243
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:cloth
+      - empty
+      - sf:cloth
+      - sf:gold_16k
+      - sf:large_backpack
+      - sf:gold_16k
+      - sf:cloth
+      - sf:cloth
+      - sf:cloth
+    outputs:
+      - sf:woven_backpack
+  - id: legacy:xp_collector
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 244
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:blistering_ingot_3
+      - empty
+      - sf:wither_proof_obsidian
+      - sf:auto_enchanter
+      - sf:wither_proof_obsidian
+      - sf:aluminum_bronze_ingot
+      - sf:electric_motor
+      - sf:aluminum_bronze_ingot
+    outputs:
+      - sf:xp_collector
+  - id: custom:grandmas_walking_stick
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 9991
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - OAK_LOG
+      - empty
+      - empty
+      - OAK_LOG
+      - empty
+      - empty
+      - OAK_LOG
+      - empty
+    outputs:
+      - sf:grandmas_walking_stick
+  - id: custom:birthday_cake
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 9992
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - TORCH
+      - empty
+      - SUGAR
+      - CAKE
+      - SUGAR
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:birthday_cake
+  - id: custom:carrot_pie
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 9993
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - SUGAR
+      - CARROT
+      - EGG
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+      - empty
+    outputs:
+      - sf:carrot_pie*2
+  - id: custom:cargo_node
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 9994
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:bronze_ingot
+      - sf:silver_ingot
+      - sf:bronze_ingot
+      - sf:silver_ingot
+      - sf:cargo_motor
+      - sf:silver_ingot
+      - sf:bronze_ingot
+      - sf:silver_ingot
+      - sf:bronze_ingot
+    outputs:
+      - sf:cargo_node*4

@@ -1,0 +1,38 @@
+name: SlimeFunX
+main: cc.theends6.sfx.SlimeFunXPlugin
+version: '2026.05.09b'
+api-version: '1.21'
+folia-supported: true
+authors: [THEENDS6]
+description: SFX 09b：严格按 Slimefun 源码显式注册配方，禁止模板猜测配方。
+load: POSTWORLD
+commands:
+  slimefunx:
+    description: SlimeFunX 主命令
+    usage: /slimefunx <guide|cheatguide|book|give|inspect|list|reload>
+    aliases: [sfx, sf, x]
+permissions:
+  sfx.command.guide:
+    description: 允许打开 SFX 科技书
+    default: true
+  sfx.command.book:
+    description: 允许领取普通科技书
+    default: true
+  sfx.command.cheatguide:
+    description: 允许打开作弊科技书
+    default: op
+  sfx.command.cheatbook:
+    description: 允许领取作弊科技书
+    default: op
+  sfx.command.give:
+    description: 允许直接获取 SFX 物品
+    default: op
+  sfx.command.inspect:
+    description: 允许检查手中物品的 SFX PDC 标记
+    default: op
+  sfx.command.list:
+    description: 允许查看 SFX 已注册物品列表
+    default: true
+  sfx.command.reload:
+    description: 允许重载 SFX 配置
+    default: op
