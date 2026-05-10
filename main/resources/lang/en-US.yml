@@ -42,17 +42,52 @@ guide:
   main:
     title: Main Menu
   settings:
-    title: Settings
-    open-survival:
-      name: <green>Open Survival Guide</green>
-      lore: <gray>Main classic guide entry.</gray>
-    open-cheat:
-      name: <red>Open Cheat Guide</red>
-      lore: <gray>Requires cheat guide permission.</gray>
-    preferences:
-      name: <yellow>Display Preferences</yellow>
-      lore: <gray>Settings entry reserved for later.</gray>
-      todo: <gray>The settings entry is reserved for future options.</gray>
+    title: Guide Settings
+    title-item: <green>Guide Settings</green>
+    description:
+      1: <gray>Configure how this guide behaves for you.</gray>
+      2: <gray>The classic layout is the default restored experience.</gray>
+    help:
+      name: <aqua>Guide Help</aqua>
+      lore:
+        1: <gray>Shift + Right Click the guide book to open this menu.</gray>
+        2: <gray>Layout, history, and close behavior are stored per player.</gray>
+    mode:
+      name: <yellow>Guide Mode</yellow>
+      survival:
+        name: <green>Switch This Book to Survival Guide</green>
+        lore: <gray>Click to switch this book back to the survival guide.</gray>
+      cheat:
+        name: <red>Switch This Book to Cheat Guide</red>
+        lore: <gray>Click to switch this book to the cheat guide.</gray>
+    layout:
+      name: <yellow>Guide Layout</yellow>
+      classic: <gray>Current: SFX. Click to switch to the restored classic layout.</gray>
+      sfx: <gray>Current: classic. Click to switch to the expanded SFX layout.</gray>
+    history:
+      name: <yellow>Nested Recipe History</yellow>
+      enabled: <green>Enabled</green>
+      disabled: <red>Disabled</red>
+      lore: <gray>When enabled, opening a recipe from another recipe remembers the previous page.</gray>
+    close-behavior:
+      name: <yellow>Esc / E Behavior</yellow>
+      enabled: <green>Esc / E returns to the previous guide page</green>
+      disabled: <red>Esc / E closes the guide immediately</red>
+      lore: <gray>This only affects guide menus.</gray>
+    fireworks:
+      name: <yellow>Research Fireworks</yellow>
+      lore: <gray>Reserved for the future research system. This matches classic guide settings.</gray>
+    unlock-animation:
+      name: <yellow>Unlock Animation</yellow>
+      lore: <gray>Reserved for the future research system. This matches classic guide settings.</gray>
+    current-layout:
+      name: <aqua>Current Layout</aqua>
+      classic: <gray>Classic layout is active.</gray>
+      sfx: <gray>SFX layout is active.</gray>
+      mode: <gray>Guide mode: {mode}</gray>
+    toggle:
+      enabled: <green>Enabled</green>
+      disabled: <red>Disabled</red>
   cheat:
     machine-pack: '<red>Cheat: click to receive a deploy pack</red>'
     machine-kit: <red>Shift click to receive the full structure kit</red>
@@ -61,10 +96,13 @@ guide:
   actions:
     open-category: <gray>Click to open category</gray>
     open-recipe: <gray>Click to view recipe</gray>
+    open-machine: <gray>Click to open this machine in the guide</gray>
+    open-vanilla-recipe: <gray>Click to view vanilla recipes</gray>
     back-guide: Back to Guide
     back-main: Back to Main Menu
     back-category: Back to Category
     close: <dark_gray>Click to close.</dark_gray>
+    close-menu: <red>Close</red>
     settings:
       name: <yellow>Guide Settings</yellow>
       lore: <gray>You can also Shift + Right Click the guide book.</gray>
@@ -74,10 +112,27 @@ guide:
       todo: <gray>The search entry is reserved for a future chat search page.</gray>
   recipe:
     title: Recipe Details
+    multiblock:
+      name: <gold>Multiblock Machine</gold>
+      lore:
+        1: <gray>This recipe is crafted in a multiblock machine.</gray>
+        2: <gray>Build the structure in the world, then interact with its trigger block.</gray>
     output: <green>Output</green>
     output-short: <green>Output</green>
+    amount: 'Amount: '
     structure: Multiblock Structure
     page: <gray>Recipe {current} / {total}</gray>
+    alternative-source: <gray>Click to open this recipe source.</gray>
+    alternative-source-group: <gray>Also available in:</gray>
+    vanilla:
+      disabled: <dark_gray>Vanilla recipe lookup is disabled.</dark_gray>
+      crafting: Crafting Table
+      stonecutting: Stonecutter
+      smithing: Smithing Table
+      furnace: Furnace
+      blasting: Blast Furnace
+      smoking: Smoker
+      campfire: Campfire
     no-recipe:
       name: <red>No Recipe</red>
       lore: <gray>This item currently only exists as a registry or system entry.</gray>
@@ -3202,3 +3257,32 @@ materials:
   piston: 活塞
   iron_bars: 铁栏杆
   cauldron: 炼药锅
+messages:
+  tape-measure:
+    no-anchor: '&cYou need to set an anchor before you can start to measure!'
+    wrong-world: '&cYour anchor seems to be in a different world!'
+    distance: '&7Measurement taken. &eDistance: {distance}'
+    anchor-set: '&aSuccessfully set the anchor:&e {anchor}'
+  climbing-pick:
+    dual-wielding: '&4You need to hold Climbing Picks in both hands to use them!'
+    wrong-material: '&cYou cannot climb this surface. Check your Slimefun Guide for more info!'
+    wrong-face: '&cYou need to click the side of a wall to climb.'
+    no-surface: '&cAim at a wall to use your Climbing Picks.'
+  diet-cookie: '&eYou are starting to feel very light...'
+  fortune-cookie:
+    - '&7Help me, I am trapped in a Fortune Cookie Factory!'
+    - '&7You will die tomorrow...     by a Creeper'
+    - '&7At some point in your Life something bad will happen!!!'
+    - '&7Next week you will notice that this is not the real world, you are in a computer game'
+    - '&7This cookie will taste good in a few seconds'
+    - '&7The last word you will hear is gonna be "EXTERMINATE!!!"'
+    - '&7Whatever you do, do not hug a Creeper... I tried it. It feels good, but it''s not worth it.'
+    - '&742. The answer is 42.'
+    - '&7A Walshy a day will keep the troubles away.'
+    - '&7Never dig straight down!'
+    - '&7Tis but a flesh wound!'
+    - '&7Always look on the bright side of life!'
+    - '&7This one was actually a Biscuit and not a Cookie'
+    - '&7Neon signs are LIT!'
+  pickaxe-of-the-seeker:
+    no-ores: '&cCannot find any nearby ores!'

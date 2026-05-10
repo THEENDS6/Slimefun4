@@ -24,6 +24,8 @@ final class LegacySfGuideResolver {
     private static final Map<String, SfxItemCategory> VIRTUAL_CATEGORIES = createVirtualCategories();
     private static final Map<String, String> EXACT_CATEGORY_BY_ITEM = createExactCategoryByItem();
     private static final Map<String, String> SOURCE_CATEGORY_FALLBACKS = createSourceCategoryFallbacks();
+    private static final Map<String, Integer> CLASSIC_ITEM_ORDER = createClassicItemOrder();
+    private static final Map<String, Integer> CLASSIC_ITEM_ORDER_OVERRIDES = createClassicItemOrderOverrides();
 
     private LegacySfGuideResolver() {
     }
@@ -46,7 +48,9 @@ final class LegacySfGuideResolver {
                 categories.add(category);
             }
         }
-        categories.sort(Comparator.comparingInt(SfxItemCategory::order).thenComparing(SfxItemCategory::id));
+        categories.sort(Comparator
+                .comparingInt(LegacySfGuideResolver::categoryOrder)
+                .thenComparing(SfxItemCategory::id));
         return categories;
     }
 
@@ -66,7 +70,33 @@ final class LegacySfGuideResolver {
                 .filter(item -> !item.hidden())
                 .filter(LegacySfGuideResolver::isLegacySlimefunItem)
                 .filter(item -> categoryId.equals(resolveLegacyGuideCategory(item)))
+                .sorted(Comparator
+                        .comparingInt((SfxItemDefinition item) -> itemOrder(item))
+                        .thenComparingInt(SfxItemDefinition::order)
+                        .thenComparing(SfxItemDefinition::id))
                 .toList();
+    }
+
+    private static int itemOrder(SfxItemDefinition item) {
+        if (item.order() != SfxItemDefinition.DEFAULT_ORDER) {
+            return item.order();
+        }
+        Integer overridden = CLASSIC_ITEM_ORDER_OVERRIDES.get(item.id());
+        if (overridden != null) {
+            return overridden;
+        }
+        int fallback = CLASSIC_ITEM_ORDER.getOrDefault(item.id(), SfxItemDefinition.DEFAULT_ORDER);
+        if (fallback == SfxItemDefinition.DEFAULT_ORDER) {
+            return fallback;
+        }
+        return 100_000 + fallback;
+    }
+
+    private static int categoryOrder(SfxItemCategory category) {
+        if (VIRTUAL_CATEGORIES.containsKey(category.id())) {
+            return category.order();
+        }
+        return 10_000 + category.order();
     }
 
     private static boolean isLegacySlimefunItem(SfxItemDefinition item) {
@@ -704,31 +734,72 @@ final class LegacySfGuideResolver {
 
     private static Map<String, SfxItemCategory> createVirtualCategories() {
         Map<String, SfxItemCategory> map = new LinkedHashMap<>();
-        map.put("guide:sf:weapons", category("guide:sf:weapons", "&7Weapons", icon(Material.STICK, "&7Grandmas Walking Stick", null, null), 1070));
-        map.put("guide:sf:tools", category("guide:sf:tools", "&7Tools", icon(Material.DIAMOND_PICKAXE, "&6Smelter's Pickaxe", null, null), 1080));
-        map.put("guide:sf:useful_items", category("guide:sf:useful_items", "&7Useful Items", icon(Material.PLAYER_HEAD, "&eBackpack", "2a3b34862b9afb63cf8d5779966d3fba70af82b04e83f3eaf6449aeba", null), 1000));
-        map.put("guide:sf:basic_machines", category("guide:sf:basic_machines", "&7Basic Machines", icon(Material.CRAFTING_TABLE, "&eEnhanced Crafting Table", null, null), 1010));
-        map.put("guide:sf:food", category("guide:sf:food", "&7Food", icon(Material.COOKIE, "&6Fortune Cookie", null, null), 1060));
-        map.put("guide:sf:armor", category("guide:sf:armor", "&7Armor", icon(Material.IRON_CHESTPLATE, "&bWatered Steel Chestplate", null, null), 1090));
-        map.put("guide:sf:magical_items", category("guide:sf:magical_items", "&7Magical Items", icon(Material.ENDER_EYE, "&5Ender Rune", null, null), 1040));
-        map.put("guide:sf:talismans", category("guide:sf:talismans", "&7Talismans - &aTier I", icon(Material.EMERALD, "&7Common Talisman", null, null), 1020));
-        map.put("guide:sf:ender_talismans", category("guide:sf:ender_talismans", "&7Talismans - &5Tier II", icon(Material.ENDER_EYE, "&5Ender Talisman", null, null), 1030));
-        map.put("guide:sf:magical_gadgets", category("guide:sf:magical_gadgets", "&7Magical Gadgets", icon(Material.ELYTRA, "&5Infused Elytra", null, null), 1070));
-        map.put("guide:sf:magical_armor", category("guide:sf:magical_armor", "&7Magical Armor", icon(Material.DIAMOND_HELMET, "&5Ender Helmet", null, null), 1080));
+        map.put("guide:sf:weapons", category("guide:sf:weapons", "&7Weapons", icon(Material.STICK, "&7Grandmas Walking Stick", null, null), 1000));
+        map.put("guide:sf:useful_items", category("guide:sf:useful_items", "&7Useful Items", icon(Material.PLAYER_HEAD, "&eBackpack", "2a3b34862b9afb63cf8d5779966d3fba70af82b04e83f3eaf6449aeba", null), 1010));
+        map.put("guide:sf:basic_machines", category("guide:sf:basic_machines", "&7Basic Machines", icon(Material.CRAFTING_TABLE, "&eEnhanced Crafting Table", null, null), 1020));
+        map.put("guide:sf:tools", category("guide:sf:tools", "&7Tools", icon(Material.DIAMOND_PICKAXE, "&6Smelter's Pickaxe", null, null), 1030));
+        map.put("guide:sf:resources", category("guide:sf:resources", "&7Resources", icon(Material.PLAYER_HEAD, "&bSynthetic Sapphire", "e35032f4d7d01de8ec99d89f8723012d4e74fa73022c4facf1b57c7ff6ff0", null), 1040));
+        map.put("guide:sf:food", category("guide:sf:food", "&7Food", icon(Material.COOKIE, "&6Fortune Cookie", null, null), 1050));
+        map.put("guide:sf:magical_items", category("guide:sf:magical_items", "&7Magical Items", icon(Material.ENDER_EYE, "&5Ender Rune", null, null), 1060));
+        map.put("guide:sf:magical_armor", category("guide:sf:magical_armor", "&7Magical Armor", icon(Material.DIAMOND_HELMET, "&5Ender Helmet", null, null), 1070));
+        map.put("guide:sf:technical_components", category("guide:sf:technical_components", "&7Technical Components", icon(Material.BLAZE_POWDER, "&6Heating Coil", null, null), 1080));
         map.put("guide:sf:misc", category("guide:sf:misc", "&7Miscellaneous", icon(Material.BUCKET, "&7Tin Can", null, null), 1090));
-        map.put("guide:sf:technical_components", category("guide:sf:technical_components", "&7Technical Components", icon(Material.BLAZE_POWDER, "&6Heating Coil", null, null), 1100));
-        map.put("guide:sf:technical_gadgets", category("guide:sf:technical_gadgets", "&7Technical Gadgets", icon(Material.LEATHER_CHESTPLATE, "&9Electric Jetpack &7- &eIV", null, 0x9D9D97), 1110));
-        map.put("guide:sf:resources", category("guide:sf:resources", "&7Resources", icon(Material.PLAYER_HEAD, "&bSynthetic Sapphire", "e35032f4d7d01de8ec99d89f8723012d4e74fa73022c4facf1b57c7ff6ff0", null), 1120));
-        map.put("guide:sf:electricity", category("guide:sf:electricity", "&bEnergy and Electricity", icon(Material.PLAYER_HEAD, "&2Nuclear Reactor", "fa5de0bc2bfb5cc2d23eb72f96402ada479524dd0de404bc23b6dacee3ffd080", null), 1130));
-        map.put("guide:sf:androids", category("guide:sf:androids", "&cProgrammable Androids", icon(Material.PLAYER_HEAD, "&cProgrammable Android", "3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba", null), 1140));
-        map.put("guide:sf:cargo", category("guide:sf:cargo", "&cCargo Management", icon(Material.PLAYER_HEAD, "&6Cargo Manager", "e510bc85362a130a6ff9d91ff11d6fa46d7d1912a3431f751558ef3c4d9c2", null), 1150));
+        map.put("guide:sf:armor", category("guide:sf:armor", "&7Armor", icon(Material.IRON_CHESTPLATE, "&bWatered Steel Chestplate", null, null), 1100));
+        map.put("guide:sf:talismans", category("guide:sf:talismans", "&7Talismans - &aTier I", icon(Material.EMERALD, "&7Common Talisman", null, null), 1110));
+        map.put("guide:sf:magical_gadgets", category("guide:sf:magical_gadgets", "&7Magical Gadgets", icon(Material.ELYTRA, "&5Infused Elytra", null, null), 1120));
+        map.put("guide:sf:technical_gadgets", category("guide:sf:technical_gadgets", "&7Technical Gadgets", icon(Material.LEATHER_CHESTPLATE, "&9Electric Jetpack &7- &eIV", null, 0x9D9D97), 1130));
+        map.put("guide:sf:ender_talismans", category("guide:sf:ender_talismans", "&7Talismans - &5Tier II", icon(Material.ENDER_EYE, "&5Ender Talisman", null, null), 1140));
+        map.put("guide:sf:electricity", category("guide:sf:electricity", "&bEnergy and Electricity", icon(Material.PLAYER_HEAD, "&2Nuclear Reactor", "fa5de0bc2bfb5cc2d23eb72f96402ada479524dd0de404bc23b6dacee3ffd080", null), 1150));
         map.put("guide:sf:gps", category("guide:sf:gps", "&bGPS-based Machines", icon(Material.PLAYER_HEAD, "&bGPS Transmitter", "b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f", null), 1160));
-        map.put("guide:sf:christmas", category("guide:sf:christmas", "&cChristmas", icon(Material.PLAYER_HEAD, "&cChristmas", "215ba31cde2671b8f176de6a9ffd008035f0590d63ee240be6e8921cd2037a45", null), 1170));
-        map.put("guide:sf:valentines_day", category("guide:sf:valentines_day", "&dValentine's Day", icon(Material.PLAYER_HEAD, "&dValentine's Day", "55d89431d14bfef2060461b4a3565614dc51115c001fae2508e8684bc0ae6a80", null), 1180));
-        map.put("guide:sf:easter", category("guide:sf:easter", "&6Easter", icon(Material.PLAYER_HEAD, "&fEaster Egg", "b2cd5df9d7f1fa8341fcce2f3c118e2f517e4d2d99df2c51d61d93ed7f83e13", null), 1190));
-        map.put("guide:sf:birthday", category("guide:sf:birthday", "&a&lTheBusyBiscuit's Birthday", icon(Material.FIREWORK_ROCKET, "&bBirthday Cake", null, null), 1200));
-        map.put("guide:sf:halloween", category("guide:sf:halloween", "&6&lHalloween", icon(Material.JACK_O_LANTERN, "&6&lHalloween", null, null), 1210));
+        map.put("guide:sf:androids", category("guide:sf:androids", "&cProgrammable Androids", icon(Material.PLAYER_HEAD, "&cProgrammable Android", "3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba", null), 1170));
+        map.put("guide:sf:cargo", category("guide:sf:cargo", "&cCargo Management", icon(Material.PLAYER_HEAD, "&6Cargo Manager", "e510bc85362a130a6ff9d91ff11d6fa46d7d1912a3431f751558ef3c4d9c2", null), 1180));
+        map.put("guide:sf:christmas", category("guide:sf:christmas", "&cChristmas", icon(Material.PLAYER_HEAD, "&cChristmas", "215ba31cde2671b8f176de6a9ffd008035f0590d63ee240be6e8921cd2037a45", null), 1190));
+        map.put("guide:sf:valentines_day", category("guide:sf:valentines_day", "&dValentine's Day", icon(Material.PLAYER_HEAD, "&dValentine's Day", "55d89431d14bfef2060461b4a3565614dc51115c001fae2508e8684bc0ae6a80", null), 1200));
+        map.put("guide:sf:easter", category("guide:sf:easter", "&6Easter", icon(Material.PLAYER_HEAD, "&fEaster Egg", "b2cd5df9d7f1fa8341fcce2f3c118e2f517e4d2d99df2c51d61d93ed7f83e13", null), 1210));
+        map.put("guide:sf:birthday", category("guide:sf:birthday", "&a&lTheBusyBiscuit's Birthday", icon(Material.FIREWORK_ROCKET, "&bBirthday Cake", null, null), 1220));
+        map.put("guide:sf:halloween", category("guide:sf:halloween", "&6&lHalloween", icon(Material.JACK_O_LANTERN, "&6&lHalloween", null, null), 1230));
         return Collections.unmodifiableMap(map);
+    }
+
+    private static Map<String, Integer> createClassicItemOrder() {
+        Map<String, Integer> byItem = new LinkedHashMap<>();
+        Map<String, Integer> nextByCategory = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : EXACT_CATEGORY_BY_ITEM.entrySet()) {
+            int next = nextByCategory.merge(entry.getValue(), 10, Integer::sum);
+            byItem.put(entry.getKey(), next);
+        }
+        return Collections.unmodifiableMap(byItem);
+    }
+
+    private static Map<String, Integer> createClassicItemOrderOverrides() {
+        Map<String, Integer> map = new LinkedHashMap<>();
+        int order = 10;
+        order = putRange(map, order, "sf:energy_regulator", "sf:energy_connector");
+        order = putRange(map, order, "sf:small_capacitor", "sf:medium_capacitor", "sf:big_capacitor", "sf:large_capacitor", "sf:carbonado_edged_capacitor", "sf:energized_capacitor");
+        order = putRange(map, order, "sf:solar_generator", "sf:solar_generator_2", "sf:solar_generator_3", "sf:solar_generator_4");
+        order = putRange(map, order, "sf:charging_bench");
+        order = putRange(map, order, "sf:electric_furnace", "sf:electric_furnace_2", "sf:electric_furnace_3");
+        order = putRange(map, order, "sf:electric_gold_pan", "sf:electric_gold_pan_2", "sf:electric_gold_pan_3");
+        order = putRange(map, order, "sf:electric_dust_washer", "sf:electric_dust_washer_2", "sf:electric_dust_washer_3");
+        order = putRange(map, order, "sf:electric_ingot_factory", "sf:electric_ingot_factory_2", "sf:electric_ingot_factory_3");
+        order = putRange(map, order, "sf:electrified_crucible", "sf:electrified_crucible_2", "sf:electrified_crucible_3");
+        order = putRange(map, order, "sf:electric_ore_grinder", "sf:electric_ore_grinder_2", "sf:electric_ore_grinder_3");
+        order = putRange(map, order, "sf:electric_ingot_pulverizer");
+        order = putRange(map, order, "sf:heated_pressure_chamber", "sf:heated_pressure_chamber_2");
+        order = putRange(map, order, "sf:electric_smeltery", "sf:electric_smeltery_2");
+        order = putRange(map, order, "sf:electric_press", "sf:electric_press_2");
+        order = putRange(map, order, "sf:refinery", "sf:combustion_reactor", "sf:nuclear_reactor", "sf:magnesium_generator");
+        order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:bio_reactor");
+        return Collections.unmodifiableMap(map);
+    }
+
+    private static int putRange(Map<String, Integer> map, int start, String... itemIds) {
+        int order = start;
+        for (String itemId : itemIds) {
+            map.put(itemId, order);
+            order += 10;
+        }
+        return order;
     }
 
     private static SfxItemCategory category(String id, String legacyName, ItemStack icon, int order) {

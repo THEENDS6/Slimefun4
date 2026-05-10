@@ -12,6 +12,7 @@ public final class SfxMenu {
     private final Map<Integer, SfxMenuButton> buttons;
     private final boolean cancelPlayerClicks;
     private final Consumer<org.bukkit.entity.Player> closeHandler;
+    private final boolean restorePreviousOnClose;
 
     private SfxMenu(Builder builder) {
         this.rows = builder.rows;
@@ -19,6 +20,7 @@ public final class SfxMenu {
         this.buttons = Collections.unmodifiableMap(new HashMap<>(builder.buttons));
         this.cancelPlayerClicks = builder.cancelPlayerClicks;
         this.closeHandler = builder.closeHandler;
+        this.restorePreviousOnClose = builder.restorePreviousOnClose;
     }
 
     public int rows() {
@@ -41,6 +43,10 @@ public final class SfxMenu {
         return closeHandler;
     }
 
+    public boolean restorePreviousOnClose() {
+        return restorePreviousOnClose;
+    }
+
     public static Builder builder(Component title) {
         return new Builder(title);
     }
@@ -51,6 +57,7 @@ public final class SfxMenu {
         private final Map<Integer, SfxMenuButton> buttons = new HashMap<>();
         private boolean cancelPlayerClicks = true;
         private Consumer<org.bukkit.entity.Player> closeHandler;
+        private boolean restorePreviousOnClose;
 
         private Builder(Component title) {
             this.title = title;
@@ -76,6 +83,11 @@ public final class SfxMenu {
 
         public Builder onClose(Consumer<org.bukkit.entity.Player> closeHandler) {
             this.closeHandler = closeHandler;
+            return this;
+        }
+
+        public Builder restorePreviousOnClose(boolean restorePreviousOnClose) {
+            this.restorePreviousOnClose = restorePreviousOnClose;
             return this;
         }
 

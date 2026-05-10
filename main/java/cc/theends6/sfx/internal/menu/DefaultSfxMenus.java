@@ -7,6 +7,8 @@ import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
@@ -21,28 +23,68 @@ import org.bukkit.inventory.InventoryHolder;
 public final class DefaultSfxMenus implements SfxMenus {
     private final SfxRuntime runtime;
     private final Map<UUID, Session> sessions = new ConcurrentHashMap<>();
+    private final java.util.Set<UUID> suppressedRestore = ConcurrentHashMap.newKeySet();
 
     public DefaultSfxMenus(SfxRuntime runtime) {
         this.runtime = runtime;
     }
 
     @Override
+    public void openRoot(Player player, SfxMenu menu) {
+        runtime.executeForPlayer(player, () -> openInternal(player, menu, new ArrayDeque<>()));
+    }
+
+    @Override
     public void open(Player player, SfxMenu menu) {
         runtime.executeForPlayer(player, () -> {
-            SfxMenuHolder holder = new SfxMenuHolder(player.getUniqueId());
-            Inventory inventory = Bukkit.createInventory(holder, menu.rows() * 9, menu.title());
-            holder.bind(inventory);
-            for (Map.Entry<Integer, SfxMenuButton> entry : menu.buttons().entrySet()) {
-                inventory.setItem(entry.getKey(), entry.getValue().icon());
-            }
-            sessions.put(player.getUniqueId(), new Session(menu, inventory));
-            player.openInventory(inventory);
+            Session previous = sessions.get(player.getUniqueId());
+            Deque<SfxMenu> history = copyHistory(previous);
+            pushCurrent(previous, history);
+            openInternal(player, menu, history);
         });
     }
 
     @Override
+    public void replace(Player player, SfxMenu menu) {
+        runtime.executeForPlayer(player, () -> {
+            Session previous = sessions.get(player.getUniqueId());
+            Deque<SfxMenu> history = copyHistory(previous);
+            openInternal(player, menu, history);
+        });
+    }
+
+    private void openInternal(Player player, SfxMenu menu, Deque<SfxMenu> history) {
+        SfxMenuHolder holder = new SfxMenuHolder(player.getUniqueId());
+        Inventory inventory = Bukkit.createInventory(holder, menu.rows() * 9, menu.title());
+        holder.bind(inventory);
+        for (Map.Entry<Integer, SfxMenuButton> entry : menu.buttons().entrySet()) {
+            inventory.setItem(entry.getKey(), entry.getValue().icon());
+        }
+        sessions.put(player.getUniqueId(), new Session(menu, inventory, history));
+        player.openInventory(inventory);
+    }
+
+    @Override
     public void close(Player player) {
-        runtime.executeForPlayer(player, player::closeInventory);
+        close(player, false);
+    }
+
+    @Override
+    public void close(Player player, boolean restoreHistory) {
+        runtime.executeForPlayer(player, () -> {
+            UUID playerId = player.getUniqueId();
+            if (!restoreHistory) {
+                suppressedRestore.add(playerId);
+                sessions.remove(playerId);
+            }
+            player.closeInventory();
+        });
+    }
+
+    @Override
+    public boolean hasHistory(Player player) {
+        Session session = sessions.get(player.getUniqueId());
+        return session != null && !session.history().isEmpty();
     }
 
     @Override
@@ -119,17 +161,41 @@ public final class DefaultSfxMenus implements SfxMenus {
     public void onClose(InventoryCloseEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof SfxMenuHolder menuHolder) {
-            Session session = sessions.get(menuHolder.viewerId());
+            if (!(event.getPlayer() instanceof Player player)) {
+                return;
+            }
+            UUID playerId = menuHolder.viewerId();
+            if (suppressedRestore.remove(playerId)) {
+                sessions.remove(playerId);
+                return;
+            }
+            Session session = sessions.get(playerId);
             if (session == null || !session.inventory().equals(event.getInventory())) {
                 return;
             }
-            sessions.remove(menuHolder.viewerId());
-            if (session.menu().closeHandler() != null && event.getPlayer() instanceof Player player) {
+            sessions.remove(playerId);
+            if (session.menu().closeHandler() != null) {
                 session.menu().closeHandler().accept(player);
             }
+            if (!session.menu().restorePreviousOnClose() || session.history().isEmpty()) {
+                return;
+            }
+            SfxMenu previous = session.history().pop();
+            Deque<SfxMenu> remaining = new ArrayDeque<>(session.history());
+            runtime.executeForPlayer(player, () -> openInternal(player, previous, remaining));
         }
     }
 
-    private record Session(SfxMenu menu, Inventory inventory) {
+    private Deque<SfxMenu> copyHistory(Session previous) {
+        return previous == null ? new ArrayDeque<>() : new ArrayDeque<>(previous.history());
+    }
+
+    private void pushCurrent(Session previous, Deque<SfxMenu> history) {
+        if (previous != null) {
+            history.push(previous.menu());
+        }
+    }
+
+    private record Session(SfxMenu menu, Inventory inventory, Deque<SfxMenu> history) {
     }
 }

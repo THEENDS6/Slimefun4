@@ -27,30 +27,37 @@ guide:
     no-settings: <red>你没有打开科技书设置的权限。</red>
     missing-category: <red>这个 SFX 分类不存在。</red>
     missing-item: <red>这个 SFX 物品不存在。</red>
-    no-cheat-access: <red>你没有使用作弊科技书的权限，或该物品不可直接获取。</red>
+    no-cheat-access: <red>你没有使用作弊科技书获取该物品的权限。</red>
   mode:
     survival:
       title: <dark_green>粘液科技书</dark_green>
       name: <dark_green>粘液科技书</dark_green>
-      lore: <gray>点击物品会查看配方。</gray>
+      lore: <gray>点击物品可查看配方。</gray>
     cheat:
       title: <dark_red>粘液作弊书</dark_red>
       name: <dark_red>粘液作弊书</dark_red>
-      lore: <gray>点击物品会直接获取。</gray>
+      lore: <gray>点击物品可直接获取。</gray>
   main:
     title: 主菜单
   settings:
-    title: 设置
-    open-survival:
-      name: <green>打开普通科技书</green>
-      lore: <gray>经典科技书入口。</gray>
-    open-cheat:
-      name: <red>打开作弊科技书</red>
-      lore: <gray>需要作弊科技书权限。</gray>
-    preferences:
-      name: <yellow>显示偏好</yellow>
-      lore: <gray>当前保留设置入口。</gray>
-      todo: <gray>科技书设置入口已保留，后续再补详细选项。</gray>
+    title: 科技书设置
+    mode:
+      survival:
+        name: <green>将这本书切换为生存科技书</green>
+        lore: <gray>把当前科技书切回经典生存模式。</gray>
+      cheat:
+        name: <red>将这本书切换为作弊科技书</red>
+        lore: <gray>把当前科技书切换为整本作弊模式。</gray>
+    history:
+      name: <yellow>递归配方回溯</yellow>
+      enabled: <green>已启用</green>
+      disabled: <red>已禁用</red>
+      lore: <gray>启用后，从配方中继续查看配方会记录上一级页面。</gray>
+    close-behavior:
+      name: <yellow>Esc / E 关闭行为</yellow>
+      enabled: <green>Esc / E 返回上一层科技书页面</green>
+      disabled: <red>Esc / E 直接关闭科技书</red>
+      lore: <gray>此设置只影响科技书菜单。</gray>
   cheat:
     machine-pack: <red>作弊模式：点击获取部署包</red>
     machine-kit: <red>按住 Shift 点击获取整套机器材料</red>
@@ -65,11 +72,11 @@ guide:
     close: <dark_gray>点击关闭。</dark_gray>
     settings:
       name: <yellow>科技书设置</yellow>
-      lore: <gray>也可以 按住 Shift + 右键科技书打开。</gray>
+      lore: <gray>也可以按住 Shift + 右键科技书打开。</gray>
     search:
       name: <yellow>搜索</yellow>
-      lore: <gray>搜索入口已预留。</gray>
-      todo: <gray>搜索入口已预留，后续补聊天搜索结果页。</gray>
+      lore: <gray>搜索入口暂未开放。</gray>
+      todo: <gray>后续会补聊天搜索和结果页面。</gray>
   recipe:
     title: 配方详情
     output: <green>目标产物</green>
@@ -78,7 +85,7 @@ guide:
     page: <gray>当前配方 {current} / {total}</gray>
     no-recipe:
       name: <red>暂无配方</red>
-      lore: <gray>这个物品目前只是注册表样品或系统物品。</gray>
+      lore: <gray>这个物品目前只有注册数据，还没有可展示的配方。</gray>
   pagination:
     prev:
       active: <yellow>上一页</yellow>
@@ -92,7 +99,7 @@ guide:
     dispenser-down: <yellow>发射器</yellow> <gray>(朝下)</gray>
     ignition:
       name: <gold>打火石</gold>
-      lore: <gray>用于点燃该多方块机器。</gray>
+      lore: <gray>用于点燃这个多方块机器。</gray>
 items:
   sfx.guide:
     name: <green>粘液科技书</green>
@@ -3286,6 +3293,127 @@ categories:
     name: '&a&lTheBusyBiscuit 的生日'
   guide.sf.halloween:
     name: '&6&l万圣节'
+guide:
+  errors:
+    no-open: <red>你没有打开这本科技书的权限。</red>
+    no-settings: <red>你没有打开科技书设置的权限。</red>
+    missing-category: <red>这个分类不存在。</red>
+    missing-item: <red>这个物品不存在。</red>
+    no-cheat-access: <red>你不能通过作弊科技书获取这个物品。</red>
+  mode:
+    survival:
+      title: <dark_green>粘液科技书</dark_green>
+      name: <dark_green>粘液科技书</dark_green>
+      lore: <gray>点击物品查看配方。</gray>
+    cheat:
+      title: <dark_red>粘液作弊书</dark_red>
+      name: <dark_red>粘液作弊书</dark_red>
+      lore: <gray>点击物品直接获取。</gray>
+  main:
+    title: 主菜单
+  settings:
+    title: 科技书设置
+    title-item: <green>科技书设置</green>
+    description:
+      1: <gray>在这里调整科技书对你的显示和交互方式。</gray>
+      2: <gray>经典布局是当前默认的还原模式。</gray>
+    help:
+      name: <aqua>使用说明</aqua>
+      lore:
+        1: <gray>按住 Shift 再右键科技书即可打开设置。</gray>
+        2: <gray>布局、历史记录和关闭行为都会按玩家保存。</gray>
+    mode:
+      survival:
+        name: <green>将这本书切换为生存科技书</green>
+        lore: <gray>把当前科技书切回普通生存模式。</gray>
+      cheat:
+        name: <red>将这本书切换为作弊科技书</red>
+        lore: <gray>把当前科技书切换为完整作弊模式。</gray>
+    layout:
+      name: <yellow>界面布局</yellow>
+      classic: <gray>切换到经典还原布局。</gray>
+      sfx: <gray>切换到扩展版 SFX 布局。</gray>
+    history:
+      name: <yellow>递归配方回溯</yellow>
+      enabled: <green>已启用</green>
+      disabled: <red>已禁用</red>
+      lore: <gray>从一个配方继续点进另一个配方时，是否记录上一级页面。</gray>
+    close-behavior:
+      name: <yellow>Esc / E 关闭行为</yellow>
+      enabled: <green>Esc / E 返回上一层科技书页面</green>
+      disabled: <red>Esc / E 直接关闭科技书</red>
+      lore: <gray>这个设置只影响科技书菜单。</gray>
+    fireworks:
+      name: <yellow>研究烟花</yellow>
+      lore: <gray>为后续研究系统预留，和经典科技书设置保持一致。</gray>
+    unlock-animation:
+      name: <yellow>解锁动画</yellow>
+      lore: <gray>为后续研究系统预留，和经典科技书设置保持一致。</gray>
+    current-layout:
+      name: <aqua>当前布局</aqua>
+      classic: <gray>当前正在使用经典布局。</gray>
+      sfx: <gray>当前正在使用 SFX 扩展布局。</gray>
+      mode: <gray>当前书本模式：{mode}</gray>
+    toggle:
+      enabled: <green>已启用</green>
+      disabled: <red>已禁用</red>
+  cheat:
+    machine-pack: <red>作弊模式：点击获取部署包</red>
+    machine-kit: <red>按住 Shift 点击获取整套机器材料</red>
+    take-one: <red>作弊模式：点击获取 1 个</red>
+    take-stack: <red>按住 Shift 点击获取 64 个</red>
+  actions:
+    open-category: <gray>点击打开分类</gray>
+    open-recipe: <gray>点击查看配方</gray>
+    open-machine: <gray>点击打开这台机器的科技书页面</gray>
+    open-vanilla-recipe: <gray>点击查看原版配方</gray>
+    back-guide: 返回科技书
+    back-main: 返回主菜单
+    back-category: 返回分类
+    close: <dark_gray>点击关闭。</dark_gray>
+    close-menu: <red>关闭</red>
+    settings:
+      name: <yellow>科技书设置</yellow>
+      lore: <gray>也可以按住 Shift + 右键科技书打开。</gray>
+    search:
+      name: <yellow>搜索</yellow>
+      lore: <gray>搜索入口暂未开放。</gray>
+      todo: <gray>后续会补聊天搜索和结果页面。</gray>
+  recipe:
+    title: 配方详情
+    output: <green>目标产物</green>
+    output-short: <green>产物</green>
+    amount: '数量：'
+    structure: 多方块结构
+    page: <gray>当前配方 {current} / {total}</gray>
+    alternative-source: <gray>点击打开这个来源的配方。</gray>
+    alternative-source-group: <gray>也可由以下来源完成：</gray>
+    vanilla:
+      disabled: <dark_gray>原版配方查询已被禁用。</dark_gray>
+      crafting: 工作台
+      stonecutting: 切石机
+      smithing: 锻造台
+      furnace: 熔炉
+      blasting: 高炉
+      smoking: 烟熏炉
+      campfire: 营火
+    no-recipe:
+      name: <red>暂无配方</red>
+      lore: <gray>这个物品当前只有注册数据，还没有可展示的配方。</gray>
+  pagination:
+    prev:
+      active: <yellow>上一页</yellow>
+      inactive: <dark_gray>上一页</dark_gray>
+    next:
+      active: <yellow>下一页</yellow>
+      inactive: <dark_gray>下一页</dark_gray>
+    page: <gray>页码 {current} / {total}</gray>
+  structure:
+    dispenser-up: <yellow>发射器</yellow> <gray>(朝上)</gray>
+    dispenser-down: <yellow>发射器</yellow> <gray>(朝下)</gray>
+    ignition:
+      name: <gold>打火石</gold>
+      lore: <gray>用于点燃这个多方块机器。</gray>
 recipes: {}
 materials:
   crafting_table: 工作台
@@ -3295,3 +3423,32 @@ materials:
   piston: 活塞
   iron_bars: 铁栏杆
   cauldron: 炼药锅
+messages:
+  tape-measure:
+    no-anchor: '&c在开始测量之前请先设置一个锚点！'
+    wrong-world: '&c你设置的锚点似乎在另一个世界。'
+    distance: '&7测量完成。 &e距离: {distance}'
+    anchor-set: '&a已成功设置锚点：&e {anchor}'
+  climbing-pick:
+    dual-wielding: '&4你需要双手都拿着攀岩镐才能使用！'
+    wrong-material: '&c你不能攀爬这个表面。请查看科技书了解详情！'
+    wrong-face: '&c你需要点击墙面的侧面才能攀爬。'
+    no-surface: '&c请对准墙面再使用攀岩镐。'
+  diet-cookie: '&e你开始感觉自己变轻了...'
+  fortune-cookie:
+    - '&7救命，我被困在幸运饼干工厂里了！'
+    - '&7你明天会死于……一只苦力怕。'
+    - '&7你的人生里总会有点坏事发生！！！'
+    - '&7下周你会发现这不是现实世界，而是一个游戏。'
+    - '&7这块饼干几秒后会变得很好吃。'
+    - '&7你最后听到的话会是“消灭！！！”'
+    - '&7无论怎样，都不要去拥抱苦力怕……我试过，感觉不错，但不值得。'
+    - '&742。答案就是 42。'
+    - '&7一天一个 Walshy，烦恼远离你。'
+    - '&7永远不要直直往下挖！'
+    - '&7这只不过是皮外伤！'
+    - '&7总要看到生活光明的一面！'
+    - '&7这其实是一块饼干，不是曲奇。'
+    - '&7霓虹灯就是要亮起来！'
+  pickaxe-of-the-seeker:
+    no-ores: '&c附近找不到任何矿石！'

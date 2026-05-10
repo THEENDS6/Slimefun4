@@ -1,0 +1,42 @@
+beheading-chances:
+  zombie: 40
+  zombie-villager: 40
+  skeleton: 40
+  creeper: 40
+  wither-skeleton: 25
+  piglin: 40
+  zombified-piglin: 40
+  player: 70
+
+tools:
+  smelters-pickaxe:
+    allow-fortune: true
+    custom-smelts:
+      raw_iron_block: iron_block
+      raw_gold_block: gold_block
+      raw_copper_block: copper_block
+
+  explosive-pickaxe:
+    allow-fortune: false
+
+  explosive-shovel:
+    allow-fortune: false
+
+  vein-mining:
+    allow-fortune: true
+    max-blocks: 16
+
+  pickaxe-of-the-seeker:
+    range: 5
+    durability-cost: 1
+
+  climbing-pick:
+    dual-wielding: true
+
+gadgets:
+  grappling-hook:
+    consume-on-use: true
+    no-fall-ticks: 60
+
+  scroll-of-dimensional-teleposition:
+    radius: 10

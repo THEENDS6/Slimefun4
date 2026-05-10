@@ -241,6 +241,7 @@ public final class BaseContentBootstrap {
         SfxItemDefinition.Builder builder = SfxItemDefinition.builder(existing.id(), existing.material(), existing.name())
                 .lore(existing.lore())
                 .category(existing.categoryId())
+                .order(existing.order())
                 .version(existing.version())
                 .hidden(existing.hidden())
                 .giveable(existing.giveable())

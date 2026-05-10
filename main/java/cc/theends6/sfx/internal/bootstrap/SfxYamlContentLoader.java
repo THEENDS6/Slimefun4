@@ -95,6 +95,11 @@ public final class SfxYamlContentLoader {
         if (entry.containsKey("category")) {
             builder.category(string(entry.get("category")));
         }
+        if (entry.containsKey("order")) {
+            builder.order(integer(entry.get("order")));
+        } else if (entry.containsKey("pos")) {
+            builder.order(integer(entry.get("pos")));
+        }
         if (entry.containsKey("version")) {
             builder.version(integer(entry.get("version")));
         }

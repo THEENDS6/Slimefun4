@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -11,6 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class Text {
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
     private static final LegacyComponentSerializer LEGACY_AMPERSAND = LegacyComponentSerializer.legacyAmpersand();
+    private static final Pattern LEGACY_FORMAT = Pattern.compile("(?i).*[&§][0-9A-FK-OR].*");
 
     private Text() {
     }
@@ -54,7 +56,14 @@ public final class Text {
 
     public static Component prefixed(JavaPlugin plugin, String message) {
         String prefix = plugin.getConfig().getString("messages.prefix", "<dark_gray>[<green>SFX</green><dark_gray>] ");
-        return mm(prefix + message);
+        return noItalic(mm(prefix).append(renderFlexible(message)));
+    }
+
+    public static Component renderFlexible(String input) {
+        if (input == null || input.isBlank()) {
+            return Component.empty();
+        }
+        return LEGACY_FORMAT.matcher(input).matches() ? legacy(input) : mm(input);
     }
 
     public static Component noItalic(Component component) {

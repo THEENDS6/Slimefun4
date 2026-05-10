@@ -10,11 +10,14 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 
 public final class SfxItemDefinition {
+    public static final int DEFAULT_ORDER = 1_000_000;
+
     private final String id;
     private final Material material;
     private final Component name;
     private final List<Component> lore;
     private final String categoryId;
+    private final int order;
     private final int version;
     private final boolean hidden;
     private final boolean giveable;
@@ -34,6 +37,7 @@ public final class SfxItemDefinition {
         this.name = Objects.requireNonNull(builder.name, "name");
         this.lore = Collections.unmodifiableList(new ArrayList<>(builder.lore));
         this.categoryId = builder.categoryId == null ? null : SfxItemCategory.normalizeId(builder.categoryId);
+        this.order = builder.order;
         this.version = Math.max(1, builder.version);
         this.hidden = builder.hidden;
         this.giveable = builder.giveable;
@@ -98,6 +102,10 @@ public final class SfxItemDefinition {
         return version;
     }
 
+    public int order() {
+        return order;
+    }
+
     public boolean hidden() {
         return hidden;
     }
@@ -148,6 +156,7 @@ public final class SfxItemDefinition {
         private final Component name;
         private final List<Component> lore = new ArrayList<>();
         private String categoryId;
+        private int order = DEFAULT_ORDER;
         private int version = 1;
         private boolean hidden;
         private boolean giveable = true;
@@ -180,6 +189,11 @@ public final class SfxItemDefinition {
 
         public Builder category(String categoryId) {
             this.categoryId = categoryId;
+            return this;
+        }
+
+        public Builder order(int order) {
+            this.order = order;
             return this;
         }
 
