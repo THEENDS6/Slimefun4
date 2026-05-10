@@ -122,6 +122,10 @@ public final class DefaultSfxGuide implements SfxGuide {
             player.sendMessage(Text.prefixed(plugin, tr("guide.errors.no-open", "<red>You do not have permission to open this guide.</red>")));
             return;
         }
+        GuidePreferences preferences = preferences(player);
+        if (preferences.reopenLastLocation() && reopenLastLocation(player, mode, preferences.lastLocation())) {
+            return;
+        }
         openMain(player, mode, 0, Navigation.ROOT);
     }
 
@@ -235,6 +239,17 @@ public final class DefaultSfxGuide implements SfxGuide {
                 }
         ));
 
+        builder.button(43, toggleButton(
+                Material.RECOVERY_COMPASS,
+                tr("guide.settings.resume-last.name", "<yellow>Resume Last Page</yellow>"),
+                tr("guide.settings.resume-last.lore", "<gray>Reopen the guide at the last page you closed.</gray>"),
+                preferences.reopenLastLocation(),
+                click -> {
+                    preferences.setReopenLastLocation(!preferences.reopenLastLocation());
+                    openSettingsView(click.player(), mode, Navigation.REPLACE);
+                }
+        ));
+
         builder.button(49, new SfxMenuButton(ItemBuilder.of(Material.NETHER_STAR)
                 .name(tr("guide.settings.current-layout.name", "<aqua>Current Layout</aqua>"))
                 .lore(
@@ -252,6 +267,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private void openMain(Player player, GuideMode mode, int page, Navigation navigation) {
+        preferences(player).setLastLocation(GuideLocation.main(mode, page));
         List<SfxItemCategory> visibleCategories = LegacySfGuideResolver.visibleCategories(registry, mode);
         int pageCount = pageCount(visibleCategories.size());
         int safePage = clampPage(page, pageCount);
@@ -275,6 +291,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private void openCategory(Player player, GuideMode mode, String categoryId, int page, Navigation navigation) {
+        preferences(player).setLastLocation(GuideLocation.category(mode, categoryId, page));
         Optional<SfxItemCategory> optionalCategory = LegacySfGuideResolver.resolveCategory(registry, categoryId);
         if (optionalCategory.isEmpty()) {
             player.sendMessage(Text.prefixed(plugin, tr("guide.errors.missing-category", "<red>This category does not exist.</red>")));
@@ -328,6 +345,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private void openRecipe(Player player, GuideMode mode, String itemId, int recipeIndex, Navigation navigation) {
+        preferences(player).setLastLocation(GuideLocation.recipe(mode, itemId, recipeIndex));
         Optional<SfxItemDefinition> optional = registry.item(itemId);
         if (optional.isEmpty()) {
             player.sendMessage(Text.prefixed(plugin, tr("guide.errors.missing-item", "<red>This item does not exist.</red>")));
@@ -356,6 +374,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private void openVanillaRecipe(Player player, GuideMode mode, Material material, int recipeIndex, Navigation navigation) {
+        preferences(player).setLastLocation(GuideLocation.vanilla(mode, material, recipeIndex));
         if (!showVanillaRecipes()) {
             return;
         }
@@ -540,7 +559,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             String sourceName = tr("guide.recipe.multiblock.name", "Multiblock Machine");
             ItemStack sourceIcon = multiblockSourceIcon();
             return new GuideRecipePage(index, GuideRecipeOrigin.SFX, resultDefinition.id(), familyKey(resultDefinition.id()), sourceName,
-                    resultDefinition.id(), sourceIcon, normalizeMatrix(recipe.matrix()), recipe.note(), recipe.outputAmount());
+                    null, sourceIcon, normalizeMatrix(recipe.matrix()), recipe.note(), recipe.outputAmount());
         }
 
         Optional<ManualMachineDefinition> machine = manualMachines.machine(recipe.recipeType());
@@ -1121,6 +1140,19 @@ public final class DefaultSfxGuide implements SfxGuide {
         return plugin.getConfig().getBoolean("guide.recipe.machine-link-enabled", true);
     }
 
+    private boolean reopenLastLocation(Player player, GuideMode mode, GuideLocation location) {
+        if (location == null || location.mode() != mode) {
+            return false;
+        }
+        switch (location.kind()) {
+            case MAIN -> openMain(player, mode, location.page(), Navigation.ROOT);
+            case CATEGORY -> openCategory(player, mode, location.categoryId(), location.page(), Navigation.ROOT);
+            case RECIPE -> openRecipe(player, mode, location.itemId(), location.recipeIndex(), Navigation.ROOT);
+            case VANILLA -> openVanillaRecipe(player, mode, location.material(), location.recipeIndex(), Navigation.ROOT);
+        }
+        return true;
+    }
+
     private void showMenu(Player player, SfxMenu.Builder builder, Navigation navigation) {
         builder.restorePreviousOnClose(preferences(player).closeReturns());
         SfxMenu menu = builder.build();
@@ -1311,6 +1343,8 @@ public final class DefaultSfxGuide implements SfxGuide {
         private boolean closeReturns;
         private boolean fireworks;
         private boolean unlockAnimation;
+        private boolean reopenLastLocation;
+        private GuideLocation lastLocation;
 
         private GuidePreferences(GuideLayout layout, boolean recordHistory, boolean closeReturns, boolean fireworks, boolean unlockAnimation) {
             this.layout = layout;
@@ -1318,6 +1352,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             this.closeReturns = closeReturns;
             this.fireworks = fireworks;
             this.unlockAnimation = unlockAnimation;
+            this.reopenLastLocation = false;
         }
 
         GuideLayout layout() {
@@ -1359,6 +1394,47 @@ public final class DefaultSfxGuide implements SfxGuide {
         void setUnlockAnimation(boolean unlockAnimation) {
             this.unlockAnimation = unlockAnimation;
         }
+
+        boolean reopenLastLocation() {
+            return reopenLastLocation;
+        }
+
+        void setReopenLastLocation(boolean reopenLastLocation) {
+            this.reopenLastLocation = reopenLastLocation;
+        }
+
+        GuideLocation lastLocation() {
+            return lastLocation;
+        }
+
+        void setLastLocation(GuideLocation lastLocation) {
+            this.lastLocation = lastLocation;
+        }
+    }
+
+    private record GuideLocation(GuideMode mode, GuideLocationKind kind, int page, String categoryId, String itemId, Material material, int recipeIndex) {
+        static GuideLocation main(GuideMode mode, int page) {
+            return new GuideLocation(mode, GuideLocationKind.MAIN, page, null, null, null, 0);
+        }
+
+        static GuideLocation category(GuideMode mode, String categoryId, int page) {
+            return new GuideLocation(mode, GuideLocationKind.CATEGORY, page, categoryId, null, null, 0);
+        }
+
+        static GuideLocation recipe(GuideMode mode, String itemId, int recipeIndex) {
+            return new GuideLocation(mode, GuideLocationKind.RECIPE, 0, null, itemId, null, recipeIndex);
+        }
+
+        static GuideLocation vanilla(GuideMode mode, Material material, int recipeIndex) {
+            return new GuideLocation(mode, GuideLocationKind.VANILLA, 0, null, null, material, recipeIndex);
+        }
+    }
+
+    private enum GuideLocationKind {
+        MAIN,
+        CATEGORY,
+        RECIPE,
+        VANILLA
     }
 
     private record DisplayEntry(ItemStack icon, String label, int priority, ClickHandler handler) {

@@ -80,6 +80,9 @@ guide:
     unlock-animation:
       name: <yellow>Unlock Animation</yellow>
       lore: <gray>Reserved for the future research system. This matches classic guide settings.</gray>
+    resume-last:
+      name: <yellow>Resume Last Page</yellow>
+      lore: <gray>Reopen the guide at the last page you closed.</gray>
     current-layout:
       name: <aqua>Current Layout</aqua>
       classic: <gray>Classic layout is active.</gray>
