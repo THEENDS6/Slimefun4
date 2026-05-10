@@ -11,6 +11,10 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class DefaultSfxItemRegistry implements SfxItemRegistry {
+    private static final Comparator<SfxItemDefinition> ITEM_ORDER = Comparator
+            .comparingInt(SfxItemDefinition::order)
+            .thenComparing(SfxItemDefinition::id);
+
     private final Map<String, SfxItemCategory> categories = new LinkedHashMap<>();
     private final Map<String, SfxItemDefinition> items = new LinkedHashMap<>();
 
@@ -64,7 +68,9 @@ public final class DefaultSfxItemRegistry implements SfxItemRegistry {
 
     @Override
     public Collection<SfxItemDefinition> items() {
-        return List.copyOf(items.values());
+        return items.values().stream()
+                .sorted(ITEM_ORDER)
+                .toList();
     }
 
     @Override
@@ -73,6 +79,7 @@ public final class DefaultSfxItemRegistry implements SfxItemRegistry {
         return items.values().stream()
                 .filter(item -> !item.hidden())
                 .filter(item -> normalized.equals(item.categoryId()))
+                .sorted(ITEM_ORDER)
                 .toList();
     }
 }

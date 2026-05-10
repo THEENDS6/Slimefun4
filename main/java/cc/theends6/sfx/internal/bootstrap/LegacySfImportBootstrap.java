@@ -663,8 +663,7 @@ public final class LegacySfImportBootstrap {
         if (!needsLegacyGlint(id) || LEGACY_ENCHANTMENTS.containsKey(id)) {
             return;
         }
-        builder.enchantment("minecraft:unbreaking", 1);
-        builder.itemFlag("HIDE_ENCHANTS");
+        builder.flag("visual-glint");
     }
 
     private static void applyLegacyEnchantments(String id, SfxItemDefinition.Builder builder) {

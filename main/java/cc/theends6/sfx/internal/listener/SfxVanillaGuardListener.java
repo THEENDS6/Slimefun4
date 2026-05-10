@@ -3,6 +3,7 @@ package cc.theends6.sfx.internal.listener;
 import cc.theends6.sfx.api.item.SfxItems;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -37,6 +38,42 @@ import org.bukkit.inventory.ItemStack;
  * vanilla should not consume, place, dye, shoot, rename, grind or craft it.</p>
  */
 public final class SfxVanillaGuardListener implements Listener {
+    private static final Set<String> VANILLA_USE_IDS = Set.of(
+            "sf:explosive_bow",
+            "sf:icy_bow",
+            "sf:fortune_cookie",
+            "sf:diet_cookie",
+            "sf:monster_jerky",
+            "sf:apple_juice",
+            "sf:melon_juice",
+            "sf:carrot_juice",
+            "sf:pumpkin_juice",
+            "sf:sweet_berry_juice",
+            "sf:glow_berry_juice",
+            "sf:golden_apple_juice",
+            "sf:beef_jerky",
+            "sf:pork_jerky",
+            "sf:chicken_jerky",
+            "sf:mutton_jerky",
+            "sf:rabbit_jerky",
+            "sf:fish_jerky",
+            "sf:kelp_cookie",
+            "sf:christmas_milk",
+            "sf:christmas_chocolate_milk",
+            "sf:christmas_egg_nog",
+            "sf:christmas_apple_cider",
+            "sf:christmas_cookie",
+            "sf:christmas_fruit_cake",
+            "sf:christmas_apple_pie",
+            "sf:christmas_hot_chocolate",
+            "sf:christmas_cake",
+            "sf:christmas_caramel_apple",
+            "sf:christmas_chocolate_apple",
+            "sf:carrot_pie",
+            "sf:easter_apple_pie"
+    );
+    private static final Set<String> VANILLA_BOW_IDS = Set.of("sf:explosive_bow", "sf:icy_bow");
+
     private final SfxItems items;
 
     public SfxVanillaGuardListener(SfxItems items) {
@@ -50,6 +87,9 @@ public final class SfxVanillaGuardListener implements Listener {
         }
         ItemStack item = event.getItem();
         if (!isSfxItem(item) || items.readGuideMode(item).isPresent()) {
+            return;
+        }
+        if (isVanillaUseAllowed(item)) {
             return;
         }
 
@@ -87,13 +127,16 @@ public final class SfxVanillaGuardListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onItemConsume(PlayerItemConsumeEvent event) {
-        if (isSfxItem(event.getItem())) {
+        if (isSfxItem(event.getItem()) && !isVanillaUseAllowed(event.getItem())) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onShootBow(EntityShootBowEvent event) {
+        if (isVanillaBowAllowed(event.getBow())) {
+            return;
+        }
         if (isSfxItem(event.getBow()) || isSfxItem(event.getConsumable())) {
             event.setCancelled(true);
         }
@@ -212,5 +255,17 @@ public final class SfxVanillaGuardListener implements Listener {
 
     private boolean isSfxItem(ItemStack item) {
         return items.isSfxItem(item);
+    }
+
+    private boolean isVanillaUseAllowed(ItemStack item) {
+        return items.readMarker(item)
+                .map(marker -> VANILLA_USE_IDS.contains(marker.itemId()))
+                .orElse(false);
+    }
+
+    private boolean isVanillaBowAllowed(ItemStack item) {
+        return items.readMarker(item)
+                .map(marker -> VANILLA_BOW_IDS.contains(marker.itemId()))
+                .orElse(false);
     }
 }

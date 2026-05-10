@@ -9,10 +9,15 @@ import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.Consumable;
+import io.papermc.paper.datacomponent.item.FoodProperties;
+import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
@@ -93,6 +98,7 @@ public final class DefaultSfxItems implements SfxItems {
             ));
             item.setItemMeta(meta);
         }
+        applyDataComponents(item, definition);
         return item;
     }
 
@@ -190,12 +196,57 @@ public final class DefaultSfxItems implements SfxItems {
         if (definition.unbreakable()) {
             meta.setUnbreakable(true);
         }
+        if (definition.flags().contains("visual-glint")) {
+            meta.setEnchantmentGlintOverride(Boolean.TRUE);
+        }
         for (Map.Entry<String, Integer> entry : definition.enchantments().entrySet()) {
             Enchantment enchantment = resolveEnchantment(entry.getKey());
             if (enchantment != null) {
                 meta.addEnchant(enchantment, entry.getValue(), true);
             }
         }
+    }
+
+    private void applyDataComponents(ItemStack item, SfxItemDefinition definition) {
+        FoodSpec spec = foodSpec(definition.id());
+        if (spec == null) {
+            return;
+        }
+
+        item.setData(DataComponentTypes.FOOD, FoodProperties.food()
+                .nutrition(spec.nutrition())
+                .saturation(spec.saturation())
+                .canAlwaysEat(spec.alwaysEdible()));
+
+        item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable()
+                .consumeSeconds(spec.consumeSeconds())
+                .animation(spec.animation())
+                .sound(Key.key(spec.animation() == ItemUseAnimation.DRINK ? "minecraft:item.honey_bottle.drink" : "minecraft:entity.generic.eat"))
+                .hasConsumeParticles(true));
+    }
+
+    private FoodSpec foodSpec(String itemId) {
+        return switch (itemId) {
+            case "sf:fortune_cookie" -> new FoodSpec(2, 0.1f, 1.6f, ItemUseAnimation.EAT, false);
+            case "sf:diet_cookie" -> new FoodSpec(1, 0.1f, 1.6f, ItemUseAnimation.EAT, true);
+            case "sf:monster_jerky" -> new FoodSpec(4, 0.25f, 1.6f, ItemUseAnimation.EAT, false);
+            case "sf:apple_juice", "sf:melon_juice", "sf:carrot_juice", "sf:pumpkin_juice", "sf:sweet_berry_juice", "sf:glow_berry_juice" ->
+                    new FoodSpec(3, 0.35f, 1.2f, ItemUseAnimation.DRINK, false);
+            case "sf:golden_apple_juice" -> new FoodSpec(4, 0.5f, 1.2f, ItemUseAnimation.DRINK, true);
+            case "sf:beef_jerky", "sf:pork_jerky" -> new FoodSpec(8, 1.2f, 1.6f, ItemUseAnimation.EAT, false);
+            case "sf:chicken_jerky", "sf:mutton_jerky" -> new FoodSpec(6, 1.0f, 1.6f, ItemUseAnimation.EAT, false);
+            case "sf:rabbit_jerky", "sf:fish_jerky" -> new FoodSpec(5, 1.0f, 1.6f, ItemUseAnimation.EAT, false);
+            case "sf:kelp_cookie" -> new FoodSpec(2, 0.2f, 1.6f, ItemUseAnimation.EAT, false);
+            case "sf:christmas_milk" -> new FoodSpec(3, 0.3f, 1.2f, ItemUseAnimation.DRINK, false);
+            case "sf:christmas_chocolate_milk" -> new FoodSpec(6, 0.7f, 1.2f, ItemUseAnimation.DRINK, false);
+            case "sf:christmas_egg_nog" -> new FoodSpec(4, 0.45f, 1.2f, ItemUseAnimation.DRINK, false);
+            case "sf:christmas_apple_cider", "sf:christmas_hot_chocolate" -> new FoodSpec(7, 0.8f, 1.2f, ItemUseAnimation.DRINK, false);
+            case "sf:christmas_cookie" -> new FoodSpec(3, 0.2f, 1.6f, ItemUseAnimation.EAT, false);
+            case "sf:christmas_fruit_cake", "sf:christmas_apple_pie", "sf:christmas_cake", "sf:carrot_pie", "sf:easter_apple_pie" ->
+                    new FoodSpec(8, 0.9f, 1.6f, ItemUseAnimation.EAT, false);
+            case "sf:christmas_caramel_apple", "sf:christmas_chocolate_apple" -> new FoodSpec(6, 0.5f, 1.6f, ItemUseAnimation.EAT, false);
+            default -> null;
+        };
     }
 
     @SuppressWarnings("deprecation")
@@ -269,5 +320,8 @@ public final class DefaultSfxItems implements SfxItems {
         meta.getPersistentDataContainer().set(variantKey, PersistentDataType.STRING, marker.variant());
         meta.getPersistentDataContainer().set(kindKey, PersistentDataType.STRING, marker.kind().pdcValue());
         meta.getPersistentDataContainer().set(flagsKey, PersistentDataType.STRING, marker.flagsAsString());
+    }
+
+    private record FoodSpec(int nutrition, float saturation, float consumeSeconds, ItemUseAnimation animation, boolean alwaysEdible) {
     }
 }

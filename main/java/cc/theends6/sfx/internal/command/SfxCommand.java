@@ -244,6 +244,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         plugin.reloadConfig();
         if (plugin instanceof cc.theends6.sfx.SlimeFunXPlugin sfxPlugin) {
             sfxPlugin.localization().reload();
+            sfxPlugin.legacyItemBehaviorConfig().reload();
         }
         sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success", "<green>SFX 配置与语言文件已重载。</green>")));
     }

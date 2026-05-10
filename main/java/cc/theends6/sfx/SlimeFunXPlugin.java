@@ -6,10 +6,15 @@ import cc.theends6.sfx.internal.bootstrap.BaseContentBootstrap;
 import cc.theends6.sfx.internal.bootstrap.LegacySfImportBootstrap;
 import cc.theends6.sfx.internal.bootstrap.SfxYamlContentLoader;
 import cc.theends6.sfx.internal.command.SfxCommand;
+import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.listener.SfxArmorEffectListener;
 import cc.theends6.sfx.internal.listener.SfxDebugJoinListener;
 import cc.theends6.sfx.internal.listener.SfxGuideListener;
+import cc.theends6.sfx.internal.listener.SfxItemUseDispatcher;
+import cc.theends6.sfx.internal.listener.SfxLegacyCombatToolListener;
+import cc.theends6.sfx.internal.listener.SfxLegacyFoodListener;
+import cc.theends6.sfx.internal.listener.SfxLegacyUtilityListener;
 import cc.theends6.sfx.internal.listener.SfxVanillaGuardListener;
 import cc.theends6.sfx.internal.machine.ManualMachineService;
 import cc.theends6.sfx.internal.machine.SfxManualMachineDeployListener;
@@ -26,6 +31,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     private SfxApiImpl api;
     private SfxLocalization localization;
+    private SfxLegacyItemBehaviorConfig legacyItemBehaviorConfig;
 
     @Override
     public void onEnable() {
@@ -34,6 +40,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         saveBundledLanguage("en-US");
 
         this.localization = new SfxLocalization(this);
+        this.legacyItemBehaviorConfig = new SfxLegacyItemBehaviorConfig(this);
+        legacyItemBehaviorConfig.ensureDefaultFile();
+        legacyItemBehaviorConfig.reload();
         this.api = SfxApiImpl.bootstrap(this, localization);
 
         BaseContentBootstrap.register(api.itemRegistry(), api.internalManualMachines());
@@ -57,10 +66,18 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
         ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization);
 
+        SfxLegacyUtilityListener utilityListener = new SfxLegacyUtilityListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig);
+        SfxLegacyCombatToolListener combatToolListener = new SfxLegacyCombatToolListener(this, api.items(), localization, legacyItemBehaviorConfig);
+        SfxLegacyFoodListener foodListener = new SfxLegacyFoodListener(this, api.items(), localization);
+
         getServer().getPluginManager().registerEvents(api.menus(), this);
         getServer().getPluginManager().registerEvents(new SfxGuideListener(this, api.items(), api.guide()), this);
+        getServer().getPluginManager().registerEvents(new SfxItemUseDispatcher(api.items(), utilityListener, combatToolListener, foodListener), this);
         getServer().getPluginManager().registerEvents(new SfxManualMachineListener(manualMachineService), this);
         getServer().getPluginManager().registerEvents(new SfxManualMachineDeployListener(this, api.internalManualMachines(), localization), this);
+        getServer().getPluginManager().registerEvents(utilityListener, this);
+        getServer().getPluginManager().registerEvents(combatToolListener, this);
+        getServer().getPluginManager().registerEvents(foodListener, this);
         getServer().getPluginManager().registerEvents(new SfxVanillaGuardListener(api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxArmorEffectListener(api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxDebugJoinListener(this, api.runtime(), localization), this);
@@ -87,6 +104,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     public SfxLocalization localization() {
         return localization;
+    }
+
+    public SfxLegacyItemBehaviorConfig legacyItemBehaviorConfig() {
+        return legacyItemBehaviorConfig;
     }
 
     private void saveBundledLanguage(String language) {
