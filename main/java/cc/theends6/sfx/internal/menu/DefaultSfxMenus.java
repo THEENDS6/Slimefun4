@@ -17,6 +17,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
@@ -184,6 +185,13 @@ public final class DefaultSfxMenus implements SfxMenus {
             Deque<SfxMenu> remaining = new ArrayDeque<>(session.history());
             runtime.executeForPlayer(player, () -> openInternal(player, previous, remaining));
         }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+        sessions.remove(uuid);
+        suppressedRestore.remove(uuid);
     }
 
     private Deque<SfxMenu> copyHistory(Session previous) {

@@ -53,7 +53,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             case "give" -> giveItem(sender, args);
             case "inspect" -> inspectItem(sender);
             case "list" -> listItems(sender, args.length >= 2 ? parseAmount(args[1]) - 1 : 0);
-            case "reload" -> reload(sender);
+            case "reload" -> reload(sender, args);
             default -> sendHelp(sender, label);
         }
 
@@ -66,11 +66,11 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (mode == GuideMode.CHEAT && !player.hasPermission("sfx.command.cheatguide")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-guide", "<red>你没有打开作弊科技书的权限。</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-guide", "<red>浣犳病鏈夋墦寮€浣滃紛绉戞妧涔︾殑鏉冮檺銆?/red>")));
             return;
         }
         if (mode == GuideMode.SURVIVAL && !player.hasPermission("sfx.command.guide")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-guide", "<red>你没有打开科技书的权限。</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-guide", "<red>浣犳病鏈夋墦寮€绉戞妧涔︾殑鏉冮檺銆?/red>")));
             return;
         }
         api.guide().open(player, mode);
@@ -82,17 +82,17 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (mode == GuideMode.CHEAT && !player.hasPermission("sfx.command.cheatbook")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-book", "<red>你没有领取作弊科技书的权限。</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-book", "<red>浣犳病鏈夐鍙栦綔寮婄鎶€涔︾殑鏉冮檺銆?/red>")));
             return;
         }
         if (mode == GuideMode.SURVIVAL && !player.hasPermission("sfx.command.book")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-book", "<red>你没有领取科技书的权限。</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-book", "<red>浣犳病鏈夐鍙栫鎶€涔︾殑鏉冮檺銆?/red>")));
             return;
         }
         api.items().give(player, api.items().createGuideBook(mode));
         player.sendMessage(Text.prefixed(plugin, mode == GuideMode.CHEAT
-                ? tr("command.book.received-cheat", "<green>已领取作弊科技书。</green>")
-                : tr("command.book.received", "<green>已领取科技书。</green>")));
+                ? tr("command.book.received-cheat", "<green>宸查鍙栦綔寮婄鎶€涔︺€?/green>")
+                : tr("command.book.received", "<green>宸查鍙栫鎶€涔︺€?/green>")));
     }
 
     private void giveItem(CommandSender sender, String[] args) {
@@ -101,11 +101,11 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (!player.hasPermission("sfx.command.give")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-give", "<red>你没有直接获取 SFX 物品的权限。</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-give", "<red>浣犳病鏈夌洿鎺ヨ幏鍙?SFX 鐗╁搧鐨勬潈闄愩€?/red>")));
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.usage", "<red>用法: /slimefunx give <id> [amount]</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.usage", "<red>鐢ㄦ硶: /slimefunx give <id> [amount]</red>")));
             return;
         }
         String itemId = args[1];
@@ -113,24 +113,24 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
         SfxItemDefinition definition = api.itemRegistry().item(itemId).orElse(null);
         if (definition == null) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.unknown", "<red>未知的 SFX 物品: </red><gray>{id}</gray>").replace("{id}", itemId)));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.unknown", "<red>鏈煡鐨?SFX 鐗╁搧: </red><gray>{id}</gray>").replace("{id}", itemId)));
             return;
         }
         if (!definition.giveable()) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.not-giveable", "<red>这个 SFX 物品不能直接给予。</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.not-giveable", "<red>杩欎釜 SFX 鐗╁搧涓嶈兘鐩存帴缁欎簣銆?/red>")));
             return;
         }
 
         int inserted = giveStacks(player.getInventory(), definition, amount);
         if (inserted <= 0) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.no-space", "<red>背包空间不足，未能给予任何物品。</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.no-space", "<red>鑳屽寘绌洪棿涓嶈冻锛屾湭鑳界粰浜堜换浣曠墿鍝併€?/red>")));
             return;
         }
         if (inserted < amount) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.partial", "<yellow>背包空间不足，仅给予：</yellow><gray>{item} x{amount}</gray>").replace("{item}", itemDisplayName(definition)).replace("{amount}", Integer.toString(inserted))));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.partial", "<yellow>鑳屽寘绌洪棿涓嶈冻锛屼粎缁欎簣锛?/yellow><gray>{item} x{amount}</gray>").replace("{item}", itemDisplayName(definition)).replace("{amount}", Integer.toString(inserted))));
             return;
         }
-        player.sendMessage(Text.prefixed(plugin, tr("command.give.success", "<green>已给予：</green><gray>{item} x{amount}</gray>").replace("{item}", itemDisplayName(definition)).replace("{amount}", Integer.toString(inserted))));
+        player.sendMessage(Text.prefixed(plugin, tr("command.give.success", "<green>宸茬粰浜堬細</green><gray>{item} x{amount}</gray>").replace("{item}", itemDisplayName(definition)).replace("{amount}", Integer.toString(inserted))));
     }
 
     private void inspectItem(CommandSender sender) {
@@ -139,15 +139,15 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (!player.hasPermission("sfx.command.inspect")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-inspect", "<red>你没有检查 SFX PDC 标记的权限。</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-inspect", "<red>浣犳病鏈夋鏌?SFX PDC 鏍囪鐨勬潈闄愩€?/red>")));
             return;
         }
         SfxItemMarker marker = api.items().readMarker(player.getInventory().getItemInMainHand()).orElse(null);
         if (marker == null) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.inspect.no-marker", "<gray>手中物品没有 SFX PDC 身份标记。</gray>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.inspect.no-marker", "<gray>鎵嬩腑鐗╁搧娌℃湁 SFX PDC 韬唤鏍囪銆?/gray>")));
             return;
         }
-        sender.sendMessage(Text.mm(tr("command.inspect.header", "<green>SFX 物品标记</green>")));
+        sender.sendMessage(Text.mm(tr("command.inspect.header", "<green>SFX 鐗╁搧鏍囪</green>")));
         sender.sendMessage(Text.mm(tr("command.inspect.field.item-id", "<gray>item_id: </gray><white>{value}</white>").replace("{value}", marker.itemId())));
         sender.sendMessage(Text.mm(tr("command.inspect.field.item-version", "<gray>item_version: </gray><white>{value}</white>").replace("{value}", Integer.toString(marker.itemVersion()))));
         sender.sendMessage(Text.mm(tr("command.inspect.field.item-schema", "<gray>item_schema: </gray><white>{value}</white>").replace("{value}", Integer.toString(marker.schemaVersion()))));
@@ -160,7 +160,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private void listItems(CommandSender sender, int page) {
         if (!sender.hasPermission("sfx.command.list")) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-list", "<red>你没有查看 SFX 物品列表的权限。</red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-list", "<red>浣犳病鏈夋煡鐪?SFX 鐗╁搧鍒楄〃鐨勬潈闄愩€?/red>")));
             return;
         }
         List<SfxItemDefinition> definitions = api.itemRegistry().items().stream()
@@ -170,7 +170,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         int safePage = Math.max(0, Math.min(page, pageCount - 1));
 
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Text.mm(tr("command.list.header", "<green>SFX 已注册可见物品：</green><gray>{count} 个，页码 {page} / {pages}</gray>").replace("{count}", Integer.toString(definitions.size())).replace("{page}", Integer.toString(safePage + 1)).replace("{pages}", Integer.toString(pageCount))));
+            sender.sendMessage(Text.mm(tr("command.list.header", "<green>SFX 宸叉敞鍐屽彲瑙佺墿鍝侊細</green><gray>{count} 涓紝椤电爜 {page} / {pages}</gray>").replace("{count}", Integer.toString(definitions.size())).replace("{page}", Integer.toString(safePage + 1)).replace("{pages}", Integer.toString(pageCount))));
             int from = safePage * LIST_SLOTS.length;
             int to = Math.min(definitions.size(), from + LIST_SLOTS.length);
             for (int i = from; i < to; i++) {
@@ -180,7 +180,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        SfxMenu.Builder builder = SfxMenu.builder(Text.mm(tr("command.list.menu-title", "<dark_green>SFX 物品列表</dark_green> <gray>{page} / {pages}</gray>").replace("{page}", Integer.toString(safePage + 1)).replace("{pages}", Integer.toString(pageCount)))).rows(6);
+        SfxMenu.Builder builder = SfxMenu.builder(Text.mm(tr("command.list.menu-title", "<dark_green>SFX 鐗╁搧鍒楄〃</dark_green> <gray>{page} / {pages}</gray>").replace("{page}", Integer.toString(safePage + 1)).replace("{pages}", Integer.toString(pageCount)))).rows(6);
         ItemStack pane = ItemBuilder.of(Material.GREEN_STAINED_GLASS_PANE).name("<dark_gray> </dark_gray>").build();
         for (int i = 0; i < 9; i++) {
             builder.button(i, new SfxMenuButton(pane, click -> {
@@ -201,20 +201,20 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         }
 
         builder.button(46, new SfxMenuButton(ItemBuilder.of(Material.ARROW)
-                .name(safePage > 0 ? tr("guide.pagination.prev.active", "<yellow>上一页</yellow>") : tr("guide.pagination.prev.inactive", "<dark_gray>上一页</dark_gray>"))
-                .lore(tr("guide.pagination.page", "<gray>页码 {current} / {total}</gray>").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
+                .name(safePage > 0 ? tr("guide.pagination.prev.active", "<yellow>涓婁竴椤?/yellow>") : tr("guide.pagination.prev.inactive", "<dark_gray>涓婁竴椤?/dark_gray>"))
+                .lore(tr("guide.pagination.page", "<gray>椤电爜 {current} / {total}</gray>").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
                 .build(), click -> {
             if (safePage > 0) {
                 listItems(click.player(), safePage - 1);
             }
         }));
         builder.button(49, new SfxMenuButton(ItemBuilder.of(Material.NETHER_STAR)
-                .name(tr("command.list.registry-name", "<green>SFX 已注册物品</green>"))
-                .lore(tr("command.list.registry-lore.0", "<gray>当前只展示玩家可见物品。</gray>"), tr("command.list.registry-lore.1", "<gray>共 {count} 个。</gray>").replace("{count}", Integer.toString(definitions.size())), "", tr("guide.actions.close", "<dark_gray>点击关闭。</dark_gray>"))
+                .name(tr("command.list.registry-name", "<green>SFX 宸叉敞鍐岀墿鍝?/green>"))
+                .lore(tr("command.list.registry-lore.0", "<gray>褰撳墠鍙睍绀虹帺瀹跺彲瑙佺墿鍝併€?/gray>"), tr("command.list.registry-lore.1", "<gray>鍏?{count} 涓€?/gray>").replace("{count}", Integer.toString(definitions.size())), "", tr("guide.actions.close", "<dark_gray>鐐瑰嚮鍏抽棴銆?/dark_gray>"))
                 .build(), click -> click.menus().close(click.player())));
         builder.button(52, new SfxMenuButton(ItemBuilder.of(Material.ARROW)
-                .name(safePage + 1 < pageCount ? tr("guide.pagination.next.active", "<yellow>下一页</yellow>") : tr("guide.pagination.next.inactive", "<dark_gray>下一页</dark_gray>"))
-                .lore(tr("guide.pagination.page", "<gray>页码 {current} / {total}</gray>").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
+                .name(safePage + 1 < pageCount ? tr("guide.pagination.next.active", "<yellow>涓嬩竴椤?/yellow>") : tr("guide.pagination.next.inactive", "<dark_gray>涓嬩竴椤?/dark_gray>"))
+                .lore(tr("guide.pagination.page", "<gray>椤电爜 {current} / {total}</gray>").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
                 .build(), click -> {
             if (safePage + 1 < pageCount) {
                 listItems(click.player(), safePage + 1);
@@ -229,24 +229,31 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         if (meta != null) {
             List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
             lore.add(Component.empty());
-            lore.add(Component.text(tr("command.list.registry-entry", "注册表展示项"), NamedTextColor.GRAY));
+            lore.add(Component.text(tr("command.list.registry-entry", "娉ㄥ唽琛ㄥ睍绀洪」"), NamedTextColor.GRAY));
             meta.lore(lore.stream().map(Text::noItalic).toList());
             icon.setItemMeta(meta);
         }
         return icon;
     }
 
-    private void reload(CommandSender sender) {
+    private void reload(CommandSender sender, String[] args) {
         if (!sender.hasPermission("sfx.command.reload")) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload", "<red>你没有重载 SFX 的权限。</red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload", "<red>浣犳病鏈夐噸杞?SFX 鐨勬潈闄愩€?/red>")));
             return;
         }
-        plugin.reloadConfig();
         if (plugin instanceof cc.theends6.sfx.SlimeFunXPlugin sfxPlugin) {
+            if (args.length >= 2 && args[1].equalsIgnoreCase("all")) {
+                sfxPlugin.reloadAllContent();
+                sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success-all", "<green>SFX fully reloaded: registries, recipes, and menus were refreshed.</green>")));
+                return;
+            }
+            plugin.reloadConfig();
             sfxPlugin.localization().reload();
             sfxPlugin.legacyItemBehaviorConfig().reload();
+        } else {
+            plugin.reloadConfig();
         }
-        sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success", "<green>SFX 配置与语言文件已重载。</green>")));
+        sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success", "<green>SFX 閰嶇疆涓庤瑷€鏂囦欢宸查噸杞姐€?/green>")));
     }
 
     private int parseAmount(String raw) {
@@ -282,14 +289,15 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(CommandSender sender, String label) {
-        sender.sendMessage(Text.mm(tr("command.help.header", "<green>SFX 命令</green>")));
-        sender.sendMessage(Text.mm(tr("command.help.line.guide", "<gray>/{label} guide</gray> <dark_gray>- 打开普通科技书</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.book", "<gray>/{label} book [cheat]</gray> <dark_gray>- 领取科技书</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.cheatguide", "<gray>/{label} cheatguide</gray> <dark_gray>- 打开作弊科技书</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.give", "<gray>/{label} give <id> [amount]</gray> <dark_gray>- 直接获取 SFX 物品</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.inspect", "<gray>/{label} inspect</gray> <dark_gray>- 检查手中物品 PDC 标记</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.list", "<gray>/{label} list [page]</gray> <dark_gray>- 打开已注册物品列表</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.reload", "<gray>/{label} reload</gray> <dark_gray>- 重载配置</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.header", "<green>SFX 鍛戒护</green>")));
+        sender.sendMessage(Text.mm(tr("command.help.line.guide", "<gray>/{label} guide</gray> <dark_gray>- 鎵撳紑鏅€氱鎶€涔?/dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.book", "<gray>/{label} book [cheat]</gray> <dark_gray>- 棰嗗彇绉戞妧涔?/dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.cheatguide", "<gray>/{label} cheatguide</gray> <dark_gray>- 鎵撳紑浣滃紛绉戞妧涔?/dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.give", "<gray>/{label} give <id> [amount]</gray> <dark_gray>- 鐩存帴鑾峰彇 SFX 鐗╁搧</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.inspect", "<gray>/{label} inspect</gray> <dark_gray>- 妫€鏌ユ墜涓墿鍝?PDC 鏍囪</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.list", "<gray>/{label} list [page]</gray> <dark_gray>- 鎵撳紑宸叉敞鍐岀墿鍝佸垪琛?/dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.reload", "<gray>/{label} reload</gray> <dark_gray>- 閲嶈浇閰嶇疆</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.reload-all", "<gray>/{label} reload all</gray> <dark_gray>- rebuild registries and recipes</dark_gray>").replace("{label}", label)));
     }
 
     @Override
@@ -299,6 +307,9 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("book")) {
             return filter(List.of("cheat"), args[1]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("reload")) {
+            return filter(List.of("all"), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("list")) {
             return filter(List.of("1", "2", "3", "4", "5"), args[1]);

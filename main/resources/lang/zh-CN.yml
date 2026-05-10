@@ -3059,6 +3059,7 @@ command:
       1: <gray>共 {count} 个。</gray>
   reload:
     success: <green>SFX 配置与语言文件已重载。</green>
+    success-all: <green>SFX 已完整重载：注册表、配方与菜单已刷新。</green>
   help:
     header: <green>SFX 命令</green>
     line:
@@ -3069,6 +3070,7 @@ command:
       inspect: <gray>/{label} inspect</gray> <dark_gray>- 检查手中物品 PDC 标记</dark_gray>
       list: <gray>/{label} list [page]</gray> <dark_gray>- 打开已注册物品列表</dark_gray>
       reload: <gray>/{label} reload</gray> <dark_gray>- 重载配置</dark_gray>
+      reload-all: <gray>/{label} reload all</gray> <dark_gray>- 重建注册表并重载配方</dark_gray>
 categories:
   sf.items:
     name: '&f物品'

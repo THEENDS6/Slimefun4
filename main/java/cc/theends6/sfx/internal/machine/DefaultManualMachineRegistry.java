@@ -33,6 +33,11 @@ public final class DefaultManualMachineRegistry implements SfxManualMachineRegis
         recipes.computeIfAbsent(recipe.machineId(), ignored -> new ArrayList<>()).add(recipe);
     }
 
+    public void clear() {
+        machines.clear();
+        recipes.clear();
+    }
+
 
     private boolean isOperationAllowed(ManualMachineOperation machineOperation, ManualMachineOperation recipeOperation) {
         if (machineOperation == ManualMachineOperation.HAND_INPUT || recipeOperation == ManualMachineOperation.HAND_INPUT) {

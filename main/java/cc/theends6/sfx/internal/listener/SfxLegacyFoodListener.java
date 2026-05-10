@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.listener;
 
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.util.List;
@@ -79,11 +80,13 @@ public final class SfxLegacyFoodListener implements Listener {
     );
 
     private final JavaPlugin plugin;
+    private final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxLocalization localization;
 
-    public SfxLegacyFoodListener(JavaPlugin plugin, SfxItems items, SfxLocalization localization) {
+    public SfxLegacyFoodListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
+        this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
     }
@@ -125,13 +128,13 @@ public final class SfxLegacyFoodListener implements Listener {
                 player.removePotionEffect(resolvePotion("LEVITATION"));
                 player.addPotionEffect(new PotionEffect(resolvePotion("LEVITATION"), 60, 1));
             }
-            case "sf:monster_jerky" -> plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            case "sf:monster_jerky" -> runtime.executeForPlayerLater(player, 1L, () -> {
                 PotionEffectType hunger = resolvePotion("HUNGER");
                 if (hunger != null) {
                     player.removePotionEffect(hunger);
                 }
                 player.addPotionEffect(new PotionEffect(resolvePotion("SATURATION"), 5, 0));
-            }, 1L);
+            });
             case "sf:golden_apple_juice" -> player.addPotionEffect(new PotionEffect(resolvePotion("ABSORPTION"), 20 * 20, 0));
             default -> {
             }

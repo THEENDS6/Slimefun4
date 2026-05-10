@@ -68,6 +68,7 @@ public final class SfxLegacyUtilityListener implements Listener {
     private static final Set<Material> NETHER_GOLD_PAN_INPUTS = Set.of(Material.SOUL_SAND, Material.SOUL_SOIL);
 
     private final JavaPlugin plugin;
+    private final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxLegacyItemBehaviorConfig behaviorConfig;
@@ -79,7 +80,7 @@ public final class SfxLegacyUtilityListener implements Listener {
 
     public SfxLegacyUtilityListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
-        Objects.requireNonNull(runtime, "runtime");
+        this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.behaviorConfig = Objects.requireNonNull(behaviorConfig, "behaviorConfig");
@@ -157,7 +158,7 @@ public final class SfxLegacyUtilityListener implements Listener {
         if (event.getEntity() instanceof Arrow arrow && arrow.getShooter() instanceof Player player) {
             GrappleState state = grapples.get(player.getUniqueId());
             if (state != null && state.arrow().getUniqueId().equals(arrow.getUniqueId())) {
-                plugin.getServer().getScheduler().runTask(plugin, () -> resolveGrapple(player, state, arrow.getLocation().toVector()));
+                runtime.executeForPlayer(player, () -> resolveGrapple(player, state, arrow.getLocation().toVector()));
             }
         }
     }
@@ -167,7 +168,7 @@ public final class SfxLegacyUtilityListener implements Listener {
         if (event.getDamager() instanceof Arrow arrow && arrow.getShooter() instanceof Player player) {
             GrappleState state = grapples.get(player.getUniqueId());
             if (state != null && state.arrow().getUniqueId().equals(arrow.getUniqueId())) {
-                plugin.getServer().getScheduler().runTask(plugin, () -> resolveGrapple(player, state, arrow.getLocation().toVector()));
+                runtime.executeForPlayer(player, () -> resolveGrapple(player, state, arrow.getLocation().toVector()));
             }
         }
     }
@@ -504,8 +505,17 @@ public final class SfxLegacyUtilityListener implements Listener {
 
         grapples.remove(player.getUniqueId());
         Arrow arrow = state.arrow();
+        Location arrowLocation = arrow.getLocation();
         if (arrow.isValid()) {
-            arrow.remove();
+            if (runtime.isOwnedByCurrentRegion(arrowLocation)) {
+                arrow.remove();
+            } else {
+                runtime.executeAt(arrowLocation, () -> {
+                    if (arrow.isValid()) {
+                        arrow.remove();
+                    }
+                });
+            }
         }
 
         Vector velocity;
@@ -528,8 +538,11 @@ public final class SfxLegacyUtilityListener implements Listener {
         grapplingNoFallUntil.put(player.getUniqueId(), player.getWorld().getGameTime() + behaviorConfig.grapplingHookNoFallTicks());
         if (state.consumed()) {
             ItemStack hook = items.create("sf:grappling_hook");
-            Item dropped = player.getWorld().dropItemNaturally(target.toLocation(player.getWorld()), hook);
-            dropped.setPickupDelay(16);
+            Location dropLocation = target.toLocation(player.getWorld());
+            runtime.executeAt(dropLocation, () -> {
+                Item dropped = player.getWorld().dropItemNaturally(dropLocation, hook);
+                dropped.setPickupDelay(16);
+            });
         }
     }
 

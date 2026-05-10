@@ -45,30 +45,13 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         legacyItemBehaviorConfig.reload();
         this.api = SfxApiImpl.bootstrap(this, localization);
 
-        BaseContentBootstrap.register(api.itemRegistry(), api.internalManualMachines());
-        LegacySfImportBootstrap.register(api.itemRegistry());
-        SfxYamlContentLoader yamlContentLoader = new SfxYamlContentLoader(this, api.itemRegistry());
-        yamlContentLoader.ensureDefaultFiles();
-        yamlContentLoader.registerAll();
-        SfxRecipeYamlLoader recipeYamlLoader = new SfxRecipeYamlLoader(this);
-        recipeYamlLoader.ensureDefaultFiles();
-        DefaultSfxRecipeRegistry recipeRegistry = new DefaultSfxRecipeRegistry();
-        recipeYamlLoader.loadInto(recipeRegistry);
-        DefaultSfxRecipeRegistry.AuditResult recipeAudit = recipeRegistry.apply((DefaultSfxItemRegistry) api.itemRegistry(), api.internalManualMachines());
-        BaseContentBootstrap.syncManualMachineGuideContent((DefaultSfxItemRegistry) api.itemRegistry(), api.internalManualMachines());
-        if (getConfig().getBoolean("debug-text.enabled", true)) {
-            getLogger().info(recipeAudit.summary());
-            recipeAudit.warnings().stream().limit(80).forEach(warning -> getLogger().warning(warning));
-            if (recipeAudit.warnings().size() > 80) {
-                getLogger().warning("[SFX Recipe Import] ... and " + (recipeAudit.warnings().size() - 80) + " more warnings.");
-            }
-        }
+        bootstrapContent();
 
         ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization);
 
         SfxLegacyUtilityListener utilityListener = new SfxLegacyUtilityListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig);
-        SfxLegacyCombatToolListener combatToolListener = new SfxLegacyCombatToolListener(this, api.items(), localization, legacyItemBehaviorConfig);
-        SfxLegacyFoodListener foodListener = new SfxLegacyFoodListener(this, api.items(), localization);
+        SfxLegacyCombatToolListener combatToolListener = new SfxLegacyCombatToolListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig);
+        SfxLegacyFoodListener foodListener = new SfxLegacyFoodListener(this, api.runtime(), api.items(), localization);
 
         getServer().getPluginManager().registerEvents(api.menus(), this);
         getServer().getPluginManager().registerEvents(new SfxGuideListener(this, api.items(), api.guide()), this);
@@ -108,6 +91,46 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     public SfxLegacyItemBehaviorConfig legacyItemBehaviorConfig() {
         return legacyItemBehaviorConfig;
+    }
+
+    public synchronized void reloadAllContent() {
+        reloadConfig();
+        localization.reload();
+        legacyItemBehaviorConfig.reload();
+        api.menus().closeAll();
+        bootstrapContent();
+    }
+
+    private void bootstrapContent() {
+        DefaultSfxItemRegistry itemRegistry = (DefaultSfxItemRegistry) api.itemRegistry();
+        itemRegistry.clear();
+        api.internalManualMachines().clear();
+
+        BaseContentBootstrap.register(itemRegistry, api.internalManualMachines());
+        LegacySfImportBootstrap.register(itemRegistry);
+
+        SfxYamlContentLoader yamlContentLoader = new SfxYamlContentLoader(this, itemRegistry);
+        yamlContentLoader.ensureDefaultFiles();
+        yamlContentLoader.registerAll();
+
+        SfxRecipeYamlLoader recipeYamlLoader = new SfxRecipeYamlLoader(this);
+        recipeYamlLoader.ensureDefaultFiles(syncBundledRecipeFiles());
+        DefaultSfxRecipeRegistry recipeRegistry = new DefaultSfxRecipeRegistry();
+        recipeYamlLoader.loadInto(recipeRegistry);
+        DefaultSfxRecipeRegistry.AuditResult recipeAudit = recipeRegistry.apply(itemRegistry, api.internalManualMachines());
+        BaseContentBootstrap.syncManualMachineGuideContent(itemRegistry, api.internalManualMachines());
+
+        if (getConfig().getBoolean("debug-text.enabled", true)) {
+            getLogger().info(recipeAudit.summary());
+            recipeAudit.warnings().stream().limit(80).forEach(warning -> getLogger().warning(warning));
+            if (recipeAudit.warnings().size() > 80) {
+                getLogger().warning("[SFX Recipe Import] ... and " + (recipeAudit.warnings().size() - 80) + " more warnings.");
+            }
+        }
+    }
+
+    private boolean syncBundledRecipeFiles() {
+        return getConfig().getBoolean("content.sync-bundled-recipes-on-startup", true);
     }
 
     private void saveBundledLanguage(String language) {
