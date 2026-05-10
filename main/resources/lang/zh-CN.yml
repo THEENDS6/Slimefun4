@@ -1,4 +1,4 @@
-machines:
+﻿machines:
   structure-changed: <red>结构已经变化，机器触发已取消。</red>
   missing-dispenser: <red>结构不完整：未找到机器对应的发射器。</red>
   smeltery-not-lit: <red>这台冶炼炉还没有点火，请在发射器下方点燃火焰或灵魂火。</red>
@@ -3244,16 +3244,17 @@ guide:
         1: <gray>按住 Shift 再右键科技书即可打开设置。</gray>
         2: <gray>布局、历史记录和关闭行为都会按玩家保存。</gray>
     mode:
+      name: <yellow>科技书模式</yellow>
       survival:
-        name: <green>将这本书切换为生存科技书</green>
-        lore: <gray>把当前科技书切回普通生存模式。</gray>
+        name: <green>切换这本书为普通科技书</green>
+        lore: <gray>点击切换这本书回普通科技书。</gray>
       cheat:
-        name: <red>将这本书切换为作弊科技书</red>
-        lore: <gray>把当前科技书切换为完整作弊模式。</gray>
+        name: <red>切换这本书为作弊科技书</red>
+        lore: <gray>点击切换这本书为作弊科技书。</gray>
     layout:
-      name: <yellow>界面布局</yellow>
-      classic: <gray>切换到经典还原布局。</gray>
-      sfx: <gray>切换到扩展版 SFX 布局。</gray>
+      name: <yellow>页面布局</yellow>
+      classic: <gray>当前为 SFX 布局，点击切换到经典布局。</gray>
+      sfx: <gray>当前为经典布局，点击切换到 SFX 扩展布局。</gray>
     history:
       name: <yellow>递归配方回溯</yellow>
       enabled: <green>已启用</green>
@@ -3270,11 +3271,14 @@ guide:
     unlock-animation:
       name: <yellow>解锁动画</yellow>
       lore: <gray>为后续研究系统预留，和经典科技书设置保持一致。</gray>
+    resume-last:
+      name: <yellow>打开到上次退出位置</yellow>
+      lore: <gray>再次打开科技书时，回到你上次关闭时所在的页面。</gray>
     current-layout:
       name: <aqua>当前布局</aqua>
-      classic: <gray>当前正在使用经典布局。</gray>
-      sfx: <gray>当前正在使用 SFX 扩展布局。</gray>
-      mode: <gray>当前书本模式：{mode}</gray>
+      classic: <gray>经典布局已启用。</gray>
+      sfx: <gray>SFX 扩展布局已启用。</gray>
+      mode: <gray>当前科技书模式：{mode}</gray>
     toggle:
       enabled: <green>已启用</green>
       disabled: <red>已禁用</red>
@@ -3302,6 +3306,11 @@ guide:
       todo: <gray>后续会补聊天搜索和结果页面。</gray>
   recipe:
     title: 配方详情
+    multiblock:
+      name: <gold>多方块机器</gold>
+      lore:
+        1: <gray>这个配方需要在多方块机器中完成。</gray>
+        2: <gray>先在世界中搭建结构，再与它的触发方块交互。</gray>
     output: <green>目标产物</green>
     output-short: <green>产物</green>
     amount: '数量：'
