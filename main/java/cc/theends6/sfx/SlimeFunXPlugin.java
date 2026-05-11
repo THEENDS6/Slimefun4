@@ -16,6 +16,7 @@ import cc.theends6.sfx.internal.listener.SfxItemUseDispatcher;
 import cc.theends6.sfx.internal.listener.SfxLegacyCombatToolListener;
 import cc.theends6.sfx.internal.listener.SfxLegacyFoodListener;
 import cc.theends6.sfx.internal.listener.SfxPlayerProfileListener;
+import cc.theends6.sfx.internal.listener.SfxResearchFireworksListener;
 import cc.theends6.sfx.internal.listener.SfxSoulboundListener;
 import cc.theends6.sfx.internal.listener.SfxTalismanListener;
 import cc.theends6.sfx.internal.listener.SfxLegacyUtilityListener;
@@ -27,9 +28,9 @@ import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.playerdata.SqliteSfxPlayerDataRepository;
 import cc.theends6.sfx.internal.recipe.DefaultSfxRecipeRegistry;
 import cc.theends6.sfx.internal.recipe.SfxRecipeYamlLoader;
-import cc.theends6.sfx.internal.research.LegacySfResearchBootstrap;
 import cc.theends6.sfx.internal.research.SfxResearchRegistry;
 import cc.theends6.sfx.internal.research.SfxResearchService;
+import cc.theends6.sfx.internal.research.SfxResearchYamlLoader;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.io.File;
 import java.util.Objects;
@@ -90,6 +91,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(foodListener, this);
         getServer().getPluginManager().registerEvents(talismanListener, this);
         getServer().getPluginManager().registerEvents(new SfxSoulboundListener(api.items(), researchService), this);
+        getServer().getPluginManager().registerEvents(new SfxResearchFireworksListener(), this);
         getServer().getPluginManager().registerEvents(new SfxVanillaGuardListener(api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxArmorEffectListener(api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxDebugJoinListener(this, api.runtime(), localization), this);
@@ -169,7 +171,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         recipeYamlLoader.loadInto(recipeRegistry);
         DefaultSfxRecipeRegistry.AuditResult recipeAudit = recipeRegistry.apply(itemRegistry, api.internalManualMachines());
         BaseContentBootstrap.syncManualMachineGuideContent(itemRegistry, api.internalManualMachines());
-        LegacySfResearchBootstrap.register(researchRegistry, itemRegistry.items());
+        SfxResearchYamlLoader researchYamlLoader = new SfxResearchYamlLoader(this);
+        researchYamlLoader.ensureDefaultFiles(syncBundledResearchFiles());
+        researchYamlLoader.loadInto(researchRegistry);
 
         if (getConfig().getBoolean("debug-text.enabled", true)) {
             getLogger().info(recipeAudit.summary());
@@ -182,6 +186,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     private boolean syncBundledRecipeFiles() {
         return getConfig().getBoolean("content.sync-bundled-recipes-on-startup", true);
+    }
+
+    private boolean syncBundledResearchFiles() {
+        return getConfig().getBoolean("content.sync-bundled-researches-on-startup", true);
     }
 
     private void saveBundledLanguage(String language) {

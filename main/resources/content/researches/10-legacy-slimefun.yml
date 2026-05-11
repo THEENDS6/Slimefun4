@@ -1,0 +1,1781 @@
+researches:
+  - id: walking_sticks
+    order: 0
+    name: 'Walking Sticks'
+    cost: 1
+    items:
+      - sf:grandmas_walking_stick
+      - sf:grandpas_walking_stick
+  - id: portable_crafter
+    order: 1
+    name: 'Portable Crafter'
+    cost: 1
+    items:
+      - sf:portable_crafter
+  - id: fortune_cookie
+    order: 2
+    name: 'Fortune Cookie'
+    cost: 1
+    items:
+      - sf:fortune_cookie
+  - id: portable_dustbin
+    order: 4
+    name: 'Portable Dustbin'
+    cost: 2
+    items:
+      - sf:portable_dustbin
+  - id: meat_jerky
+    order: 5
+    name: 'Jerkys'
+    cost: 2
+    items:
+      - sf:beef_jerky
+      - sf:fish_jerky
+      - sf:rabbit_jerky
+      - sf:mutton_jerky
+      - sf:chicken_jerky
+      - sf:pork_jerky
+  - id: armor_forge
+    order: 6
+    name: 'Armor Crafting'
+    cost: 2
+    items:
+      - sf:armor_forge
+  - id: glowstone_armor
+    order: 7
+    name: 'Glowstone Armor'
+    cost: 3
+    items:
+      - sf:glowstone_helmet
+      - sf:glowstone_chestplate
+      - sf:glowstone_leggings
+      - sf:glowstone_boots
+  - id: lumps
+    order: 8
+    name: 'Lumps and Magic'
+    cost: 3
+    items:
+      - sf:magic_lump_1
+      - sf:magic_lump_2
+      - sf:magic_lump_3
+      - sf:ender_lump_1
+      - sf:ender_lump_2
+      - sf:ender_lump_3
+  - id: ender_backpack
+    order: 9
+    name: 'Ender Backpack'
+    cost: 4
+    items:
+      - sf:ender_backpack
+  - id: ender_armor
+    order: 10
+    name: 'Ender Armor'
+    cost: 4
+    items:
+      - sf:ender_helmet
+      - sf:ender_chestplate
+      - sf:ender_leggings
+      - sf:ender_boots
+  - id: magic_eye_of_ender
+    order: 11
+    name: 'Magic Eye of Ender'
+    cost: 4
+    items:
+      - sf:magic_eye_of_ender
+  - id: magic_sugar
+    order: 12
+    name: 'Magic Sugar'
+    cost: 4
+    items:
+      - sf:magic_sugar
+  - id: monster_jerky
+    order: 13
+    name: 'Monster Jerky'
+    cost: 5
+    items:
+      - sf:monster_jerky
+  - id: slime_armor
+    order: 14
+    name: 'Slime Armor'
+    cost: 5
+    items:
+      - sf:slime_helmet
+      - sf:slime_chestplate
+      - sf:slime_leggings
+      - sf:slime_boots
+  - id: sword_of_beheading
+    order: 15
+    name: 'Sword of Beheading'
+    cost: 6
+    items:
+      - sf:sword_of_beheading
+  - id: basic_circuit_board
+    order: 16
+    name: 'Electric Work'
+    cost: 8
+    items:
+      - sf:basic_circuit_board
+  - id: advanced_circuit_board
+    order: 17
+    name: 'Advanced Electricity'
+    cost: 9
+    items:
+      - sf:advanced_circuit_board
+  - id: smeltery
+    order: 18
+    name: 'Hot Smelting'
+    cost: 10
+    items:
+      - sf:smeltery
+  - id: steel
+    order: 19
+    name: 'Steel Age'
+    cost: 11
+    items:
+      - sf:steel_ingot
+  - id: misc_power_items
+    order: 20
+    name: 'Important Power-Related Items'
+    cost: 12
+    items:
+      - sf:sulfate
+      - sf:power_crystal
+  - id: battery
+    order: 21
+    name: 'Your first Battery'
+    cost: 10
+    items:
+      - sf:battery
+  - id: steel_plate
+    order: 22
+    name: 'Steel Plating'
+    cost: 14
+    items:
+      - sf:steel_plate
+  - id: steel_thruster
+    order: 23
+    name: 'Steel Thruster'
+    cost: 14
+    items:
+      - sf:steel_thruster
+  - id: parachute
+    order: 24
+    name: 'Parachute'
+    cost: 15
+    items:
+      - sf:parachute
+  - id: grappling_hook
+    order: 25
+    name: 'Grappling Hook'
+    cost: 15
+    items:
+      - sf:grappling_hook
+      - sf:hook
+      - sf:chain
+  - id: jetpacks
+    order: 26
+    name: 'Jetpacks'
+    cost: 22
+    items:
+      - sf:duralumin_jetpack
+      - sf:billon_jetpack
+      - sf:solder_jetpack
+      - sf:steel_jetpack
+      - sf:damascus_steel_jetpack
+      - sf:reinforced_alloy_jetpack
+  - id: multitools
+    order: 27
+    name: 'Multi Tools'
+    cost: 18
+    items:
+      - sf:duralumin_multi_tool
+      - sf:solder_multi_tool
+      - sf:billon_multi_tool
+      - sf:steel_multi_tool
+      - sf:damascus_steel_multi_tool
+      - sf:reinforced_alloy_multi_tool
+  - id: solar_panel_and_helmet
+    order: 28
+    name: 'Solar Power'
+    cost: 17
+    items:
+      - sf:solar_panel
+      - sf:solar_helmet
+  - id: elemental_staff
+    order: 29
+    name: 'Elemental Staves'
+    cost: 17
+    items:
+      - sf:staff_elemental
+  - id: grind_stone
+    order: 30
+    name: 'Grind Stone'
+    cost: 4
+    items:
+      - sf:grind_stone
+  - id: cactus_armor
+    order: 31
+    name: 'Cactus Suit'
+    cost: 5
+    items:
+      - sf:cactus_boots
+      - sf:cactus_chestplate
+      - sf:cactus_helmet
+      - sf:cactus_leggings
+  - id: gold_pan
+    order: 32
+    name: 'Gold Pan'
+    cost: 5
+    items:
+      - sf:gold_pan
+  - id: magical_book_cover
+    order: 33
+    name: 'Magical Book Binding'
+    cost: 5
+    items:
+      - sf:magical_book_cover
+  - id: slimefun_metals
+    order: 34
+    name: 'New Metals'
+    cost: 6
+    items:
+      - sf:copper_ingot
+      - sf:tin_ingot
+      - sf:silver_ingot
+      - sf:lead_ingot
+      - sf:aluminum_ingot
+      - sf:zinc_ingot
+      - sf:magnesium_ingot
+  - id: ore_crusher
+    order: 35
+    name: 'Ore Doubling'
+    cost: 6
+    items:
+      - sf:ore_crusher
+  - id: bronze
+    order: 36
+    name: 'Bronze Creation'
+    cost: 8
+    items:
+      - sf:bronze_ingot
+  - id: alloys
+    order: 37
+    name: 'Advanced Alloys'
+    cost: 12
+    items:
+      - sf:billon_ingot
+      - sf:duralumin_ingot
+      - sf:aluminum_brass_ingot
+      - sf:aluminum_bronze_ingot
+      - sf:solder_ingot
+      - sf:corinthian_bronze_ingot
+      - sf:brass_ingot
+  - id: compressor_and_carbon
+    order: 38
+    name: 'Carbon Creation'
+    cost: 9
+    items:
+      - sf:compressor
+      - sf:carbon
+  - id: gilded_iron_armor
+    order: 40
+    name: 'Gilded Iron Armor'
+    cost: 16
+    items:
+      - sf:gilded_iron_helmet
+      - sf:gilded_iron_chestplate
+      - sf:gilded_iron_leggings
+      - sf:gilded_iron_boots
+  - id: synthetic_diamond
+    order: 41
+    name: 'Synthetic Diamonds'
+    cost: 10
+    items:
+      - sf:compressed_carbon
+      - sf:carbon_chunk
+      - sf:synthetic_diamond
+  - id: pressure_chamber
+    order: 42
+    name: 'Pressure Chamber'
+    cost: 14
+    items:
+      - sf:pressure_chamber
+  - id: synthetic_sapphire
+    order: 43
+    name: 'Synthetic Sapphires'
+    cost: 16
+    items:
+      - sf:synthetic_sapphire
+  - id: damascus_steel
+    order: 45
+    name: 'Damascus Steel'
+    cost: 17
+    items:
+      - sf:damascus_steel_ingot
+  - id: damascus_steel_armor
+    order: 46
+    name: 'Damascus Steel Armor'
+    cost: 18
+    items:
+      - sf:damascus_steel_helmet
+      - sf:damascus_steel_chestplate
+      - sf:damascus_steel_leggings
+      - sf:damascus_steel_boots
+  - id: reinforced_alloy
+    order: 47
+    name: 'Reinforced Alloy'
+    cost: 22
+    items:
+      - sf:hardened_metal_ingot
+      - sf:reinforced_alloy_ingot
+  - id: carbonado
+    order: 48
+    name: 'Black Diamonds'
+    cost: 26
+    items:
+      - sf:raw_carbonado
+      - sf:carbonado
+  - id: magic_workbench
+    order: 50
+    name: 'Magic Workbench'
+    cost: 12
+    items:
+      - sf:magic_workbench
+  - id: wind_staff
+    order: 51
+    name: 'Wind Staff'
+    cost: 17
+    items:
+      - sf:staff_elemental_wind
+  - id: reinforced_armor
+    order: 52
+    name: 'Reinforced Armor'
+    cost: 26
+    items:
+      - sf:reinforced_alloy_helmet
+      - sf:reinforced_alloy_chestplate
+      - sf:reinforced_alloy_leggings
+      - sf:reinforced_alloy_boots
+  - id: ore_washer
+    order: 53
+    name: 'Ore Washer'
+    cost: 5
+    items:
+      - sf:ore_washer
+      - sf:stone_chunk
+      - sf:sifted_ore
+  - id: gold_carats
+    order: 54
+    name: 'Pure Gold'
+    cost: 7
+    items:
+      - sf:gold_4k
+      - sf:gold_6k
+      - sf:gold_8k
+      - sf:gold_10k
+      - sf:gold_12k
+      - sf:gold_14k
+      - sf:gold_16k
+      - sf:gold_18k
+      - sf:gold_20k
+      - sf:gold_22k
+      - sf:gold_24k
+  - id: silicon
+    order: 55
+    name: 'Silicon Valley'
+    cost: 12
+    items:
+      - sf:silicon
+      - sf:ferrosilicon
+  - id: fire_staff
+    order: 56
+    name: 'Fire Staff'
+    cost: 2
+    items:
+      - sf:staff_elemental_fire
+  - id: smelters_pickaxe
+    order: 57
+    name: 'Smelters Pickaxe'
+    cost: 17
+    items:
+      - sf:smelters_pickaxe
+  - id: common_talisman
+    order: 58
+    name: 'Common Talisman'
+    cost: 14
+    items:
+      - sf:common_talisman
+  - id: anvil_talisman
+    order: 59
+    name: 'Talisman of the Anvil'
+    cost: 18
+    items:
+      - sf:anvil_talisman
+  - id: miner_talisman
+    order: 60
+    name: 'Talisman of the Miner'
+    cost: 18
+    items:
+      - sf:miner_talisman
+  - id: hunter_talisman
+    order: 61
+    name: 'Talisman of the Hunter'
+    cost: 18
+    items:
+      - sf:hunter_talisman
+  - id: lava_talisman
+    order: 62
+    name: 'Talisman of the Lava Walker'
+    cost: 18
+    items:
+      - sf:lava_talisman
+  - id: water_talisman
+    order: 63
+    name: 'Talisman of the Water Breather'
+    cost: 18
+    items:
+      - sf:water_talisman
+  - id: angel_talisman
+    order: 64
+    name: 'Talisman of the Angel'
+    cost: 18
+    items:
+      - sf:angel_talisman
+  - id: fire_talisman
+    order: 65
+    name: 'Talisman of the Firefighter'
+    cost: 18
+    items:
+      - sf:fire_talisman
+  - id: lava_crystal
+    order: 67
+    name: 'Firey Situation'
+    cost: 14
+    items:
+      - sf:lava_crystal
+  - id: magician_talisman
+    order: 68
+    name: 'Talisman of the Magician'
+    cost: 20
+    items:
+      - sf:magician_talisman
+  - id: traveller_talisman
+    order: 69
+    name: 'Talisman of the Traveller'
+    cost: 20
+    items:
+      - sf:traveller_talisman
+  - id: warrior_talisman
+    order: 70
+    name: 'Talisman of the Warrior'
+    cost: 20
+    items:
+      - sf:warrior_talisman
+  - id: knight_talisman
+    order: 71
+    name: 'Talisman of the Knight'
+    cost: 20
+    items:
+      - sf:knight_talisman
+  - id: gilded_iron
+    order: 72
+    name: 'Shiny Iron'
+    cost: 11
+    items:
+      - sf:gilded_iron
+  - id: synthetic_emerald
+    order: 73
+    name: 'Fake Gem'
+    cost: 17
+    items:
+      - sf:synthetic_emerald
+  - id: chainmail_armor
+    order: 74
+    name: 'Chainmail Armor'
+    cost: 8
+    items:
+      - minecraft:chainmail_helmet
+      - minecraft:chainmail_chestplate
+      - minecraft:chainmail_leggings
+      - minecraft:chainmail_boots
+  - id: whirlwind_talisman
+    order: 75
+    name: 'Talisman of the Whirlwind'
+    cost: 19
+    items:
+      - sf:whirlwind_talisman
+  - id: wizard_talisman
+    order: 76
+    name: 'Talisman of the Wizard'
+    cost: 22
+    items:
+      - sf:wizard_talisman
+  - id: lumber_axe
+    order: 77
+    name: 'Lumber Axe'
+    cost: 21
+    items:
+      - sf:lumber_axe
+  - id: hazmat_suit
+    order: 79
+    name: 'Hazmat Suit'
+    cost: 21
+    items:
+      - sf:scuba_helmet
+      - sf:hazmat_chestplate
+      - sf:hazmat_leggings
+      - sf:hazmat_boots
+  - id: uranium
+    order: 80
+    name: 'Radioactive'
+    cost: 30
+    items:
+      - sf:tiny_uranium
+      - sf:small_uranium
+      - sf:uranium
+  - id: crushed_ore
+    order: 81
+    name: 'Ore Purification'
+    cost: 25
+    items:
+      - sf:crushed_ore
+      - sf:pulverized_ore
+      - sf:pure_ore_cluster
+  - id: redstone_alloy
+    order: 84
+    name: 'Redstone Alloy'
+    cost: 16
+    items:
+      - sf:redstone_alloy
+  - id: carbonado_tools
+    order: 85
+    name: 'Top Tier Machines'
+    cost: 24
+    items:
+      - sf:carbonado_multi_tool
+      - sf:carbonado_jetpack
+      - sf:carbonado_jetboots
+  - id: first_aid
+    order: 86
+    name: 'First Aid'
+    cost: 2
+    items:
+      - sf:cloth
+      - sf:rag
+      - sf:bandage
+      - sf:splint
+      - sf:tin_can
+      - sf:vitamins
+      - sf:medicine
+  - id: gold_armor
+    order: 87
+    name: 'Shiny Armor'
+    cost: 13
+    items:
+      - sf:gold_12k_helmet
+      - sf:gold_12k_chestplate
+      - sf:gold_12k_leggings
+      - sf:gold_12k_boots
+  - id: night_vision_googles
+    order: 89
+    name: 'Night Vision Goggles'
+    cost: 10
+    items:
+      - sf:night_vision_goggles
+  - id: pickaxe_of_containment
+    order: 90
+    name: 'Pickaxe of Containment'
+    cost: 14
+    items:
+      - sf:pickaxe_of_containment
+      - sf:broken_spawner
+  - id: table_saw
+    order: 92
+    name: 'Table Saw'
+    cost: 4
+    items:
+      - sf:table_saw
+  - id: slime_steel_armor
+    order: 93
+    name: 'Slimy Steel Armor'
+    cost: 27
+    items:
+      - sf:slime_steel_helmet
+      - sf:slime_steel_chestplate
+      - sf:slime_steel_leggings
+      - sf:slime_steel_boots
+  - id: blade_of_vampires
+    order: 94
+    name: 'Blade of Vampires'
+    cost: 26
+    items:
+      - sf:blade_of_vampires
+  - id: water_staff
+    order: 96
+    name: 'Water Staff'
+    cost: 8
+    items:
+      - sf:staff_elemental_water
+  - id: 24k_gold_block
+    order: 97
+    name: 'Golden City'
+    cost: 19
+    items:
+      - sf:gold_24k_block
+  - id: composter
+    order: 99
+    name: 'Composting Dirt'
+    cost: 3
+    items:
+      - sf:composter
+  - id: farmer_shoes
+    order: 100
+    name: 'Farmer Shoes'
+    cost: 4
+    items:
+      - sf:farmer_shoes
+  - id: explosive_tools
+    order: 101
+    name: 'Explosive Tools'
+    cost: 30
+    items:
+      - sf:explosive_pickaxe
+      - sf:explosive_shovel
+  - id: automated_panning_machine
+    order: 102
+    name: 'Automated Gold Pan'
+    cost: 17
+    items:
+      - sf:automated_panning_machine
+  - id: boots_of_the_stomper
+    order: 103
+    name: 'Boots of the Stomper'
+    cost: 19
+    items:
+      - sf:boots_of_the_stomper
+  - id: pickaxe_of_the_seeker
+    order: 104
+    name: 'Pickaxe of the Seeker'
+    cost: 19
+    items:
+      - sf:pickaxe_of_the_seeker
+  - id: backpacks
+    order: 105
+    name: 'Backpacks'
+    cost: 15
+    items:
+      - sf:large_backpack
+      - sf:medium_backpack
+      - sf:small_backpack
+  - id: woven_backpack
+    order: 106
+    name: 'Woven Backpack'
+    cost: 19
+    items:
+      - sf:woven_backpack
+  - id: crucible
+    order: 107
+    name: 'Crucible'
+    cost: 13
+    items:
+      - sf:crucible
+  - id: gilded_backpack
+    order: 108
+    name: 'Gilded Backpack'
+    cost: 22
+    items:
+      - sf:gilded_backpack
+  - id: armored_jetpack
+    order: 111
+    name: 'Armored Jetpack'
+    cost: 27
+    items:
+      - sf:armored_jetpack
+  - id: ender_talismans
+    order: 112
+    name: 'Ender Talismans'
+    cost: 28
+    items: []
+  - id: nickel_and_cobalt
+    order: 115
+    name: 'Even more Ores'
+    cost: 10
+    items:
+      - sf:nickel_ingot
+      - sf:cobalt_ingot
+  - id: magnet
+    order: 116
+    name: 'Magnetic Metals'
+    cost: 16
+    items:
+      - sf:magnet
+  - id: infused_magnet
+    order: 117
+    name: 'Infused Magnets'
+    cost: 18
+    items:
+      - sf:infused_magnet
+  - id: cobalt_pickaxe
+    order: 118
+    name: 'Speedy Pickaxe'
+    cost: 14
+    items:
+      - sf:cobalt_pickaxe
+  - id: essence_of_afterlife
+    order: 119
+    name: 'Necromancy'
+    cost: 19
+    items:
+      - sf:necrotic_skull
+      - sf:essence_of_afterlife
+  - id: bound_backpack
+    order: 120
+    name: 'Soulbound Storage'
+    cost: 22
+    items:
+      - sf:bound_backpack
+  - id: jetboots
+    order: 121
+    name: 'Jet Boots'
+    cost: 25
+    items:
+      - sf:duralumin_jetboots
+      - sf:billon_jetboots
+      - sf:solder_jetboots
+      - sf:steel_jetboots
+      - sf:damascus_steel_jetboots
+      - sf:reinforced_alloy_jetboots
+  - id: armored_jetboots
+    order: 122
+    name: 'Armored Jet Boots'
+    cost: 27
+    items:
+      - sf:armored_jetboots
+  - id: seismic_axe
+    order: 123
+    name: 'Seismic Axe'
+    cost: 29
+    items:
+      - sf:seismic_axe
+  - id: pickaxe_of_vein_mining
+    order: 124
+    name: 'Pickaxe of Vein Mining'
+    cost: 29
+    items:
+      - sf:pickaxe_of_vein_mining
+  - id: bound_weapons
+    order: 125
+    name: 'Soulbound Weapons'
+    cost: 29
+    items:
+      - sf:soulbound_sword
+      - sf:soulbound_bow
+      - sf:soulbound_trident
+  - id: bound_tools
+    order: 126
+    name: 'Soulbound Tools'
+    cost: 29
+    items:
+      - sf:soulbound_pickaxe
+      - sf:soulbound_axe
+      - sf:soulbound_shovel
+      - sf:soulbound_hoe
+  - id: bound_armor
+    order: 127
+    name: 'Soulbound Armor'
+    cost: 29
+    items:
+      - sf:soulbound_helmet
+      - sf:soulbound_chestplate
+      - sf:soulbound_leggings
+      - sf:soulbound_boots
+  - id: juicer
+    order: 129
+    name: 'Delicious Drinks'
+    cost: 29
+    items:
+      - sf:juicer
+      - sf:apple_juice
+      - sf:melon_juice
+      - sf:carrot_juice
+      - sf:pumpkin_juice
+      - sf:sweet_berry_juice
+      - sf:glow_berry_juice
+  - id: repaired_spawner
+    order: 130
+    name: 'Repairing Spawners'
+    cost: 15
+    items:
+      - sf:repaired_spawner
+  - id: enhanced_furnace
+    order: 132
+    name: 'Enhanced Furnace'
+    cost: 7
+    items:
+      - sf:enhanced_furnace
+      - sf:enhanced_furnace_2
+  - id: more_enhanced_furnaces
+    order: 133
+    name: 'Better Furnaces'
+    cost: 18
+    items:
+      - sf:enhanced_furnace_3
+      - sf:enhanced_furnace_4
+      - sf:enhanced_furnace_5
+      - sf:enhanced_furnace_6
+      - sf:enhanced_furnace_7
+  - id: high_tier_enhanced_furnaces
+    order: 134
+    name: 'High Tier Furnace'
+    cost: 29
+    items:
+      - sf:enhanced_furnace_8
+      - sf:enhanced_furnace_9
+      - sf:enhanced_furnace_10
+      - sf:enhanced_furnace_11
+  - id: reinforced_furnace
+    order: 135
+    name: 'Reinforced Furnace'
+    cost: 32
+    items:
+      - sf:reinforced_furnace
+  - id: carbonado_furnace
+    order: 136
+    name: 'Carbonado Edged Furnace'
+    cost: 35
+    items:
+      - sf:carbonado_edged_furnace
+  - id: electric_motor
+    order: 137
+    name: 'Heating up'
+    cost: 32
+    items:
+      - sf:electro_magnet
+      - sf:electric_motor
+      - sf:heating_coil
+  - id: block_placer
+    order: 138
+    name: 'Block Placer'
+    cost: 17
+    items:
+      - sf:block_placer
+  - id: scroll_of_dimensional_teleposition
+    order: 142
+    name: 'Turning things around'
+    cost: 38
+    items:
+      - sf:scroll_of_dimensional_teleposition
+  - id: special_bows
+    order: 143
+    name: 'Robin Hood'
+    cost: 22
+    items:
+      - sf:explosive_bow
+      - sf:icy_bow
+  - id: tome_of_knowledge_sharing
+    order: 144
+    name: 'Sharing with friends'
+    cost: 30
+    items:
+      - sf:tome_of_knowledge_sharing
+  - id: flask_of_knowledge
+    order: 145
+    name: 'XP Storage'
+    cost: 13
+    items:
+      - sf:flask_of_knowledge
+  - id: hardened_glass
+    order: 146
+    name: 'Withstanding Explosions'
+    cost: 15
+    items:
+      - sf:reinforced_plate
+      - sf:hardened_glass
+  - id: golden_apple_juice
+    order: 149
+    name: 'Golden potion'
+    cost: 24
+    items:
+      - sf:golden_apple_juice
+  - id: cooler
+    order: 150
+    name: 'Portable Beverages'
+    cost: 24
+    items:
+      - sf:cooling_unit
+      - sf:cooler
+  - id: ancient_altar
+    order: 151
+    name: 'Ancient Altar'
+    cost: 15
+    items:
+      - sf:ancient_pedestal
+      - sf:ancient_altar
+  - id: wither_proof_obsidian
+    order: 152
+    name: 'Wither-Proof Obsidian'
+    cost: 21
+    items:
+      - sf:wither_proof_obsidian
+  - id: ancient_runes
+    order: 155
+    name: 'Elemental Runes'
+    cost: 15
+    items:
+      - sf:blank_rune
+      - sf:earth_rune
+      - sf:water_rune
+      - sf:air_rune
+      - sf:fire_rune
+  - id: special_runes
+    order: 156
+    name: 'Purple Runes'
+    cost: 18
+    items:
+      - sf:ender_rune
+      - sf:rainbow_rune
+  - id: infernal_bonemeal
+    order: 157
+    name: 'Infernal Bonemeal'
+    cost: 12
+    items:
+      - sf:infernal_bonemeal
+  - id: rainbow_blocks
+    order: 158
+    name: 'Rainbow Blocks'
+    cost: 24
+    items:
+      - sf:rainbow_clay
+      - sf:rainbow_glass
+      - sf:rainbow_glass_pane
+      - sf:rainbow_wool
+      - sf:rainbow_concrete
+      - sf:rainbow_glazed_terracotta
+  - id: infused_hopper
+    order: 159
+    name: 'Infused Hopper'
+    cost: 22
+    items:
+      - sf:infused_hopper
+  - id: wither_proof_glass
+    order: 160
+    name: 'Wither-Proof Glass'
+    cost: 20
+    items:
+      - sf:wither_proof_glass
+  - id: duct_tape
+    order: 161
+    name: 'Duct Tape'
+    cost: 14
+    items:
+      - sf:duct_tape
+  - id: plastic_sheet
+    order: 162
+    name: 'Plastic'
+    cost: 25
+    items:
+      - sf:plastic_sheet
+  - id: android_memory_core
+    order: 163
+    name: 'Memory Core'
+    cost: 28
+    items:
+      - sf:android_memory_core
+  - id: oil
+    order: 164
+    name: 'Oil'
+    cost: 30
+    items:
+      - sf:oil_bucket
+      - sf:oil_pump
+  - id: fuel
+    order: 165
+    name: 'Fuel'
+    cost: 30
+    items:
+      - sf:fuel_bucket
+      - sf:refinery
+  - id: hologram_projector
+    order: 166
+    name: 'Holograms'
+    cost: 36
+    items:
+      - sf:hologram_projector
+  - id: capacitors
+    order: 167
+    name: 'Tier 1 Capacitors'
+    cost: 25
+    items:
+      - sf:small_capacitor
+      - sf:medium_capacitor
+      - sf:big_capacitor
+  - id: high_tier_capacitors
+    order: 168
+    name: 'Tier 2 Capacitors'
+    cost: 32
+    items:
+      - sf:large_capacitor
+      - sf:carbonado_edged_capacitor
+  - id: solar_generators
+    order: 169
+    name: 'Solar Power Plant'
+    cost: 14
+    items:
+      - sf:solar_generator
+  - id: electric_furnaces
+    order: 170
+    name: 'Powered Furnace'
+    cost: 15
+    items:
+      - sf:electric_furnace
+  - id: electric_ore_grinding
+    order: 171
+    name: 'Crushing and Grinding'
+    cost: 20
+    items:
+      - sf:electric_ore_grinder
+      - sf:electric_ingot_pulverizer
+  - id: heated_pressure_chamber
+    order: 172
+    name: 'Heated Pressure Chamber'
+    cost: 22
+    items:
+      - sf:heated_pressure_chamber
+  - id: coal_generator
+    order: 173
+    name: 'Coal Generator'
+    cost: 14
+    items:
+      - sf:coal_generator
+  - id: bio_reactor
+    order: 173
+    name: 'Bio-Reactor'
+    cost: 18
+    items:
+      - sf:bio_reactor
+  - id: auto_enchanting
+    order: 174
+    name: 'Automatic Enchanting and Disenchanting'
+    cost: 24
+    items:
+      - sf:auto_enchanter
+      - sf:auto_disenchanter
+  - id: auto_anvil
+    order: 175
+    name: 'Automatic Anvil'
+    cost: 34
+    items:
+      - sf:auto_anvil
+      - sf:auto_anvil_2
+  - id: multimeter
+    order: 176
+    name: 'Power Measurement'
+    cost: 10
+    items:
+      - sf:multimeter
+  - id: gps_setup
+    order: 177
+    name: 'Basic GPS Setup'
+    cost: 28
+    items:
+      - sf:gps_transmitter
+      - sf:gps_control_panel
+      - sf:gps_marker_tool
+  - id: gps_emergency_transmitter
+    order: 178
+    name: 'GPS Emergency Waypoint'
+    cost: 30
+    items:
+      - sf:gps_emergency_transmitter
+  - id: programmable_androids
+    order: 179
+    name: 'Programmable Androids'
+    cost: 50
+    items:
+      - sf:programmable_android
+      - sf:programmable_android_farmer
+      - sf:programmable_android_fisherman
+      - sf:programmable_android_miner
+      - sf:programmable_android_woodcutter
+  - id: android_interfaces
+    order: 180
+    name: 'Android Interfaces'
+    cost: 26
+    items:
+      - sf:android_interface_fuel
+      - sf:android_interface_items
+  - id: geo_scanner
+    order: 181
+    name: 'GEO-Scans'
+    cost: 30
+    items:
+      - sf:gps_geo_scanner
+      - sf:portable_geo_scanner
+  - id: combustion_reactor
+    order: 182
+    name: 'Combustion Reactor'
+    cost: 38
+    items:
+      - sf:combustion_reactor
+  - id: teleporter
+    order: 183
+    name: 'Teleporter Base Components'
+    cost: 42
+    items:
+      - sf:gps_teleportation_matrix
+      - sf:gps_teleporter_pylon
+  - id: teleporter_activation_plates
+    order: 184
+    name: 'Teleporter Activation'
+    cost: 36
+    items:
+      - sf:gps_activation_device_personal
+      - sf:gps_activation_device_shared
+  - id: better_solar_generators
+    order: 185
+    name: 'Upgraded Solar Generators'
+    cost: 28
+    items:
+      - sf:solar_generator_2
+      - sf:solar_generator_3
+  - id: better_gps_transmitters
+    order: 186
+    name: 'Upgraded Transmitters'
+    cost: 36
+    items:
+      - sf:gps_transmitter_2
+      - sf:gps_transmitter_3
+  - id: elevator
+    order: 187
+    name: 'Elevators'
+    cost: 28
+    items:
+      - sf:elevator_plate
+  - id: energized_solar_generator
+    order: 188
+    name: 'Full-Time Solar Power'
+    cost: 44
+    items:
+      - sf:solar_generator_4
+  - id: energized_gps_transmitter
+    order: 189
+    name: 'Top Tier Transmitter'
+    cost: 44
+    items:
+      - sf:gps_transmitter_4
+  - id: energy_regulator
+    order: 190
+    name: 'Energy Networks 101'
+    cost: 6
+    items:
+      - sf:energy_regulator
+  - id: butcher_androids
+    order: 191
+    name: 'Butcher Androids'
+    cost: 32
+    items:
+      - sf:programmable_android_butcher
+  - id: organic_food
+    order: 192
+    name: 'Organic Food'
+    cost: 25
+    items:
+      - sf:food_fabricator
+      - sf:wheat_organic_food
+      - sf:carrot_organic_food
+      - sf:potato_organic_food
+      - sf:seeds_organic_food
+      - sf:beetroot_organic_food
+      - sf:melon_organic_food
+      - sf:apple_organic_food
+      - sf:sweet_berries_organic_food
+      - sf:kelp_organic_food
+      - sf:cocoa_organic_food
+      - sf:seagrass_organic_food
+  - id: auto_breeder
+    order: 193
+    name: 'Automated Feeding'
+    cost: 25
+    items:
+      - sf:auto_breeder
+  - id: advanced_android
+    order: 194
+    name: 'Advanced Androids'
+    cost: 60
+    items:
+      - sf:programmable_android_2
+  - id: advanced_butcher_android
+    order: 195
+    name: 'Advanced Androids - Butcher'
+    cost: 30
+    items:
+      - sf:programmable_android_2_butcher
+  - id: advanced_fisherman_android
+    order: 196
+    name: 'Advanced Androids - Fisherman'
+    cost: 30
+    items:
+      - sf:programmable_android_2_fisherman
+  - id: animal_growth_accelerator
+    order: 197
+    name: 'Animal Growth Manipulation'
+    cost: 32
+    items:
+      - sf:animal_growth_accelerator
+  - id: xp_collector
+    order: 198
+    name: 'XP Collector'
+    cost: 36
+    items:
+      - sf:xp_collector
+  - id: organic_fertilizer
+    order: 199
+    name: 'Organic Fertilizer'
+    cost: 36
+    items:
+      - sf:food_composter
+      - sf:wheat_fertilizer
+      - sf:carrot_fertilizer
+      - sf:potato_fertilizer
+      - sf:seeds_fertilizer
+      - sf:beetroot_fertilizer
+      - sf:melon_fertilizer
+      - sf:apple_fertilizer
+      - sf:sweet_berries_fertilizer
+      - sf:kelp_fertilizer
+      - sf:cocoa_fertilizer
+      - sf:seagrass_fertilizer
+  - id: crop_growth_accelerator
+    order: 200
+    name: 'Crop Growth Acceleration'
+    cost: 40
+    items:
+      - sf:crop_growth_accelerator
+  - id: better_crop_growth_accelerator
+    order: 201
+    name: 'Upgraded Crop Growth Accelerator'
+    cost: 44
+    items:
+      - sf:crop_growth_accelerator_2
+  - id: reactor_essentials
+    order: 202
+    name: 'Reactor Essentials'
+    cost: 36
+    items:
+      - sf:reactor_coolant_cell
+      - sf:neptunium
+      - sf:plutonium
+  - id: nuclear_reactor
+    order: 203
+    name: 'Nuclear Power Plant'
+    cost: 48
+    items:
+      - sf:nuclear_reactor
+  - id: freezer
+    order: 204
+    name: 'Mr Freeze'
+    cost: 20
+    items:
+      - sf:freezer
+  - id: cargo_basics
+    order: 205
+    name: 'Cargo Basics'
+    cost: 30
+    items:
+      - sf:cargo_motor
+      - sf:cargo_manager
+      - sf:cargo_connector_node
+  - id: cargo_nodes
+    order: 206
+    name: 'Cargo Setup'
+    cost: 30
+    items:
+      - sf:cargo_input_node
+      - sf:cargo_output_node
+  - id: electric_ingot_machines
+    order: 207
+    name: 'Electric Ingot Fabrication'
+    cost: 18
+    items:
+      - sf:electric_gold_pan
+      - sf:electric_dust_washer
+      - sf:electric_ingot_factory
+  - id: medium_tier_electric_ingot_machines
+    order: 208
+    name: 'Fast Ingot Fabrication'
+    cost: 25
+    items:
+      - sf:electric_gold_pan_2
+      - sf:electric_dust_washer_2
+      - sf:electric_ingot_factory_2
+      - sf:electric_ore_grinder_2
+  - id: high_tier_electric_ingot_machines
+    order: 209
+    name: 'Super Fast Ingot Fabrication'
+    cost: 32
+    items:
+      - sf:electric_gold_pan_3
+      - sf:electric_dust_washer_3
+      - sf:electric_ingot_factory_3
+      - sf:electric_ore_grinder_3
+  - id: better_food_fabricator
+    order: 211
+    name: 'Upgraded Food Fabrication'
+    cost: 28
+    items:
+      - sf:food_fabricator_2
+      - sf:food_composter_2
+  - id: reactor_access_port
+    order: 212
+    name: 'Reactor Interaction'
+    cost: 18
+    items:
+      - sf:reactor_access_port
+  - id: fluid_pump
+    order: 213
+    name: 'Fluid Pump'
+    cost: 28
+    items:
+      - sf:fluid_pump
+  - id: better_freezer
+    order: 214
+    name: 'Upgraded Freezer'
+    cost: 29
+    items:
+      - sf:freezer_2
+      - sf:freezer_3
+  - id: boosted_uranium
+    order: 215
+    name: 'Never-Ending Circle'
+    cost: 30
+    items:
+      - sf:boosted_uranium
+  - id: trash_can
+    order: 216
+    name: 'Trash'
+    cost: 8
+    items:
+      - sf:trash_can
+  - id: advanced_output_node
+    order: 217
+    name: 'Advanced Output Node'
+    cost: 24
+    items:
+      - sf:cargo_output_node_2
+  - id: carbon_press
+    order: 218
+    name: 'Carbon Press'
+    cost: 28
+    items:
+      - sf:carbon_press
+  - id: electric_smeltery
+    order: 219
+    name: 'Electric Smeltery'
+    cost: 28
+    items:
+      - sf:electric_smeltery
+  - id: better_electric_furnace
+    order: 220
+    name: 'Upgraded Electric Furnace'
+    cost: 20
+    items:
+      - sf:electric_furnace_2
+      - sf:electric_furnace_3
+  - id: better_carbon_press
+    order: 221
+    name: 'Upgraded Carbon Press'
+    cost: 26
+    items:
+      - sf:carbon_press_2
+  - id: empowered_android
+    order: 222
+    name: 'Empowered Androids'
+    cost: 60
+    items:
+      - sf:programmable_android_3
+  - id: empowered_butcher_android
+    order: 223
+    name: 'Empowered Androids - Butcher'
+    cost: 30
+    items:
+      - sf:programmable_android_3_butcher
+  - id: empowered_fisherman_android
+    order: 224
+    name: 'Empowered Androids - Fisherman'
+    cost: 30
+    items:
+      - sf:programmable_android_3_fisherman
+  - id: high_tier_carbon_press
+    order: 225
+    name: 'Ultimate Carbon Press'
+    cost: 32
+    items:
+      - sf:carbon_press_3
+  - id: wither_assembler
+    order: 226
+    name: 'Automated Wither Killer'
+    cost: 35
+    items:
+      - sf:wither_assembler
+  - id: better_heated_pressure_chamber
+    order: 227
+    name: 'Upgraded Heated Pressure Chamber'
+    cost: 20
+    items:
+      - sf:heated_pressure_chamber_2
+  - id: elytra
+    order: 228
+    name: 'Elytras'
+    cost: 20
+    items:
+      - sf:elytra_scale
+      - minecraft:elytra
+  - id: special_elytras
+    order: 229
+    name: 'Special Elytras'
+    cost: 30
+    items:
+      - sf:infused_elytra
+      - sf:soulbound_elytra
+  - id: electric_crucible
+    order: 230
+    name: 'Electrified Crucible'
+    cost: 26
+    items:
+      - sf:electrified_crucible
+  - id: better_electric_crucibles
+    order: 231
+    name: 'Hot Crucibles'
+    cost: 30
+    items:
+      - sf:electrified_crucible_2
+      - sf:electrified_crucible_3
+  - id: advanced_electric_smeltery
+    order: 232
+    name: 'Advanced Electric Smeltery'
+    cost: 28
+    items:
+      - sf:electric_smeltery_2
+  - id: advanced_farmer_android
+    order: 233
+    name: 'Advanced Androids - Farmer'
+    cost: 30
+    items:
+      - sf:programmable_android_2_farmer
+  - id: lava_generator
+    order: 234
+    name: 'Lava Generator'
+    cost: 16
+    items:
+      - sf:lava_generator
+  - id: nether_ice
+    order: 235
+    name: 'Nether Ice Coolant'
+    cost: 45
+    items:
+      - sf:nether_ice
+      - sf:enriched_nether_ice
+      - sf:nether_ice_coolant_cell
+  - id: nether_star_reactor
+    order: 236
+    name: 'Nether Star Reactor'
+    cost: 60
+    items:
+      - sf:nether_star_reactor
+  - id: blistering_ingots
+    order: 237
+    name: 'Blistering Radioactivity'
+    cost: 38
+    items:
+      - sf:blistering_ingot
+      - sf:blistering_ingot_2
+      - sf:blistering_ingot_3
+  - id: automatic_ignition_chamber
+    order: 239
+    name: 'Automatic Ignition Chamber'
+    cost: 12
+    items:
+      - sf:ignition_chamber
+  - id: output_chest
+    order: 240
+    name: 'Basic machinery output chest'
+    cost: 20
+    items:
+      - sf:output_chest
+  - id: copper_wire
+    order: 241
+    name: 'Thinned-down Conductivity'
+    cost: 15
+    items:
+      - sf:copper_wire
+  - id: radiant_backpack
+    order: 242
+    name: 'Radiant Backpack'
+    cost: 25
+    items:
+      - sf:radiant_backpack
+  - id: auto_drier
+    order: 243
+    name: 'A Dry Day'
+    cost: 15
+    items:
+      - sf:auto_drier
+  - id: diet_cookie
+    order: 244
+    name: 'Diet Cookie'
+    cost: 3
+    items:
+      - sf:diet_cookie
+  - id: storm_staff
+    order: 245
+    name: 'Storm Staff'
+    cost: 30
+    items:
+      - sf:staff_elemental_storm
+  - id: soulbound_rune
+    order: 246
+    name: 'Soulbound Rune'
+    cost: 60
+    items:
+      - sf:soulbound_rune
+  - id: geo_miner
+    order: 247
+    name: 'GEO-Miner'
+    cost: 24
+    items:
+      - sf:geo_miner
+  - id: lightning_rune
+    order: 248
+    name: 'Lightning Rune'
+    cost: 24
+    items:
+      - sf:lightning_rune
+  - id: totem_of_undying
+    order: 249
+    name: 'Totem of Undying'
+    cost: 36
+    items:
+      - minecraft:totem_of_undying
+  - id: charging_bench
+    order: 250
+    name: 'Charging Bench'
+    cost: 8
+    items:
+      - sf:charging_bench
+  - id: nether_gold_pan
+    order: 251
+    name: 'Nether Gold Pan'
+    cost: 8
+    items:
+      - sf:nether_gold_pan
+  - id: electric_press
+    order: 252
+    name: 'Electric Press'
+    cost: 16
+    items:
+      - sf:electric_press
+      - sf:electric_press_2
+  - id: magnesium_generator
+    order: 253
+    name: 'Power from Magnesium'
+    cost: 20
+    items:
+      - sf:magnesium_salt
+      - sf:magnesium_generator
+  - id: kelp_cookie
+    order: 254
+    name: 'Tasty Kelp'
+    cost: 4
+    items:
+      - sf:kelp_cookie
+  - id: makeshift_smeltery
+    order: 255
+    name: 'Improvised Smeltery'
+    cost: 6
+    items:
+      - sf:makeshift_smeltery
+  - id: tree_growth_accelerator
+    order: 256
+    name: 'Faster Trees'
+    cost: 18
+    items:
+      - sf:tree_growth_accelerator
+  - id: industrial_miner
+    order: 95
+    name: 'Industrial Mining'
+    cost: 28
+    items:
+      - sf:industrial_miner
+  - id: advanced_industrial_miner
+    order: 98
+    name: 'Better Mining'
+    cost: 36
+    items:
+      - sf:advanced_industrial_miner
+  - id: magical_zombie_pills
+    order: 257
+    name: 'De-Zombification'
+    cost: 22
+    items:
+      - sf:magical_zombie_pills
+  - id: auto_brewer
+    order: 258
+    name: 'Industrial Brewery'
+    cost: 30
+    items:
+      - sf:auto_brewer
+  - id: enchantment_rune
+    order: 259
+    name: 'Ancient Enchanting'
+    cost: 24
+    items:
+      - sf:magical_glass
+      - sf:enchantment_rune
+  - id: lead_clothing
+    order: 260
+    name: 'Lead Clothing'
+    cost: 14
+    items:
+      - sf:reinforced_cloth
+  - id: tape_measure
+    order: 261
+    name: 'Tape Measure'
+    cost: 7
+    items:
+      - sf:tape_measure
+  - id: iron_golem_assembler
+    order: 262
+    name: 'Automated Iron Golems'
+    cost: 30
+    items:
+      - sf:iron_golem_assembler
+  - id: shulker_shell
+    order: 263
+    name: 'Synthetic Shulkers'
+    cost: 30
+    items:
+      - sf:synthetic_shulker_shell
+  - id: villager_rune
+    order: 264
+    name: 'Reset Villager Trades'
+    cost: 26
+    items:
+      - sf:villager_rune
+      - sf:strange_nether_goo
+  - id: climbing_pick
+    order: 265
+    name: 'Block Raider'
+    cost: 20
+    items:
+      - sf:climbing_pick
+  - id: even_higher_tier_capacitors
+    order: 266
+    name: 'Tier 3 Capacitors'
+    cost: 40
+    items:
+      - sf:energized_capacitor
+  - id: caveman_talisman
+    order: 267
+    name: 'Talisman of the Caveman'
+    cost: 20
+    items:
+      - sf:caveman_talisman
+  - id: elytra_cap
+    order: 268
+    name: 'Crash Gear'
+    cost: 20
+    items:
+      - sf:elytra_cap
+  - id: energy_connectors
+    order: 269
+    name: 'Wired Connections'
+    cost: 12
+    items:
+      - sf:energy_connector
+  - id: bee_armor
+    order: 270
+    name: 'Bee Armor'
+    cost: 24
+    items:
+      - sf:bee_helmet
+      - sf:bee_wings
+      - sf:bee_leggings
+      - sf:bee_boots
+  - id: wise_talisman
+    order: 271
+    name: 'Talisman of the Wise'
+    cost: 20
+    items:
+      - sf:wise_talisman
+  - id: book_binder
+    order: 272
+    name: 'Enchantment Book Binding'
+    cost: 26
+    items:
+      - sf:book_binder
+  - id: auto_crafting
+    order: 273
+    name: 'Automatic Crafting'
+    cost: 30
+    items:
+      - sf:crafting_motor
+      - sf:vanilla_auto_crafter
+      - sf:enhanced_auto_crafter
+      - sf:armor_auto_crafter
+  - id: produce_collector
+    order: 274
+    name: 'Automatic Milking'
+    cost: 20
+    items:
+      - sf:produce_collector
+  - id: improved_generators
+    order: 275
+    name: 'Improved Generators'
+    cost: 24
+    items:
+      - sf:coal_generator_2
+      - sf:lava_generator_2
+  - id: ingredients_and_cheese
+    order: 276
+    name: 'Slimefun Cuisine'
+    cost: 5
+    items:
+      - sf:salt
+      - sf:wheat_flour
+      - sf:heavy_cream
+      - sf:cheese
+      - sf:butter
+  - id: medium_tier_auto_enchanting
+    order: 277
+    name: 'Fast Automatic Enchanting and Disenchanting'
+    cost: 48
+    items:
+      - sf:auto_enchanter_2
+      - sf:auto_disenchanter_2
+  - id: portable_teleporter
+    order: 278
+    name: 'Teleportation from Anywhere'
+    cost: 42
+    items:
+      - sf:portable_teleporter
+  - id: trident
+    order: 279
+    name: 'Trident'
+    cost: 20
+    items:
+      - minecraft:trident
+  - id: farmer_talisman
+    order: 280
+    name: 'Talisman of the Farmer'
+    cost: 18
+    items:
+      - sf:farmer_talisman
+  - id: rainbow_armor
+    order: 281
+    name: 'I wanna see the rainbow high in the sky'
+    cost: 22
+    items:
+      - sf:rainbow_helmet
+      - sf:rainbow_chestplate
+      - sf:rainbow_leggings
+      - sf:rainbow_boots
