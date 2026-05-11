@@ -2,8 +2,11 @@ package cc.theends6.sfx.internal.listener;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -27,6 +30,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 
 
 
@@ -73,10 +77,29 @@ public final class SfxVanillaGuardListener implements Listener {
             "sf:easter_apple_pie"
     );
     private static final Set<String> VANILLA_BOW_IDS = Set.of("sf:explosive_bow", "sf:icy_bow");
+    private static final Set<String> DEFAULT_NETHERITE_UPGRADE_IDS = Set.of(
+            "sf:smelters_pickaxe",
+            "sf:lumber_axe",
+            "sf:explosive_pickaxe",
+            "sf:explosive_shovel",
+            "sf:pickaxe_of_the_seeker",
+            "sf:pickaxe_of_vein_mining",
+            "sf:soulbound_sword",
+            "sf:soulbound_pickaxe",
+            "sf:soulbound_axe",
+            "sf:soulbound_shovel",
+            "sf:soulbound_hoe",
+            "sf:soulbound_helmet",
+            "sf:soulbound_chestplate",
+            "sf:soulbound_leggings",
+            "sf:soulbound_boots"
+    );
 
+    private final JavaPlugin plugin;
     private final SfxItems items;
 
-    public SfxVanillaGuardListener(SfxItems items) {
+    public SfxVanillaGuardListener(JavaPlugin plugin, SfxItems items) {
+        this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.items = Objects.requireNonNull(items, "items");
     }
 
@@ -180,11 +203,20 @@ public final class SfxVanillaGuardListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPrepareSmithing(PrepareSmithingEvent event) {
-        if (isSfxItem(event.getInventory().getInputEquipment())
-                || isSfxItem(event.getInventory().getInputMineral())
-                || isSfxItem(event.getInventory().getInputTemplate())) {
+        ItemStack inputEquipment = event.getInventory().getInputEquipment();
+        ItemStack inputMineral = event.getInventory().getInputMineral();
+        ItemStack inputTemplate = event.getInventory().getInputTemplate();
+
+        if (isSfxItem(inputMineral) || isSfxItem(inputTemplate)) {
             event.setResult(null);
+            return;
         }
+        if (!isSfxItem(inputEquipment)) {
+            return;
+        }
+
+        ItemStack upgraded = createNetheriteUpgradeResult(inputEquipment, inputMineral, inputTemplate);
+        event.setResult(upgraded);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -239,6 +271,70 @@ public final class SfxVanillaGuardListener implements Listener {
         if (isSmeltingInventory(event.getDestination().getType()) && isSfxItem(event.getItem())) {
             event.setCancelled(true);
         }
+    }
+
+    private ItemStack createNetheriteUpgradeResult(ItemStack inputEquipment, ItemStack inputMineral, ItemStack inputTemplate) {
+        if (!isConfiguredNetheriteUpgradeAllowed(inputEquipment)) {
+            return null;
+        }
+        if (!isNetheriteIngot(inputMineral) || !isNetheriteUpgradeTemplate(inputTemplate)) {
+            return null;
+        }
+        Material upgradedMaterial = netheriteMaterial(inputEquipment.getType());
+        if (upgradedMaterial == null) {
+            return null;
+        }
+        ItemStack result = inputEquipment.clone();
+        result.setType(upgradedMaterial);
+        result.setAmount(1);
+        return result;
+    }
+
+    private boolean isConfiguredNetheriteUpgradeAllowed(ItemStack inputEquipment) {
+        if (!plugin.getConfig().getBoolean("options.sfx-netherite-smithing.enabled", true)) {
+            return false;
+        }
+        return items.readMarker(inputEquipment)
+                .map(marker -> allowedNetheriteUpgradeIds().contains(marker.itemId()))
+                .orElse(false);
+    }
+
+    private Set<String> allowedNetheriteUpgradeIds() {
+        List<String> configured = plugin.getConfig().getStringList("options.sfx-netherite-smithing.allowed-items");
+        if (configured.isEmpty() && !plugin.getConfig().contains("options.sfx-netherite-smithing.allowed-items")) {
+            return DEFAULT_NETHERITE_UPGRADE_IDS;
+        }
+        return configured.stream()
+                .filter(raw -> raw != null && !raw.isBlank())
+                .map(raw -> raw.trim().toLowerCase(Locale.ROOT))
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    private boolean isNetheriteIngot(ItemStack item) {
+        return item != null && item.getType() == Material.NETHERITE_INGOT;
+    }
+
+    private boolean isNetheriteUpgradeTemplate(ItemStack item) {
+        if (item == null || item.getType().isAir()) {
+            return false;
+        }
+        Material template = Material.matchMaterial("NETHERITE_UPGRADE_SMITHING_TEMPLATE");
+        return template != null && item.getType() == template;
+    }
+
+    private Material netheriteMaterial(Material material) {
+        return switch (material) {
+            case DIAMOND_SWORD -> Material.NETHERITE_SWORD;
+            case DIAMOND_PICKAXE -> Material.NETHERITE_PICKAXE;
+            case DIAMOND_AXE -> Material.NETHERITE_AXE;
+            case DIAMOND_SHOVEL -> Material.NETHERITE_SHOVEL;
+            case DIAMOND_HOE -> Material.NETHERITE_HOE;
+            case DIAMOND_HELMET -> Material.NETHERITE_HELMET;
+            case DIAMOND_CHESTPLATE -> Material.NETHERITE_CHESTPLATE;
+            case DIAMOND_LEGGINGS -> Material.NETHERITE_LEGGINGS;
+            case DIAMOND_BOOTS -> Material.NETHERITE_BOOTS;
+            default -> null;
+        };
     }
 
     private boolean isSmeltingInventory(InventoryType type) {

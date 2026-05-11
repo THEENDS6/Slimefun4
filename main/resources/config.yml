@@ -36,4 +36,26 @@ debug-text:
 options:
   
   
+  
+  sfx-netherite-smithing:
+    enabled: true
+    allowed-items:
+      - sf:smelters_pickaxe
+      - sf:lumber_axe
+      - sf:explosive_pickaxe
+      - sf:explosive_shovel
+      - sf:pickaxe_of_the_seeker
+      - sf:pickaxe_of_vein_mining
+      - sf:soulbound_sword
+      - sf:soulbound_pickaxe
+      - sf:soulbound_axe
+      - sf:soulbound_shovel
+      - sf:soulbound_hoe
+      - sf:soulbound_helmet
+      - sf:soulbound_chestplate
+      - sf:soulbound_leggings
+      - sf:soulbound_boots
+
+  
+  
   fire-breaking-chance: 34
