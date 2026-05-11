@@ -69,4 +69,11 @@ public final class Text {
     public static Component noItalic(Component component) {
         return component.decoration(TextDecoration.ITALIC, false);
     }
+
+    public static String toLegacy(Component component) {
+        if (component == null) {
+            return "";
+        }
+        return LEGACY_AMPERSAND.serialize(component);
+    }
 }

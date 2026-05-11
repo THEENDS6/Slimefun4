@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'cc.theends6'
-version = '2026.05.11f'
+version = '2026.05.12a'
 
 description = 'SlimeFunX restored single-module workspace.'
 
@@ -94,6 +94,18 @@ tasks.register('deployToPaperRuntime', Copy) {
     from(tasks.named('jar').flatMap { it.archiveFile })
     into(layout.projectDirectory.dir('run-paper-1.21.8/plugins'))
     rename { rootProject.ext.pluginJarName }
+}
+
+tasks.register('exportLegacyItemsYaml', JavaExec) {
+    group = 'build setup'
+    description = 'Exports legacy Slimefun category and item definitions to bundled YAML resources.'
+    dependsOn 'classes'
+    classpath = sourceSets.main.output + sourceSets.main.compileClasspath + configurations.shade
+    mainClass = 'cc.theends6.sfx.internal.bootstrap.LegacySfYamlExportTool'
+    workingDir = projectDir
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 tasks.register('deployToFoliaRuntime', Copy) {

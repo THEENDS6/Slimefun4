@@ -1,6 +1,6 @@
 # Additive / override content entry.
-# Core legacy Slimefun content remains hard-coded.
-# Use replace: true to override an existing category or item by id.
+# Bundled legacy Slimefun item/category definitions now live in content/items/*.yml.
+# Keep this file for local overrides. Use replace: true to override an existing category or item by id.
 
 categories: []
 

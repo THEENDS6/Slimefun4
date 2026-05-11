@@ -3,7 +3,6 @@ package cc.theends6.sfx;
 import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.internal.SfxApiImpl;
 import cc.theends6.sfx.internal.bootstrap.BaseContentBootstrap;
-import cc.theends6.sfx.internal.bootstrap.LegacySfImportBootstrap;
 import cc.theends6.sfx.internal.bootstrap.SfxYamlContentLoader;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBasicMachineBlockListener;
@@ -182,8 +181,6 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         api.internalManualMachines().clear();
 
         BaseContentBootstrap.register(itemRegistry, api.internalManualMachines());
-        LegacySfImportBootstrap.register(itemRegistry);
-
         SfxYamlContentLoader yamlContentLoader = new SfxYamlContentLoader(this, itemRegistry);
         yamlContentLoader.ensureDefaultFiles();
         yamlContentLoader.registerAll();

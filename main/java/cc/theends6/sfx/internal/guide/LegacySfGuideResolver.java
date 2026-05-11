@@ -21,7 +21,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-final class LegacySfGuideResolver {
+public final class LegacySfGuideResolver {
     private static final Map<String, SfxItemCategory> VIRTUAL_CATEGORIES = createVirtualCategories();
     private static final Map<String, String> EXACT_CATEGORY_BY_ITEM = createExactCategoryByItem();
     private static final Map<String, String> SOURCE_CATEGORY_FALLBACKS = createSourceCategoryFallbacks();
@@ -92,13 +92,12 @@ final class LegacySfGuideResolver {
                 .filter(LegacySfGuideResolver::isLegacySlimefunItem)
                 .filter(item -> categoryId.equals(resolveLegacyGuideCategory(item)))
                 .sorted(Comparator
-                        .comparingInt((SfxItemDefinition item) -> itemOrder(item))
-                        .thenComparingInt(SfxItemDefinition::order)
+                        .comparingInt(SfxItemDefinition::order)
                         .thenComparing(SfxItemDefinition::id))
                 .toList();
     }
 
-    private static int itemOrder(SfxItemDefinition item) {
+    public static int legacySuggestedOrder(SfxItemDefinition item) {
         if (item.order() != SfxItemDefinition.DEFAULT_ORDER) {
             return item.order();
         }
