@@ -3183,9 +3183,9 @@ categories:
   guide.sf.magical_items:
     name: '&7魔法物品'
   guide.sf.talismans:
-    name: '&7护身符 - &a一阶'
+    name: '&7护身符 I'
   guide.sf.ender_talismans:
-    name: '&7护身符 - &5二阶'
+    name: '&7护身符 II'
   guide.sf.magical_gadgets:
     name: '&7魔法装置'
   guide.sf.magical_armor:
@@ -3269,10 +3269,10 @@ guide:
       lore: <gray>这个设置只影响科技书菜单。</gray>
     fireworks:
       name: <yellow>研究烟花</yellow>
-      lore: <gray>控制解锁研究时是否播放烟花效果。</gray>
+      lore: <gray>在研究完成时发射一枚大型烟花火箭。</gray>
     unlock-animation:
       name: <yellow>解锁动画</yellow>
-      lore: <gray>控制解锁研究时是否播放解锁音效。</gray>
+      lore: <gray>在研究过程中于聊天栏显示思索进度。</gray>
     resume-last:
       name: <yellow>打开到上次退出位置</yellow>
       lore: <gray>再次打开科技书时，回到你上次关闭时所在的页面。</gray>
@@ -3332,6 +3332,11 @@ guide:
     no-recipe:
       name: <red>暂无配方</red>
       lore: <gray>这个物品当前只有注册数据，还没有可展示的配方。</gray>
+  locked: 已锁定
+  locked-itemgroup:
+    line1: 要解锁这个分类，你需要
+    line2: 先解锁以下分类中的全部物品
+    line3: 然后才能继续查看
   research:
     locked: <red>尚未解锁</red>
     click-unlock: <green>点击解锁</green>
@@ -3369,9 +3374,9 @@ messages:
   not-researched-item: <red>你还没有解锁这个物品。</red>
   not-enough-xp: <red>你的经验等级不足，无法解锁这项研究。</red>
   research:
-    start: <yellow>正在研究：{name}</yellow>
-    progress: <yellow>{name}</yellow><gray> - </gray><aqua>{progress}</aqua>
-    unlocked: <green>已解锁研究：{name}</green>
+    start: <gray>远古之灵正在你耳边低语神秘的知识……</gray>
+    progress: <gray>你开始思索 </gray><aqua>{name}</aqua><gray>（{progress}）</gray>
+    unlocked: <aqua>你已解锁 </aqua><gray>“{name}”</gray>
   backpack:
     no-stack: <red>背包类物品必须单独一件使用。</red>
     foreign-owner: <red>这个背包属于其他玩家。</red>

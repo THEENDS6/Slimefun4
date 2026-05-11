@@ -52,6 +52,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         saveDefaultConfig();
         saveBundledLanguage("zh-CN");
         saveBundledLanguage("en-US");
+        saveBundledTestingFile();
 
         var runtime = new cc.theends6.sfx.internal.runtime.PaperSfxRuntime(this);
         try {
@@ -146,6 +147,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         reloadConfig();
         localization.reload();
         legacyItemBehaviorConfig.reload();
+        saveBundledTestingFile();
         api.menus().closeAll();
         if (backpackListener != null) {
             backpackListener.shutdown();
@@ -197,6 +199,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         if (!target.exists()) {
             saveResource("lang/" + language + ".yml", false);
         }
+    }
+
+    private void saveBundledTestingFile() {
+        saveResource("TESTING.md", true);
     }
 
     private File playerDataFile() {

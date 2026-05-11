@@ -21,6 +21,9 @@ guide:
   sfx-layout-enabled: true
   allow-layout-switching: true
   show-vanilla-recipes: true
+  seasonal-categories:
+    enabled: true
+    always-show: true
   recipe:
     machine-link-enabled: true
   survival-title: '<dark_green>SFX 科技书</dark_green>'

@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -25,8 +26,17 @@ final class LegacySfGuideResolver {
     private static final Map<String, String> EXACT_CATEGORY_BY_ITEM = createExactCategoryByItem();
     private static final Map<String, String> SOURCE_CATEGORY_FALLBACKS = createSourceCategoryFallbacks();
     private static final Map<String, Integer> CLASSIC_ITEM_ORDER = createClassicItemOrder();
+    private static final Map<String, Integer> CLASSIC_BASIC_MACHINE_ORDER = createClassicBasicMachineOrder();
     private static final Map<String, Integer> CLASSIC_ELECTRICITY_ORDER = createClassicElectricityOrder();
     private static final Map<String, Integer> CLASSIC_ITEM_ORDER_OVERRIDES = createClassicItemOrderOverrides();
+    private static final Map<String, List<String>> LOCKED_CATEGORY_PARENTS = createLockedCategoryParents();
+    private static final Set<String> SEASONAL_CATEGORIES = Set.of(
+            "guide:sf:christmas",
+            "guide:sf:valentines_day",
+            "guide:sf:easter",
+            "guide:sf:birthday",
+            "guide:sf:halloween"
+    );
 
     private LegacySfGuideResolver() {
     }
@@ -63,6 +73,14 @@ final class LegacySfGuideResolver {
         return registry.category(categoryId).filter(category -> !category.id().startsWith("sf:"));
     }
 
+    static List<String> parentCategories(String categoryId) {
+        return LOCKED_CATEGORY_PARENTS.getOrDefault(categoryId, List.of());
+    }
+
+    static boolean isSeasonalCategory(String categoryId) {
+        return SEASONAL_CATEGORIES.contains(categoryId);
+    }
+
     static List<SfxItemDefinition> visibleItemsInCategory(DefaultSfxItemRegistry registry, String categoryId) {
         if (!VIRTUAL_CATEGORIES.containsKey(categoryId)) {
             return registry.visibleItemsInCategory(categoryId).stream().toList();
@@ -81,6 +99,12 @@ final class LegacySfGuideResolver {
     private static int itemOrder(SfxItemDefinition item) {
         if (item.order() != SfxItemDefinition.DEFAULT_ORDER) {
             return item.order();
+        }
+        if ("guide:sf:basic_machines".equals(resolveLegacyGuideCategory(item))) {
+            Integer order = CLASSIC_BASIC_MACHINE_ORDER.get(item.id());
+            if (order != null) {
+                return order;
+            }
         }
         if ("guide:sf:electricity".equals(resolveLegacyGuideCategory(item))) {
             Integer electricityOrder = CLASSIC_ELECTRICITY_ORDER.get(item.id());
@@ -774,6 +798,38 @@ final class LegacySfGuideResolver {
         return Collections.unmodifiableMap(byItem);
     }
 
+    private static Map<String, Integer> createClassicBasicMachineOrder() {
+        Map<String, Integer> map = new LinkedHashMap<>();
+        int order = 10;
+        order = putRange(map, order,
+                "sf:enhanced_crafting_table",
+                "sf:grind_stone",
+                "sf:armor_forge",
+                "sf:ore_crusher",
+                "sf:compressor",
+                "sf:makeshift_smeltery",
+                "sf:smeltery",
+                "sf:pressure_chamber",
+                "sf:magic_workbench",
+                "sf:ore_washer",
+                "sf:juicer");
+        order = putRange(map, order,
+                "sf:enhanced_furnace",
+                "sf:enhanced_furnace_2",
+                "sf:enhanced_furnace_3",
+                "sf:enhanced_furnace_4",
+                "sf:enhanced_furnace_5",
+                "sf:enhanced_furnace_6",
+                "sf:enhanced_furnace_7",
+                "sf:enhanced_furnace_8",
+                "sf:enhanced_furnace_9",
+                "sf:enhanced_furnace_10",
+                "sf:enhanced_furnace_11",
+                "sf:reinforced_furnace",
+                "sf:carbonado_edged_furnace");
+        return Collections.unmodifiableMap(map);
+    }
+
     private static Map<String, Integer> createClassicItemOrderOverrides() {
         Map<String, Integer> map = new LinkedHashMap<>();
         int order = 10;
@@ -793,6 +849,16 @@ final class LegacySfGuideResolver {
         order = putRange(map, order, "sf:electric_press", "sf:electric_press_2");
         order = putRange(map, order, "sf:refinery", "sf:combustion_reactor", "sf:nuclear_reactor", "sf:magnesium_generator");
         order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:bio_reactor");
+        return Collections.unmodifiableMap(map);
+    }
+
+    private static Map<String, List<String>> createLockedCategoryParents() {
+        Map<String, List<String>> map = new LinkedHashMap<>();
+        map.put("guide:sf:electricity", List.of("guide:sf:basic_machines"));
+        map.put("guide:sf:cargo", List.of("guide:sf:basic_machines"));
+        map.put("guide:sf:gps", List.of("guide:sf:basic_machines"));
+        map.put("guide:sf:androids", List.of("guide:sf:basic_machines"));
+        map.put("guide:sf:ender_talismans", List.of("guide:sf:talismans"));
         return Collections.unmodifiableMap(map);
     }
 
