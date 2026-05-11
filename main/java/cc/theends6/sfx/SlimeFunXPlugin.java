@@ -93,7 +93,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(talismanListener, this);
         getServer().getPluginManager().registerEvents(new SfxSoulboundListener(api.items(), researchService), this);
         getServer().getPluginManager().registerEvents(new SfxResearchFireworksListener(), this);
-        getServer().getPluginManager().registerEvents(new SfxVanillaGuardListener(api.items()), this);
+        getServer().getPluginManager().registerEvents(new SfxVanillaGuardListener(this, api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxArmorEffectListener(api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxDebugJoinListener(this, api.runtime(), localization), this);
 

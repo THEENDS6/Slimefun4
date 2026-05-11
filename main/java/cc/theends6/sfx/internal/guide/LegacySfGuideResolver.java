@@ -812,7 +812,17 @@ final class LegacySfGuideResolver {
                 "sf:pressure_chamber",
                 "sf:magic_workbench",
                 "sf:ore_washer",
-                "sf:juicer");
+                "sf:table_saw",
+                "sf:juicer",
+                "sf:automated_panning_machine",
+                "sf:industrial_miner",
+                "sf:advanced_industrial_miner",
+                "sf:composter",
+                "sf:crucible",
+                "sf:output_chest",
+                "sf:ignition_chamber",
+                "sf:hologram_projector",
+                "sf:block_placer");
         order = putRange(map, order,
                 "sf:enhanced_furnace",
                 "sf:enhanced_furnace_2",

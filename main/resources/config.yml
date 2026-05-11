@@ -34,6 +34,28 @@ debug-text:
   enabled: true
 
 options:
+  # Allows selected SFX diamond equipment to be upgraded in the vanilla Smithing Table
+  # with a Netherite Upgrade Smithing Template and a Netherite Ingot.
+  # The output keeps the original SFX item id and metadata, only the vanilla material changes.
+  sfx-netherite-smithing:
+    enabled: true
+    allowed-items:
+      - sf:smelters_pickaxe
+      - sf:lumber_axe
+      - sf:explosive_pickaxe
+      - sf:explosive_shovel
+      - sf:pickaxe_of_the_seeker
+      - sf:pickaxe_of_vein_mining
+      - sf:soulbound_sword
+      - sf:soulbound_pickaxe
+      - sf:soulbound_axe
+      - sf:soulbound_shovel
+      - sf:soulbound_hoe
+      - sf:soulbound_helmet
+      - sf:soulbound_chestplate
+      - sf:soulbound_leggings
+      - sf:soulbound_boots
+
   # Slimefun classic smeltery behavior: the makeshift smeltery always consumes fire after a successful craft;
   # the normal smeltery consumes fire by chance after a successful craft.
   fire-breaking-chance: 34

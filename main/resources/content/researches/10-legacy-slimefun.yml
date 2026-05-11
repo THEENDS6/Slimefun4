@@ -524,7 +524,7 @@ researches:
       - sf:scuba_helmet
       - sf:hazmat_chestplate
       - sf:hazmat_leggings
-      - sf:hazmat_boots
+      - sf:rubber_boots
   - id: uranium
     order: 80
     name: 'Radioactive'
@@ -564,7 +564,7 @@ researches:
       - sf:rag
       - sf:bandage
       - sf:splint
-      - sf:tin_can
+      - sf:can
       - sf:vitamins
       - sf:medicine
   - id: gold_armor
@@ -806,7 +806,7 @@ researches:
     name: 'Repairing Spawners'
     cost: 15
     items:
-      - sf:repaired_spawner
+      - sf:reinforced_spawner
   - id: enhanced_furnace
     order: 132
     name: 'Enhanced Furnace'
@@ -923,17 +923,17 @@ researches:
     cost: 15
     items:
       - sf:blank_rune
-      - sf:earth_rune
-      - sf:water_rune
-      - sf:air_rune
-      - sf:fire_rune
+      - sf:ancient_rune_earth
+      - sf:ancient_rune_water
+      - sf:ancient_rune_air
+      - sf:ancient_rune_fire
   - id: special_runes
     order: 156
     name: 'Purple Runes'
     cost: 18
     items:
-      - sf:ender_rune
-      - sf:rainbow_rune
+      - sf:ancient_rune_ender
+      - sf:ancient_rune_rainbow
   - id: infernal_bonemeal
     order: 157
     name: 'Infernal Bonemeal'
@@ -986,14 +986,14 @@ researches:
     name: 'Oil'
     cost: 30
     items:
-      - sf:oil_bucket
+      - sf:bucket_of_oil
       - sf:oil_pump
   - id: fuel
     order: 165
     name: 'Fuel'
     cost: 30
     items:
-      - sf:fuel_bucket
+      - sf:bucket_of_fuel
       - sf:refinery
   - id: hologram_projector
     order: 166
@@ -1181,17 +1181,17 @@ researches:
     cost: 25
     items:
       - sf:food_fabricator
-      - sf:wheat_organic_food
-      - sf:carrot_organic_food
-      - sf:potato_organic_food
-      - sf:seeds_organic_food
-      - sf:beetroot_organic_food
-      - sf:melon_organic_food
-      - sf:apple_organic_food
-      - sf:sweet_berries_organic_food
-      - sf:kelp_organic_food
-      - sf:cocoa_organic_food
-      - sf:seagrass_organic_food
+      - sf:organic_food_wheat
+      - sf:organic_food_carrot
+      - sf:organic_food_potato
+      - sf:organic_food_seeds
+      - sf:organic_food_beetroot
+      - sf:organic_food_melon
+      - sf:organic_food_apple
+      - sf:organic_food_sweet_berries
+      - sf:organic_food_kelp
+      - sf:organic_food_cocoa
+      - sf:organic_food_seagrass
   - id: auto_breeder
     order: 193
     name: 'Automated Feeding'
@@ -1234,17 +1234,17 @@ researches:
     cost: 36
     items:
       - sf:food_composter
-      - sf:wheat_fertilizer
-      - sf:carrot_fertilizer
-      - sf:potato_fertilizer
-      - sf:seeds_fertilizer
-      - sf:beetroot_fertilizer
-      - sf:melon_fertilizer
-      - sf:apple_fertilizer
-      - sf:sweet_berries_fertilizer
-      - sf:kelp_fertilizer
-      - sf:cocoa_fertilizer
-      - sf:seagrass_fertilizer
+      - sf:fertilizer_wheat
+      - sf:fertilizer_carrot
+      - sf:fertilizer_potato
+      - sf:fertilizer_seeds
+      - sf:fertilizer_beetroot
+      - sf:fertilizer_melon
+      - sf:fertilizer_apple
+      - sf:fertilizer_sweet_berries
+      - sf:fertilizer_kelp
+      - sf:fertilizer_cocoa
+      - sf:fertilizer_seagrass
   - id: crop_growth_accelerator
     order: 200
     name: 'Crop Growth Acceleration'
@@ -1262,7 +1262,7 @@ researches:
     name: 'Reactor Essentials'
     cost: 36
     items:
-      - sf:reactor_coolant_cell
+      - sf:reactor_collant_cell
       - sf:neptunium
       - sf:plutonium
   - id: nuclear_reactor
@@ -1284,14 +1284,14 @@ researches:
     items:
       - sf:cargo_motor
       - sf:cargo_manager
-      - sf:cargo_connector_node
+      - sf:cargo_node
   - id: cargo_nodes
     order: 206
     name: 'Cargo Setup'
     cost: 30
     items:
-      - sf:cargo_input_node
-      - sf:cargo_output_node
+      - sf:cargo_node_input
+      - sf:cargo_node_output
   - id: electric_ingot_machines
     order: 207
     name: 'Electric Ingot Fabrication'
@@ -1355,13 +1355,13 @@ researches:
     name: 'Trash'
     cost: 8
     items:
-      - sf:trash_can
+      - sf:trash_can_block
   - id: advanced_output_node
     order: 217
     name: 'Advanced Output Node'
     cost: 24
     items:
-      - sf:cargo_output_node_2
+      - sf:cargo_node_output_advanced
   - id: carbon_press
     order: 218
     name: 'Carbon Press'
@@ -1476,12 +1476,12 @@ researches:
       - sf:nether_ice
       - sf:enriched_nether_ice
       - sf:nether_ice_coolant_cell
-  - id: nether_star_reactor
+  - id: netherstar_reactor
     order: 236
     name: 'Nether Star Reactor'
     cost: 60
     items:
-      - sf:nether_star_reactor
+      - sf:netherstar_reactor
   - id: blistering_ingots
     order: 237
     name: 'Blistering Radioactivity'
@@ -1537,7 +1537,7 @@ researches:
     name: 'Soulbound Rune'
     cost: 60
     items:
-      - sf:soulbound_rune
+      - sf:ancient_rune_soulbound
   - id: geo_miner
     order: 247
     name: 'GEO-Miner'
@@ -1549,7 +1549,7 @@ researches:
     name: 'Lightning Rune'
     cost: 24
     items:
-      - sf:lightning_rune
+      - sf:ancient_rune_lightning
   - id: totem_of_undying
     order: 249
     name: 'Totem of Undying'
@@ -1630,7 +1630,7 @@ researches:
     cost: 24
     items:
       - sf:magical_glass
-      - sf:enchantment_rune
+      - sf:ancient_rune_enchantment
   - id: lead_clothing
     order: 260
     name: 'Lead Clothing'
@@ -1660,7 +1660,7 @@ researches:
     name: 'Reset Villager Trades'
     cost: 26
     items:
-      - sf:villager_rune
+      - sf:ancient_rune_villagers
       - sf:strange_nether_goo
   - id: climbing_pick
     order: 265
