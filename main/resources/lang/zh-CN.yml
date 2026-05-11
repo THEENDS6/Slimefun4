@@ -3332,6 +3332,14 @@ guide:
     no-recipe:
       name: <red>暂无配方</red>
       lore: <gray>这个物品当前只有注册数据，还没有可展示的配方。</gray>
+  research:
+    locked: <red>尚未解锁</red>
+    click-unlock: <green>点击解锁</green>
+    cost: '<gray>消耗：</gray><aqua>{cost} 级经验</aqua>'
+    unlock:
+      name: <green>解锁研究</green>
+      lore:
+        1: <gray>消耗经验等级来解锁这个物品。</gray>
   pagination:
     prev:
       active: <yellow>上一页</yellow>
@@ -3356,6 +3364,16 @@ materials:
   iron_bars: 铁栏杆
   cauldron: 炼药锅
 messages:
+  profile:
+    loading: <yellow>SFX 玩家数据仍在加载，请稍后再试。</yellow>
+  not-researched-item: <red>你还没有解锁这个物品。</red>
+  not-enough-xp: <red>你的经验等级不足，无法解锁这项研究。</red>
+  research:
+    unlocked: <green>已解锁研究：{name}</green>
+  backpack:
+    no-stack: <red>背包类物品必须单独一件使用。</red>
+    foreign-owner: <red>这个背包属于其他玩家。</red>
+    already-open: <red>这个背包已经被打开了。</red>
   tape-measure:
     no-anchor: '&c在开始测量之前请先设置一个锚点！'
     wrong-world: '&c你设置的锚点似乎在另一个世界。'

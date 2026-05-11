@@ -3,6 +3,7 @@ package cc.theends6.sfx.internal.listener;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.research.SfxResearchService;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -43,11 +44,13 @@ public final class SfxTalismanListener implements Listener {
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final SfxItems items;
+    private final SfxResearchService researches;
 
-    public SfxTalismanListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items) {
+    public SfxTalismanListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxResearchService researches) {
         this.plugin = plugin;
         this.runtime = runtime;
         this.items = items;
+        this.researches = researches;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -191,9 +194,9 @@ public final class SfxTalismanListener implements Listener {
         if (ThreadLocalRandom.current().nextInt(100) >= chance(type)) {
             return false;
         }
-        InventoryMatch match = findTalisman(player.getInventory(), type, false);
+        InventoryMatch match = findTalisman(player, player.getInventory(), type, false);
         if (match == null) {
-            match = findTalisman(player.getEnderChest(), type, true);
+            match = findTalisman(player, player.getEnderChest(), type, true);
         }
         if (match == null) {
             return false;
@@ -208,11 +211,14 @@ public final class SfxTalismanListener implements Listener {
         return true;
     }
 
-    private InventoryMatch findTalisman(Inventory inventory, String type, boolean requireEnderVariant) {
+    private InventoryMatch findTalisman(Player player, Inventory inventory, String type, boolean requireEnderVariant) {
         for (int i = 0; i < inventory.getSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             Optional<SfxItemMarker> marker = items.readMarker(stack);
             if (marker.isEmpty()) {
+                continue;
+            }
+            if (!researches.canUse(player, marker.get().itemId())) {
                 continue;
             }
             var flags = marker.get().flags();

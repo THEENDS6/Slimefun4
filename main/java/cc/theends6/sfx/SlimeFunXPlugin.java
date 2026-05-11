@@ -9,18 +9,27 @@ import cc.theends6.sfx.internal.command.SfxCommand;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.listener.SfxArmorEffectListener;
+import cc.theends6.sfx.internal.listener.SfxBackpackListener;
 import cc.theends6.sfx.internal.listener.SfxDebugJoinListener;
 import cc.theends6.sfx.internal.listener.SfxGuideListener;
 import cc.theends6.sfx.internal.listener.SfxItemUseDispatcher;
 import cc.theends6.sfx.internal.listener.SfxLegacyCombatToolListener;
 import cc.theends6.sfx.internal.listener.SfxLegacyFoodListener;
+import cc.theends6.sfx.internal.listener.SfxPlayerProfileListener;
+import cc.theends6.sfx.internal.listener.SfxSoulboundListener;
+import cc.theends6.sfx.internal.listener.SfxTalismanListener;
 import cc.theends6.sfx.internal.listener.SfxLegacyUtilityListener;
 import cc.theends6.sfx.internal.listener.SfxVanillaGuardListener;
 import cc.theends6.sfx.internal.machine.ManualMachineService;
 import cc.theends6.sfx.internal.machine.SfxManualMachineDeployListener;
 import cc.theends6.sfx.internal.machine.SfxManualMachineListener;
+import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
+import cc.theends6.sfx.internal.playerdata.SqliteSfxPlayerDataRepository;
 import cc.theends6.sfx.internal.recipe.DefaultSfxRecipeRegistry;
 import cc.theends6.sfx.internal.recipe.SfxRecipeYamlLoader;
+import cc.theends6.sfx.internal.research.LegacySfResearchBootstrap;
+import cc.theends6.sfx.internal.research.SfxResearchRegistry;
+import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.io.File;
 import java.util.Objects;
@@ -32,6 +41,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxApiImpl api;
     private SfxLocalization localization;
     private SfxLegacyItemBehaviorConfig legacyItemBehaviorConfig;
+    private SfxPlayerDataService playerDataService;
+    private SfxResearchRegistry researchRegistry;
+    private SfxResearchService researchService;
+    private SfxBackpackListener backpackListener;
 
     @Override
     public void onEnable() {
@@ -39,28 +52,45 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         saveBundledLanguage("zh-CN");
         saveBundledLanguage("en-US");
 
+        var runtime = new cc.theends6.sfx.internal.runtime.PaperSfxRuntime(this);
+        try {
+            this.playerDataService = new SfxPlayerDataService(this, runtime, new SqliteSfxPlayerDataRepository(this, playerDataFile()));
+            playerDataService.initialize();
+        } catch (Exception exception) {
+            throw new IllegalStateException("Failed to initialize SFX player data storage", exception);
+        }
+        this.researchRegistry = new SfxResearchRegistry();
+        LegacySfResearchBootstrap.register(researchRegistry);
+        this.researchService = new SfxResearchService(researchRegistry, playerDataService);
+
         this.localization = new SfxLocalization(this);
         this.legacyItemBehaviorConfig = new SfxLegacyItemBehaviorConfig(this);
         legacyItemBehaviorConfig.ensureDefaultFile();
         legacyItemBehaviorConfig.reload();
-        this.api = SfxApiImpl.bootstrap(this, localization);
+        this.api = SfxApiImpl.bootstrap(this, localization, playerDataService, researchService);
 
         bootstrapContent();
 
         ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization);
 
+        this.backpackListener = new SfxBackpackListener(this, api.runtime(), api.items(), localization, playerDataService, researchService);
         SfxLegacyUtilityListener utilityListener = new SfxLegacyUtilityListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig);
         SfxLegacyCombatToolListener combatToolListener = new SfxLegacyCombatToolListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig);
         SfxLegacyFoodListener foodListener = new SfxLegacyFoodListener(this, api.runtime(), api.items(), localization);
+        SfxTalismanListener talismanListener = new SfxTalismanListener(this, api.runtime(), api.items(), researchService);
 
         getServer().getPluginManager().registerEvents(api.menus(), this);
+        getServer().getPluginManager().registerEvents(new SfxPlayerProfileListener(playerDataService), this);
         getServer().getPluginManager().registerEvents(new SfxGuideListener(this, api.items(), api.guide()), this);
-        getServer().getPluginManager().registerEvents(new SfxItemUseDispatcher(api.items(), utilityListener, combatToolListener, foodListener), this);
+        getServer().getPluginManager().registerEvents(new SfxItemUseDispatcher(api.items(), backpackListener, utilityListener, combatToolListener, foodListener, researchService, localization), this);
         getServer().getPluginManager().registerEvents(new SfxManualMachineListener(manualMachineService), this);
         getServer().getPluginManager().registerEvents(new SfxManualMachineDeployListener(this, api.internalManualMachines(), localization), this);
+        getServer().getPluginManager().registerEvents(backpackListener, this);
         getServer().getPluginManager().registerEvents(utilityListener, this);
         getServer().getPluginManager().registerEvents(combatToolListener, this);
         getServer().getPluginManager().registerEvents(foodListener, this);
+        getServer().getPluginManager().registerEvents(talismanListener, this);
+        getServer().getPluginManager().registerEvents(new SfxSoulboundListener(api.items(), researchService), this);
         getServer().getPluginManager().registerEvents(new SfxVanillaGuardListener(api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxArmorEffectListener(api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxDebugJoinListener(this, api.runtime(), localization), this);
@@ -79,6 +109,12 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         if (api != null) {
             api.menus().closeAll();
         }
+        if (backpackListener != null) {
+            backpackListener.shutdown();
+        }
+        if (playerDataService != null) {
+            playerDataService.shutdown();
+        }
     }
 
     public SfxApi api() {
@@ -93,11 +129,23 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         return legacyItemBehaviorConfig;
     }
 
+    public SfxPlayerDataService playerDataService() {
+        return playerDataService;
+    }
+
+    public SfxResearchService researchService() {
+        return researchService;
+    }
+
     public synchronized void reloadAllContent() {
         reloadConfig();
         localization.reload();
         legacyItemBehaviorConfig.reload();
         api.menus().closeAll();
+        if (backpackListener != null) {
+            backpackListener.shutdown();
+        }
+        LegacySfResearchBootstrap.register(researchRegistry);
         bootstrapContent();
     }
 
@@ -138,5 +186,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         if (!target.exists()) {
             saveResource("lang/" + language + ".yml", false);
         }
+    }
+
+    private File playerDataFile() {
+        String configured = getConfig().getString("storage.sqlite-file", "data/player-data.db");
+        return new File(getDataFolder(), configured);
     }
 }

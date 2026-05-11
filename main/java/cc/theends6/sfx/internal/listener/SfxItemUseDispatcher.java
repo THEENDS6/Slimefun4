@@ -2,6 +2,9 @@ package cc.theends6.sfx.internal.listener;
 
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.internal.research.SfxResearchService;
+import cc.theends6.sfx.internal.util.SfxLocalization;
+import cc.theends6.sfx.internal.util.Text;
 import java.util.Objects;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -13,20 +16,29 @@ import org.bukkit.inventory.ItemStack;
 
 public final class SfxItemUseDispatcher implements Listener {
     private final SfxItems items;
+    private final SfxBackpackListener backpackListener;
     private final SfxLegacyUtilityListener utilityListener;
     private final SfxLegacyCombatToolListener combatToolListener;
     private final SfxLegacyFoodListener foodListener;
+    private final SfxResearchService researches;
+    private final SfxLocalization localization;
 
     public SfxItemUseDispatcher(
             SfxItems items,
+            SfxBackpackListener backpackListener,
             SfxLegacyUtilityListener utilityListener,
             SfxLegacyCombatToolListener combatToolListener,
-            SfxLegacyFoodListener foodListener
+            SfxLegacyFoodListener foodListener,
+            SfxResearchService researches,
+            SfxLocalization localization
     ) {
         this.items = Objects.requireNonNull(items, "items");
+        this.backpackListener = Objects.requireNonNull(backpackListener, "backpackListener");
         this.utilityListener = Objects.requireNonNull(utilityListener, "utilityListener");
         this.combatToolListener = Objects.requireNonNull(combatToolListener, "combatToolListener");
         this.foodListener = Objects.requireNonNull(foodListener, "foodListener");
+        this.researches = Objects.requireNonNull(researches, "researches");
+        this.localization = Objects.requireNonNull(localization, "localization");
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
@@ -55,6 +67,32 @@ public final class SfxItemUseDispatcher implements Listener {
             return;
         }
 
+        if (researches.researchForItem(itemId).isPresent()
+                && researches.findProfile(event.getPlayer().getUniqueId()).isEmpty()) {
+            event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+            event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(Text.prefixed(
+                    org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(getClass()),
+                    localization.text("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")
+            ));
+            return;
+        }
+
+        if (!researches.canUse(event.getPlayer(), itemId)) {
+            event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+            event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(Text.prefixed(
+                    org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(getClass()),
+                    localization.text("messages.not-researched-item", "<red>You have not unlocked this item yet.</red>")
+            ));
+            return;
+        }
+
+        if (backpackListener.handleItemUse(event, itemId)) {
+            return;
+        }
         if (utilityListener.handleItemUse(event, itemId)) {
             return;
         }
