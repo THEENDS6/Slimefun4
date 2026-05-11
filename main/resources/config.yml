@@ -3,6 +3,9 @@ language: 'zh-CN'
 content:
   sync-bundled-recipes-on-startup: true
 
+storage:
+  sqlite-file: 'data/player-data.db'
+
 messages:
   prefix: '<dark_gray>[<green>SFX</green><dark_gray>] '
 

@@ -139,6 +139,14 @@ guide:
     no-recipe:
       name: <red>No Recipe</red>
       lore: <gray>This item currently only exists as a registry or system entry.</gray>
+  research:
+    locked: <red>Locked</red>
+    click-unlock: <green>Click to unlock</green>
+    cost: '<gray>Cost: </gray><aqua>{cost} levels</aqua>'
+    unlock:
+      name: <green>Unlock Research</green>
+      lore:
+        1: <gray>Spend experience levels to unlock this item.</gray>
   pagination:
     prev:
       active: <yellow>Previous Page</yellow>
@@ -3263,6 +3271,16 @@ materials:
   iron_bars: Iron Bars
   cauldron: Cauldron
 messages:
+  profile:
+    loading: <yellow>Your SFX player data is still loading. Try again in a moment.</yellow>
+  not-researched-item: <red>You have not unlocked this item yet.</red>
+  not-enough-xp: <red>You do not have enough levels to unlock this research.</red>
+  research:
+    unlocked: <green>Unlocked research: {name}</green>
+  backpack:
+    no-stack: <red>Backpacks must be used one at a time.</red>
+    foreign-owner: <red>This backpack belongs to another player.</red>
+    already-open: <red>This backpack is already open.</red>
   tape-measure:
     no-anchor: '&cYou need to set an anchor before you can start to measure!'
     wrong-world: '&cYour anchor seems to be in a different world!'

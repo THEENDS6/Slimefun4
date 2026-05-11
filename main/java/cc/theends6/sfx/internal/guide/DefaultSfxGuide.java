@@ -17,6 +17,10 @@ import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.machine.ManualMachineDefinition;
 import cc.theends6.sfx.internal.machine.ManualMachineOutput;
 import cc.theends6.sfx.internal.machine.ManualMachineRecipe;
+import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
+import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
+import cc.theends6.sfx.internal.research.SfxResearchDefinition;
+import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
@@ -93,6 +97,8 @@ public final class DefaultSfxGuide implements SfxGuide {
     private final SfxGuideAccessPolicy accessPolicy;
     private final DefaultManualMachineRegistry manualMachines;
     private final SfxLocalization localization;
+    private final SfxPlayerDataService profiles;
+    private final SfxResearchService researches;
     private final Map<UUID, GuidePreferences> preferencesByPlayer = new ConcurrentHashMap<>();
     private final Map<Material, List<GuideRecipePage>> vanillaRecipeCache = new ConcurrentHashMap<>();
 
@@ -104,7 +110,9 @@ public final class DefaultSfxGuide implements SfxGuide {
             SfxMenus menus,
             SfxGuideAccessPolicy accessPolicy,
             DefaultManualMachineRegistry manualMachines,
-            SfxLocalization localization
+            SfxLocalization localization,
+            SfxPlayerDataService profiles,
+            SfxResearchService researches
     ) {
         this.plugin = plugin;
         this.runtime = runtime;
@@ -114,6 +122,8 @@ public final class DefaultSfxGuide implements SfxGuide {
         this.accessPolicy = accessPolicy;
         this.manualMachines = manualMachines;
         this.localization = localization;
+        this.profiles = profiles;
+        this.researches = researches;
     }
 
     @Override
@@ -313,7 +323,9 @@ public final class DefaultSfxGuide implements SfxGuide {
         for (int i = from; i < to; i++) {
             SfxItemDefinition definition = entries.get(i);
             int slot = CONTENT_SLOTS[i - from];
-            ItemStack icon = items.create(definition, 1);
+            SfxResearchDefinition research = researches.researchForItem(definition.id()).orElse(null);
+            boolean locked = mode == GuideMode.SURVIVAL && research != null && !isUnlocked(player, research);
+            ItemStack icon = locked ? lockedItemIcon(definition, research) : items.create(definition, 1);
             if (mode == GuideMode.CHEAT) {
                 Optional<ManualMachineDefinition> manualMachine = manualMachines.machine(definition.id());
                 if (manualMachine.isPresent()) {
@@ -330,6 +342,8 @@ public final class DefaultSfxGuide implements SfxGuide {
                     ));
                 }
                 builder.button(slot, new SfxMenuButton(icon, click -> giveFromCheatGuide(click.player(), definition, click.clickType())));
+            } else if (locked) {
+                builder.button(slot, new SfxMenuButton(icon, click -> unlockResearchAndRefresh(click.player(), mode, category.id(), safePage, research)));
             } else {
                 icon = withLore(icon, List.of(Component.empty(), Text.mm(tr("guide.actions.open-recipe", "<gray>Click to view recipe</gray>"))));
                 builder.button(slot, new SfxMenuButton(icon, click -> openRecipe(click.player(), mode, definition.id(), 0, Navigation.OPEN)));
@@ -352,6 +366,13 @@ public final class DefaultSfxGuide implements SfxGuide {
             return;
         }
         SfxItemDefinition definition = optional.get();
+        if (mode == GuideMode.SURVIVAL) {
+            Optional<SfxResearchDefinition> research = researches.researchForItem(definition.id());
+            if (research.isPresent() && !isUnlocked(player, research.get())) {
+                openLockedResearchView(player, mode, definition, research.get(), navigation);
+                return;
+            }
+        }
         List<GuideRecipePage> pages = sfxRecipePages(definition);
         int pageCount = Math.max(1, pages.size());
         int safeRecipe = clampPage(recipeIndex, pageCount);
@@ -397,6 +418,22 @@ public final class DefaultSfxGuide implements SfxGuide {
         RecipePageOpener opener = (targetPlayer, nextRecipe, nextNavigation) -> openVanillaRecipe(targetPlayer, mode, material, nextRecipe, nextNavigation);
         renderRecipe(player, mode, layout, materialName(material), output, pages, current, navigation, outputAction, null,
                 alternativeSourceEntries(pages, current, opener), opener);
+    }
+
+    private void openLockedResearchView(Player player, GuideMode mode, SfxItemDefinition definition, SfxResearchDefinition research, Navigation navigation) {
+        SfxMenu.Builder builder = SfxMenu.builder(title(mode, itemDisplayName(definition))).rows(3);
+        builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-category", "Back to Category")), click -> goBack(click.player(), mode)));
+        builder.button(1, new SfxMenuButton(settingsIcon(), click -> openSettingsView(click.player(), mode, Navigation.OPEN)));
+        builder.button(8, new SfxMenuButton(closeIcon(), click -> closeGuide(click.player())));
+        builder.button(13, new SfxMenuButton(lockedItemIcon(definition, research), click -> unlockResearchAndOpen(click.player(), mode, definition, research)));
+        builder.button(15, new SfxMenuButton(ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
+                .name(tr("guide.research.unlock.name", "<green>Unlock Research</green>"))
+                .lore(
+                        tr("guide.research.unlock.lore.1", "<gray>Spend experience levels to unlock this item.</gray>"),
+                        tr("guide.research.cost", "<gray>Cost: </gray><aqua>{cost} levels</aqua>").replace("{cost}", Integer.toString(research.cost()))
+                )
+                .build(), click -> unlockResearchAndOpen(click.player(), mode, definition, research)));
+        showMenu(player, builder, navigation);
     }
 
     private void renderRecipe(
@@ -1079,6 +1116,19 @@ public final class DefaultSfxGuide implements SfxGuide {
         return ItemBuilder.of(Material.BARRIER).name("<yellow>" + text + "</yellow>").build();
     }
 
+    private ItemStack lockedItemIcon(SfxItemDefinition definition, SfxResearchDefinition research) {
+        return ItemBuilder.of(Material.BARRIER)
+                .name("<white>" + itemDisplayName(definition) + "</white>")
+                .lore(
+                        tr("guide.research.locked", "<red>Locked</red>"),
+                        "",
+                        tr("guide.research.click-unlock", "<green>Click to unlock</green>"),
+                        "",
+                        tr("guide.research.cost", "<gray>Cost: </gray><aqua>{cost} levels</aqua>").replace("{cost}", Integer.toString(research.cost()))
+                )
+                .build();
+    }
+
     private SfxMenuButton toggleButton(Material material, String name, String lore, boolean enabled, java.util.function.Consumer<cc.theends6.sfx.api.menu.SfxMenuClickContext> handler) {
         return new SfxMenuButton(ItemBuilder.of(material)
                 .name(name)
@@ -1188,6 +1238,73 @@ public final class DefaultSfxGuide implements SfxGuide {
             return GuideLayout.CLASSIC;
         }
         return preferences.layout();
+    }
+
+    private boolean isUnlocked(Player player, SfxResearchDefinition research) {
+        return profiles.find(player.getUniqueId())
+                .map(profile -> profile.hasUnlocked(research.id()))
+                .orElse(false);
+    }
+
+    private void unlockResearchAndRefresh(Player player, GuideMode mode, String categoryId, int page, SfxResearchDefinition research) {
+        Optional<SfxPlayerProfile> optional = profiles.find(player.getUniqueId());
+        if (optional.isEmpty()) {
+            profiles.request(player, profile -> openCategory(player, mode, categoryId, page, Navigation.REPLACE));
+            player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")));
+            return;
+        }
+
+        switch (researches.unlock(player, research)) {
+            case PROFILE_NOT_LOADED -> player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")));
+            case ALREADY_UNLOCKED -> {
+            }
+            case NOT_ENOUGH_LEVELS -> player.sendMessage(Text.prefixed(plugin, tr("messages.not-enough-xp", "<red>You do not have enough levels to unlock this research.</red>")));
+            case UNLOCKED -> {
+                GuidePreferences preferences = preferences(player);
+                if (preferences.unlockAnimation()) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
+                }
+                if (preferences.fireworks()) {
+                    player.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, player.getLocation().add(0.0, 1.0, 0.0), 12, 0.3, 0.5, 0.3, 0.02);
+                }
+                player.sendMessage(Text.prefixed(plugin,
+                        tr("messages.research.unlocked", "<green>Unlocked research: {name}</green>")
+                                .replace("{name}", research.name())));
+            }
+        }
+
+        openCategory(player, mode, categoryId, page, Navigation.REPLACE);
+    }
+
+    private void unlockResearchAndOpen(Player player, GuideMode mode, SfxItemDefinition definition, SfxResearchDefinition research) {
+        Optional<SfxPlayerProfile> optional = profiles.find(player.getUniqueId());
+        if (optional.isEmpty()) {
+            profiles.request(player, profile -> openLockedResearchView(player, mode, definition, research, Navigation.REPLACE));
+            player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")));
+            return;
+        }
+
+        switch (researches.unlock(player, research)) {
+            case PROFILE_NOT_LOADED -> player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")));
+            case ALREADY_UNLOCKED -> openRecipe(player, mode, definition.id(), 0, Navigation.REPLACE);
+            case NOT_ENOUGH_LEVELS -> {
+                player.sendMessage(Text.prefixed(plugin, tr("messages.not-enough-xp", "<red>You do not have enough levels to unlock this research.</red>")));
+                openLockedResearchView(player, mode, definition, research, Navigation.REPLACE);
+            }
+            case UNLOCKED -> {
+                GuidePreferences preferences = preferences(player);
+                if (preferences.unlockAnimation()) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
+                }
+                if (preferences.fireworks()) {
+                    player.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, player.getLocation().add(0.0, 1.0, 0.0), 12, 0.3, 0.5, 0.3, 0.02);
+                }
+                player.sendMessage(Text.prefixed(plugin,
+                        tr("messages.research.unlocked", "<green>Unlocked research: {name}</green>")
+                                .replace("{name}", research.name())));
+                openRecipe(player, mode, definition.id(), 0, Navigation.REPLACE);
+            }
+        }
     }
 
     private void switchGuideBookMode(Player player, GuideMode mode) {
