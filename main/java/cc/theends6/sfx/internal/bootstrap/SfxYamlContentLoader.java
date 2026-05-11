@@ -107,7 +107,14 @@ public final class SfxYamlContentLoader {
         Material iconMaterial = parseMaterial(icon == null ? "BOOK" : string(orDefault(icon, "material", "BOOK")));
         String iconName = icon == null ? name : string(orDefault(icon, "name", name));
         String headTexture = icon == null ? null : optionalString(icon.get("headTexture"));
-        Integer colorRgb = icon == null ? null : (icon.containsKey("colorRgb") ? parseColor(icon.get("colorRgb")) : (icon.containsKey("color") ? parseColor(icon.get("color")) : null));
+        Integer colorRgb = null;
+        if (icon != null) {
+            if (icon.containsKey("colorRgb")) {
+                colorRgb = parseColor(icon.get("colorRgb"));
+            } else if (icon.containsKey("color")) {
+                colorRgb = parseColor(icon.get("color"));
+            }
+        }
         Component parsedName = Text.renderFlexible(name);
         return new SfxItemCategory(id, parsedName, LegacySfBootstrapSupport.icon(iconMaterial, Text.renderFlexible(iconName), headTexture, colorRgb), order, hidden);
     }
@@ -141,10 +148,14 @@ public final class SfxYamlContentLoader {
         if (entry.containsKey("headTexture")) {
             builder.headTexture(string(entry.get("headTexture")));
         }
+        Integer colorRgb = null;
         if (entry.containsKey("colorRgb")) {
-            builder.colorRgb(parseColor(entry.get("colorRgb")));
+            colorRgb = parseColor(entry.get("colorRgb"));
         } else if (entry.containsKey("color")) {
-            builder.colorRgb(parseColor(entry.get("color")));
+            colorRgb = parseColor(entry.get("color"));
+        }
+        if (colorRgb != null) {
+            builder.colorRgb(colorRgb);
         }
         if (Boolean.TRUE.equals(entry.get("unbreakable"))) {
             builder.unbreakable(true);
