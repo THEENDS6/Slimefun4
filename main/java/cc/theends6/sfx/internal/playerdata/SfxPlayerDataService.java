@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -29,13 +30,16 @@ public final class SfxPlayerDataService {
     public void request(Player player, Consumer<SfxPlayerProfile> callback) {
         UUID uuid = player.getUniqueId();
         CompletableFuture<SfxPlayerProfile> future = profiles.computeIfAbsent(uuid, ignored -> loadAsync(uuid, player.getName()));
-        future.whenComplete((profile, throwable) -> runtime.executeForPlayer(player, () -> {
-            if (throwable != null) {
-                plugin.getLogger().warning("Failed to load SFX profile for " + player.getName() + ": " + throwable.getMessage());
-                return;
-            }
-            callback.accept(profile);
-        }));
+        future.whenComplete((profile, throwable) -> runtime.executeForPlayer(player, () -> completeProfileCallback(player.getName(), callback, profile, throwable)));
+    }
+
+    public void request(OfflinePlayer player, Consumer<SfxPlayerProfile> callback) {
+        request(player.getUniqueId(), player.getName() == null ? player.getUniqueId().toString() : player.getName(), callback);
+    }
+
+    public void request(UUID uuid, String lastKnownName, Consumer<SfxPlayerProfile> callback) {
+        CompletableFuture<SfxPlayerProfile> future = profiles.computeIfAbsent(uuid, ignored -> loadAsync(uuid, lastKnownName));
+        future.whenComplete((profile, throwable) -> runtime.executeGlobal(() -> completeProfileCallback(lastKnownName, callback, profile, throwable)));
     }
 
     public Optional<SfxPlayerProfile> find(UUID uuid) {
@@ -106,5 +110,13 @@ public final class SfxPlayerDataService {
             }
         });
         return future;
+    }
+
+    private void completeProfileCallback(String name, Consumer<SfxPlayerProfile> callback, SfxPlayerProfile profile, Throwable throwable) {
+        if (throwable != null) {
+            plugin.getLogger().warning("Failed to load SFX profile for " + name + ": " + throwable.getMessage());
+            return;
+        }
+        callback.accept(profile);
     }
 }

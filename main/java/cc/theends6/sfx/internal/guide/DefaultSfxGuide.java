@@ -43,6 +43,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.BlastingRecipe;
@@ -56,6 +57,7 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.ShapelessRecipe;
 import org.bukkit.inventory.SmokingRecipe;
 import org.bukkit.inventory.StonecuttingRecipe;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -343,7 +345,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                 }
                 builder.button(slot, new SfxMenuButton(icon, click -> giveFromCheatGuide(click.player(), definition, click.clickType())));
             } else if (locked) {
-                builder.button(slot, new SfxMenuButton(icon, click -> unlockResearchAndRefresh(click.player(), mode, category.id(), safePage, research)));
+                builder.button(slot, new SfxMenuButton(icon, click -> unlockResearchAndRefresh(click.player(), mode, category.id(), safePage, definition, research)));
             } else {
                 icon = withLore(icon, List.of(Component.empty(), Text.mm(tr("guide.actions.open-recipe", "<gray>Click to view recipe</gray>"))));
                 builder.button(slot, new SfxMenuButton(icon, click -> openRecipe(click.player(), mode, definition.id(), 0, Navigation.OPEN)));
@@ -1120,6 +1122,8 @@ public final class DefaultSfxGuide implements SfxGuide {
         return ItemBuilder.of(Material.BARRIER)
                 .name("<white>" + itemDisplayName(definition) + "</white>")
                 .lore(
+                        "<gray>" + displayResearchName(research, definition) + "</gray>",
+                        "",
                         tr("guide.research.locked", "<red>Locked</red>"),
                         "",
                         tr("guide.research.click-unlock", "<green>Click to unlock</green>"),
@@ -1127,6 +1131,27 @@ public final class DefaultSfxGuide implements SfxGuide {
                         tr("guide.research.cost", "<gray>Cost: </gray><aqua>{cost} levels</aqua>").replace("{cost}", Integer.toString(research.cost()))
                 )
                 .build();
+    }
+
+    private String displayResearchName(SfxResearchDefinition research, SfxItemDefinition definition) {
+        Component fallback = definition == null ? Text.mm(research.name()) : localization.itemName(definition.id(), definition.name());
+        return PlainTextComponentSerializer.plainText().serialize(localization.researchName(research.id(), fallback));
+    }
+
+    private void launchResearchFirework(Player player) {
+        Firework firework = player.getWorld().spawn(player.getLocation().add(0.0, 1.0, 0.0), Firework.class, spawned -> {
+            FireworkMeta meta = spawned.getFireworkMeta();
+            meta.setPower(0);
+            meta.addEffect(org.bukkit.FireworkEffect.builder()
+                    .withColor(org.bukkit.Color.LIME, org.bukkit.Color.AQUA)
+                    .withFade(org.bukkit.Color.YELLOW)
+                    .trail(true)
+                    .flicker(true)
+                    .build());
+            spawned.setFireworkMeta(meta);
+            spawned.setSilent(true);
+        });
+        runtime.executeAtLater(player.getLocation(), 2L, firework::detonate);
     }
 
     private SfxMenuButton toggleButton(Material material, String name, String lore, boolean enabled, java.util.function.Consumer<cc.theends6.sfx.api.menu.SfxMenuClickContext> handler) {
@@ -1246,7 +1271,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                 .orElse(false);
     }
 
-    private void unlockResearchAndRefresh(Player player, GuideMode mode, String categoryId, int page, SfxResearchDefinition research) {
+    private void unlockResearchAndRefresh(Player player, GuideMode mode, String categoryId, int page, SfxItemDefinition definition, SfxResearchDefinition research) {
         Optional<SfxPlayerProfile> optional = profiles.find(player.getUniqueId());
         if (optional.isEmpty()) {
             profiles.request(player, profile -> openCategory(player, mode, categoryId, page, Navigation.REPLACE));
@@ -1265,11 +1290,11 @@ public final class DefaultSfxGuide implements SfxGuide {
                     player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
                 }
                 if (preferences.fireworks()) {
-                    player.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, player.getLocation().add(0.0, 1.0, 0.0), 12, 0.3, 0.5, 0.3, 0.02);
+                    launchResearchFirework(player);
                 }
                 player.sendMessage(Text.prefixed(plugin,
                         tr("messages.research.unlocked", "<green>Unlocked research: {name}</green>")
-                                .replace("{name}", research.name())));
+                                .replace("{name}", displayResearchName(research, definition))));
             }
         }
 
@@ -1297,11 +1322,11 @@ public final class DefaultSfxGuide implements SfxGuide {
                     player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
                 }
                 if (preferences.fireworks()) {
-                    player.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, player.getLocation().add(0.0, 1.0, 0.0), 12, 0.3, 0.5, 0.3, 0.02);
+                    launchResearchFirework(player);
                 }
                 player.sendMessage(Text.prefixed(plugin,
                         tr("messages.research.unlocked", "<green>Unlocked research: {name}</green>")
-                                .replace("{name}", research.name())));
+                                .replace("{name}", displayResearchName(research, definition))));
                 openRecipe(player, mode, definition.id(), 0, Navigation.REPLACE);
             }
         }

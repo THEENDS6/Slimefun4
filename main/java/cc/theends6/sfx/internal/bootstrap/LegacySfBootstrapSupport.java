@@ -39,9 +39,14 @@ final class LegacySfBootstrapSupport {
     }
 
     static void registerLegacyItem(SfxItemRegistry registry, String id, String categoryId, Material material, String legacyName, String textureHash, Integer colorRgb, String[] legacyLore) {
+        registerLegacyItem(registry, id, categoryId, material, legacyName, textureHash, colorRgb, legacyLore, false, true);
+    }
+
+    static void registerLegacyItem(SfxItemRegistry registry, String id, String categoryId, Material material, String legacyName, String textureHash, Integer colorRgb, String[] legacyLore, boolean hidden, boolean giveable) {
         SfxItemDefinition.Builder builder = SfxItemDefinition.builder(id, material, Text.legacy(legacyName))
                 .category(categoryId)
                 .flag("legacy-sf");
+        builder.hidden(hidden).giveable(giveable);
         if (textureHash != null) {
             builder.headTexture(textureHash);
         }

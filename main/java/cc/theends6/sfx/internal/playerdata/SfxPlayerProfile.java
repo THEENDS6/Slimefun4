@@ -41,6 +41,26 @@ public final class SfxPlayerProfile {
         }
     }
 
+    public synchronized boolean unlockAll(Iterable<String> researchIds) {
+        boolean changed = false;
+        for (String researchId : researchIds) {
+            if (researchId != null && unlockedResearches.add(researchId)) {
+                changed = true;
+            }
+        }
+        if (changed) {
+            dirty = true;
+        }
+        return changed;
+    }
+
+    public synchronized void clearUnlockedResearches() {
+        if (!unlockedResearches.isEmpty()) {
+            unlockedResearches.clear();
+            dirty = true;
+        }
+    }
+
     public synchronized Set<String> unlockedResearchesCopy() {
         return Set.copyOf(unlockedResearches);
     }
@@ -56,6 +76,15 @@ public final class SfxPlayerProfile {
         });
     }
 
+    public synchronized SfxBackpackRecord ensureBackpackSized(int id, int size) {
+        SfxBackpackRecord backpack = getOrCreateBackpack(id, size);
+        if (backpack.size() != size) {
+            backpack.setSize(size);
+            dirty = true;
+        }
+        return backpack;
+    }
+
     public synchronized int nextBackpackId() {
         int next = 0;
         while (backpacks.containsKey(next)) {
@@ -68,7 +97,7 @@ public final class SfxPlayerProfile {
         Map<Integer, SfxBackpackRecord> copy = new LinkedHashMap<>();
         for (Map.Entry<Integer, SfxBackpackRecord> entry : backpacks.entrySet()) {
             SfxBackpackRecord backpack = entry.getValue();
-            copy.put(entry.getKey(), new SfxBackpackRecord(backpack.id(), backpack.size(), backpack.contentsCopy()));
+            copy.put(entry.getKey(), new SfxBackpackRecord(backpack.id(), backpack.size(), backpack.contentsCopy(), backpack.updatedAt()));
         }
         return copy;
     }

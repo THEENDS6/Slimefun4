@@ -4,12 +4,18 @@ import org.bukkit.inventory.ItemStack;
 
 public final class SfxBackpackRecord {
     private final int id;
-    private final int size;
+    private int size;
+    private long updatedAt;
     private ItemStack[] contents;
 
     public SfxBackpackRecord(int id, int size, ItemStack[] contents) {
+        this(id, size, contents, System.currentTimeMillis());
+    }
+
+    public SfxBackpackRecord(int id, int size, ItemStack[] contents, long updatedAt) {
         this.id = id;
         this.size = size;
+        this.updatedAt = updatedAt;
         this.contents = copy(contents, size);
     }
 
@@ -21,12 +27,27 @@ public final class SfxBackpackRecord {
         return size;
     }
 
+    public synchronized long updatedAt() {
+        return updatedAt;
+    }
+
     public synchronized ItemStack[] contentsCopy() {
         return copy(contents, size);
     }
 
     public synchronized void setContents(ItemStack[] updated) {
         this.contents = copy(updated, size);
+        this.updatedAt = System.currentTimeMillis();
+    }
+
+    public synchronized void setSize(int size) {
+        this.size = Math.max(9, size);
+        this.contents = copy(contents, this.size);
+        this.updatedAt = System.currentTimeMillis();
+    }
+
+    public synchronized void touch() {
+        this.updatedAt = System.currentTimeMillis();
     }
 
     private static ItemStack[] copy(ItemStack[] source, int size) {

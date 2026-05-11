@@ -3269,10 +3269,10 @@ guide:
       lore: <gray>这个设置只影响科技书菜单。</gray>
     fireworks:
       name: <yellow>研究烟花</yellow>
-      lore: <gray>为后续研究系统预留，和经典科技书设置保持一致。</gray>
+      lore: <gray>控制解锁研究时是否播放烟花效果。</gray>
     unlock-animation:
       name: <yellow>解锁动画</yellow>
-      lore: <gray>为后续研究系统预留，和经典科技书设置保持一致。</gray>
+      lore: <gray>控制解锁研究时是否播放解锁音效。</gray>
     resume-last:
       name: <yellow>打开到上次退出位置</yellow>
       lore: <gray>再次打开科技书时，回到你上次关闭时所在的页面。</gray>
@@ -3374,6 +3374,8 @@ messages:
     no-stack: <red>背包类物品必须单独一件使用。</red>
     foreign-owner: <red>这个背包属于其他玩家。</red>
     already-open: <red>这个背包已经被打开了。</red>
+    not-found: <red>这个背包不存在。</red>
+    admin-title: 背包 #{id}（{owner}）
   tape-measure:
     no-anchor: '&c在开始测量之前请先设置一个锚点！'
     wrong-world: '&c你设置的锚点似乎在另一个世界。'

@@ -86,14 +86,15 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
             }
 
             try (PreparedStatement statement = connection.prepareStatement(
-                    "SELECT backpack_id, size, contents FROM sfx_player_backpacks WHERE owner_uuid = ? ORDER BY backpack_id")) {
+                    "SELECT backpack_id, size, contents, updated_at FROM sfx_player_backpacks WHERE owner_uuid = ? ORDER BY backpack_id")) {
                 statement.setString(1, ownerId.toString());
                 try (ResultSet result = statement.executeQuery()) {
                     while (result.next()) {
                         int id = result.getInt("backpack_id");
                         int size = result.getInt("size");
                         byte[] contentsBlob = result.getBytes("contents");
-                        profile.putBackpack(new SfxBackpackRecord(id, size, SfxItemStackCodec.decode(contentsBlob)));
+                        long updatedAt = result.getLong("updated_at");
+                        profile.putBackpack(new SfxBackpackRecord(id, size, SfxItemStackCodec.decode(contentsBlob), updatedAt));
                     }
                 }
             }
@@ -147,7 +148,7 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
                         insertBackpack.setInt(2, backpack.id());
                         insertBackpack.setInt(3, backpack.size());
                         insertBackpack.setBytes(4, SfxItemStackCodec.encode(backpack.contentsCopy()));
-                        insertBackpack.setLong(5, now);
+                        insertBackpack.setLong(5, backpack.updatedAt() > 0L ? backpack.updatedAt() : now);
                         insertBackpack.addBatch();
                     }
                     insertBackpack.executeBatch();

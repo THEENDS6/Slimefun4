@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.research;
 
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import org.bukkit.entity.Player;
@@ -17,6 +18,14 @@ public final class SfxResearchService {
 
     public SfxResearchRegistry registry() {
         return registry;
+    }
+
+    public Collection<SfxResearchDefinition> allResearches() {
+        return registry.all();
+    }
+
+    public Optional<SfxResearchDefinition> researchById(String id) {
+        return registry.byId(id);
     }
 
     public Optional<SfxResearchDefinition> researchForItem(String itemId) {
@@ -55,6 +64,28 @@ public final class SfxResearchService {
         profile.unlock(research.id());
         profiles.saveAsync(profile);
         return UnlockResult.UNLOCKED;
+    }
+
+    public boolean grant(SfxPlayerProfile profile, SfxResearchDefinition research) {
+        if (profile.hasUnlocked(research.id())) {
+            return false;
+        }
+        profile.unlock(research.id());
+        profiles.saveAsync(profile);
+        return true;
+    }
+
+    public int grantAll(SfxPlayerProfile profile) {
+        boolean changed = profile.unlockAll(registry.all().stream().map(SfxResearchDefinition::id).toList());
+        if (changed) {
+            profiles.saveAsync(profile);
+        }
+        return profile.unlockedResearchesCopy().size();
+    }
+
+    public void resetAll(SfxPlayerProfile profile) {
+        profile.clearUnlockedResearches();
+        profiles.saveAsync(profile);
     }
 
     public Optional<SfxPlayerProfile> findProfile(UUID uuid) {

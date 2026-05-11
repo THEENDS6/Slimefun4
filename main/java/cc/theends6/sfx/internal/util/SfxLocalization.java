@@ -71,6 +71,12 @@ public final class SfxLocalization {
         return value == null ? fallback : render(value);
     }
 
+    public Component researchName(String researchId, Component fallback) {
+        String path = "researches." + sanitize(researchId) + ".name";
+        String value = lookup(path);
+        return value == null ? fallback : render(value);
+    }
+
     public List<Component> itemLore(String itemId, List<Component> fallback) {
         List<String> lines = list("items." + sanitize(itemId) + ".lore");
         if (lines.isEmpty()) {
