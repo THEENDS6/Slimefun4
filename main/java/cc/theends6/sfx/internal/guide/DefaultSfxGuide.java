@@ -34,8 +34,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -62,6 +64,18 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class DefaultSfxGuide implements SfxGuide {
+    private static final int[] RESEARCH_PROGRESS = {23, 44, 57, 92};
+    private static final org.bukkit.Color[] RESEARCH_FIREWORK_COLORS = {
+            org.bukkit.Color.AQUA,
+            org.bukkit.Color.BLUE,
+            org.bukkit.Color.FUCHSIA,
+            org.bukkit.Color.GREEN,
+            org.bukkit.Color.LIME,
+            org.bukkit.Color.ORANGE,
+            org.bukkit.Color.PURPLE,
+            org.bukkit.Color.RED,
+            org.bukkit.Color.YELLOW
+    };
     private static final int[] CONTENT_SLOTS = {
             9, 10, 11, 12, 13, 14, 15, 16, 17,
             18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -103,6 +117,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     private final SfxResearchService researches;
     private final Map<UUID, GuidePreferences> preferencesByPlayer = new ConcurrentHashMap<>();
     private final Map<Material, List<GuideRecipePage>> vanillaRecipeCache = new ConcurrentHashMap<>();
+    private final Set<UUID> researchingPlayers = ConcurrentHashMap.newKeySet();
 
     public DefaultSfxGuide(
             JavaPlugin plugin,
@@ -1139,19 +1154,22 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private void launchResearchFirework(Player player) {
-        Firework firework = player.getWorld().spawn(player.getLocation().add(0.0, 1.0, 0.0), Firework.class, spawned -> {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        org.bukkit.Color color = RESEARCH_FIREWORK_COLORS[random.nextInt(RESEARCH_FIREWORK_COLORS.length)];
+        Firework firework = player.getWorld().spawn(player.getLocation().clone().add(random.nextInt(3) - 1, 0.0, random.nextInt(3) - 1), Firework.class, spawned -> {
             FireworkMeta meta = spawned.getFireworkMeta();
-            meta.setPower(0);
+            meta.setDisplayName(org.bukkit.ChatColor.GREEN + "Slimefun Research");
+            meta.setPower(random.nextInt(2) + 1);
             meta.addEffect(org.bukkit.FireworkEffect.builder()
-                    .withColor(org.bukkit.Color.LIME, org.bukkit.Color.AQUA)
-                    .withFade(org.bukkit.Color.YELLOW)
-                    .trail(true)
-                    .flicker(true)
+                    .withColor(color)
+                    .with(random.nextBoolean() ? org.bukkit.FireworkEffect.Type.BALL : org.bukkit.FireworkEffect.Type.BALL_LARGE)
+                    .trail(random.nextBoolean())
+                    .flicker(random.nextBoolean())
                     .build());
             spawned.setFireworkMeta(meta);
             spawned.setSilent(true);
         });
-        runtime.executeAtLater(player.getLocation(), 2L, firework::detonate);
+        firework.setShotAtAngle(false);
     }
 
     private SfxMenuButton toggleButton(Material material, String name, String lore, boolean enabled, java.util.function.Consumer<cc.theends6.sfx.api.menu.SfxMenuClickContext> handler) {
@@ -1278,27 +1296,9 @@ public final class DefaultSfxGuide implements SfxGuide {
             player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")));
             return;
         }
-
-        switch (researches.unlock(player, research)) {
-            case PROFILE_NOT_LOADED -> player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")));
-            case ALREADY_UNLOCKED -> {
-            }
-            case NOT_ENOUGH_LEVELS -> player.sendMessage(Text.prefixed(plugin, tr("messages.not-enough-xp", "<red>You do not have enough levels to unlock this research.</red>")));
-            case UNLOCKED -> {
-                GuidePreferences preferences = preferences(player);
-                if (preferences.unlockAnimation()) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
-                }
-                if (preferences.fireworks()) {
-                    launchResearchFirework(player);
-                }
-                player.sendMessage(Text.prefixed(plugin,
-                        tr("messages.research.unlocked", "<green>Unlocked research: {name}</green>")
-                                .replace("{name}", displayResearchName(research, definition))));
-            }
-        }
-
-        openCategory(player, mode, categoryId, page, Navigation.REPLACE);
+        beginResearchUnlock(player, optional.get(), definition, research,
+                () -> openCategory(player, mode, categoryId, page, Navigation.REPLACE),
+                () -> openCategory(player, mode, categoryId, page, Navigation.REPLACE));
     }
 
     private void unlockResearchAndOpen(Player player, GuideMode mode, SfxItemDefinition definition, SfxResearchDefinition research) {
@@ -1308,28 +1308,96 @@ public final class DefaultSfxGuide implements SfxGuide {
             player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")));
             return;
         }
+        beginResearchUnlock(player, optional.get(), definition, research,
+                () -> openRecipe(player, mode, definition.id(), 0, Navigation.REPLACE),
+                () -> openLockedResearchView(player, mode, definition, research, Navigation.REPLACE));
+    }
 
-        switch (researches.unlock(player, research)) {
-            case PROFILE_NOT_LOADED -> player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")));
-            case ALREADY_UNLOCKED -> openRecipe(player, mode, definition.id(), 0, Navigation.REPLACE);
-            case NOT_ENOUGH_LEVELS -> {
-                player.sendMessage(Text.prefixed(plugin, tr("messages.not-enough-xp", "<red>You do not have enough levels to unlock this research.</red>")));
-                openLockedResearchView(player, mode, definition, research, Navigation.REPLACE);
-            }
-            case UNLOCKED -> {
-                GuidePreferences preferences = preferences(player);
-                if (preferences.unlockAnimation()) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
-                }
-                if (preferences.fireworks()) {
-                    launchResearchFirework(player);
-                }
-                player.sendMessage(Text.prefixed(plugin,
-                        tr("messages.research.unlocked", "<green>Unlocked research: {name}</green>")
-                                .replace("{name}", displayResearchName(research, definition))));
-                openRecipe(player, mode, definition.id(), 0, Navigation.REPLACE);
-            }
+    private void beginResearchUnlock(Player player, SfxPlayerProfile profile, SfxItemDefinition definition, SfxResearchDefinition research, Runnable onSuccess, Runnable onFailure) {
+        if (profile.hasUnlocked(research.id())) {
+            onSuccess.run();
+            return;
         }
+        if (!canAffordResearch(player, research)) {
+            player.sendMessage(Text.prefixed(plugin, tr("messages.not-enough-xp", "<red>You do not have enough levels to unlock this research.</red>")));
+            onFailure.run();
+            return;
+        }
+        if (!researchingPlayers.add(player.getUniqueId())) {
+            return;
+        }
+
+        String researchName = displayResearchName(research, definition);
+        consumeResearchCost(player, research);
+        GuidePreferences preferences = preferences(player);
+
+        if (!preferences.unlockAnimation()) {
+            finishResearchUnlock(player, profile, definition, research, onSuccess);
+            return;
+        }
+
+        player.sendMessage(Text.prefixed(plugin,
+                tr("messages.research.start", "<yellow>Researching {name}...</yellow>")
+                        .replace("{name}", researchName)));
+
+        runtime.executeForPlayerLater(player, 5L, () -> {
+            if (!player.isOnline()) {
+                finishResearchUnlock(player, profile, definition, research, onSuccess);
+                return;
+            }
+            playResearchSound(player);
+            player.sendMessage(Text.prefixed(plugin,
+                    tr("messages.research.progress", "<yellow>{name}</yellow><gray> - </gray><aqua>{progress}</aqua>")
+                            .replace("{name}", researchName)
+                            .replace("{progress}", "0%")));
+        });
+
+        for (int index = 0; index < RESEARCH_PROGRESS.length; index++) {
+            int progress = RESEARCH_PROGRESS[index];
+            long delay = (index + 1L) * 20L;
+            runtime.executeForPlayerLater(player, delay, () -> {
+                if (!player.isOnline()) {
+                    return;
+                }
+                playResearchSound(player);
+                player.sendMessage(Text.prefixed(plugin,
+                        tr("messages.research.progress", "<yellow>{name}</yellow><gray> - </gray><aqua>{progress}</aqua>")
+                                .replace("{name}", researchName)
+                                .replace("{progress}", progress + "%")));
+            });
+        }
+
+        runtime.executeForPlayerLater(player, (RESEARCH_PROGRESS.length + 1L) * 20L, () ->
+                finishResearchUnlock(player, profile, definition, research, onSuccess));
+    }
+
+    private void finishResearchUnlock(Player player, SfxPlayerProfile profile, SfxItemDefinition definition, SfxResearchDefinition research, Runnable onSuccess) {
+        researchingPlayers.remove(player.getUniqueId());
+        researches.grant(profile, research);
+        if (player.isOnline()) {
+            GuidePreferences preferences = preferences(player);
+            if (preferences.fireworks()) {
+                launchResearchFirework(player);
+            }
+            player.sendMessage(Text.prefixed(plugin,
+                    tr("messages.research.unlocked", "<green>Unlocked research: {name}</green>")
+                            .replace("{name}", displayResearchName(research, definition))));
+            onSuccess.run();
+        }
+    }
+
+    private boolean canAffordResearch(Player player, SfxResearchDefinition research) {
+        return player.getGameMode() == org.bukkit.GameMode.CREATIVE || player.getLevel() >= research.cost();
+    }
+
+    private void consumeResearchCost(Player player, SfxResearchDefinition research) {
+        if (player.getGameMode() != org.bukkit.GameMode.CREATIVE) {
+            player.setLevel(player.getLevel() - research.cost());
+        }
+    }
+
+    private void playResearchSound(Player player) {
+        player.playSound(player.getLocation(), Sound.ENTITY_BAT_TAKEOFF, 0.7f, 1.0f);
     }
 
     private void switchGuideBookMode(Player player, GuideMode mode) {

@@ -3276,6 +3276,8 @@ messages:
   not-researched-item: <red>You have not unlocked this item yet.</red>
   not-enough-xp: <red>You do not have enough levels to unlock this research.</red>
   research:
+    start: <yellow>Researching {name}...</yellow>
+    progress: <yellow>{name}</yellow><gray> - </gray><aqua>{progress}</aqua>
     unlocked: <green>Unlocked research: {name}</green>
   backpack:
     no-stack: <red>Backpacks must be used one at a time.</red>

@@ -2,6 +2,7 @@ language: 'zh-CN'
 
 content:
   sync-bundled-recipes-on-startup: true
+  sync-bundled-researches-on-startup: true
 
 storage:
   sqlite-file: 'data/player-data.db'

@@ -3369,6 +3369,8 @@ messages:
   not-researched-item: <red>你还没有解锁这个物品。</red>
   not-enough-xp: <red>你的经验等级不足，无法解锁这项研究。</red>
   research:
+    start: <yellow>正在研究：{name}</yellow>
+    progress: <yellow>{name}</yellow><gray> - </gray><aqua>{progress}</aqua>
     unlocked: <green>已解锁研究：{name}</green>
   backpack:
     no-stack: <red>背包类物品必须单独一件使用。</red>

@@ -21,10 +21,7 @@ public final class SfxResearchRegistry {
         }
         researches.put(definition.id(), definition);
         for (String itemId : definition.itemIds()) {
-            SfxResearchDefinition existing = byItemId.putIfAbsent(itemId, definition);
-            if (existing != null) {
-                throw new IllegalArgumentException("Item " + itemId + " is already bound to research " + existing.id());
-            }
+            byItemId.put(itemId, definition);
         }
     }
 
