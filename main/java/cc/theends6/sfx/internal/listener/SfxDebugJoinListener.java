@@ -4,6 +4,8 @@ import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,13 +23,11 @@ public final class SfxDebugJoinListener implements Listener {
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final SfxLocalization localization;
-    private final List<String> testingLines;
 
     public SfxDebugJoinListener(JavaPlugin plugin, SfxRuntime runtime, SfxLocalization localization) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.localization = Objects.requireNonNull(localization, "localization");
-        this.testingLines = loadTestingLines(plugin);
     }
 
     @EventHandler
@@ -40,6 +40,7 @@ public final class SfxDebugJoinListener implements Listener {
             if (!player.isOnline()) {
                 return;
             }
+            List<String> testingLines = loadTestingLines();
             player.sendMessage(Text.mm(localization.text("debug.header", "<dark_gray>====================</dark_gray> <green>SFX DEBUG TEXT</green> <dark_gray>====================</dark_gray>")));
             for (String line : testingLines) {
                 if (line.isBlank()) {
@@ -52,22 +53,34 @@ public final class SfxDebugJoinListener implements Listener {
         }), 20L);
     }
 
-    private List<String> loadTestingLines(JavaPlugin plugin) {
+    private List<String> loadTestingLines() {
+        File external = new File(plugin.getDataFolder(), "TESTING.md");
+        if (external.isFile()) {
+            try (InputStream stream = new FileInputStream(external)) {
+                return readLines(stream);
+            } catch (IOException ex) {
+                return List.of(localization.text("debug.failed-testing", "Failed to read TESTING.md: {error}").replace("{error}", ex.getMessage()));
+            }
+        }
         try (InputStream stream = plugin.getResource("TESTING.md")) {
             if (stream == null) {
-                return List.of(localization.text("debug.missing-testing", "TESTING.md 未被打包进插件。"));
+                return List.of(localization.text("debug.missing-testing", "TESTING.md was not packaged into the plugin."));
             }
-            List<String> lines = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    lines.add(line);
-                }
-            }
-            return lines;
+            return readLines(stream);
         } catch (IOException ex) {
-            return List.of(localization.text("debug.failed-testing", "读取 TESTING.md 失败：{error}").replace("{error}", ex.getMessage()));
+            return List.of(localization.text("debug.failed-testing", "Failed to read TESTING.md: {error}").replace("{error}", ex.getMessage()));
         }
+    }
+
+    private List<String> readLines(InputStream stream) throws IOException {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+        }
+        return lines;
     }
 
     private String escape(String text) {

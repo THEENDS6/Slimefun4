@@ -167,14 +167,7 @@ final class LegacySfBootstrapSupport {
                 || id.equals("sf:infused_magnet")
                 || id.equals("sf:infused_hopper")
                 || id.equals("sf:necrotic_skull")
-                || id.equals("sf:infused_elytra")
-                || id.equals("sf:explosive_bow")
-                || id.equals("sf:icy_bow")
-                || id.equals("sf:smelters_pickaxe")
-                || id.equals("sf:lumber_axe")
-                || id.equals("sf:explosive_pickaxe")
-                || id.equals("sf:explosive_shovel")
-                || id.startsWith("sf:pickaxe_of_");
+                || id.equals("sf:infused_elytra");
     }
 
     private static Map<String, Map<String, Integer>> createLegacyEnchantments() {

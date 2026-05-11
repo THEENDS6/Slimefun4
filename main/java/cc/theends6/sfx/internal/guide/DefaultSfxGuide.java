@@ -24,6 +24,8 @@ import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -247,7 +249,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         builder.button(39, toggleButton(
                 Material.FIREWORK_ROCKET,
                 tr("guide.settings.fireworks.name", "<yellow>Research Fireworks</yellow>"),
-                tr("guide.settings.fireworks.lore", "<gray>Reserved for the future research system. This matches classic guide settings.</gray>"),
+                tr("guide.settings.fireworks.lore", "<gray>Show a large firework when you finish researching an item.</gray>"),
                 preferences.fireworks(),
                 click -> {
                     preferences.setFireworks(!preferences.fireworks());
@@ -258,7 +260,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         builder.button(41, toggleButton(
                 Material.REDSTONE_TORCH,
                 tr("guide.settings.unlock-animation.name", "<yellow>Unlock Animation</yellow>"),
-                tr("guide.settings.unlock-animation.lore", "<gray>Reserved for the future research system. This matches classic guide settings.</gray>"),
+                tr("guide.settings.unlock-animation.lore", "<gray>Show the pondering progress in chat while researching an item.</gray>"),
                 preferences.unlockAnimation(),
                 click -> {
                     preferences.setUnlockAnimation(!preferences.unlockAnimation());
@@ -295,7 +297,7 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private void openMain(Player player, GuideMode mode, int page, Navigation navigation) {
         preferences(player).setLastLocation(GuideLocation.main(mode, page));
-        List<SfxItemCategory> visibleCategories = LegacySfGuideResolver.visibleCategories(registry, mode);
+        List<SfxItemCategory> visibleCategories = visibleCategoriesFor(player, mode);
         int pageCount = pageCount(visibleCategories.size());
         int safePage = clampPage(page, pageCount);
 
@@ -307,7 +309,12 @@ public final class DefaultSfxGuide implements SfxGuide {
         for (int i = from; i < to; i++) {
             SfxItemCategory category = visibleCategories.get(i);
             int slot = CONTENT_SLOTS[i - from];
-            builder.button(slot, new SfxMenuButton(categoryButtonIcon(category), click -> openCategory(click.player(), mode, category.id(), 0, Navigation.OPEN)));
+            if (mode == GuideMode.SURVIVAL && !isCategoryUnlocked(player, category.id())) {
+                builder.button(slot, new SfxMenuButton(lockedCategoryIcon(player, category), click -> {
+                }));
+            } else {
+                builder.button(slot, new SfxMenuButton(categoryButtonIcon(category), click -> openCategory(click.player(), mode, category.id(), 0, Navigation.OPEN)));
+            }
         }
 
         addContentPagination(builder, safePage, pageCount,
@@ -318,6 +325,14 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private void openCategory(Player player, GuideMode mode, String categoryId, int page, Navigation navigation) {
+        if (!isCategoryVisible(categoryId)) {
+            openMain(player, mode, 0, navigation == Navigation.ROOT ? Navigation.ROOT : Navigation.REPLACE);
+            return;
+        }
+        if (mode == GuideMode.SURVIVAL && !isCategoryUnlocked(player, categoryId)) {
+            openMain(player, mode, 0, navigation == Navigation.ROOT ? Navigation.ROOT : Navigation.REPLACE);
+            return;
+        }
         preferences(player).setLastLocation(GuideLocation.category(mode, categoryId, page));
         Optional<SfxItemCategory> optionalCategory = LegacySfGuideResolver.resolveCategory(registry, categoryId);
         if (optionalCategory.isEmpty()) {
@@ -1153,6 +1168,55 @@ public final class DefaultSfxGuide implements SfxGuide {
         return PlainTextComponentSerializer.plainText().serialize(localization.researchName(research.id(), fallback));
     }
 
+    private List<SfxItemCategory> visibleCategoriesFor(Player player, GuideMode mode) {
+        return LegacySfGuideResolver.visibleCategories(registry, mode).stream()
+                .filter(category -> isCategoryVisible(category.id()))
+                .toList();
+    }
+
+    private boolean isCategoryVisible(String categoryId) {
+        if (!LegacySfGuideResolver.isSeasonalCategory(categoryId)) {
+            return true;
+        }
+        if (!plugin.getConfig().getBoolean("guide.seasonal-categories.enabled", true)) {
+            return false;
+        }
+        if (plugin.getConfig().getBoolean("guide.seasonal-categories.always-show", true)) {
+            return true;
+        }
+        return switch (categoryId) {
+            case "guide:sf:christmas" -> currentMonth() == Month.DECEMBER;
+            case "guide:sf:valentines_day" -> currentMonth() == Month.FEBRUARY;
+            case "guide:sf:easter" -> currentMonth() == Month.APRIL;
+            case "guide:sf:birthday", "guide:sf:halloween" -> currentMonth() == Month.OCTOBER;
+            default -> true;
+        };
+    }
+
+    private Month currentMonth() {
+        return LocalDate.now().getMonth();
+    }
+
+    private boolean isCategoryUnlocked(Player player, String categoryId) {
+        List<String> parents = LegacySfGuideResolver.parentCategories(categoryId);
+        if (parents.isEmpty()) {
+            return true;
+        }
+        Optional<SfxPlayerProfile> profile = profiles.find(player.getUniqueId());
+        if (profile.isEmpty()) {
+            return false;
+        }
+        for (String parentId : parents) {
+            for (SfxItemDefinition item : LegacySfGuideResolver.visibleItemsInCategory(registry, parentId)) {
+                Optional<SfxResearchDefinition> research = researches.researchForItem(item.id());
+                if (research.isPresent() && !profile.get().hasUnlocked(research.get().id())) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     private void launchResearchFirework(Player player) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         org.bukkit.Color color = RESEARCH_FIREWORK_COLORS[random.nextInt(RESEARCH_FIREWORK_COLORS.length)];
@@ -1167,9 +1231,9 @@ public final class DefaultSfxGuide implements SfxGuide {
                     .flicker(random.nextBoolean())
                     .build());
             spawned.setFireworkMeta(meta);
-            spawned.setSilent(true);
         });
         firework.setShotAtAngle(false);
+        player.playSound(firework.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.0f);
     }
 
     private SfxMenuButton toggleButton(Material material, String name, String lore, boolean enabled, java.util.function.Consumer<cc.theends6.sfx.api.menu.SfxMenuClickContext> handler) {
@@ -1193,9 +1257,29 @@ public final class DefaultSfxGuide implements SfxGuide {
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
             meta.displayName(Text.noItalic(localization.categoryName(category.id(), category.name())));
+            if ("guide:sf:magical_gadgets".equals(category.id())) {
+                meta.setEnchantmentGlintOverride(Boolean.TRUE);
+            }
             icon.setItemMeta(meta);
         }
         return withLore(icon, List.of(Component.empty(), Text.mm(tr("guide.actions.open-category", "<gray>Click to open category</gray>"))));
+    }
+
+    private ItemStack lockedCategoryIcon(Player player, SfxItemCategory category) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(Text.mm("<white>" + tr("guide.locked-itemgroup.line1", "To unlock this category you will")));
+        lore.add(Text.mm("<white>" + tr("guide.locked-itemgroup.line2", "need to unlock all items from the")));
+        lore.add(Text.mm("<white>" + tr("guide.locked-itemgroup.line3", "following categories")));
+        lore.add(Component.empty());
+        for (String parentId : LegacySfGuideResolver.parentCategories(category.id())) {
+            LegacySfGuideResolver.resolveCategory(registry, parentId)
+                    .map(parent -> localization.categoryName(parent.id(), parent.name()))
+                    .ifPresent(lore::add);
+        }
+        ItemStack item = ItemBuilder.of(Material.BARRIER)
+                .name("<red>" + tr("guide.locked", "LOCKED") + " <gray>-</gray> <white>" + plainCategoryName(category) + "</white>")
+                .build();
+        return withLore(item, lore);
     }
 
     private ItemStack machineSourceIcon(ManualMachineDefinition machine) {
@@ -1337,17 +1421,16 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
 
         player.sendMessage(Text.prefixed(plugin,
-                tr("messages.research.start", "<yellow>Researching {name}...</yellow>")
-                        .replace("{name}", researchName)));
+                tr("messages.research.start", "<gray>The Ancient Spirits whisper mysterious words into your ear!</gray>")));
 
         runtime.executeForPlayerLater(player, 5L, () -> {
             if (!player.isOnline()) {
                 finishResearchUnlock(player, profile, definition, research, onSuccess);
                 return;
             }
-            playResearchSound(player);
-            player.sendMessage(Text.prefixed(plugin,
-                    tr("messages.research.progress", "<yellow>{name}</yellow><gray> - </gray><aqua>{progress}</aqua>")
+                playResearchSound(player);
+                player.sendMessage(Text.prefixed(plugin,
+                    tr("messages.research.progress", "<gray>You start to wonder about </gray><aqua>{name}</aqua><gray> ({progress})</gray>")
                             .replace("{name}", researchName)
                             .replace("{progress}", "0%")));
         });
@@ -1361,7 +1444,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                 }
                 playResearchSound(player);
                 player.sendMessage(Text.prefixed(plugin,
-                        tr("messages.research.progress", "<yellow>{name}</yellow><gray> - </gray><aqua>{progress}</aqua>")
+                        tr("messages.research.progress", "<gray>You start to wonder about </gray><aqua>{name}</aqua><gray> ({progress})</gray>")
                                 .replace("{name}", researchName)
                                 .replace("{progress}", progress + "%")));
             });
@@ -1380,7 +1463,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                 launchResearchFirework(player);
             }
             player.sendMessage(Text.prefixed(plugin,
-                    tr("messages.research.unlocked", "<green>Unlocked research: {name}</green>")
+                    tr("messages.research.unlocked", "<aqua>You have unlocked </aqua><gray>\"{name}\"</gray>")
                             .replace("{name}", displayResearchName(research, definition))));
             onSuccess.run();
         }

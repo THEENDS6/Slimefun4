@@ -76,10 +76,10 @@ guide:
       lore: <gray>This only affects guide menus.</gray>
     fireworks:
       name: <yellow>Research Fireworks</yellow>
-      lore: <gray>Toggle the firework effect when a research is unlocked.</gray>
+      lore: <gray>Show a large firework when you finish researching an item.</gray>
     unlock-animation:
       name: <yellow>Unlock Animation</yellow>
-      lore: <gray>Play the unlock sound when a research is unlocked.</gray>
+      lore: <gray>Show the pondering progress in chat while researching an item.</gray>
     resume-last:
       name: <yellow>Resume Last Page</yellow>
       lore: <gray>Reopen the guide at the last page you closed.</gray>
@@ -113,6 +113,11 @@ guide:
       name: <yellow>Search</yellow>
       lore: <gray>The search entry is reserved.</gray>
       todo: <gray>The search entry is reserved for a future chat search page.</gray>
+  locked: LOCKED
+  locked-itemgroup:
+    line1: To unlock this category you will
+    line2: need to unlock all items from the
+    line3: following categories
   recipe:
     title: Recipe Details
     multiblock:
@@ -3225,6 +3230,10 @@ categories:
     name: '&7Useful Items'
   guide.sf.basic_machines:
     name: '&7Basic Machines'
+  guide.sf.talismans:
+    name: '&7Talismans I'
+  guide.sf.ender_talismans:
+    name: '&7Talismans II'
   guide.sf.food:
     name: '&7Food'
   guide.sf.armor:
@@ -3276,9 +3285,9 @@ messages:
   not-researched-item: <red>You have not unlocked this item yet.</red>
   not-enough-xp: <red>You do not have enough levels to unlock this research.</red>
   research:
-    start: <yellow>Researching {name}...</yellow>
-    progress: <yellow>{name}</yellow><gray> - </gray><aqua>{progress}</aqua>
-    unlocked: <green>Unlocked research: {name}</green>
+    start: <gray>The Ancient Spirits whisper mysterious words into your ear!</gray>
+    progress: <gray>You start to wonder about </gray><aqua>{name}</aqua><gray> ({progress})</gray>
+    unlocked: <aqua>You have unlocked </aqua><gray>"{name}"</gray>
   backpack:
     no-stack: <red>Backpacks must be used one at a time.</red>
     foreign-owner: <red>This backpack belongs to another player.</red>
