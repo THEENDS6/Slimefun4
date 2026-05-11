@@ -1,21 +1,33 @@
 package cc.theends6.sfx.internal.command;
 
+import cc.theends6.sfx.SlimeFunXPlugin;
 import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.guide.GuideMode;
 import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.menu.SfxMenu;
 import cc.theends6.sfx.api.menu.SfxMenuButton;
+import cc.theends6.sfx.internal.playerdata.SfxBackpackRecord;
+import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
+import cc.theends6.sfx.internal.research.SfxResearchDefinition;
+import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.Text;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -45,18 +57,18 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String sub = args.length == 0 ? "help" : args[0].toLowerCase(Locale.ROOT);
-
         switch (sub) {
             case "guide" -> openGuide(sender, GuideMode.SURVIVAL);
             case "cheatguide" -> openGuide(sender, GuideMode.CHEAT);
             case "book" -> giveGuideBook(sender, args.length >= 2 && args[1].equalsIgnoreCase("cheat") ? GuideMode.CHEAT : GuideMode.SURVIVAL);
             case "give" -> giveItem(sender, args);
+            case "research" -> handleResearch(sender, args);
+            case "backpack" -> handleBackpack(sender, args);
             case "inspect" -> inspectItem(sender);
-            case "list" -> listItems(sender, args.length >= 2 ? parseAmount(args[1]) - 1 : 0);
+            case "list" -> listItems(sender, args.length >= 2 ? parsePositive(args[1], 1) - 1 : 0);
             case "reload" -> reload(sender, args);
             default -> sendHelp(sender, label);
         }
-
         return true;
     }
 
@@ -66,11 +78,11 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (mode == GuideMode.CHEAT && !player.hasPermission("sfx.command.cheatguide")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-guide", "<red>浣犳病鏈夋墦寮€浣滃紛绉戞妧涔︾殑鏉冮檺銆?/red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-guide", "<red>You do not have permission to open the cheat guide.</red>")));
             return;
         }
         if (mode == GuideMode.SURVIVAL && !player.hasPermission("sfx.command.guide")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-guide", "<red>浣犳病鏈夋墦寮€绉戞妧涔︾殑鏉冮檺銆?/red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-guide", "<red>You do not have permission to open the guide.</red>")));
             return;
         }
         api.guide().open(player, mode);
@@ -78,21 +90,21 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private void giveGuideBook(CommandSender sender, GuideMode mode) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(tr("command.errors.players-only-book", "Only players can receive the SFX guide."));
+            sender.sendMessage(tr("command.errors.players-only-book", "Only players can receive the SFX guide book."));
             return;
         }
         if (mode == GuideMode.CHEAT && !player.hasPermission("sfx.command.cheatbook")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-book", "<red>浣犳病鏈夐鍙栦綔寮婄鎶€涔︾殑鏉冮檺銆?/red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-book", "<red>You do not have permission to receive the cheat guide book.</red>")));
             return;
         }
         if (mode == GuideMode.SURVIVAL && !player.hasPermission("sfx.command.book")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-book", "<red>浣犳病鏈夐鍙栫鎶€涔︾殑鏉冮檺銆?/red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-book", "<red>You do not have permission to receive the guide book.</red>")));
             return;
         }
         api.items().give(player, api.items().createGuideBook(mode));
         player.sendMessage(Text.prefixed(plugin, mode == GuideMode.CHEAT
-                ? tr("command.book.received-cheat", "<green>宸查鍙栦綔寮婄鎶€涔︺€?/green>")
-                : tr("command.book.received", "<green>宸查鍙栫鎶€涔︺€?/green>")));
+                ? tr("command.book.received-cheat", "<green>You received a cheat guide book.</green>")
+                : tr("command.book.received", "<green>You received a guide book.</green>")));
     }
 
     private void giveItem(CommandSender sender, String[] args) {
@@ -101,36 +113,172 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (!player.hasPermission("sfx.command.give")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-give", "<red>浣犳病鏈夌洿鎺ヨ幏鍙?SFX 鐗╁搧鐨勬潈闄愩€?/red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-give", "<red>You do not have permission to receive SFX items directly.</red>")));
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.usage", "<red>鐢ㄦ硶: /slimefunx give <id> [amount]</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.usage", "<red>Usage: /slimefunx give <id> [amount]</red>")));
             return;
         }
         String itemId = args[1];
-        int amount = args.length >= 3 ? parseAmount(args[2]) : 1;
-
+        int amount = args.length >= 3 ? parsePositive(args[2], 1) : 1;
         SfxItemDefinition definition = api.itemRegistry().item(itemId).orElse(null);
         if (definition == null) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.unknown", "<red>鏈煡鐨?SFX 鐗╁搧: </red><gray>{id}</gray>").replace("{id}", itemId)));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.unknown", "<red>Unknown SFX item: {id}</red>").replace("{id}", itemId)));
             return;
         }
         if (!definition.giveable()) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.not-giveable", "<red>杩欎釜 SFX 鐗╁搧涓嶈兘鐩存帴缁欎簣銆?/red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.not-giveable", "<red>This item cannot be given directly.</red>")));
             return;
         }
-
         int inserted = giveStacks(player.getInventory(), definition, amount);
         if (inserted <= 0) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.no-space", "<red>鑳屽寘绌洪棿涓嶈冻锛屾湭鑳界粰浜堜换浣曠墿鍝併€?/red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.no-space", "<red>Your inventory does not have enough free space.</red>")));
             return;
         }
         if (inserted < amount) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.partial", "<yellow>鑳屽寘绌洪棿涓嶈冻锛屼粎缁欎簣锛?/yellow><gray>{item} x{amount}</gray>").replace("{item}", itemDisplayName(definition)).replace("{amount}", Integer.toString(inserted))));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.partial", "<yellow>Inserted {amount}x {item}. Inventory became full.</yellow>")
+                    .replace("{amount}", Integer.toString(inserted))
+                    .replace("{item}", itemDisplayName(definition))));
             return;
         }
-        player.sendMessage(Text.prefixed(plugin, tr("command.give.success", "<green>宸茬粰浜堬細</green><gray>{item} x{amount}</gray>").replace("{item}", itemDisplayName(definition)).replace("{amount}", Integer.toString(inserted))));
+        player.sendMessage(Text.prefixed(plugin, tr("command.give.success", "<green>Received {amount}x {item}.</green>")
+                .replace("{amount}", Integer.toString(inserted))
+                .replace("{item}", itemDisplayName(definition))));
+    }
+
+    private void handleResearch(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("sfx.command.research")) {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-research", "<red>You do not have permission to manage researches.</red>")));
+            return;
+        }
+        if (args.length < 3) {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.research.usage", "<red>Usage: /slimefunx research <player|uuid> <all|reset|research-id></red>")));
+            return;
+        }
+        SlimeFunXPlugin sfx = sfxPlugin();
+        if (sfx == null) {
+            sender.sendMessage("SFX plugin context unavailable.");
+            return;
+        }
+        ResolvedPlayerRef target = resolvePlayer(args[1]);
+        if (target == null) {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.player.unknown", "<red>Unknown player or UUID.</red>")));
+            return;
+        }
+        String action = args[2].toLowerCase(Locale.ROOT);
+        sfx.playerDataService().request(target.offlinePlayer(), profile -> {
+            SfxResearchService researches = sfx.researchService();
+            switch (action) {
+                case "all" -> {
+                    researches.grantAll(profile);
+                    sender.sendMessage(Text.prefixed(plugin, tr("command.research.success-all", "<green>Unlocked all researches for {player}.</green>").replace("{player}", target.displayName())));
+                }
+                case "reset" -> {
+                    researches.resetAll(profile);
+                    sender.sendMessage(Text.prefixed(plugin, tr("command.research.success-reset", "<green>Reset all researches for {player}.</green>").replace("{player}", target.displayName())));
+                }
+                default -> {
+                    Optional<SfxResearchDefinition> research = researches.researchById(action);
+                    if (research.isEmpty()) {
+                        sender.sendMessage(Text.prefixed(plugin, tr("command.research.unknown", "<red>Unknown research: {id}</red>").replace("{id}", action)));
+                        return;
+                    }
+                    boolean changed = researches.grant(profile, research.get());
+                    sender.sendMessage(Text.prefixed(plugin, (changed
+                            ? tr("command.research.success-one", "<green>Unlocked research {id} for {player}.</green>")
+                            : tr("command.research.already", "<yellow>{player} already had research {id}.</yellow>"))
+                            .replace("{id}", research.get().id())
+                            .replace("{player}", target.displayName())));
+                }
+            }
+        });
+    }
+
+    private void handleBackpack(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("sfx.command.backpack")) {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-backpack", "<red>You do not have permission to manage backpacks.</red>")));
+            return;
+        }
+        if (args.length < 3) {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.backpack.usage", "<red>Usage: /slimefunx backpack <list|open|give> <player|uuid> [id] [size]</red>")));
+            return;
+        }
+        SlimeFunXPlugin sfx = sfxPlugin();
+        if (sfx == null) {
+            sender.sendMessage("SFX plugin context unavailable.");
+            return;
+        }
+        String action = args[1].toLowerCase(Locale.ROOT);
+        ResolvedPlayerRef target = resolvePlayer(args[2]);
+        if (target == null) {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.player.unknown", "<red>Unknown player or UUID.</red>")));
+            return;
+        }
+        switch (action) {
+            case "list" -> listBackpacks(sender, sfx, target);
+            case "open" -> openBackpack(sender, sfx, target, args);
+            case "give" -> giveBackpack(sender, sfx, target, args);
+            default -> sender.sendMessage(Text.prefixed(plugin, tr("command.backpack.usage", "<red>Usage: /slimefunx backpack <list|open|give> <player|uuid> [id] [size]</red>")));
+        }
+    }
+
+    private void listBackpacks(CommandSender sender, SlimeFunXPlugin sfx, ResolvedPlayerRef target) {
+        sfx.playerDataService().request(target.offlinePlayer(), profile -> {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.backpack.list.header", "<green>Backpacks for {player}</green>").replace("{player}", target.displayName())));
+            if (profile.backpacksCopy().isEmpty()) {
+                sender.sendMessage(Text.mm(tr("command.backpack.list.empty", "<gray>No backpacks found.</gray>")));
+                return;
+            }
+            for (SfxBackpackRecord backpack : profile.backpacksCopy().values()) {
+                sender.sendMessage(Text.mm(tr("command.backpack.list.entry", "<gray>- ID {id} | size {size} | updated {updated}</gray>")
+                        .replace("{id}", Integer.toString(backpack.id()))
+                        .replace("{size}", Integer.toString(backpack.size()))
+                        .replace("{updated}", formatTimestamp(backpack.updatedAt()))));
+            }
+        });
+    }
+
+    private void openBackpack(CommandSender sender, SlimeFunXPlugin sfx, ResolvedPlayerRef target, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(tr("command.errors.players-only-backpack-open", "Only players can open backpacks directly."));
+            return;
+        }
+        if (args.length < 4) {
+            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.open.usage", "<red>Usage: /slimefunx backpack open <player|uuid> <id></red>")));
+            return;
+        }
+        Integer backpackId = parseNonNegativeInt(args[3]);
+        if (backpackId == null) {
+            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.invalid-id", "<red>Invalid backpack id.</red>")));
+            return;
+        }
+        sfx.backpackListener().openBackpackForAdmin(player, target.offlinePlayer().getUniqueId(), target.displayName(), backpackId);
+    }
+
+    private void giveBackpack(CommandSender sender, SlimeFunXPlugin sfx, ResolvedPlayerRef target, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(tr("command.errors.players-only-backpack-give", "Only players can receive backpack items."));
+            return;
+        }
+        if (args.length < 4) {
+            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.give.usage", "<red>Usage: /slimefunx backpack give <player|uuid> <id> [size|tier]</red>")));
+            return;
+        }
+        Integer backpackId = parseNonNegativeInt(args[3]);
+        if (backpackId == null) {
+            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.invalid-id", "<red>Invalid backpack id.</red>")));
+            return;
+        }
+        Integer size = args.length >= 5 ? parseBackpackSizeArg(args[4]) : null;
+        if (args.length >= 5 && size == null) {
+            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.invalid-size", "<red>Use backpack size 9/18/27/36/45/54 or tier 1-6.</red>")));
+            return;
+        }
+        sfx.backpackListener().giveBackpackItem(player, target.offlinePlayer().getUniqueId(), target.displayName(), backpackId, size);
+        player.sendMessage(Text.prefixed(plugin, tr("command.backpack.give.sent", "<green>Prepared backpack item for {player} #{id}.</green>")
+                .replace("{player}", target.displayName())
+                .replace("{id}", Integer.toString(backpackId))));
     }
 
     private void inspectItem(CommandSender sender) {
@@ -139,15 +287,15 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (!player.hasPermission("sfx.command.inspect")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-inspect", "<red>浣犳病鏈夋鏌?SFX PDC 鏍囪鐨勬潈闄愩€?/red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-inspect", "<red>You do not have permission to inspect SFX item markers.</red>")));
             return;
         }
         SfxItemMarker marker = api.items().readMarker(player.getInventory().getItemInMainHand()).orElse(null);
         if (marker == null) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.inspect.no-marker", "<gray>鎵嬩腑鐗╁搧娌℃湁 SFX PDC 韬唤鏍囪銆?/gray>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.inspect.no-marker", "<gray>No SFX item marker was found in your main hand.</gray>")));
             return;
         }
-        sender.sendMessage(Text.mm(tr("command.inspect.header", "<green>SFX 鐗╁搧鏍囪</green>")));
+        sender.sendMessage(Text.mm(tr("command.inspect.header", "<green>SFX Item Marker</green>")));
         sender.sendMessage(Text.mm(tr("command.inspect.field.item-id", "<gray>item_id: </gray><white>{value}</white>").replace("{value}", marker.itemId())));
         sender.sendMessage(Text.mm(tr("command.inspect.field.item-version", "<gray>item_version: </gray><white>{value}</white>").replace("{value}", Integer.toString(marker.itemVersion()))));
         sender.sendMessage(Text.mm(tr("command.inspect.field.item-schema", "<gray>item_schema: </gray><white>{value}</white>").replace("{value}", Integer.toString(marker.schemaVersion()))));
@@ -160,17 +308,18 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private void listItems(CommandSender sender, int page) {
         if (!sender.hasPermission("sfx.command.list")) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-list", "<red>浣犳病鏈夋煡鐪?SFX 鐗╁搧鍒楄〃鐨勬潈闄愩€?/red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-list", "<red>You do not have permission to view the SFX item list.</red>")));
             return;
         }
-        List<SfxItemDefinition> definitions = api.itemRegistry().items().stream()
-                .filter(item -> !item.hidden())
-                .toList();
+        List<SfxItemDefinition> definitions = api.itemRegistry().items().stream().filter(item -> !item.hidden()).toList();
         int pageCount = Math.max(1, (int) Math.ceil(definitions.size() / (double) LIST_SLOTS.length));
         int safePage = Math.max(0, Math.min(page, pageCount - 1));
 
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Text.mm(tr("command.list.header", "<green>SFX 宸叉敞鍐屽彲瑙佺墿鍝侊細</green><gray>{count} 涓紝椤电爜 {page} / {pages}</gray>").replace("{count}", Integer.toString(definitions.size())).replace("{page}", Integer.toString(safePage + 1)).replace("{pages}", Integer.toString(pageCount))));
+            sender.sendMessage(Text.mm(tr("command.list.header", "<green>SFX Item Registry</green><gray> {count} items | page {page}/{pages}</gray>")
+                    .replace("{count}", Integer.toString(definitions.size()))
+                    .replace("{page}", Integer.toString(safePage + 1))
+                    .replace("{pages}", Integer.toString(pageCount))));
             int from = safePage * LIST_SLOTS.length;
             int to = Math.min(definitions.size(), from + LIST_SLOTS.length);
             for (int i = from; i < to; i++) {
@@ -180,7 +329,9 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        SfxMenu.Builder builder = SfxMenu.builder(Text.mm(tr("command.list.menu-title", "<dark_green>SFX 鐗╁搧鍒楄〃</dark_green> <gray>{page} / {pages}</gray>").replace("{page}", Integer.toString(safePage + 1)).replace("{pages}", Integer.toString(pageCount)))).rows(6);
+        SfxMenu.Builder builder = SfxMenu.builder(Text.mm(tr("command.list.menu-title", "<dark_green>SFX Item Registry</dark_green> <gray>{page}/{pages}</gray>")
+                .replace("{page}", Integer.toString(safePage + 1))
+                .replace("{pages}", Integer.toString(pageCount)))).rows(6);
         ItemStack pane = ItemBuilder.of(Material.GREEN_STAINED_GLASS_PANE).name("<dark_gray> </dark_gray>").build();
         for (int i = 0; i < 9; i++) {
             builder.button(i, new SfxMenuButton(pane, click -> {
@@ -190,31 +341,31 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             builder.button(i, new SfxMenuButton(pane, click -> {
             }));
         }
-
         int from = safePage * LIST_SLOTS.length;
         int to = Math.min(definitions.size(), from + LIST_SLOTS.length);
         for (int i = from; i < to; i++) {
             SfxItemDefinition definition = definitions.get(i);
-            int slot = LIST_SLOTS[i - from];
-            builder.button(slot, new SfxMenuButton(listIcon(definition), click -> {
+            builder.button(LIST_SLOTS[i - from], new SfxMenuButton(listIcon(definition), click -> {
             }));
         }
-
         builder.button(46, new SfxMenuButton(ItemBuilder.of(Material.ARROW)
-                .name(safePage > 0 ? tr("guide.pagination.prev.active", "<yellow>涓婁竴椤?/yellow>") : tr("guide.pagination.prev.inactive", "<dark_gray>涓婁竴椤?/dark_gray>"))
-                .lore(tr("guide.pagination.page", "<gray>椤电爜 {current} / {total}</gray>").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
+                .name(safePage > 0 ? tr("guide.pagination.prev.active", "<yellow>Previous Page</yellow>") : tr("guide.pagination.prev.inactive", "<dark_gray>Previous Page</dark_gray>"))
+                .lore(tr("guide.pagination.page", "<gray>Page {current} / {total}</gray>").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
                 .build(), click -> {
             if (safePage > 0) {
                 listItems(click.player(), safePage - 1);
             }
         }));
         builder.button(49, new SfxMenuButton(ItemBuilder.of(Material.NETHER_STAR)
-                .name(tr("command.list.registry-name", "<green>SFX 宸叉敞鍐岀墿鍝?/green>"))
-                .lore(tr("command.list.registry-lore.0", "<gray>褰撳墠鍙睍绀虹帺瀹跺彲瑙佺墿鍝併€?/gray>"), tr("command.list.registry-lore.1", "<gray>鍏?{count} 涓€?/gray>").replace("{count}", Integer.toString(definitions.size())), "", tr("guide.actions.close", "<dark_gray>鐐瑰嚮鍏抽棴銆?/dark_gray>"))
+                .name(tr("command.list.registry-name", "<green>SFX Item Registry</green>"))
+                .lore(tr("command.list.registry-lore.0", "<gray>Browse all currently registered visible items.</gray>"),
+                        tr("command.list.registry-lore.1", "<gray>Total: {count}</gray>").replace("{count}", Integer.toString(definitions.size())),
+                        "",
+                        tr("guide.actions.close", "<dark_gray>Click to close.</dark_gray>"))
                 .build(), click -> click.menus().close(click.player())));
         builder.button(52, new SfxMenuButton(ItemBuilder.of(Material.ARROW)
-                .name(safePage + 1 < pageCount ? tr("guide.pagination.next.active", "<yellow>涓嬩竴椤?/yellow>") : tr("guide.pagination.next.inactive", "<dark_gray>涓嬩竴椤?/dark_gray>"))
-                .lore(tr("guide.pagination.page", "<gray>椤电爜 {current} / {total}</gray>").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
+                .name(safePage + 1 < pageCount ? tr("guide.pagination.next.active", "<yellow>Next Page</yellow>") : tr("guide.pagination.next.inactive", "<dark_gray>Next Page</dark_gray>"))
+                .lore(tr("guide.pagination.page", "<gray>Page {current} / {total}</gray>").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
                 .build(), click -> {
             if (safePage + 1 < pageCount) {
                 listItems(click.player(), safePage + 1);
@@ -229,7 +380,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         if (meta != null) {
             List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
             lore.add(Component.empty());
-            lore.add(Component.text(tr("command.list.registry-entry", "娉ㄥ唽琛ㄥ睍绀洪」"), NamedTextColor.GRAY));
+            lore.add(Component.text(tr("command.list.registry-entry", "Registry Entry"), NamedTextColor.GRAY));
             meta.lore(lore.stream().map(Text::noItalic).toList());
             icon.setItemMeta(meta);
         }
@@ -238,13 +389,13 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private void reload(CommandSender sender, String[] args) {
         if (!sender.hasPermission("sfx.command.reload")) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload", "<red>浣犳病鏈夐噸杞?SFX 鐨勬潈闄愩€?/red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload", "<red>You do not have permission to reload SFX.</red>")));
             return;
         }
-        if (plugin instanceof cc.theends6.sfx.SlimeFunXPlugin sfxPlugin) {
+        if (plugin instanceof SlimeFunXPlugin sfxPlugin) {
             if (args.length >= 2 && args[1].equalsIgnoreCase("all")) {
                 sfxPlugin.reloadAllContent();
-                sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success-all", "<green>SFX fully reloaded: registries, recipes, and menus were refreshed.</green>")));
+                sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success-all", "<green>SFX fully reloaded: registries, recipes, researches, and menus were refreshed.</green>")));
                 return;
             }
             plugin.reloadConfig();
@@ -253,14 +404,118 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         } else {
             plugin.reloadConfig();
         }
-        sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success", "<green>SFX 閰嶇疆涓庤瑷€鏂囦欢宸查噸杞姐€?/green>")));
+        sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success", "<green>SFX configuration and language files were reloaded.</green>")));
     }
 
-    private int parseAmount(String raw) {
+    private void sendHelp(CommandSender sender, String label) {
+        sender.sendMessage(Text.mm(tr("command.help.header", "<green>SFX Commands</green>")));
+        sender.sendMessage(Text.mm(tr("command.help.line.guide", "<gray>/{label} guide</gray> <dark_gray>- open the survival guide</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.book", "<gray>/{label} book [cheat]</gray> <dark_gray>- receive a guide book</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.cheatguide", "<gray>/{label} cheatguide</gray> <dark_gray>- open the cheat guide</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.give", "<gray>/{label} give <id> [amount]</gray> <dark_gray>- receive an SFX item</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.research", "<gray>/{label} research <player> <all|reset|id></gray> <dark_gray>- manage researches</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.backpack", "<gray>/{label} backpack <list|open|give> ...</gray> <dark_gray>- manage backpacks</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.inspect", "<gray>/{label} inspect</gray> <dark_gray>- inspect the SFX item in your main hand</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.list", "<gray>/{label} list [page]</gray> <dark_gray>- list visible SFX items</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.reload", "<gray>/{label} reload [all]</gray> <dark_gray>- reload SFX configuration</dark_gray>").replace("{label}", label)));
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 1) {
+            return filter(List.of("guide", "cheatguide", "book", "give", "research", "backpack", "inspect", "list", "reload", "help"), args[0]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("book")) {
+            return filter(List.of("cheat"), args[1]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("reload")) {
+            return filter(List.of("all"), args[1]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("research")) {
+            return filter(knownPlayerNames(), args[1]);
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("research")) {
+            List<String> options = new ArrayList<>(List.of("all", "reset"));
+            SlimeFunXPlugin sfx = sfxPlugin();
+            if (sfx != null) {
+                options.addAll(sfx.researchService().allResearches().stream().map(SfxResearchDefinition::id).toList());
+            }
+            return filter(options, args[2]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("backpack")) {
+            return filter(List.of("list", "open", "give"), args[1]);
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("backpack")) {
+            return filter(knownPlayerNames(), args[2]);
+        }
+        if (args.length == 4 && args[0].equalsIgnoreCase("backpack")) {
+            return filter(List.of("0", "1", "2", "3", "4", "5"), args[3]);
+        }
+        if (args.length == 5 && args[0].equalsIgnoreCase("backpack") && args[1].equalsIgnoreCase("give")) {
+            return filter(List.of("1", "2", "3", "4", "5", "6", "9", "18", "27", "36", "45", "54"), args[4]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("list")) {
+            return filter(List.of("1", "2", "3", "4", "5"), args[1]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
+            return filter(api.itemRegistry().items().stream().map(SfxItemDefinition::id).toList(), args[1]);
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
+            return filter(List.of("1", "8", "16", "32", "64", "128", "256", "512", "1024"), args[2]);
+        }
+        return List.of();
+    }
+
+    private SlimeFunXPlugin sfxPlugin() {
+        return plugin instanceof SlimeFunXPlugin sfx ? sfx : null;
+    }
+
+    private String tr(String key, String fallback) {
+        SlimeFunXPlugin sfx = sfxPlugin();
+        return sfx == null ? fallback : sfx.localization().text(key, fallback);
+    }
+
+    private String itemDisplayName(SfxItemDefinition definition) {
+        SlimeFunXPlugin sfx = sfxPlugin();
+        return sfx == null ? plainText(definition.name()) : plainText(sfx.localization().itemName(definition.id(), definition.name()));
+    }
+
+    private String plainText(Component component) {
+        return PlainTextComponentSerializer.plainText().serialize(component);
+    }
+
+    private Integer parseNonNegativeInt(String raw) {
+        try {
+            int value = Integer.parseInt(raw);
+            return value < 0 ? null : value;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private int parsePositive(String raw, int fallback) {
         try {
             return Math.max(1, Math.min(100000, Integer.parseInt(raw)));
         } catch (NumberFormatException ignored) {
-            return 1;
+            return fallback;
+        }
+    }
+
+    private Integer parseBackpackSizeArg(String raw) {
+        try {
+            int value = Integer.parseInt(raw);
+            return switch (value) {
+                case 1 -> 9;
+                case 2 -> 18;
+                case 3 -> 27;
+                case 4 -> 36;
+                case 5 -> 45;
+                case 6 -> 54;
+                case 9, 18, 27, 36, 45, 54 -> value;
+                default -> null;
+            };
+        } catch (NumberFormatException ignored) {
+            return null;
         }
     }
 
@@ -288,58 +543,43 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         return given;
     }
 
-    private void sendHelp(CommandSender sender, String label) {
-        sender.sendMessage(Text.mm(tr("command.help.header", "<green>SFX 鍛戒护</green>")));
-        sender.sendMessage(Text.mm(tr("command.help.line.guide", "<gray>/{label} guide</gray> <dark_gray>- 鎵撳紑鏅€氱鎶€涔?/dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.book", "<gray>/{label} book [cheat]</gray> <dark_gray>- 棰嗗彇绉戞妧涔?/dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.cheatguide", "<gray>/{label} cheatguide</gray> <dark_gray>- 鎵撳紑浣滃紛绉戞妧涔?/dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.give", "<gray>/{label} give <id> [amount]</gray> <dark_gray>- 鐩存帴鑾峰彇 SFX 鐗╁搧</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.inspect", "<gray>/{label} inspect</gray> <dark_gray>- 妫€鏌ユ墜涓墿鍝?PDC 鏍囪</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.list", "<gray>/{label} list [page]</gray> <dark_gray>- 鎵撳紑宸叉敞鍐岀墿鍝佸垪琛?/dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.reload", "<gray>/{label} reload</gray> <dark_gray>- 閲嶈浇閰嶇疆</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.reload-all", "<gray>/{label} reload all</gray> <dark_gray>- rebuild registries and recipes</dark_gray>").replace("{label}", label)));
+    private ResolvedPlayerRef resolvePlayer(String raw) {
+        Player online = Bukkit.getPlayerExact(raw);
+        if (online != null) {
+            return new ResolvedPlayerRef(online, online.getName());
+        }
+        try {
+            UUID uuid = UUID.fromString(raw);
+            OfflinePlayer offline = Bukkit.getOfflinePlayer(uuid);
+            return new ResolvedPlayerRef(offline, offline.getName() == null ? uuid.toString() : offline.getName());
+        } catch (IllegalArgumentException ignored) {
+        }
+        for (OfflinePlayer offline : Bukkit.getOfflinePlayers()) {
+            if (offline.getName() != null && offline.getName().equalsIgnoreCase(raw)) {
+                return new ResolvedPlayerRef(offline, offline.getName());
+            }
+        }
+        return null;
     }
 
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1) {
-            return filter(List.of("guide", "cheatguide", "book", "give", "inspect", "list", "reload", "help"), args[0]);
+    private List<String> knownPlayerNames() {
+        List<String> values = new ArrayList<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            values.add(player.getName());
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("book")) {
-            return filter(List.of("cheat"), args[1]);
+        for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
+            if (player.getName() != null && !values.contains(player.getName())) {
+                values.add(player.getName());
+            }
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("reload")) {
-            return filter(List.of("all"), args[1]);
-        }
-        if (args.length == 2 && args[0].equalsIgnoreCase("list")) {
-            return filter(List.of("1", "2", "3", "4", "5"), args[1]);
-        }
-        if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
-            return filter(api.itemRegistry().items().stream().map(SfxItemDefinition::id).toList(), args[1]);
-        }
-        if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
-            return filter(List.of("1", "8", "16", "32", "64", "128", "256", "512", "1024"), args[2]);
-        }
-        return List.of();
+        return values;
     }
 
-    private String tr(String key, String fallback) {
-        if (plugin instanceof cc.theends6.sfx.SlimeFunXPlugin sfxPlugin) {
-            return sfxPlugin.localization().text(key, fallback);
+    private String formatTimestamp(long timestamp) {
+        if (timestamp <= 0L) {
+            return "-";
         }
-        return fallback;
-    }
-
-
-    private String itemDisplayName(SfxItemDefinition definition) {
-        if (plugin instanceof cc.theends6.sfx.SlimeFunXPlugin sfxPlugin) {
-            return plainText(sfxPlugin.localization().itemName(definition.id(), definition.name()));
-        }
-        return plainText(definition.name());
-    }
-
-    private String plainText(Component component) {
-        return PlainTextComponentSerializer.plainText().serialize(component);
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault()).toString().replace('T', ' ');
     }
 
     private List<String> filter(Collection<String> options, String prefix) {
@@ -351,5 +591,8 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             }
         }
         return result;
+    }
+
+    private record ResolvedPlayerRef(OfflinePlayer offlinePlayer, String displayName) {
     }
 }

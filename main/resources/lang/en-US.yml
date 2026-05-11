@@ -76,10 +76,10 @@ guide:
       lore: <gray>This only affects guide menus.</gray>
     fireworks:
       name: <yellow>Research Fireworks</yellow>
-      lore: <gray>Reserved for the future research system. This matches classic guide settings.</gray>
+      lore: <gray>Toggle the firework effect when a research is unlocked.</gray>
     unlock-animation:
       name: <yellow>Unlock Animation</yellow>
-      lore: <gray>Reserved for the future research system. This matches classic guide settings.</gray>
+      lore: <gray>Play the unlock sound when a research is unlocked.</gray>
     resume-last:
       name: <yellow>Resume Last Page</yellow>
       lore: <gray>Reopen the guide at the last page you closed.</gray>
@@ -3281,6 +3281,8 @@ messages:
     no-stack: <red>Backpacks must be used one at a time.</red>
     foreign-owner: <red>This backpack belongs to another player.</red>
     already-open: <red>This backpack is already open.</red>
+    not-found: <red>That backpack does not exist.</red>
+    admin-title: Backpack 
   tape-measure:
     no-anchor: '&cYou need to set an anchor before you can start to measure!'
     wrong-world: '&cYour anchor seems to be in a different world!'

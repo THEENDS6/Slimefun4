@@ -60,7 +60,6 @@ public final class SlimeFunXPlugin extends JavaPlugin {
             throw new IllegalStateException("Failed to initialize SFX player data storage", exception);
         }
         this.researchRegistry = new SfxResearchRegistry();
-        LegacySfResearchBootstrap.register(researchRegistry);
         this.researchService = new SfxResearchService(researchRegistry, playerDataService);
 
         this.localization = new SfxLocalization(this);
@@ -137,6 +136,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         return researchService;
     }
 
+    public SfxBackpackListener backpackListener() {
+        return backpackListener;
+    }
+
     public synchronized void reloadAllContent() {
         reloadConfig();
         localization.reload();
@@ -145,7 +148,6 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         if (backpackListener != null) {
             backpackListener.shutdown();
         }
-        LegacySfResearchBootstrap.register(researchRegistry);
         bootstrapContent();
     }
 
@@ -167,6 +169,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         recipeYamlLoader.loadInto(recipeRegistry);
         DefaultSfxRecipeRegistry.AuditResult recipeAudit = recipeRegistry.apply(itemRegistry, api.internalManualMachines());
         BaseContentBootstrap.syncManualMachineGuideContent(itemRegistry, api.internalManualMachines());
+        LegacySfResearchBootstrap.register(researchRegistry, itemRegistry.items());
 
         if (getConfig().getBoolean("debug-text.enabled", true)) {
             getLogger().info(recipeAudit.summary());

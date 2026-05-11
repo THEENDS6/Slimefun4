@@ -19,9 +19,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -90,20 +93,49 @@ public final class SfxBackpackListener implements Listener {
             UUID viewerId = entry.getKey();
             OpenBackpackSession session = entry.getValue();
             openBackpacks.remove(session.uniqueKey());
-            Optional<SfxPlayerProfile> optional = profiles.find(session.ownerId());
-            if (optional.isPresent()) {
-                SfxPlayerProfile profile = optional.get();
-                SfxBackpackRecord backpack = profile.getOrCreateBackpack(session.backpackId(), session.inventory().getSize());
-                backpack.setContents(session.inventory().getContents());
-                profile.markDirty();
-                profiles.saveAsync(profile);
-            }
+            persistSession(session);
             Player viewer = plugin.getServer().getPlayer(viewerId);
             if (viewer != null) {
                 runtime.executeForPlayer(viewer, viewer::closeInventory);
             }
         }
         sessions.clear();
+    }
+
+    public void openBackpackForAdmin(Player viewer, UUID ownerId, String ownerName, int backpackId) {
+        profiles.request(ownerId, ownerName, profile -> {
+            SfxBackpackRecord backpack = profile.getBackpack(backpackId);
+            if (backpack == null) {
+                runtime.executeForPlayer(viewer, () -> send(viewer, "messages.backpack.not-found", "<red>That backpack does not exist.</red>"));
+                return;
+            }
+            runtime.executeForPlayer(viewer, () -> openProfileBackpack(viewer, profile, backpackId, itemIdForSize(backpack.size()),
+                    localization.text("messages.backpack.admin-title", "Backpack #{id} ({owner})")
+                            .replace("{id}", Integer.toString(backpackId))
+                            .replace("{owner}", ownerName),
+                    true, false));
+        });
+    }
+
+    public void giveBackpackItem(Player recipient, UUID ownerId, String ownerName, int backpackId, Integer requestedSize) {
+        profiles.request(ownerId, ownerName, profile -> {
+            String itemId;
+            if (requestedSize == null) {
+                if (profile.getBackpack(backpackId) == null) {
+                    runtime.executeForPlayer(recipient, () -> send(recipient, "messages.backpack.not-found", "<red>That backpack does not exist.</red>"));
+                    return;
+                }
+                itemId = "sf:restored_backpack";
+            } else {
+                int size = normalizeBackpackSize(requestedSize);
+                profile.ensureBackpackSized(backpackId, size);
+                profile.markDirty();
+                profiles.saveAsync(profile);
+                itemId = itemIdForSize(size);
+            }
+            ItemStack stack = createBoundBackpackItem(itemId, profile.ownerId(), backpackId);
+            runtime.executeForPlayer(recipient, () -> items.give(recipient, stack));
+        });
     }
 
     boolean handleItemUse(PlayerInteractEvent event, String itemId) {
@@ -125,15 +157,7 @@ public final class SfxBackpackListener implements Listener {
             return;
         }
         openBackpacks.remove(session.uniqueKey());
-        Optional<SfxPlayerProfile> optional = profiles.find(session.ownerId());
-        if (optional.isEmpty()) {
-            return;
-        }
-        SfxPlayerProfile profile = optional.get();
-        SfxBackpackRecord backpack = profile.getOrCreateBackpack(session.backpackId(), session.inventory().getSize());
-        backpack.setContents(session.inventory().getContents());
-        profile.markDirty();
-        profiles.saveAsync(profile);
+        persistSession(session);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -236,28 +260,13 @@ public final class SfxBackpackListener implements Listener {
         }
         SfxPlayerProfile profile = optional.get();
         BackpackBinding binding = readBinding(item).orElseGet(() -> bindBackpackItem(item, profile, itemId));
-        if (!binding.ownerId().equals(player.getUniqueId())) {
+        if (!allowForeignOpen() && !binding.ownerId().equals(player.getUniqueId())) {
             send(player, "messages.backpack.foreign-owner", "<red>This backpack belongs to another player.</red>");
             return;
         }
-        String uniqueKey = uniqueKey(binding.ownerId(), binding.backpackId());
-        UUID viewer = openBackpacks.get(uniqueKey);
-        if (viewer != null && !viewer.equals(player.getUniqueId())) {
-            send(player, "messages.backpack.already-open", "<red>This backpack is already open.</red>");
-            return;
-        }
-
-        SfxBackpackRecord backpack = profile.getOrCreateBackpack(binding.backpackId(), backpackSize(itemId));
-        Inventory inventory = plugin.getServer().createInventory(new BackpackHolder(binding.ownerId(), binding.backpackId()), backpack.size(),
-                Component.text(backpackTitle(item, itemId)));
-        inventory.setContents(backpack.contentsCopy());
-        OpenBackpackSession previous = sessions.remove(player.getUniqueId());
-        if (previous != null) {
-            openBackpacks.remove(previous.uniqueKey());
-        }
-        sessions.put(player.getUniqueId(), new OpenBackpackSession(uniqueKey, binding.ownerId(), binding.backpackId(), itemId, inventory));
-        openBackpacks.put(uniqueKey, player.getUniqueId());
-        player.openInventory(inventory);
+        String ownerName = resolveOwnerName(binding.ownerId(), profile);
+        profiles.request(binding.ownerId(), ownerName, ownerProfile ->
+                runtime.executeForPlayer(player, () -> openProfileBackpack(player, ownerProfile, binding.backpackId(), itemId, backpackTitle(item, itemId), false, true)));
     }
 
     private void consumeFromCooler(Player player) {
@@ -307,26 +316,36 @@ public final class SfxBackpackListener implements Listener {
 
     private BackpackBinding bindBackpackItem(ItemStack item, SfxPlayerProfile profile, String itemId) {
         int backpackId = profile.nextBackpackId();
+        applyBinding(item, profile.ownerId(), backpackId, itemId);
+        profile.getOrCreateBackpack(backpackId, backpackSize(itemId));
+        profile.markDirty();
+        profiles.saveAsync(profile);
+        return new BackpackBinding(profile.ownerId(), backpackId);
+    }
+
+    private ItemStack createBoundBackpackItem(String itemId, UUID ownerId, int backpackId) {
+        ItemStack item = items.create(itemId);
+        applyBinding(item, ownerId, backpackId, itemId);
+        return item;
+    }
+
+    private void applyBinding(ItemStack item, UUID ownerId, int backpackId, String itemId) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
             throw new IllegalStateException("Backpack item meta missing: " + itemId);
         }
-        meta.getPersistentDataContainer().set(backpackOwnerKey, PersistentDataType.STRING, profile.ownerId().toString());
+        meta.getPersistentDataContainer().set(backpackOwnerKey, PersistentDataType.STRING, ownerId.toString());
         meta.getPersistentDataContainer().set(backpackIdKey, PersistentDataType.INTEGER, backpackId);
         List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
-        String idText = profile.ownerId() + "#" + backpackId;
+        String idText = ownerId + "#" + backpackId;
         for (int i = 0; i < lore.size(); i++) {
-            String plain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(lore.get(i));
+            String plain = PlainTextComponentSerializer.plainText().serialize(lore.get(i));
             if (plain.contains("<ID>")) {
                 lore.set(i, Text.legacy(plain.replace("<ID>", idText)));
             }
         }
         meta.lore(lore);
         item.setItemMeta(meta);
-        profile.getOrCreateBackpack(backpackId, backpackSize(itemId));
-        profile.markDirty();
-        profiles.saveAsync(profile);
-        return new BackpackBinding(profile.ownerId(), backpackId);
     }
 
     private Optional<BackpackBinding> readBinding(ItemStack item) {
@@ -386,6 +405,30 @@ public final class SfxBackpackListener implements Listener {
         };
     }
 
+    private int normalizeBackpackSize(int raw) {
+        return switch (raw) {
+            case 1, 9 -> 9;
+            case 2, 18 -> 18;
+            case 3, 27 -> 27;
+            case 4, 36 -> 36;
+            case 5, 45 -> 45;
+            case 6, 54 -> 54;
+            default -> throw new IllegalArgumentException("Unsupported backpack size: " + raw);
+        };
+    }
+
+    private String itemIdForSize(int size) {
+        return switch (normalizeBackpackSize(size)) {
+            case 9 -> "sf:small_backpack";
+            case 18 -> "sf:medium_backpack";
+            case 27 -> "sf:large_backpack";
+            case 36 -> "sf:woven_backpack";
+            case 45 -> "sf:gilded_backpack";
+            case 54 -> "sf:radiant_backpack";
+            default -> "sf:large_backpack";
+        };
+    }
+
     private String backpackTitle(ItemStack item, String itemId) {
         String fallback = switch (itemId) {
             case "sf:small_backpack" -> "Small Backpack";
@@ -404,6 +447,72 @@ public final class SfxBackpackListener implements Listener {
                 .flatMap(meta -> Optional.ofNullable(meta.displayName()))
                 .map(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()::serialize)
                 .orElse(localization.text("items." + itemId.replace(':', '.').toLowerCase(Locale.ROOT) + ".name", fallback));
+    }
+
+    private void openProfileBackpack(Player player, SfxPlayerProfile ownerProfile, int backpackId, String itemId, String title, boolean force, boolean createIfMissing) {
+        String uniqueKey = uniqueKey(ownerProfile.ownerId(), backpackId);
+        UUID viewer = openBackpacks.get(uniqueKey);
+        if (viewer != null && !viewer.equals(player.getUniqueId())) {
+            if (!force) {
+                send(player, "messages.backpack.already-open", "<red>This backpack is already open.</red>");
+                return;
+            }
+            Player existingViewer = plugin.getServer().getPlayer(viewer);
+            OpenBackpackSession existingSession = sessions.remove(viewer);
+            if (existingSession != null) {
+                openBackpacks.remove(existingSession.uniqueKey());
+                persistSession(existingSession);
+            }
+            if (existingViewer != null) {
+                runtime.executeForPlayer(existingViewer, existingViewer::closeInventory);
+            }
+        }
+
+        SfxBackpackRecord backpack = createIfMissing
+                ? ownerProfile.getOrCreateBackpack(backpackId, backpackSize(itemId))
+                : ownerProfile.getBackpack(backpackId);
+        if (backpack == null) {
+            send(player, "messages.backpack.not-found", "<red>That backpack does not exist.</red>");
+            return;
+        }
+        OpenBackpackSession previous = sessions.remove(player.getUniqueId());
+        if (previous != null) {
+            openBackpacks.remove(previous.uniqueKey());
+            persistSession(previous);
+        }
+        Inventory inventory = plugin.getServer().createInventory(new BackpackHolder(ownerProfile.ownerId(), backpackId), backpack.size(), Component.text(title));
+        inventory.setContents(backpack.contentsCopy());
+        sessions.put(player.getUniqueId(), new OpenBackpackSession(uniqueKey, ownerProfile.ownerId(), backpackId, itemId, inventory));
+        openBackpacks.put(uniqueKey, player.getUniqueId());
+        player.openInventory(inventory);
+    }
+
+    private void persistSession(OpenBackpackSession session) {
+        Optional<SfxPlayerProfile> optional = profiles.find(session.ownerId());
+        if (optional.isEmpty()) {
+            return;
+        }
+        SfxPlayerProfile profile = optional.get();
+        SfxBackpackRecord backpack = profile.getOrCreateBackpack(session.backpackId(), session.inventory().getSize());
+        backpack.setContents(session.inventory().getContents());
+        profile.markDirty();
+        profiles.saveAsync(profile);
+    }
+
+    private boolean allowForeignOpen() {
+        return plugin.getConfig().getBoolean("backpacks.allow-foreign-open", true);
+    }
+
+    private String resolveOwnerName(UUID ownerId, SfxPlayerProfile fallbackProfile) {
+        Optional<SfxPlayerProfile> optional = profiles.find(ownerId);
+        if (optional.isPresent() && optional.get().lastKnownName() != null && !optional.get().lastKnownName().isBlank()) {
+            return optional.get().lastKnownName();
+        }
+        if (fallbackProfile.ownerId().equals(ownerId) && fallbackProfile.lastKnownName() != null && !fallbackProfile.lastKnownName().isBlank()) {
+            return fallbackProfile.lastKnownName();
+        }
+        OfflinePlayer offline = Bukkit.getOfflinePlayer(ownerId);
+        return offline.getName() == null ? ownerId.toString() : offline.getName();
     }
 
     private void denyItemUse(PlayerInteractEvent event) {

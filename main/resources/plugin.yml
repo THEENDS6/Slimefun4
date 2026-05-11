@@ -10,7 +10,7 @@ load: POSTWORLD
 commands:
   slimefunx:
     description: SlimeFunX main command
-    usage: /slimefunx <guide|cheatguide|book|give|inspect|list|reload [all]>
+    usage: /slimefunx <guide|cheatguide|book|give|research|backpack|inspect|list|reload [all]>
     aliases: [sfx, sf, x]
 
 permissions:
@@ -28,6 +28,12 @@ permissions:
     default: op
   sfx.command.give:
     description: Allows directly receiving SFX items
+    default: op
+  sfx.command.research:
+    description: Allows managing SFX researches
+    default: op
+  sfx.command.backpack:
+    description: Allows managing SFX backpacks
     default: op
   sfx.command.inspect:
     description: Allows inspecting SFX item markers

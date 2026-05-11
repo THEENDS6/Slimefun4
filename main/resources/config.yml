@@ -6,6 +6,9 @@ content:
 storage:
   sqlite-file: 'data/player-data.db'
 
+backpacks:
+  allow-foreign-open: true
+
 messages:
   prefix: '<dark_gray>[<green>SFX</green><dark_gray>] '
 
