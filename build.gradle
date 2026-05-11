@@ -96,18 +96,6 @@ tasks.register('deployToPaperRuntime', Copy) {
     rename { rootProject.ext.pluginJarName }
 }
 
-tasks.register('exportLegacyItemsYaml', JavaExec) {
-    group = 'build setup'
-    description = 'Exports legacy Slimefun category and item definitions to bundled YAML resources.'
-    dependsOn 'classes'
-    classpath = sourceSets.main.output + sourceSets.main.compileClasspath + configurations.shade
-    mainClass = 'cc.theends6.sfx.internal.bootstrap.LegacySfYamlExportTool'
-    workingDir = projectDir
-    javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
 tasks.register('deployToFoliaRuntime', Copy) {
     group = 'deployment'
     description = 'Builds the plugin and copies it to run-folia-1.21.8/plugins.'
