@@ -4,6 +4,8 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import io.papermc.paper.event.player.PlayerPickBlockEvent;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -28,8 +31,10 @@ import org.bukkit.block.Chest;
 import org.bukkit.block.Dispenser;
 import org.bukkit.block.Dropper;
 import org.bukkit.block.Furnace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.Waterlogged;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -77,6 +82,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
+    private final Map<SfxBlockAnchorKey, ActiveCrucibleProcess> activeCrucibles = new ConcurrentHashMap<>();
     private volatile boolean furnaceTickerRunning;
 
     public SfxBasicMachineBlockListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData) {
@@ -98,15 +104,19 @@ public final class SfxBasicMachineBlockListener implements Listener {
         });
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
         Optional<SfxAnchorRecord> anchor = blockData.findAnchor(event.getBlock().getLocation());
         if (anchor.isEmpty()) {
             return;
         }
-        if (!SUPPORTED_BLOCKS.contains(instanceType(anchor.get().instanceId()))) {
+        String typeId = instanceType(anchor.get().instanceId());
+        if (!SUPPORTED_BLOCKS.contains(typeId)) {
             return;
         }
+        event.setDropItems(false);
+        clearActiveCrucible(anchor.get().key(), true);
+        dropPluginBlock(event.getBlock(), typeId);
         blockData.unregisterAt(event.getBlock().getLocation());
     }
 
@@ -130,6 +140,23 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
         if ("sf:crucible".equals(typeId)) {
             handleCrucible(event, clicked);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onPickBlock(PlayerPickBlockEvent event) {
+        Optional<SfxAnchorRecord> anchor = blockData.findAnchor(event.getBlock().getLocation());
+        if (anchor.isEmpty()) {
+            return;
+        }
+        String typeId = instanceType(anchor.get().instanceId());
+        if (typeId == null) {
+            return;
+        }
+        if (items.readMarker(items.create(typeId)).map(marker -> marker.flags().contains("creative-clone")).orElse(false)) {
+            event.setCancelled(true);
+            event.getPlayer().getInventory().setItem(event.getTargetSlot(), items.create(typeId));
+            event.getPlayer().updateInventory();
         }
     }
 
@@ -276,6 +303,11 @@ public final class SfxBasicMachineBlockListener implements Listener {
     private void handleCrucible(PlayerInteractEvent event, Block block) {
         event.setCancelled(true);
         Player player = event.getPlayer();
+        SfxBlockAnchorKey anchorKey = SfxBlockAnchorKey.fromLocation(block.getLocation());
+        if (activeCrucibles.containsKey(anchorKey)) {
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.busy", "<red>This machine is already working.</red>")));
+            return;
+        }
         ItemStack input = itemInHand(event);
         if (input == null || input.getType().isAir()) {
             player.sendMessage(Text.prefixed(plugin, localization.text("machines.empty", "<gray>手中没有可处理的物品。</gray>")));
@@ -286,8 +318,16 @@ public final class SfxBasicMachineBlockListener implements Listener {
             player.sendMessage(Text.prefixed(plugin, localization.text("machines.wrong-item", "<red>这个物品不能被这台机器处理。</red>")));
             return;
         }
+        Block outputBlock = block.getRelative(BlockFace.UP);
+        if (!canStartCrucible(outputBlock, plan.water())) {
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.crucible-blocked", "<red>The space above the Crucible is blocked.</red>")));
+            return;
+        }
         consumeFromHand(player, event, input, plan.inputAmount());
-        generateLiquid(block.getRelative(BlockFace.UP), plan.water());
+        UUID token = UUID.randomUUID();
+        activeCrucibles.put(anchorKey, new ActiveCrucibleProcess(token, outputBlock.getLocation(), plan.water()));
+        setInstanceState(block, SfxBlockLifecycleState.ACTIVE, "crucible:active:" + plan.water());
+        generateLiquid(anchorKey, token, outputBlock, plan.water());
     }
 
     private void completeComposter(Block block, ItemStack output) {
@@ -301,63 +341,85 @@ public final class SfxBasicMachineBlockListener implements Listener {
         playSound(block.getLocation(), Sound.BLOCK_COMPOSTER_READY, 1.0f, 1.0f);
     }
 
-    private void generateLiquid(Block block, boolean water) {
+    private void generateLiquid(SfxBlockAnchorKey anchorKey, UUID token, Block block, boolean water) {
+        if (!isCrucibleProcessActive(anchorKey, token)) {
+            return;
+        }
         if (water && block.getWorld().getEnvironment() == World.Environment.NETHER
                 && !plugin.getConfig().getBoolean("plugin-blocks.crucible.allow-water-in-nether", false)) {
             block.getWorld().spawnParticle(Particle.SMOKE, block.getLocation().add(0.5, 0.5, 0.5), 4, 0.1, 0.1, 0.1, 0.01);
             playSound(block.getLocation(), Sound.BLOCK_LAVA_EXTINGUISH, 1.0f, 1.0f);
+            clearActiveCrucible(anchorKey, false);
+            setInstanceState(block.getRelative(BlockFace.DOWN), SfxBlockLifecycleState.IDLE, "crucible:idle");
             return;
         }
 
         if (block.getType() == (water ? Material.WATER : Material.LAVA)) {
-            addLiquidLevel(block, water);
+            addLiquidLevel(anchorKey, token, block, water);
         } else if (block.getType() == (water ? Material.LAVA : Material.WATER)) {
             Levelled levelled = (Levelled) block.getBlockData();
             block.setType(levelled.getLevel() == 0 || levelled.getLevel() == 8 ? Material.OBSIDIAN : Material.STONE, false);
             playSound(block.getLocation(), Sound.BLOCK_LAVA_EXTINGUISH, 1.0f, 1.0f);
+            clearActiveCrucible(anchorKey, false);
+            setInstanceState(block.getRelative(BlockFace.DOWN), SfxBlockLifecycleState.IDLE, "crucible:idle");
         } else {
-            runtime.executeAtLater(block.getLocation(), 50L, () -> placeLiquid(block, water));
+            runtime.executeAtLater(block.getLocation(), 50L, () -> placeLiquid(anchorKey, token, block, water));
         }
     }
 
-    private void addLiquidLevel(Block block, boolean water) {
+    private void addLiquidLevel(SfxBlockAnchorKey anchorKey, UUID token, Block block, boolean water) {
+        if (!isCrucibleProcessActive(anchorKey, token)) {
+            return;
+        }
         Levelled levelled = (Levelled) block.getBlockData();
         int level = levelled.getLevel();
         if (level > 7) {
             level -= 8;
         }
         if (level == 0) {
-            runCruciblePostTask(block, water, 1);
+            runCruciblePostTask(anchorKey, token, block, water, 1);
         } else {
             int next = 7 - level;
-            runtime.executeAtLater(block.getLocation(), 50L, () -> runCruciblePostTask(block, water, next));
+            runtime.executeAtLater(block.getLocation(), 50L, () -> runCruciblePostTask(anchorKey, token, block, water, next));
         }
     }
 
-    private void placeLiquid(Block block, boolean water) {
+    private void placeLiquid(SfxBlockAnchorKey anchorKey, UUID token, Block block, boolean water) {
+        if (!isCrucibleProcessActive(anchorKey, token)) {
+            return;
+        }
         if (block.getType().isAir()) {
             block.setType(water ? Material.WATER : Material.LAVA, false);
         } else if (water && block.getBlockData() instanceof Waterlogged waterlogged) {
             waterlogged.setWaterlogged(true);
             block.setBlockData(waterlogged, false);
             playSound(block.getLocation(), Sound.ITEM_BUCKET_EMPTY, 1.0f, 1.0f);
+            clearActiveCrucible(anchorKey, false);
+            setInstanceState(block.getRelative(BlockFace.DOWN), SfxBlockLifecycleState.IDLE, "crucible:idle");
             return;
         }
-        runCruciblePostTask(block, water, 1);
+        runCruciblePostTask(anchorKey, token, block, water, 1);
     }
 
-    private void runCruciblePostTask(Block block, boolean water, int times) {
+    private void runCruciblePostTask(SfxBlockAnchorKey anchorKey, UUID token, Block block, boolean water, int times) {
+        if (!isCrucibleProcessActive(anchorKey, token)) {
+            return;
+        }
         if (!(block.getBlockData() instanceof Levelled levelled)) {
             playSound(block.getLocation(), Sound.BLOCK_STONE_BREAK, 1.0f, 1.0f);
+            clearActiveCrucible(anchorKey, false);
+            setInstanceState(block.getRelative(BlockFace.DOWN), SfxBlockLifecycleState.IDLE, "crucible:idle");
             return;
         }
         playSound(block.getLocation(), water ? Sound.ITEM_BUCKET_EMPTY : Sound.ITEM_BUCKET_EMPTY_LAVA, 1.0f, 1.0f);
         levelled.setLevel(8 - times);
         block.setBlockData(levelled, false);
         if (times < 8) {
-            runtime.executeAtLater(block.getLocation(), 50L, () -> runCruciblePostTask(block, water, times + 1));
+            runtime.executeAtLater(block.getLocation(), 50L, () -> runCruciblePostTask(anchorKey, token, block, water, times + 1));
         } else {
             playSound(block.getLocation(), Sound.ITEM_BUCKET_FILL_LAVA, 1.0f, 1.0f);
+            clearActiveCrucible(anchorKey, false);
+            setInstanceState(block.getRelative(BlockFace.DOWN), SfxBlockLifecycleState.IDLE, "crucible:idle");
         }
     }
 
@@ -536,6 +598,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
 
     public void shutdown() {
         furnaceTickerRunning = false;
+        activeCrucibles.clear();
     }
 
     private void scheduleEnhancedFurnaceTick() {
@@ -570,8 +633,52 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         int cookTime = furnace.getCookTime() + (stats.processingSpeed() - 1) * 10;
+        if (plugin.getConfig().getBoolean("plugin-blocks.enhanced-furnace.speed-affects-fuel-consumption", false) && furnace.getBurnTime() > 0) {
+            furnace.setBurnTime((short) Math.max(0, furnace.getBurnTime() - (stats.processingSpeed() - 1)));
+        }
         furnace.setCookTime((short) Math.min(cookTime, furnace.getCookTimeTotal() - 1));
         state.update(true, false);
+    }
+
+    private boolean canStartCrucible(Block block, boolean water) {
+        Material type = block.getType();
+        if (type.isAir() || type == Material.WATER || type == Material.LAVA) {
+            return true;
+        }
+        return water && block.getBlockData() instanceof Waterlogged;
+    }
+
+    private boolean isCrucibleProcessActive(SfxBlockAnchorKey anchorKey, UUID token) {
+        ActiveCrucibleProcess process = activeCrucibles.get(anchorKey);
+        return process != null && process.token().equals(token);
+    }
+
+    private void clearActiveCrucible(SfxBlockAnchorKey anchorKey, boolean clearOutput) {
+        ActiveCrucibleProcess process = activeCrucibles.remove(anchorKey);
+        if (process == null || !clearOutput) {
+            return;
+        }
+        Block block = process.outputLocation().getBlock();
+        if (block.getType() == Material.WATER || block.getType() == Material.LAVA) {
+            block.setType(Material.AIR, false);
+            return;
+        }
+        BlockData data = block.getBlockData();
+        if (data instanceof Waterlogged waterlogged && waterlogged.isWaterlogged()) {
+            waterlogged.setWaterlogged(false);
+            block.setBlockData(waterlogged, false);
+        }
+    }
+
+    private void setInstanceState(Block anchorBlock, SfxBlockLifecycleState state, String payload) {
+        blockData.findAnchor(anchorBlock.getLocation())
+                .ifPresent(anchor -> blockData.updateInstanceState(anchor.instanceId(), payload.getBytes(StandardCharsets.UTF_8), state));
+    }
+
+    private void dropPluginBlock(Block block, String typeId) {
+        ItemStack item = items.create(typeId);
+        Item dropped = block.getWorld().dropItem(block.getLocation().add(0.5, 0.5, 0.5), item);
+        dropped.setPickupDelay(0);
     }
 
     private FurnaceStats furnaceStatsAt(SfxAnchorRecord anchor) {
@@ -612,5 +719,8 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private record FurnaceStats(int processingSpeed, int fuelEfficiency, int fortuneLevel) {
+    }
+
+    private record ActiveCrucibleProcess(UUID token, Location outputLocation, boolean water) {
     }
 }

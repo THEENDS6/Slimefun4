@@ -3373,6 +3373,9 @@ messages:
     loading: <yellow>SFX 玩家数据仍在加载，请稍后再试。</yellow>
   not-researched-item: <red>你还没有解锁这个物品。</red>
   not-enough-xp: <red>你的经验等级不足，无法解锁这项研究。</red>
+  machines:
+    busy: <red>这台机器正在工作中。</red>
+    crucible-blocked: <red>坩埚上方被方块阻挡，无法开始工作。</red>
   research:
     start: <gray>远古之灵正在你耳边低语神秘的知识……</gray>
     progress: <gray>你开始思索 </gray><aqua>{name}</aqua><gray>（{progress}）</gray>

@@ -3284,6 +3284,9 @@ messages:
     loading: <yellow>Your SFX player data is still loading. Try again in a moment.</yellow>
   not-researched-item: <red>You have not unlocked this item yet.</red>
   not-enough-xp: <red>You do not have enough levels to unlock this research.</red>
+  machines:
+    busy: <red>This machine is already working.</red>
+    crucible-blocked: <red>The space above the Crucible is blocked.</red>
   research:
     start: <gray>The Ancient Spirits whisper mysterious words into your ear!</gray>
     progress: <gray>You start to wonder about </gray><aqua>{name}</aqua><gray> ({progress})</gray>
