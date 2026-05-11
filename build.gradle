@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'cc.theends6'
-version = '2026.05.11d'
+version = '2026.05.11e'
 
 description = 'SlimeFunX restored single-module workspace.'
 

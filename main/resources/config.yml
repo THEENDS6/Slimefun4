@@ -6,6 +6,8 @@ content:
 
 storage:
   sqlite-file: 'data/player-data.db'
+  block-data:
+    sqlite-file: 'data/block-data.db'
 
 backpacks:
   allow-foreign-open: true
