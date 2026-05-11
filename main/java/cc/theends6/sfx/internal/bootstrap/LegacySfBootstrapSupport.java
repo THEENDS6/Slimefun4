@@ -117,6 +117,11 @@ final class LegacySfBootstrapSupport {
         if (id.equals("sf:hazmat_chestplate")) {
             builder.flag("armor-fire-resistance");
         }
+        if (isPluginBlockId(id)) {
+            builder.flag("plugin-block");
+            builder.flag("placeable-block");
+            builder.flag("creative-clone");
+        }
         if (id.equals("sf:boots_of_the_stomper")) {
             builder.flag("armor-stomper");
         }
@@ -168,6 +173,18 @@ final class LegacySfBootstrapSupport {
                 || id.equals("sf:infused_hopper")
                 || id.equals("sf:necrotic_skull")
                 || id.equals("sf:infused_elytra");
+    }
+
+    private static boolean isPluginBlockId(String id) {
+        return id.equals("sf:composter")
+                || id.equals("sf:crucible")
+                || id.equals("sf:output_chest")
+                || id.equals("sf:ignition_chamber")
+                || id.equals("sf:block_placer")
+                || id.equals("sf:enhanced_furnace")
+                || id.startsWith("sf:enhanced_furnace_")
+                || id.equals("sf:reinforced_furnace")
+                || id.equals("sf:carbonado_edged_furnace");
     }
 
     private static Map<String, Map<String, Integer>> createLegacyEnchantments() {

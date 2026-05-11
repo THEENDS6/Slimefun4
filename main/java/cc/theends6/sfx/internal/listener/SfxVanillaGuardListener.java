@@ -112,6 +112,9 @@ public final class SfxVanillaGuardListener implements Listener {
         if (!isSfxItem(item) || items.readGuideMode(item).isPresent()) {
             return;
         }
+        if (isSfxPlacementAllowed(item, event.getAction())) {
+            return;
+        }
         if (isVanillaUseAllowed(item)) {
             return;
         }
@@ -167,7 +170,7 @@ public final class SfxVanillaGuardListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (isSfxItem(event.getItemInHand())) {
+        if (isSfxItem(event.getItemInHand()) && !isSfxPlacementAllowed(event.getItemInHand(), Action.RIGHT_CLICK_BLOCK)) {
             event.setCancelled(true);
         }
     }
@@ -362,6 +365,15 @@ public final class SfxVanillaGuardListener implements Listener {
     private boolean isVanillaBowAllowed(ItemStack item) {
         return items.readMarker(item)
                 .map(marker -> VANILLA_BOW_IDS.contains(marker.itemId()))
+                .orElse(false);
+    }
+
+    private boolean isSfxPlacementAllowed(ItemStack item, Action action) {
+        if (action != Action.RIGHT_CLICK_BLOCK) {
+            return false;
+        }
+        return items.readMarker(item)
+                .map(marker -> marker.flags().contains("placeable-block"))
                 .orElse(false);
     }
 }

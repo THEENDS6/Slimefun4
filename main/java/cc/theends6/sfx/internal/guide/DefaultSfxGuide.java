@@ -779,12 +779,66 @@ public final class DefaultSfxGuide implements SfxGuide {
         List<DisplayEntry> entries = new ArrayList<>();
         entries.addAll(alternativeSourceEntries(pages, current, opener));
         if (definition != null) {
+            entries.addAll(specialDisplayEntries(definition, mode));
             entries.addAll(machineOutputEntries(definition, mode));
         }
         return entries.stream()
                 .sorted(DISPLAY_ENTRY_ORDER)
                 .limit(CLASSIC_DISPLAY_SLOTS.length)
                 .toList();
+    }
+
+    private List<DisplayEntry> specialDisplayEntries(SfxItemDefinition definition, GuideMode mode) {
+        return switch (definition.id()) {
+            case "sf:composter" -> pairedDisplayEntries(List.of(
+                    SfxRecipeSlot.vanilla(Material.OAK_LEAVES, 8), SfxRecipeSlot.vanilla(Material.DIRT),
+                    SfxRecipeSlot.vanilla(Material.OAK_SAPLING, 8), SfxRecipeSlot.vanilla(Material.DIRT),
+                    SfxRecipeSlot.vanilla(Material.STONE, 4), SfxRecipeSlot.vanilla(Material.NETHERRACK),
+                    SfxRecipeSlot.vanilla(Material.SAND, 2), SfxRecipeSlot.vanilla(Material.SOUL_SAND),
+                    SfxRecipeSlot.vanilla(Material.WHEAT, 4), SfxRecipeSlot.vanilla(Material.NETHER_WART)
+            ), mode);
+            case "sf:crucible" -> pairedDisplayEntries(List.of(
+                    SfxRecipeSlot.vanilla(Material.COBBLESTONE, 16), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
+                    SfxRecipeSlot.vanilla(Material.NETHERRACK, 16), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
+                    SfxRecipeSlot.vanilla(Material.STONE, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
+                    SfxRecipeSlot.vanilla(Material.OBSIDIAN, 1), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
+                    SfxRecipeSlot.vanilla(Material.TERRACOTTA, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
+                    SfxRecipeSlot.vanilla(Material.OAK_LEAVES, 16), SfxRecipeSlot.vanilla(Material.WATER_BUCKET),
+                    SfxRecipeSlot.vanilla(Material.BLACKSTONE, 8), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
+                    SfxRecipeSlot.vanilla(Material.BASALT, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
+                    SfxRecipeSlot.vanilla(Material.COBBLED_DEEPSLATE, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET)
+            ), mode);
+            default -> List.of();
+        };
+    }
+
+    private List<DisplayEntry> pairedDisplayEntries(List<SfxRecipeSlot> slots, GuideMode mode) {
+        List<DisplayEntry> entries = new ArrayList<>();
+        int priority = 200;
+        for (SfxRecipeSlot slot : slots) {
+            if (slot == null || slot.isEmpty()) {
+                continue;
+            }
+            entries.add(displayEntryForSlot(slot, mode, priority));
+            priority += 5;
+        }
+        return entries;
+    }
+
+    private DisplayEntry displayEntryForSlot(SfxRecipeSlot slot, GuideMode mode, int priority) {
+        ItemStack icon = ingredientIcon(slot);
+        String label = slot.isSfxItem()
+                ? slot.sfxId().flatMap(registry::item).map(this::itemDisplayName).orElse(slot.sfxItemId())
+                : materialName(slot.material());
+        ClickHandler handler = null;
+        if (slot.isSfxItem()) {
+            handler = click -> slot.sfxId().ifPresent(target ->
+                    openRecipe(click.player(), mode, target, 0, preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE));
+        } else if (showVanillaRecipes() && slot.material() != null && !vanillaRecipePages(slot.material()).isEmpty()) {
+            handler = click -> openVanillaRecipe(click.player(), mode, slot.material(), 0,
+                    preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE);
+        }
+        return new DisplayEntry(icon, label, priority, handler);
     }
 
     private List<DisplayEntry> alternativeSourceEntries(List<GuideRecipePage> pages, GuideRecipePage current, RecipePageOpener opener) {

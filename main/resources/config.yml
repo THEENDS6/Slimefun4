@@ -15,6 +15,11 @@ backpacks:
 plugin-blocks:
   crucible:
     allow-water-in-nether: false
+  enhanced-furnace:
+    
+    
+    
+    speed-affects-fuel-consumption: false
 
 messages:
   prefix: '<dark_gray>[<green>SFX</green><dark_gray>] '
