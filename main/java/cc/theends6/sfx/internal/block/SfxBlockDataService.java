@@ -52,6 +52,10 @@ public final class SfxBlockDataService {
         return results;
     }
 
+    public List<SfxAnchorRecord> anchors() {
+        return new ArrayList<>(anchors.values());
+    }
+
     public UUID registerSingleBlock(String typeId, Location location, Material material, UUID ownerId) {
         long now = Instant.now().toEpochMilli();
         UUID instanceId = UUID.randomUUID();

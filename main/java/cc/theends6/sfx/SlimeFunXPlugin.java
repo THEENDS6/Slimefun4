@@ -6,6 +6,7 @@ import cc.theends6.sfx.internal.bootstrap.BaseContentBootstrap;
 import cc.theends6.sfx.internal.bootstrap.LegacySfImportBootstrap;
 import cc.theends6.sfx.internal.bootstrap.SfxYamlContentLoader;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
+import cc.theends6.sfx.internal.block.SfxBasicMachineBlockListener;
 import cc.theends6.sfx.internal.block.SqliteSfxBlockDataRepository;
 import cc.theends6.sfx.internal.command.SfxCommand;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
@@ -49,6 +50,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxResearchRegistry researchRegistry;
     private SfxResearchService researchService;
     private SfxBackpackListener backpackListener;
+    private SfxBasicMachineBlockListener basicMachineBlockListener;
 
     @Override
     public void onEnable() {
@@ -77,7 +79,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
         bootstrapContent();
 
-        ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization);
+        this.basicMachineBlockListener = new SfxBasicMachineBlockListener(this, api.runtime(), api.items(), localization, blockDataService);
+        ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization, basicMachineBlockListener);
 
         this.backpackListener = new SfxBackpackListener(this, api.runtime(), api.items(), localization, playerDataService, researchService);
         SfxLegacyUtilityListener utilityListener = new SfxLegacyUtilityListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig);
@@ -91,6 +94,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SfxItemUseDispatcher(api.items(), backpackListener, utilityListener, combatToolListener, foodListener, researchService, localization), this);
         getServer().getPluginManager().registerEvents(new SfxManualMachineListener(manualMachineService), this);
         getServer().getPluginManager().registerEvents(new SfxManualMachineDeployListener(this, api.internalManualMachines(), localization), this);
+        getServer().getPluginManager().registerEvents(basicMachineBlockListener, this);
         getServer().getPluginManager().registerEvents(backpackListener, this);
         getServer().getPluginManager().registerEvents(utilityListener, this);
         getServer().getPluginManager().registerEvents(combatToolListener, this);
@@ -120,6 +124,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         if (backpackListener != null) {
             backpackListener.shutdown();
+        }
+        if (basicMachineBlockListener != null) {
+            basicMachineBlockListener.shutdown();
         }
         if (playerDataService != null) {
             playerDataService.shutdown();

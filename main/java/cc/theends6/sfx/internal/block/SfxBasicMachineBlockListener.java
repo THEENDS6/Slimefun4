@@ -1,0 +1,616 @@
+package cc.theends6.sfx.internal.block;
+
+import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.util.SfxLocalization;
+import cc.theends6.sfx.internal.util.Text;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
+import org.bukkit.Tag;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Chest;
+import org.bukkit.block.Dispenser;
+import org.bukkit.block.Dropper;
+import org.bukkit.block.Furnace;
+import org.bukkit.block.data.Levelled;
+import org.bukkit.block.data.Waterlogged;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.inventory.FurnaceBurnEvent;
+import org.bukkit.event.inventory.FurnaceSmeltEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.FurnaceInventory;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public final class SfxBasicMachineBlockListener implements Listener {
+    private static final Set<String> SUPPORTED_BLOCKS = Set.of(
+            "sf:composter",
+            "sf:crucible",
+            "sf:output_chest",
+            "sf:ignition_chamber",
+            "sf:enhanced_furnace",
+            "sf:enhanced_furnace_2",
+            "sf:enhanced_furnace_3",
+            "sf:enhanced_furnace_4",
+            "sf:enhanced_furnace_5",
+            "sf:enhanced_furnace_6",
+            "sf:enhanced_furnace_7",
+            "sf:enhanced_furnace_8",
+            "sf:enhanced_furnace_9",
+            "sf:enhanced_furnace_10",
+            "sf:enhanced_furnace_11",
+            "sf:reinforced_furnace",
+            "sf:carbonado_edged_furnace"
+    );
+
+    private static final BlockFace[] OUTPUT_CHEST_SEARCH = {
+            BlockFace.UP, BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST
+    };
+    private static final BlockFace[] IGNITION_SEARCH = {
+            BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST
+    };
+
+    private final JavaPlugin plugin;
+    private final SfxRuntime runtime;
+    private final SfxItems items;
+    private final SfxLocalization localization;
+    private final SfxBlockDataService blockData;
+    private volatile boolean furnaceTickerRunning;
+
+    public SfxBasicMachineBlockListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData) {
+        this.plugin = Objects.requireNonNull(plugin, "plugin");
+        this.runtime = Objects.requireNonNull(runtime, "runtime");
+        this.items = Objects.requireNonNull(items, "items");
+        this.localization = Objects.requireNonNull(localization, "localization");
+        this.blockData = Objects.requireNonNull(blockData, "blockData");
+        startEnhancedFurnaceTicker();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlace(BlockPlaceEvent event) {
+        items.readMarker(event.getItemInHand()).ifPresent(marker -> {
+            if (!SUPPORTED_BLOCKS.contains(marker.itemId())) {
+                return;
+            }
+            blockData.registerSingleBlock(marker.itemId(), event.getBlockPlaced().getLocation(), event.getBlockPlaced().getType(), event.getPlayer().getUniqueId());
+        });
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBreak(BlockBreakEvent event) {
+        Optional<SfxAnchorRecord> anchor = blockData.findAnchor(event.getBlock().getLocation());
+        if (anchor.isEmpty()) {
+            return;
+        }
+        if (!SUPPORTED_BLOCKS.contains(instanceType(anchor.get().instanceId()))) {
+            return;
+        }
+        blockData.unregisterAt(event.getBlock().getLocation());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getAction().isLeftClick()) {
+            return;
+        }
+        Block clicked = event.getClickedBlock();
+        if (clicked == null) {
+            return;
+        }
+        Optional<SfxAnchorRecord> anchor = blockData.findAnchor(clicked.getLocation());
+        if (anchor.isEmpty()) {
+            return;
+        }
+        String typeId = instanceType(anchor.get().instanceId());
+        if ("sf:composter".equals(typeId)) {
+            handleComposter(event, clicked);
+            return;
+        }
+        if ("sf:crucible".equals(typeId)) {
+            handleCrucible(event, clicked);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onFuelBurn(FurnaceBurnEvent event) {
+        if (event.getBlock().getType() != Material.FURNACE) {
+            return;
+        }
+        FurnaceStats stats = furnaceStats(event.getBlock().getLocation());
+        if (stats == null || stats.fuelEfficiency() <= 1) {
+            return;
+        }
+        int newBurnTime = stats.fuelEfficiency() * event.getBurnTime();
+        event.setBurnTime(Math.min(newBurnTime, Short.MAX_VALUE - 1));
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onItemSmelt(FurnaceSmeltEvent event) {
+        if (event.getBlock().getType() != Material.FURNACE) {
+            return;
+        }
+        FurnaceStats stats = furnaceStats(event.getBlock().getLocation());
+        if (stats == null) {
+            return;
+        }
+        BlockState state = event.getBlock().getState();
+        if (!(state instanceof Furnace furnace)) {
+            return;
+        }
+        FurnaceInventory inventory = furnace.getInventory();
+        ItemStack smelting = inventory.getSmelting();
+        if (smelting == null || smelting.getType().isAir()) {
+            return;
+        }
+        if (!isEnhancedFurnaceLuckMaterial(smelting.getType())) {
+            return;
+        }
+        ItemStack result = event.getResult();
+        if (result == null || result.getType().isAir()) {
+            return;
+        }
+        int previous = inventory.getResult() != null ? inventory.getResult().getAmount() : 0;
+        int bonus = ThreadLocalRandom.current().nextInt(stats.fortuneLevel() + 1);
+        int amount = Math.min(result.getMaxStackSize() - previous, 1 + bonus);
+        event.setResult(new ItemStack(result.getType(), Math.max(1, amount)));
+    }
+
+    public Optional<Inventory> findOutputChestFor(Block machineBlock, ItemStack output) {
+        for (BlockFace face : OUTPUT_CHEST_SEARCH) {
+            Block target = machineBlock.getRelative(face);
+            if (target.getType() != Material.CHEST) {
+                continue;
+            }
+            if (!"sf:output_chest".equals(instanceTypeAt(target.getLocation()))) {
+                continue;
+            }
+            BlockState state = target.getState();
+            if (state instanceof Chest chest) {
+                Inventory inventory = chest.getInventory();
+                if (fits(inventory, output)) {
+                    return Optional.of(inventory);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    public Optional<Inventory> findAnyOutputChestFor(Block machineBlock) {
+        for (BlockFace face : OUTPUT_CHEST_SEARCH) {
+            Block target = machineBlock.getRelative(face);
+            if (target.getType() != Material.CHEST) {
+                continue;
+            }
+            if (!"sf:output_chest".equals(instanceTypeAt(target.getLocation()))) {
+                continue;
+            }
+            BlockState state = target.getState();
+            if (state instanceof Chest chest) {
+                return Optional.of(chest.getInventory());
+            }
+        }
+        return Optional.empty();
+    }
+
+    public boolean useIgnitionChamber(Player player, Block smelteryDispenserBlock) {
+        for (BlockFace face : IGNITION_SEARCH) {
+            Block target = smelteryDispenserBlock.getRelative(face);
+            if (target.getType() != Material.DROPPER) {
+                continue;
+            }
+            if (!"sf:ignition_chamber".equals(instanceTypeAt(target.getLocation()))) {
+                continue;
+            }
+            BlockState state = target.getState();
+            if (!(state instanceof Dropper dropper)) {
+                continue;
+            }
+            Inventory inventory = dropper.getInventory();
+            int slot = inventory.first(Material.FLINT_AND_STEEL);
+            if (slot < 0) {
+                if (player != null) {
+                    player.sendMessage(Text.prefixed(plugin, localization.text("machines.ignition-chamber-no-flint", "<red>自动点火室中没有打火石。</red>")));
+                }
+                return false;
+            }
+            ItemStack tool = inventory.getItem(slot);
+            if (tool == null) {
+                return false;
+            }
+            if (!tool.getItemMeta().isUnbreakable()) {
+                short durability = (short) (tool.getDurability() + 1);
+                if (durability >= tool.getType().getMaxDurability()) {
+                    inventory.setItem(slot, null);
+                } else {
+                    tool.setDurability(durability);
+                    inventory.setItem(slot, tool);
+                }
+            }
+            playSound(smelteryDispenserBlock.getLocation(), Sound.ITEM_FLINTANDSTEEL_USE, 1.0f, 1.0f);
+            return true;
+        }
+        return false;
+    }
+
+    private void handleComposter(PlayerInteractEvent event, Block block) {
+        event.setCancelled(true);
+        Player player = event.getPlayer();
+        ItemStack input = itemInHand(event);
+        if (input == null || input.getType().isAir()) {
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.empty", "<gray>手中没有可处理的物品。</gray>")));
+            return;
+        }
+        ItemStack output = composterOutput(input);
+        if (output == null) {
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.wrong-item", "<red>这个物品不能被这台机器处理。</red>")));
+            return;
+        }
+        consumeFromHand(player, event, input, requiredComposterAmount(input.getType()));
+        Location origin = block.getLocation();
+        playComposterEffects(origin, input.getType());
+        runtime.executeAtLater(origin, 20L, () -> completeComposter(block, output));
+    }
+
+    private void handleCrucible(PlayerInteractEvent event, Block block) {
+        event.setCancelled(true);
+        Player player = event.getPlayer();
+        ItemStack input = itemInHand(event);
+        if (input == null || input.getType().isAir()) {
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.empty", "<gray>手中没有可处理的物品。</gray>")));
+            return;
+        }
+        CruciblePlan plan = cruciblePlan(input.getType());
+        if (plan == null) {
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.wrong-item", "<red>这个物品不能被这台机器处理。</red>")));
+            return;
+        }
+        consumeFromHand(player, event, input, plan.inputAmount());
+        generateLiquid(block.getRelative(BlockFace.UP), plan.water());
+    }
+
+    private void completeComposter(Block block, ItemStack output) {
+        Optional<Inventory> outputChest = findOutputChestFor(block, output);
+        if (outputChest.isPresent()) {
+            outputChest.get().addItem(output.clone());
+        } else {
+            World world = block.getWorld();
+            world.dropItemNaturally(block.getRelative(BlockFace.UP).getLocation().add(0.5, 0.5, 0.5), output.clone());
+        }
+        playSound(block.getLocation(), Sound.BLOCK_COMPOSTER_READY, 1.0f, 1.0f);
+    }
+
+    private void generateLiquid(Block block, boolean water) {
+        if (water && block.getWorld().getEnvironment() == World.Environment.NETHER
+                && !plugin.getConfig().getBoolean("plugin-blocks.crucible.allow-water-in-nether", false)) {
+            block.getWorld().spawnParticle(Particle.SMOKE, block.getLocation().add(0.5, 0.5, 0.5), 4, 0.1, 0.1, 0.1, 0.01);
+            playSound(block.getLocation(), Sound.BLOCK_LAVA_EXTINGUISH, 1.0f, 1.0f);
+            return;
+        }
+
+        if (block.getType() == (water ? Material.WATER : Material.LAVA)) {
+            addLiquidLevel(block, water);
+        } else if (block.getType() == (water ? Material.LAVA : Material.WATER)) {
+            Levelled levelled = (Levelled) block.getBlockData();
+            block.setType(levelled.getLevel() == 0 || levelled.getLevel() == 8 ? Material.OBSIDIAN : Material.STONE, false);
+            playSound(block.getLocation(), Sound.BLOCK_LAVA_EXTINGUISH, 1.0f, 1.0f);
+        } else {
+            runtime.executeAtLater(block.getLocation(), 50L, () -> placeLiquid(block, water));
+        }
+    }
+
+    private void addLiquidLevel(Block block, boolean water) {
+        Levelled levelled = (Levelled) block.getBlockData();
+        int level = levelled.getLevel();
+        if (level > 7) {
+            level -= 8;
+        }
+        if (level == 0) {
+            runCruciblePostTask(block, water, 1);
+        } else {
+            int next = 7 - level;
+            runtime.executeAtLater(block.getLocation(), 50L, () -> runCruciblePostTask(block, water, next));
+        }
+    }
+
+    private void placeLiquid(Block block, boolean water) {
+        if (block.getType().isAir()) {
+            block.setType(water ? Material.WATER : Material.LAVA, false);
+        } else if (water && block.getBlockData() instanceof Waterlogged waterlogged) {
+            waterlogged.setWaterlogged(true);
+            block.setBlockData(waterlogged, false);
+            playSound(block.getLocation(), Sound.ITEM_BUCKET_EMPTY, 1.0f, 1.0f);
+            return;
+        }
+        runCruciblePostTask(block, water, 1);
+    }
+
+    private void runCruciblePostTask(Block block, boolean water, int times) {
+        if (!(block.getBlockData() instanceof Levelled levelled)) {
+            playSound(block.getLocation(), Sound.BLOCK_STONE_BREAK, 1.0f, 1.0f);
+            return;
+        }
+        playSound(block.getLocation(), water ? Sound.ITEM_BUCKET_EMPTY : Sound.ITEM_BUCKET_EMPTY_LAVA, 1.0f, 1.0f);
+        levelled.setLevel(8 - times);
+        block.setBlockData(levelled, false);
+        if (times < 8) {
+            runtime.executeAtLater(block.getLocation(), 50L, () -> runCruciblePostTask(block, water, times + 1));
+        } else {
+            playSound(block.getLocation(), Sound.ITEM_BUCKET_FILL_LAVA, 1.0f, 1.0f);
+        }
+    }
+
+    private void playComposterEffects(Location origin, Material source) {
+        Location center = origin.clone().add(0.5, 0.5, 0.5);
+        runtime.executeAt(origin, () -> origin.getWorld().playEffect(center, org.bukkit.Effect.STEP_SOUND, source.isBlock() ? source : Material.HAY_BLOCK));
+        runtime.executeAtLater(origin, 10L, () -> origin.getWorld().playEffect(center, org.bukkit.Effect.STEP_SOUND, source.isBlock() ? source : Material.HAY_BLOCK));
+        runtime.executeAtLater(origin, 20L, () -> origin.getWorld().playEffect(center, org.bukkit.Effect.STEP_SOUND, source.isBlock() ? source : Material.HAY_BLOCK));
+    }
+
+    private FurnaceStats furnaceStats(Location location) {
+        String typeId = instanceTypeAt(location);
+        if (typeId == null) {
+            return null;
+        }
+        return switch (typeId) {
+            case "sf:enhanced_furnace" -> new FurnaceStats(1, 1, 1);
+            case "sf:enhanced_furnace_2" -> new FurnaceStats(2, 1, 1);
+            case "sf:enhanced_furnace_3" -> new FurnaceStats(2, 2, 1);
+            case "sf:enhanced_furnace_4" -> new FurnaceStats(3, 2, 1);
+            case "sf:enhanced_furnace_5" -> new FurnaceStats(3, 2, 2);
+            case "sf:enhanced_furnace_6" -> new FurnaceStats(3, 3, 2);
+            case "sf:enhanced_furnace_7" -> new FurnaceStats(4, 3, 2);
+            case "sf:enhanced_furnace_8" -> new FurnaceStats(4, 4, 2);
+            case "sf:enhanced_furnace_9" -> new FurnaceStats(5, 4, 2);
+            case "sf:enhanced_furnace_10" -> new FurnaceStats(5, 5, 2);
+            case "sf:enhanced_furnace_11" -> new FurnaceStats(5, 5, 3);
+            case "sf:reinforced_furnace" -> new FurnaceStats(10, 10, 3);
+            case "sf:carbonado_edged_furnace" -> new FurnaceStats(20, 10, 3);
+            default -> null;
+        };
+    }
+
+    private String instanceTypeAt(Location location) {
+        return blockData.findAnchor(location)
+                .map(anchor -> instanceType(anchor.instanceId()))
+                .orElse(null);
+    }
+
+    private String instanceType(UUID instanceId) {
+        return blockData.findInstance(instanceId).map(SfxBlockInstanceRecord::typeId).orElse(null);
+    }
+
+    private boolean fits(Inventory inventory, ItemStack stack) {
+        ItemStack[] contents = inventory.getStorageContents();
+        int remaining = stack.getAmount();
+        for (ItemStack current : contents) {
+            if (current == null || current.getType().isAir()) {
+                remaining -= stack.getMaxStackSize();
+            } else if (current.isSimilar(stack)) {
+                remaining -= Math.max(0, current.getMaxStackSize() - current.getAmount());
+            }
+            if (remaining <= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ItemStack itemInHand(PlayerInteractEvent event) {
+        ItemStack item = event.getItem();
+        if (item != null) {
+            return item;
+        }
+        return switch (event.getHand()) {
+            case HAND -> event.getPlayer().getInventory().getItemInMainHand();
+            case OFF_HAND -> event.getPlayer().getInventory().getItemInOffHand();
+            default -> null;
+        };
+    }
+
+    private void consumeFromHand(Player player, PlayerInteractEvent event, ItemStack stack, int amount) {
+        if (player.getGameMode() == org.bukkit.GameMode.CREATIVE) {
+            return;
+        }
+        int next = stack.getAmount() - amount;
+        if (next <= 0) {
+            if (event.getHand() == org.bukkit.inventory.EquipmentSlot.OFF_HAND) {
+                player.getInventory().setItemInOffHand(null);
+            } else {
+                player.getInventory().setItemInMainHand(null);
+            }
+        } else {
+            stack.setAmount(next);
+        }
+    }
+
+    private ItemStack composterOutput(ItemStack input) {
+        Material type = input.getType();
+        if (Tag.LEAVES.isTagged(type) || Tag.SAPLINGS.isTagged(type)) {
+            return input.getAmount() >= 8 ? new ItemStack(Material.DIRT) : null;
+        }
+        if (type == Material.STONE && input.getAmount() >= 4) {
+            return new ItemStack(Material.NETHERRACK);
+        }
+        if (type == Material.SAND && input.getAmount() >= 2) {
+            return new ItemStack(Material.SOUL_SAND);
+        }
+        if (type == Material.WHEAT && input.getAmount() >= 4) {
+            return new ItemStack(Material.NETHER_WART);
+        }
+        return null;
+    }
+
+    private int requiredComposterAmount(Material type) {
+        if (Tag.LEAVES.isTagged(type) || Tag.SAPLINGS.isTagged(type)) {
+            return 8;
+        }
+        return switch (type) {
+            case STONE -> 4;
+            case SAND -> 2;
+            case WHEAT -> 4;
+            default -> 1;
+        };
+    }
+
+    private CruciblePlan cruciblePlan(Material type) {
+        if (type == Material.COBBLESTONE || type == Material.NETHERRACK) {
+            return new CruciblePlan(16, false);
+        }
+        if (type == Material.STONE || type == Material.TERRACOTTA) {
+            return new CruciblePlan(12, false);
+        }
+        if (type == Material.OBSIDIAN) {
+            return new CruciblePlan(1, false);
+        }
+        if (type == Material.BLACKSTONE) {
+            return new CruciblePlan(8, false);
+        }
+        if (type == Material.BASALT) {
+            return new CruciblePlan(12, false);
+        }
+        if (type == Material.COBBLED_DEEPSLATE) {
+            return new CruciblePlan(12, false);
+        }
+        if (type == Material.DEEPSLATE) {
+            return new CruciblePlan(10, false);
+        }
+        if (type == Material.TUFF) {
+            return new CruciblePlan(8, false);
+        }
+        if (Tag.LEAVES.isTagged(type)) {
+            return new CruciblePlan(16, true);
+        }
+        if (isTerracottaVariant(type)) {
+            return new CruciblePlan(12, false);
+        }
+        return null;
+    }
+
+    private boolean isEnhancedFurnaceLuckMaterial(Material type) {
+        return type.name().endsWith("_ORE")
+                || type == Material.RAW_IRON
+                || type == Material.RAW_GOLD
+                || type == Material.RAW_COPPER
+                || type == Material.NETHER_GOLD_ORE
+                || type == Material.DEEPSLATE_IRON_ORE
+                || type == Material.DEEPSLATE_GOLD_ORE
+                || type == Material.DEEPSLATE_COPPER_ORE
+                || type == Material.DEEPSLATE_DIAMOND_ORE
+                || type == Material.DEEPSLATE_EMERALD_ORE
+                || type == Material.DEEPSLATE_REDSTONE_ORE
+                || type == Material.DEEPSLATE_LAPIS_ORE
+                || type == Material.DEEPSLATE_COAL_ORE;
+    }
+
+    private boolean isTerracottaVariant(Material type) {
+        String name = type.name();
+        return name.endsWith("TERRACOTTA") && !name.endsWith("GLAZED_TERRACOTTA");
+    }
+
+    private void startEnhancedFurnaceTicker() {
+        furnaceTickerRunning = true;
+        scheduleEnhancedFurnaceTick();
+    }
+
+    public void shutdown() {
+        furnaceTickerRunning = false;
+    }
+
+    private void scheduleEnhancedFurnaceTick() {
+        runtime.executeGlobalLater(1L, () -> {
+            if (!furnaceTickerRunning) {
+                return;
+            }
+            for (SfxAnchorRecord anchor : blockData.anchors()) {
+                FurnaceStats stats = furnaceStatsAt(anchor);
+                if (stats == null) {
+                    continue;
+                }
+                Location location = new Location(plugin.getServer().getWorld(anchor.key().worldId()), anchor.key().x(), anchor.key().y(), anchor.key().z());
+                if (location.getWorld() == null) {
+                    continue;
+                }
+                runtime.executeAt(location, () -> tickEnhancedFurnace(location.getBlock(), stats));
+            }
+            scheduleEnhancedFurnaceTick();
+        });
+    }
+
+    private void tickEnhancedFurnace(Block block, FurnaceStats stats) {
+        if (block.getType() != Material.FURNACE) {
+            return;
+        }
+        BlockState state = block.getState();
+        if (!(state instanceof Furnace furnace)) {
+            return;
+        }
+        if (furnace.getCookTime() <= 0 || stats.processingSpeed() <= 1) {
+            return;
+        }
+        int cookTime = furnace.getCookTime() + (stats.processingSpeed() - 1) * 10;
+        furnace.setCookTime((short) Math.min(cookTime, furnace.getCookTimeTotal() - 1));
+        state.update(true, false);
+    }
+
+    private FurnaceStats furnaceStatsAt(SfxAnchorRecord anchor) {
+        String typeId = instanceType(anchor.instanceId());
+        if (typeId == null) {
+            return null;
+        }
+        return furnaceStats(typeId);
+    }
+
+    private FurnaceStats furnaceStats(String typeId) {
+        return switch (typeId) {
+            case "sf:enhanced_furnace" -> new FurnaceStats(1, 1, 1);
+            case "sf:enhanced_furnace_2" -> new FurnaceStats(2, 1, 1);
+            case "sf:enhanced_furnace_3" -> new FurnaceStats(2, 2, 1);
+            case "sf:enhanced_furnace_4" -> new FurnaceStats(3, 2, 1);
+            case "sf:enhanced_furnace_5" -> new FurnaceStats(3, 2, 2);
+            case "sf:enhanced_furnace_6" -> new FurnaceStats(3, 3, 2);
+            case "sf:enhanced_furnace_7" -> new FurnaceStats(4, 3, 2);
+            case "sf:enhanced_furnace_8" -> new FurnaceStats(4, 4, 2);
+            case "sf:enhanced_furnace_9" -> new FurnaceStats(5, 4, 2);
+            case "sf:enhanced_furnace_10" -> new FurnaceStats(5, 5, 2);
+            case "sf:enhanced_furnace_11" -> new FurnaceStats(5, 5, 3);
+            case "sf:reinforced_furnace" -> new FurnaceStats(10, 10, 3);
+            case "sf:carbonado_edged_furnace" -> new FurnaceStats(20, 10, 3);
+            default -> null;
+        };
+    }
+
+    private void playSound(Location location, Sound sound, float volume, float pitch) {
+        World world = location.getWorld();
+        if (world != null) {
+            world.playSound(location.clone().add(0.5, 0.5, 0.5), sound, SoundCategory.BLOCKS, volume, pitch);
+        }
+    }
+
+    private record CruciblePlan(int inputAmount, boolean water) {
+    }
+
+    private record FurnaceStats(int processingSpeed, int fuelEfficiency, int fortuneLevel) {
+    }
+}

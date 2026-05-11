@@ -5,12 +5,14 @@ import static cc.theends6.sfx.internal.bootstrap.BaseContentBootstrap.*;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.block.SfxBasicMachineBlockListener;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -44,13 +46,15 @@ public final class ManualMachineService {
     private final DefaultManualMachineRegistry registry;
     private final SfxItems items;
     private final SfxLocalization localization;
+    private final SfxBasicMachineBlockListener basicBlockMachines;
 
-    public ManualMachineService(JavaPlugin plugin, SfxRuntime runtime, DefaultManualMachineRegistry registry, SfxItems items, SfxLocalization localization) {
+    public ManualMachineService(JavaPlugin plugin, SfxRuntime runtime, DefaultManualMachineRegistry registry, SfxItems items, SfxLocalization localization, SfxBasicMachineBlockListener basicBlockMachines) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.registry = Objects.requireNonNull(registry, "registry");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
+        this.basicBlockMachines = Objects.requireNonNull(basicBlockMachines, "basicBlockMachines");
     }
 
     public boolean tryInteract(Player player, Block clickedBlock) {
@@ -243,6 +247,12 @@ public final class ManualMachineService {
     }
 
     private Inventory adjacentInventory(Block center, Block inventoryBlock, Block inputBlock) {
+        if (inputBlock != null) {
+            Optional<Inventory> outputChest = basicBlockMachines.findAnyOutputChestFor(inputBlock);
+            if (outputChest.isPresent()) {
+                return outputChest.get();
+            }
+        }
         for (Block origin : List.of(center, inventoryBlock)) {
             for (BlockFace face : OUTPUT_SEARCH_ORDER) {
                 Block target = origin.getRelative(face);
@@ -865,6 +875,12 @@ public final class ManualMachineService {
     }
 
     private void extinguishIgnitionFire(Block clickedBlock, ManualMachineDefinition definition) {
+        if (SMELTERY.equals(definition.id())) {
+            Dispenser dispenser = resolveInputDispenser(definition, clickedBlock);
+            if (dispenser != null && basicBlockMachines.useIgnitionChamber(null, dispenser.getBlock())) {
+                return;
+            }
+        }
         Block fireBlock = definition.centerBlock(clickedBlock).getRelative(BlockFace.DOWN);
         Material type = fireBlock.getType();
         if (type == Material.FIRE || type == Material.SOUL_FIRE) {

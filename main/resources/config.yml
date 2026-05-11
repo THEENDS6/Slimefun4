@@ -12,6 +12,10 @@ storage:
 backpacks:
   allow-foreign-open: true
 
+plugin-blocks:
+  crucible:
+    allow-water-in-nether: false
+
 messages:
   prefix: '<dark_gray>[<green>SFX</green><dark_gray>] '
 
