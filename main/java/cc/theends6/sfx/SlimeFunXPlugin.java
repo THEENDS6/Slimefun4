@@ -5,6 +5,8 @@ import cc.theends6.sfx.internal.SfxApiImpl;
 import cc.theends6.sfx.internal.bootstrap.BaseContentBootstrap;
 import cc.theends6.sfx.internal.bootstrap.LegacySfImportBootstrap;
 import cc.theends6.sfx.internal.bootstrap.SfxYamlContentLoader;
+import cc.theends6.sfx.internal.block.SfxBlockDataService;
+import cc.theends6.sfx.internal.block.SqliteSfxBlockDataRepository;
 import cc.theends6.sfx.internal.command.SfxCommand;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
@@ -43,6 +45,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxLocalization localization;
     private SfxLegacyItemBehaviorConfig legacyItemBehaviorConfig;
     private SfxPlayerDataService playerDataService;
+    private SfxBlockDataService blockDataService;
     private SfxResearchRegistry researchRegistry;
     private SfxResearchService researchService;
     private SfxBackpackListener backpackListener;
@@ -58,8 +61,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         try {
             this.playerDataService = new SfxPlayerDataService(this, runtime, new SqliteSfxPlayerDataRepository(this, playerDataFile()));
             playerDataService.initialize();
+            this.blockDataService = new SfxBlockDataService(this, runtime, new SqliteSfxBlockDataRepository(this, blockDataFile()));
+            blockDataService.initialize();
         } catch (Exception exception) {
-            throw new IllegalStateException("Failed to initialize SFX player data storage", exception);
+            throw new IllegalStateException("Failed to initialize SFX persistent storage", exception);
         }
         this.researchRegistry = new SfxResearchRegistry();
         this.researchService = new SfxResearchService(researchRegistry, playerDataService);
@@ -103,7 +108,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         pluginCommand.setTabCompleter(command);
 
         getLogger().info("SFX enabled. Registered " + api.itemRegistry().items().size()
-                + " item definitions and " + api.manualMachines().machines().size() + " manual machines.");
+                + " item definitions and " + api.manualMachines().machines().size() + " manual machines. "
+                + "Loaded " + blockDataService.anchorCount() + " block anchors and "
+                + blockDataService.instanceCount() + " block instances.");
     }
 
     @Override
@@ -116,6 +123,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         if (playerDataService != null) {
             playerDataService.shutdown();
+        }
+        if (blockDataService != null) {
+            blockDataService.shutdown();
         }
     }
 
@@ -133,6 +143,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     public SfxPlayerDataService playerDataService() {
         return playerDataService;
+    }
+
+    public SfxBlockDataService blockDataService() {
+        return blockDataService;
     }
 
     public SfxResearchService researchService() {
@@ -207,6 +221,11 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     private File playerDataFile() {
         String configured = getConfig().getString("storage.sqlite-file", "data/player-data.db");
+        return new File(getDataFolder(), configured);
+    }
+
+    private File blockDataFile() {
+        String configured = getConfig().getString("storage.block-data.sqlite-file", "data/block-data.db");
         return new File(getDataFolder(), configured);
     }
 }

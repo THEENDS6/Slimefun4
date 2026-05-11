@@ -835,7 +835,6 @@ final class LegacySfGuideResolver {
                 "sf:crucible",
                 "sf:output_chest",
                 "sf:ignition_chamber",
-                "sf:hologram_projector",
                 "sf:block_placer");
         order = putRange(map, order,
                 "sf:enhanced_furnace",
