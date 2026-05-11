@@ -1,0 +1,313 @@
+categories:
+- id: sf:items
+  name: '&fItems'
+  priority: 1000
+  icon:
+    material: PLAYER_HEAD
+    name: '&6Portable Crafter'
+    headTexture: 72ec4a4bd8a58f8361f8a0303e2199d33d624ea5f92f7cb3414fee95e2d861
+- id: sf:gadgets
+  name: '&fGadgets'
+  priority: 1010
+  icon:
+    material: BOWL
+    name: '&6Gold Pan'
+- id: sf:backpacks
+  name: '&fBackpacks'
+  priority: 1020
+  icon:
+    material: PLAYER_HEAD
+    name: '&eSmall Backpack'
+    headTexture: 40cb1e67b512ab2d4bf3d7ace0eaaf61c32cd4681ddc3987ceb326706a33fa
+- id: sf:jetpacks
+  name: '&fJetpacks'
+  priority: 1030
+  icon:
+    material: LEATHER_CHESTPLATE
+    name: '&9Electric Jetpack &7- &eI'
+    colorRgb: 10329495
+- id: sf:jetboots
+  name: '&fJetboots'
+  priority: 1040
+  icon:
+    material: LEATHER_BOOTS
+    name: '&9Jet Boots &7- &eI'
+    colorRgb: 10329495
+- id: sf:multi_tools
+  name: '&fMulti Tools'
+  priority: 1050
+  icon:
+    material: SHEARS
+    name: '&9Multi Tool &7- &eI'
+- id: sf:food
+  name: '&fFood'
+  priority: 1060
+  icon:
+    material: COOKIE
+    name: '&6Fortune Cookie'
+- id: sf:christmas
+  name: '&fChristmas'
+  priority: 1070
+  icon:
+    material: POTION
+    name: '&6Glass of Milk'
+    colorRgb: 16383998
+- id: sf:easter
+  name: '&fEaster'
+  priority: 1080
+  icon:
+    material: PLAYER_HEAD
+    name: '&fEaster Egg'
+    headTexture: b2cd5df9d7f1fa8341fcce2f3c118e2f517e4d2d99df2c51d61d93ed7f83e13
+- id: sf:weapons
+  name: '&fWeapons'
+  priority: 1090
+  icon:
+    material: STICK
+    name: '&7Grandmas Walking Stick'
+- id: sf:bows
+  name: '&fBows'
+  priority: 1100
+  icon:
+    material: BOW
+    name: '&cExplosive Bow'
+- id: sf:tools
+  name: '&fTools'
+  priority: 1110
+  icon:
+    material: DIAMOND_PICKAXE
+    name: '&6Smelter''s Pickaxe'
+- id: sf:armor
+  name: '&fArmor'
+  priority: 1120
+  icon:
+    material: LEATHER_HELMET
+    name: '&e&lGlowstone Helmet'
+    colorRgb: 16701501
+- id: sf:magical_components
+  name: '&fMagical components'
+  priority: 1130
+  icon:
+    material: GOLD_NUGGET
+    name: '&6Magical Lump &7- &eI'
+- id: sf:technical_components
+  name: '&fTechnical components'
+  priority: 1140
+  icon:
+    material: ACTIVATOR_RAIL
+    name: '&bBasic Circuit Board'
+- id: sf:resources
+  name: '&fResources'
+  priority: 1145
+  icon:
+    material: BUCKET
+    name: '&fBucket of Oil'
+- id: sf:rainbow_blocks
+  name: '&fRainbow blocks'
+  priority: 1150
+  icon:
+    material: WHITE_WOOL
+    name: '&5Rainbow Wool'
+- id: sf:seasonal
+  name: '&fSeasonal'
+  priority: 1160
+  icon:
+    material: WHITE_WOOL
+    name: '&5Rainbow Wool &7(Christmas)'
+- id: sf:ingots
+  name: '&fIngots'
+  priority: 1170
+  icon:
+    material: BRICK
+    name: '&bCopper Ingot'
+- id: sf:alloy_carbon_iron
+  name: '&fAlloy (Carbon + Iron)'
+  priority: 1180
+  icon:
+    material: IRON_INGOT
+    name: '&bSteel Ingot'
+- id: sf:alloy_copper_tin
+  name: '&fAlloy (Copper + Tin)'
+  priority: 1190
+  icon:
+    material: BRICK
+    name: '&bBronze Ingot'
+- id: sf:alloy_copper_aluminum
+  name: '&fAlloy (Copper + Aluminum)'
+  priority: 1200
+  icon:
+    material: IRON_INGOT
+    name: '&bDuralumin Ingot'
+- id: sf:alloy_copper_silver
+  name: '&fAlloy (Copper + Silver)'
+  priority: 1210
+  icon:
+    material: IRON_INGOT
+    name: '&bBillon Ingot'
+- id: sf:alloy_copper_zinc
+  name: '&fAlloy (Copper + Zinc)'
+  priority: 1220
+  icon:
+    material: GOLD_INGOT
+    name: '&bBrass Ingot'
+- id: sf:alloy_aluminum_brass
+  name: '&fAlloy (Aluminum + Brass)'
+  priority: 1230
+  icon:
+    material: GOLD_INGOT
+    name: '&bAluminum Brass Ingot'
+- id: sf:alloy_aluminum_bronze
+  name: '&fAlloy (Aluminum + Bronze)'
+  priority: 1240
+  icon:
+    material: GOLD_INGOT
+    name: '&bAluminum Bronze Ingot'
+- id: sf:alloy_gold_silver_copper
+  name: '&fAlloy (Gold + Silver + Copper)'
+  priority: 1250
+  icon:
+    material: GOLD_INGOT
+    name: '&bCorinthian Bronze Ingot'
+- id: sf:alloy_lead_tin
+  name: '&fAlloy (Lead + Tin)'
+  priority: 1260
+  icon:
+    material: IRON_INGOT
+    name: '&bSolder Ingot'
+- id: sf:alloy_steel_iron_carbon
+  name: '&fAlloy (Steel + Iron + Carbon)'
+  priority: 1270
+  icon:
+    material: IRON_INGOT
+    name: '&bDamascus Steel Ingot'
+- id: sf:alloy_damascus_steel_duralumin_compressed_carbon_aluminium_bronze
+  name: '&fAlloy (Damascus Steel + Duralumin + Compressed Carbon + Aluminium Bronze)'
+  priority: 1280
+  icon:
+    material: IRON_INGOT
+    name: '&b&lHardened Metal'
+- id: sf:alloy_hardened_metal_corinthian_bronze_solder_billon_damascus_steel
+  name: '&fAlloy (Hardened Metal + Corinthian Bronze + Solder + Billon + Damascus
+    Steel)'
+  priority: 1290
+  icon:
+    material: IRON_INGOT
+    name: '&b&lReinforced Alloy Ingot'
+- id: sf:alloy_iron_silicon
+  name: '&fAlloy (Iron + Silicon)'
+  priority: 1300
+  icon:
+    material: IRON_INGOT
+    name: '&bFerrosilicon'
+- id: sf:alloy_iron_gold
+  name: '&fAlloy (Iron + Gold)'
+  priority: 1310
+  icon:
+    material: GOLD_INGOT
+    name: '&6&lGilded Iron'
+- id: sf:alloy_redstone_ferrosilicon
+  name: '&fAlloy (Redstone + Ferrosilicon)'
+  priority: 1320
+  icon:
+    material: BRICK
+    name: '&cRedstone Alloy Ingot'
+- id: sf:alloy_iron_copper
+  name: '&fAlloy (Iron + Copper)'
+  priority: 1330
+  icon:
+    material: IRON_INGOT
+    name: '&bNickel Ingot'
+- id: sf:alloy_nickel_iron_copper
+  name: '&fAlloy (Nickel + Iron + Copper)'
+  priority: 1340
+  icon:
+    material: IRON_INGOT
+    name: '&9Cobalt Ingot'
+- id: sf:gold
+  name: '&fGold'
+  priority: 1350
+  icon:
+    material: GOLD_INGOT
+    name: '&fGold Ingot &7(4-Carat)'
+- id: sf:dusts
+  name: '&fDusts'
+  priority: 1360
+  icon:
+    material: GUNPOWDER
+    name: '&6Iron Dust'
+- id: sf:gems
+  name: '&fGems'
+  priority: 1370
+  icon:
+    material: DIAMOND
+    name: '&bSynthetic Diamond'
+- id: sf:talisman
+  name: '&fTalisman'
+  priority: 1380
+  icon:
+    material: EMERALD
+    name: '&6Common Talisman'
+- id: sf:staves
+  name: '&fStaves'
+  priority: 1390
+  icon:
+    material: STICK
+    name: '&6Elemental Staff'
+- id: sf:multiblocks
+  name: '&fMultiblocks'
+  priority: 1400
+  icon:
+    material: CRAFTING_TABLE
+    name: '&eEnhanced Crafting Table'
+- id: sf:machines
+  name: '&fMachines'
+  priority: 1410
+  icon:
+    material: CAULDRON
+    name: '&aComposter'
+- id: sf:enhanced_furnaces
+  name: '&fEnhanced Furnaces'
+  priority: 1420
+  icon:
+    material: FURNACE
+    name: '&7Enhanced Furnace - &eI'
+- id: sf:soulbound_items
+  name: '&fSoulbound Items'
+  priority: 1430
+  icon:
+    material: DIAMOND_SWORD
+    name: '&cSoulbound Sword'
+- id: sf:runes
+  name: '&fRunes'
+  priority: 1440
+  icon:
+    material: FIREWORK_STAR
+    name: '&fBlank Rune'
+    colorRgb: 1908001
+- id: sf:electricity
+  name: '&fElectricity'
+  priority: 1450
+  icon:
+    material: DAYLIGHT_DETECTOR
+    name: '&bSolar Generator'
+- id: sf:cargo
+  name: '&fCargo'
+  priority: 1455
+  icon:
+    material: HOPPER
+    name: '&6Cargo Node'
+- id: sf:robots
+  name: '&fRobots'
+  priority: 1460
+  icon:
+    material: PLAYER_HEAD
+    name: '&cProgrammable Android &7(Normal)'
+    headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
+- id: sf:gps
+  name: '&fGPS'
+  priority: 1470
+  icon:
+    material: PLAYER_HEAD
+    name: '&bGPS Transmitter'
+    headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
+items: []

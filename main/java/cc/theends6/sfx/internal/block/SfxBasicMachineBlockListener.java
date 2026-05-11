@@ -166,10 +166,16 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         FurnaceStats stats = furnaceStats(event.getBlock().getLocation());
-        if (stats == null || stats.fuelEfficiency() <= 1) {
+        if (stats == null) {
             return;
         }
-        int newBurnTime = stats.fuelEfficiency() * event.getBurnTime();
+        double burnMultiplier = stats.fuelEfficiency();
+        if (plugin.getConfig().getBoolean("plugin-blocks.enhanced-furnace.speed-affects-fuel-consumption", false)
+                && stats.processingSpeed() > 0) {
+            burnMultiplier /= stats.processingSpeed();
+        }
+        int newBurnTime = (int) Math.ceil(event.getBurnTime() * burnMultiplier);
+        newBurnTime = Math.max(1, newBurnTime);
         event.setBurnTime(Math.min(newBurnTime, Short.MAX_VALUE - 1));
     }
 
@@ -633,9 +639,6 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         int cookTime = furnace.getCookTime() + (stats.processingSpeed() - 1) * 10;
-        if (plugin.getConfig().getBoolean("plugin-blocks.enhanced-furnace.speed-affects-fuel-consumption", false) && furnace.getBurnTime() > 0) {
-            furnace.setBurnTime((short) Math.max(0, furnace.getBurnTime() - (stats.processingSpeed() - 1)));
-        }
         furnace.setCookTime((short) Math.min(cookTime, furnace.getCookTimeTotal() - 1));
         state.update(true, false);
     }

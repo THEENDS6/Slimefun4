@@ -11,10 +11,12 @@ import cc.theends6.sfx.internal.util.Text;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -26,6 +28,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxYamlContentLoader {
     private static final String ITEMS_PATH = "content/items.yml";
+    private static final String ITEMS_DIRECTORY = "content/items";
+    private static final List<String> BUNDLED_ITEM_RESOURCES = List.of(
+            "content/items/10-legacy-categories.yml",
+            "content/items/20-legacy-items.yml",
+            ITEMS_PATH
+    );
     private final JavaPlugin plugin;
     private final DefaultSfxItemRegistry registry;
     private final Logger logger;
@@ -37,7 +45,9 @@ public final class SfxYamlContentLoader {
     }
 
     public void ensureDefaultFiles() {
-        saveIfAbsent(ITEMS_PATH);
+        for (String resource : BUNDLED_ITEM_RESOURCES) {
+            saveIfAbsent(resource);
+        }
     }
 
     public void registerAll() {
@@ -45,33 +55,44 @@ public final class SfxYamlContentLoader {
     }
 
     private void loadItems() {
-        File file = new File(plugin.getDataFolder(), ITEMS_PATH);
-        if (!file.isFile()) {
-            return;
-        }
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
-        for (Map<?, ?> entry : yaml.getMapList("categories")) {
-            try {
-                SfxItemCategory category = parseCategory(entry);
-                if (Boolean.TRUE.equals(entry.get("replace"))) {
-                    registry.replaceCategory(category);
-                } else {
-                    registry.registerCategory(category);
-                }
-            } catch (Exception ex) {
-                logger.warning("Failed to load category from YAML: " + ex.getMessage());
+        List<File> files = new ArrayList<>();
+        File directory = new File(plugin.getDataFolder(), ITEMS_DIRECTORY);
+        if (directory.isDirectory()) {
+            File[] discovered = directory.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
+            if (discovered != null) {
+                files.addAll(List.of(discovered));
             }
         }
-        for (Map<?, ?> entry : yaml.getMapList("items")) {
-            try {
-                SfxItemDefinition item = parseItem(entry);
-                if (Boolean.TRUE.equals(entry.get("replace"))) {
-                    registry.replaceItem(item);
-                } else {
-                    registry.registerItem(item);
+        File singleFile = new File(plugin.getDataFolder(), ITEMS_PATH);
+        if (singleFile.isFile()) {
+            files.add(singleFile);
+        }
+        files.sort(Comparator.comparing(File::getName));
+        for (File file : files) {
+            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+            for (Map<?, ?> entry : yaml.getMapList("categories")) {
+                try {
+                    SfxItemCategory category = parseCategory(entry);
+                    if (Boolean.TRUE.equals(entry.get("replace"))) {
+                        registry.replaceCategory(category);
+                    } else {
+                        registry.registerCategory(category);
+                    }
+                } catch (Exception ex) {
+                    logger.warning("Failed to load category from YAML " + file.getName() + ": " + ex.getMessage());
                 }
-            } catch (Exception ex) {
-                logger.warning("Failed to load item from YAML: " + ex.getMessage());
+            }
+            for (Map<?, ?> entry : yaml.getMapList("items")) {
+                try {
+                    SfxItemDefinition item = parseItem(entry);
+                    if (Boolean.TRUE.equals(entry.get("replace"))) {
+                        registry.replaceItem(item);
+                    } else {
+                        registry.registerItem(item);
+                    }
+                } catch (Exception ex) {
+                    logger.warning("Failed to load item from YAML " + file.getName() + ": " + ex.getMessage());
+                }
             }
         }
     }
@@ -79,24 +100,29 @@ public final class SfxYamlContentLoader {
     private SfxItemCategory parseCategory(Map<?, ?> entry) {
         String id = string(entry.get("id"));
         String name = string(orDefault(entry, "name", id));
-        int order = integer(orDefault(entry, "order", 900000));
+        int order = integer(orDefault(entry, entry.containsKey("priority") ? "priority" : "order", 900000));
         boolean hidden = Boolean.TRUE.equals(entry.get("hidden"));
         @SuppressWarnings("unchecked")
         Map<String, Object> icon = (Map<String, Object>) entry.get("icon");
         Material iconMaterial = parseMaterial(icon == null ? "BOOK" : string(orDefault(icon, "material", "BOOK")));
         String iconName = icon == null ? name : string(orDefault(icon, "name", name));
-        return new SfxItemCategory(id, Text.mm(name), ItemBuilder.of(iconMaterial).name(iconName).build(), order, hidden);
+        String headTexture = icon == null ? null : optionalString(icon.get("headTexture"));
+        Integer colorRgb = icon == null ? null : (icon.containsKey("colorRgb") ? parseColor(icon.get("colorRgb")) : (icon.containsKey("color") ? parseColor(icon.get("color")) : null));
+        Component parsedName = Text.renderFlexible(name);
+        return new SfxItemCategory(id, parsedName, LegacySfBootstrapSupport.icon(iconMaterial, Text.renderFlexible(iconName), headTexture, colorRgb), order, hidden);
     }
 
     private SfxItemDefinition parseItem(Map<?, ?> entry) {
         String id = string(entry.get("id"));
         Material material = parseMaterial(string(entry.get("material")));
-        SfxItemDefinition.Builder builder = SfxItemDefinition.builder(id, material, Text.mm(string(orDefault(entry, "name", id))));
+        SfxItemDefinition.Builder builder = SfxItemDefinition.builder(id, material, Text.renderFlexible(string(orDefault(entry, "name", id))));
         if (entry.containsKey("category")) {
             builder.category(string(entry.get("category")));
         }
         if (entry.containsKey("order")) {
             builder.order(integer(entry.get("order")));
+        } else if (entry.containsKey("priority")) {
+            builder.order(integer(entry.get("priority")));
         } else if (entry.containsKey("pos")) {
             builder.order(integer(entry.get("pos")));
         }
@@ -126,7 +152,7 @@ public final class SfxYamlContentLoader {
         Object lore = entry.get("lore");
         if (lore instanceof List<?> lines) {
             for (Object line : lines) {
-                builder.addLore(Text.mm(String.valueOf(line)));
+                builder.addLore(Text.renderFlexible(String.valueOf(line)));
             }
         }
         Object flags = entry.get("flags");
@@ -240,6 +266,14 @@ public final class SfxYamlContentLoader {
             throw new IllegalArgumentException("required string value missing");
         }
         return String.valueOf(raw);
+    }
+
+    private static String optionalString(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        String text = String.valueOf(raw).trim();
+        return text.isEmpty() ? null : text;
     }
 
     private void saveIfAbsent(String resourcePath) {
