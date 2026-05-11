@@ -27,6 +27,8 @@ final class LegacySfGuideResolver {
     private static final Map<String, String> SOURCE_CATEGORY_FALLBACKS = createSourceCategoryFallbacks();
     private static final Map<String, Integer> CLASSIC_ITEM_ORDER = createClassicItemOrder();
     private static final Map<String, Integer> CLASSIC_BASIC_MACHINE_ORDER = createClassicBasicMachineOrder();
+    private static final Map<String, Integer> CLASSIC_CARGO_ORDER = createClassicCargoOrder();
+    private static final Map<String, Integer> CLASSIC_ARMOR_ORDER = createClassicArmorOrder();
     private static final Map<String, Integer> CLASSIC_ELECTRICITY_ORDER = createClassicElectricityOrder();
     private static final Map<String, Integer> CLASSIC_ITEM_ORDER_OVERRIDES = createClassicItemOrderOverrides();
     private static final Map<String, List<String>> LOCKED_CATEGORY_PARENTS = createLockedCategoryParents();
@@ -104,6 +106,18 @@ final class LegacySfGuideResolver {
             Integer order = CLASSIC_BASIC_MACHINE_ORDER.get(item.id());
             if (order != null) {
                 return order;
+            }
+        }
+        if ("guide:sf:cargo".equals(resolveLegacyGuideCategory(item))) {
+            Integer cargoOrder = CLASSIC_CARGO_ORDER.get(item.id());
+            if (cargoOrder != null) {
+                return cargoOrder;
+            }
+        }
+        if ("guide:sf:armor".equals(resolveLegacyGuideCategory(item))) {
+            Integer armorOrder = CLASSIC_ARMOR_ORDER.get(item.id());
+            if (armorOrder != null) {
+                return armorOrder;
             }
         }
         if ("guide:sf:electricity".equals(resolveLegacyGuideCategory(item))) {
@@ -305,7 +319,7 @@ final class LegacySfGuideResolver {
         map.put("sf:reinforced_alloy_boots", "guide:sf:armor");
         map.put("sf:scuba_helmet", "guide:sf:armor");
         map.put("sf:hazmat_leggings", "guide:sf:armor");
-        map.put("sf:rubber_boots", "guide:sf:armor");
+        map.put("sf:hazmat_boots", "guide:sf:armor");
         map.put("sf:gilded_iron_helmet", "guide:sf:armor");
         map.put("sf:gilded_iron_chestplate", "guide:sf:armor");
         map.put("sf:gilded_iron_leggings", "guide:sf:armor");
@@ -699,7 +713,7 @@ final class LegacySfGuideResolver {
         map.put("sf:fertilizer_cocoa", "guide:sf:misc");
         map.put("sf:fertilizer_seagrass", "guide:sf:misc");
         map.put("sf:xp_collector", "guide:sf:electricity");
-        map.put("sf:reactor_collant_cell", "guide:sf:technical_components");
+        map.put("sf:reactor_coolant_cell", "guide:sf:technical_components");
         map.put("sf:netherstar_reactor", "guide:sf:electricity");
         map.put("sf:trash_can_block", "guide:sf:cargo");
         map.put("sf:birthday_cake", "guide:sf:birthday");
@@ -862,6 +876,56 @@ final class LegacySfGuideResolver {
         return Collections.unmodifiableMap(map);
     }
 
+    private static Map<String, Integer> createClassicCargoOrder() {
+        Map<String, Integer> map = new LinkedHashMap<>();
+        int order = 10;
+        order = putRange(map, order,
+                "sf:cargo_motor",
+                "sf:cargo_manager",
+                "sf:cargo_node",
+                "sf:cargo_node_input",
+                "sf:cargo_node_output",
+                "sf:cargo_node_output_advanced",
+                "sf:reactor_access_port",
+                "sf:trash_can_block",
+                "sf:crafting_motor",
+                "sf:vanilla_auto_crafter",
+                "sf:enhanced_auto_crafter",
+                "sf:armor_auto_crafter");
+        return Collections.unmodifiableMap(map);
+    }
+
+    private static Map<String, Integer> createClassicArmorOrder() {
+        Map<String, Integer> map = new LinkedHashMap<>();
+        int order = 10;
+        order = putRange(map, order,
+                "sf:damascus_steel_helmet",
+                "sf:damascus_steel_chestplate",
+                "sf:damascus_steel_leggings",
+                "sf:damascus_steel_boots",
+                "sf:reinforced_alloy_helmet",
+                "sf:reinforced_alloy_chestplate",
+                "sf:reinforced_alloy_leggings",
+                "sf:reinforced_alloy_boots",
+                "sf:cactus_helmet",
+                "sf:cactus_chestplate",
+                "sf:cactus_leggings",
+                "sf:cactus_boots",
+                "sf:gilded_iron_helmet",
+                "sf:gilded_iron_chestplate",
+                "sf:gilded_iron_leggings",
+                "sf:gilded_iron_boots",
+                "sf:scuba_helmet",
+                "sf:hazmat_chestplate",
+                "sf:hazmat_leggings",
+                "sf:hazmat_boots",
+                "sf:gold_12k_helmet",
+                "sf:gold_12k_chestplate",
+                "sf:gold_12k_leggings",
+                "sf:gold_12k_boots");
+        return Collections.unmodifiableMap(map);
+    }
+
     private static Map<String, List<String>> createLockedCategoryParents() {
         Map<String, List<String>> map = new LinkedHashMap<>();
         map.put("guide:sf:electricity", List.of("guide:sf:basic_machines"));
@@ -885,14 +949,18 @@ final class LegacySfGuideResolver {
         order = putRange(map, order, "sf:electric_ingot_factory", "sf:electric_ingot_factory_2", "sf:electric_ingot_factory_3");
         order = putRange(map, order, "sf:electrified_crucible", "sf:electrified_crucible_2", "sf:electrified_crucible_3");
         order = putRange(map, order, "sf:electric_ore_grinder", "sf:electric_ore_grinder_2", "sf:electric_ore_grinder_3");
-        order = putRange(map, order, "sf:electric_ingot_pulverizer");
         order = putRange(map, order, "sf:heated_pressure_chamber", "sf:heated_pressure_chamber_2");
-        order = putRange(map, order, "sf:electric_smeltery", "sf:electric_smeltery_2");
+        order = putRange(map, order, "sf:electric_ingot_pulverizer");
         order = putRange(map, order, "sf:electric_press", "sf:electric_press_2");
         order = putRange(map, order, "sf:refinery");
         order = putRange(map, order, "sf:combustion_reactor");
         order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:magnesium_generator", "sf:bio_reactor");
         order = putRange(map, order, "sf:nuclear_reactor", "sf:netherstar_reactor");
+        order = putRange(map, order, "sf:fluid_pump");
+        order = putRange(map, order, "sf:carbon_press", "sf:carbon_press_2", "sf:carbon_press_3");
+        order = putRange(map, order, "sf:electric_smeltery", "sf:electric_smeltery_2");
+        order = putRange(map, order, "sf:iron_golem_assembler", "sf:wither_assembler");
+        order = putRange(map, order, "sf:produce_collector");
         order = putRange(map, order, "sf:freezer", "sf:freezer_2", "sf:freezer_3");
         order = putRange(map, order, "sf:auto_drier");
         order = putRange(map, order, "sf:auto_enchanter", "sf:auto_enchanter_2");
@@ -900,11 +968,9 @@ final class LegacySfGuideResolver {
         order = putRange(map, order, "sf:auto_anvil", "sf:auto_anvil_2");
         order = putRange(map, order, "sf:auto_brewer");
         order = putRange(map, order, "sf:book_binder");
-        order = putRange(map, order, "sf:auto_breeder", "sf:produce_collector");
+        order = putRange(map, order, "sf:auto_breeder");
         order = putRange(map, order, "sf:animal_growth_accelerator", "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2", "sf:tree_growth_accelerator");
         order = putRange(map, order, "sf:food_fabricator", "sf:food_fabricator_2", "sf:food_composter", "sf:food_composter_2");
-        order = putRange(map, order, "sf:fluid_pump");
-        order = putRange(map, order, "sf:iron_golem_assembler", "sf:wither_assembler");
         order = putRange(map, order, "sf:xp_collector");
         return Collections.unmodifiableMap(map);
     }

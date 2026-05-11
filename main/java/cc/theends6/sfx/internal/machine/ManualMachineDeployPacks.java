@@ -25,7 +25,7 @@ public final class ManualMachineDeployPacks {
         if (!definition.deployable()) {
             throw new IllegalArgumentException("Manual machine deploy pack is not supported for " + definition.id());
         }
-        ItemStack item = new ItemStack(definition.triggerMaterial());
+        ItemStack item = new ItemStack(definition.icon());
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
             return item;

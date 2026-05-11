@@ -175,14 +175,14 @@ recipes:
     input: WHEAT
     outputs:
       - sf:organic_food_wheat
-  - id: legacy:reactor_collant_cell
+  - id: legacy:reactor_coolant_cell
     recipe-type: sf:freezer
     operation: single
     guide-order: 23
     source: slimefun-rc37
     input: BLUE_ICE
     outputs:
-      - sf:reactor_collant_cell
+      - sf:reactor_coolant_cell
   - id: legacy:nether_ice
     recipe-type: sf:geo_miner
     operation: shaped

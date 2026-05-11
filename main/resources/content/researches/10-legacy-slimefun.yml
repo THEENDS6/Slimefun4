@@ -524,7 +524,7 @@ researches:
       - sf:scuba_helmet
       - sf:hazmat_chestplate
       - sf:hazmat_leggings
-      - sf:rubber_boots
+      - sf:hazmat_boots
   - id: uranium
     order: 80
     name: 'Radioactive'
@@ -1262,7 +1262,7 @@ researches:
     name: 'Reactor Essentials'
     cost: 36
     items:
-      - sf:reactor_collant_cell
+      - sf:reactor_coolant_cell
       - sf:neptunium
       - sf:plutonium
   - id: nuclear_reactor

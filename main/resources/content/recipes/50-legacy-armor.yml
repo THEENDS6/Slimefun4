@@ -398,7 +398,7 @@ recipes:
       - sf:rainbow_leather
     outputs:
       - sf:rainbow_leggings
-  - id: legacy:rubber_boots
+  - id: legacy:hazmat_boots
     recipe-type: sf:armor_forge
     operation: shaped
     guide-order: 22
@@ -416,7 +416,7 @@ recipes:
       - empty
       - BLACK_WOOL
     outputs:
-      - sf:rubber_boots
+      - sf:hazmat_boots
   - id: legacy:scuba_helmet
     recipe-type: sf:armor_forge
     operation: shaped

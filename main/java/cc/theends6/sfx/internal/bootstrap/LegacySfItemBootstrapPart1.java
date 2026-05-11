@@ -153,7 +153,7 @@ final class LegacySfItemBootstrapPart1 {
         registerLegacyItem(registry, "sf:scuba_helmet", "sf:armor", Material.LEATHER_HELMET, "&cScuba Helmet", null, 0xF9801D, new String[] {"", "&7Allows you to breathe underwater"});
         registerLegacyItem(registry, "sf:hazmat_chestplate", "sf:armor", Material.LEATHER_CHESTPLATE, "&cHazmat Suit", null, 0xF9801D, new String[] {"", "&7Allows you to walk through fire and lava"});
         registerLegacyItem(registry, "sf:hazmat_leggings", "sf:armor", Material.LEATHER_LEGGINGS, "&cHazmat Suit Leggings", null, 0xF9801D, new String[] {"", "&6Full set effects:", "&e- Radiation immunity", "&e- Bee Sting protection"});
-        registerLegacyItem(registry, "sf:rubber_boots", "sf:armor", Material.LEATHER_BOOTS, "&cHazmat Boots", null, 0x1D1D21, new String[] {"", "&6Full set effects:", "&e- Radiation immunity", "&e- Bee Sting protection"});
+        registerLegacyItem(registry, "sf:hazmat_boots", "sf:armor", Material.LEATHER_BOOTS, "&cHazmat Boots", null, 0x1D1D21, new String[] {"", "&6Full set effects:", "&e- Radiation immunity", "&e- Bee Sting protection"});
         registerLegacyItem(registry, "sf:gilded_iron_helmet", "sf:armor", Material.GOLDEN_HELMET, "&6Gilded Iron Helmet", null, null, new String[] {});
         registerLegacyItem(registry, "sf:gilded_iron_chestplate", "sf:armor", Material.GOLDEN_CHESTPLATE, "&6Gilded Iron Chestplate", null, null, new String[] {});
         registerLegacyItem(registry, "sf:gilded_iron_leggings", "sf:armor", Material.GOLDEN_LEGGINGS, "&6Gilded Iron Leggings", null, null, new String[] {});
