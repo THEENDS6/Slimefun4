@@ -865,7 +865,7 @@ items:
     - '&6整套效果：'
     - '&e- 辐射免疫'
     - '&e- 蜜蜂蜇伤防护'
-  sf.rubber_boots:
+  sf.hazmat_boots:
     name: '&c防化靴子'
     lore:
     - ''
@@ -2798,7 +2798,7 @@ items:
     - '&4终极机器'
     - '&8⇨ &e⚡ &71024 J 储能'
     - '&8⇨ &e⚡ &720 J/s'
-  sf.reactor_collant_cell:
+  sf.reactor_coolant_cell:
     name: '&b反应堆冷却单元'
   sf.nuclear_reactor:
     name: '&2核反应堆'

@@ -214,6 +214,16 @@ public final class ManualMachineService {
     }
 
     private Dispenser resolveInputDispenser(ManualMachineDefinition definition, Block clickedBlock) {
+        if (MAGIC_WORKBENCH.equals(definition.id())) {
+            Block center = definition.centerBlock(clickedBlock);
+            for (BlockFace face : List.of(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST)) {
+                BlockState adjacent = center.getRelative(face).getState();
+                if (adjacent instanceof Dispenser dispenser) {
+                    return dispenser;
+                }
+            }
+            return null;
+        }
         Block machineInventoryBlock = definition.inventoryBlock(clickedBlock);
         BlockState state = machineInventoryBlock.getState();
         return state instanceof Dispenser dispenser ? dispenser : null;
@@ -221,7 +231,7 @@ public final class ManualMachineService {
 
     private Inventory resolveOutputInventory(ManualMachineDefinition definition, Block clickedBlock, Dispenser input, Inventory inputInventory) {
         Block center = definition.centerBlock(clickedBlock);
-        Block inventoryBlock = definition.inventoryBlock(clickedBlock);
+        Block inventoryBlock = MAGIC_WORKBENCH.equals(definition.id()) ? input.getBlock() : definition.inventoryBlock(clickedBlock);
         Inventory found = adjacentInventory(center, inventoryBlock, input.getBlock());
         return found == null ? inputInventory : found;
     }
@@ -401,10 +411,14 @@ public final class ManualMachineService {
     }
 
     private boolean isDelayedCompletionMachine(ManualMachineDefinition definition) {
-        return MANUAL_COMPRESSOR.equals(definition.id());
+        return MANUAL_COMPRESSOR.equals(definition.id()) || PRESSURE_CHAMBER.equals(definition.id());
     }
 
     private void startDelayedCompletion(Block clickedBlock, ManualMachineDefinition definition, List<ManualMachineOutput> outputs) {
+        if (PRESSURE_CHAMBER.equals(definition.id())) {
+            startPressureChamberCompletion(clickedBlock, definition, outputs);
+            return;
+        }
         Location origin = clickedBlock.getLocation().clone();
         compressorTick(origin, 0);
         runDelayedAt(origin, COMPRESSOR_CONTRACT_TICKS, () -> compressorTick(origin, 1));
@@ -420,6 +434,14 @@ public final class ManualMachineService {
         runDelayedAt(origin, ARMOR_FORGE_COMPLETE_TICKS, () -> completeArmorForgeOperation(origin, definition, outputs));
     }
 
+    private void startPressureChamberCompletion(Block clickedBlock, ManualMachineDefinition definition, List<ManualMachineOutput> outputs) {
+        Location origin = clickedBlock.getLocation().clone();
+        pressureChamberTick(origin, false);
+        runDelayedAt(origin, 20L, () -> pressureChamberTick(origin, false));
+        runDelayedAt(origin, 40L, () -> pressureChamberTick(origin, false));
+        runDelayedAt(origin, 60L, () -> completePressureChamberOperation(origin, definition, outputs));
+    }
+
     private void compressorTick(Location origin, int step) {
         if (step == 1) {
             playBlockSound(origin, Sound.BLOCK_PISTON_CONTRACT, 1.0f, 1.0f);
@@ -433,6 +455,19 @@ public final class ManualMachineService {
             playBlockSound(origin, Sound.BLOCK_ANVIL_USE, 0.8f, 1.0f);
         } else {
             playBlockSound(origin, Sound.ENTITY_ARROW_HIT_PLAYER, 0.8f, 1.0f);
+        }
+    }
+
+    private void pressureChamberTick(Location origin, boolean finished) {
+        World world = origin.getWorld();
+        if (world != null) {
+            Location smoke = origin.clone().add(0.5, 1.5, 0.5);
+            world.spawnParticle(Particle.SMOKE, smoke, 12, 0.0, 0.0, 0.0, 0.02);
+        }
+        if (finished) {
+            playBlockSound(origin, Sound.ENTITY_ARROW_HIT_PLAYER, 0.8f, 1.0f);
+        } else {
+            playBlockSound(origin, Sound.ENTITY_TNT_PRIMED, 0.8f, 1.0f);
         }
     }
 
@@ -470,6 +505,24 @@ public final class ManualMachineService {
             dropOutputs(origin, outputs);
         }
         armorForgeTick(origin, true);
+    }
+
+    private void completePressureChamberOperation(Location origin, ManualMachineDefinition definition, List<ManualMachineOutput> outputs) {
+        Block clickedBlock = origin.getBlock();
+        Inventory output = null;
+        if (definition.matches(clickedBlock)) {
+            Dispenser dispenser = resolveInputDispenser(definition, clickedBlock);
+            if (dispenser != null) {
+                output = resolveOutputInventory(definition, clickedBlock, dispenser, dispenser.getInventory());
+            }
+        }
+
+        if (output != null && canFitAll(cloneContents(output), outputs)) {
+            addOutputs(output, outputs);
+        } else {
+            dropOutputs(origin, outputs);
+        }
+        pressureChamberTick(origin, true);
     }
 
     private void runDelayedAt(Location location, long delayTicks, Runnable task) {

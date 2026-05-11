@@ -167,7 +167,7 @@ public final class BaseContentBootstrap {
                 Material.GLASS,
                 actual(Material.SMOOTH_STONE_SLAB, Material.DISPENSER, Material.SMOOTH_STONE_SLAB, Material.PISTON, Material.GLASS, Material.PISTON, Material.PISTON, Material.CAULDRON, Material.PISTON),
                 display(Material.SMOOTH_STONE_SLAB, Material.DISPENSER, Material.SMOOTH_STONE_SLAB, Material.PISTON, Material.GLASS, Material.PISTON, Material.PISTON, Material.CAULDRON, Material.PISTON),
-                BlockFace.DOWN,
+                BlockFace.UP,
                 BlockFace.UP,
                 ManualMachineOperation.SINGLE_INPUT
         ));
@@ -175,10 +175,10 @@ public final class BaseContentBootstrap {
                 MAGIC_WORKBENCH,
                 Text.legacy("&6Magic Workbench"),
                 Material.CRAFTING_TABLE,
-                actual(null, null, null, null, Material.CRAFTING_TABLE, null, Material.BOOKSHELF, Material.DISPENSER, null),
-                display(null, null, null, null, null, null, Material.BOOKSHELF, Material.CRAFTING_TABLE, Material.DISPENSER),
+                actual(null, null, null, Material.BOOKSHELF, Material.CRAFTING_TABLE, Material.DISPENSER, null, null, null),
+                display(null, null, null, Material.BOOKSHELF, Material.CRAFTING_TABLE, Material.DISPENSER, null, null, null),
                 BlockFace.SELF,
-                BlockFace.DOWN,
+                BlockFace.SELF,
                 ManualMachineOperation.SHAPED_3X3
         ));
         machines.registerMachine(new ManualMachineDefinition(

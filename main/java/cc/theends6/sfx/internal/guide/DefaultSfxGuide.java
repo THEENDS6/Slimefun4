@@ -359,7 +359,8 @@ public final class DefaultSfxGuide implements SfxGuide {
             boolean locked = mode == GuideMode.SURVIVAL && research != null && !isUnlocked(player, research);
             ItemStack icon = locked ? lockedItemIcon(definition, research) : items.create(definition, 1);
             if (mode == GuideMode.CHEAT) {
-                Optional<ManualMachineDefinition> manualMachine = manualMachines.machine(definition.id());
+                Optional<ManualMachineDefinition> manualMachine = manualMachines.machine(definition.id())
+                        .or(() -> cc.theends6.sfx.internal.machine.ExtraDeployStructures.machine(definition.id()));
                 if (manualMachine.isPresent()) {
                     icon = withLore(icon, List.of(
                             Component.empty(),
@@ -938,7 +939,8 @@ public final class DefaultSfxGuide implements SfxGuide {
             return;
         }
 
-        Optional<ManualMachineDefinition> manualMachine = manualMachines.machine(definition.id());
+        Optional<ManualMachineDefinition> manualMachine = manualMachines.machine(definition.id())
+                .or(() -> cc.theends6.sfx.internal.machine.ExtraDeployStructures.machine(definition.id()));
         if (manualMachine.isPresent()) {
             giveManualMachineFromCheatGuide(player, manualMachine.get(), clickType != null && clickType.isShiftClick());
             return;
@@ -972,8 +974,11 @@ public final class DefaultSfxGuide implements SfxGuide {
             } else {
                 ItemStack deployPack = cc.theends6.sfx.internal.machine.ManualMachineDeployPacks.create(plugin, definition, localization);
                 items.give(player, deployPack);
+                String itemName = deployPack.hasItemMeta() && deployPack.getItemMeta() != null && deployPack.getItemMeta().hasDisplayName()
+                        ? net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(deployPack.getItemMeta().displayName())
+                        : machineDisplayName(definition);
                 player.sendMessage(Text.prefixed(plugin, localization.text("machines.cheat-machine-pack", "<green>Received machine deploy pack:</green><gray>{item}</gray>")
-                        .replace("{item}", machineDisplayName(definition))));
+                        .replace("{item}", itemName)));
             }
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.7f, 1.2f);
         });

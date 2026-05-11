@@ -1012,7 +1012,7 @@ items:
     - '&6Full set effects:'
     - '&e- Radiation immunity'
     - '&e- Bee Sting protection'
-  sf.rubber_boots:
+  sf.hazmat_boots:
     name: '&cHazmat Boots'
     lore:
     - ''
@@ -2850,7 +2850,7 @@ items:
     - '&4End-Game Machine'
     - '&8鈬?&e鈿?&71024 J Buffer'
     - '&8鈬?&e鈿?&720 J/s'
-  sf.reactor_collant_cell:
+  sf.reactor_coolant_cell:
     name: '&bReactor Coolant Cell'
   sf.nuclear_reactor:
     name: '&2Nuclear Reactor'
