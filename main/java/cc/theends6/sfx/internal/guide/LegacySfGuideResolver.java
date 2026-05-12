@@ -92,34 +92,32 @@ public final class LegacySfGuideResolver {
                 .filter(LegacySfGuideResolver::isLegacySlimefunItem)
                 .filter(item -> categoryId.equals(resolveLegacyGuideCategory(item)))
                 .sorted(Comparator
-                        .comparingInt(SfxItemDefinition::order)
+                        .comparingInt(LegacySfGuideResolver::legacySuggestedOrder)
                         .thenComparing(SfxItemDefinition::id))
                 .toList();
     }
 
     public static int legacySuggestedOrder(SfxItemDefinition item) {
-        if (item.order() != SfxItemDefinition.DEFAULT_ORDER) {
-            return item.order();
-        }
-        if ("guide:sf:basic_machines".equals(resolveLegacyGuideCategory(item))) {
+        String guideCategory = resolveLegacyGuideCategory(item);
+        if ("guide:sf:basic_machines".equals(guideCategory)) {
             Integer order = CLASSIC_BASIC_MACHINE_ORDER.get(item.id());
             if (order != null) {
                 return order;
             }
         }
-        if ("guide:sf:cargo".equals(resolveLegacyGuideCategory(item))) {
+        if ("guide:sf:cargo".equals(guideCategory)) {
             Integer cargoOrder = CLASSIC_CARGO_ORDER.get(item.id());
             if (cargoOrder != null) {
                 return cargoOrder;
             }
         }
-        if ("guide:sf:armor".equals(resolveLegacyGuideCategory(item))) {
+        if ("guide:sf:armor".equals(guideCategory)) {
             Integer armorOrder = CLASSIC_ARMOR_ORDER.get(item.id());
             if (armorOrder != null) {
                 return armorOrder;
             }
         }
-        if ("guide:sf:electricity".equals(resolveLegacyGuideCategory(item))) {
+        if ("guide:sf:electricity".equals(guideCategory)) {
             Integer electricityOrder = CLASSIC_ELECTRICITY_ORDER.get(item.id());
             if (electricityOrder != null) {
                 return electricityOrder;
@@ -128,6 +126,9 @@ public final class LegacySfGuideResolver {
         Integer overridden = CLASSIC_ITEM_ORDER_OVERRIDES.get(item.id());
         if (overridden != null) {
             return overridden;
+        }
+        if (item.order() != SfxItemDefinition.DEFAULT_ORDER) {
+            return item.order();
         }
         return CLASSIC_ITEM_ORDER.getOrDefault(item.id(), SfxItemDefinition.DEFAULT_ORDER);
     }

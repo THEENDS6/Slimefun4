@@ -1838,7 +1838,7 @@ items:
     - ''
     - '&a&oUsed to smelt Items into Liquids'
   sf.output_chest:
-    name: '&4Output Chest'
+    name: '&4Item Output Chest'
     lore:
     - ''
     - '&c&oA basic machine will try to put'
@@ -1865,94 +1865,81 @@ items:
   sf.enhanced_furnace:
     name: '&7Enhanced Furnace - &eI'
     lore:
-    - ''
-    - '&7Processing Speed: &e1x'
+    - '&7Processing Speed: &e2x'
     - '&7Fuel Efficiency: &e1x'
-    - '&7Luck Multiplier: &e1x'
+    - '&7Fortune Level: &e1x'
   sf.enhanced_furnace_2:
     name: '&7Enhanced Furnace - &eII'
     lore:
-    - ''
     - '&7Processing Speed: &e2x'
     - '&7Fuel Efficiency: &e1x'
-    - '&7Luck Multiplier: &e1x'
+    - '&7Fortune Level: &e1x'
   sf.enhanced_furnace_3:
     name: '&7Enhanced Furnace - &eIII'
     lore:
-    - ''
-    - '&7Processing Speed: &e2x'
+    - '&7Processing Speed: &e3x'
     - '&7Fuel Efficiency: &e2x'
-    - '&7Luck Multiplier: &e1x'
+    - '&7Fortune Level: &e1x'
   sf.enhanced_furnace_4:
     name: '&7Enhanced Furnace - &eIV'
     lore:
-    - ''
     - '&7Processing Speed: &e3x'
-    - '&7Fuel Efficiency: &e2x'
-    - '&7Luck Multiplier: &e1x'
+    - '&7Fuel Efficiency: &e3x'
+    - '&7Fortune Level: &e1x'
   sf.enhanced_furnace_5:
     name: '&7Enhanced Furnace - &eV'
     lore:
-    - ''
-    - '&7Processing Speed: &e3x'
-    - '&7Fuel Efficiency: &e2x'
-    - '&7Luck Multiplier: &e2x'
+    - '&7Processing Speed: &e4x'
+    - '&7Fuel Efficiency: &e3x'
+    - '&7Fortune Level: &e1x'
   sf.enhanced_furnace_6:
     name: '&7Enhanced Furnace - &eVI'
     lore:
-    - ''
-    - '&7Processing Speed: &e3x'
+    - '&7Processing Speed: &e4x'
     - '&7Fuel Efficiency: &e3x'
-    - '&7Luck Multiplier: &e2x'
+    - '&7Fortune Level: &e2x'
   sf.enhanced_furnace_7:
     name: '&7Enhanced Furnace - &eVII'
     lore:
-    - ''
-    - '&7Processing Speed: &e4x'
+    - '&7Processing Speed: &e5x'
     - '&7Fuel Efficiency: &e3x'
-    - '&7Luck Multiplier: &e2x'
+    - '&7Fortune Level: &e2x'
   sf.enhanced_furnace_8:
     name: '&7Enhanced Furnace - &eVIII'
     lore:
-    - ''
-    - '&7Processing Speed: &e4x'
+    - '&7Processing Speed: &e5x'
     - '&7Fuel Efficiency: &e4x'
-    - '&7Luck Multiplier: &e2x'
+    - '&7Fortune Level: &e2x'
   sf.enhanced_furnace_9:
     name: '&7Enhanced Furnace - &eIX'
     lore:
-    - ''
-    - '&7Processing Speed: &e5x'
+    - '&7Processing Speed: &e6x'
     - '&7Fuel Efficiency: &e4x'
-    - '&7Luck Multiplier: &e2x'
+    - '&7Fortune Level: &e2x'
   sf.enhanced_furnace_10:
     name: '&7Enhanced Furnace - &eX'
     lore:
-    - ''
-    - '&7Processing Speed: &e5x'
-    - '&7Fuel Efficiency: &e5x'
-    - '&7Luck Multiplier: &e2x'
+    - '&7Processing Speed: &e7x'
+    - '&7Fuel Efficiency: &e4x'
+    - '&7Fortune Level: &e2x'
   sf.enhanced_furnace_11:
     name: '&7Enhanced Furnace - &eXI'
     lore:
-    - ''
-    - '&7Processing Speed: &e5x'
-    - '&7Fuel Efficiency: &e5x'
-    - '&7Luck Multiplier: &e3x'
+    - '&7Processing Speed: &e8x'
+    - '&7Fuel Efficiency: &e4x'
+    - '&7Fortune Level: &e2x'
   sf.reinforced_furnace:
-    name: '&7Reinforced Furnace'
+    name: '&7Advanced Furnace'
     lore:
-    - ''
     - '&7Processing Speed: &e10x'
-    - '&7Fuel Efficiency: &e10x'
-    - '&7Luck Multiplier: &e3x'
+    - '&7Fuel Efficiency: &e5x'
+    - '&7Fortune Level: &e3x'
   sf.carbonado_edged_furnace:
     name: '&7Carbonado Edged Furnace'
     lore:
-    - ''
     - '&7Processing Speed: &e20x'
     - '&7Fuel Efficiency: &e10x'
-    - '&7Luck Multiplier: &e3x'
+    - '&7Fortune Level: &e3x'
   sf.soulbound_sword:
     name: '&cSoulbound Sword'
   sf.soulbound_bow:

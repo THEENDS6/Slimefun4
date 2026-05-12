@@ -46,6 +46,7 @@ import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.FurnaceInventory;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -116,6 +117,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
         event.setDropItems(false);
         clearActiveCrucible(anchor.get().key(), true);
+        dropStoredContents(event.getBlock());
         dropPluginBlock(event.getBlock(), typeId);
         blockData.unregisterAt(event.getBlock().getLocation());
     }
@@ -442,18 +444,18 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return null;
         }
         return switch (typeId) {
-            case "sf:enhanced_furnace" -> new FurnaceStats(1, 1, 1);
+            case "sf:enhanced_furnace" -> new FurnaceStats(2, 1, 1);
             case "sf:enhanced_furnace_2" -> new FurnaceStats(2, 1, 1);
-            case "sf:enhanced_furnace_3" -> new FurnaceStats(2, 2, 1);
-            case "sf:enhanced_furnace_4" -> new FurnaceStats(3, 2, 1);
-            case "sf:enhanced_furnace_5" -> new FurnaceStats(3, 2, 2);
-            case "sf:enhanced_furnace_6" -> new FurnaceStats(3, 3, 2);
-            case "sf:enhanced_furnace_7" -> new FurnaceStats(4, 3, 2);
-            case "sf:enhanced_furnace_8" -> new FurnaceStats(4, 4, 2);
-            case "sf:enhanced_furnace_9" -> new FurnaceStats(5, 4, 2);
-            case "sf:enhanced_furnace_10" -> new FurnaceStats(5, 5, 2);
-            case "sf:enhanced_furnace_11" -> new FurnaceStats(5, 5, 3);
-            case "sf:reinforced_furnace" -> new FurnaceStats(10, 10, 3);
+            case "sf:enhanced_furnace_3" -> new FurnaceStats(3, 2, 1);
+            case "sf:enhanced_furnace_4" -> new FurnaceStats(3, 3, 1);
+            case "sf:enhanced_furnace_5" -> new FurnaceStats(4, 3, 1);
+            case "sf:enhanced_furnace_6" -> new FurnaceStats(4, 3, 2);
+            case "sf:enhanced_furnace_7" -> new FurnaceStats(5, 3, 2);
+            case "sf:enhanced_furnace_8" -> new FurnaceStats(5, 4, 2);
+            case "sf:enhanced_furnace_9" -> new FurnaceStats(6, 4, 2);
+            case "sf:enhanced_furnace_10" -> new FurnaceStats(7, 4, 2);
+            case "sf:enhanced_furnace_11" -> new FurnaceStats(8, 4, 2);
+            case "sf:reinforced_furnace" -> new FurnaceStats(10, 5, 3);
             case "sf:carbonado_edged_furnace" -> new FurnaceStats(20, 10, 3);
             default -> null;
         };
@@ -684,6 +686,21 @@ public final class SfxBasicMachineBlockListener implements Listener {
         dropped.setPickupDelay(0);
     }
 
+    private void dropStoredContents(Block block) {
+        if (!(block.getState() instanceof InventoryHolder holder)) {
+            return;
+        }
+        Inventory inventory = holder.getInventory();
+        for (ItemStack content : inventory.getContents()) {
+            if (content == null || content.getType().isAir()) {
+                continue;
+            }
+            Item dropped = block.getWorld().dropItem(block.getLocation().add(0.5, 0.5, 0.5), content.clone());
+            dropped.setPickupDelay(0);
+        }
+        inventory.clear();
+    }
+
     private FurnaceStats furnaceStatsAt(SfxAnchorRecord anchor) {
         String typeId = instanceType(anchor.instanceId());
         if (typeId == null) {
@@ -694,18 +711,18 @@ public final class SfxBasicMachineBlockListener implements Listener {
 
     private FurnaceStats furnaceStats(String typeId) {
         return switch (typeId) {
-            case "sf:enhanced_furnace" -> new FurnaceStats(1, 1, 1);
+            case "sf:enhanced_furnace" -> new FurnaceStats(2, 1, 1);
             case "sf:enhanced_furnace_2" -> new FurnaceStats(2, 1, 1);
-            case "sf:enhanced_furnace_3" -> new FurnaceStats(2, 2, 1);
-            case "sf:enhanced_furnace_4" -> new FurnaceStats(3, 2, 1);
-            case "sf:enhanced_furnace_5" -> new FurnaceStats(3, 2, 2);
-            case "sf:enhanced_furnace_6" -> new FurnaceStats(3, 3, 2);
-            case "sf:enhanced_furnace_7" -> new FurnaceStats(4, 3, 2);
-            case "sf:enhanced_furnace_8" -> new FurnaceStats(4, 4, 2);
-            case "sf:enhanced_furnace_9" -> new FurnaceStats(5, 4, 2);
-            case "sf:enhanced_furnace_10" -> new FurnaceStats(5, 5, 2);
-            case "sf:enhanced_furnace_11" -> new FurnaceStats(5, 5, 3);
-            case "sf:reinforced_furnace" -> new FurnaceStats(10, 10, 3);
+            case "sf:enhanced_furnace_3" -> new FurnaceStats(3, 2, 1);
+            case "sf:enhanced_furnace_4" -> new FurnaceStats(3, 3, 1);
+            case "sf:enhanced_furnace_5" -> new FurnaceStats(4, 3, 1);
+            case "sf:enhanced_furnace_6" -> new FurnaceStats(4, 3, 2);
+            case "sf:enhanced_furnace_7" -> new FurnaceStats(5, 3, 2);
+            case "sf:enhanced_furnace_8" -> new FurnaceStats(5, 4, 2);
+            case "sf:enhanced_furnace_9" -> new FurnaceStats(6, 4, 2);
+            case "sf:enhanced_furnace_10" -> new FurnaceStats(7, 4, 2);
+            case "sf:enhanced_furnace_11" -> new FurnaceStats(8, 4, 2);
+            case "sf:reinforced_furnace" -> new FurnaceStats(10, 5, 3);
             case "sf:carbonado_edged_furnace" -> new FurnaceStats(20, 10, 3);
             default -> null;
         };

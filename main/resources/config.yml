@@ -1,6 +1,7 @@
 language: 'zh-CN'
 
 content:
+  sync-bundled-items-on-startup: true
   sync-bundled-recipes-on-startup: true
   sync-bundled-researches-on-startup: true
 
@@ -19,7 +20,7 @@ plugin-blocks:
     # SFX extension:
     # when enabled, processing speed also increases fuel consumption speed.
     # false = classic behavior
-    speed-affects-fuel-consumption: false
+    speed-affects-fuel-consumption: true
 
 messages:
   prefix: '<dark_gray>[<green>SFX</green><dark_gray>] '
