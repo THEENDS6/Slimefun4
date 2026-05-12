@@ -78,7 +78,17 @@ public final class SfxResearchYamlLoader {
         int cost = integer(entry.get("cost"));
         int order = integer(entry.get("order"));
         List<String> items = stringList(entry.get("items"));
+        items = filterFeatureItems(items);
         return new SfxResearchDefinition(id, name, cost, order, new LinkedHashSet<>(items));
+    }
+
+    private List<String> filterFeatureItems(List<String> items) {
+        if (plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true)) {
+            return items;
+        }
+        return items.stream()
+                .filter(item -> !"sf:bio_reactor_2".equalsIgnoreCase(item.trim()))
+                .toList();
     }
 
     private static int integer(Object raw) {

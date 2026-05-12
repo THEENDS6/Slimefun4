@@ -57,12 +57,27 @@ public final class SfxRecipeYamlLoader {
             YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
             for (Map<?, ?> entry : yaml.getMapList("recipes")) {
                 try {
+                    if (!isFeatureEnabled(entry)) {
+                        continue;
+                    }
                     registry.register(parseRecipe(entry));
                 } catch (Exception ex) {
                     logger.warning("Failed to load recipe from YAML " + file.getName() + ": " + ex.getMessage());
                 }
             }
         }
+    }
+
+
+    private boolean isFeatureEnabled(Map<?, ?> entry) {
+        boolean sfxGeneratorBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
+        if (Boolean.TRUE.equals(entry.get("requires-sfx-generator-balance")) && !sfxGeneratorBalance) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(entry.get("requires-classic-generator-balance")) && sfxGeneratorBalance) {
+            return false;
+        }
+        return true;
     }
 
     private void collectYaml(File dir, List<File> files) {

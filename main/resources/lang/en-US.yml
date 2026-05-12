@@ -1,9 +1,8 @@
-﻿machines:
+machines:
   structure-changed: <red>The structure changed. Machine activation was cancelled.</red>
   missing-dispenser: '<red>Structure incomplete: missing the paired dispenser.</red>'
-  smeltery-not-lit: '<red>This smeltery is not lit. Light fire or soul fire below the dispenser.</red>'
-  no-recipes: <gray>This machine is recognized, but no executable recipes are registered
-    yet.</gray>
+  smeltery-not-lit: <red>This smeltery is not lit. Light fire or soul fire below the dispenser.</red>
+  no-recipes: <gray>This machine is recognized, but no executable recipes are registered yet.</gray>
   inventory-empty: <gray>The dispenser does not contain a valid 3x3 input.</gray>
   empty: <gray>The dispenser does not contain a valid input.</gray>
   pattern-not-found: <red>Items were found, but no matching 3x3 recipe exists.</red>
@@ -21,8 +20,7 @@
     - <gray>Places the full manual machine structure automatically.</gray>
     - <gray>Checks for enough free space before deploying.</gray>
     - <dark_gray>This is an SFX cheat helper item.</dark_gray>
-  deploy-pack-unsupported: <yellow>This machine does not support deploy packs yet,
-    a full structure kit was given instead:</yellow><gray>{item}</gray>
+  deploy-pack-unsupported: <yellow>This machine does not support deploy packs yet, a full structure kit was given instead:"</yellow><gray>{item}</gray>"
 guide:
   errors:
     no-open: <red>You do not have permission to open this guide.</red>
@@ -62,8 +60,8 @@ guide:
         lore: <gray>Click to switch this book to the cheat guide.</gray>
     layout:
       name: <yellow>Guide Layout</yellow>
-      classic: <gray>Current: SFX. Click to switch to the restored classic layout.</gray>
-      sfx: <gray>Current: classic. Click to switch to the expanded SFX layout.</gray>
+      classic: '<gray>Current: SFX. Click to switch to the restored classic layout.</gray>'
+      sfx: '<gray>Current: classic. Click to switch to the expanded SFX layout.</gray>'
     history:
       name: <yellow>Nested Recipe History</yellow>
       enabled: <green>Enabled</green>
@@ -96,7 +94,7 @@ guide:
       name: <aqua>Current Layout</aqua>
       classic: <gray>Classic layout is active.</gray>
       sfx: <gray>SFX layout is active.</gray>
-      mode: <gray>Guide mode: {mode}</gray>
+      mode: '<gray>Guide mode: {mode}</gray>'
     toggle:
       enabled: <green>Enabled</green>
       disabled: <red>Disabled</red>
@@ -440,160 +438,160 @@ items:
     name: '&9Electric Jetpack &7- &eI'
     lore:
     - ''
-    - '&8鈬?&7Material: &bDuralumin'
-    - '&8鈬?&e鈿?&70 / 20 J'
-    - '&8鈬?&7Thrust: &c0.35'
+    - '&8⇨ &7Material: &bDuralumin'
+    - '&8⇨ &e⚡&70 / 20 J'
+    - '&8⇨ &7Thrust: &c0.35'
     - ''
     - '&eCrouch&7 to use'
   sf.solder_jetpack:
     name: '&9Electric Jetpack &7- &eII'
     lore:
     - ''
-    - '&8鈬?&7Material: &bSolder'
-    - '&8鈬?&e鈿?&70 / 30 J'
-    - '&8鈬?&7Thrust: &c0.4'
+    - '&8⇨ &7Material: &bSolder'
+    - '&8⇨ &e⚡&70 / 30 J'
+    - '&8⇨ &7Thrust: &c0.4'
     - ''
     - '&eCrouch&7 to use'
   sf.billon_jetpack:
     name: '&9Electric Jetpack &7- &eIII'
     lore:
     - ''
-    - '&8鈬?&7Material: &bBillon'
-    - '&8鈬?&e鈿?&70 / 45 J'
-    - '&8鈬?&7Thrust: &c0.45'
+    - '&8⇨ &7Material: &bBillon'
+    - '&8⇨ &e⚡&70 / 45 J'
+    - '&8⇨ &7Thrust: &c0.45'
     - ''
     - '&eCrouch&7 to use'
   sf.steel_jetpack:
     name: '&9Electric Jetpack &7- &eIV'
     lore:
     - ''
-    - '&8鈬?&7Material: &bSteel'
-    - '&8鈬?&e鈿?&70 / 60 J'
-    - '&8鈬?&7Thrust: &c0.5'
+    - '&8⇨ &7Material: &bSteel'
+    - '&8⇨ &e⚡&70 / 60 J'
+    - '&8⇨ &7Thrust: &c0.5'
     - ''
     - '&eCrouch&7 to use'
   sf.damascus_steel_jetpack:
     name: '&9Electric Jetpack &7- &eV'
     lore:
     - ''
-    - '&8鈬?&7Material: &bDamascus Steel'
-    - '&8鈬?&e鈿?&70 / 75 J'
-    - '&8鈬?&7Thrust: &c0.55'
+    - '&8⇨ &7Material: &bDamascus Steel'
+    - '&8⇨ &e⚡&70 / 75 J'
+    - '&8⇨ &7Thrust: &c0.55'
     - ''
     - '&eCrouch&7 to use'
   sf.reinforced_alloy_jetpack:
     name: '&9Electric Jetpack &7- &eVI'
     lore:
     - ''
-    - '&8鈬?&7Material: &bReinforced Alloy'
-    - '&8鈬?&e鈿?&70 / 100 J'
-    - '&8鈬?&7Thrust: &c0.6'
+    - '&8⇨ &7Material: &bReinforced Alloy'
+    - '&8⇨ &e⚡&70 / 100 J'
+    - '&8⇨ &7Thrust: &c0.6'
     - ''
     - '&eCrouch&7 to use'
   sf.carbonado_jetpack:
     name: '&9Electric Jetpack &7- &eVII'
     lore:
     - ''
-    - '&8鈬?&7Material: &bCarbonado'
-    - '&8鈬?&e鈿?&70 / 150 J'
-    - '&8鈬?&7Thrust: &c0.7'
+    - '&8⇨ &7Material: &bCarbonado'
+    - '&8⇨ &e⚡&70 / 150 J'
+    - '&8⇨ &7Thrust: &c0.7'
     - ''
     - '&eCrouch&7 to use'
   sf.armored_jetpack:
     name: '&9Armored Jetpack'
     lore:
-    - '&8鈬?&7Material: &bSteel'
+    - '&8⇨ &7Material: &bSteel'
     - ''
-    - '&8鈬?&e鈿?&70 / 50 J'
-    - '&8鈬?&7Thrust: &c0.5'
+    - '&8⇨ &e⚡&70 / 50 J'
+    - '&8⇨ &7Thrust: &c0.5'
     - ''
     - '&eCrouch&7 to use'
   sf.duralumin_jetboots:
     name: '&9Jet Boots &7- &eI'
     lore:
     - ''
-    - '&8鈬?&7Material: &bDuralumin'
-    - '&8鈬?&e鈿?&70 / 20 J'
-    - '&8鈬?&b鈿?&7Speed: &b0.35x'
-    - '&8鈬?&7Accuracy: &c50%'
+    - '&8⇨ &7Material: &bDuralumin'
+    - '&8⇨ &e⚡&70 / 20 J'
+    - '&8⇨ &b⚡&7Speed: &b0.35x'
+    - '&8⇨ &7Accuracy: &c50%'
     - ''
     - '&eCrouch&7 to use'
   sf.solder_jetboots:
     name: '&9Jet Boots &7- &eII'
     lore:
     - ''
-    - '&8鈬?&7Material: &bSolder'
-    - '&8鈬?&e鈿?&70 / 30 J'
-    - '&8鈬?&b鈿?&7Speed: &b0.4x'
-    - '&8鈬?&7Accuracy: &660%'
+    - '&8⇨ &7Material: &bSolder'
+    - '&8⇨ &e⚡&70 / 30 J'
+    - '&8⇨ &b⚡&7Speed: &b0.4x'
+    - '&8⇨ &7Accuracy: &660%'
     - ''
     - '&eCrouch&7 to use'
   sf.billon_jetboots:
     name: '&9Jet Boots &7- &eIII'
     lore:
     - ''
-    - '&8鈬?&7Material: &bBillon'
-    - '&8鈬?&e鈿?&70 / 40 J'
-    - '&8鈬?&b鈿?&7Speed: &b0.45x'
-    - '&8鈬?&7Accuracy: &665%'
+    - '&8⇨ &7Material: &bBillon'
+    - '&8⇨ &e⚡&70 / 40 J'
+    - '&8⇨ &b⚡&7Speed: &b0.45x'
+    - '&8⇨ &7Accuracy: &665%'
     - ''
     - '&eCrouch&7 to use'
   sf.steel_jetboots:
     name: '&9Jet Boots &7- &eIV'
     lore:
     - ''
-    - '&8鈬?&7Material: &bSteel'
-    - '&8鈬?&e鈿?&70 / 50 J'
-    - '&8鈬?&b鈿?&7Speed: &b0.5x'
-    - '&8鈬?&7Accuracy: &e70%'
+    - '&8⇨ &7Material: &bSteel'
+    - '&8⇨ &e⚡&70 / 50 J'
+    - '&8⇨ &b⚡&7Speed: &b0.5x'
+    - '&8⇨ &7Accuracy: &e70%'
     - ''
     - '&eCrouch&7 to use'
   sf.damascus_steel_jetboots:
     name: '&9Jet Boots &7- &eV'
     lore:
     - ''
-    - '&8鈬?&7Material: &bDamascus Steel'
-    - '&8鈬?&e鈿?&70 / 75 J'
-    - '&8鈬?&b鈿?&7Speed: &b0.55x'
-    - '&8鈬?&7Accuracy: &a75%'
+    - '&8⇨ &7Material: &bDamascus Steel'
+    - '&8⇨ &e⚡&70 / 75 J'
+    - '&8⇨ &b⚡&7Speed: &b0.55x'
+    - '&8⇨ &7Accuracy: &a75%'
     - ''
     - '&eCrouch&7 to use'
   sf.reinforced_alloy_jetboots:
     name: '&9Jet Boots &7- &eVI'
     lore:
     - ''
-    - '&8鈬?&7Material: &bReinforced Alloy'
-    - '&8鈬?&e鈿?&70 / 100 J'
-    - '&8鈬?&b鈿?&7Speed: &b0.6x'
-    - '&8鈬?&7Accuracy: &c80%'
+    - '&8⇨ &7Material: &bReinforced Alloy'
+    - '&8⇨ &e⚡&70 / 100 J'
+    - '&8⇨ &b⚡&7Speed: &b0.6x'
+    - '&8⇨ &7Accuracy: &c80%'
     - ''
     - '&eCrouch&7 to use'
   sf.carbonado_jetboots:
     name: '&9Jet Boots &7- &eVII'
     lore:
     - ''
-    - '&8鈬?&7Material: &bCarbonado'
-    - '&8鈬?&e鈿?&70 / 125 J'
-    - '&8鈬?&b鈿?&7Speed: &b0.7x'
-    - '&8鈬?&7Accuracy: &c99.9%'
+    - '&8⇨ &7Material: &bCarbonado'
+    - '&8⇨ &e⚡&70 / 125 J'
+    - '&8⇨ &b⚡&7Speed: &b0.7x'
+    - '&8⇨ &7Accuracy: &c99.9%'
     - ''
     - '&eCrouch&7 to use'
   sf.armored_jetboots:
     name: '&9Armored Jet Boots'
     lore:
     - ''
-    - '&8鈬?&7Material: &bSteel'
-    - '&8鈬?&e鈿?&70 / 50 J'
-    - '&8鈬?&b鈿?&7Speed: &b0.45x'
-    - '&8鈬?&7Accuracy: &e70%'
+    - '&8⇨ &7Material: &bSteel'
+    - '&8⇨ &e⚡&70 / 50 J'
+    - '&8⇨ &b⚡&7Speed: &b0.45x'
+    - '&8⇨ &7Accuracy: &e70%'
     - ''
     - '&eCrouch&7 to use'
   sf.duralumin_multi_tool:
     name: '&9Multi Tool &7- &eI'
     lore:
     - ''
-    - '&8鈬?&7Material: &bDuralumin'
-    - '&8鈬?&e鈿?&70 / 20 J'
+    - '&8⇨ &7Material: &bDuralumin'
+    - '&8⇨ &e⚡&70 / 20 J'
     - ''
     - '&eRight Click&7 to use'
     - '&eCrouch & Right Click&7 to switch modes'
@@ -601,8 +599,8 @@ items:
     name: '&9Multi Tool &7- &eII'
     lore:
     - ''
-    - '&8鈬?&7Material: &bSolder'
-    - '&8鈬?&e鈿?&70 / 30 J'
+    - '&8⇨ &7Material: &bSolder'
+    - '&8⇨ &e⚡&70 / 30 J'
     - ''
     - '&eRight Click&7 to use'
     - '&eCrouch & Right Click&7 to switch modes'
@@ -610,8 +608,8 @@ items:
     name: '&9Multi Tool &7- &eIII'
     lore:
     - ''
-    - '&8鈬?&7Material: &bBillon'
-    - '&8鈬?&e鈿?&70 / 40 J'
+    - '&8⇨ &7Material: &bBillon'
+    - '&8⇨ &e⚡&70 / 40 J'
     - ''
     - '&eRight Click&7 to use'
     - '&eCrouch & Right Click&7 to switch modes'
@@ -619,8 +617,8 @@ items:
     name: '&9Multi Tool &7- &eIV'
     lore:
     - ''
-    - '&8鈬?&7Material: &bSteel'
-    - '&8鈬?&e鈿?&70 / 50 J'
+    - '&8⇨ &7Material: &bSteel'
+    - '&8⇨ &e⚡&70 / 50 J'
     - ''
     - '&eRight Click&7 to use'
     - '&eCrouch & Right Click&7 to switch modes'
@@ -628,8 +626,8 @@ items:
     name: '&9Multi Tool &7- &eV'
     lore:
     - ''
-    - '&8鈬?&7Material: &bDamascus Steel'
-    - '&8鈬?&e鈿?&70 / 60 J'
+    - '&8⇨ &7Material: &bDamascus Steel'
+    - '&8⇨ &e⚡&70 / 60 J'
     - ''
     - '&eRight Click&7 to use'
     - '&eCrouch & Right Click&7 to switch modes'
@@ -637,8 +635,8 @@ items:
     name: '&9Multi Tool &7- &eVI'
     lore:
     - ''
-    - '&8鈬?&7Material: &bReinforced Alloy'
-    - '&8鈬?&e鈿?&70 / 75 J'
+    - '&8⇨ &7Material: &bReinforced Alloy'
+    - '&8⇨ &e⚡&70 / 75 J'
     - ''
     - '&eRight Click&7 to use'
     - '&eCrouch & Right Click&7 to switch modes'
@@ -646,8 +644,8 @@ items:
     name: '&9Multi Tool &7- &eVII'
     lore:
     - ''
-    - '&8鈬?&7Material: &bCarbonado'
-    - '&8鈬?&e鈿?&70 / 100 J'
+    - '&8⇨ &7Material: &bCarbonado'
+    - '&8⇨ &e⚡&70 / 100 J'
     - ''
     - '&eRight Click&7 to use'
     - '&eCrouch & Right Click&7 to switch modes'
@@ -1207,13 +1205,13 @@ items:
     name: '&cSmall Chunk of Uranium'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &eMODERATE'
-    - '&8鈬?&4Hazmat Suit required!'
+    - '&a☢ &7Radiation level: &eMODERATE'
+    - '&8⇨ &4Hazmat Suit required!'
   sf.tiny_uranium:
     name: '&cTiny Pile of Uranium'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &eLOW'
+    - '&a☢ &7Radiation level: &eLOW'
   sf.solar_panel:
     name: '&9Photovoltaic Cell'
     lore:
@@ -1553,26 +1551,26 @@ items:
     name: '&4Uranium'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &6HIGH'
-    - '&8鈬?&4Hazmat Suit required!'
+    - '&a☢ &7Radiation level: &6HIGH'
+    - '&8⇨ &4Hazmat Suit required!'
   sf.neptunium:
     name: '&aNeptunium'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &6HIGH'
-    - '&8鈬?&4Hazmat Suit required!'
+    - '&a☢ &7Radiation level: &6HIGH'
+    - '&8⇨ &4Hazmat Suit required!'
   sf.plutonium:
     name: '&7Plutonium'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &cVERY HIGH'
-    - '&8鈬?&4Hazmat Suit required!'
+    - '&a☢ &7Radiation level: &cVERY HIGH'
+    - '&8⇨ &4Hazmat Suit required!'
   sf.boosted_uranium:
     name: '&2Boosted Uranium'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &cVERY HIGH'
-    - '&8鈬?&4Hazmat Suit required!'
+    - '&a☢ &7Radiation level: &cVERY HIGH'
+    - '&8⇨ &4Hazmat Suit required!'
   sf.common_talisman:
     name: '&6Common Talisman'
   sf.ender_talisman:
@@ -1998,22 +1996,22 @@ items:
     lore:
     - ''
     - '&eBasic Generator'
-    - '&8? &e? &70 J Buffer'
-    - '&8? &e? &72 J/t'
+    - '&8⇨ &e⚡ &70 J Buffer'
+    - '&8⇨ &e⚡ &74 J/t'
   sf.solar_generator_2:
     name: '&cAdvanced Solar Generator'
     lore:
     - ''
     - '&aMedium Generator'
-    - '&8? &e? &70 J Buffer'
-    - '&8? &e? &78 J/t'
+    - '&8⇨ &e⚡ &70 J Buffer'
+    - '&8⇨ &e⚡ &716 J/t'
   sf.solar_generator_3:
     name: '&4Carbonado Solar Generator'
     lore:
     - ''
     - '&4End-Game Generator'
-    - '&8? &e? &70 J Buffer'
-    - '&8? &e? &732 J/t'
+    - '&8⇨ &e⚡ &70 J Buffer'
+    - '&8⇨ &e⚡ &764 J/t'
   sf.solar_generator_4:
     name: '&eEnergized Solar Generator'
     lore:
@@ -2021,58 +2019,58 @@ items:
     - '&9Works at Night'
     - ''
     - '&4End-Game Generator'
-    - '&8? &e? &70 J Buffer'
-    - '&8? &e? &7128 J/t (Day)'
-    - '&8? &e? &764 J/t (Night)'
+    - '&8⇨ &e⚡ &70 J Buffer'
+    - '&8⇨ &e⚡ &7256 J/t (Day)'
+    - '&8⇨ &e⚡ &7128 J/t (Night)'
   sf.coal_generator:
     name: '&cCoal Generator'
     lore:
     - ''
     - '&6Average Generator'
-    - '&8? &e? &71280 J Buffer'
-    - '&8? &e? &78 J/t'
+    - '&8⇨ &e⚡ &71280 J Buffer'
+    - '&8⇨ &e⚡ &716 J/t'
   sf.coal_generator_2:
     name: '&cCoal Generator &7(&eII&7)'
     lore:
     - ''
     - '&6Advanced Generator'
-    - '&8? &e? &75120 J Buffer'
-    - '&8? &e? &715 J/t'
+    - '&8⇨ &e⚡ &75120 J Buffer'
+    - '&8⇨ &e⚡ &730 J/t'
   sf.lava_generator:
     name: '&4Lava Generator'
     lore:
     - ''
     - '&6Average Generator'
-    - '&8? &e? &710240 J Buffer'
-    - '&8? &e? &710 J/t'
+    - '&8⇨ &e⚡ &710240 J Buffer'
+    - '&8⇨ &e⚡ &720 J/t'
   sf.lava_generator_2:
     name: '&4Lava Generator &7(&eII&7)'
     lore:
     - ''
     - '&6Advanced Generator'
-    - '&8? &e? &720480 J Buffer'
-    - '&8? &e? &720 J/t'
+    - '&8⇨ &e⚡ &720480 J Buffer'
+    - '&8⇨ &e⚡ &740 J/t'
   sf.electric_furnace:
     name: '&cElectric Furnace'
     lore:
     - ''
     - '&eBasic Machine'
-    - '&8? &b? &7Speed: &b1x'
-    - '&8? &e? &72 J/t'
+    - '&8⇨ &b⚡ &7Speed: &b1x'
+    - '&8⇨ &e⚡ &74 J/t'
   sf.electric_furnace_2:
     name: '&cElectric Furnace &7- &eII'
     lore:
     - ''
     - '&aMedium Machine'
-    - '&8? &b? &7Speed: &b2x'
-    - '&8? &e? &73 J/t'
+    - '&8⇨ &b⚡ &7Speed: &b2x'
+    - '&8⇨ &e⚡ &76 J/t'
   sf.electric_furnace_3:
     name: '&cElectric Furnace &7- &eIII'
     lore:
     - ''
     - '&aMedium Machine'
-    - '&8? &b? &7Speed: &b4x'
-    - '&8? &e? &75 J/t'
+    - '&8⇨ &b⚡ &7Speed: &b4x'
+    - '&8⇨ &e⚡ &710 J/t'
   sf.electric_ore_grinder:
     name: '&cElectric Ore Grinder'
     lore:
@@ -2080,8 +2078,8 @@ items:
     - '&fWorks as an Ore Crusher and Grind Stone'
     - ''
     - '&6Advanced Machine'
-    - '&8? &b? &7Speed: &b1x'
-    - '&8? &e? &76 J/t'
+    - '&8⇨ &b⚡ &7Speed: &b1x'
+    - '&8⇨ &e⚡ &712 J/t'
   sf.electric_ore_grinder_2:
     name: '&cElectric Ore Grinder &7(&eII&7)'
     lore:
@@ -2089,8 +2087,8 @@ items:
     - '&fWorks as an Ore Crusher and Grind Stone'
     - ''
     - '&4End-Game Machine'
-    - '&8? &b? &7Speed: &b4x'
-    - '&8? &e? &715 J/t'
+    - '&8⇨ &b⚡ &7Speed: &b4x'
+    - '&8⇨ &e⚡ &730 J/t'
   sf.electric_ore_grinder_3:
     name: '&cElectric Ore Grinder &7(&eIII&7)'
     lore:
@@ -2098,8 +2096,8 @@ items:
     - '&fWorks as an Ore Crusher and Grind Stone'
     - ''
     - '&4End-Game Machine'
-    - '&8? &b? &7Speed: &b10x'
-    - '&8? &e? &745 J/t'
+    - '&8⇨ &b⚡ &7Speed: &b10x'
+    - '&8⇨ &e⚡ &790 J/t'
   sf.electric_ingot_pulverizer:
     name: '&cElectric Ingot Pulverizer'
     lore:
@@ -2107,64 +2105,64 @@ items:
     - '&fPulverizes Ingots into Dust'
     - ''
     - '&aMedium Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&714 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&714 J/t'
   sf.auto_drier:
     name: '&6Auto Drier'
     lore:
     - ''
     - '&aMedium Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&710 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&710 J/t'
   sf.auto_enchanter:
     name: '&5Auto Enchanter'
     lore:
     - ''
     - '&aMedium Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&718 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&718 J/t'
   sf.auto_enchanter_2:
     name: '&5Auto Enchanter &7- &eII'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b3x'
-    - '&8鈬?&e鈿?&748 J/t'
+    - '&8⇨ &b⚡&7Speed: &b3x'
+    - '&8⇨ &e⚡&748 J/t'
   sf.auto_disenchanter:
     name: '&5Auto Disenchanter'
     lore:
     - ''
     - '&aMedium Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&718 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&718 J/t'
   sf.auto_disenchanter_2:
     name: '&5Auto Disenchanter &7- &eII'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b3x'
-    - '&8鈬?&e鈿?&748 J/t'
+    - '&8⇨ &b⚡&7Speed: &b3x'
+    - '&8⇨ &e⚡&748 J/t'
   sf.auto_anvil:
     name: '&7Auto Anvil'
     lore:
     - ''
     - '&6Advanced Machine'
-    - '&8鈬?&7Repair Factor: 10%'
-    - '&8鈬?&e鈿?&724 J/t'
+    - '&8⇨ &7Repair Factor: 10%'
+    - '&8⇨ &e⚡&724 J/t'
   sf.auto_anvil_2:
     name: '&7Auto Anvil Mk.II'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&7Repair Factor: 25%'
-    - '&8鈬?&e鈿?&732 J/t'
+    - '&8⇨ &7Repair Factor: 25%'
+    - '&8⇨ &e⚡&732 J/t'
   sf.auto_brewer:
     name: '&6Auto Brewer'
     lore:
     - ''
     - '&aMedium Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&712 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&712 J/t'
   sf.book_binder:
     name: '&6Book Binder'
     lore:
@@ -2172,14 +2170,21 @@ items:
     - '&fBinds multiple enchanted books into one.'
     - ''
     - '&aMedium Machine'
-    - '&8鈬?&e鈿?&716 J/t'
+    - '&8⇨ &e⚡&716 J/t'
   sf.bio_reactor:
     name: '&2Bio Reactor'
     lore:
     - ''
     - '&6Average Generator'
-    - '&8? &e? &72560 J Buffer'
-    - '&8? &e? &74 J/t'
+    - '&8⇨ &e⚡ &72560 J Buffer'
+    - '&8⇨ &e⚡ &78 J/t'
+  sf.bio_reactor_2:
+    name: '&2Bio Reactor &7- &eII'
+    lore:
+    - ''
+    - '&6Advanced Generator'
+    - '&8⇨ &e⚡ &75120 J Buffer'
+    - '&8⇨ &e⚡ &720 J/t'
   sf.multimeter:
     name: '&eMultimeter'
     lore:
@@ -2192,151 +2197,151 @@ items:
     - '&7Range: &c6 Blocks'
     - ''
     - '&eBasic Capacitor'
-    - '&8? &e? &72560 J Capacity'
+    - '&8⇨ &e⚡ &72560 J Capacity'
   sf.medium_capacitor:
     name: '&aMedium Energy Capacitor'
     lore:
     - '&7Range: &c6 Blocks'
     - ''
     - '&6Average Capacitor'
-    - '&8? &e? &710240 J Capacity'
+    - '&8⇨ &e⚡ &710240 J Capacity'
   sf.big_capacitor:
     name: '&aBig Energy Capacitor'
     lore:
     - '&7Range: &c6 Blocks'
     - ''
     - '&aMedium Capacitor'
-    - '&8? &e? &720480 J Capacity'
+    - '&8⇨ &e⚡ &720480 J Capacity'
   sf.large_capacitor:
     name: '&aLarge Energy Capacitor'
     lore:
     - '&7Range: &c6 Blocks'
     - ''
     - '&2Large Capacitor'
-    - '&8? &e? &7163840 J Capacity'
+    - '&8⇨ &e⚡ &7163840 J Capacity'
   sf.carbonado_edged_capacitor:
     name: '&aCarbonado Edged Energy Capacitor'
     lore:
     - '&7Range: &c6 Blocks'
     - ''
     - '&4End-Game Capacitor'
-    - '&8? &e? &71310720 J Capacity'
+    - '&8⇨ &e⚡ &71310720 J Capacity'
   sf.energized_capacitor:
     name: '&aEnergized Energy Capacitor'
     lore:
     - '&7Range: &c6 Blocks'
     - ''
     - '&4End-Game Capacitor'
-    - '&8? &e? &710485760 J Capacity'
+    - '&8⇨ &e⚡ &710485760 J Capacity'
   sf.programmable_android:
     name: '&cProgrammable Android &7(Normal)'
     lore:
     - ''
-    - '&8鈬?&7Function: None'
-    - '&8鈬?&7Fuel Efficiency: 1.0x'
+    - '&8⇨ &7Function: None'
+    - '&8⇨ &7Fuel Efficiency: 1.0x'
   sf.programmable_android_farmer:
     name: '&cProgrammable Android &7(Farmer)'
     lore:
     - ''
-    - '&8鈬?&7Function: Farming'
-    - '&8鈬?&7Fuel Efficiency: 1.0x'
+    - '&8⇨ &7Function: Farming'
+    - '&8⇨ &7Fuel Efficiency: 1.0x'
   sf.programmable_android_miner:
     name: '&cProgrammable Android &7(Miner)'
     lore:
     - ''
-    - '&8鈬?&7Function: Mining'
-    - '&8鈬?&7Fuel Efficiency: 1.0x'
+    - '&8⇨ &7Function: Mining'
+    - '&8⇨ &7Fuel Efficiency: 1.0x'
   sf.programmable_android_woodcutter:
     name: '&cProgrammable Android &7(Woodcutter)'
     lore:
     - ''
-    - '&8鈬?&7Function: Woodcutting'
-    - '&8鈬?&7Fuel Efficiency: 1.0x'
+    - '&8⇨ &7Function: Woodcutting'
+    - '&8⇨ &7Fuel Efficiency: 1.0x'
   sf.programmable_android_butcher:
     name: '&cProgrammable Android &7(Butcher)'
     lore:
     - ''
-    - '&8鈬?&7Function: Slaughtering'
-    - '&8鈬?&7Damage: 4'
-    - '&8鈬?&7Fuel Efficiency: 1.0x'
+    - '&8⇨ &7Function: Slaughtering'
+    - '&8⇨ &7Damage: 4'
+    - '&8⇨ &7Fuel Efficiency: 1.0x'
   sf.programmable_android_fisherman:
     name: '&cProgrammable Android &7(Fisherman)'
     lore:
     - ''
-    - '&8鈬?&7Function: Fishing'
-    - '&8鈬?&7Success Rate: 10%'
-    - '&8鈬?&7Fuel Efficiency: 1.0x'
+    - '&8⇨ &7Function: Fishing'
+    - '&8⇨ &7Success Rate: 10%'
+    - '&8⇨ &7Fuel Efficiency: 1.0x'
   sf.programmable_android_2:
     name: '&cAdvanced Programmable Android &7(Normal)'
     lore:
     - ''
-    - '&8鈬?&7Function: None'
-    - '&8鈬?&7Fuel Efficiency: 1.5x'
+    - '&8⇨ &7Function: None'
+    - '&8⇨ &7Fuel Efficiency: 1.5x'
   sf.programmable_android_2_fisherman:
     name: '&cAdvanced Programmable Android &7(Fisherman)'
     lore:
     - ''
-    - '&8鈬?&7Function: Fishing'
-    - '&8鈬?&7Success Rate: 20%'
-    - '&8鈬?&7Fuel Efficiency: 1.5x'
+    - '&8⇨ &7Function: Fishing'
+    - '&8⇨ &7Success Rate: 20%'
+    - '&8⇨ &7Fuel Efficiency: 1.5x'
   sf.programmable_android_2_farmer:
     name: '&cAdvanced Programmable Android &7(Farmer)'
     lore:
     - ''
-    - '&8鈬?&7Function: Farming'
-    - '&8鈬?&7Fuel Efficiency: 1.5x'
-    - '&8鈬?&7Can also harvest Plants from ExoticGarden'
+    - '&8⇨ &7Function: Farming'
+    - '&8⇨ &7Fuel Efficiency: 1.5x'
+    - '&8⇨ &7Can also harvest Plants from ExoticGarden'
   sf.programmable_android_2_butcher:
     name: '&cAdvanced Programmable Android &7(Butcher)'
     lore:
     - ''
-    - '&8鈬?&7Function: Slaughtering'
-    - '&8鈬?&7Damage: 8'
-    - '&8鈬?&7Fuel Efficiency: 1.5x'
+    - '&8⇨ &7Function: Slaughtering'
+    - '&8⇨ &7Damage: 8'
+    - '&8⇨ &7Fuel Efficiency: 1.5x'
   sf.programmable_android_3:
     name: '&eEmpowered Programmable Android &7(Normal)'
     lore:
     - ''
-    - '&8鈬?&7Function: None'
-    - '&8鈬?&7Fuel Efficiency: 3.0x'
+    - '&8⇨ &7Function: None'
+    - '&8⇨ &7Fuel Efficiency: 3.0x'
   sf.programmable_android_3_fisherman:
     name: '&eEmpowered Programmable Android &7(Fisherman)'
     lore:
     - ''
-    - '&8鈬?&7Function: Fishing'
-    - '&8鈬?&7Success Rate: 30%'
-    - '&8鈬?&7Fuel Efficiency: 8.0x'
+    - '&8⇨ &7Function: Fishing'
+    - '&8⇨ &7Success Rate: 30%'
+    - '&8⇨ &7Fuel Efficiency: 8.0x'
   sf.programmable_android_3_butcher:
     name: '&eEmpowered Programmable Android &7(Butcher)'
     lore:
     - ''
-    - '&8鈬?&7Function: Slaughtering'
-    - '&8鈬?&7Damage: 20'
-    - '&8鈬?&7Fuel Efficiency: 8.0x'
+    - '&8⇨ &7Function: Slaughtering'
+    - '&8⇨ &7Damage: 20'
+    - '&8⇨ &7Fuel Efficiency: 8.0x'
   sf.gps_transmitter:
     name: '&bGPS Transmitter'
     lore:
     - ''
-    - '&8鈬?&e鈿?&14320 J Buffer'
-    - '&8鈬?&e鈿?&72 J/t'
+    - '&8⇨ &e⚡&7320 J Buffer'
+    - '&8⇨ &e⚡&72 J/t'
   sf.gps_transmitter_2:
     name: '&cAdvanced GPS Transmitter'
     lore:
     - ''
-    - '&8鈬?&e鈿?&15280 J Buffer'
-    - '&8鈬?&e鈿?&76 J/t'
+    - '&8⇨ &e⚡&71280 J Buffer'
+    - '&8⇨ &e⚡&76 J/t'
   sf.gps_transmitter_3:
     name: '&4Carbonado GPS Transmitter'
     lore:
     - ''
-    - '&8鈬?&e鈿?&145120 J Buffer'
-    - '&8鈬?&e鈿?&722 J/t'
+    - '&8⇨ &e⚡&75120 J Buffer'
+    - '&8⇨ &e⚡&722 J/t'
   sf.gps_transmitter_4:
     name: '&eEnergized GPS Transmitter'
     lore:
     - ''
-    - '&8鈬?&e鈿?&1420480 J Buffer'
-    - '&8鈬?&e鈿?&792 J/t'
+    - '&8⇨ &e⚡&720480 J Buffer'
+    - '&8⇨ &e⚡&792 J/t'
   sf.gps_marker_tool:
     name: '&bGPS Marker Tool'
     lore:
@@ -2391,8 +2396,8 @@ items:
     - '&eThese Resources cannot be mined with a pickaxe'
     - ''
     - '&6Advanced Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&748 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&748 J/t'
     - ''
     - '&c&l! &cMake sure to Geo-Scan the Chunk first'
   sf.oil_pump:
@@ -2416,8 +2421,8 @@ items:
     lore:
     - ''
     - '&6Advanced Generator'
-    - '&8? &e? &720480 J Buffer'
-    - '&8? &e? &764 J/t'
+    - '&8⇨ &e⚡ &75120 J Buffer'
+    - '&8⇨ &e⚡ &724 J/t'
   sf.android_memory_core:
     name: '&bAndroid Memory Core'
   sf.gps_teleporter_pylon:
@@ -2457,7 +2462,7 @@ items:
     - '&fThis device allows you to teleport'
     - '&fto your waypoints from anywhere'
     - ''
-    - '&8鈬?&e鈿?&70 / 50 J'
+    - '&8⇨ &e⚡&70 / 50 J'
     - ''
     - '&eRight Click&7 to use'
   sf.elevator_plate:
@@ -2479,15 +2484,15 @@ items:
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&710 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&710 J/t'
   sf.heated_pressure_chamber_2:
     name: '&cHeated Pressure Chamber &7- &eII'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b5x'
-    - '&8鈬?&e鈿?&744 J/t'
+    - '&8⇨ &b⚡&7Speed: &b5x'
+    - '&8⇨ &e⚡&744 J/t'
   sf.electric_smeltery:
     name: '&cElectric Smeltery'
     lore:
@@ -2495,8 +2500,8 @@ items:
     - '&4Alloys-Only, doesn''t smelt Dust into Ingots'
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&720 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&720 J/t'
   sf.electric_smeltery_2:
     name: '&cElectric Smeltery &7- &eII'
     lore:
@@ -2504,82 +2509,82 @@ items:
     - '&4Alloys-Only, doesn''t smelt Dust into Ingots'
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b3x'
-    - '&8鈬?&e鈿?&740 J/t'
+    - '&8⇨ &b⚡&7Speed: &b3x'
+    - '&8⇨ &e⚡&740 J/t'
   sf.electric_press:
     name: '&eElectric Press'
     lore:
     - ''
     - '&aMedium Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&716 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&716 J/t'
   sf.electric_press_2:
     name: '&eElectric Press &7- &eII'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b3x'
-    - '&8鈬?&e鈿?&740 J/t'
+    - '&8⇨ &b⚡&7Speed: &b3x'
+    - '&8⇨ &e⚡&740 J/t'
   sf.electrified_crucible:
     name: '&cElectrified Crucible'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&748 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&748 J/t'
   sf.electrified_crucible_2:
     name: '&cElectrified Crucible &7- &eII'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b2x'
-    - '&8鈬?&e鈿?&780 J/t'
+    - '&8⇨ &b⚡&7Speed: &b2x'
+    - '&8⇨ &e⚡&780 J/t'
   sf.electrified_crucible_3:
     name: '&cElectrified Crucible &7- &eIII'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b4x'
-    - '&8鈬?&e鈿?&7120 J/t'
+    - '&8⇨ &b⚡&7Speed: &b4x'
+    - '&8⇨ &e⚡&7120 J/t'
   sf.carbon_press:
     name: '&cCarbon Press'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&720 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&720 J/t'
   sf.carbon_press_2:
     name: '&cCarbon Press &7- &eII'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b3x'
-    - '&8鈬?&e鈿?&750 J/t'
+    - '&8⇨ &b⚡&7Speed: &b3x'
+    - '&8⇨ &e⚡&750 J/t'
   sf.carbon_press_3:
     name: '&cCarbon Press &7- &eIII'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b15x'
-    - '&8鈬?&e鈿?&7180 J/t'
+    - '&8⇨ &b⚡&7Speed: &b15x'
+    - '&8⇨ &e⚡&7180 J/t'
   sf.blistering_ingot:
     name: '&6Blistering Ingot &7(33%)'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &6HIGH'
-    - '&8鈬?&4Hazmat Suit required!'
+    - '&a☢ &7Radiation level: &6HIGH'
+    - '&8⇨ &4Hazmat Suit required!'
   sf.blistering_ingot_2:
     name: '&6Blistering Ingot &7(66%)'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &cVERY HIGH'
-    - '&8鈬?&4Hazmat Suit required!'
+    - '&a☢ &7Radiation level: &cVERY HIGH'
+    - '&8⇨ &4Hazmat Suit required!'
   sf.blistering_ingot_3:
     name: '&6Blistering Ingot'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &cVERY HIGH'
-    - '&8鈬?&4Hazmat Suit required!'
+    - '&a☢ &7Radiation level: &cVERY HIGH'
+    - '&8⇨ &4Hazmat Suit required!'
   sf.energy_regulator:
     name: '&6Energy Regulator'
     lore:
@@ -2605,14 +2610,14 @@ items:
     name: '&eNether Ice'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &eMODERATE'
-    - '&8鈬?&4Hazmat Suit required!'
+    - '&a☢ &7Radiation level: &eMODERATE'
+    - '&8⇨ &4Hazmat Suit required!'
   sf.enriched_nether_ice:
     name: '&eEnriched Nether Ice'
     lore:
     - ''
-    - '&a鈽?7 Radiation level: &cVERY HIGH'
-    - '&8鈬?&4Hazmat Suit required!'
+    - '&a☢ &7Radiation level: &cVERY HIGH'
+    - '&8⇨ &4Hazmat Suit required!'
   sf.nether_ice_coolant_cell:
     name: '&6Nether Ice Coolant Cell'
   sf.cargo_manager:
@@ -2647,8 +2652,8 @@ items:
     - '&fRuns on &aOrganic Food'
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&e鈿?&1420480 J Buffer'
-    - '&8鈬?&e鈿?&760 J/Animal'
+    - '&8⇨ &e⚡&720480 J Buffer'
+    - '&8⇨ &e⚡&760 J/Animal'
   sf.produce_collector:
     name: '&bProduce Collector'
     lore:
@@ -2657,12 +2662,12 @@ items:
     - '&fcollect produce from nearby animals.'
     - ''
     - '&6Advanced Machine'
-    - '&8鈬?&e鈿?&150240 J Buffer'
-    - '&8鈬?&e鈿?&732 J/t'
+    - '&8⇨ &e⚡&710240 J Buffer'
+    - '&8⇨ &e⚡&732 J/t'
   sf.organic_food:
     name: '&aOrganic Food'
     lore:
-    - '&7Content: &9???'
+    - '&7Content: &9Unknown'
   sf.organic_food_wheat:
     name: '&aOrganic Food'
     lore:
@@ -2710,7 +2715,7 @@ items:
   sf.fertilizer:
     name: '&aOrganic Fertilizer'
     lore:
-    - '&7Content: &9???'
+    - '&7Content: &9Unknown'
   sf.fertilizer_wheat:
     name: '&aOrganic Fertilizer'
     lore:
@@ -2762,8 +2767,8 @@ items:
     - '&fRuns on &aOrganic Food'
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&e鈿?&1420480 J Buffer'
-    - '&8鈬?&e鈿?&728 J/t'
+    - '&8⇨ &e⚡&720480 J Buffer'
+    - '&8⇨ &e⚡&728 J/t'
   sf.crop_growth_accelerator:
     name: '&aCrop Growth Accelerator'
     lore:
@@ -2771,10 +2776,10 @@ items:
     - '&fRuns on &aOrganic Fertilizer'
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&7Radius: 7x7'
-    - '&8鈬?&7Speed: &a3/time'
-    - '&8鈬?&e鈿?&1420480 J Buffer'
-    - '&8鈬?&e鈿?&750 J/t'
+    - '&8⇨ &7Radius: 7x7'
+    - '&8⇨ &7Speed: &a3/time'
+    - '&8⇨ &e⚡&720480 J Buffer'
+    - '&8⇨ &e⚡&750 J/t'
   sf.crop_growth_accelerator_2:
     name: '&aCrop Growth Accelerator &7(&eII&7)'
     lore:
@@ -2782,10 +2787,10 @@ items:
     - '&fRuns on &aOrganic Fertilizer'
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&7Radius: 9x9'
-    - '&8鈬?&7Speed: &a4/time'
-    - '&8鈬?&e鈿?&1420480 J Buffer'
-    - '&8鈬?&e鈿?&760 J/t'
+    - '&8⇨ &7Radius: 9x9'
+    - '&8⇨ &7Speed: &a4/time'
+    - '&8⇨ &e⚡&720480 J Buffer'
+    - '&8⇨ &e⚡&760 J/t'
   sf.tree_growth_accelerator:
     name: '&aTree Growth Accelerator'
     lore:
@@ -2793,10 +2798,10 @@ items:
     - '&fRuns on &aOrganic Fertilizer'
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&7Radius: 9x9'
-    - '&8鈬?&7Speed: &a4/time'
-    - '&8鈬?&e鈿?&1420480 J Buffer'
-    - '&8鈬?&e鈿?&748 J/t'
+    - '&8⇨ &7Radius: 9x9'
+    - '&8⇨ &7Speed: &a4/time'
+    - '&8⇨ &e⚡&720480 J Buffer'
+    - '&8⇨ &e⚡&748 J/t'
   sf.food_fabricator:
     name: '&cFood Fabricator'
     lore:
@@ -2804,9 +2809,9 @@ items:
     - '&fProduces &aOrganic Food'
     - ''
     - '&6Advanced Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&145120 J Buffer'
-    - '&8鈬?&e鈿?&714 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&75120 J Buffer'
+    - '&8⇨ &e⚡&714 J/t'
   sf.food_fabricator_2:
     name: '&cFood Fabricator &7(&eII&7)'
     lore:
@@ -2814,9 +2819,9 @@ items:
     - '&fProduces &aOrganic Food'
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b6x'
-    - '&8鈬?&e鈿?&150240 J Buffer'
-    - '&8鈬?&e鈿?&748 J/t'
+    - '&8⇨ &b⚡&7Speed: &b6x'
+    - '&8⇨ &e⚡&710240 J Buffer'
+    - '&8⇨ &e⚡&748 J/t'
   sf.food_composter:
     name: '&cFood Composter'
     lore:
@@ -2824,9 +2829,9 @@ items:
     - '&fProduces &aOrganic Fertilizer'
     - ''
     - '&6Advanced Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&145120 J Buffer'
-    - '&8鈬?&e鈿?&716 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&75120 J Buffer'
+    - '&8⇨ &e⚡&716 J/t'
   sf.food_composter_2:
     name: '&cFood Composter &7(&eII&7)'
     lore:
@@ -2834,9 +2839,9 @@ items:
     - '&fProduces &aOrganic Fertilizer'
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b10x'
-    - '&8鈬?&e鈿?&150240 J Buffer'
-    - '&8鈬?&e鈿?&752 J/t'
+    - '&8⇨ &b⚡&7Speed: &b10x'
+    - '&8⇨ &e⚡&710240 J Buffer'
+    - '&8⇨ &e⚡&752 J/t'
   sf.xp_collector:
     name: '&aEXP Collector'
     lore:
@@ -2844,8 +2849,8 @@ items:
     - '&fCollects nearby Exp and stores it'
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&e鈿?&1420480 J Buffer'
-    - '&8鈬?&e鈿?&720 J/t'
+    - '&8⇨ &e⚡&720480 J Buffer'
+    - '&8⇨ &e⚡&720 J/t'
   sf.reactor_coolant_cell:
     name: '&bReactor Coolant Cell'
   sf.nuclear_reactor:
@@ -2853,24 +2858,24 @@ items:
     lore:
     - ''
     - '&fRequires Cooling!'
-    - '&8鈬?&bMust be surrounded by Water'
-    - '&8鈬?&bMust be supplied with Reactor Coolant Cells'
+    - '&8⇨ &bMust be surrounded by Water'
+    - '&8⇨ &bMust be supplied with Reactor Coolant Cells'
     - ''
     - '&4End-Game Generator'
-    - '&8鈬?&e鈿?&14327680 J Buffer'
-    - '&8鈬?&e鈿?&7500 J/t'
+    - '&8⇨ &e⚡&7327680 J Buffer'
+    - '&8⇨ &e⚡&7500 J/t'
   sf.netherstar_reactor:
     name: '&fNether Star Reactor'
     lore:
     - ''
     - '&fRuns on Nether Stars'
-    - '&8鈬?&bMust be surrounded by Water'
-    - '&8鈬?&bMust be supplied with Nether Ice Coolant Cells'
+    - '&8⇨ &bMust be surrounded by Water'
+    - '&8⇨ &bMust be supplied with Nether Ice Coolant Cells'
     - ''
     - '&4End-Game Generator'
-    - '&8鈬?&e鈿?&14655360 J Buffer'
-    - '&8鈬?&e鈿?&71024 J/t'
-    - '&8鈬?&4Causes nearby Entities to get Withered'
+    - '&8⇨ &e⚡&7655360 J Buffer'
+    - '&8⇨ &e⚡&71024 J/t'
+    - '&8⇨ &4Causes nearby Entities to get Withered'
   sf.reactor_access_port:
     name: '&2Reactor Access Port'
     lore:
@@ -2879,100 +2884,100 @@ items:
     - '&fvia Cargo Nodes, can also be used'
     - '&fas a Buffer'
     - ''
-    - '&8鈬?&eMust be placed &a3 Blocks &eabove the Reactor'
+    - '&8⇨ &eMust be placed &a3 Blocks &eabove the Reactor'
   sf.freezer:
     name: '&bFreezer'
     lore:
     - ''
     - '&6Advanced Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&145120 J Buffer'
-    - '&8鈬?&e鈿?&718 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&75120 J Buffer'
+    - '&8⇨ &e⚡&718 J/t'
   sf.freezer_2:
     name: '&bFreezer &7(&eII&7)'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b2x'
-    - '&8鈬?&e鈿?&145120 J Buffer'
-    - '&8鈬?&e鈿?&730 J/t'
+    - '&8⇨ &b⚡&7Speed: &b2x'
+    - '&8⇨ &e⚡&75120 J Buffer'
+    - '&8⇨ &e⚡&730 J/t'
   sf.freezer_3:
     name: '&bFreezer &7(&eIII&7)'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b3x'
-    - '&8鈬?&e鈿?&145120 J Buffer'
-    - '&8鈬?&e鈿?&742 J/t'
+    - '&8⇨ &b⚡&7Speed: &b3x'
+    - '&8⇨ &e⚡&75120 J Buffer'
+    - '&8⇨ &e⚡&742 J/t'
   sf.electric_gold_pan:
     name: '&6Electric Gold Pan'
     lore:
     - ''
     - '&eBasic Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&72 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&72 J/t'
   sf.electric_gold_pan_2:
     name: '&6Electric Gold Pan &7(&eII&7)'
     lore:
     - ''
     - '&eBasic Machine'
-    - '&8鈬?&b鈿?&7Speed: &b3x'
-    - '&8鈬?&e鈿?&74 J/t'
+    - '&8⇨ &b⚡&7Speed: &b3x'
+    - '&8⇨ &e⚡&74 J/t'
   sf.electric_gold_pan_3:
     name: '&6Electric Gold Pan &7(&eIII&7)'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b10x'
-    - '&8鈬?&e鈿?&714 J/t'
+    - '&8⇨ &b⚡&7Speed: &b10x'
+    - '&8⇨ &e⚡&714 J/t'
   sf.electric_dust_washer:
     name: '&3Electric Dust Washer'
     lore:
     - ''
     - '&eBasic Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&76 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&76 J/t'
   sf.electric_dust_washer_2:
     name: '&3Electric Dust Washer &7(&eII&7)'
     lore:
     - ''
     - '&eBasic Machine'
-    - '&8鈬?&b鈿?&7Speed: &b2x'
-    - '&8鈬?&e鈿?&710 J/t'
+    - '&8⇨ &b⚡&7Speed: &b2x'
+    - '&8⇨ &e⚡&710 J/t'
   sf.electric_dust_washer_3:
     name: '&3Electric Dust Washer &7(&eIII&7)'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b10x'
-    - '&8鈬?&e鈿?&730 J/t'
+    - '&8⇨ &b⚡&7Speed: &b10x'
+    - '&8⇨ &e⚡&730 J/t'
   sf.electric_ingot_factory:
     name: '&cElectric Ingot Factory'
     lore:
     - ''
     - '&eBasic Machine'
-    - '&8鈬?&b鈿?&7Speed: &b1x'
-    - '&8鈬?&e鈿?&78 J/t'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&78 J/t'
   sf.electric_ingot_factory_2:
     name: '&cElectric Ingot Factory &7(&eII&7)'
     lore:
     - ''
     - '&eBasic Machine'
-    - '&8鈬?&b鈿?&7Speed: &b2x'
-    - '&8鈬?&e鈿?&714 J/t'
+    - '&8⇨ &b⚡&7Speed: &b2x'
+    - '&8⇨ &e⚡&714 J/t'
   sf.electric_ingot_factory_3:
     name: '&cElectric Ingot Factory &7(&eIII&7)'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&b鈿?&7Speed: &b8x'
-    - '&8鈬?&e鈿?&740 J/t'
+    - '&8⇨ &b⚡&7Speed: &b8x'
+    - '&8⇨ &e⚡&740 J/t'
   sf.fluid_pump:
     name: '&9Fluid Pump'
     lore:
     - ''
     - '&6Advanced Machine'
-    - '&8鈬?&e鈿?&732 J/Block'
+    - '&8⇨ &e⚡&732 J/Block'
   sf.charging_bench:
     name: '&6Charging Bench'
     lore:
@@ -2980,8 +2985,8 @@ items:
     - '&fCharges Items such as Jetpacks'
     - ''
     - '&eBasic Machine'
-    - '&8鈬?&e鈿?&142560 J Buffer'
-    - '&8鈬?&e鈿?&7Energy Loss: &c50%'
+    - '&8⇨ &e⚡&72560 J Buffer'
+    - '&8⇨ &e⚡&7Energy Loss: &c50%'
   sf.vanilla_auto_crafter:
     name: '&2Auto-Crafter &8(Vanilla)'
     lore:
@@ -2992,7 +2997,7 @@ items:
     - '&fnormal &eCrafting Table'
     - ''
     - '&6Advanced Machine'
-    - '&8鈬?&e鈿?&716 J/Item'
+    - '&8⇨ &e⚡&716 J/Item'
   sf.enhanced_auto_crafter:
     name: '&2Auto-Crafter &8(Enhanced)'
     lore:
@@ -3003,7 +3008,7 @@ items:
     - '&eEnhanced Crafting Table'
     - ''
     - '&6Advanced Machine'
-    - '&8鈬?&e鈿?&716 J/Item'
+    - '&8⇨ &e⚡&716 J/Item'
   sf.armor_auto_crafter:
     name: '&2Auto-Crafter &8(Armor Forge)'
     lore:
@@ -3014,23 +3019,23 @@ items:
     - '&eArmor Forge'
     - ''
     - '&6Advanced Machine'
-    - '&8鈬?&e鈿?&732 J/Item'
+    - '&8⇨ &e⚡&732 J/Item'
   sf.iron_golem_assembler:
     name: '&6Iron Golem Assembler'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&7Cooldown: &b30 Seconds'
-    - '&8鈬?&e鈿?&1481920 J Buffer'
-    - '&8鈬?&e鈿?&72048 J/Golem'
+    - '&8⇨ &7Cooldown: &b30 Seconds'
+    - '&8⇨ &e⚡&781920 J Buffer'
+    - '&8⇨ &e⚡&72048 J/Golem'
   sf.wither_assembler:
     name: '&5Wither Assembler'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8鈬?&7Cooldown: &b30 Seconds'
-    - '&8鈬?&e鈿?&1481920 J Buffer'
-    - '&8鈬?&e鈿?&74096 J/Wither'
+    - '&8⇨ &7Cooldown: &b30 Seconds'
+    - '&8⇨ &e⚡&781920 J Buffer'
+    - '&8⇨ &e⚡&74096 J/Wither'
   sf.trash_can_block:
     name: '&3Trash Can'
     lore:
@@ -3053,13 +3058,12 @@ items:
     lore:
     - ''
     - '&aMedium Generator'
-    - '&8? &e? &72560 J Buffer'
-    - '&8? &e? &718 J/t'
+    - '&8⇨ &e⚡ &72560 J Buffer'
+    - '&8⇨ &e⚡ &736 J/t'
   sf.birthday_cake:
     name: '&bBirthday Cake'
 debug:
-  header: <dark_gray>====================</dark_gray> <green>SFX DEBUG TEXT</green>
-    <dark_gray>====================</dark_gray>
+  header: <dark_gray>====================</dark_gray> <green>SFX DEBUG TEXT</green> <dark_gray>====================</dark_gray>
   footer: <dark_gray>====================</dark_gray> <green>END</green> <dark_gray>====================</dark_gray>
   missing-testing: TESTING.md was not packaged into the plugin.
   failed-testing: 'Failed to read TESTING.md: {error}'
@@ -3108,7 +3112,7 @@ command:
       1: '<gray>Total: {count}</gray>'
   reload:
     success: <green>SFX configuration and language files were reloaded.</green>
-    success-all: <green>SFX fully reloaded: registries, recipes, and menus were refreshed.</green>
+    success-all: '<green>SFX fully reloaded: registries, recipes, and menus were refreshed.</green>'
   help:
     header: <green>SFX Commands</green>
     line:
@@ -3180,8 +3184,7 @@ categories:
   sf.alloy_damascus_steel_duralumin_compressed_carbon_aluminium_bronze:
     name: '&fAlloy (Damascus Steel + Duralumin + Compressed Carbon + Aluminium Bronze)'
   sf.alloy_hardened_metal_corinthian_bronze_solder_billon_damascus_steel:
-    name: '&fAlloy (Hardened Metal + Corinthian Bronze + Solder + Billon + Damascus
-      Steel)'
+    name: '&fAlloy (Hardened Metal + Corinthian Bronze + Solder + Billon + Damascus Steel)'
   sf.alloy_iron_silicon:
     name: '&fAlloy (Iron + Silicon)'
   sf.alloy_iron_gold:
@@ -3292,7 +3295,7 @@ messages:
     foreign-owner: <red>This backpack belongs to another player.</red>
     already-open: <red>This backpack is already open.</red>
     not-found: <red>That backpack does not exist.</red>
-    admin-title: Backpack 
+    admin-title: Backpack
   tape-measure:
     no-anchor: '&cYou need to set an anchor before you can start to measure!'
     wrong-world: '&cYour anchor seems to be in a different world!'
@@ -3305,20 +3308,20 @@ messages:
     no-surface: '&cAim at a wall to use your Climbing Picks.'
   diet-cookie: '&eYou are starting to feel very light...'
   fortune-cookie:
-    - '&7Help me, I am trapped in a Fortune Cookie Factory!'
-    - '&7You will die tomorrow...     by a Creeper'
-    - '&7At some point in your Life something bad will happen!!!'
-    - '&7Next week you will notice that this is not the real world, you are in a computer game'
-    - '&7This cookie will taste good in a few seconds'
-    - '&7The last word you will hear is gonna be "EXTERMINATE!!!"'
-    - '&7Whatever you do, do not hug a Creeper... I tried it. It feels good, but it''s not worth it.'
-    - '&742. The answer is 42.'
-    - '&7A Walshy a day will keep the troubles away.'
-    - '&7Never dig straight down!'
-    - '&7Tis but a flesh wound!'
-    - '&7Always look on the bright side of life!'
-    - '&7This one was actually a Biscuit and not a Cookie'
-    - '&7Neon signs are LIT!'
+  - '&7Help me, I am trapped in a Fortune Cookie Factory!'
+  - '&7You will die tomorrow...     by a Creeper'
+  - '&7At some point in your Life something bad will happen!!!'
+  - '&7Next week you will notice that this is not the real world, you are in a computer game'
+  - '&7This cookie will taste good in a few seconds'
+  - '&7The last word you will hear is gonna be "EXTERMINATE!!!"'
+  - '&7Whatever you do, do not hug a Creeper... I tried it. It feels good, but it''s not worth it.'
+  - '&742. The answer is 42.'
+  - '&7A Walshy a day will keep the troubles away.'
+  - '&7Never dig straight down!'
+  - '&7Tis but a flesh wound!'
+  - '&7Always look on the bright side of life!'
+  - '&7This one was actually a Biscuit and not a Cookie'
+  - '&7Neon signs are LIT!'
   pickaxe-of-the-seeker:
     no-ores: '&cCannot find any nearby ores!'
 electric-ui:
@@ -3344,34 +3347,41 @@ electric-ui:
   no-power:
     name: <red>No Power</red>
     lore: <gray>Charge this machine to continue.</gray>
-  energy-buffer: "<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>"
+  energy-buffer: '<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
   progress:
     name: <yellow>Working</yellow>
-    recipe: "<gray>Recipe: </gray><white>{recipe}</white>"
-    speed: "<gray>Speed: </gray><aqua>{speed}x</aqua>"
-    value: "<gray>Progress: </gray><white>{current}</white><gray>/</gray><white>{total}</white>"
+    recipe: '<gray>Recipe: </gray><white>{recipe}</white>'
+    speed: '<gray>Speed: </gray><aqua>{speed}x</aqua>'
+    value: '<gray>Progress: </gray><white>{current}</white><gray>/</gray><white>{total}</white>'
     power-disabled: <dark_gray>Power usage is disabled for now.</dark_gray>
-    time-left: "<gray>{time}</gray>"
-    work: "<gray>Progress: </gray><white>{current}</white><gray>/</gray><white>{total}</white><gray> (+{rate}/tick)</gray>"
+    time-left: <gray>{time}</gray>
+    work: '<gray>Progress: </gray><white>{current}</white><gray>/</gray><white>{total}</white><gray> (+{rate}/tick)</gray>'
 energy:
   regulator:
-    no-network: "<red>No Energy Network found</red>"
-    multi-regulator: "<red>Multiple Energy Regulators connected</red>"
-    shared-node-conflict: "<red>Energy network conflict</red>"
-    net-positive: "<green>+{net} J</green><gray> | +{supply} / -{demand}</gray>"
-    net-negative: "<red>{net} J</red><gray> | +{supply} / -{demand}</gray>"
-    classic-positive: "<green>+{net} J ⚡</green>"
-    classic-negative: "<red>{net} J ⚡</red>"
-    sfx-positive: "<green>+{net} J</green><gray> | {stored}/{capacity} J</gray>"
-    sfx-negative: "<red>{net} J</red><gray> | {stored}/{capacity} J</gray>"
+    no-network: <red>Not connected to any electric machines</red>
+    multi-regulator: <red>Multiple energy regulators in this connection</red>
+    shared-node-conflict: <red>Energy network conflict</red>
+    net-positive: <green>+{net} J/t</green><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity} J</gray>
+    net-negative: <red>{net} J/t</red><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity} J</gray>
+    classic-positive: <green>+{net} J ⚡</green>
+    classic-negative: <red>{net} J ⚡</red>
+    sfx-positive: <green>+{net_text} J/t</green><newline>{flow_line}<newline>{storage_line}
+    sfx-negative: <red>-{net_text} J/t</red><newline>{flow_line}<newline>{storage_line}
   generator:
+    fuel:
+      oil: Oil
+      fuel: Fuel
+    fuel-duration: '<gray>Duration: </gray><aqua>{seconds}s</aqua>'
     active:
       name: <green>Generating</green>
       lore: <gray>Fuel is currently being converted into energy.</gray>
-    time-left: "<gray>{time}s</gray>"
+    time-left: <gray>{time}s</gray>
     idle:
       name: <gray>Idle</gray>
       lore: <gray>Insert fuel to start generating power.</gray>
+    output-full:
+      name: <red>Output Full</red>
+      lore: <gray>Clear the output slots to continue.</gray>
     no-network:
       name: <red>Not Connected</red>
       lore: <gray>This generator is not connected to an energy network.</gray>
@@ -3380,8 +3390,9 @@ energy:
       lore: <gray>Resolve regulator or shared-node conflicts first.</gray>
     solar:
       name: <yellow>Solar Generator</yellow>
-    buffer: "<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>"
-    production: "<gray>Production: </gray><green>{energy} J/t</green>"
+    buffer: '<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
+    production: '<gray>Production: </gray><green>{energy} J/t</green>'
+    tier2-fuel-consumption-lore: '&8⇨ &6🔥 &7Fuel consumption: &b1.5x'
   messages:
     capacitor-status: <yellow>Stored {stored}/{capacity} J</yellow>
     regulator-status: <yellow>Energy regulator active.</yellow>

@@ -1735,6 +1735,7 @@ researches:
     items:
       - sf:coal_generator_2
       - sf:lava_generator_2
+      - sf:bio_reactor_2
   - id: ingredients_and_cheese
     order: 276
     name: 'Slimefun Cuisine'

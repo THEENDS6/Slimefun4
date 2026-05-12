@@ -95,7 +95,8 @@ public final class DefaultSfxGuide implements SfxGuide {
             36, 37, 38, 39, 40, 41, 42, 43, 44
     };
     private static final int[] CLASSIC_RECIPE_SLOTS = {3, 4, 5, 12, 13, 14, 21, 22, 23};
-    private static final int[] SFX_RECIPE_SLOTS = {3, 4, 5, 12, 13, 14, 21, 22, 23};
+    private static final int[] SFX_RECIPE_SLOTS_TOP = {3, 4, 5, 12, 13, 14, 21, 22, 23};
+    private static final int[] SFX_RECIPE_SLOTS_NORMAL = {12, 13, 14, 21, 22, 23, 30, 31, 32};
     private static final int CLASSIC_VERTICAL_INPUT_SLOT = 13;
     private static final int CLASSIC_VERTICAL_OUTPUT_SLOT = 22;
     private static final int SFX_VERTICAL_INPUT_SLOT = 13;
@@ -104,16 +105,20 @@ public final class DefaultSfxGuide implements SfxGuide {
             36, 37, 38, 39, 40, 41, 42, 43, 44,
             45, 46, 47, 48, 49, 50, 51, 52, 53
     };
-    private static final int[] SFX_DISPLAY_SLOTS = {
+    private static final int[] SFX_DISPLAY_SLOTS_PAIRED = {
             36, 37, 38, 39, 40, 41, 42, 43, 44,
             45, 46, 47, 48, 49, 50, 51, 52, 53
     };
+    private static final int[] SFX_DISPLAY_SLOTS_COMPACT = {45, 46, 47, 48, 49, 50, 51, 52, 53};
     private static final int CLASSIC_RECIPE_CENTER_SLOT = 13;
-    private static final int SFX_RECIPE_CENTER_SLOT = 13;
+    private static final int SFX_RECIPE_CENTER_SLOT_TOP = 13;
+    private static final int SFX_RECIPE_CENTER_SLOT_NORMAL = 22;
     private static final int CLASSIC_SOURCE_SLOT = 10;
     private static final int CLASSIC_OUTPUT_SLOT = 16;
-    private static final int SFX_SOURCE_SLOT = 10;
-    private static final int SFX_OUTPUT_SLOT = 16;
+    private static final int SFX_SOURCE_SLOT_TOP = 10;
+    private static final int SFX_OUTPUT_SLOT_TOP = 16;
+    private static final int SFX_SOURCE_SLOT_NORMAL = 19;
+    private static final int SFX_OUTPUT_SLOT_NORMAL = 25;
     private static final int[] SETTINGS_BACKGROUND = {
             1, 3, 5, 7,
             9, 10, 11, 12, 13, 14, 15, 16, 17,
@@ -638,26 +643,35 @@ public final class DefaultSfxGuide implements SfxGuide {
             List<DisplayEntry> displayEntries,
             RecipePageOpener opener
     ) {
+        SfxDisplayLayout displayLayout = sfxDisplayLayout(displayEntries);
+        int[] recipeSlots = displayLayout == SfxDisplayLayout.PAIRED_GRID ? SFX_RECIPE_SLOTS_TOP : SFX_RECIPE_SLOTS_NORMAL;
+        int recipeCenterSlot = displayLayout == SfxDisplayLayout.PAIRED_GRID ? SFX_RECIPE_CENTER_SLOT_TOP : SFX_RECIPE_CENTER_SLOT_NORMAL;
+        int sourceSlot = displayLayout == SfxDisplayLayout.PAIRED_GRID ? SFX_SOURCE_SLOT_TOP : SFX_SOURCE_SLOT_NORMAL;
+        int outputSlot = displayLayout == SfxDisplayLayout.PAIRED_GRID ? SFX_OUTPUT_SLOT_TOP : SFX_OUTPUT_SLOT_NORMAL;
         SfxMenu.Builder builder = SfxMenu.builder(title(mode, subjectTitle)).rows(6);
+        paintRecipeFrame(builder, mode);
+        if (displayLayout != SfxDisplayLayout.PAIRED_GRID) {
+            paintSfxLowerDivider(builder, current, pages.size());
+        }
 
         if (current.hasRecipe()) {
-            for (int i = 0; i < SFX_RECIPE_SLOTS.length; i++) {
-                builder.button(SFX_RECIPE_SLOTS[i], ingredientButton(current.matrix().get(i), mode));
+            for (int i = 0; i < recipeSlots.length; i++) {
+                builder.button(recipeSlots[i], ingredientButton(current.matrix().get(i), mode));
             }
         } else {
-            for (int slot : SFX_RECIPE_SLOTS) {
+            for (int slot : recipeSlots) {
                 builder.button(slot, new SfxMenuButton(emptyMatrixSlotIcon(), click -> {
                 }));
             }
-            builder.button(SFX_RECIPE_CENTER_SLOT, new SfxMenuButton(ItemBuilder.of(Material.BARRIER)
+            builder.button(recipeCenterSlot, new SfxMenuButton(ItemBuilder.of(Material.BARRIER)
                     .name(tr("guide.recipe.no-recipe.name", "<red>No Recipe</red>"))
                     .lore(tr("guide.recipe.no-recipe.lore", "<gray>This item currently only exists as a registry or system entry.</gray>"))
                     .build(), click -> {
             }));
         }
 
-        builder.button(SFX_SOURCE_SLOT, recipeSourceButton(current, mode));
-        builder.button(SFX_OUTPUT_SLOT, new SfxMenuButton(withLore(outputItem, List.of(
+        builder.button(sourceSlot, recipeSourceButton(current, mode));
+        builder.button(outputSlot, new SfxMenuButton(withLore(outputItem, List.of(
                 Component.empty(),
                 Text.mm(tr("guide.recipe.output", "<green>Output</green>"))
         )), click -> outputAction.accept(click.player(), click.clickType())));
@@ -675,10 +689,12 @@ public final class DefaultSfxGuide implements SfxGuide {
             }
         }));
 
-        if (!displayEntries.isEmpty()) {
+        if (displayLayout == SfxDisplayLayout.PAIRED_GRID) {
             paintClassicDivider(builder, current, pages.size());
+            renderDisplayEntries(builder, displayEntries, SFX_DISPLAY_SLOTS_PAIRED);
+        } else if (displayLayout == SfxDisplayLayout.COMPACT_LIST) {
+            renderDisplayEntries(builder, displayEntries, SFX_DISPLAY_SLOTS_COMPACT);
         }
-        renderDisplayEntries(builder, displayEntries, SFX_DISPLAY_SLOTS);
         showMenu(player, builder, navigation);
     }
 
@@ -907,8 +923,27 @@ public final class DefaultSfxGuide implements SfxGuide {
                     SfxRecipeSlot.vanilla(Material.BASALT, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
                     SfxRecipeSlot.vanilla(Material.COBBLED_DEEPSLATE, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET)
             ), mode);
+            case "sf:combustion_reactor" -> combustionFuelDisplayEntries(mode);
             default -> List.of();
         };
+    }
+
+    private List<DisplayEntry> combustionFuelDisplayEntries(GuideMode mode) {
+        boolean sfxBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
+        int oilSeconds = sfxBalance ? 40 : 30;
+        int fuelSeconds = sfxBalance ? 120 : 90;
+        List<DisplayEntry> entries = new ArrayList<>();
+        entries.add(fuelDisplayEntry(SfxRecipeSlot.sfx("sf:bucket_of_oil"), tr("energy.generator.fuel.oil", "Oil"), oilSeconds, 300, mode));
+        entries.add(fuelDisplayEntry(SfxRecipeSlot.sfx("sf:bucket_of_fuel"), tr("energy.generator.fuel.fuel", "Fuel"), fuelSeconds, 305, mode));
+        return entries;
+    }
+
+    private DisplayEntry fuelDisplayEntry(SfxRecipeSlot slot, String label, int seconds, int priority, GuideMode mode) {
+        ItemStack icon = withLore(ingredientIcon(slot), List.of(
+                Component.empty(),
+                Text.mm(tr("energy.generator.fuel-duration", "<gray>Duration: </gray><aqua>{seconds}s</aqua>").replace("{seconds}", Integer.toString(seconds)))
+        ));
+        return DisplayEntry.single(icon, label + " " + seconds + "s", priority, handlerForSlot(slot, mode));
     }
 
     private List<DisplayEntry> pairedDisplayEntries(List<SfxRecipeSlot> slots, GuideMode mode) {
@@ -1041,7 +1076,24 @@ public final class DefaultSfxGuide implements SfxGuide {
         };
     }
 
+    private SfxDisplayLayout sfxDisplayLayout(List<DisplayEntry> entries) {
+        if (entries == null || entries.isEmpty()) {
+            return SfxDisplayLayout.NONE;
+        }
+        boolean compact = entries.size() <= SFX_DISPLAY_SLOTS_COMPACT.length && entries.stream().noneMatch(DisplayEntry::paired);
+        return compact ? SfxDisplayLayout.COMPACT_LIST : SfxDisplayLayout.PAIRED_GRID;
+    }
+
     private void renderDisplayEntries(SfxMenu.Builder builder, List<DisplayEntry> entries, int[] slots) {
+        if (slots.length <= 9) {
+            for (int i = 0; i < slots.length; i++) {
+                DisplayEntry entry = i < entries.size() ? entries.get(i) : null;
+                Cell cell = entry == null ? null : new Cell(entry.primaryIcon(), entry.primaryHandler());
+                paintDisplayCell(builder, slots[i], cell);
+            }
+            return;
+        }
+
         int columns = slots.length / 2;
         Cell[] top = new Cell[columns];
         Cell[] bottom = new Cell[columns];
@@ -1285,6 +1337,19 @@ public final class DefaultSfxGuide implements SfxGuide {
             }));
         }
         builder.button(31, new SfxMenuButton(ItemBuilder.of(Material.KNOWLEDGE_BOOK)
+                .name("<yellow>" + current.sourceName() + "</yellow>")
+                .lore(pageNumberLore(current.index(), pageCount))
+                .build(), click -> {
+        }));
+    }
+
+    private void paintSfxLowerDivider(SfxMenu.Builder builder, GuideRecipePage current, int pageCount) {
+        ItemStack divider = ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE).name("<dark_gray> </dark_gray>").build();
+        for (int slot = 36; slot <= 44; slot++) {
+            builder.button(slot, new SfxMenuButton(divider, click -> {
+            }));
+        }
+        builder.button(40, new SfxMenuButton(ItemBuilder.of(Material.KNOWLEDGE_BOOK)
                 .name("<yellow>" + current.sourceName() + "</yellow>")
                 .lore(pageNumberLore(current.index(), pageCount))
                 .build(), click -> {
@@ -2078,6 +2143,12 @@ public final class DefaultSfxGuide implements SfxGuide {
         static GuideLocation vanilla(GuideMode mode, Material material, int recipeIndex) {
             return new GuideLocation(mode, GuideLocationKind.VANILLA, 0, null, null, material, recipeIndex);
         }
+    }
+
+    private enum SfxDisplayLayout {
+        NONE,
+        COMPACT_LIST,
+        PAIRED_GRID
     }
 
     private enum GuideLocationKind {

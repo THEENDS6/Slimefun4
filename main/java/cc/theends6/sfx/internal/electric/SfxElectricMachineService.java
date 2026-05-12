@@ -10,6 +10,7 @@ import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,6 +63,7 @@ public final class SfxElectricMachineService implements Listener {
     private final Map<UUID, SfxElectricMachineState> stateCache = new ConcurrentHashMap<>();
     private final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
     private final Set<UUID> activeInstances = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Integer> recentEnergyConsumption = new ConcurrentHashMap<>();
     private final Map<UUID, MachineSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, MachineSession> sessionsByInstance = new ConcurrentHashMap<>();
     private volatile boolean running;
@@ -272,6 +274,7 @@ public final class SfxElectricMachineService implements Listener {
         stateCache.clear();
         dirtyInstances.clear();
         activeInstances.clear();
+        recentEnergyConsumption.clear();
     }
 
     private void bootstrapLoadedStates() {
@@ -292,12 +295,12 @@ public final class SfxElectricMachineService implements Listener {
                 manualMachines.recipesFor("sf:grind_stone"),
                 manualMachines.recipesFor("sf:ore_crusher"),
                 4);
-        result.register(new SfxElectricMachineDefinition("sf:electric_furnace", "Electric Furnace", 1, 1280, 2, Material.FLINT_AND_STEEL, furnaceRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electric_furnace_2", "Electric Furnace - II", 2, 2560, 3, Material.FLINT_AND_STEEL, furnaceRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electric_furnace_3", "Electric Furnace - III", 4, 5120, 5, Material.FLINT_AND_STEEL, furnaceRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electric_ore_grinder", "Electric Ore Grinder", 1, 2560, 6, Material.IRON_PICKAXE, grinderRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electric_ore_grinder_2", "Electric Ore Grinder - II", 4, 10240, 15, Material.IRON_PICKAXE, grinderRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electric_ore_grinder_3", "Electric Ore Grinder - III", 10, 20480, 45, Material.IRON_PICKAXE, grinderRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:electric_furnace", "Electric Furnace", 1, 1280, 4, Material.FLINT_AND_STEEL, furnaceRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:electric_furnace_2", "Electric Furnace - II", 2, 2560, 6, Material.FLINT_AND_STEEL, furnaceRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:electric_furnace_3", "Electric Furnace - III", 4, 5120, 10, Material.FLINT_AND_STEEL, furnaceRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:electric_ore_grinder", "Electric Ore Grinder", 1, 2560, 12, Material.IRON_PICKAXE, grinderRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:electric_ore_grinder_2", "Electric Ore Grinder - II", 4, 10240, 30, Material.IRON_PICKAXE, grinderRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:electric_ore_grinder_3", "Electric Ore Grinder - III", 10, 20480, 90, Material.IRON_PICKAXE, grinderRecipes));
         return result;
     }
 
@@ -311,6 +314,58 @@ public final class SfxElectricMachineService implements Listener {
             return 0;
         }
         return currentState(instanceId, instance).storedEnergy();
+    }
+
+    public int drainRecentEnergyConsumption(Collection<UUID> instanceIds) {
+        if (instanceIds == null || instanceIds.isEmpty()) {
+            return 0;
+        }
+        int total = 0;
+        for (UUID instanceId : instanceIds) {
+            Integer consumed = recentEnergyConsumption.remove(instanceId);
+            if (consumed != null && consumed > 0) {
+                total += consumed;
+            }
+        }
+        return total;
+    }
+
+    public int requestedEnergyConsumption(Collection<UUID> instanceIds) {
+        if (instanceIds == null || instanceIds.isEmpty()) {
+            return 0;
+        }
+        int total = 0;
+        for (UUID instanceId : instanceIds) {
+            total += requestedEnergyConsumption(instanceId);
+        }
+        return total;
+    }
+
+    private int requestedEnergyConsumption(UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            return 0;
+        }
+        SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
+        if (definition == null || definition.energyConsumptionPerTick() <= 0) {
+            return 0;
+        }
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        if (state.hasPendingOutput()) {
+            return 0;
+        }
+        SfxElectricRecipe activeRecipe = activeRecipe(definition, state);
+        if (activeRecipe != null && state.reservedInput() != null) {
+            return definition.energyConsumptionPerTick();
+        }
+        RecipeMatch match = findRecipeMatch(definition, state);
+        if (match == null) {
+            return 0;
+        }
+        if (findOutputSlot(state, match.recipe().output()) == null) {
+            return 0;
+        }
+        return definition.energyConsumptionPerTick();
     }
 
     public int chargeConsumer(UUID instanceId, int amount) {
@@ -459,6 +514,7 @@ public final class SfxElectricMachineService implements Listener {
                 } else {
                     if (definition.energyConsumptionPerTick() > 0) {
                         state.storedEnergy(state.storedEnergy() - definition.energyConsumptionPerTick());
+                        recentEnergyConsumption.merge(instanceId, definition.energyConsumptionPerTick(), Integer::sum);
                     }
                     int totalWork = requiredWork(activeRecipe);
                     int progressed = Math.min(totalWork, state.progressWork() + definition.speed());
