@@ -17,7 +17,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -48,10 +47,12 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private final JavaPlugin plugin;
     private final SfxApi api;
+    private final SfxCommandTabCompleter tabCompleter;
 
     public SfxCommand(JavaPlugin plugin, SfxApi api) {
         this.plugin = plugin;
         this.api = api;
+        this.tabCompleter = new SfxCommandTabCompleter(plugin, api);
     }
 
     @Override
@@ -422,48 +423,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1) {
-            return filter(List.of("guide", "cheatguide", "book", "give", "research", "backpack", "inspect", "list", "reload", "help"), args[0]);
-        }
-        if (args.length == 2 && args[0].equalsIgnoreCase("book")) {
-            return filter(List.of("cheat"), args[1]);
-        }
-        if (args.length == 2 && args[0].equalsIgnoreCase("reload")) {
-            return filter(List.of("all"), args[1]);
-        }
-        if (args.length == 2 && args[0].equalsIgnoreCase("research")) {
-            return filter(knownPlayerNames(), args[1]);
-        }
-        if (args.length == 3 && args[0].equalsIgnoreCase("research")) {
-            List<String> options = new ArrayList<>(List.of("all", "reset"));
-            SlimeFunXPlugin sfx = sfxPlugin();
-            if (sfx != null) {
-                options.addAll(sfx.researchService().allResearches().stream().map(SfxResearchDefinition::id).toList());
-            }
-            return filter(options, args[2]);
-        }
-        if (args.length == 2 && args[0].equalsIgnoreCase("backpack")) {
-            return filter(List.of("list", "open", "give"), args[1]);
-        }
-        if (args.length == 3 && args[0].equalsIgnoreCase("backpack")) {
-            return filter(knownPlayerNames(), args[2]);
-        }
-        if (args.length == 4 && args[0].equalsIgnoreCase("backpack")) {
-            return filter(List.of("0", "1", "2", "3", "4", "5"), args[3]);
-        }
-        if (args.length == 5 && args[0].equalsIgnoreCase("backpack") && args[1].equalsIgnoreCase("give")) {
-            return filter(List.of("1", "2", "3", "4", "5", "6", "9", "18", "27", "36", "45", "54"), args[4]);
-        }
-        if (args.length == 2 && args[0].equalsIgnoreCase("list")) {
-            return filter(List.of("1", "2", "3", "4", "5"), args[1]);
-        }
-        if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
-            return filter(api.itemRegistry().items().stream().map(SfxItemDefinition::id).toList(), args[1]);
-        }
-        if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
-            return filter(List.of("1", "8", "16", "32", "64", "128", "256", "512", "1024"), args[2]);
-        }
-        return List.of();
+        return tabCompleter.complete(sender, command, alias, args);
     }
 
     private SlimeFunXPlugin sfxPlugin() {
@@ -562,19 +522,6 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         return null;
     }
 
-    private List<String> knownPlayerNames() {
-        List<String> values = new ArrayList<>();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            values.add(player.getName());
-        }
-        for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
-            if (player.getName() != null && !values.contains(player.getName())) {
-                values.add(player.getName());
-            }
-        }
-        return values;
-    }
-
     private String formatTimestamp(long timestamp) {
         if (timestamp <= 0L) {
             return "-";
@@ -582,17 +529,5 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault()).toString().replace('T', ' ');
     }
 
-    private List<String> filter(Collection<String> options, String prefix) {
-        String normalized = prefix.toLowerCase(Locale.ROOT);
-        List<String> result = new ArrayList<>();
-        for (String option : options) {
-            if (option.toLowerCase(Locale.ROOT).startsWith(normalized)) {
-                result.add(option);
-            }
-        }
-        return result;
-    }
 
-    private record ResolvedPlayerRef(OfflinePlayer offlinePlayer, String displayName) {
-    }
 }

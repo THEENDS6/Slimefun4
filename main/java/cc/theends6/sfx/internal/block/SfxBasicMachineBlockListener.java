@@ -752,12 +752,5 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
     }
 
-    private record CruciblePlan(int inputAmount, boolean water) {
-    }
 
-    private record FurnaceStats(int processingSpeed, int fuelEfficiency, int fortuneLevel) {
-    }
-
-    private record ActiveCrucibleProcess(UUID token, Location outputLocation, boolean water) {
-    }
 }

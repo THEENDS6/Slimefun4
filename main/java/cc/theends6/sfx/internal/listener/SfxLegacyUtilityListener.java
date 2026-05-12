@@ -645,16 +645,5 @@ public final class SfxLegacyUtilityListener implements Listener {
         event.setCancelled(true);
     }
 
-    private record WeightedDrop(int weight, ItemStack item) {
-    }
 
-    private record GrappleState(Arrow arrow, boolean consumed) {
-    }
-
-    private static final class DustbinHolder implements InventoryHolder {
-        @Override
-        public Inventory getInventory() {
-            return null;
-        }
-    }
 }

@@ -10,6 +10,8 @@ import cc.theends6.sfx.internal.block.SfxPlaceableBlockListener;
 import cc.theends6.sfx.internal.block.SqliteSfxBlockDataRepository;
 import cc.theends6.sfx.internal.command.SfxCommand;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
+import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
+import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayListener;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
@@ -57,6 +59,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxBasicMachineBlockListener basicMachineBlockListener;
     private SfxElectricMachineService electricMachineService;
     private SfxEnergyService energyService;
+    private SfxFloatingTextDisplayService floatingTextDisplayService;
     private boolean packetEventsLoaded;
 
     @Override
@@ -97,8 +100,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
         this.basicMachineBlockListener = new SfxBasicMachineBlockListener(this, api.runtime(), api.items(), localization, blockDataService);
         ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization, basicMachineBlockListener);
+        this.floatingTextDisplayService = new SfxFloatingTextDisplayService(this, api.runtime());
         this.electricMachineService = new SfxElectricMachineService(this, api.runtime(), api.items(), localization, blockDataService, playerDataService, api.internalManualMachines());
-        this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService);
+        this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, floatingTextDisplayService);
         SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, energyService);
 
         this.backpackListener = new SfxBackpackListener(this, api.runtime(), api.items(), localization, playerDataService, researchService);
@@ -108,6 +112,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         SfxTalismanListener talismanListener = new SfxTalismanListener(this, api.runtime(), api.items(), researchService);
 
         getServer().getPluginManager().registerEvents(api.menus(), this);
+        getServer().getPluginManager().registerEvents(new SfxFloatingTextDisplayListener(floatingTextDisplayService), this);
         getServer().getPluginManager().registerEvents(new SfxPlayerProfileListener(playerDataService), this);
         getServer().getPluginManager().registerEvents(new SfxGuideListener(this, api.items(), api.guide()), this);
         getServer().getPluginManager().registerEvents(new SfxItemUseDispatcher(api.items(), backpackListener, utilityListener, combatToolListener, foodListener, researchService, localization), this);
@@ -155,6 +160,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         if (energyService != null) {
             energyService.shutdown();
+        }
+        if (floatingTextDisplayService != null) {
+            floatingTextDisplayService.shutdown();
         }
         if (playerDataService != null) {
             playerDataService.shutdown();
