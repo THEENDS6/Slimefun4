@@ -8,10 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.Nameable;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.entity.Player;
@@ -190,6 +193,7 @@ public final class SfxManualMachineDeployListener implements Listener {
             if (updated != null) {
                 block.setBlockData(updated, false);
             }
+            clearPlacedBlockName(block);
         }
         Material anchorExpected = plan.placements().get(plan.anchor());
         if (anchorExpected == null || anchorExpected.isAir()) {
@@ -308,6 +312,14 @@ public final class SfxManualMachineDeployListener implements Listener {
 
     private BlockFace playerFacing(Player player) {
         return player == null ? BlockFace.NORTH : player.getFacing();
+    }
+
+    private void clearPlacedBlockName(Block block) {
+        BlockState state = block.getState();
+        if (state instanceof Nameable nameable) {
+            nameable.customName((Component) null);
+            state.update(true, false);
+        }
     }
 
     private record DeploymentPlan(Block anchor, Block center, Map<Block, Material> placements) {

@@ -42,6 +42,27 @@ import org.bukkit.plugin.java.JavaPlugin;
  * vanilla should not consume, place, dye, shoot, rename, grind or craft it.</p>
  */
 public final class SfxVanillaGuardListener implements Listener {
+    private static final Set<String> ALWAYS_PLACEABLE_IDS = Set.of(
+            "sf:energy_regulator",
+            "sf:energy_connector",
+            "sf:small_capacitor",
+            "sf:medium_capacitor",
+            "sf:big_capacitor",
+            "sf:large_capacitor",
+            "sf:carbonado_edged_capacitor",
+            "sf:energized_capacitor",
+            "sf:solar_generator",
+            "sf:solar_generator_2",
+            "sf:solar_generator_3",
+            "sf:solar_generator_4",
+            "sf:coal_generator",
+            "sf:coal_generator_2",
+            "sf:lava_generator",
+            "sf:lava_generator_2",
+            "sf:bio_reactor",
+            "sf:combustion_reactor",
+            "sf:magnesium_generator"
+    );
     private static final Set<String> VANILLA_USE_IDS = Set.of(
             "sf:explosive_bow",
             "sf:icy_bow",
@@ -373,7 +394,7 @@ public final class SfxVanillaGuardListener implements Listener {
             return false;
         }
         return items.readMarker(item)
-                .map(marker -> marker.flags().contains("placeable-block"))
+                .map(marker -> marker.flags().contains("placeable-block") || ALWAYS_PLACEABLE_IDS.contains(marker.itemId()))
                 .orElse(false);
     }
 }

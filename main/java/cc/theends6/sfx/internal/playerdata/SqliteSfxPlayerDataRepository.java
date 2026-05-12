@@ -37,6 +37,16 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
                     CREATE TABLE IF NOT EXISTS sfx_player_profiles (
                       uuid TEXT PRIMARY KEY,
                       last_name TEXT NOT NULL,
+                      guide_layout TEXT,
+                      guide_record_history INTEGER NOT NULL DEFAULT 1,
+                      guide_close_returns INTEGER NOT NULL DEFAULT 1,
+                      guide_fireworks INTEGER NOT NULL DEFAULT 1,
+                      guide_unlock_animation INTEGER NOT NULL DEFAULT 1,
+                      guide_reopen_last INTEGER NOT NULL DEFAULT 0,
+                      guide_last_location TEXT,
+                      machine_ui_extended INTEGER NOT NULL DEFAULT 1,
+                      machine_completion_sound INTEGER NOT NULL DEFAULT 1,
+                      machine_smooth_ui INTEGER NOT NULL DEFAULT 1,
                       updated_at INTEGER NOT NULL
                     )
                     """);
@@ -60,6 +70,16 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
                       FOREIGN KEY (owner_uuid) REFERENCES sfx_player_profiles(uuid) ON DELETE CASCADE
                     )
                     """);
+            ensureProfileColumn(connection, "guide_layout", "TEXT");
+            ensureProfileColumn(connection, "guide_record_history", "INTEGER NOT NULL DEFAULT 1");
+            ensureProfileColumn(connection, "guide_close_returns", "INTEGER NOT NULL DEFAULT 1");
+            ensureProfileColumn(connection, "guide_fireworks", "INTEGER NOT NULL DEFAULT 1");
+            ensureProfileColumn(connection, "guide_unlock_animation", "INTEGER NOT NULL DEFAULT 1");
+            ensureProfileColumn(connection, "guide_reopen_last", "INTEGER NOT NULL DEFAULT 0");
+            ensureProfileColumn(connection, "guide_last_location", "TEXT");
+            ensureProfileColumn(connection, "machine_ui_extended", "INTEGER NOT NULL DEFAULT 1");
+            ensureProfileColumn(connection, "machine_completion_sound", "INTEGER NOT NULL DEFAULT 1");
+            ensureProfileColumn(connection, "machine_smooth_ui", "INTEGER NOT NULL DEFAULT 1");
         }
     }
 
@@ -67,11 +87,35 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
     public SfxPlayerProfile load(UUID ownerId, String lastKnownName) throws Exception {
         SfxPlayerProfile profile = new SfxPlayerProfile(ownerId, lastKnownName);
         try (Connection connection = openConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT last_name FROM sfx_player_profiles WHERE uuid = ?")) {
+            try (PreparedStatement statement = connection.prepareStatement("""
+                    SELECT last_name,
+                           guide_layout,
+                           guide_record_history,
+                           guide_close_returns,
+                           guide_fireworks,
+                           guide_unlock_animation,
+                           guide_reopen_last,
+                           guide_last_location,
+                           machine_ui_extended,
+                           machine_completion_sound,
+                           machine_smooth_ui
+                    FROM sfx_player_profiles
+                    WHERE uuid = ?
+                    """)) {
                 statement.setString(1, ownerId.toString());
                 try (ResultSet result = statement.executeQuery()) {
                     if (result.next()) {
                         profile.setLastKnownName(result.getString(1));
+                        profile.setGuideLayoutMode(result.getString("guide_layout"));
+                        profile.setGuideRecordHistory(result.getInt("guide_record_history") != 0);
+                        profile.setGuideCloseReturns(result.getInt("guide_close_returns") != 0);
+                        profile.setGuideFireworks(result.getInt("guide_fireworks") != 0);
+                        profile.setGuideUnlockAnimation(result.getInt("guide_unlock_animation") != 0);
+                        profile.setGuideReopenLastLocation(result.getInt("guide_reopen_last") != 0);
+                        profile.setGuideLastLocation(result.getString("guide_last_location"));
+                        profile.setMachineUiExtended(result.getInt("machine_ui_extended") != 0);
+                        profile.setMachineCompletionSound(result.getInt("machine_completion_sound") != 0);
+                        profile.setMachineSmoothUi(result.getInt("machine_smooth_ui") != 0);
                     }
                 }
             }
@@ -112,13 +156,49 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
             connection.setAutoCommit(false);
             try {
                 try (PreparedStatement statement = connection.prepareStatement("""
-                        INSERT INTO sfx_player_profiles(uuid, last_name, updated_at)
-                        VALUES(?, ?, ?)
-                        ON CONFLICT(uuid) DO UPDATE SET last_name = excluded.last_name, updated_at = excluded.updated_at
+                        INSERT INTO sfx_player_profiles(
+                            uuid,
+                            last_name,
+                            guide_layout,
+                            guide_record_history,
+                            guide_close_returns,
+                            guide_fireworks,
+                            guide_unlock_animation,
+                            guide_reopen_last,
+                            guide_last_location,
+                            machine_ui_extended,
+                            machine_completion_sound,
+                            machine_smooth_ui,
+                            updated_at
+                        )
+                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(uuid) DO UPDATE SET
+                            last_name = excluded.last_name,
+                            guide_layout = excluded.guide_layout,
+                            guide_record_history = excluded.guide_record_history,
+                            guide_close_returns = excluded.guide_close_returns,
+                            guide_fireworks = excluded.guide_fireworks,
+                            guide_unlock_animation = excluded.guide_unlock_animation,
+                            guide_reopen_last = excluded.guide_reopen_last,
+                            guide_last_location = excluded.guide_last_location,
+                            machine_ui_extended = excluded.machine_ui_extended,
+                            machine_completion_sound = excluded.machine_completion_sound,
+                            machine_smooth_ui = excluded.machine_smooth_ui,
+                            updated_at = excluded.updated_at
                         """)) {
                     statement.setString(1, profile.ownerId().toString());
                     statement.setString(2, profile.lastKnownName());
-                    statement.setLong(3, now);
+                    statement.setString(3, profile.guideLayoutMode());
+                    statement.setInt(4, profile.guideRecordHistory() ? 1 : 0);
+                    statement.setInt(5, profile.guideCloseReturns() ? 1 : 0);
+                    statement.setInt(6, profile.guideFireworks() ? 1 : 0);
+                    statement.setInt(7, profile.guideUnlockAnimation() ? 1 : 0);
+                    statement.setInt(8, profile.guideReopenLastLocation() ? 1 : 0);
+                    statement.setString(9, profile.guideLastLocation());
+                    statement.setInt(10, profile.machineUiExtended() ? 1 : 0);
+                    statement.setInt(11, profile.machineCompletionSound() ? 1 : 0);
+                    statement.setInt(12, profile.machineSmoothUi() ? 1 : 0);
+                    statement.setLong(13, now);
                     statement.executeUpdate();
                 }
 
@@ -172,5 +252,26 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
 
     private Connection openConnection() throws SQLException {
         return DriverManager.getConnection(jdbcUrl);
+    }
+
+    private void ensureProfileColumn(Connection connection, String columnName, String definition) throws SQLException {
+        if (hasColumn(connection, "sfx_player_profiles", columnName)) {
+            return;
+        }
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("ALTER TABLE sfx_player_profiles ADD COLUMN " + columnName + " " + definition);
+        }
+    }
+
+    private boolean hasColumn(Connection connection, String tableName, String columnName) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("PRAGMA table_info(" + tableName + ")");
+             ResultSet result = statement.executeQuery()) {
+            while (result.next()) {
+                if (columnName.equalsIgnoreCase(result.getString("name"))) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

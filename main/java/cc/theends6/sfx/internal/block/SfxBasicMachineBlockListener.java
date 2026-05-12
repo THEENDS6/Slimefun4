@@ -101,8 +101,15 @@ public final class SfxBasicMachineBlockListener implements Listener {
             if (!SUPPORTED_BLOCKS.contains(marker.itemId())) {
                 return;
             }
+            if (blockData.findAnchor(event.getBlockPlaced().getLocation()).isPresent()) {
+                return;
+            }
             blockData.registerSingleBlock(marker.itemId(), event.getBlockPlaced().getLocation(), event.getBlockPlaced().getType(), event.getPlayer().getUniqueId());
         });
+    }
+
+    public boolean supportsType(String typeId) {
+        return SUPPORTED_BLOCKS.contains(typeId);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -116,10 +123,17 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         event.setDropItems(false);
-        clearActiveCrucible(anchor.get().key(), true);
-        dropStoredContents(event.getBlock());
-        dropPluginBlock(event.getBlock(), typeId);
-        blockData.unregisterAt(event.getBlock().getLocation());
+        destroyAnchoredBlock(event.getBlock(), typeId);
+    }
+
+    public void destroyAnchoredBlock(Block block, String typeId) {
+        if (block == null || typeId == null || !SUPPORTED_BLOCKS.contains(typeId)) {
+            return;
+        }
+        clearActiveCrucible(SfxBlockAnchorKey.fromLocation(block.getLocation()), true);
+        dropStoredContents(block);
+        dropPluginBlock(block, typeId);
+        blockData.unregisterAt(block.getLocation());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
