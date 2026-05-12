@@ -44,9 +44,9 @@ public final class SfxYamlContentLoader {
         this.logger = plugin.getLogger();
     }
 
-    public void ensureDefaultFiles() {
+    public void ensureDefaultFiles(boolean overwrite) {
         for (String resource : BUNDLED_ITEM_RESOURCES) {
-            saveIfAbsent(resource);
+            saveBundled(resource, overwrite);
         }
     }
 
@@ -287,9 +287,9 @@ public final class SfxYamlContentLoader {
         return text.isEmpty() ? null : text;
     }
 
-    private void saveIfAbsent(String resourcePath) {
+    private void saveBundled(String resourcePath, boolean overwrite) {
         File target = new File(plugin.getDataFolder(), resourcePath);
-        if (target.exists()) {
+        if (!overwrite && target.exists()) {
             return;
         }
         File parent = target.getParentFile();
@@ -298,7 +298,7 @@ public final class SfxYamlContentLoader {
             return;
         }
         try {
-            plugin.saveResource(resourcePath, false);
+            plugin.saveResource(resourcePath, overwrite);
         } catch (IllegalArgumentException ignored) {
             try {
                 if (!target.exists() && !target.createNewFile()) {

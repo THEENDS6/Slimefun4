@@ -1813,94 +1813,81 @@ items:
   sf.enhanced_furnace:
     name: '&7强化熔炉 &7- &eI'
     lore:
-    - ''
-    - '&8⇨ &b处理速度：&f1x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f1x'
+    - '&8⇨ &b处理速度：&f2x'
+    - '&8⇨ &6燃料效率：&f1x'
+    - '&8⇨ &d时运等级：&f1x'
   sf.enhanced_furnace_2:
     name: '&7强化熔炉 &7- &eII'
     lore:
-    - ''
     - '&8⇨ &b处理速度：&f2x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f1x'
+    - '&8⇨ &6燃料效率：&f1x'
+    - '&8⇨ &d时运等级：&f1x'
   sf.enhanced_furnace_3:
     name: '&7强化熔炉 &7- &eIII'
     lore:
-    - ''
-    - '&8⇨ &b处理速度：&f2x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f1x'
+    - '&8⇨ &b处理速度：&f3x'
+    - '&8⇨ &6燃料效率：&f2x'
+    - '&8⇨ &d时运等级：&f1x'
   sf.enhanced_furnace_4:
     name: '&7强化熔炉 &7- &eIV'
     lore:
-    - ''
     - '&8⇨ &b处理速度：&f3x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f1x'
+    - '&8⇨ &6燃料效率：&f3x'
+    - '&8⇨ &d时运等级：&f1x'
   sf.enhanced_furnace_5:
     name: '&7强化熔炉 &7- &eV'
     lore:
-    - ''
-    - '&8⇨ &b处理速度：&f3x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f2x'
+    - '&8⇨ &b处理速度：&f4x'
+    - '&8⇨ &6燃料效率：&f3x'
+    - '&8⇨ &d时运等级：&f1x'
   sf.enhanced_furnace_6:
     name: '&7强化熔炉 &7- &eVI'
     lore:
-    - ''
-    - '&8⇨ &b处理速度：&f3x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f2x'
+    - '&8⇨ &b处理速度：&f4x'
+    - '&8⇨ &6燃料效率：&f3x'
+    - '&8⇨ &d时运等级：&f2x'
   sf.enhanced_furnace_7:
     name: '&7强化熔炉 &7- &eVII'
     lore:
-    - ''
-    - '&8⇨ &b处理速度：&f4x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f2x'
+    - '&8⇨ &b处理速度：&f5x'
+    - '&8⇨ &6燃料效率：&f3x'
+    - '&8⇨ &d时运等级：&f2x'
   sf.enhanced_furnace_8:
     name: '&7强化熔炉 &7- &eVIII'
     lore:
-    - ''
-    - '&8⇨ &b处理速度：&f4x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f2x'
+    - '&8⇨ &b处理速度：&f5x'
+    - '&8⇨ &6燃料效率：&f4x'
+    - '&8⇨ &d时运等级：&f2x'
   sf.enhanced_furnace_9:
     name: '&7强化熔炉 &7- &eIX'
     lore:
-    - ''
-    - '&8⇨ &b处理速度：&f5x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f2x'
+    - '&8⇨ &b处理速度：&f6x'
+    - '&8⇨ &6燃料效率：&f4x'
+    - '&8⇨ &d时运等级：&f2x'
   sf.enhanced_furnace_10:
     name: '&7强化熔炉 &7- &eX'
     lore:
-    - ''
-    - '&8⇨ &b处理速度：&f5x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f2x'
+    - '&8⇨ &b处理速度：&f7x'
+    - '&8⇨ &6燃料效率：&f4x'
+    - '&8⇨ &d时运等级：&f2x'
   sf.enhanced_furnace_11:
     name: '&7强化熔炉 &7- &eXI'
     lore:
-    - ''
-    - '&8⇨ &b处理速度：&f5x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f3x'
+    - '&8⇨ &b处理速度：&f8x'
+    - '&8⇨ &6燃料效率：&f4x'
+    - '&8⇨ &d时运等级：&f2x'
   sf.reinforced_furnace:
-    name: '&b强化熔炉'
+    name: '&b进阶熔炉'
     lore:
-    - ''
     - '&8⇨ &b处理速度：&f10x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f3x'
+    - '&8⇨ &6燃料效率：&f5x'
+    - '&8⇨ &d时运等级：&f3x'
   sf.carbonado_edged_furnace:
     name: '&b黑钻熔炉'
     lore:
-    - ''
     - '&8⇨ &b处理速度：&f20x'
-    - ''
-    - '&8⇨ &d幸运倍率：&f3x'
+    - '&8⇨ &6燃料效率：&f10x'
+    - '&8⇨ &d时运等级：&f3x'
   sf.soulbound_sword:
     name: '&c灵魂绑定剑'
   sf.soulbound_bow:

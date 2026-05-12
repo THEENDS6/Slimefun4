@@ -182,7 +182,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
         BaseContentBootstrap.register(itemRegistry, api.internalManualMachines());
         SfxYamlContentLoader yamlContentLoader = new SfxYamlContentLoader(this, itemRegistry);
-        yamlContentLoader.ensureDefaultFiles();
+        yamlContentLoader.ensureDefaultFiles(syncBundledItemFiles());
         yamlContentLoader.registerAll();
 
         SfxRecipeYamlLoader recipeYamlLoader = new SfxRecipeYamlLoader(this);
@@ -206,6 +206,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     private boolean syncBundledRecipeFiles() {
         return getConfig().getBoolean("content.sync-bundled-recipes-on-startup", true);
+    }
+
+    private boolean syncBundledItemFiles() {
+        return getConfig().getBoolean("content.sync-bundled-items-on-startup", true);
     }
 
     private boolean syncBundledResearchFiles() {

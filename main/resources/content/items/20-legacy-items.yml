@@ -1,4 +1,4 @@
-categories: []
+﻿categories: []
 items:
 - id: sf:portable_crafter
   category: sf:items
@@ -471,9 +471,9 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bDuralumin'
-  - '&8鈬?&e鈿?&70 / 20 J'
-  - '&8鈬?&7Thrust: &c0.35'
+  - '&8閳?&7Material: &bDuralumin'
+  - '&8閳?&e閳?&70 / 20 J'
+  - '&8閳?&7Thrust: &c0.35'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -486,9 +486,9 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bSolder'
-  - '&8鈬?&e鈿?&70 / 30 J'
-  - '&8鈬?&7Thrust: &c0.4'
+  - '&8閳?&7Material: &bSolder'
+  - '&8閳?&e閳?&70 / 30 J'
+  - '&8閳?&7Thrust: &c0.4'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -501,9 +501,9 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bBillon'
-  - '&8鈬?&e鈿?&70 / 45 J'
-  - '&8鈬?&7Thrust: &c0.45'
+  - '&8閳?&7Material: &bBillon'
+  - '&8閳?&e閳?&70 / 45 J'
+  - '&8閳?&7Thrust: &c0.45'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -516,9 +516,9 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bSteel'
-  - '&8鈬?&e鈿?&70 / 60 J'
-  - '&8鈬?&7Thrust: &c0.5'
+  - '&8閳?&7Material: &bSteel'
+  - '&8閳?&e閳?&70 / 60 J'
+  - '&8閳?&7Thrust: &c0.5'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -531,9 +531,9 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bDamascus Steel'
-  - '&8鈬?&e鈿?&70 / 75 J'
-  - '&8鈬?&7Thrust: &c0.55'
+  - '&8閳?&7Material: &bDamascus Steel'
+  - '&8閳?&e閳?&70 / 75 J'
+  - '&8閳?&7Thrust: &c0.55'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -546,9 +546,9 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bReinforced Alloy'
-  - '&8鈬?&e鈿?&70 / 100 J'
-  - '&8鈬?&7Thrust: &c0.6'
+  - '&8閳?&7Material: &bReinforced Alloy'
+  - '&8閳?&e閳?&70 / 100 J'
+  - '&8閳?&7Thrust: &c0.6'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -561,9 +561,9 @@ items:
   colorRgb: 1908001
   lore:
   - ''
-  - '&8鈬?&7Material: &bCarbonado'
-  - '&8鈬?&e鈿?&70 / 150 J'
-  - '&8鈬?&7Thrust: &c0.7'
+  - '&8閳?&7Material: &bCarbonado'
+  - '&8閳?&e閳?&70 / 150 J'
+  - '&8閳?&7Thrust: &c0.7'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -574,10 +574,10 @@ items:
   name: '&9Armored Jetpack'
   priority: 42
   lore:
-  - '&8鈬?&7Material: &bSteel'
+  - '&8閳?&7Material: &bSteel'
   - ''
-  - '&8鈬?&e鈿?&70 / 50 J'
-  - '&8鈬?&7Thrust: &c0.5'
+  - '&8閳?&e閳?&70 / 50 J'
+  - '&8閳?&7Thrust: &c0.5'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -590,10 +590,10 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bDuralumin'
-  - '&8鈬?&e鈿?&70 / 20 J'
-  - '&8鈬?&b鈿?&7Speed: &b0.35x'
-  - '&8鈬?&7Accuracy: &c50%'
+  - '&8閳?&7Material: &bDuralumin'
+  - '&8閳?&e閳?&70 / 20 J'
+  - '&8閳?&b閳?&7Speed: &b0.35x'
+  - '&8閳?&7Accuracy: &c50%'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -607,10 +607,10 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bSolder'
-  - '&8鈬?&e鈿?&70 / 30 J'
-  - '&8鈬?&b鈿?&7Speed: &b0.4x'
-  - '&8鈬?&7Accuracy: &660%'
+  - '&8閳?&7Material: &bSolder'
+  - '&8閳?&e閳?&70 / 30 J'
+  - '&8閳?&b閳?&7Speed: &b0.4x'
+  - '&8閳?&7Accuracy: &660%'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -624,10 +624,10 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bBillon'
-  - '&8鈬?&e鈿?&70 / 40 J'
-  - '&8鈬?&b鈿?&7Speed: &b0.45x'
-  - '&8鈬?&7Accuracy: &665%'
+  - '&8閳?&7Material: &bBillon'
+  - '&8閳?&e閳?&70 / 40 J'
+  - '&8閳?&b閳?&7Speed: &b0.45x'
+  - '&8閳?&7Accuracy: &665%'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -641,10 +641,10 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bSteel'
-  - '&8鈬?&e鈿?&70 / 50 J'
-  - '&8鈬?&b鈿?&7Speed: &b0.5x'
-  - '&8鈬?&7Accuracy: &e70%'
+  - '&8閳?&7Material: &bSteel'
+  - '&8閳?&e閳?&70 / 50 J'
+  - '&8閳?&b閳?&7Speed: &b0.5x'
+  - '&8閳?&7Accuracy: &e70%'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -658,10 +658,10 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bDamascus Steel'
-  - '&8鈬?&e鈿?&70 / 75 J'
-  - '&8鈬?&b鈿?&7Speed: &b0.55x'
-  - '&8鈬?&7Accuracy: &a75%'
+  - '&8閳?&7Material: &bDamascus Steel'
+  - '&8閳?&e閳?&70 / 75 J'
+  - '&8閳?&b閳?&7Speed: &b0.55x'
+  - '&8閳?&7Accuracy: &a75%'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -675,10 +675,10 @@ items:
   colorRgb: 10329495
   lore:
   - ''
-  - '&8鈬?&7Material: &bReinforced Alloy'
-  - '&8鈬?&e鈿?&70 / 100 J'
-  - '&8鈬?&b鈿?&7Speed: &b0.6x'
-  - '&8鈬?&7Accuracy: &c80%'
+  - '&8閳?&7Material: &bReinforced Alloy'
+  - '&8閳?&e閳?&70 / 100 J'
+  - '&8閳?&b閳?&7Speed: &b0.6x'
+  - '&8閳?&7Accuracy: &c80%'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -692,10 +692,10 @@ items:
   colorRgb: 1908001
   lore:
   - ''
-  - '&8鈬?&7Material: &bCarbonado'
-  - '&8鈬?&e鈿?&70 / 125 J'
-  - '&8鈬?&b鈿?&7Speed: &b0.7x'
-  - '&8鈬?&7Accuracy: &c99.9%'
+  - '&8閳?&7Material: &bCarbonado'
+  - '&8閳?&e閳?&70 / 125 J'
+  - '&8閳?&b閳?&7Speed: &b0.7x'
+  - '&8閳?&7Accuracy: &c99.9%'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -708,10 +708,10 @@ items:
   priority: 50
   lore:
   - ''
-  - '&8鈬?&7Material: &bSteel'
-  - '&8鈬?&e鈿?&70 / 50 J'
-  - '&8鈬?&b鈿?&7Speed: &b0.45x'
-  - '&8鈬?&7Accuracy: &e70%'
+  - '&8閳?&7Material: &bSteel'
+  - '&8閳?&e閳?&70 / 50 J'
+  - '&8閳?&b閳?&7Speed: &b0.45x'
+  - '&8閳?&7Accuracy: &e70%'
   - ''
   - '&eCrouch&7 to use'
   flags:
@@ -724,8 +724,8 @@ items:
   priority: 51
   lore:
   - ''
-  - '&8鈬?&7Material: &bDuralumin'
-  - '&8鈬?&e鈿?&70 / 20 J'
+  - '&8閳?&7Material: &bDuralumin'
+  - '&8閳?&e閳?&70 / 20 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -738,8 +738,8 @@ items:
   priority: 52
   lore:
   - ''
-  - '&8鈬?&7Material: &bSolder'
-  - '&8鈬?&e鈿?&70 / 30 J'
+  - '&8閳?&7Material: &bSolder'
+  - '&8閳?&e閳?&70 / 30 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -752,8 +752,8 @@ items:
   priority: 53
   lore:
   - ''
-  - '&8鈬?&7Material: &bBillon'
-  - '&8鈬?&e鈿?&70 / 40 J'
+  - '&8閳?&7Material: &bBillon'
+  - '&8閳?&e閳?&70 / 40 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -766,8 +766,8 @@ items:
   priority: 54
   lore:
   - ''
-  - '&8鈬?&7Material: &bSteel'
-  - '&8鈬?&e鈿?&70 / 50 J'
+  - '&8閳?&7Material: &bSteel'
+  - '&8閳?&e閳?&70 / 50 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -780,8 +780,8 @@ items:
   priority: 55
   lore:
   - ''
-  - '&8鈬?&7Material: &bDamascus Steel'
-  - '&8鈬?&e鈿?&70 / 60 J'
+  - '&8閳?&7Material: &bDamascus Steel'
+  - '&8閳?&e閳?&70 / 60 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -794,8 +794,8 @@ items:
   priority: 56
   lore:
   - ''
-  - '&8鈬?&7Material: &bReinforced Alloy'
-  - '&8鈬?&e鈿?&70 / 75 J'
+  - '&8閳?&7Material: &bReinforced Alloy'
+  - '&8閳?&e閳?&70 / 75 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -808,8 +808,8 @@ items:
   priority: 57
   lore:
   - ''
-  - '&8鈬?&7Material: &bCarbonado'
-  - '&8鈬?&e鈿?&70 / 100 J'
+  - '&8閳?&7Material: &bCarbonado'
+  - '&8閳?&e閳?&70 / 100 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -2205,8 +2205,8 @@ items:
   headTexture: c8b29afa6d6dc923e2e1324bf8192750f7bdbddc689632a2b6c18d9fe7a5e
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &eMODERATE'
-  - '&8鈬?&4Hazmat Suit required!'
+  - '&a閳?7 Radiation level: &eMODERATE'
+  - '&8閳?&4Hazmat Suit required!'
   flags:
   - legacy-sf
 - id: sf:tiny_uranium
@@ -2217,7 +2217,7 @@ items:
   headTexture: c8b29afa6d6dc923e2e1324bf8192750f7bdbddc689632a2b6c18d9fe7a5e
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &eLOW'
+  - '&a閳?7 Radiation level: &eLOW'
   flags:
   - legacy-sf
 - id: sf:solar_panel
@@ -3060,8 +3060,8 @@ items:
   headTexture: c8b29afa6d6dc923e2e1324bf8192750f7bdbddc689632a2b6c18d9fe7a5e
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &6HIGH'
-  - '&8鈬?&4Hazmat Suit required!'
+  - '&a閳?7 Radiation level: &6HIGH'
+  - '&8閳?&4Hazmat Suit required!'
   flags:
   - legacy-sf
 - id: sf:neptunium
@@ -3072,8 +3072,8 @@ items:
   headTexture: 4edea6bfd37e49de43f154fe6fca617d4129e61b95759a3d49a15935a1c2dcf0
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &6HIGH'
-  - '&8鈬?&4Hazmat Suit required!'
+  - '&a閳?7 Radiation level: &6HIGH'
+  - '&8閳?&4Hazmat Suit required!'
   flags:
   - legacy-sf
 - id: sf:plutonium
@@ -3084,8 +3084,8 @@ items:
   headTexture: 25cf91b7388665a6d7c1b6026bdb2322c6d278997a44478677cbcc15f76124f
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &cVERY HIGH'
-  - '&8鈬?&4Hazmat Suit required!'
+  - '&a閳?7 Radiation level: &cVERY HIGH'
+  - '&8閳?&4Hazmat Suit required!'
   flags:
   - legacy-sf
 - id: sf:boosted_uranium
@@ -3096,8 +3096,8 @@ items:
   headTexture: 6837ca12f222f4787196a17b8ab656985f8404c50767adbcb6e7f14254fee
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &cVERY HIGH'
-  - '&8鈬?&4Hazmat Suit required!'
+  - '&a閳?7 Radiation level: &cVERY HIGH'
+  - '&8閳?&4Hazmat Suit required!'
   flags:
   - legacy-sf
 - id: sf:common_talisman
@@ -3918,7 +3918,7 @@ items:
 - id: sf:output_chest
   category: sf:machines
   material: CHEST
-  name: '&4Output Chest'
+  name: '&4Item Output Chest'
   priority: 309
   lore:
   - ''
@@ -3975,10 +3975,9 @@ items:
   name: '&7Enhanced Furnace - &eI'
   priority: 313
   lore:
-  - ''
-  - '&7Processing Speed: &e1x'
+  - '&7Processing Speed: &e2x'
   - '&7Fuel Efficiency: &e1x'
-  - '&7Luck Multiplier: &e1x'
+  - '&7Fortune Level: &e1x'
   flags:
   - legacy-sf
   - plugin-block
@@ -3990,10 +3989,9 @@ items:
   name: '&7Enhanced Furnace - &eII'
   priority: 314
   lore:
-  - ''
   - '&7Processing Speed: &e2x'
   - '&7Fuel Efficiency: &e1x'
-  - '&7Luck Multiplier: &e1x'
+  - '&7Fortune Level: &e1x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4005,10 +4003,9 @@ items:
   name: '&7Enhanced Furnace - &eIII'
   priority: 315
   lore:
-  - ''
-  - '&7Processing Speed: &e2x'
+  - '&7Processing Speed: &e3x'
   - '&7Fuel Efficiency: &e2x'
-  - '&7Luck Multiplier: &e1x'
+  - '&7Fortune Level: &e1x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4020,10 +4017,9 @@ items:
   name: '&7Enhanced Furnace - &eIV'
   priority: 316
   lore:
-  - ''
   - '&7Processing Speed: &e3x'
-  - '&7Fuel Efficiency: &e2x'
-  - '&7Luck Multiplier: &e1x'
+  - '&7Fuel Efficiency: &e3x'
+  - '&7Fortune Level: &e1x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4035,10 +4031,9 @@ items:
   name: '&7Enhanced Furnace - &eV'
   priority: 317
   lore:
-  - ''
-  - '&7Processing Speed: &e3x'
-  - '&7Fuel Efficiency: &e2x'
-  - '&7Luck Multiplier: &e2x'
+  - '&7Processing Speed: &e4x'
+  - '&7Fuel Efficiency: &e3x'
+  - '&7Fortune Level: &e1x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4050,10 +4045,9 @@ items:
   name: '&7Enhanced Furnace - &eVI'
   priority: 318
   lore:
-  - ''
-  - '&7Processing Speed: &e3x'
+  - '&7Processing Speed: &e4x'
   - '&7Fuel Efficiency: &e3x'
-  - '&7Luck Multiplier: &e2x'
+  - '&7Fortune Level: &e2x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4065,10 +4059,9 @@ items:
   name: '&7Enhanced Furnace - &eVII'
   priority: 319
   lore:
-  - ''
-  - '&7Processing Speed: &e4x'
+  - '&7Processing Speed: &e5x'
   - '&7Fuel Efficiency: &e3x'
-  - '&7Luck Multiplier: &e2x'
+  - '&7Fortune Level: &e2x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4080,10 +4073,9 @@ items:
   name: '&7Enhanced Furnace - &eVIII'
   priority: 320
   lore:
-  - ''
-  - '&7Processing Speed: &e4x'
+  - '&7Processing Speed: &e5x'
   - '&7Fuel Efficiency: &e4x'
-  - '&7Luck Multiplier: &e2x'
+  - '&7Fortune Level: &e2x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4095,10 +4087,9 @@ items:
   name: '&7Enhanced Furnace - &eIX'
   priority: 321
   lore:
-  - ''
-  - '&7Processing Speed: &e5x'
+  - '&7Processing Speed: &e6x'
   - '&7Fuel Efficiency: &e4x'
-  - '&7Luck Multiplier: &e2x'
+  - '&7Fortune Level: &e2x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4110,10 +4101,9 @@ items:
   name: '&7Enhanced Furnace - &eX'
   priority: 322
   lore:
-  - ''
-  - '&7Processing Speed: &e5x'
-  - '&7Fuel Efficiency: &e5x'
-  - '&7Luck Multiplier: &e2x'
+  - '&7Processing Speed: &e7x'
+  - '&7Fuel Efficiency: &e4x'
+  - '&7Fortune Level: &e2x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4125,10 +4115,9 @@ items:
   name: '&7Enhanced Furnace - &eXI'
   priority: 323
   lore:
-  - ''
-  - '&7Processing Speed: &e5x'
-  - '&7Fuel Efficiency: &e5x'
-  - '&7Luck Multiplier: &e3x'
+  - '&7Processing Speed: &e8x'
+  - '&7Fuel Efficiency: &e4x'
+  - '&7Fortune Level: &e2x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4137,13 +4126,12 @@ items:
 - id: sf:reinforced_furnace
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Reinforced Furnace'
+  name: '&7Advanced Furnace'
   priority: 324
   lore:
-  - ''
   - '&7Processing Speed: &e10x'
-  - '&7Fuel Efficiency: &e10x'
-  - '&7Luck Multiplier: &e3x'
+  - '&7Fuel Efficiency: &e5x'
+  - '&7Fortune Level: &e3x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4155,10 +4143,9 @@ items:
   name: '&7Carbonado Edged Furnace'
   priority: 325
   lore:
-  - ''
   - '&7Processing Speed: &e20x'
   - '&7Fuel Efficiency: &e10x'
-  - '&7Luck Multiplier: &e3x'
+  - '&7Fortune Level: &e3x'
   flags:
   - legacy-sf
   - plugin-block
@@ -4344,8 +4331,8 @@ items:
   lore:
   - ''
   - '&eBasic Generator'
-  - '&8鈬?&e鈿?&70 J Buffer'
-  - '&8鈬?&e鈿?&74 J/s'
+  - '&8閳?&e閳?&70 J Buffer'
+  - '&8閳?&e閳?&74 J/s'
   flags:
   - legacy-sf
 - id: sf:solar_generator_2
@@ -4356,8 +4343,8 @@ items:
   lore:
   - ''
   - '&aMedium Generator'
-  - '&8鈬?&e鈿?&70 J Buffer'
-  - '&8鈬?&e鈿?&716 J/s'
+  - '&8閳?&e閳?&70 J Buffer'
+  - '&8閳?&e閳?&716 J/s'
   flags:
   - legacy-sf
 - id: sf:solar_generator_3
@@ -4368,8 +4355,8 @@ items:
   lore:
   - ''
   - '&4End-Game Generator'
-  - '&8鈬?&e鈿?&70 J Buffer'
-  - '&8鈬?&e鈿?&764 J/s'
+  - '&8閳?&e閳?&70 J Buffer'
+  - '&8閳?&e閳?&764 J/s'
   flags:
   - legacy-sf
 - id: sf:solar_generator_4
@@ -4382,9 +4369,9 @@ items:
   - '&9Works at Night'
   - ''
   - '&4End-Game Generator'
-  - '&8鈬?&e鈿?&70 J Buffer'
-  - '&8鈬?&e鈿?&7256 J/s (Day)'
-  - '&8鈬?&e鈿?&7128 J/s (Night)'
+  - '&8閳?&e閳?&70 J Buffer'
+  - '&8閳?&e閳?&7256 J/s (Day)'
+  - '&8閳?&e閳?&7128 J/s (Night)'
   flags:
   - legacy-sf
 - id: sf:coal_generator
@@ -4396,8 +4383,8 @@ items:
   lore:
   - ''
   - '&6Average Generator'
-  - '&8鈬?&e鈿?&764 J Buffer'
-  - '&8鈬?&e鈿?&716 J/s'
+  - '&8閳?&e閳?&764 J Buffer'
+  - '&8閳?&e閳?&716 J/s'
   flags:
   - legacy-sf
 - id: sf:coal_generator_2
@@ -4409,8 +4396,8 @@ items:
   lore:
   - ''
   - '&6Advanced Generator'
-  - '&8鈬?&e鈿?&7256 J Buffer'
-  - '&8鈬?&e鈿?&730 J/s'
+  - '&8閳?&e閳?&7256 J Buffer'
+  - '&8閳?&e閳?&730 J/s'
   flags:
   - legacy-sf
 - id: sf:lava_generator
@@ -4422,8 +4409,8 @@ items:
   lore:
   - ''
   - '&6Average Generator'
-  - '&8鈬?&e鈿?&7512 J Buffer'
-  - '&8鈬?&e鈿?&720 J/s'
+  - '&8閳?&e閳?&7512 J Buffer'
+  - '&8閳?&e閳?&720 J/s'
   flags:
   - legacy-sf
 - id: sf:lava_generator_2
@@ -4435,8 +4422,8 @@ items:
   lore:
   - ''
   - '&6Advanced Generator'
-  - '&8鈬?&e鈿?&71024 J Buffer'
-  - '&8鈬?&e鈿?&740 J/s'
+  - '&8閳?&e閳?&71024 J Buffer'
+  - '&8閳?&e閳?&740 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_furnace
@@ -4447,8 +4434,8 @@ items:
   lore:
   - ''
   - '&eBasic Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&74 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&74 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_furnace_2
@@ -4459,8 +4446,8 @@ items:
   lore:
   - ''
   - '&aMedium Machine'
-  - '&8鈬?&b鈿?&7Speed: &b2x'
-  - '&8鈬?&e鈿?&76 J/s'
+  - '&8閳?&b閳?&7Speed: &b2x'
+  - '&8閳?&e閳?&76 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_furnace_3
@@ -4471,8 +4458,8 @@ items:
   lore:
   - ''
   - '&aMedium Machine'
-  - '&8鈬?&b鈿?&7Speed: &b4x'
-  - '&8鈬?&e鈿?&710 J/s'
+  - '&8閳?&b閳?&7Speed: &b4x'
+  - '&8閳?&e閳?&710 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_ore_grinder
@@ -4485,8 +4472,8 @@ items:
   - '&fWorks as an Ore Crusher and Grind Stone'
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&712 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&712 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_ore_grinder_2
@@ -4499,8 +4486,8 @@ items:
   - '&fWorks as an Ore Crusher and Grind Stone'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b4x'
-  - '&8鈬?&e鈿?&730 J/s'
+  - '&8閳?&b閳?&7Speed: &b4x'
+  - '&8閳?&e閳?&730 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_ore_grinder_3
@@ -4513,8 +4500,8 @@ items:
   - '&fWorks as an Ore Crusher and Grind Stone'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b10x'
-  - '&8鈬?&e鈿?&790 J/s'
+  - '&8閳?&b閳?&7Speed: &b10x'
+  - '&8閳?&e閳?&790 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_ingot_pulverizer
@@ -4527,8 +4514,8 @@ items:
   - '&fPulverizes Ingots into Dust'
   - ''
   - '&aMedium Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&714 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&714 J/s'
   flags:
   - legacy-sf
 - id: sf:auto_drier
@@ -4539,8 +4526,8 @@ items:
   lore:
   - ''
   - '&aMedium Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&710 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&710 J/s'
   flags:
   - legacy-sf
 - id: sf:auto_enchanter
@@ -4551,8 +4538,8 @@ items:
   lore:
   - ''
   - '&aMedium Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&718 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&718 J/s'
   flags:
   - legacy-sf
 - id: sf:auto_enchanter_2
@@ -4563,8 +4550,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b3x'
-  - '&8鈬?&e鈿?&748 J/s'
+  - '&8閳?&b閳?&7Speed: &b3x'
+  - '&8閳?&e閳?&748 J/s'
   flags:
   - legacy-sf
 - id: sf:auto_disenchanter
@@ -4575,8 +4562,8 @@ items:
   lore:
   - ''
   - '&aMedium Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&718 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&718 J/s'
   flags:
   - legacy-sf
 - id: sf:auto_disenchanter_2
@@ -4587,8 +4574,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b3x'
-  - '&8鈬?&e鈿?&748 J/s'
+  - '&8閳?&b閳?&7Speed: &b3x'
+  - '&8閳?&e閳?&748 J/s'
   flags:
   - legacy-sf
 - id: sf:auto_anvil
@@ -4599,8 +4586,8 @@ items:
   lore:
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&7Repair Factor: 10%'
-  - '&8鈬?&e鈿?&724 J/s'
+  - '&8閳?&7Repair Factor: 10%'
+  - '&8閳?&e閳?&724 J/s'
   flags:
   - legacy-sf
 - id: sf:auto_anvil_2
@@ -4611,8 +4598,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&7Repair Factor: 25%'
-  - '&8鈬?&e鈿?&732 J/s'
+  - '&8閳?&7Repair Factor: 25%'
+  - '&8閳?&e閳?&732 J/s'
   flags:
   - legacy-sf
 - id: sf:auto_brewer
@@ -4623,8 +4610,8 @@ items:
   lore:
   - ''
   - '&aMedium Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&712 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&712 J/s'
   flags:
   - legacy-sf
 - id: sf:book_binder
@@ -4637,7 +4624,7 @@ items:
   - '&fBinds multiple enchanted books into one.'
   - ''
   - '&aMedium Machine'
-  - '&8鈬?&e鈿?&716 J/s'
+  - '&8閳?&e閳?&716 J/s'
   flags:
   - legacy-sf
 - id: sf:bio_reactor
@@ -4648,8 +4635,8 @@ items:
   lore:
   - ''
   - '&6Average Generator'
-  - '&8鈬?&e鈿?&7128 J Buffer'
-  - '&8鈬?&e鈿?&78 J/s'
+  - '&8閳?&e閳?&7128 J Buffer'
+  - '&8閳?&e閳?&78 J/s'
   flags:
   - legacy-sf
 - id: sf:multimeter
@@ -4673,7 +4660,7 @@ items:
   - '&7Range: &c6 blocks'
   - ''
   - '&eBasic Capacitor'
-  - '&8鈬?&e鈿?&7128 J Capacity'
+  - '&8閳?&e閳?&7128 J Capacity'
   flags:
   - legacy-sf
 - id: sf:medium_capacitor
@@ -4686,7 +4673,7 @@ items:
   - '&7Range: &c6 blocks'
   - ''
   - '&6Average Capacitor'
-  - '&8鈬?&e鈿?&7512 J Capacity'
+  - '&8閳?&e閳?&7512 J Capacity'
   flags:
   - legacy-sf
 - id: sf:big_capacitor
@@ -4699,7 +4686,7 @@ items:
   - '&7Range: &c6 blocks'
   - ''
   - '&aMedium Capacitor'
-  - '&8鈬?&e鈿?&71024 J Capacity'
+  - '&8閳?&e閳?&71024 J Capacity'
   flags:
   - legacy-sf
 - id: sf:large_capacitor
@@ -4712,7 +4699,7 @@ items:
   - '&7Range: &c6 blocks'
   - ''
   - '&2Good Capacitor'
-  - '&8鈬?&e鈿?&78192 J Capacity'
+  - '&8閳?&e閳?&78192 J Capacity'
   flags:
   - legacy-sf
 - id: sf:carbonado_edged_capacitor
@@ -4725,7 +4712,7 @@ items:
   - '&7Range: &c6 blocks'
   - ''
   - '&4End-Game Capacitor'
-  - '&8鈬?&e鈿?&765536 J Capacity'
+  - '&8閳?&e閳?&765536 J Capacity'
   flags:
   - legacy-sf
 - id: sf:energized_capacitor
@@ -4738,7 +4725,7 @@ items:
   - '&7Range: &c6 blocks'
   - ''
   - '&4End-Game Capacitor'
-  - '&8鈬?&e鈿?&7524288 J Capacity'
+  - '&8閳?&e閳?&7524288 J Capacity'
   flags:
   - legacy-sf
 - id: sf:programmable_android
@@ -4749,8 +4736,8 @@ items:
   headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
   lore:
   - ''
-  - '&8鈬?&7Function: None'
-  - '&8鈬?&7Fuel Efficiency: 1.0x'
+  - '&8閳?&7Function: None'
+  - '&8閳?&7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_farmer
@@ -4761,8 +4748,8 @@ items:
   headTexture: f9d33357e8418823bf783de92de80291b4ebd392aec8706698e06896d498f6
   lore:
   - ''
-  - '&8鈬?&7Function: Farming'
-  - '&8鈬?&7Fuel Efficiency: 1.0x'
+  - '&8閳?&7Function: Farming'
+  - '&8閳?&7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_miner
@@ -4773,8 +4760,8 @@ items:
   headTexture: e638a28541ab3ae0a723d5578738e08758388ec4c33247bd4ca13482aef334
   lore:
   - ''
-  - '&8鈬?&7Function: Mining'
-  - '&8鈬?&7Fuel Efficiency: 1.0x'
+  - '&8閳?&7Function: Mining'
+  - '&8閳?&7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_woodcutter
@@ -4785,8 +4772,8 @@ items:
   headTexture: d32a814510142205169a1ad32f0a745f18e9cb6c66ee64eca2e65babdef9ff
   lore:
   - ''
-  - '&8鈬?&7Function: Woodcutting'
-  - '&8鈬?&7Fuel Efficiency: 1.0x'
+  - '&8閳?&7Function: Woodcutting'
+  - '&8閳?&7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_butcher
@@ -4797,9 +4784,9 @@ items:
   headTexture: 3b472df0ad9a3be88f2e5d5d422d02b116d64d8df1475ed32e546afc84b31
   lore:
   - ''
-  - '&8鈬?&7Function: Slaughtering'
-  - '&8鈬?&7Damage: 4'
-  - '&8鈬?&7Fuel Efficiency: 1.0x'
+  - '&8閳?&7Function: Slaughtering'
+  - '&8閳?&7Damage: 4'
+  - '&8閳?&7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_fisherman
@@ -4810,9 +4797,9 @@ items:
   headTexture: 345e8733a73114333b98b3601751241722f4713e1a1a5d36fbb132493f1c7
   lore:
   - ''
-  - '&8鈬?&7Function: Fishing'
-  - '&8鈬?&7Success Rate: 10%'
-  - '&8鈬?&7Fuel Efficiency: 1.0x'
+  - '&8閳?&7Function: Fishing'
+  - '&8閳?&7Success Rate: 10%'
+  - '&8閳?&7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_2
@@ -4823,8 +4810,8 @@ items:
   headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
   lore:
   - ''
-  - '&8鈬?&7Function: None'
-  - '&8鈬?&7Fuel Efficiency: 1.5x'
+  - '&8閳?&7Function: None'
+  - '&8閳?&7Fuel Efficiency: 1.5x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_2_fisherman
@@ -4835,9 +4822,9 @@ items:
   headTexture: 345e8733a73114333b98b3601751241722f4713e1a1a5d36fbb132493f1c7
   lore:
   - ''
-  - '&8鈬?&7Function: Fishing'
-  - '&8鈬?&7Success Rate: 20%'
-  - '&8鈬?&7Fuel Efficiency: 1.5x'
+  - '&8閳?&7Function: Fishing'
+  - '&8閳?&7Success Rate: 20%'
+  - '&8閳?&7Fuel Efficiency: 1.5x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_2_farmer
@@ -4848,9 +4835,9 @@ items:
   headTexture: f9d33357e8418823bf783de92de80291b4ebd392aec8706698e06896d498f6
   lore:
   - ''
-  - '&8鈬?&7Function: Farming'
-  - '&8鈬?&7Fuel Efficiency: 1.5x'
-  - '&8鈬?&7Can also harvest Plants from ExoticGarden'
+  - '&8閳?&7Function: Farming'
+  - '&8閳?&7Fuel Efficiency: 1.5x'
+  - '&8閳?&7Can also harvest Plants from ExoticGarden'
   flags:
   - legacy-sf
 - id: sf:programmable_android_2_butcher
@@ -4861,9 +4848,9 @@ items:
   headTexture: 3b472df0ad9a3be88f2e5d5d422d02b116d64d8df1475ed32e546afc84b31
   lore:
   - ''
-  - '&8鈬?&7Function: Slaughtering'
-  - '&8鈬?&7Damage: 8'
-  - '&8鈬?&7Fuel Efficiency: 1.5x'
+  - '&8閳?&7Function: Slaughtering'
+  - '&8閳?&7Damage: 8'
+  - '&8閳?&7Fuel Efficiency: 1.5x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_3
@@ -4874,8 +4861,8 @@ items:
   headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
   lore:
   - ''
-  - '&8鈬?&7Function: None'
-  - '&8鈬?&7Fuel Efficiency: 3.0x'
+  - '&8閳?&7Function: None'
+  - '&8閳?&7Fuel Efficiency: 3.0x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_3_fisherman
@@ -4886,9 +4873,9 @@ items:
   headTexture: 345e8733a73114333b98b3601751241722f4713e1a1a5d36fbb132493f1c7
   lore:
   - ''
-  - '&8鈬?&7Function: Fishing'
-  - '&8鈬?&7Success Rate: 30%'
-  - '&8鈬?&7Fuel Efficiency: 8.0x'
+  - '&8閳?&7Function: Fishing'
+  - '&8閳?&7Success Rate: 30%'
+  - '&8閳?&7Fuel Efficiency: 8.0x'
   flags:
   - legacy-sf
 - id: sf:programmable_android_3_butcher
@@ -4899,9 +4886,9 @@ items:
   headTexture: 3b472df0ad9a3be88f2e5d5d422d02b116d64d8df1475ed32e546afc84b31
   lore:
   - ''
-  - '&8鈬?&7Function: Slaughtering'
-  - '&8鈬?&7Damage: 20'
-  - '&8鈬?&7Fuel Efficiency: 8.0x'
+  - '&8閳?&7Function: Slaughtering'
+  - '&8閳?&7Damage: 20'
+  - '&8閳?&7Fuel Efficiency: 8.0x'
   flags:
   - legacy-sf
 - id: sf:gps_transmitter
@@ -4912,8 +4899,8 @@ items:
   headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
   lore:
   - ''
-  - '&8鈬?&e鈿?&716 J Buffer'
-  - '&8鈬?&e鈿?&72 J/s'
+  - '&8閳?&e閳?&716 J Buffer'
+  - '&8閳?&e閳?&72 J/s'
   flags:
   - legacy-sf
 - id: sf:gps_transmitter_2
@@ -4924,8 +4911,8 @@ items:
   headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
   lore:
   - ''
-  - '&8鈬?&e鈿?&764 J Buffer'
-  - '&8鈬?&e鈿?&76 J/s'
+  - '&8閳?&e閳?&764 J Buffer'
+  - '&8閳?&e閳?&76 J/s'
   flags:
   - legacy-sf
 - id: sf:gps_transmitter_3
@@ -4936,8 +4923,8 @@ items:
   headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
   lore:
   - ''
-  - '&8鈬?&e鈿?&7256 J Buffer'
-  - '&8鈬?&e鈿?&722 J/s'
+  - '&8閳?&e閳?&7256 J Buffer'
+  - '&8閳?&e閳?&722 J/s'
   flags:
   - legacy-sf
 - id: sf:gps_transmitter_4
@@ -4948,8 +4935,8 @@ items:
   headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
   lore:
   - ''
-  - '&8鈬?&e鈿?&71024 J Buffer'
-  - '&8鈬?&e鈿?&792 J/s'
+  - '&8閳?&e閳?&71024 J Buffer'
+  - '&8閳?&e閳?&792 J/s'
   flags:
   - legacy-sf
 - id: sf:gps_marker_tool
@@ -5048,8 +5035,8 @@ items:
   - '&eThese Resources cannot be mined with a pickaxe'
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&748 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&748 J/s'
   - ''
   - '&c&l! &cMake sure to Geo-Scan the Chunk first'
   flags:
@@ -5102,8 +5089,8 @@ items:
   lore:
   - ''
   - '&6Advanced Generator'
-  - '&8鈬?&e鈿?&7256 J Buffer'
-  - '&8鈬?&e鈿?&724 J/s'
+  - '&8閳?&e閳?&7256 J Buffer'
+  - '&8閳?&e閳?&724 J/s'
   flags:
   - legacy-sf
 - id: sf:android_memory_core
@@ -5174,7 +5161,7 @@ items:
   - '&fThis device allows you to teleport'
   - '&fto your waypoints from anywhere'
   - ''
-  - '&8鈬?&e鈿?&70 / 50 J'
+  - '&8閳?&e閳?&70 / 50 J'
   - ''
   - '&eRight Click&7 to use'
   flags:
@@ -5212,8 +5199,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&710 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&710 J/s'
   flags:
   - legacy-sf
 - id: sf:heated_pressure_chamber_2
@@ -5224,8 +5211,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b5x'
-  - '&8鈬?&e鈿?&744 J/s'
+  - '&8閳?&b閳?&7Speed: &b5x'
+  - '&8閳?&e閳?&744 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_smeltery
@@ -5238,8 +5225,8 @@ items:
   - '&4Alloys-Only, doesn''t smelt Dust into Ingots'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&720 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&720 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_smeltery_2
@@ -5252,8 +5239,8 @@ items:
   - '&4Alloys-Only, doesn''t smelt Dust into Ingots'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b3x'
-  - '&8鈬?&e鈿?&740 J/s'
+  - '&8閳?&b閳?&7Speed: &b3x'
+  - '&8閳?&e閳?&740 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_press
@@ -5265,8 +5252,8 @@ items:
   lore:
   - ''
   - '&aMedium Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&716 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&716 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_press_2
@@ -5278,8 +5265,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b3x'
-  - '&8鈬?&e鈿?&740 J/s'
+  - '&8閳?&b閳?&7Speed: &b3x'
+  - '&8閳?&e閳?&740 J/s'
   flags:
   - legacy-sf
 - id: sf:electrified_crucible
@@ -5290,8 +5277,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&748 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&748 J/s'
   flags:
   - legacy-sf
 - id: sf:electrified_crucible_2
@@ -5302,8 +5289,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b2x'
-  - '&8鈬?&e鈿?&780 J/s'
+  - '&8閳?&b閳?&7Speed: &b2x'
+  - '&8閳?&e閳?&780 J/s'
   flags:
   - legacy-sf
 - id: sf:electrified_crucible_3
@@ -5314,8 +5301,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b4x'
-  - '&8鈬?&e鈿?&7120 J/s'
+  - '&8閳?&b閳?&7Speed: &b4x'
+  - '&8閳?&e閳?&7120 J/s'
   flags:
   - legacy-sf
 - id: sf:carbon_press
@@ -5326,8 +5313,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&720 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&720 J/s'
   flags:
   - legacy-sf
 - id: sf:carbon_press_2
@@ -5338,8 +5325,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b3x'
-  - '&8鈬?&e鈿?&750 J/s'
+  - '&8閳?&b閳?&7Speed: &b3x'
+  - '&8閳?&e閳?&750 J/s'
   flags:
   - legacy-sf
 - id: sf:carbon_press_3
@@ -5350,8 +5337,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b15x'
-  - '&8鈬?&e鈿?&7180 J/s'
+  - '&8閳?&b閳?&7Speed: &b15x'
+  - '&8閳?&e閳?&7180 J/s'
   flags:
   - legacy-sf
 - id: sf:blistering_ingot
@@ -5361,8 +5348,8 @@ items:
   priority: 418
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &6HIGH'
-  - '&8鈬?&4Hazmat Suit required!'
+  - '&a閳?7 Radiation level: &6HIGH'
+  - '&8閳?&4Hazmat Suit required!'
   flags:
   - legacy-sf
 - id: sf:blistering_ingot_2
@@ -5372,8 +5359,8 @@ items:
   priority: 419
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &cVERY HIGH'
-  - '&8鈬?&4Hazmat Suit required!'
+  - '&a閳?7 Radiation level: &cVERY HIGH'
+  - '&8閳?&4Hazmat Suit required!'
   flags:
   - legacy-sf
 - id: sf:blistering_ingot_3
@@ -5383,8 +5370,8 @@ items:
   priority: 420
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &cVERY HIGH'
-  - '&8鈬?&4Hazmat Suit required!'
+  - '&a閳?7 Radiation level: &cVERY HIGH'
+  - '&8閳?&4Hazmat Suit required!'
   flags:
   - legacy-sf
 - id: sf:energy_regulator
@@ -5435,8 +5422,8 @@ items:
   headTexture: 3ce2dad9baf7eaba7e80d4d0f9fac0aab01a76b12fb71c3d2af2a16fdd4c7383
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &eMODERATE'
-  - '&8鈬?&4Hazmat Suit required!'
+  - '&a閳?7 Radiation level: &eMODERATE'
+  - '&8閳?&4Hazmat Suit required!'
   flags:
   - legacy-sf
 - id: sf:enriched_nether_ice
@@ -5447,8 +5434,8 @@ items:
   headTexture: 7c818aa13aabc7294838d21caac057e97bd8c89641a0c0f8a55442ff4e27
   lore:
   - ''
-  - '&a鈽?7 Radiation level: &cVERY HIGH'
-  - '&8鈬?&4Hazmat Suit required!'
+  - '&a閳?7 Radiation level: &cVERY HIGH'
+  - '&8閳?&4Hazmat Suit required!'
   flags:
   - legacy-sf
 - id: sf:nether_ice_coolant_cell
@@ -5524,8 +5511,8 @@ items:
   - '&fRuns on &aOrganic Food'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&e鈿?&71024 J Buffer'
-  - '&8鈬?&e鈿?&760 J/Animal'
+  - '&8閳?&e閳?&71024 J Buffer'
+  - '&8閳?&e閳?&760 J/Animal'
   flags:
   - legacy-sf
 - id: sf:produce_collector
@@ -5539,8 +5526,8 @@ items:
   - '&fcollect produce from nearby animals.'
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&e鈿?&7512 J Buffer'
-  - '&8鈬?&e鈿?&732 J/s'
+  - '&8閳?&e閳?&7512 J Buffer'
+  - '&8閳?&e閳?&732 J/s'
   flags:
   - legacy-sf
 - id: sf:organic_food
@@ -5793,8 +5780,8 @@ items:
   - '&fRuns on &aOrganic Food'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&e鈿?&71024 J Buffer'
-  - '&8鈬?&e鈿?&728 J/s'
+  - '&8閳?&e閳?&71024 J Buffer'
+  - '&8閳?&e閳?&728 J/s'
   flags:
   - legacy-sf
 - id: sf:crop_growth_accelerator
@@ -5807,10 +5794,10 @@ items:
   - '&fRuns on &aOrganic Fertilizer'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&7Radius: 7x7'
-  - '&8鈬?&7Speed: &a3/time'
-  - '&8鈬?&e鈿?&71024 J Buffer'
-  - '&8鈬?&e鈿?&750 J/s'
+  - '&8閳?&7Radius: 7x7'
+  - '&8閳?&7Speed: &a3/time'
+  - '&8閳?&e閳?&71024 J Buffer'
+  - '&8閳?&e閳?&750 J/s'
   flags:
   - legacy-sf
 - id: sf:crop_growth_accelerator_2
@@ -5823,10 +5810,10 @@ items:
   - '&fRuns on &aOrganic Fertilizer'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&7Radius: 9x9'
-  - '&8鈬?&7Speed: &a4/time'
-  - '&8鈬?&e鈿?&71024 J Buffer'
-  - '&8鈬?&e鈿?&760 J/s'
+  - '&8閳?&7Radius: 9x9'
+  - '&8閳?&7Speed: &a4/time'
+  - '&8閳?&e閳?&71024 J Buffer'
+  - '&8閳?&e閳?&760 J/s'
   flags:
   - legacy-sf
 - id: sf:tree_growth_accelerator
@@ -5839,10 +5826,10 @@ items:
   - '&fRuns on &aOrganic Fertilizer'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&7Radius: 9x9'
-  - '&8鈬?&7Speed: &a4/time'
-  - '&8鈬?&e鈿?&71024 J Buffer'
-  - '&8鈬?&e鈿?&748 J/s'
+  - '&8閳?&7Radius: 9x9'
+  - '&8閳?&7Speed: &a4/time'
+  - '&8閳?&e閳?&71024 J Buffer'
+  - '&8閳?&e閳?&748 J/s'
   flags:
   - legacy-sf
 - id: sf:food_fabricator
@@ -5855,9 +5842,9 @@ items:
   - '&fProduces &aOrganic Food'
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&7256 J Buffer'
-  - '&8鈬?&e鈿?&714 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&7256 J Buffer'
+  - '&8閳?&e閳?&714 J/s'
   flags:
   - legacy-sf
 - id: sf:food_fabricator_2
@@ -5870,9 +5857,9 @@ items:
   - '&fProduces &aOrganic Food'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b6x'
-  - '&8鈬?&e鈿?&7512 J Buffer'
-  - '&8鈬?&e鈿?&748 J/s'
+  - '&8閳?&b閳?&7Speed: &b6x'
+  - '&8閳?&e閳?&7512 J Buffer'
+  - '&8閳?&e閳?&748 J/s'
   flags:
   - legacy-sf
 - id: sf:food_composter
@@ -5885,9 +5872,9 @@ items:
   - '&fProduces &aOrganic Fertilizer'
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&7256 J Buffer'
-  - '&8鈬?&e鈿?&716 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&7256 J Buffer'
+  - '&8閳?&e閳?&716 J/s'
   flags:
   - legacy-sf
 - id: sf:food_composter_2
@@ -5900,9 +5887,9 @@ items:
   - '&fProduces &aOrganic Fertilizer'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b10x'
-  - '&8鈬?&e鈿?&7512 J Buffer'
-  - '&8鈬?&e鈿?&752 J/s'
+  - '&8閳?&b閳?&7Speed: &b10x'
+  - '&8閳?&e閳?&7512 J Buffer'
+  - '&8閳?&e閳?&752 J/s'
   flags:
   - legacy-sf
 - id: sf:xp_collector
@@ -5916,8 +5903,8 @@ items:
   - '&fCollects nearby Exp and stores it'
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&e鈿?&71024 J Buffer'
-  - '&8鈬?&e鈿?&720 J/s'
+  - '&8閳?&e閳?&71024 J Buffer'
+  - '&8閳?&e閳?&720 J/s'
   flags:
   - legacy-sf
 - id: sf:reactor_coolant_cell
@@ -5937,12 +5924,12 @@ items:
   lore:
   - ''
   - '&fRequires Cooling!'
-  - '&8鈬?&bMust be surrounded by Water'
-  - '&8鈬?&bMust be supplied with Reactor Coolant Cells'
+  - '&8閳?&bMust be surrounded by Water'
+  - '&8閳?&bMust be supplied with Reactor Coolant Cells'
   - ''
   - '&4End-Game Generator'
-  - '&8鈬?&e鈿?&716384 J Buffer'
-  - '&8鈬?&e鈿?&7500 J/s'
+  - '&8閳?&e閳?&716384 J Buffer'
+  - '&8閳?&e閳?&7500 J/s'
   flags:
   - legacy-sf
 - id: sf:netherstar_reactor
@@ -5954,13 +5941,13 @@ items:
   lore:
   - ''
   - '&fRuns on Nether Stars'
-  - '&8鈬?&bMust be surrounded by Water'
-  - '&8鈬?&bMust be supplied with Nether Ice Coolant Cells'
+  - '&8閳?&bMust be surrounded by Water'
+  - '&8閳?&bMust be supplied with Nether Ice Coolant Cells'
   - ''
   - '&4End-Game Generator'
-  - '&8鈬?&e鈿?&732768 J Buffer'
-  - '&8鈬?&e鈿?&71024 J/s'
-  - '&8鈬?&4Causes nearby Entities to get Withered'
+  - '&8閳?&e閳?&732768 J Buffer'
+  - '&8閳?&e閳?&71024 J/s'
+  - '&8閳?&4Causes nearby Entities to get Withered'
   flags:
   - legacy-sf
 - id: sf:reactor_access_port
@@ -5974,7 +5961,7 @@ items:
   - '&fvia Cargo Nodes, can also be used'
   - '&fas a Buffer'
   - ''
-  - '&8鈬?&eMust be placed &a3 Blocks &eabove the Reactor'
+  - '&8閳?&eMust be placed &a3 Blocks &eabove the Reactor'
   flags:
   - legacy-sf
 - id: sf:freezer
@@ -5985,9 +5972,9 @@ items:
   lore:
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&7256 J Buffer'
-  - '&8鈬?&e鈿?&718 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&7256 J Buffer'
+  - '&8閳?&e閳?&718 J/s'
   flags:
   - legacy-sf
 - id: sf:freezer_2
@@ -5998,9 +5985,9 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b2x'
-  - '&8鈬?&e鈿?&7256 J Buffer'
-  - '&8鈬?&e鈿?&730 J/s'
+  - '&8閳?&b閳?&7Speed: &b2x'
+  - '&8閳?&e閳?&7256 J Buffer'
+  - '&8閳?&e閳?&730 J/s'
   flags:
   - legacy-sf
 - id: sf:freezer_3
@@ -6011,9 +5998,9 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b3x'
-  - '&8鈬?&e鈿?&7256 J Buffer'
-  - '&8鈬?&e鈿?&742 J/s'
+  - '&8閳?&b閳?&7Speed: &b3x'
+  - '&8閳?&e閳?&7256 J Buffer'
+  - '&8閳?&e閳?&742 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_gold_pan
@@ -6024,8 +6011,8 @@ items:
   lore:
   - ''
   - '&eBasic Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&72 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&72 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_gold_pan_2
@@ -6036,8 +6023,8 @@ items:
   lore:
   - ''
   - '&eBasic Machine'
-  - '&8鈬?&b鈿?&7Speed: &b3x'
-  - '&8鈬?&e鈿?&74 J/s'
+  - '&8閳?&b閳?&7Speed: &b3x'
+  - '&8閳?&e閳?&74 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_gold_pan_3
@@ -6048,8 +6035,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b10x'
-  - '&8鈬?&e鈿?&714 J/s'
+  - '&8閳?&b閳?&7Speed: &b10x'
+  - '&8閳?&e閳?&714 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_dust_washer
@@ -6060,8 +6047,8 @@ items:
   lore:
   - ''
   - '&eBasic Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&76 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&76 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_dust_washer_2
@@ -6072,8 +6059,8 @@ items:
   lore:
   - ''
   - '&eBasic Machine'
-  - '&8鈬?&b鈿?&7Speed: &b2x'
-  - '&8鈬?&e鈿?&710 J/s'
+  - '&8閳?&b閳?&7Speed: &b2x'
+  - '&8閳?&e閳?&710 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_dust_washer_3
@@ -6084,8 +6071,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b10x'
-  - '&8鈬?&e鈿?&730 J/s'
+  - '&8閳?&b閳?&7Speed: &b10x'
+  - '&8閳?&e閳?&730 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_ingot_factory
@@ -6096,8 +6083,8 @@ items:
   lore:
   - ''
   - '&eBasic Machine'
-  - '&8鈬?&b鈿?&7Speed: &b1x'
-  - '&8鈬?&e鈿?&78 J/s'
+  - '&8閳?&b閳?&7Speed: &b1x'
+  - '&8閳?&e閳?&78 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_ingot_factory_2
@@ -6108,8 +6095,8 @@ items:
   lore:
   - ''
   - '&eBasic Machine'
-  - '&8鈬?&b鈿?&7Speed: &b2x'
-  - '&8鈬?&e鈿?&714 J/s'
+  - '&8閳?&b閳?&7Speed: &b2x'
+  - '&8閳?&e閳?&714 J/s'
   flags:
   - legacy-sf
 - id: sf:electric_ingot_factory_3
@@ -6120,8 +6107,8 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&b鈿?&7Speed: &b8x'
-  - '&8鈬?&e鈿?&740 J/s'
+  - '&8閳?&b閳?&7Speed: &b8x'
+  - '&8閳?&e閳?&740 J/s'
   flags:
   - legacy-sf
 - id: sf:fluid_pump
@@ -6132,7 +6119,7 @@ items:
   lore:
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&e鈿?&732 J/Block'
+  - '&8閳?&e閳?&732 J/Block'
   flags:
   - legacy-sf
 - id: sf:charging_bench
@@ -6145,8 +6132,8 @@ items:
   - '&fCharges Items such as Jetpacks'
   - ''
   - '&eBasic Machine'
-  - '&8鈬?&e鈿?&7128 J Buffer'
-  - '&8鈬?&e鈿?&7Energy Loss: &c50%'
+  - '&8閳?&e閳?&7128 J Buffer'
+  - '&8閳?&e閳?&7Energy Loss: &c50%'
   flags:
   - legacy-sf
 - id: sf:vanilla_auto_crafter
@@ -6163,7 +6150,7 @@ items:
   - '&fnormal &eCrafting Table'
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&e鈿?&716 J/Item'
+  - '&8閳?&e閳?&716 J/Item'
   flags:
   - legacy-sf
 - id: sf:enhanced_auto_crafter
@@ -6180,7 +6167,7 @@ items:
   - '&eEnhanced Crafting Table'
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&e鈿?&716 J/Item'
+  - '&8閳?&e閳?&716 J/Item'
   flags:
   - legacy-sf
 - id: sf:armor_auto_crafter
@@ -6197,7 +6184,7 @@ items:
   - '&eArmor Forge'
   - ''
   - '&6Advanced Machine'
-  - '&8鈬?&e鈿?&732 J/Item'
+  - '&8閳?&e閳?&732 J/Item'
   flags:
   - legacy-sf
 - id: sf:iron_golem_assembler
@@ -6208,9 +6195,9 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&7Cooldown: &b30 Seconds'
-  - '&8鈬?&e鈿?&74096 J Buffer'
-  - '&8鈬?&e鈿?&72048 J/Golem'
+  - '&8閳?&7Cooldown: &b30 Seconds'
+  - '&8閳?&e閳?&74096 J Buffer'
+  - '&8閳?&e閳?&72048 J/Golem'
   flags:
   - legacy-sf
 - id: sf:wither_assembler
@@ -6221,9 +6208,9 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8鈬?&7Cooldown: &b30 Seconds'
-  - '&8鈬?&e鈿?&74096 J Buffer'
-  - '&8鈬?&e鈿?&74096 J/Wither'
+  - '&8閳?&7Cooldown: &b30 Seconds'
+  - '&8閳?&e閳?&74096 J Buffer'
+  - '&8閳?&e閳?&74096 J/Wither'
   flags:
   - legacy-sf
 - id: sf:trash_can_block
@@ -6281,8 +6268,8 @@ items:
   lore:
   - ''
   - '&aMedium Generator'
-  - '&8鈬?&e鈿?&7128 J Buffer'
-  - '&8鈬?&e鈿?&736 J/s'
+  - '&8閳?&e閳?&7128 J Buffer'
+  - '&8閳?&e閳?&736 J/s'
   flags:
   - legacy-sf
 - id: sf:birthday_cake
