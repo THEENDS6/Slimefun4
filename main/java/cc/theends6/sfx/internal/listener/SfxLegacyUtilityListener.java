@@ -216,23 +216,29 @@ public final class SfxLegacyUtilityListener implements Listener {
     private void openPortableCrafter(PlayerInteractEvent event) {
         denyItemUse(event);
         Player player = event.getPlayer();
-        player.openWorkbench(player.getLocation(), true);
-        player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.7f, 1.2f);
+        runtime.executeForPlayer(player, () -> {
+            player.openWorkbench(player.getLocation(), true);
+            player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.7f, 1.2f);
+        });
     }
 
     private void openPortableDustbin(PlayerInteractEvent event) {
         event.setCancelled(true);
         Player player = event.getPlayer();
-        Inventory inventory = plugin.getServer().createInventory(new DustbinHolder(), 27, Component.text("Delete Items"));
-        player.openInventory(inventory);
-        player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 0.8f, 1.0f);
+        runtime.executeForPlayer(player, () -> {
+            Inventory inventory = plugin.getServer().createInventory(new DustbinHolder(), 27, Component.text("Delete Items"));
+            player.openInventory(inventory);
+            player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 0.8f, 1.0f);
+        });
     }
 
     private void openEnderBackpack(PlayerInteractEvent event) {
         event.setCancelled(true);
         Player player = event.getPlayer();
-        player.openInventory(player.getEnderChest());
-        player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 0.8f, 1.0f);
+        runtime.executeForPlayer(player, () -> {
+            player.openInventory(player.getEnderChest());
+            player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 0.8f, 1.0f);
+        });
     }
 
     private void useMagicEye(PlayerInteractEvent event) {

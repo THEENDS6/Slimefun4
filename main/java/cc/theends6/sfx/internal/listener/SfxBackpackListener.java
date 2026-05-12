@@ -239,6 +239,7 @@ public final class SfxBackpackListener implements Listener {
         OpenBackpackSession session = sessions.remove(event.getPlayer().getUniqueId());
         if (session != null) {
             openBackpacks.remove(session.uniqueKey());
+            persistSession(session);
         }
     }
 

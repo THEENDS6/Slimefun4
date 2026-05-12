@@ -72,8 +72,12 @@ public final class SfxItemDefinition {
             return null;
         }
         String normalized = input.trim().toLowerCase();
-        if (!normalized.matches("[0-9a-f]+")) {
-            throw new IllegalArgumentException("Invalid SFX head texture hash: " + input);
+        String texturePrefix = "https://textures.minecraft.net/texture/";
+        if (normalized.startsWith(texturePrefix)) {
+            normalized = normalized.substring(texturePrefix.length());
+        }
+        if (!normalized.matches("[0-9a-f]{32,128}")) {
+            throw new IllegalArgumentException("Invalid SFX head texture hash, expected 32-128 lowercase hex characters: " + input);
         }
         return normalized;
     }

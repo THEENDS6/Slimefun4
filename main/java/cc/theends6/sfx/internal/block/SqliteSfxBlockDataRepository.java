@@ -49,9 +49,11 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
                       version INTEGER NOT NULL,
                       owner_uuid TEXT,
                       state_blob BLOB NOT NULL,
-                      updated_at INTEGER NOT NULL
+                      updated_at INTEGER NOT NULL,
+                      energy_priority_distance INTEGER NOT NULL DEFAULT 2147483647
                     )
                     """);
+            ensureColumn(connection, "sfx_block_instances", "energy_priority_distance", "INTEGER NOT NULL DEFAULT 2147483647");
             statement.execute("""
                     CREATE TABLE IF NOT EXISTS sfx_block_anchors (
                       world_id TEXT NOT NULL,
@@ -96,7 +98,7 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
                 }
             }
             try (PreparedStatement statement = connection.prepareStatement("""
-                    SELECT instance_id, type_id, anchor_world, anchor_x, anchor_y, anchor_z, lifecycle_state, version, owner_uuid, state_blob, updated_at
+                    SELECT instance_id, type_id, anchor_world, anchor_x, anchor_y, anchor_z, lifecycle_state, version, owner_uuid, state_blob, updated_at, energy_priority_distance
                     FROM sfx_block_instances
                     ORDER BY updated_at DESC
                     """);
@@ -115,7 +117,8 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
                             result.getInt("version"),
                             owner == null ? null : UUID.fromString(owner),
                             result.getBytes("state_blob"),
-                            result.getLong("updated_at")));
+                            result.getLong("updated_at"),
+                            result.getInt("energy_priority_distance")));
                 }
             }
         }
@@ -166,8 +169,8 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
     public void upsertInstance(SfxBlockInstanceRecord instance) throws Exception {
         try (Connection connection = openConnection();
              PreparedStatement statement = connection.prepareStatement("""
-                     INSERT INTO sfx_block_instances(instance_id, type_id, anchor_world, anchor_x, anchor_y, anchor_z, lifecycle_state, version, owner_uuid, state_blob, updated_at)
-                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     INSERT INTO sfx_block_instances(instance_id, type_id, anchor_world, anchor_x, anchor_y, anchor_z, lifecycle_state, version, owner_uuid, state_blob, updated_at, energy_priority_distance)
+                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                      ON CONFLICT(instance_id) DO UPDATE SET
                        type_id = excluded.type_id,
                        anchor_world = excluded.anchor_world,
@@ -178,7 +181,8 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
                        version = excluded.version,
                        owner_uuid = excluded.owner_uuid,
                        state_blob = excluded.state_blob,
-                       updated_at = excluded.updated_at
+                       updated_at = excluded.updated_at,
+                       energy_priority_distance = excluded.energy_priority_distance
                      """)) {
             statement.setString(1, instance.instanceId().toString());
             statement.setString(2, instance.typeId());
@@ -195,6 +199,7 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
             }
             statement.setBytes(10, instance.stateBlob());
             statement.setLong(11, instance.updatedAt());
+            statement.setInt(12, instance.energyPriorityDistance());
             statement.executeUpdate();
         }
     }
@@ -211,6 +216,21 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
     @Override
     public void close() {
         plugin.getLogger().fine("Closed SQLite block data repository: " + databaseFile.getAbsolutePath());
+    }
+
+
+    private void ensureColumn(Connection connection, String table, String column, String declaration) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("PRAGMA table_info(" + table + ")");
+             ResultSet result = statement.executeQuery()) {
+            while (result.next()) {
+                if (column.equalsIgnoreCase(result.getString("name"))) {
+                    return;
+                }
+            }
+        }
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + declaration);
+        }
     }
 
     private Connection openConnection() throws SQLException {

@@ -6,8 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -18,6 +21,8 @@ public final class SfxBlockDataService {
     private final SfxBlockDataRepository repository;
     private final Map<SfxBlockAnchorKey, SfxAnchorRecord> anchors = new ConcurrentHashMap<>();
     private final Map<UUID, SfxBlockInstanceRecord> instances = new ConcurrentHashMap<>();
+    private final Set<CompletableFuture<Void>> pendingWrites = ConcurrentHashMap.newKeySet();
+    private volatile boolean shuttingDown;
 
     public SfxBlockDataService(JavaPlugin plugin, SfxRuntime runtime, SfxBlockDataRepository repository) {
         this.plugin = plugin;
@@ -57,6 +62,10 @@ public final class SfxBlockDataService {
     }
 
     public UUID registerSingleBlock(String typeId, Location location, Material material, UUID ownerId) {
+        return registerSingleBlock(typeId, location, material, ownerId, SfxBlockInstanceRecord.DEFAULT_ENERGY_PRIORITY_DISTANCE);
+    }
+
+    public UUID registerSingleBlock(String typeId, Location location, Material material, UUID ownerId, int energyPriorityDistance) {
         long now = Instant.now().toEpochMilli();
         UUID instanceId = UUID.randomUUID();
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(location);
@@ -68,7 +77,8 @@ public final class SfxBlockDataService {
                 1,
                 ownerId,
                 new byte[0],
-                now);
+                now,
+                energyPriorityDistance);
         SfxAnchorRecord anchor = new SfxAnchorRecord(
                 key,
                 material.key().toString(),
@@ -82,6 +92,16 @@ public final class SfxBlockDataService {
         return instanceId;
     }
 
+    public void updateEnergyPriorityDistance(UUID instanceId, int energyPriorityDistance) {
+        SfxBlockInstanceRecord existing = instances.get(instanceId);
+        if (existing == null || existing.energyPriorityDistance() == energyPriorityDistance) {
+            return;
+        }
+        SfxBlockInstanceRecord updated = existing.withEnergyPriorityDistance(energyPriorityDistance, Instant.now().toEpochMilli());
+        instances.put(instanceId, updated);
+        enqueueWrite(() -> saveInstance(updated));
+    }
+
     public void updateInstanceState(UUID instanceId, byte[] stateBlob, SfxBlockLifecycleState lifecycleState) {
         SfxBlockInstanceRecord existing = instances.get(instanceId);
         if (existing == null) {
@@ -89,7 +109,7 @@ public final class SfxBlockDataService {
         }
         SfxBlockInstanceRecord updated = existing.withState(stateBlob, lifecycleState, Instant.now().toEpochMilli());
         instances.put(instanceId, updated);
-        runtime.executeAsync(() -> saveInstance(updated));
+        enqueueWrite(() -> saveInstance(updated));
     }
 
     public void markAnchorIntegrity(Location location, SfxBlockIntegrityState integrityState) {
@@ -100,7 +120,7 @@ public final class SfxBlockDataService {
         }
         SfxAnchorRecord updated = existing.withIntegrity(integrityState, Instant.now().toEpochMilli());
         anchors.put(key, updated);
-        runtime.executeAsync(() -> saveAnchor(updated));
+        enqueueWrite(() -> saveAnchor(updated));
     }
 
     public void unregisterAt(Location location) {
@@ -111,7 +131,7 @@ public final class SfxBlockDataService {
         }
         UUID instanceId = anchor.instanceId();
         instances.remove(instanceId);
-        runtime.executeAsync(() -> {
+        enqueueWrite(() -> {
             try {
                 repository.deleteAnchor(key);
                 repository.deleteInstance(instanceId);
@@ -122,6 +142,15 @@ public final class SfxBlockDataService {
     }
 
     public void shutdown() {
+        shuttingDown = true;
+        awaitPendingWrites();
+        for (SfxBlockInstanceRecord instance : instances.values()) {
+            saveInstance(instance);
+        }
+        for (SfxAnchorRecord anchor : anchors.values()) {
+            saveAnchor(anchor);
+        }
+        awaitPendingWrites();
         repository.close();
         anchors.clear();
         instances.clear();
@@ -136,10 +165,42 @@ public final class SfxBlockDataService {
     }
 
     private void persist(SfxBlockInstanceRecord instance, SfxAnchorRecord anchor) {
-        runtime.executeAsync(() -> {
+        enqueueWrite(() -> {
             saveInstance(instance);
             saveAnchor(anchor);
         });
+    }
+
+    private void enqueueWrite(Runnable write) {
+        if (shuttingDown) {
+            write.run();
+            return;
+        }
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        pendingWrites.add(future);
+        runtime.executeAsync(() -> {
+            try {
+                write.run();
+                future.complete(null);
+            } catch (Throwable throwable) {
+                future.completeExceptionally(throwable);
+                plugin.getLogger().warning("Failed to execute SFX block data write: " + throwable.getMessage());
+            } finally {
+                pendingWrites.remove(future);
+            }
+        });
+    }
+
+    private void awaitPendingWrites() {
+        CompletableFuture<?>[] futures = pendingWrites.toArray(CompletableFuture[]::new);
+        if (futures.length == 0) {
+            return;
+        }
+        try {
+            CompletableFuture.allOf(futures).get(5L, TimeUnit.SECONDS);
+        } catch (Exception exception) {
+            plugin.getLogger().warning("Timed out while flushing SFX block data writes: " + exception.getMessage());
+        }
     }
 
     private void saveInstance(SfxBlockInstanceRecord instance) {

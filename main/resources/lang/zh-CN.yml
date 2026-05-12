@@ -3464,7 +3464,8 @@ energy:
     fuel:
       oil: 石油桶
       fuel: 燃料桶
-    fuel-duration: '<gray>持续时间：</gray><aqua>{seconds}s</aqua>'
+    fuel-duration: '<gray>持续时间：</gray><aqua>{seconds}</aqua>'
+    fuel-total-energy: '<gray>总能量：</gray><aqua>{energy} J</aqua>'
     active:
       name: <green>发电中</green>
       lore: <gray>正在将燃料转化为电力。</gray>

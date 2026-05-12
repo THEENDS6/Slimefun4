@@ -34,6 +34,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -456,6 +457,10 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private void openRecipe(Player player, GuideMode mode, String itemId, int recipeIndex, Navigation navigation) {
+        openRecipe(player, mode, itemId, recipeIndex, 0, navigation);
+    }
+
+    private void openRecipe(Player player, GuideMode mode, String itemId, int recipeIndex, int extraDisplayPage, Navigation navigation) {
         rememberLocation(player, GuideLocation.recipe(mode, itemId, recipeIndex));
         Optional<SfxItemDefinition> optional = registry.item(itemId);
         if (optional.isEmpty()) {
@@ -488,7 +493,7 @@ public final class DefaultSfxGuide implements SfxGuide {
 
         GuideRecipePage current = pages.get(safeRecipe);
         List<DisplayEntry> displayEntries = displayEntriesFor(definition, pages, current, mode, opener);
-        renderRecipe(player, mode, layout, itemDisplayName(definition), items.create(definition, current.outputAmount()), pages, current, navigation, outputAction, definition, displayEntries, opener);
+        renderRecipe(player, mode, layout, itemDisplayName(definition), items.create(definition, current.outputAmount()), pages, current, navigation, outputAction, definition, displayEntries, opener, extraDisplayPage);
     }
 
     private void openVanillaRecipe(Player player, GuideMode mode, Material material, int recipeIndex, Navigation navigation) {
@@ -514,7 +519,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         };
         RecipePageOpener opener = (targetPlayer, nextRecipe, nextNavigation) -> openVanillaRecipe(targetPlayer, mode, material, nextRecipe, nextNavigation);
         renderRecipe(player, mode, layout, materialName(material), output, pages, current, navigation, outputAction, null,
-                alternativeSourceEntries(pages, current, opener), opener);
+                alternativeSourceEntries(pages, current, opener), opener, 0);
     }
 
     private void openLockedResearchView(Player player, GuideMode mode, SfxItemDefinition definition, SfxResearchDefinition research, Navigation navigation) {
@@ -545,13 +550,14 @@ public final class DefaultSfxGuide implements SfxGuide {
             OutputAction outputAction,
             SfxItemDefinition definition,
             List<DisplayEntry> displayEntries,
-            RecipePageOpener opener
+            RecipePageOpener opener,
+            int extraDisplayPage
     ) {
         if (layout == GuideLayout.CLASSIC) {
             renderClassicRecipe(player, mode, subjectTitle, outputItem, pages, current, navigation, outputAction, definition, displayEntries, opener);
             return;
         }
-        renderSfxRecipe(player, mode, subjectTitle, outputItem, pages, current, navigation, outputAction, definition, displayEntries, opener);
+        renderSfxRecipe(player, mode, subjectTitle, outputItem, pages, current, navigation, outputAction, definition, displayEntries, opener, extraDisplayPage);
     }
 
     private void renderRecipeWithoutEntries(
@@ -567,7 +573,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             RecipePageOpener opener
     ) {
         GuideRecipePage empty = GuideRecipePage.noRecipe();
-        renderRecipe(player, mode, layout, subjectTitle, outputItem, List.of(empty), empty, navigation, outputAction, definition, displayEntries, opener);
+        renderRecipe(player, mode, layout, subjectTitle, outputItem, List.of(empty), empty, navigation, outputAction, definition, displayEntries, opener, 0);
     }
 
     private void renderClassicRecipe(
@@ -641,9 +647,11 @@ public final class DefaultSfxGuide implements SfxGuide {
             OutputAction outputAction,
             SfxItemDefinition definition,
             List<DisplayEntry> displayEntries,
-            RecipePageOpener opener
+            RecipePageOpener opener,
+            int extraDisplayPage
     ) {
         SfxDisplayLayout displayLayout = sfxDisplayLayout(displayEntries);
+        DisplayPage displayPage = displayPage(displayEntries, displayLayout, extraDisplayPage);
         int[] recipeSlots = displayLayout == SfxDisplayLayout.PAIRED_GRID ? SFX_RECIPE_SLOTS_TOP : SFX_RECIPE_SLOTS_NORMAL;
         int recipeCenterSlot = displayLayout == SfxDisplayLayout.PAIRED_GRID ? SFX_RECIPE_CENTER_SLOT_TOP : SFX_RECIPE_CENTER_SLOT_NORMAL;
         int sourceSlot = displayLayout == SfxDisplayLayout.PAIRED_GRID ? SFX_SOURCE_SLOT_TOP : SFX_SOURCE_SLOT_NORMAL;
@@ -691,9 +699,14 @@ public final class DefaultSfxGuide implements SfxGuide {
 
         if (displayLayout == SfxDisplayLayout.PAIRED_GRID) {
             paintClassicDivider(builder, current, pages.size());
-            renderDisplayEntries(builder, displayEntries, SFX_DISPLAY_SLOTS_PAIRED);
+            if (definition != null) {
+                addExtraDisplayPagination(builder, displayPage.page(), displayPage.pageCount(),
+                        previous -> openRecipe(previous, mode, definition.id(), current.index(), displayPage.page() - 1, Navigation.REPLACE),
+                        next -> openRecipe(next, mode, definition.id(), current.index(), displayPage.page() + 1, Navigation.REPLACE));
+            }
+            renderDisplayEntries(builder, displayPage.entries(), SFX_DISPLAY_SLOTS_PAIRED);
         } else if (displayLayout == SfxDisplayLayout.COMPACT_LIST) {
-            renderDisplayEntries(builder, displayEntries, SFX_DISPLAY_SLOTS_COMPACT);
+            renderDisplayEntries(builder, displayPage.entries(), SFX_DISPLAY_SLOTS_COMPACT);
         }
         showMenu(player, builder, navigation);
     }
@@ -899,7 +912,6 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
         return entries.stream()
                 .sorted(DISPLAY_ENTRY_ORDER)
-                .limit(CLASSIC_DISPLAY_SLOTS.length)
                 .toList();
     }
 
@@ -923,27 +935,203 @@ public final class DefaultSfxGuide implements SfxGuide {
                     SfxRecipeSlot.vanilla(Material.BASALT, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
                     SfxRecipeSlot.vanilla(Material.COBBLED_DEEPSLATE, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET)
             ), mode);
+            case "sf:coal_generator" -> coalFuelDisplayEntries(16, 10, mode, 300);
+            case "sf:coal_generator_2" -> coalFuelDisplayEntries(30, tierTwoBurnRateTenths(), mode, 300);
+            case "sf:lava_generator" -> fixedFuelDisplayEntries(20, 10, mode, 300, List.of(
+                    fuelData(SfxRecipeSlot.vanilla(Material.LAVA_BUCKET), 40 * lavaSecondsMultiplier(), "lava")));
+            case "sf:lava_generator_2" -> fixedFuelDisplayEntries(40, tierTwoBurnRateTenths(), mode, 300, List.of(
+                    fuelData(SfxRecipeSlot.vanilla(Material.LAVA_BUCKET), 40 * lavaSecondsMultiplier(), "lava")));
+            case "sf:bio_reactor" -> bioFuelDisplayEntries(8, 10, mode, 300);
+            case "sf:bio_reactor_2" -> bioFuelDisplayEntries(20, tierTwoBurnRateTenths(), mode, 300);
             case "sf:combustion_reactor" -> combustionFuelDisplayEntries(mode);
+            case "sf:magnesium_generator" -> fixedFuelDisplayEntries(36, 10, mode, 300, List.of(
+                    fuelData(SfxRecipeSlot.sfx("sf:magnesium_salt"), 20, "magnesium")));
+            case "sf:nuclear_reactor" -> fixedFuelDisplayEntries(500, 10, mode, 300, List.of(
+                    fuelData(SfxRecipeSlot.sfx("sf:uranium"), 1200, "uranium"),
+                    fuelData(SfxRecipeSlot.sfx("sf:neptunium"), 600, "neptunium"),
+                    fuelData(SfxRecipeSlot.sfx("sf:boosted_uranium"), 1500, "boosted_uranium")));
+            case "sf:netherstar_reactor" -> fixedFuelDisplayEntries(netherStarReactorEnergyPerTick(), 10, mode, 300, List.of(
+                    fuelData(SfxRecipeSlot.vanilla(Material.NETHER_STAR), 1800, "nether_star")));
             default -> List.of();
         };
     }
 
     private List<DisplayEntry> combustionFuelDisplayEntries(GuideMode mode) {
         boolean sfxBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
+        int energy = sfxBalance ? 64 : 24;
         int oilSeconds = sfxBalance ? 40 : 30;
         int fuelSeconds = sfxBalance ? 120 : 90;
+        return fixedFuelDisplayEntries(energy, 10, mode, 300, List.of(
+                fuelData(SfxRecipeSlot.sfx("sf:bucket_of_oil"), oilSeconds, "oil"),
+                fuelData(SfxRecipeSlot.sfx("sf:bucket_of_fuel"), fuelSeconds, "fuel")));
+    }
+
+    private List<DisplayEntry> coalFuelDisplayEntries(int energyPerTick, int burnRateTenths, GuideMode mode, int startPriority) {
+        int multiplier = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 2 : 1;
+        List<FuelDisplayData> fuels = List.of(
+                fuelData(SfxRecipeSlot.vanilla(Material.CHARCOAL), vanillaFuelSeconds(1600, multiplier), "charcoal"),
+                fuelData(SfxRecipeSlot.vanilla(Material.COAL), vanillaFuelSeconds(1600, multiplier), "coal"),
+                fuelData(SfxRecipeSlot.vanilla(Material.COAL_BLOCK), vanillaFuelSeconds(16000, multiplier), "coal_block"),
+                fuelData(SfxRecipeSlot.vanilla(Material.OAK_PLANKS), vanillaFuelSeconds(300, multiplier), "oak_planks")
+        );
+        return fixedFuelDisplayEntries(energyPerTick, burnRateTenths, mode, startPriority, fuels);
+    }
+
+    private double vanillaFuelSeconds(int burnTicks, int multiplier) {
+        return (burnTicks * multiplier) / 200.0;
+    }
+
+    private List<DisplayEntry> bioFuelDisplayEntries(int energyPerTick, int burnRateTenths, GuideMode mode, int startPriority) {
+        int multiplier = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 4 : 1;
+        List<FuelDisplayData> fuels = new ArrayList<>();
+        addBioFuel(fuels, Material.ROTTEN_FLESH, 2, multiplier);
+        addBioFuel(fuels, Material.SPIDER_EYE, 2, multiplier);
+        addBioFuel(fuels, Material.BONE, 2, multiplier);
+        addBioFuel(fuels, Material.STRING, 2, multiplier);
+        addBioFuel(fuels, Material.APPLE, 3, multiplier);
+        addBioFuel(fuels, Material.MELON_SLICE, 3, multiplier);
+        addBioFuel(fuels, Material.MELON, 27, multiplier);
+        addBioFuel(fuels, Material.PUMPKIN, 3, multiplier);
+        addBioFuel(fuels, Material.PUMPKIN_SEEDS, 3, multiplier);
+        addBioFuel(fuels, Material.MELON_SEEDS, 3, multiplier);
+        addBioFuel(fuels, Material.WHEAT, 3, multiplier);
+        addBioFuel(fuels, Material.WHEAT_SEEDS, 3, multiplier);
+        addBioFuel(fuels, Material.CARROT, 3, multiplier);
+        addBioFuel(fuels, Material.POTATO, 3, multiplier);
+        addBioFuel(fuels, Material.SUGAR_CANE, 3, multiplier);
+        addBioFuel(fuels, Material.NETHER_WART, 3, multiplier);
+        addBioFuel(fuels, Material.RED_MUSHROOM, 2, multiplier);
+        addBioFuel(fuels, Material.BROWN_MUSHROOM, 2, multiplier);
+        addBioFuel(fuels, Material.VINE, 2, multiplier);
+        addBioFuel(fuels, Material.CACTUS, 2, multiplier);
+        addBioFuel(fuels, Material.LILY_PAD, 2, multiplier);
+        addBioFuel(fuels, Material.CHORUS_FRUIT, 8, multiplier);
+        addBioFuel(fuels, Material.KELP, 1, multiplier);
+        addBioFuel(fuels, Material.DRIED_KELP, 2, multiplier);
+        addBioFuel(fuels, Material.DRIED_KELP_BLOCK, 20, multiplier);
+        addBioFuel(fuels, Material.SEAGRASS, 1, multiplier);
+        addBioFuel(fuels, Material.SEA_PICKLE, 2, multiplier);
+        addBioFuel(fuels, Material.BAMBOO, 1, multiplier);
+        addBioFuel(fuels, Material.SWEET_BERRIES, 2, multiplier);
+        addBioFuel(fuels, Material.COCOA_BEANS, 2, multiplier);
+        addBioFuel(fuels, Material.BEETROOT, 3, multiplier);
+        addBioFuel(fuels, Material.BEETROOT_SEEDS, 3, multiplier);
+        addBioFuel(fuels, Material.HONEYCOMB, 4, multiplier);
+        addBioFuel(fuels, Material.HONEYCOMB_BLOCK, 40, multiplier);
+        addBioFuel(fuels, Material.SHROOMLIGHT, 4, multiplier);
+        addBioFuel(fuels, Material.CRIMSON_FUNGUS, 2, multiplier);
+        addBioFuel(fuels, Material.WARPED_FUNGUS, 2, multiplier);
+        fuels.add(fuelData(SfxRecipeSlot.sfx("sf:strange_nether_goo"), 16 * multiplier, "strange_nether_goo"));
+        addOptionalBioFuel(fuels, Material.GLOW_BERRIES, 2, multiplier);
+        addOptionalBioFuel(fuels, Material.SMALL_DRIPLEAF, 3, multiplier);
+        addOptionalBioFuel(fuels, Material.BIG_DRIPLEAF, 3, multiplier);
+        addOptionalBioFuel(fuels, Material.GLOW_LICHEN, 2, multiplier);
+        addOptionalBioFuel(fuels, Material.SPORE_BLOSSOM, 20, multiplier);
+        addOptionalBioFuel(fuels, Material.POPPY, 1, multiplier);
+        addOptionalBioFuel(fuels, Material.OAK_LEAVES, 1, multiplier);
+        addOptionalBioFuel(fuels, Material.OAK_SAPLING, 1, multiplier);
+        addOptionalBioFuel(fuels, Material.BRAIN_CORAL, 2, multiplier);
+        addOptionalBioFuel(fuels, Material.BRAIN_CORAL_BLOCK, 2, multiplier);
+        return fixedFuelDisplayEntries(energyPerTick, burnRateTenths, mode, startPriority, fuels);
+    }
+
+    private void addBioFuel(List<FuelDisplayData> fuels, Material material, int seconds, int multiplier) {
+        fuels.add(fuelData(SfxRecipeSlot.vanilla(material), seconds * multiplier, material.key().toString()));
+    }
+
+    private void addOptionalBioFuel(List<FuelDisplayData> fuels, Material material, int seconds, int multiplier) {
+        if (material != null) {
+            addBioFuel(fuels, material, seconds, multiplier);
+        }
+    }
+
+    private List<DisplayEntry> fixedFuelDisplayEntries(int energyPerTick, int burnRateTenths, GuideMode mode, int startPriority, List<FuelDisplayData> fuels) {
         List<DisplayEntry> entries = new ArrayList<>();
-        entries.add(fuelDisplayEntry(SfxRecipeSlot.sfx("sf:bucket_of_oil"), tr("energy.generator.fuel.oil", "Oil"), oilSeconds, 300, mode));
-        entries.add(fuelDisplayEntry(SfxRecipeSlot.sfx("sf:bucket_of_fuel"), tr("energy.generator.fuel.fuel", "Fuel"), fuelSeconds, 305, mode));
+        int priority = startPriority;
+        for (FuelDisplayData fuel : fuels) {
+            double effectiveSeconds = fuel.baseSeconds() * 10.0 / Math.max(1, burnRateTenths);
+            entries.add(fuelDisplayEntry(fuel.slot(), effectiveSeconds, energyPerTick, priority, mode));
+            priority += 5;
+        }
         return entries;
     }
 
-    private DisplayEntry fuelDisplayEntry(SfxRecipeSlot slot, String label, int seconds, int priority, GuideMode mode) {
+    private FuelDisplayData fuelData(SfxRecipeSlot slot, double seconds, String key) {
+        return new FuelDisplayData(slot, seconds, key);
+    }
+
+    private DisplayEntry fuelDisplayEntry(SfxRecipeSlot slot, double seconds, int energyPerTick, int priority, GuideMode mode) {
+        long totalEnergy = Math.round(seconds * energyPerTick);
         ItemStack icon = withLore(ingredientIcon(slot), List.of(
                 Component.empty(),
-                Text.mm(tr("energy.generator.fuel-duration", "<gray>Duration: </gray><aqua>{seconds}s</aqua>").replace("{seconds}", Integer.toString(seconds)))
+                Text.mm(tr("energy.generator.fuel-duration", "<gray>Duration: </gray><aqua>{seconds}</aqua>").replace("{seconds}", formatDuration(seconds))),
+                Text.mm(tr("energy.generator.fuel-total-energy", "<gray>Total Energy: </gray><aqua>{energy} J</aqua>").replace("{energy}", formatEnergyShort(totalEnergy)))
         ));
-        return DisplayEntry.single(icon, label + " " + seconds + "s", priority, handlerForSlot(slot, mode));
+        return DisplayEntry.single(icon, slotLabel(slot) + " " + formatDuration(seconds), priority, handlerForSlot(slot, mode));
+    }
+
+    private int tierTwoBurnRateTenths() {
+        return plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 15 : 10;
+    }
+
+    private int lavaSecondsMultiplier() {
+        return plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 2 : 1;
+    }
+
+    private int netherStarReactorEnergyPerTick() {
+        return plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 2048 : 1024;
+    }
+
+    private String formatDuration(double seconds) {
+        if (seconds < 60.0) {
+            double rounded = Math.round(seconds * 10.0) / 10.0;
+            if (Math.abs(rounded - Math.rint(rounded)) < 0.0001) {
+                return Integer.toString((int) Math.rint(rounded)) + "s";
+            }
+            return String.format(Locale.ROOT, "%.1fs", rounded);
+        }
+        long totalSeconds = Math.max(0L, Math.round(seconds));
+        long hours = totalSeconds / 3600L;
+        long minutes = (totalSeconds % 3600L) / 60L;
+        long remainingSeconds = totalSeconds % 60L;
+        StringBuilder builder = new StringBuilder();
+        if (hours > 0L) {
+            builder.append(hours).append("h");
+            if (minutes > 0L) {
+                builder.append(minutes).append("m");
+            }
+            if (remainingSeconds > 0L) {
+                builder.append(remainingSeconds).append("s");
+            }
+            return builder.toString();
+        }
+        builder.append(minutes).append("m");
+        if (remainingSeconds > 0L) {
+            builder.append(remainingSeconds).append("s");
+        }
+        return builder.toString();
+    }
+
+    private String formatEnergyShort(long value) {
+        long abs = Math.abs(value);
+        if (abs < 1000) {
+            return Long.toString(value);
+        }
+        String[] units = {"k", "m", "b", "t", "p", "e"};
+        double scaled = abs;
+        int unitIndex = -1;
+        while (scaled >= 1000.0 && unitIndex + 1 < units.length) {
+            scaled /= 1000.0;
+            unitIndex++;
+        }
+        String number = scaled < 10.0 ? String.format(Locale.ROOT, "%.1f", scaled) : String.format(Locale.ROOT, "%.0f", scaled);
+        if (number.endsWith(".0") && scaled >= 10.0) {
+            number = number.substring(0, number.length() - 2);
+        }
+        return (value < 0 ? "-" : "") + number + units[unitIndex];
+    }
+
+    private record FuelDisplayData(SfxRecipeSlot slot, double baseSeconds, String key) {
     }
 
     private List<DisplayEntry> pairedDisplayEntries(List<SfxRecipeSlot> slots, GuideMode mode) {
@@ -1082,6 +1270,34 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
         boolean compact = entries.size() <= SFX_DISPLAY_SLOTS_COMPACT.length && entries.stream().noneMatch(DisplayEntry::paired);
         return compact ? SfxDisplayLayout.COMPACT_LIST : SfxDisplayLayout.PAIRED_GRID;
+    }
+
+    private DisplayPage displayPage(List<DisplayEntry> entries, SfxDisplayLayout layout, int requestedPage) {
+        if (entries == null || entries.isEmpty() || layout == SfxDisplayLayout.NONE) {
+            return new DisplayPage(List.of(), 0, 1);
+        }
+        int capacity = layout == SfxDisplayLayout.COMPACT_LIST ? SFX_DISPLAY_SLOTS_COMPACT.length : SFX_DISPLAY_SLOTS_PAIRED.length;
+        List<List<DisplayEntry>> pages = new ArrayList<>();
+        List<DisplayEntry> current = new ArrayList<>();
+        int used = 0;
+        for (DisplayEntry entry : entries) {
+            int cost = entry.paired() ? 2 : 1;
+            if (!current.isEmpty() && used + cost > capacity) {
+                pages.add(List.copyOf(current));
+                current.clear();
+                used = 0;
+            }
+            current.add(entry);
+            used += cost;
+        }
+        if (!current.isEmpty()) {
+            pages.add(List.copyOf(current));
+        }
+        if (pages.isEmpty()) {
+            return new DisplayPage(List.of(), 0, 1);
+        }
+        int safePage = clampPage(requestedPage, pages.size());
+        return new DisplayPage(pages.get(safePage), safePage, pages.size());
     }
 
     private void renderDisplayEntries(SfxMenu.Builder builder, List<DisplayEntry> entries, int[] slots) {
@@ -1386,6 +1602,22 @@ public final class DefaultSfxGuide implements SfxGuide {
             }
         }));
         builder.button(52, new SfxMenuButton(nextRecipeIcon(page, pageCount), click -> {
+            if (page + 1 < pageCount) {
+                next.accept(click.player());
+            }
+        }));
+    }
+
+    private void addExtraDisplayPagination(SfxMenu.Builder builder, int page, int pageCount, PlayerAction previous, PlayerAction next) {
+        if (pageCount <= 1) {
+            return;
+        }
+        builder.button(27, new SfxMenuButton(previousRecipeIcon(page, pageCount), click -> {
+            if (page > 0) {
+                previous.accept(click.player());
+            }
+        }));
+        builder.button(35, new SfxMenuButton(nextRecipeIcon(page, pageCount), click -> {
             if (page + 1 < pageCount) {
                 next.accept(click.player());
             }
@@ -2156,6 +2388,9 @@ public final class DefaultSfxGuide implements SfxGuide {
         CATEGORY,
         RECIPE,
         VANILLA
+    }
+
+    private record DisplayPage(List<DisplayEntry> entries, int page, int pageCount) {
     }
 
     private record DisplayEntry(

@@ -3,9 +3,11 @@ package cc.theends6.sfx.internal.playerdata;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -16,6 +18,8 @@ public final class SfxPlayerDataService {
     private final SfxRuntime runtime;
     private final SfxPlayerDataRepository repository;
     private final Map<UUID, CompletableFuture<SfxPlayerProfile>> profiles = new ConcurrentHashMap<>();
+    private final Set<CompletableFuture<Void>> pendingWrites = ConcurrentHashMap.newKeySet();
+    private volatile boolean shuttingDown;
 
     public SfxPlayerDataService(JavaPlugin plugin, SfxRuntime runtime, SfxPlayerDataRepository repository) {
         this.plugin = plugin;
@@ -54,13 +58,7 @@ public final class SfxPlayerDataService {
         if (profile == null || !profile.isDirty()) {
             return;
         }
-        runtime.executeAsync(() -> {
-            try {
-                repository.save(profile);
-            } catch (Exception exception) {
-                plugin.getLogger().warning("Failed to save SFX profile for " + profile.ownerId() + ": " + exception.getMessage());
-            }
-        });
+        enqueueWrite(() -> saveNow(profile));
     }
 
     public void saveAndUnload(UUID uuid) {
@@ -72,30 +70,21 @@ public final class SfxPlayerDataService {
             if (throwable != null || profile == null) {
                 return;
             }
-            try {
-                repository.save(profile);
-            } catch (Exception exception) {
-                plugin.getLogger().warning("Failed to save SFX profile for " + uuid + ": " + exception.getMessage());
-            }
+            enqueueWrite(() -> saveNow(profile));
         });
     }
 
     public void shutdown() {
+        shuttingDown = true;
+        awaitPendingWrites();
         for (Map.Entry<UUID, CompletableFuture<SfxPlayerProfile>> entry : profiles.entrySet()) {
-            CompletableFuture<SfxPlayerProfile> future = entry.getValue();
-            if (!future.isDone() || future.isCompletedExceptionally()) {
-                continue;
-            }
-            SfxPlayerProfile profile = future.getNow(null);
+            SfxPlayerProfile profile = profileOrNull(entry.getValue());
             if (profile == null) {
                 continue;
             }
-            try {
-                repository.save(profile);
-            } catch (Exception exception) {
-                plugin.getLogger().warning("Failed to save SFX profile for " + profile.ownerId() + ": " + exception.getMessage());
-            }
+            saveNow(profile);
         }
+        awaitPendingWrites();
         profiles.clear();
         repository.close();
     }
@@ -110,6 +99,55 @@ public final class SfxPlayerDataService {
             }
         });
         return future;
+    }
+
+    private SfxPlayerProfile profileOrNull(CompletableFuture<SfxPlayerProfile> future) {
+        try {
+            return future.get(5L, TimeUnit.SECONDS);
+        } catch (Exception exception) {
+            plugin.getLogger().warning("Timed out while loading SFX profile during shutdown: " + exception.getMessage());
+            return null;
+        }
+    }
+
+    private void enqueueWrite(Runnable write) {
+        if (shuttingDown) {
+            write.run();
+            return;
+        }
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        pendingWrites.add(future);
+        runtime.executeAsync(() -> {
+            try {
+                write.run();
+                future.complete(null);
+            } catch (Throwable throwable) {
+                future.completeExceptionally(throwable);
+                plugin.getLogger().warning("Failed to execute SFX player data write: " + throwable.getMessage());
+            } finally {
+                pendingWrites.remove(future);
+            }
+        });
+    }
+
+    private void awaitPendingWrites() {
+        CompletableFuture<?>[] futures = pendingWrites.toArray(CompletableFuture[]::new);
+        if (futures.length == 0) {
+            return;
+        }
+        try {
+            CompletableFuture.allOf(futures).get(5L, TimeUnit.SECONDS);
+        } catch (Exception exception) {
+            plugin.getLogger().warning("Timed out while flushing SFX player data writes: " + exception.getMessage());
+        }
+    }
+
+    private void saveNow(SfxPlayerProfile profile) {
+        try {
+            repository.save(profile);
+        } catch (Exception exception) {
+            plugin.getLogger().warning("Failed to save SFX profile for " + profile.ownerId() + ": " + exception.getMessage());
+        }
     }
 
     private void completeProfileCallback(String name, Consumer<SfxPlayerProfile> callback, SfxPlayerProfile profile, Throwable throwable) {

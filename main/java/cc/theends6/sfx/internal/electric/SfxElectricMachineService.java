@@ -35,6 +35,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -170,6 +171,9 @@ public final class SfxElectricMachineService implements Listener {
         if (event.getAction().isLeftClick() || event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) {
             return;
         }
+        if (event.getPlayer().isSneaking()) {
+            return;
+        }
         Block clicked = event.getClickedBlock();
         if (clicked == null) {
             return;
@@ -183,7 +187,7 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         event.setCancelled(true);
-        runtime.executeAt(clicked.getLocation(), () -> openMachine(event.getPlayer(), instance));
+        runtime.executeForPlayer(event.getPlayer(), () -> openMachine(event.getPlayer(), instance));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -249,14 +253,17 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         sessionsByViewer.remove(session.viewerId());
-        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
-        if (instance == null) {
+        syncSessionState(session);
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        MachineSession session = sessionsByViewer.remove(event.getPlayer().getUniqueId());
+        if (session == null) {
             return;
         }
-        SfxElectricMachineState state = currentState(holder.instanceId(), instance);
-        syncInventoryToState(session.inventory(), state);
-        dirtyInstances.add(holder.instanceId());
-        activeInstances.add(holder.instanceId());
+        sessionsByInstance.remove(session.instanceId());
+        syncSessionState(session);
     }
 
     public void shutdown() {
