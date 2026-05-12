@@ -101,17 +101,54 @@ public final class SfxLocalization {
     public List<String> list(String path) {
         List<String> fromCustom = custom == null ? List.of() : custom.getStringList(path);
         if (!fromCustom.isEmpty()) {
-            return fromCustom;
+            return postProcessList(path, fromCustom);
         }
         List<String> fromBundled = bundled == null ? List.of() : bundled.getStringList(path);
         if (!fromBundled.isEmpty()) {
-            return fromBundled;
+            return postProcessList(path, fromBundled);
         }
         List<String> indexed = indexedList(custom, path);
         if (!indexed.isEmpty()) {
-            return indexed;
+            return postProcessList(path, indexed);
         }
-        return indexedList(bundled, path);
+        return postProcessList(path, indexedList(bundled, path));
+    }
+
+    private List<String> postProcessList(String path, List<String> values) {
+        boolean sfxGeneratorBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
+        if ("items.sf.combustion_reactor.lore".equals(path)) {
+            return combustionReactorLore(values, sfxGeneratorBalance);
+        }
+        if (!sfxGeneratorBalance) {
+            return values;
+        }
+        if (!"items.sf.coal_generator_2.lore".equals(path)
+                && !"items.sf.lava_generator_2.lore".equals(path)
+                && !"items.sf.bio_reactor_2.lore".equals(path)) {
+            return values;
+        }
+        String line = text("energy.generator.tier2-fuel-consumption-lore", "&8⇨ &6🔥 &7Fuel consumption: &b1.5x");
+        if (line == null || line.isBlank() || values.contains(line)) {
+            return values;
+        }
+        List<String> copy = new ArrayList<>(values);
+        copy.add(line);
+        return copy;
+    }
+
+    private List<String> combustionReactorLore(List<String> values, boolean sfxGeneratorBalance) {
+        String capacity = sfxGeneratorBalance ? "20480" : "5120";
+        String output = sfxGeneratorBalance ? "64" : "24";
+        List<String> copy = new ArrayList<>(values.size());
+        for (String value : values) {
+            String line = value
+                    .replace("20480 J", capacity + " J")
+                    .replace("5120 J", capacity + " J")
+                    .replace("64 J/t", output + " J/t")
+                    .replace("24 J/t", output + " J/t");
+            copy.add(line);
+        }
+        return copy;
     }
 
     public Map<String, String> sectionStrings(String path) {

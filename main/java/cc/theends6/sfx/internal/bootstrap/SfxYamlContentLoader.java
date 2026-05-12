@@ -95,6 +95,9 @@ public final class SfxYamlContentLoader {
             }
             for (Map<?, ?> entry : yaml.getMapList("items")) {
                 try {
+                    if (!isFeatureEnabled(entry)) {
+                        continue;
+                    }
                     SfxItemDefinition item = parseItem(entry);
                     if (Boolean.TRUE.equals(entry.get("replace"))) {
                         registry.replaceItem(item);
@@ -106,6 +109,18 @@ public final class SfxYamlContentLoader {
                 }
             }
         }
+    }
+
+
+    private boolean isFeatureEnabled(Map<?, ?> entry) {
+        boolean sfxGeneratorBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
+        if (Boolean.TRUE.equals(entry.get("requires-sfx-generator-balance")) && !sfxGeneratorBalance) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(entry.get("requires-classic-generator-balance")) && sfxGeneratorBalance) {
+            return false;
+        }
+        return true;
     }
 
     private SfxItemCategory parseCategory(Map<?, ?> entry) {

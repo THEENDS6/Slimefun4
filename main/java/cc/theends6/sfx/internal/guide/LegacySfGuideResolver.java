@@ -544,6 +544,7 @@ public final class LegacySfGuideResolver {
         map.put("sf:auto_brewer", "guide:sf:electricity");
         map.put("sf:book_binder", "guide:sf:electricity");
         map.put("sf:bio_reactor", "guide:sf:electricity");
+        map.put("sf:bio_reactor_2", "guide:sf:electricity");
         map.put("sf:multimeter", "guide:sf:technical_gadgets");
         map.put("sf:small_capacitor", "guide:sf:electricity");
         map.put("sf:medium_capacitor", "guide:sf:electricity");
@@ -871,7 +872,7 @@ public final class LegacySfGuideResolver {
         order = putRange(map, order, "sf:electric_smeltery", "sf:electric_smeltery_2");
         order = putRange(map, order, "sf:electric_press", "sf:electric_press_2");
         order = putRange(map, order, "sf:refinery", "sf:combustion_reactor", "sf:nuclear_reactor", "sf:magnesium_generator");
-        order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:bio_reactor");
+        order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:bio_reactor", "sf:bio_reactor_2");
         return Collections.unmodifiableMap(map);
     }
 
@@ -953,7 +954,7 @@ public final class LegacySfGuideResolver {
         order = putRange(map, order, "sf:electric_press", "sf:electric_press_2");
         order = putRange(map, order, "sf:refinery");
         order = putRange(map, order, "sf:combustion_reactor");
-        order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:magnesium_generator", "sf:bio_reactor");
+        order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:magnesium_generator", "sf:bio_reactor", "sf:bio_reactor_2");
         order = putRange(map, order, "sf:nuclear_reactor", "sf:netherstar_reactor");
         order = putRange(map, order, "sf:fluid_pump");
         order = putRange(map, order, "sf:carbon_press", "sf:carbon_press_2", "sf:carbon_press_3");

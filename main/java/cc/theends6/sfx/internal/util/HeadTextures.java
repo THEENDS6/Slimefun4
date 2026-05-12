@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
+import org.bukkit.block.Skull;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
@@ -35,6 +36,30 @@ public final class HeadTextures {
             }
         } catch (Throwable ex) {
             LOGGER.log(Level.FINE, "Failed to apply head texture via reflection", ex);
+        }
+    }
+
+
+    public static void apply(Skull skull, String textureHash) {
+        if (skull == null || textureHash == null || textureHash.isBlank()) {
+            return;
+        }
+        try {
+            Object profile = createProfile(textureHash);
+            if (profile == null) {
+                return;
+            }
+            Object textures = invoke(profile, "getTextures");
+            if (textures != null) {
+                invokeBest(textures, "setSkin", new URL("https://textures.minecraft.net/texture/" + textureHash));
+                invokeBest(profile, "setTextures", textures);
+            }
+            if (!invokeBest(skull, "setPlayerProfile", profile)) {
+                invokeBest(skull, "setOwnerProfile", profile);
+            }
+            skull.update(true, false);
+        } catch (Throwable ex) {
+            LOGGER.log(Level.FINE, "Failed to apply placed head texture via reflection", ex);
         }
     }
 

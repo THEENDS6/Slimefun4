@@ -1,4 +1,4 @@
-﻿machines:
+machines:
   structure-changed: <red>结构已经变化，机器触发已取消。</red>
   missing-dispenser: <red>结构不完整：未找到机器对应的发射器。</red>
   smeltery-not-lit: <red>这台冶炼炉还没有点火，请在发射器下方点燃火焰或灵魂火。</red>
@@ -1938,21 +1938,21 @@ items:
     - ''
     - '&e基础发电机'
     - '&8⇨ &e⚡ &70 J 储能'
-    - '&8⇨ &e⚡ &72 J/t'
+    - '&8⇨ &e⚡ &74 J/t'
   sf.solar_generator_2:
     name: '&c高级太阳能发电机'
     lore:
     - ''
     - '&a中型发电机'
     - '&8⇨ &e⚡ &70 J 储能'
-    - '&8⇨ &e⚡ &78 J/t'
+    - '&8⇨ &e⚡ &716 J/t'
   sf.solar_generator_3:
     name: '&4黑钻太阳能发电机'
     lore:
     - ''
     - '&4终极发电机'
     - '&8⇨ &e⚡ &70 J 储能'
-    - '&8⇨ &e⚡ &732 J/t'
+    - '&8⇨ &e⚡ &764 J/t'
   sf.solar_generator_4:
     name: '&e充能太阳能发电机'
     lore:
@@ -1961,84 +1961,84 @@ items:
     - ''
     - '&4终极发电机'
     - '&8⇨ &e⚡ &70 J 储能'
-    - '&8⇨ &e⚡ &7128 J/t（白天）'
-    - '&8⇨ &e⚡ &764 J/t（夜晚）'
+    - '&8⇨ &e⚡ &7256 J/t（白天）'
+    - '&8⇨ &e⚡ &7128 J/t（夜晚）'
   sf.coal_generator:
     name: '&c煤炭发电机'
     lore:
     - ''
     - '&6普通发电机'
     - '&8⇨ &e⚡ &71280 J 储能'
-    - '&8⇨ &e⚡ &78 J/t'
+    - '&8⇨ &e⚡ &716 J/t'
   sf.coal_generator_2:
     name: '&c煤炭发电机 &7(&eII&7)'
     lore:
     - ''
     - '&6高级发电机'
     - '&8⇨ &e⚡ &75120 J 储能'
-    - '&8⇨ &e⚡ &715 J/t'
+    - '&8⇨ &e⚡ &730 J/t'
   sf.lava_generator:
     name: '&4熔岩发电机'
     lore:
     - ''
     - '&6普通发电机'
     - '&8⇨ &e⚡ &710240 J 储能'
-    - '&8⇨ &e⚡ &710 J/t'
+    - '&8⇨ &e⚡ &720 J/t'
   sf.lava_generator_2:
     name: '&4熔岩发电机 &7(&eII&7)'
     lore:
     - ''
     - '&6高级发电机'
     - '&8⇨ &e⚡ &720480 J 储能'
-    - '&8⇨ &e⚡ &720 J/t'
+    - '&8⇨ &e⚡ &740 J/t'
   sf.electric_furnace:
-    name: '&c????'
+    name: '&c电力熔炉'
     lore:
     - ''
-    - '&e????'
-    - '&8? &b? &7???&b1x'
-    - '&8? &e? &72 J/t'
+    - '&e基础机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &74 J/t'
   sf.electric_furnace_2:
-    name: '&c???? &7- &eII'
+    name: '&c电力熔炉 &7- &eII'
     lore:
     - ''
-    - '&a????'
-    - '&8? &b? &7???&b2x'
-    - '&8? &e? &73 J/t'
+    - '&a中型机器'
+    - '&8⇨ &b⚡ &7速度：&b2x'
+    - '&8⇨ &e⚡ &76 J/t'
   sf.electric_furnace_3:
-    name: '&c???? &7- &eIII'
+    name: '&c电力熔炉 &7- &eIII'
     lore:
     - ''
-    - '&a????'
-    - '&8? &b? &7???&b4x'
-    - '&8? &e? &75 J/t'
+    - '&a中型机器'
+    - '&8⇨ &b⚡ &7速度：&b4x'
+    - '&8⇨ &e⚡ &710 J/t'
   sf.electric_ore_grinder:
-    name: '&c?????'
+    name: '&c电力碎矿机'
     lore:
     - ''
-    - '&f??????????'
+    - '&f兼具碎矿机与磨石的功能'
     - ''
-    - '&6????'
-    - '&8? &b? &7???&b1x'
-    - '&8? &e? &76 J/t'
+    - '&6高级机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &712 J/t'
   sf.electric_ore_grinder_2:
-    name: '&c????? &7(&eII&7)'
+    name: '&c电力碎矿机 &7(&eII&7)'
     lore:
     - ''
-    - '&f??????????'
+    - '&f兼具碎矿机与磨石的功能'
     - ''
-    - '&4????'
-    - '&8? &b? &7???&b4x'
-    - '&8? &e? &715 J/t'
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b4x'
+    - '&8⇨ &e⚡ &730 J/t'
   sf.electric_ore_grinder_3:
-    name: '&c????? &7(&eIII&7)'
+    name: '&c电力碎矿机 &7(&eIII&7)'
     lore:
     - ''
-    - '&f??????????'
+    - '&f兼具碎矿机与磨石的功能'
     - ''
-    - '&4????'
-    - '&8? &b? &7???&b10x'
-    - '&8? &e? &745 J/t'
+    - '&4终极机器'
+    - '&8⇨ &b⚡ &7速度：&b10x'
+    - '&8⇨ &e⚡ &790 J/t'
   sf.electric_ingot_pulverizer:
     name: '&c电力锭粉碎机'
     lore:
@@ -2047,63 +2047,63 @@ items:
     - ''
     - '&a中型机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7280 J ??/t'
+    - '&8⇨ &e⚡ &714 J/t'
   sf.auto_drier:
     name: '&6自动烘干机'
     lore:
     - ''
     - '&a中型机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7200 J ??/t'
+    - '&8⇨ &e⚡ &710 J/t'
   sf.auto_enchanter:
     name: '&5自动附魔机'
     lore:
     - ''
     - '&a中型机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7360 J ??/t'
+    - '&8⇨ &e⚡ &718 J/t'
   sf.auto_enchanter_2:
     name: '&5自动附魔机 &7- &eII'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b3x'
-    - '&8⇨ &e⚡ &7960 J ??/t'
+    - '&8⇨ &e⚡ &748 J/t'
   sf.auto_disenchanter:
     name: '&5自动祛魔机'
     lore:
     - ''
     - '&a中型机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7360 J ??/t'
+    - '&8⇨ &e⚡ &718 J/t'
   sf.auto_disenchanter_2:
     name: '&5自动祛魔机 &7- &eII'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b3x'
-    - '&8⇨ &e⚡ &7960 J ??/t'
+    - '&8⇨ &e⚡ &748 J/t'
   sf.auto_anvil:
     name: '&7自动铁砧'
     lore:
     - ''
     - '&6高级机器'
     - '&8⇨ &7修复系数：10%'
-    - '&8⇨ &e⚡ &7480 J ??/t'
+    - '&8⇨ &e⚡ &724 J/t'
   sf.auto_anvil_2:
     name: '&7自动铁砧 Mk.II'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &7修复系数：25%'
-    - '&8⇨ &e⚡ &7640 J ??/t'
+    - '&8⇨ &e⚡ &732 J/t'
   sf.auto_brewer:
     name: '&6自动酿造机'
     lore:
     - ''
     - '&a中型机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7240 J ??/t'
+    - '&8⇨ &e⚡ &712 J/t'
   sf.book_binder:
     name: '&6附魔书装订机'
     lore:
@@ -2111,14 +2111,21 @@ items:
     - '&f可将多本附魔书合并为一本。'
     - ''
     - '&a中型机器'
-    - '&8⇨ &e⚡ &7320 J ??/t'
+    - '&8⇨ &e⚡ &716 J/t'
   sf.bio_reactor:
     name: '&2生物质发电机'
     lore:
     - ''
     - '&6普通发电机'
     - '&8⇨ &e⚡ &72560 J 储能'
-    - '&8⇨ &e⚡ &74 J/t'
+    - '&8⇨ &e⚡ &78 J/t'
+  sf.bio_reactor_2:
+    name: '&2生物质发电机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&6高级发电机'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &720 J/t'
   sf.multimeter:
     name: '&e万用表'
     lore:
@@ -2140,7 +2147,7 @@ items:
     - '&6普通电容'
     - '&8⇨ &e⚡ &710240 J 容量'
   sf.big_capacitor:
-    name: '&a大号能源电容'
+    name: '&a大型能源电容'
     lore:
     - '&7范围：&c6 格'
     - ''
@@ -2154,7 +2161,7 @@ items:
     - '&2大型电容'
     - '&8⇨ &e⚡ &7163840 J 容量'
   sf.carbonado_edged_capacitor:
-    name: '&a黑钻镶边能源电容'
+    name: '&a黑钻能源电容'
     lore:
     - '&7范围：&c6 格'
     - ''
@@ -2256,26 +2263,26 @@ items:
     name: '&bGPS 发射器'
     lore:
     - ''
-    - '&8⇨ &e⚡ &7320 J ?? 储能'
-    - '&8⇨ &e⚡ &740 J ??/t'
+    - '&8⇨ &e⚡ &7320 J 储能'
+    - '&8⇨ &e⚡ &72 J/t'
   sf.gps_transmitter_2:
     name: '&c高级 GPS 发射器'
     lore:
     - ''
-    - '&8⇨ &e⚡ &71280 J ?? 储能'
-    - '&8⇨ &e⚡ &7120 J ??/t'
+    - '&8⇨ &e⚡ &71280 J 储能'
+    - '&8⇨ &e⚡ &76 J/t'
   sf.gps_transmitter_3:
     name: '&4黑钻 GPS 发射器'
     lore:
     - ''
-    - '&8⇨ &e⚡ &75120 J ?? 储能'
-    - '&8⇨ &e⚡ &7440 J ??/t'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &722 J/t'
   sf.gps_transmitter_4:
     name: '&e充能 GPS 发射器'
     lore:
     - ''
-    - '&8⇨ &e⚡ &720480 J ?? 储能'
-    - '&8⇨ &e⚡ &71840 J ??/t'
+    - '&8⇨ &e⚡ &720480 J 储能'
+    - '&8⇨ &e⚡ &792 J/t'
   sf.gps_marker_tool:
     name: '&bGPS 标记工具'
     lore:
@@ -2331,7 +2338,7 @@ items:
     - ''
     - '&6高级机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7960 J ??/t'
+    - '&8⇨ &e⚡ &748 J/t'
     - ''
     - '&c&l! &c请先对该区块进行地质扫描'
   sf.oil_pump:
@@ -2355,8 +2362,8 @@ items:
     lore:
     - ''
     - '&6高级发电机'
-    - '&8⇨ &e⚡ &720480 J 储能'
-    - '&8⇨ &e⚡ &764 J/t'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &724 J/t'
   sf.android_memory_core:
     name: '&b机器人记忆核心'
   sf.gps_teleporter_pylon:
@@ -2419,14 +2426,14 @@ items:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7200 J ??/t'
+    - '&8⇨ &e⚡ &710 J/t'
   sf.heated_pressure_chamber_2:
     name: '&c热压力室 &7- &eII'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b5x'
-    - '&8⇨ &e⚡ &7880 J ??/t'
+    - '&8⇨ &e⚡ &744 J/t'
   sf.electric_smeltery:
     name: '&c电力冶炼炉'
     lore:
@@ -2435,7 +2442,7 @@ items:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7400 J ??/t'
+    - '&8⇨ &e⚡ &720 J/t'
   sf.electric_smeltery_2:
     name: '&c电力冶炼炉 &7- &eII'
     lore:
@@ -2444,63 +2451,63 @@ items:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b3x'
-    - '&8⇨ &e⚡ &7800 J ??/t'
+    - '&8⇨ &e⚡ &740 J/t'
   sf.electric_press:
     name: '&e电力压缩机'
     lore:
     - ''
     - '&a中型机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7320 J ??/t'
+    - '&8⇨ &e⚡ &716 J/t'
   sf.electric_press_2:
     name: '&e电力压缩机 &7- &eII'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b3x'
-    - '&8⇨ &e⚡ &7800 J ??/t'
+    - '&8⇨ &e⚡ &740 J/t'
   sf.electrified_crucible:
     name: '&c电力坩埚'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7960 J ??/t'
+    - '&8⇨ &e⚡ &748 J/t'
   sf.electrified_crucible_2:
     name: '&c电力坩埚 &7- &eII'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b2x'
-    - '&8⇨ &e⚡ &71600 J ??/t'
+    - '&8⇨ &e⚡ &780 J/t'
   sf.electrified_crucible_3:
     name: '&c电力坩埚 &7- &eIII'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b4x'
-    - '&8⇨ &e⚡ &72400 J ??/t'
+    - '&8⇨ &e⚡ &7120 J/t'
   sf.carbon_press:
     name: '&c碳压缩机'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7400 J ??/t'
+    - '&8⇨ &e⚡ &720 J/t'
   sf.carbon_press_2:
     name: '&c碳压缩机 &7- &eII'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b3x'
-    - '&8⇨ &e⚡ &71000 J ??/t'
+    - '&8⇨ &e⚡ &750 J/t'
   sf.carbon_press_3:
     name: '&c碳压缩机 &7- &eIII'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b15x'
-    - '&8⇨ &e⚡ &73600 J ??/t'
+    - '&8⇨ &e⚡ &7180 J/t'
   sf.blistering_ingot:
     name: '&6发泡锭 &7(33%)'
     lore:
@@ -2586,8 +2593,8 @@ items:
     - '&f使用 &a有机食物 &f运行'
     - ''
     - '&4终极机器'
-    - '&8⇨ &e⚡ &720480 J ?? 储能'
-    - '&8⇨ &e⚡ &71200 J ??/动物'
+    - '&8⇨ &e⚡ &720480 J 储能'
+    - '&8⇨ &e⚡ &760 J/动物'
   sf.produce_collector:
     name: '&b产物收集器'
     lore:
@@ -2596,12 +2603,12 @@ items:
     - '&f收集附近动物的产物。'
     - ''
     - '&6高级机器'
-    - '&8⇨ &e⚡ &710240 J ?? 储能'
-    - '&8⇨ &e⚡ &7640 J ??/t'
+    - '&8⇨ &e⚡ &710240 J 储能'
+    - '&8⇨ &e⚡ &732 J/t'
   sf.organic_food:
     name: '&a有机食物'
     lore:
-    - '&7内容： &9???'
+    - '&7内容： &9未知'
   sf.organic_food_wheat:
     name: '&a有机食物'
     lore:
@@ -2649,7 +2656,7 @@ items:
   sf.fertilizer:
     name: '&a有机肥料'
     lore:
-    - '&7内容： &9???'
+    - '&7内容： &9未知'
   sf.fertilizer_wheat:
     name: '&a有机肥料'
     lore:
@@ -2701,8 +2708,8 @@ items:
     - '&f使用 &a有机食物 &f运行'
     - ''
     - '&4终极机器'
-    - '&8⇨ &e⚡ &720480 J ?? 储能'
-    - '&8⇨ &e⚡ &7560 J ??/t'
+    - '&8⇨ &e⚡ &720480 J 储能'
+    - '&8⇨ &e⚡ &728 J/t'
   sf.crop_growth_accelerator:
     name: '&a作物生长加速器'
     lore:
@@ -2712,8 +2719,8 @@ items:
     - '&4终极机器'
     - '&8⇨ &7范围：7x7'
     - '&8⇨ &7速度：&a3/次'
-    - '&8⇨ &e⚡ &720480 J ?? 储能'
-    - '&8⇨ &e⚡ &71000 J ??/t'
+    - '&8⇨ &e⚡ &720480 J 储能'
+    - '&8⇨ &e⚡ &750 J/t'
   sf.crop_growth_accelerator_2:
     name: '&a作物生长加速器 &7(&eII&7)'
     lore:
@@ -2723,8 +2730,8 @@ items:
     - '&4终极机器'
     - '&8⇨ &7范围：9x9'
     - '&8⇨ &7速度：&a4/次'
-    - '&8⇨ &e⚡ &720480 J ?? 储能'
-    - '&8⇨ &e⚡ &71200 J ??/t'
+    - '&8⇨ &e⚡ &720480 J 储能'
+    - '&8⇨ &e⚡ &760 J/t'
   sf.tree_growth_accelerator:
     name: '&a树木生长加速器'
     lore:
@@ -2734,8 +2741,8 @@ items:
     - '&4终极机器'
     - '&8⇨ &7范围：9x9'
     - '&8⇨ &7速度：&a4/次'
-    - '&8⇨ &e⚡ &720480 J ?? 储能'
-    - '&8⇨ &e⚡ &7960 J ??/t'
+    - '&8⇨ &e⚡ &720480 J 储能'
+    - '&8⇨ &e⚡ &748 J/t'
   sf.food_fabricator:
     name: '&c食物合成机'
     lore:
@@ -2744,8 +2751,8 @@ items:
     - ''
     - '&6高级机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &75120 J ?? 储能'
-    - '&8⇨ &e⚡ &7280 J ??/t'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &714 J/t'
   sf.food_fabricator_2:
     name: '&c食物合成机 &7(&eII&7)'
     lore:
@@ -2754,8 +2761,8 @@ items:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b6x'
-    - '&8⇨ &e⚡ &710240 J ?? 储能'
-    - '&8⇨ &e⚡ &7960 J ??/t'
+    - '&8⇨ &e⚡ &710240 J 储能'
+    - '&8⇨ &e⚡ &748 J/t'
   sf.food_composter:
     name: '&c食物堆肥机'
     lore:
@@ -2764,8 +2771,8 @@ items:
     - ''
     - '&6高级机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &75120 J ?? 储能'
-    - '&8⇨ &e⚡ &7320 J ??/t'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &716 J/t'
   sf.food_composter_2:
     name: '&c食物堆肥机 &7(&eII&7)'
     lore:
@@ -2774,8 +2781,8 @@ items:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b10x'
-    - '&8⇨ &e⚡ &710240 J ?? 储能'
-    - '&8⇨ &e⚡ &71040 J ??/t'
+    - '&8⇨ &e⚡ &710240 J 储能'
+    - '&8⇨ &e⚡ &752 J/t'
   sf.xp_collector:
     name: '&a经验收集器'
     lore:
@@ -2783,8 +2790,8 @@ items:
     - '&f收集附近的经验并将其储存起来'
     - ''
     - '&4终极机器'
-    - '&8⇨ &e⚡ &720480 J ?? 储能'
-    - '&8⇨ &e⚡ &7400 J ??/t'
+    - '&8⇨ &e⚡ &720480 J 储能'
+    - '&8⇨ &e⚡ &720 J/t'
   sf.reactor_coolant_cell:
     name: '&b反应堆冷却单元'
   sf.nuclear_reactor:
@@ -2796,8 +2803,8 @@ items:
     - '&8⇨ &b必须供应反应堆冷却单元'
     - ''
     - '&4终极发电机'
-    - '&8⇨ &e⚡ &7327680 J ?? 储能'
-    - '&8⇨ &e⚡ &710000 J ??/t'
+    - '&8⇨ &e⚡ &7327680 J 储能'
+    - '&8⇨ &e⚡ &7500 J/t'
   sf.netherstar_reactor:
     name: '&f下界之星反应堆'
     lore:
@@ -2807,8 +2814,8 @@ items:
     - '&8⇨ &b必须供应下界冰冷却单元'
     - ''
     - '&4终极发电机'
-    - '&8⇨ &e⚡ &7655360 J ?? 储能'
-    - '&8⇨ &e⚡ &720480 J ??/t'
+    - '&8⇨ &e⚡ &7655360 J 储能'
+    - '&8⇨ &e⚡ &71024 J/t'
     - '&8⇨ &4使附近实体获得凋零效果'
   sf.reactor_access_port:
     name: '&2反应堆访问端口'
@@ -2825,93 +2832,93 @@ items:
     - ''
     - '&6高级机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &75120 J ?? 储能'
-    - '&8⇨ &e⚡ &7360 J ??/t'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &718 J/t'
   sf.freezer_2:
     name: '&b冷冻机 &7(&eII&7)'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b2x'
-    - '&8⇨ &e⚡ &75120 J ?? 储能'
-    - '&8⇨ &e⚡ &7600 J ??/t'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &730 J/t'
   sf.freezer_3:
     name: '&b冷冻机 &7(&eIII&7)'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b3x'
-    - '&8⇨ &e⚡ &75120 J ?? 储能'
-    - '&8⇨ &e⚡ &7840 J ??/t'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &742 J/t'
   sf.electric_gold_pan:
     name: '&6电力洗淘机'
     lore:
     - ''
     - '&e基础机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &740 J ??/t'
+    - '&8⇨ &e⚡ &72 J/t'
   sf.electric_gold_pan_2:
     name: '&6电力洗淘机 &7(&eII&7)'
     lore:
     - ''
     - '&e基础机器'
     - '&8⇨ &b⚡ &7速度：&b3x'
-    - '&8⇨ &e⚡ &780 J ??/t'
+    - '&8⇨ &e⚡ &74 J/t'
   sf.electric_gold_pan_3:
     name: '&6电力洗淘机 &7(&eIII&7)'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b10x'
-    - '&8⇨ &e⚡ &7280 J ??/t'
+    - '&8⇨ &e⚡ &714 J/t'
   sf.electric_dust_washer:
     name: '&3电力洗粉机'
     lore:
     - ''
     - '&e基础机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7120 J ??/t'
+    - '&8⇨ &e⚡ &76 J/t'
   sf.electric_dust_washer_2:
     name: '&3电力洗粉机 &7(&eII&7)'
     lore:
     - ''
     - '&e基础机器'
     - '&8⇨ &b⚡ &7速度：&b2x'
-    - '&8⇨ &e⚡ &7200 J ??/t'
+    - '&8⇨ &e⚡ &710 J/t'
   sf.electric_dust_washer_3:
     name: '&3电力洗粉机 &7(&eIII&7)'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b10x'
-    - '&8⇨ &e⚡ &7600 J ??/t'
+    - '&8⇨ &e⚡ &730 J/t'
   sf.electric_ingot_factory:
     name: '&c电力制锭机'
     lore:
     - ''
     - '&e基础机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &7160 J ??/t'
+    - '&8⇨ &e⚡ &78 J/t'
   sf.electric_ingot_factory_2:
     name: '&c电力制锭机 &7(&eII&7)'
     lore:
     - ''
     - '&e基础机器'
     - '&8⇨ &b⚡ &7速度：&b2x'
-    - '&8⇨ &e⚡ &7280 J ??/t'
+    - '&8⇨ &e⚡ &714 J/t'
   sf.electric_ingot_factory_3:
     name: '&c电力制锭机 &7(&eIII&7)'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &b⚡ &7速度：&b8x'
-    - '&8⇨ &e⚡ &7800 J ??/t'
+    - '&8⇨ &e⚡ &740 J/t'
   sf.fluid_pump:
     name: '&9流体泵'
     lore:
     - ''
     - '&6高级机器'
-    - '&8⇨ &e⚡ &7640 J ??/方块'
+    - '&8⇨ &e⚡ &732 J/方块'
   sf.charging_bench:
     name: '&6充电台'
     lore:
@@ -2919,7 +2926,7 @@ items:
     - '&f为喷气背包等物品充电'
     - ''
     - '&e基础机器'
-    - '&8⇨ &e⚡ &72560 J ?? 储能'
+    - '&8⇨ &e⚡ &72560 J 储能'
     - '&8⇨ &e⚡ &7能量损耗：&c50%'
   sf.vanilla_auto_crafter:
     name: '&2自动合成机 &8(原版)'
@@ -2931,7 +2938,7 @@ items:
     - '&f普通&e工作台'
     - ''
     - '&6高级机器'
-    - '&8⇨ &e⚡ &7320 J ??/物品'
+    - '&8⇨ &e⚡ &716 J/物品'
   sf.enhanced_auto_crafter:
     name: '&2自动合成机 &8(增强型)'
     lore:
@@ -2942,7 +2949,7 @@ items:
     - '&e增强型工作台'
     - ''
     - '&6高级机器'
-    - '&8⇨ &e⚡ &7320 J ??/物品'
+    - '&8⇨ &e⚡ &716 J/物品'
   sf.armor_auto_crafter:
     name: '&2自动合成机 &8(护甲锻造台)'
     lore:
@@ -2953,23 +2960,23 @@ items:
     - '&e护甲锻造台'
     - ''
     - '&6高级机器'
-    - '&8⇨ &e⚡ &7640 J ??/物品'
+    - '&8⇨ &e⚡ &732 J/物品'
   sf.iron_golem_assembler:
     name: '&6铁傀儡组装机'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &7冷却： &b30 秒'
-    - '&8⇨ &e⚡ &781920 J ?? 储能'
-    - '&8⇨ &e⚡ &740960 J ??/铁傀儡'
+    - '&8⇨ &e⚡ &781920 J 储能'
+    - '&8⇨ &e⚡ &740960 J/铁傀儡'
   sf.wither_assembler:
     name: '&5凋零组装机'
     lore:
     - ''
     - '&4终极机器'
     - '&8⇨ &7冷却： &b30 秒'
-    - '&8⇨ &e⚡ &781920 J ?? 储能'
-    - '&8⇨ &e⚡ &781920 J ??/凋灵'
+    - '&8⇨ &e⚡ &781920 J 储能'
+    - '&8⇨ &e⚡ &781920 J/凋灵'
   sf.trash_can_block:
     name: '&3垃圾桶'
     lore:
@@ -2993,7 +3000,7 @@ items:
     - ''
     - '&a中型发电机'
     - '&8⇨ &e⚡ &72560 J 储能'
-    - '&8⇨ &e⚡ &718 J/t'
+    - '&8⇨ &e⚡ &736 J/t'
   sf.birthday_cake:
     name: '&b生日蛋糕'
 debug:
@@ -3311,7 +3318,7 @@ guide:
         2: <gray>先在世界中搭建结构，再与它的触发方块交互。</gray>
     output: <green>目标产物</green>
     output-short: <green>产物</green>
-    amount: '数量：'
+    amount: 数量：
     structure: 多方块结构
     page: <gray>当前配方 {current} / {total}</gray>
     alternative-source: <gray>点击打开这个来源的配方。</gray>
@@ -3336,7 +3343,7 @@ guide:
   research:
     locked: <red>尚未解锁</red>
     click-unlock: <green>点击解锁</green>
-    cost: '<gray>消耗：</gray><aqua>{cost} 级经验</aqua>'
+    cost: <gray>消耗：</gray><aqua>{cost} 级经验</aqua>
     unlock:
       name: <green>解锁研究</green>
       lore:
@@ -3381,7 +3388,7 @@ messages:
     foreign-owner: <red>这个背包属于其他玩家。</red>
     already-open: <red>这个背包已经被打开了。</red>
     not-found: <red>这个背包不存在。</red>
-    admin-title: 背包 #{id}（{owner}）
+    admin-title: 背包
   tape-measure:
     no-anchor: '&c在开始测量之前请先设置一个锚点！'
     wrong-world: '&c你设置的锚点似乎在另一个世界。'
@@ -3394,20 +3401,20 @@ messages:
     no-surface: '&c请对准墙面再使用攀岩镐。'
   diet-cookie: '&e你开始感觉自己变轻了...'
   fortune-cookie:
-    - '&7救命，我被困在幸运饼干工厂里了！'
-    - '&7你明天会死于……一只苦力怕。'
-    - '&7你的人生里总会有点坏事发生！！！'
-    - '&7下周你会发现这不是现实世界，而是一个游戏。'
-    - '&7这块饼干几秒后会变得很好吃。'
-    - '&7你最后听到的话会是“消灭！！！”'
-    - '&7无论怎样，都不要去拥抱苦力怕……我试过，感觉不错，但不值得。'
-    - '&742。答案就是 42。'
-    - '&7一天一个 Walshy，烦恼远离你。'
-    - '&7永远不要直直往下挖！'
-    - '&7这只不过是皮外伤！'
-    - '&7总要看到生活光明的一面！'
-    - '&7这其实是一块饼干，不是曲奇。'
-    - '&7霓虹灯就是要亮起来！'
+  - '&7救命，我被困在幸运饼干工厂里了！'
+  - '&7你明天会死于……一只苦力怕。'
+  - '&7你的人生里总会有点坏事发生！！！'
+  - '&7下周你会发现这不是现实世界，而是一个游戏。'
+  - '&7这块饼干几秒后会变得很好吃。'
+  - '&7你最后听到的话会是“消灭！！！”'
+  - '&7无论怎样，都不要去拥抱苦力怕……我试过，感觉不错，但不值得。'
+  - '&742。答案就是 42。'
+  - '&7一天一个 Walshy，烦恼远离你。'
+  - '&7永远不要直直往下挖！'
+  - '&7这只不过是皮外伤！'
+  - '&7总要看到生活光明的一面！'
+  - '&7这其实是一块饼干，不是曲奇。'
+  - '&7霓虹灯就是要亮起来！'
   pickaxe-of-the-seeker:
     no-ores: '&c附近找不到任何矿石！'
 electric-ui:
@@ -3433,34 +3440,41 @@ electric-ui:
   no-power:
     name: <red>电力不足</red>
     lore: <gray>为机器充能后继续工作。</gray>
-  energy-buffer: "<gray>储能: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>"
+  energy-buffer: '<gray>储能: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
   progress:
     name: <yellow>工作中</yellow>
-    recipe: "<gray>配方：</gray><white>{recipe}</white>"
-    speed: "<gray>速度：</gray><aqua>{speed}x</aqua>"
-    value: "<gray>进度：</gray><white>{current}</white><gray>/</gray><white>{total}</white>"
+    recipe: <gray>配方：</gray><white>{recipe}</white>
+    speed: <gray>速度：</gray><aqua>{speed}x</aqua>
+    value: <gray>进度：</gray><white>{current}</white><gray>/</gray><white>{total}</white>
     power-disabled: <dark_gray>当前版本暂不消耗电力。</dark_gray>
-    time-left: "<gray>{time}</gray>"
-    work: "<gray>进度：</gray><white>{current}</white><gray>/</gray><white>{total}</white><gray> (+{rate}/tick)</gray>"
+    time-left: <gray>{time}</gray>
+    work: <gray>进度：</gray><white>{current}</white><gray>/</gray><white>{total}</white><gray> (+{rate}/tick)</gray>
 energy:
   regulator:
-    no-network: "<red>未发现电网</red>"
-    multi-regulator: "<red>检测到多个能源调度器</red>"
-    shared-node-conflict: "<red>电网连接冲突</red>"
-    net-positive: "<green>+{net} J</green><gray> | +{supply} / -{demand}</gray>"
-    net-negative: "<red>{net} J</red><gray> | +{supply} / -{demand}</gray>"
-    classic-positive: "<green>+{net} J ⚡</green>"
-    classic-negative: "<red>{net} J ⚡</red>"
-    sfx-positive: "<green>+{net} J</green><gray> | {stored}/{capacity} J</gray>"
-    sfx-negative: "<red>{net} J</red><gray> | {stored}/{capacity} J</gray>"
+    no-network: <red>未连接到任意电力机器</red>
+    multi-regulator: <red>连接中存在多个能量调度器</red>
+    shared-node-conflict: <red>电网连接冲突</red>
+    net-positive: <green>+{net} J/t</green><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity} J</gray>
+    net-negative: <red>{net} J/t</red><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity} J</gray>
+    classic-positive: <green>+{net} J ⚡</green>
+    classic-negative: <red>{net} J ⚡</red>
+    sfx-positive: <green>+{net_text} J/t</green><newline>{flow_line}<newline>{storage_line}
+    sfx-negative: <red>-{net_text} J/t</red><newline>{flow_line}<newline>{storage_line}
   generator:
+    fuel:
+      oil: 石油桶
+      fuel: 燃料桶
+    fuel-duration: '<gray>持续时间：</gray><aqua>{seconds}s</aqua>'
     active:
       name: <green>发电中</green>
       lore: <gray>正在将燃料转化为电力。</gray>
-    time-left: "<gray>{time}s</gray>"
+    time-left: <gray>{time}s</gray>
     idle:
       name: <gray>待机中</gray>
       lore: <gray>放入燃料后开始发电。</gray>
+    output-full:
+      name: <red>输出已满</red>
+      lore: <gray>清理输出槽后继续工作。</gray>
     no-network:
       name: <red>未接入电网</red>
       lore: <gray>该发电机尚未接入任何能源网络。</gray>
@@ -3469,8 +3483,9 @@ energy:
       lore: <gray>请先解决多个调度器或共享节点冲突。</gray>
     solar:
       name: <yellow>太阳能发电机</yellow>
-    buffer: "<gray>储能: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>"
-    production: "<gray>发电: </gray><green>{energy} J/t</green>"
+    buffer: '<gray>储能: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
+    production: '<gray>发电: </gray><green>{energy} J/t</green>'
+    tier2-fuel-consumption-lore: '&8⇨ &6🔥 &7燃料消耗：&b1.5x'
   messages:
     capacitor-status: <yellow>当前储能 {stored}/{capacity} J</yellow>
     regulator-status: <yellow>能源调度器已激活。</yellow>

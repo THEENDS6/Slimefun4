@@ -9,6 +9,7 @@ import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayDeque;
@@ -34,6 +35,8 @@ import org.bukkit.Tag;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Skull;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -154,10 +157,7 @@ public final class SfxEnergyService implements Listener {
         }
         SfxEnergyNodeState state = currentState(instance.instanceId(), instance);
         if (definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
-            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text(
-                    "energy.messages.capacitor-status",
-                    "<yellow>Stored {stored}/{capacity} J</yellow>",
-                    Map.of("stored", state.storedEnergy(), "capacity", definition.capacity()))));
+            return;
         } else if (definition.componentType() == SfxEnergyComponentType.REGULATOR) {
             event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text(
                     "energy.messages.regulator-status",
@@ -310,13 +310,12 @@ public final class SfxEnergyService implements Listener {
     private void initializeDefinitions() {
         boolean useSfxBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
         int tier2BurnRate = useSfxBalance ? 15 : 10;
-        int coalTicksMultiplier = useSfxBalance ? 2 : 1;
         int lavaSecondsMultiplier = useSfxBalance ? 2 : 1;
         int bioSecondsMultiplier = useSfxBalance ? 4 : 1;
         int combustionOilSeconds = useSfxBalance ? 40 : 30;
         int combustionFuelSeconds = useSfxBalance ? 120 : 90;
         int combustionCapacity = useSfxBalance ? 20480 : 5120;
-        int combustionEnergy = useSfxBalance ? 64 : 12;
+        int combustionEnergy = useSfxBalance ? 64 : 24;
 
         define(new SfxEnergyComponentDefinition("sf:energy_regulator", SfxEnergyComponentType.REGULATOR, 0, 0, 0, 10, false, Material.REDSTONE, List.of()));
         define(new SfxEnergyComponentDefinition("sf:energy_connector", SfxEnergyComponentType.CONNECTOR, 0, 0, 0, 10, false, Material.REDSTONE, List.of()));
@@ -327,19 +326,19 @@ public final class SfxEnergyService implements Listener {
         define(new SfxEnergyComponentDefinition("sf:carbonado_edged_capacitor", SfxEnergyComponentType.CAPACITOR, 1310720, 0, 0, 10, false, Material.REDSTONE, List.of()));
         define(new SfxEnergyComponentDefinition("sf:energized_capacitor", SfxEnergyComponentType.CAPACITOR, 10485760, 0, 0, 10, false, Material.REDSTONE, List.of()));
 
-        define(new SfxEnergyComponentDefinition("sf:solar_generator", SfxEnergyComponentType.GENERATOR, 0, 2, 0, 10, false, Material.DAYLIGHT_DETECTOR, List.of()));
-        define(new SfxEnergyComponentDefinition("sf:solar_generator_2", SfxEnergyComponentType.GENERATOR, 0, 8, 0, 10, false, Material.DAYLIGHT_DETECTOR, List.of()));
-        define(new SfxEnergyComponentDefinition("sf:solar_generator_3", SfxEnergyComponentType.GENERATOR, 0, 32, 0, 10, false, Material.DAYLIGHT_DETECTOR, List.of()));
-        define(new SfxEnergyComponentDefinition("sf:solar_generator_4", SfxEnergyComponentType.GENERATOR, 0, 128, 64, 10, false, Material.DAYLIGHT_DETECTOR, List.of()));
+        define(new SfxEnergyComponentDefinition("sf:solar_generator", SfxEnergyComponentType.GENERATOR, 0, 4, 0, 10, false, Material.DAYLIGHT_DETECTOR, List.of()));
+        define(new SfxEnergyComponentDefinition("sf:solar_generator_2", SfxEnergyComponentType.GENERATOR, 0, 16, 0, 10, false, Material.DAYLIGHT_DETECTOR, List.of()));
+        define(new SfxEnergyComponentDefinition("sf:solar_generator_3", SfxEnergyComponentType.GENERATOR, 0, 64, 0, 10, false, Material.DAYLIGHT_DETECTOR, List.of()));
+        define(new SfxEnergyComponentDefinition("sf:solar_generator_4", SfxEnergyComponentType.GENERATOR, 0, 256, 128, 10, false, Material.DAYLIGHT_DETECTOR, List.of()));
 
-        define(new SfxEnergyComponentDefinition("sf:coal_generator", SfxEnergyComponentType.GENERATOR, 1280, 8, 0, 10, true, Material.FLINT_AND_STEEL, List.of()));
-        define(new SfxEnergyComponentDefinition("sf:coal_generator_2", SfxEnergyComponentType.GENERATOR, 5120, 15, 0, tier2BurnRate, true, Material.FLINT_AND_STEEL, List.of()));
+        define(new SfxEnergyComponentDefinition("sf:coal_generator", SfxEnergyComponentType.GENERATOR, 1280, 16, 0, 10, true, Material.FLINT_AND_STEEL, List.of()));
+        define(new SfxEnergyComponentDefinition("sf:coal_generator_2", SfxEnergyComponentType.GENERATOR, 5120, 30, 0, tier2BurnRate, true, Material.FLINT_AND_STEEL, List.of()));
 
         define(new SfxEnergyComponentDefinition(
                 "sf:lava_generator",
                 SfxEnergyComponentType.GENERATOR,
                 10240,
-                10,
+                20,
                 0,
                 10,
                 false,
@@ -349,7 +348,7 @@ public final class SfxEnergyService implements Listener {
                 "sf:lava_generator_2",
                 SfxEnergyComponentType.GENERATOR,
                 20480,
-                20,
+                40,
                 0,
                 tier2BurnRate,
                 false,
@@ -360,12 +359,25 @@ public final class SfxEnergyService implements Listener {
                 "sf:bio_reactor",
                 SfxEnergyComponentType.GENERATOR,
                 2560,
-                4,
+                8,
                 0,
                 10,
                 false,
                 Material.GOLDEN_HOE,
                 bioFuelRules(bioSecondsMultiplier)));
+
+        if (useSfxBalance) {
+            define(new SfxEnergyComponentDefinition(
+                    "sf:bio_reactor_2",
+                    SfxEnergyComponentType.GENERATOR,
+                    5120,
+                    20,
+                    0,
+                    tier2BurnRate,
+                    false,
+                    Material.GOLDEN_HOE,
+                    bioFuelRules(bioSecondsMultiplier)));
+        }
 
         define(new SfxEnergyComponentDefinition(
                 "sf:combustion_reactor",
@@ -384,7 +396,7 @@ public final class SfxEnergyService implements Listener {
                 "sf:magnesium_generator",
                 SfxEnergyComponentType.GENERATOR,
                 2560,
-                18,
+                36,
                 0,
                 10,
                 false,
@@ -475,8 +487,13 @@ public final class SfxEnergyService implements Listener {
             if (!definitions.containsKey(instance.typeId())) {
                 continue;
             }
-            nodeStates.put(instance.instanceId(), SfxEnergyNodeState.decode(instance.stateBlob()));
+            SfxEnergyNodeState state = SfxEnergyNodeState.decode(instance.stateBlob());
+            nodeStates.put(instance.instanceId(), state);
             activeNodes.add(instance.instanceId());
+            SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
+            if (definition != null && definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
+                updateCapacitorAppearance(new NodeRef(instance, definition, state));
+            }
         }
     }
 
@@ -624,6 +641,7 @@ public final class SfxEnergyService implements Listener {
         List<NodeRef> capacitorRefs = new ArrayList<>();
         List<NodeRef> generatorRefs = new ArrayList<>();
         List<SfxBlockInstanceRecord> consumers = new ArrayList<>();
+        List<UUID> consumerIds = new ArrayList<>();
 
         for (UUID memberId : result.members()) {
             SfxBlockInstanceRecord instance = blockData.findInstance(memberId).orElse(null);
@@ -641,6 +659,7 @@ public final class SfxEnergyService implements Listener {
                 }
             } else if (electricMachines.supportsType(instance.typeId())) {
                 consumers.add(instance);
+                consumerIds.add(instance.instanceId());
             }
         }
 
@@ -710,10 +729,16 @@ public final class SfxEnergyService implements Listener {
             }
         }
 
+        for (NodeRef capacitor : capacitorRefs) {
+            updateCapacitorAppearance(capacitor);
+        }
+
+        int requestedConsumption = electricMachines.requestedEnergyConsumption(consumerIds);
+        electricMachines.drainRecentEnergyConsumption(result.members());
         int totalStored = totalStoredEnergy(capacitorRefs, generatorRefs, consumers);
         int totalCapacity = totalCapacity(capacitorRefs, generatorRefs, consumers);
-        int net = supply - consumption;
-        displayStatus(result.regulatorKey(), GridStatus.ONLINE, supply, consumption, net, totalStored, totalCapacity);
+        int net = supply - requestedConsumption;
+        displayStatus(result.regulatorKey(), GridStatus.ONLINE, supply, requestedConsumption, net, totalStored, totalCapacity);
         refreshOpenGeneratorSessions();
     }
 
@@ -907,16 +932,45 @@ public final class SfxEnergyService implements Listener {
         }
     }
 
+    private void updateCapacitorAppearance(NodeRef capacitor) {
+        Location location = toLocation(capacitor.instance().anchorKey());
+        if (location == null || location.getWorld() == null || capacitor.definition().capacity() <= 0) {
+            return;
+        }
+        Block block = location.getBlock();
+        if (block.getType() != Material.PLAYER_HEAD && block.getType() != Material.PLAYER_WALL_HEAD) {
+            block.setType(Material.PLAYER_HEAD, false);
+        }
+        BlockState state = block.getState();
+        if (state instanceof Skull skull) {
+            HeadTextures.apply(skull, capacitorTexture(capacitor.state().storedEnergy(), capacitor.definition().capacity()));
+        }
+    }
+
+    private String capacitorTexture(int stored, int capacity) {
+        double ratio = stored <= 0 ? 0D : stored / (double) Math.max(1, capacity);
+        if (ratio >= 0.999D) {
+            return "7a2569415c14e31c98ec993a2f99e6d64846db367a13b199965ad99c438c86c"; // CAPACITOR_100
+        }
+        if (ratio >= 0.75D) {
+            return "5584432af6f382167120258d1eee8c87c6e75d9e479e7b0d4c7b6ad48cfeef"; // CAPACITOR_75
+        }
+        if (ratio >= 0.50D) {
+            return "305323394a7d91bfb33df06d92b63cb414ef80f054d04734ea015a23c539"; // CAPACITOR_50
+        }
+        return "91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4"; // CAPACITOR_25
+    }
+
     private void displayStatus(SfxBlockAnchorKey regulatorKey, GridStatus status, int supply, int consumption, int net, int totalStored, int totalCapacity) {
         switch (status) {
             case NO_NETWORK -> displayService.update(regulatorKey, new SfxEnergyDisplayService.DisplayText(
                     "energy.regulator.no-network",
                     Map.of(),
-                    "<red>No Energy Network found</red>"));
+                    "<red>Not connected to any electric machines</red>"));
             case MULTIPLE_REGULATORS -> displayService.update(regulatorKey, new SfxEnergyDisplayService.DisplayText(
                     "energy.regulator.multi-regulator",
                     Map.of(),
-                    "<red>Multiple Energy Regulators connected</red>"));
+                    "<red>Multiple energy regulators in this connection</red>"));
             case SHARED_NODE_CONFLICT -> displayService.update(regulatorKey, new SfxEnergyDisplayService.DisplayText(
                     "energy.regulator.shared-node-conflict",
                     Map.of(),
@@ -932,9 +986,22 @@ public final class SfxEnergyService implements Listener {
                             : "<red>{net} J ⚡</red>";
                 } else {
                     key = net >= 0 ? "energy.regulator.sfx-positive" : "energy.regulator.sfx-negative";
-                    fallback = net >= 0
-                            ? "<green>+{net} J</green><gray> | {stored}/{capacity} J</gray>"
-                            : "<red>{net} J</red><gray> | {stored}/{capacity} J</gray>";
+                    EnergyDisplayParts parts = energyDisplayParts(supply, consumption, net, totalStored, totalCapacity);
+                    fallback = (net >= 0 ? "<green>+{net_text} J/t</green>" : "<red>-{net_text} J/t</red>")
+                            + "<newline>{flow_line}<newline>{storage_line}";
+                    displayService.update(regulatorKey, new SfxEnergyDisplayService.DisplayText(
+                            key,
+                            Map.of(
+                                    "net", net,
+                                    "supply", supply,
+                                    "consumption", consumption,
+                                    "stored", totalStored,
+                                    "capacity", totalCapacity,
+                                    "net_text", parts.netText(),
+                                    "flow_line", parts.flowLine(),
+                                    "storage_line", parts.storageLine()),
+                            fallback));
+                    return;
                 }
                 displayService.update(regulatorKey, new SfxEnergyDisplayService.DisplayText(
                         key,
@@ -942,6 +1009,53 @@ public final class SfxEnergyService implements Listener {
                         fallback));
             }
         }
+    }
+
+    private EnergyDisplayParts energyDisplayParts(int supply, int consumption, int net, int totalStored, int totalCapacity) {
+        String netText = formatEnergyShort(Math.abs((long) net));
+        String supplyText = formatEnergyShort(supply) + " J/t";
+        String consumptionText = formatEnergyShort(consumption) + " J/t";
+        String storedText = formatEnergyShort(totalStored) + " J";
+        String capacityText = formatEnergyShort(totalCapacity) + " J";
+        String[] flow = centeredPair(supplyText, consumptionText);
+        String[] storage = centeredPair(storedText, capacityText);
+        String flowLine = "<green>" + flow[0] + "</green><gray> | </gray><red>" + flow[1] + "</red>";
+        String storageLine = "<gray>" + storage[0] + " / " + storage[1] + "</gray>";
+        return new EnergyDisplayParts(netText, flowLine, storageLine);
+    }
+
+    private String[] centeredPair(String left, String right) {
+        int side = Math.max(visibleLength(left), visibleLength(right));
+        return new String[] {
+                " ".repeat(Math.max(0, side - visibleLength(left))) + left,
+                right + " ".repeat(Math.max(0, side - visibleLength(right)))
+        };
+    }
+
+    private int visibleLength(String text) {
+        return text == null ? 0 : text.length();
+    }
+
+    private String formatEnergyShort(long value) {
+        long abs = Math.abs(value);
+        if (abs < 1000) {
+            return Long.toString(value);
+        }
+        String[] units = {"k", "m", "b", "t", "p", "e"};
+        double scaled = abs;
+        int unitIndex = -1;
+        while (scaled >= 1000.0 && unitIndex + 1 < units.length) {
+            scaled /= 1000.0;
+            unitIndex++;
+        }
+        String number = scaled < 10.0 ? String.format(java.util.Locale.ROOT, "%.1f", scaled) : String.format(java.util.Locale.ROOT, "%.0f", scaled);
+        if (number.endsWith(".0") && scaled >= 10.0) {
+            number = number.substring(0, number.length() - 2);
+        }
+        return (value < 0 ? "-" : "") + number + units[unitIndex];
+    }
+
+    private record EnergyDisplayParts(String netText, String flowLine, String storageLine) {
     }
 
     private void openGenerator(Player player, SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition) {
@@ -1070,6 +1184,12 @@ public final class SfxEnergyService implements Listener {
                     localization.component("energy.generator.conflict.name", "<red>Network Conflict</red>"),
                     List.of(localization.component("energy.generator.conflict.lore", "<gray>Resolve regulator or shared-node conflicts first.</gray>")));
         }
+        if (status == GeneratorRenderStatus.OUTPUT_FULL) {
+            return namedItem(
+                    Material.ORANGE_STAINED_GLASS_PANE,
+                    localization.component("energy.generator.output-full.name", "<red>Output Full</red>"),
+                    List.of(localization.component("energy.generator.output-full.lore", "<gray>Clear the output slots to continue.</gray>")));
+        }
         if (status == GeneratorRenderStatus.IDLE && !definition.isSolarGenerator()) {
             return namedItem(
                     Material.BLACK_STAINED_GLASS_PANE,
@@ -1128,9 +1248,16 @@ public final class SfxEnergyService implements Listener {
             return GeneratorRenderStatus.CONFLICT;
         }
         boolean connected = gridStatus == GridStatus.ONLINE;
-        boolean hasFuelLoaded = definition.isSolarGenerator() || state.hasActiveFuel() || findFuelMatch(definition, state) != null;
+        FuelMatch fuelMatch = definition.isSolarGenerator() ? null : findFuelMatch(definition, state);
+        boolean hasFuelLoaded = definition.isSolarGenerator() || state.hasActiveFuel() || fuelMatch != null;
         if (!connected && hasFuelLoaded) {
             return GeneratorRenderStatus.NO_NETWORK;
+        }
+        if (state.hasPendingOutput() && findOutputSlot(state, state.pendingOutput()) == null) {
+            return GeneratorRenderStatus.OUTPUT_FULL;
+        }
+        if (!state.hasActiveFuel() && fuelMatch != null && fuelMatch.output() != null && findOutputSlot(state, fuelMatch.output()) == null) {
+            return GeneratorRenderStatus.OUTPUT_FULL;
         }
         if (!state.hasActiveFuel()) {
             return GeneratorRenderStatus.IDLE;
@@ -1304,6 +1431,7 @@ public final class SfxEnergyService implements Listener {
     private enum GeneratorRenderStatus {
         IDLE,
         ACTIVE,
+        OUTPUT_FULL,
         NO_NETWORK,
         CONFLICT
     }
