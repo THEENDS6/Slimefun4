@@ -6,9 +6,12 @@ import cc.theends6.sfx.internal.bootstrap.BaseContentBootstrap;
 import cc.theends6.sfx.internal.bootstrap.SfxYamlContentLoader;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBasicMachineBlockListener;
+import cc.theends6.sfx.internal.block.SfxPlaceableBlockListener;
 import cc.theends6.sfx.internal.block.SqliteSfxBlockDataRepository;
 import cc.theends6.sfx.internal.command.SfxCommand;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
+import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
+import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.listener.SfxArmorEffectListener;
 import cc.theends6.sfx.internal.listener.SfxBackpackListener;
@@ -36,6 +39,8 @@ import cc.theends6.sfx.internal.research.SfxResearchYamlLoader;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.io.File;
 import java.util.Objects;
+import com.github.retrooper.packetevents.PacketEvents;
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -50,12 +55,24 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxResearchService researchService;
     private SfxBackpackListener backpackListener;
     private SfxBasicMachineBlockListener basicMachineBlockListener;
+    private SfxElectricMachineService electricMachineService;
+    private SfxEnergyService energyService;
+    private boolean packetEventsLoaded;
+
+    @Override
+    public void onLoad() {
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+        PacketEvents.getAPI().load();
+        packetEventsLoaded = true;
+    }
 
     @Override
     public void onEnable() {
+        if (packetEventsLoaded) {
+            PacketEvents.getAPI().init();
+        }
         saveDefaultConfig();
-        saveBundledLanguage("zh-CN");
-        saveBundledLanguage("en-US");
+        syncBundledLanguages();
         saveBundledTestingFile();
 
         var runtime = new cc.theends6.sfx.internal.runtime.PaperSfxRuntime(this);
@@ -80,6 +97,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
         this.basicMachineBlockListener = new SfxBasicMachineBlockListener(this, api.runtime(), api.items(), localization, blockDataService);
         ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization, basicMachineBlockListener);
+        this.electricMachineService = new SfxElectricMachineService(this, api.runtime(), api.items(), localization, blockDataService, playerDataService, api.internalManualMachines());
+        this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService);
+        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, energyService);
 
         this.backpackListener = new SfxBackpackListener(this, api.runtime(), api.items(), localization, playerDataService, researchService);
         SfxLegacyUtilityListener utilityListener = new SfxLegacyUtilityListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig);
@@ -93,7 +113,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SfxItemUseDispatcher(api.items(), backpackListener, utilityListener, combatToolListener, foodListener, researchService, localization), this);
         getServer().getPluginManager().registerEvents(new SfxManualMachineListener(manualMachineService), this);
         getServer().getPluginManager().registerEvents(new SfxManualMachineDeployListener(this, api.internalManualMachines(), localization), this);
+        getServer().getPluginManager().registerEvents(placeableBlockListener, this);
         getServer().getPluginManager().registerEvents(basicMachineBlockListener, this);
+        getServer().getPluginManager().registerEvents(electricMachineService, this);
+        getServer().getPluginManager().registerEvents(energyService, this);
         getServer().getPluginManager().registerEvents(backpackListener, this);
         getServer().getPluginManager().registerEvents(utilityListener, this);
         getServer().getPluginManager().registerEvents(combatToolListener, this);
@@ -127,11 +150,21 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         if (basicMachineBlockListener != null) {
             basicMachineBlockListener.shutdown();
         }
+        if (electricMachineService != null) {
+            electricMachineService.shutdown();
+        }
+        if (energyService != null) {
+            energyService.shutdown();
+        }
         if (playerDataService != null) {
             playerDataService.shutdown();
         }
         if (blockDataService != null) {
             blockDataService.shutdown();
+        }
+        if (packetEventsLoaded) {
+            PacketEvents.getAPI().terminate();
+            packetEventsLoaded = false;
         }
     }
 
@@ -165,6 +198,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     public synchronized void reloadAllContent() {
         reloadConfig();
+        syncBundledLanguages();
         localization.reload();
         legacyItemBehaviorConfig.reload();
         saveBundledTestingFile();
@@ -218,9 +252,15 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     private void saveBundledLanguage(String language) {
         File target = new File(new File(getDataFolder(), "lang"), language + ".yml");
-        if (!target.exists()) {
-            saveResource("lang/" + language + ".yml", false);
+        boolean overwrite = getConfig().getBoolean("content.sync-bundled-languages-on-startup", true);
+        if (!target.exists() || overwrite) {
+            saveResource("lang/" + language + ".yml", overwrite);
         }
+    }
+
+    private void syncBundledLanguages() {
+        saveBundledLanguage("zh-CN");
+        saveBundledLanguage("en-US");
     }
 
     private void saveBundledTestingFile() {

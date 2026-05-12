@@ -265,6 +265,16 @@ recipes:
     input: GOLD_ORE
     outputs:
       - sf:gold_dust
+  - id: legacy:gold_dust_deepslate
+    recipe-type: sf:ore_crusher
+    operation: single
+    guide-order: 22
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_crusher
+    input: DEEPSLATE_GOLD_ORE
+    outputs:
+      - sf:gold_dust
   - id: legacy:iron_dust
     recipe-type: sf:ore_crusher
     operation: single
@@ -273,6 +283,16 @@ recipes:
     runtime: true
     machine: sf:ore_crusher
     input: IRON_ORE
+    outputs:
+      - sf:iron_dust
+  - id: legacy:iron_dust_deepslate
+    recipe-type: sf:ore_crusher
+    operation: single
+    guide-order: 23
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_crusher
+    input: DEEPSLATE_IRON_ORE
     outputs:
       - sf:iron_dust
   - id: legacy:pulverized_ore

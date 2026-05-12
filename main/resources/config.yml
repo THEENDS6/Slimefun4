@@ -1,6 +1,7 @@
 language: 'zh-CN'
 
 content:
+  sync-bundled-languages-on-startup: true
   sync-bundled-items-on-startup: true
   sync-bundled-recipes-on-startup: true
   sync-bundled-researches-on-startup: true
@@ -71,3 +72,18 @@ options:
   
   
   fire-breaking-chance: 34
+
+energy:
+  regulator-display:
+    mode: 'sfx'
+  bucket-fuels:
+    instant-empty-bucket-return: true
+  generator-balance:
+    use-sfx-balance: true
+    future:
+      nether-star-reactor:
+        production: 2048
+        buffer: 1310720
+        duration-seconds: 1800
+        coolant-rate-multiplier: 2.0
+        coolant-units: 144

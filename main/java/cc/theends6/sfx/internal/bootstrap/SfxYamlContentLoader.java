@@ -12,9 +12,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Logger;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
@@ -27,6 +29,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 
 public final class SfxYamlContentLoader {
+    private static final Set<String> LEGACY_NON_PLACEABLE_BLOCK_IDS = Set.of(
+            "sf:broken_spawner"
+    );
+    private static final Set<String> LEGACY_PLACEABLE_HEAD_CATEGORIES = Set.of(
+            "sf:electricity",
+            "sf:cargo",
+            "sf:machines",
+            "sf:technical_components"
+    );
     private static final String ITEMS_PATH = "content/items.yml";
     private static final String ITEMS_DIRECTORY = "content/items";
     private static final List<String> BUNDLED_ITEM_RESOURCES = List.of(
@@ -122,9 +133,10 @@ public final class SfxYamlContentLoader {
     private SfxItemDefinition parseItem(Map<?, ?> entry) {
         String id = string(entry.get("id"));
         Material material = parseMaterial(string(entry.get("material")));
+        String categoryId = entry.containsKey("category") ? string(entry.get("category")) : null;
         SfxItemDefinition.Builder builder = SfxItemDefinition.builder(id, material, Text.renderFlexible(string(orDefault(entry, "name", id))));
-        if (entry.containsKey("category")) {
-            builder.category(string(entry.get("category")));
+        if (categoryId != null) {
+            builder.category(categoryId);
         }
         if (entry.containsKey("order")) {
             builder.order(integer(entry.get("order")));
@@ -167,10 +179,16 @@ public final class SfxYamlContentLoader {
             }
         }
         Object flags = entry.get("flags");
+        Set<String> normalizedFlags = new HashSet<>();
         if (flags instanceof List<?> values) {
             for (Object flag : values) {
-                builder.flag(String.valueOf(flag));
+                String normalized = String.valueOf(flag).trim().toLowerCase();
+                normalizedFlags.add(normalized);
+                builder.flag(normalized);
             }
+        }
+        if (shouldImplicitlyBePlaceableLegacyBlock(id, categoryId, material, normalizedFlags)) {
+            builder.flag("placeable-block");
         }
         Object itemFlags = entry.get("itemFlags");
         if (itemFlags instanceof List<?> values) {
@@ -194,6 +212,20 @@ public final class SfxYamlContentLoader {
             }
         }
         return builder.build();
+    }
+
+    private boolean shouldImplicitlyBePlaceableLegacyBlock(String id, String categoryId, Material material, Set<String> flags) {
+        if (flags.contains("placeable-block") || !flags.contains("legacy-sf")) {
+            return false;
+        }
+        String normalizedId = SfxItemDefinition.normalizeId(id);
+        if (LEGACY_NON_PLACEABLE_BLOCK_IDS.contains(normalizedId)) {
+            return false;
+        }
+        if (material == Material.PLAYER_HEAD) {
+            return categoryId != null && LEGACY_PLACEABLE_HEAD_CATEGORIES.contains(SfxItemCategory.normalizeId(categoryId));
+        }
+        return material.isBlock();
     }
 
     private SfxRecipe parseDisplayRecipe(Map<?, ?> entry) {
