@@ -141,6 +141,9 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (event.getAction().isLeftClick()) {
             return;
         }
+        if (event.getPlayer().isSneaking()) {
+            return;
+        }
         Block clicked = event.getClickedBlock();
         if (clicked == null) {
             return;

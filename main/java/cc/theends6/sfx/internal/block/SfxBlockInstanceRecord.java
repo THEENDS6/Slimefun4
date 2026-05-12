@@ -12,14 +12,18 @@ public record SfxBlockInstanceRecord(
         int version,
         UUID ownerId,
         byte[] stateBlob,
-        long updatedAt
+        long updatedAt,
+        int energyPriorityDistance
 ) {
+    public static final int DEFAULT_ENERGY_PRIORITY_DISTANCE = Integer.MAX_VALUE;
+
     public SfxBlockInstanceRecord {
         Objects.requireNonNull(instanceId, "instanceId");
         Objects.requireNonNull(typeId, "typeId");
         Objects.requireNonNull(anchorKey, "anchorKey");
         Objects.requireNonNull(lifecycleState, "lifecycleState");
         stateBlob = stateBlob == null ? new byte[0] : Arrays.copyOf(stateBlob, stateBlob.length);
+        energyPriorityDistance = Math.max(0, energyPriorityDistance);
     }
 
     @Override
@@ -28,6 +32,10 @@ public record SfxBlockInstanceRecord(
     }
 
     public SfxBlockInstanceRecord withState(byte[] newStateBlob, SfxBlockLifecycleState newLifecycleState, long now) {
-        return new SfxBlockInstanceRecord(instanceId, typeId, anchorKey, newLifecycleState, version, ownerId, newStateBlob, now);
+        return new SfxBlockInstanceRecord(instanceId, typeId, anchorKey, newLifecycleState, version, ownerId, newStateBlob, now, energyPriorityDistance);
+    }
+
+    public SfxBlockInstanceRecord withEnergyPriorityDistance(int newEnergyPriorityDistance, long now) {
+        return new SfxBlockInstanceRecord(instanceId, typeId, anchorKey, lifecycleState, version, ownerId, stateBlob, now, newEnergyPriorityDistance);
     }
 }

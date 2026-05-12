@@ -12,6 +12,7 @@ import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +28,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.lang.reflect.Method;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -48,6 +48,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemFlag;
@@ -98,7 +99,7 @@ public final class SfxEnergyService implements Listener {
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
-        this.displayService = new SfxEnergyDisplayService(plugin, localization);
+        this.displayService = new SfxEnergyDisplayService(plugin, runtime, localization);
         initializeDefinitions();
         bootstrapLoadedStates();
         running = true;
@@ -113,16 +114,24 @@ public final class SfxEnergyService implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         items.readMarker(event.getItemInHand()).ifPresent(marker -> {
-            if (!definitions.containsKey(marker.itemId())) {
+            SfxEnergyComponentDefinition definition = definitions.get(marker.itemId());
+            if (definition == null) {
                 return;
             }
+            int priorityDistance = definition.componentType() == SfxEnergyComponentType.CAPACITOR
+                    ? capacitorPriorityDistanceForPlacement(event.getBlockPlaced().getLocation())
+                    : SfxBlockInstanceRecord.DEFAULT_ENERGY_PRIORITY_DISTANCE;
             UUID instanceId = blockData.findAnchor(event.getBlockPlaced().getLocation())
                     .map(SfxAnchorRecord::instanceId)
                     .orElseGet(() -> blockData.registerSingleBlock(
                             marker.itemId(),
                             event.getBlockPlaced().getLocation(),
                             event.getBlockPlaced().getType(),
-                            event.getPlayer().getUniqueId()));
+                            event.getPlayer().getUniqueId(),
+                            priorityDistance));
+            if (definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
+                blockData.updateEnergyPriorityDistance(instanceId, priorityDistance);
+            }
             nodeStates.putIfAbsent(instanceId, SfxEnergyNodeState.empty());
             activeNodes.add(instanceId);
             dirtyNodes.add(instanceId);
@@ -132,6 +141,9 @@ public final class SfxEnergyService implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onInteract(PlayerInteractEvent event) {
         if (event.getAction().isLeftClick() || event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) {
+            return;
+        }
+        if (event.getPlayer().isSneaking()) {
             return;
         }
         Block clicked = event.getClickedBlock();
@@ -152,7 +164,7 @@ public final class SfxEnergyService implements Listener {
         }
         event.setCancelled(true);
         if (definition.isFueledGenerator()) {
-            runtime.executeGlobal(() -> openGenerator(event.getPlayer(), instance, definition));
+            runtime.executeForPlayer(event.getPlayer(), () -> openGenerator(event.getPlayer(), instance, definition));
             return;
         }
         SfxEnergyNodeState state = currentState(instance.instanceId(), instance);
@@ -232,14 +244,19 @@ public final class SfxEnergyService implements Listener {
             return;
         }
         sessionsByViewer.remove(session.viewerId());
-        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
-        if (instance == null) {
+        syncSessionState(session);
+        activeNodes.add(holder.instanceId());
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        GeneratorSession session = sessionsByViewer.remove(event.getPlayer().getUniqueId());
+        if (session == null) {
             return;
         }
-        SfxEnergyNodeState state = currentState(holder.instanceId(), instance);
-        syncInventoryToState(session.inventory(), state);
-        dirtyNodes.add(holder.instanceId());
-        activeNodes.add(holder.instanceId());
+        sessionsByInstance.remove(session.instanceId());
+        syncSessionState(session);
+        activeNodes.add(session.instanceId());
     }
 
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {
@@ -492,7 +509,7 @@ public final class SfxEnergyService implements Listener {
             activeNodes.add(instance.instanceId());
             SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
             if (definition != null && definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
-                updateCapacitorAppearance(new NodeRef(instance, definition, state));
+                scheduleCapacitorAppearanceUpdate(new NodeRef(instance, definition, state));
             }
         }
     }
@@ -635,9 +652,7 @@ public final class SfxEnergyService implements Listener {
 
     private void processGrid(GridResult result) {
         int available = 0;
-        int demand = 0;
         int supply = 0;
-        int consumption = 0;
         List<NodeRef> capacitorRefs = new ArrayList<>();
         List<NodeRef> generatorRefs = new ArrayList<>();
         List<SfxBlockInstanceRecord> consumers = new ArrayList<>();
@@ -663,15 +678,7 @@ public final class SfxEnergyService implements Listener {
             }
         }
 
-        int initialStored = totalStoredEnergy(capacitorRefs, generatorRefs, consumers);
-
-        for (NodeRef capacitor : capacitorRefs) {
-            if (capacitor.state().storedEnergy() > 0) {
-                available += capacitor.state().storedEnergy();
-                capacitor.state().storedEnergy(0);
-                dirtyNodes.add(capacitor.instance().instanceId());
-            }
-        }
+        sortCapacitors(capacitorRefs);
 
         for (NodeRef generator : generatorRefs) {
             if (generator.state().storedEnergy() > 0) {
@@ -685,21 +692,36 @@ public final class SfxEnergyService implements Listener {
         }
 
         for (SfxBlockInstanceRecord consumer : consumers) {
-            int capacity = electricMachines.consumerCapacity(consumer.typeId());
-            int stored = electricMachines.consumerStoredEnergy(consumer.instanceId());
-            demand += Math.max(0, capacity - stored);
-        }
-
-        int supplied = 0;
-        for (SfxBlockInstanceRecord consumer : consumers) {
             if (available <= 0) {
                 break;
             }
             int accepted = electricMachines.chargeConsumer(consumer.instanceId(), available);
             if (accepted > 0) {
                 available -= accepted;
-                supplied += accepted;
-                consumption += accepted;
+            }
+        }
+
+        for (SfxBlockInstanceRecord consumer : consumers) {
+            int remainingDemand = Math.max(0, electricMachines.consumerCapacity(consumer.typeId()) - electricMachines.consumerStoredEnergy(consumer.instanceId()));
+            if (remainingDemand <= 0) {
+                continue;
+            }
+            for (NodeRef capacitor : capacitorRefs) {
+                if (remainingDemand <= 0) {
+                    break;
+                }
+                int stored = capacitor.state().storedEnergy();
+                if (stored <= 0) {
+                    continue;
+                }
+                int offered = Math.min(stored, remainingDemand);
+                int accepted = electricMachines.chargeConsumer(consumer.instanceId(), offered);
+                if (accepted <= 0) {
+                    break;
+                }
+                capacitor.state().storedEnergy(stored - accepted);
+                dirtyNodes.add(capacitor.instance().instanceId());
+                remainingDemand -= accepted;
             }
         }
 
@@ -730,7 +752,7 @@ public final class SfxEnergyService implements Listener {
         }
 
         for (NodeRef capacitor : capacitorRefs) {
-            updateCapacitorAppearance(capacitor);
+            scheduleCapacitorAppearanceUpdate(capacitor);
         }
 
         int requestedConsumption = electricMachines.requestedEnergyConsumption(consumerIds);
@@ -740,6 +762,68 @@ public final class SfxEnergyService implements Listener {
         int net = supply - requestedConsumption;
         displayStatus(result.regulatorKey(), GridStatus.ONLINE, supply, requestedConsumption, net, totalStored, totalCapacity);
         refreshOpenGeneratorSessions();
+    }
+
+    private void sortCapacitors(List<NodeRef> capacitorRefs) {
+        capacitorRefs.sort((left, right) -> {
+            int byDistance = Integer.compare(left.instance().energyPriorityDistance(), right.instance().energyPriorityDistance());
+            if (byDistance != 0) {
+                return byDistance;
+            }
+            return compareAnchorKeys(left.instance().anchorKey(), right.instance().anchorKey());
+        });
+    }
+
+    private int compareAnchorKeys(SfxBlockAnchorKey left, SfxBlockAnchorKey right) {
+        int byWorld = left.worldId().compareTo(right.worldId());
+        if (byWorld != 0) {
+            return byWorld;
+        }
+        int byX = Integer.compare(left.x(), right.x());
+        if (byX != 0) {
+            return byX;
+        }
+        int byY = Integer.compare(left.y(), right.y());
+        if (byY != 0) {
+            return byY;
+        }
+        return Integer.compare(left.z(), right.z());
+    }
+
+    private int capacitorPriorityDistanceForPlacement(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return SfxBlockInstanceRecord.DEFAULT_ENERGY_PRIORITY_DISTANCE;
+        }
+        SfxBlockAnchorKey placed = SfxBlockAnchorKey.fromLocation(location);
+        int best = SfxBlockInstanceRecord.DEFAULT_ENERGY_PRIORITY_DISTANCE;
+        for (SfxAnchorRecord anchor : blockData.anchors()) {
+            if (!anchor.key().worldId().equals(placed.worldId())) {
+                continue;
+            }
+            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (instance == null) {
+                continue;
+            }
+            SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
+            if (definition == null || definition.componentType() != SfxEnergyComponentType.REGULATOR) {
+                continue;
+            }
+            int distance = manhattanDistance(placed, anchor.key());
+            if (distance < best || (distance == best && compareAnchorKeys(anchor.key(), placed) < 0)) {
+                best = distance;
+            }
+        }
+        return best;
+    }
+
+    private int manhattanDistance(SfxBlockAnchorKey first, SfxBlockAnchorKey second) {
+        if (!first.worldId().equals(second.worldId())) {
+            return SfxBlockInstanceRecord.DEFAULT_ENERGY_PRIORITY_DISTANCE;
+        }
+        long distance = Math.abs((long) first.x() - second.x())
+                + Math.abs((long) first.y() - second.y())
+                + Math.abs((long) first.z() - second.z());
+        return distance > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) distance;
     }
 
     private int totalStoredEnergy(List<NodeRef> capacitorRefs, List<NodeRef> generatorRefs, List<SfxBlockInstanceRecord> consumers) {
@@ -867,7 +951,7 @@ public final class SfxEnergyService implements Listener {
             return 0;
         }
         Material material = input.material();
-        if (material == Material.LAVA_BUCKET) {
+        if (material == Material.LAVA_BUCKET || isCarpetFuel(material)) {
             return 0;
         }
         int burnTicks = vanillaFuelTicks(input.toItemStack(items));
@@ -876,6 +960,10 @@ public final class SfxEnergyService implements Listener {
         }
         int multiplier = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 2 : 1;
         return burnTicks * multiplier;
+    }
+
+    private boolean isCarpetFuel(Material material) {
+        return material != null && material.name().endsWith("_CARPET");
     }
 
     private boolean shouldReturnFuelOutputImmediately(SfxEnergyComponentDefinition definition, SfxElectricStack output) {
@@ -932,9 +1020,17 @@ public final class SfxEnergyService implements Listener {
         }
     }
 
-    private void updateCapacitorAppearance(NodeRef capacitor) {
+    private void scheduleCapacitorAppearanceUpdate(NodeRef capacitor) {
         Location location = toLocation(capacitor.instance().anchorKey());
         if (location == null || location.getWorld() == null || capacitor.definition().capacity() <= 0) {
+            return;
+        }
+        String texture = capacitorTexture(capacitor.state().storedEnergy(), capacitor.definition().capacity());
+        runtime.executeAt(location, () -> updateCapacitorAppearance(location, texture));
+    }
+
+    private void updateCapacitorAppearance(Location location, String texture) {
+        if (location == null || location.getWorld() == null || texture == null) {
             return;
         }
         Block block = location.getBlock();
@@ -943,7 +1039,7 @@ public final class SfxEnergyService implements Listener {
         }
         BlockState state = block.getState();
         if (state instanceof Skull skull) {
-            HeadTextures.apply(skull, capacitorTexture(capacitor.state().storedEnergy(), capacitor.definition().capacity()));
+            HeadTextures.apply(skull, texture);
         }
     }
 

@@ -1,6 +1,5 @@
 package cc.theends6.sfx.internal.util;
 
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -10,6 +9,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.block.Skull;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.profile.PlayerProfile;
+import org.bukkit.profile.PlayerTextures;
 
 public final class HeadTextures {
     private static final Logger LOGGER = Logger.getLogger(HeadTextures.class.getName());
@@ -18,139 +19,53 @@ public final class HeadTextures {
     }
 
     public static void apply(ItemMeta meta, String textureHash) {
-        if (!(meta instanceof SkullMeta skullMeta) || textureHash == null || textureHash.isBlank()) {
+        String normalized = normalize(textureHash);
+        if (!(meta instanceof SkullMeta skullMeta) || normalized == null) {
             return;
         }
         try {
-            Object profile = createProfile(textureHash);
-            if (profile == null) {
-                return;
-            }
-            Object textures = invoke(profile, "getTextures");
-            if (textures != null) {
-                invokeBest(textures, "setSkin", new URL("https://textures.minecraft.net/texture/" + textureHash));
-                invokeBest(profile, "setTextures", textures);
-            }
-            if (!invokeBest(skullMeta, "setPlayerProfile", profile)) {
-                invokeBest(skullMeta, "setOwnerProfile", profile);
-            }
+            skullMeta.setOwnerProfile(createProfile(normalized));
         } catch (Throwable ex) {
-            LOGGER.log(Level.FINE, "Failed to apply head texture via reflection", ex);
+            LOGGER.log(Level.FINE, "Failed to apply head texture", ex);
         }
     }
-
 
     public static void apply(Skull skull, String textureHash) {
-        if (skull == null || textureHash == null || textureHash.isBlank()) {
+        String normalized = normalize(textureHash);
+        if (skull == null || normalized == null) {
             return;
         }
         try {
-            Object profile = createProfile(textureHash);
-            if (profile == null) {
-                return;
-            }
-            Object textures = invoke(profile, "getTextures");
-            if (textures != null) {
-                invokeBest(textures, "setSkin", new URL("https://textures.minecraft.net/texture/" + textureHash));
-                invokeBest(profile, "setTextures", textures);
-            }
-            if (!invokeBest(skull, "setPlayerProfile", profile)) {
-                invokeBest(skull, "setOwnerProfile", profile);
-            }
+            skull.setOwnerProfile(createProfile(normalized));
             skull.update(true, false);
         } catch (Throwable ex) {
-            LOGGER.log(Level.FINE, "Failed to apply placed head texture via reflection", ex);
+            LOGGER.log(Level.FINE, "Failed to apply placed head texture", ex);
         }
     }
 
-    private static Object createProfile(String textureHash) {
+    private static String normalize(String textureHash) {
+        if (textureHash == null || textureHash.isBlank()) {
+            return null;
+        }
+        String normalized = textureHash.trim().toLowerCase();
+        String texturePrefix = "https://textures.minecraft.net/texture/";
+        if (normalized.startsWith(texturePrefix)) {
+            normalized = normalized.substring(texturePrefix.length());
+        }
+        if (!normalized.matches("[0-9a-f]{32,128}")) {
+            LOGGER.fine("Ignoring invalid SFX head texture hash: " + textureHash);
+            return null;
+        }
+        return normalized;
+    }
+
+    private static PlayerProfile createProfile(String textureHash) throws Exception {
         UUID uuid = UUID.nameUUIDFromBytes(textureHash.getBytes(StandardCharsets.UTF_8));
-        Object profile = invokeStatic(Bukkit.class, "createPlayerProfile", uuid, "SFX-" + textureHash.substring(0, Math.min(12, textureHash.length())));
-        if (profile != null) {
-            return profile;
-        }
-        return invokeStatic(Bukkit.class, "createProfile", uuid, "SFX-" + textureHash.substring(0, Math.min(12, textureHash.length())));
-    }
-
-    private static Object invokeStatic(Class<?> owner, String method, Object... args) {
-        try {
-            Method matched = findMethod(owner, method, args);
-            if (matched == null) {
-                return null;
-            }
-            return matched.invoke(null, args);
-        } catch (Throwable ex) {
-            LOGGER.log(Level.FINE, "Failed reflective static call: " + owner.getName() + "#" + method, ex);
-            return null;
-        }
-    }
-
-    private static Object invoke(Object target, String method, Object... args) {
-        try {
-            Method matched = findMethod(target.getClass(), method, args);
-            if (matched == null) {
-                return null;
-            }
-            return matched.invoke(target, args);
-        } catch (Throwable ex) {
-            LOGGER.log(Level.FINE, "Failed reflective call: " + target.getClass().getName() + "#" + method, ex);
-            return null;
-        }
-    }
-
-    private static boolean invokeBest(Object target, String method, Object... args) {
-        Method matched = findMethod(target.getClass(), method, args);
-        if (matched == null) {
-            return false;
-        }
-        try {
-            matched.invoke(target, args);
-            return true;
-        } catch (Throwable ex) {
-            LOGGER.log(Level.FINE, "Failed reflective call: " + target.getClass().getName() + "#" + method, ex);
-            return false;
-        }
-    }
-
-    private static Method findMethod(Class<?> owner, String name, Object... args) {
-        for (Method method : owner.getMethods()) {
-            if (!method.getName().equals(name)) {
-                continue;
-            }
-            Class<?>[] parameterTypes = method.getParameterTypes();
-            if (parameterTypes.length != args.length) {
-                continue;
-            }
-            boolean matches = true;
-            for (int i = 0; i < parameterTypes.length; i++) {
-                if (args[i] == null) {
-                    continue;
-                }
-                if (!wrap(parameterTypes[i]).isAssignableFrom(args[i].getClass())) {
-                    matches = false;
-                    break;
-                }
-            }
-            if (matches) {
-                method.setAccessible(true);
-                return method;
-            }
-        }
-        return null;
-    }
-
-    private static Class<?> wrap(Class<?> type) {
-        if (!type.isPrimitive()) {
-            return type;
-        }
-        if (type == boolean.class) return Boolean.class;
-        if (type == byte.class) return Byte.class;
-        if (type == char.class) return Character.class;
-        if (type == short.class) return Short.class;
-        if (type == int.class) return Integer.class;
-        if (type == long.class) return Long.class;
-        if (type == float.class) return Float.class;
-        if (type == double.class) return Double.class;
-        return Void.class;
+        String name = "SFX-" + textureHash.substring(0, 12);
+        PlayerProfile profile = Bukkit.createPlayerProfile(uuid, name);
+        PlayerTextures textures = profile.getTextures();
+        textures.setSkin(new URL("https://textures.minecraft.net/texture/" + textureHash));
+        profile.setTextures(textures);
+        return profile;
     }
 }

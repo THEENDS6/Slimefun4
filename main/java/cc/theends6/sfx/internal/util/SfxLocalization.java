@@ -119,6 +119,9 @@ public final class SfxLocalization {
         if ("items.sf.combustion_reactor.lore".equals(path)) {
             return combustionReactorLore(values, sfxGeneratorBalance);
         }
+        if ("items.sf.netherstar_reactor.lore".equals(path)) {
+            return netherStarReactorLore(values, sfxGeneratorBalance);
+        }
         if (!sfxGeneratorBalance) {
             return values;
         }
@@ -147,6 +150,17 @@ public final class SfxLocalization {
                     .replace("64 J/t", output + " J/t")
                     .replace("24 J/t", output + " J/t");
             copy.add(line);
+        }
+        return copy;
+    }
+
+    private List<String> netherStarReactorLore(List<String> values, boolean sfxGeneratorBalance) {
+        String output = sfxGeneratorBalance ? "2048" : "1024";
+        List<String> copy = new ArrayList<>(values.size());
+        for (String value : values) {
+            copy.add(value
+                    .replace("2048 J/t", output + " J/t")
+                    .replace("1024 J/t", output + " J/t"));
         }
         return copy;
     }

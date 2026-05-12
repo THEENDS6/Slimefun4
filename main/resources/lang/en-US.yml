@@ -3371,7 +3371,8 @@ energy:
     fuel:
       oil: Oil
       fuel: Fuel
-    fuel-duration: '<gray>Duration: </gray><aqua>{seconds}s</aqua>'
+    fuel-duration: '<gray>Duration: </gray><aqua>{seconds}</aqua>'
+    fuel-total-energy: '<gray>Total Energy: </gray><aqua>{energy} J</aqua>'
     active:
       name: <green>Generating</green>
       lore: <gray>Fuel is currently being converted into energy.</gray>
