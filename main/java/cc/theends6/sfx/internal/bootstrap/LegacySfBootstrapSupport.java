@@ -236,6 +236,7 @@ final class LegacySfBootstrapSupport {
         return Map.copyOf(map);
     }
 
+    @SafeVarargs
     private static Map<String, Integer> enchantments(Map.Entry<String, Integer>... entries) {
         Map<String, Integer> values = new LinkedHashMap<>();
         for (Map.Entry<String, Integer> entry : entries) {

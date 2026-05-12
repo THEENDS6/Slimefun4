@@ -20,7 +20,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Item;
@@ -39,9 +38,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.ItemFlag;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxElectricMachineService implements Listener {
@@ -61,12 +57,14 @@ public final class SfxElectricMachineService implements Listener {
     private final SfxBlockDataService blockData;
     private final SfxPlayerDataService profiles;
     private final SfxElectricMachineRegistry registry;
+    private final SfxElectricMachineMenuRenderer menuRenderer;
+    private final SfxElectricRecipeProcessor recipeProcessor;
     private final Map<UUID, SfxElectricMachineState> stateCache = new ConcurrentHashMap<>();
     private final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
     private final Set<UUID> activeInstances = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> recentEnergyConsumption = new ConcurrentHashMap<>();
-    private final Map<UUID, MachineSession> sessionsByViewer = new ConcurrentHashMap<>();
-    private final Map<UUID, MachineSession> sessionsByInstance = new ConcurrentHashMap<>();
+    private final Map<UUID, SfxElectricMachineSession> sessionsByViewer = new ConcurrentHashMap<>();
+    private final Map<UUID, SfxElectricMachineSession> sessionsByInstance = new ConcurrentHashMap<>();
     private volatile boolean running;
     private volatile long tickCounter;
 
@@ -85,7 +83,9 @@ public final class SfxElectricMachineService implements Listener {
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.profiles = Objects.requireNonNull(profiles, "profiles");
-        this.registry = createRegistry(plugin, manualMachines);
+        this.registry = SfxElectricMachineDefinitions.create(plugin, manualMachines);
+        this.menuRenderer = new SfxElectricMachineMenuRenderer(items, localization, profiles);
+        this.recipeProcessor = new SfxElectricRecipeProcessor(items);
         bootstrapLoadedStates();
         running = true;
         scheduleTick();
@@ -133,7 +133,7 @@ public final class SfxElectricMachineService implements Listener {
         if (block == null || instanceId == null || typeId == null || !registry.contains(typeId)) {
             return;
         }
-        MachineSession session = sessionsByInstance.remove(instanceId);
+        SfxElectricMachineSession session = sessionsByInstance.remove(instanceId);
         if (session != null) {
             sessionsByViewer.remove(session.viewerId());
             syncSessionState(session);
@@ -192,7 +192,7 @@ public final class SfxElectricMachineService implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof MachineHolder holder)) {
+        if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxElectricMachineHolder holder)) {
             return;
         }
         if (event.getClick() == ClickType.DOUBLE_CLICK || event.getClick() == ClickType.NUMBER_KEY || event.getClick() == ClickType.SWAP_OFFHAND) {
@@ -225,7 +225,7 @@ public final class SfxElectricMachineService implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof MachineHolder holder)) {
+        if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxElectricMachineHolder holder)) {
             return;
         }
         int topSize = event.getView().getTopInventory().getSize();
@@ -245,10 +245,10 @@ public final class SfxElectricMachineService implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof MachineHolder holder)) {
+        if (!(event.getInventory().getHolder() instanceof SfxElectricMachineHolder holder)) {
             return;
         }
-        MachineSession session = sessionsByInstance.remove(holder.instanceId());
+        SfxElectricMachineSession session = sessionsByInstance.remove(holder.instanceId());
         if (session == null) {
             return;
         }
@@ -258,7 +258,7 @@ public final class SfxElectricMachineService implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        MachineSession session = sessionsByViewer.remove(event.getPlayer().getUniqueId());
+        SfxElectricMachineSession session = sessionsByViewer.remove(event.getPlayer().getUniqueId());
         if (session == null) {
             return;
         }
@@ -268,7 +268,7 @@ public final class SfxElectricMachineService implements Listener {
 
     public void shutdown() {
         running = false;
-        for (MachineSession session : List.copyOf(sessionsByViewer.values())) {
+        for (SfxElectricMachineSession session : List.copyOf(sessionsByViewer.values())) {
             syncSessionState(session);
             Player player = plugin.getServer().getPlayer(session.viewerId());
             if (player != null) {
@@ -293,22 +293,6 @@ public final class SfxElectricMachineService implements Listener {
             stateCache.put(instance.instanceId(), SfxElectricMachineState.decode(instance.stateBlob()));
             activeInstances.add(instance.instanceId());
         }
-    }
-
-    private SfxElectricMachineRegistry createRegistry(JavaPlugin plugin, DefaultManualMachineRegistry manualMachines) {
-        SfxElectricMachineRegistry result = new SfxElectricMachineRegistry();
-        SfxElectricRecipeProvider furnaceRecipes = new SfxVanillaFurnaceRecipeProvider(plugin, 4);
-        SfxElectricRecipeProvider grinderRecipes = new SfxClassicOreGrinderRecipeProvider(
-                manualMachines.recipesFor("sf:grind_stone"),
-                manualMachines.recipesFor("sf:ore_crusher"),
-                4);
-        result.register(new SfxElectricMachineDefinition("sf:electric_furnace", "Electric Furnace", 1, 1280, 4, Material.FLINT_AND_STEEL, furnaceRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electric_furnace_2", "Electric Furnace - II", 2, 2560, 6, Material.FLINT_AND_STEEL, furnaceRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electric_furnace_3", "Electric Furnace - III", 4, 5120, 10, Material.FLINT_AND_STEEL, furnaceRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electric_ore_grinder", "Electric Ore Grinder", 1, 2560, 12, Material.IRON_PICKAXE, grinderRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electric_ore_grinder_2", "Electric Ore Grinder - II", 4, 10240, 30, Material.IRON_PICKAXE, grinderRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electric_ore_grinder_3", "Electric Ore Grinder - III", 10, 20480, 90, Material.IRON_PICKAXE, grinderRecipes));
-        return result;
     }
 
     public int consumerCapacity(String typeId) {
@@ -361,15 +345,15 @@ public final class SfxElectricMachineService implements Listener {
         if (state.hasPendingOutput()) {
             return 0;
         }
-        SfxElectricRecipe activeRecipe = activeRecipe(definition, state);
+        SfxElectricRecipe activeRecipe = recipeProcessor.activeRecipe(definition, state);
         if (activeRecipe != null && state.reservedInput() != null) {
             return definition.energyConsumptionPerTick();
         }
-        RecipeMatch match = findRecipeMatch(definition, state);
+        SfxElectricRecipeMatch match = recipeProcessor.findRecipeMatch(definition, state);
         if (match == null) {
             return 0;
         }
-        if (findOutputSlot(state, match.recipe().output()) == null) {
+        if (recipeProcessor.findOutputSlot(state, match.recipe().output()) == null) {
             return 0;
         }
         return definition.energyConsumptionPerTick();
@@ -456,55 +440,55 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         SfxElectricMachineState state = currentState(instanceId, instance);
-        MachineSession session = sessionsByInstance.get(instanceId);
+        SfxElectricMachineSession session = sessionsByInstance.get(instanceId);
         if (session != null) {
             syncInventoryToState(session.inventory(), state);
         }
 
-        SfxElectricRecipe activeRecipe = activeRecipe(definition, state);
-        MachineRenderStatus status = MachineRenderStatus.IDLE;
+        SfxElectricRecipe activeRecipe = recipeProcessor.activeRecipe(definition, state);
+        SfxElectricMachineRenderStatus status = SfxElectricMachineRenderStatus.IDLE;
 
         if (state.hasPendingOutput()) {
             SfxElectricStack pendingOutput = state.pendingOutput();
-            Integer outputSlot = pendingOutput == null ? null : findOutputSlot(state, pendingOutput);
+            Integer outputSlot = pendingOutput == null ? null : recipeProcessor.findOutputSlot(state, pendingOutput);
             if (pendingOutput != null && outputSlot != null) {
-                pushOutput(state, outputSlot, pendingOutput);
+                recipeProcessor.pushOutput(state, outputSlot, pendingOutput);
                 state.resetProgress();
                 dirtyInstances.add(instanceId);
                 playCompleteSound(session);
-                RecipeStart nextStart = tryStartNextRecipe(definition, state);
+                SfxElectricRecipeStart nextStart = recipeProcessor.tryStartNextRecipe(definition, state);
                 if (nextStart != null) {
                     activeRecipe = nextStart.recipe();
-                    status = MachineRenderStatus.WORKING;
+                    status = SfxElectricMachineRenderStatus.WORKING;
                     activeInstances.add(instanceId);
                 } else {
                     activeRecipe = null;
-                    status = state.hasAnyInput() ? deriveStatus(definition, state) : MachineRenderStatus.IDLE;
+                    status = state.hasAnyInput() ? recipeProcessor.deriveStatus(definition, state) : SfxElectricMachineRenderStatus.IDLE;
                 }
             } else {
-                status = MachineRenderStatus.BLOCKED_OUTPUT;
+                status = SfxElectricMachineRenderStatus.BLOCKED_OUTPUT;
                 activeInstances.add(instanceId);
             }
         } else if (activeRecipe == null) {
-            RecipeMatch match = findRecipeMatch(definition, state);
+            SfxElectricRecipeMatch match = recipeProcessor.findRecipeMatch(definition, state);
             if (match == null) {
                 if (state.hasProgress()) {
                     state.resetProgress();
                     dirtyInstances.add(instanceId);
                 }
-                status = state.hasAnyInput() ? MachineRenderStatus.NO_RECIPE : MachineRenderStatus.IDLE;
+                status = state.hasAnyInput() ? SfxElectricMachineRenderStatus.NO_RECIPE : SfxElectricMachineRenderStatus.IDLE;
             } else {
-                if (findOutputSlot(state, match.recipe().output()) == null) {
-                    status = MachineRenderStatus.OUTPUT_FULL;
+                if (recipeProcessor.findOutputSlot(state, match.recipe().output()) == null) {
+                    status = SfxElectricMachineRenderStatus.OUTPUT_FULL;
                 } else {
-                    SfxElectricStack reservedInput = consumeInput(state, match.inputSlot(), match.recipe().input().amount());
+                    SfxElectricStack reservedInput = recipeProcessor.consumeInput(state, match.inputSlot(), match.recipe().input().amount());
                     state.activeRecipeKey(match.recipe().key());
                     state.activeInputSlot(match.inputSlot());
                     state.progressWork(0);
                     state.reservedInput(reservedInput);
                     state.pendingOutput(null);
                     activeRecipe = match.recipe();
-                    status = MachineRenderStatus.WORKING;
+                    status = SfxElectricMachineRenderStatus.WORKING;
                     dirtyInstances.add(instanceId);
                     activeInstances.add(instanceId);
                 }
@@ -514,34 +498,34 @@ public final class SfxElectricMachineService implements Listener {
             if (state.reservedInput() == null) {
                 state.resetProgress();
                 dirtyInstances.add(instanceId);
-                status = state.hasAnyInput() ? deriveStatus(definition, state) : MachineRenderStatus.IDLE;
+                status = state.hasAnyInput() ? recipeProcessor.deriveStatus(definition, state) : SfxElectricMachineRenderStatus.IDLE;
             } else {
                 if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
-                    status = MachineRenderStatus.NO_POWER;
+                    status = SfxElectricMachineRenderStatus.NO_POWER;
                 } else {
                     if (definition.energyConsumptionPerTick() > 0) {
                         state.storedEnergy(state.storedEnergy() - definition.energyConsumptionPerTick());
                         recentEnergyConsumption.merge(instanceId, definition.energyConsumptionPerTick(), Integer::sum);
                     }
-                    int totalWork = requiredWork(activeRecipe);
+                    int totalWork = recipeProcessor.requiredWork(activeRecipe);
                     int progressed = Math.min(totalWork, state.progressWork() + definition.speed());
                     state.progressWork(progressed);
-                    status = MachineRenderStatus.WORKING;
+                    status = SfxElectricMachineRenderStatus.WORKING;
                     if (progressed >= totalWork) {
-                        Integer outputSlot = findOutputSlot(state, activeRecipe.output());
+                        Integer outputSlot = recipeProcessor.findOutputSlot(state, activeRecipe.output());
                         if (outputSlot == null) {
                             state.pendingOutput(activeRecipe.output());
-                            status = MachineRenderStatus.BLOCKED_OUTPUT;
+                            status = SfxElectricMachineRenderStatus.BLOCKED_OUTPUT;
                         } else {
-                            pushOutput(state, outputSlot, activeRecipe.output());
+                            recipeProcessor.pushOutput(state, outputSlot, activeRecipe.output());
                             state.resetProgress();
-                            RecipeStart nextStart = tryStartNextRecipe(definition, state);
+                            SfxElectricRecipeStart nextStart = recipeProcessor.tryStartNextRecipe(definition, state);
                             if (nextStart != null) {
                                 activeRecipe = nextStart.recipe();
-                                status = MachineRenderStatus.WORKING;
+                                status = SfxElectricMachineRenderStatus.WORKING;
                                 activeInstances.add(instanceId);
                             } else {
-                                status = state.hasAnyInput() ? deriveStatus(definition, state) : MachineRenderStatus.IDLE;
+                                status = state.hasAnyInput() ? recipeProcessor.deriveStatus(definition, state) : SfxElectricMachineRenderStatus.IDLE;
                             }
                             playCompleteSound(session);
                         }
@@ -552,7 +536,7 @@ public final class SfxElectricMachineService implements Listener {
         }
 
         if (session != null && shouldRenderSession(session, status)) {
-            render(session, definition, session.inventory(), state, activeRecipe(definition, state), status);
+            render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), status);
         }
         if (session == null && !state.hasAnyInput() && !state.hasProgress()) {
             activeInstances.remove(instanceId);
@@ -564,13 +548,13 @@ public final class SfxElectricMachineService implements Listener {
         if (definition == null) {
             return;
         }
-        MachineSession existing = sessionsByInstance.get(instance.instanceId());
+        SfxElectricMachineSession existing = sessionsByInstance.get(instance.instanceId());
         if (existing != null && !existing.viewerId().equals(player.getUniqueId())) {
             player.sendMessage(Text.prefixed(plugin, localization.text("machines.busy", "<red>This machine is already open.</red>")));
             return;
         }
 
-        MachineSession previous = sessionsByViewer.remove(player.getUniqueId());
+        SfxElectricMachineSession previous = sessionsByViewer.remove(player.getUniqueId());
         if (previous != null) {
             sessionsByInstance.remove(previous.instanceId());
             syncSessionState(previous);
@@ -578,17 +562,17 @@ public final class SfxElectricMachineService implements Listener {
 
         SfxElectricMachineState state = currentState(instance.instanceId(), instance);
         Component title = localization.itemName(definition.id(), Component.text(definition.title()));
-        Inventory inventory = plugin.getServer().createInventory(new MachineHolder(instance.instanceId()), INVENTORY_SIZE, title);
-        MachineSession session = new MachineSession(player.getUniqueId(), instance.instanceId(), inventory);
+        Inventory inventory = plugin.getServer().createInventory(new SfxElectricMachineHolder(instance.instanceId()), INVENTORY_SIZE, title);
+        SfxElectricMachineSession session = new SfxElectricMachineSession(player.getUniqueId(), instance.instanceId(), inventory);
         sessionsByViewer.put(player.getUniqueId(), session);
         sessionsByInstance.put(instance.instanceId(), session);
         activeInstances.add(instance.instanceId());
-        render(session, definition, inventory, state, activeRecipe(definition, state), deriveStatus(definition, state));
+        render(session, definition, inventory, state, recipeProcessor.activeRecipe(definition, state), recipeProcessor.deriveStatus(definition, state));
         player.openInventory(inventory);
     }
 
     private void refreshSession(UUID instanceId) {
-        MachineSession session = sessionsByInstance.get(instanceId);
+        SfxElectricMachineSession session = sessionsByInstance.get(instanceId);
         if (session == null) {
             return;
         }
@@ -604,14 +588,14 @@ public final class SfxElectricMachineService implements Listener {
         syncInventoryToState(session.inventory(), state);
         dirtyInstances.add(instanceId);
         activeInstances.add(instanceId);
-        render(session, definition, session.inventory(), state, activeRecipe(definition, state), deriveStatus(definition, state));
+        render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), recipeProcessor.deriveStatus(definition, state));
     }
 
     private SfxElectricMachineState currentState(UUID instanceId, SfxBlockInstanceRecord instance) {
         return stateCache.computeIfAbsent(instanceId, ignored -> SfxElectricMachineState.decode(instance.stateBlob()));
     }
 
-    private void syncSessionState(MachineSession session) {
+    private void syncSessionState(SfxElectricMachineSession session) {
         SfxBlockInstanceRecord instance = blockData.findInstance(session.instanceId()).orElse(null);
         if (instance == null) {
             return;
@@ -620,109 +604,6 @@ public final class SfxElectricMachineService implements Listener {
         syncInventoryToState(session.inventory(), state);
         dirtyInstances.add(session.instanceId());
         activeInstances.add(session.instanceId());
-    }
-
-    private SfxElectricRecipe activeRecipe(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
-        String key = state.activeRecipeKey();
-        if (key == null) {
-            return null;
-        }
-        for (SfxElectricRecipe recipe : definition.recipeProvider().recipes()) {
-            if (recipe.key().equals(key)) {
-                return recipe;
-            }
-        }
-        state.resetProgress();
-        return null;
-    }
-
-    private RecipeMatch findRecipeMatch(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
-        for (SfxElectricRecipe recipe : definition.recipeProvider().recipes()) {
-            for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
-                SfxElectricStack input = state.input(slot);
-                if (input != null && input.matches(recipe.input())) {
-                    return new RecipeMatch(slot, recipe);
-                }
-            }
-        }
-        return null;
-    }
-
-    private MachineRenderStatus deriveStatus(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
-        if (state.hasPendingOutput()) {
-            return MachineRenderStatus.BLOCKED_OUTPUT;
-        }
-        SfxElectricRecipe recipe = activeRecipe(definition, state);
-        if (recipe != null) {
-            if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
-                return MachineRenderStatus.NO_POWER;
-            }
-            return MachineRenderStatus.WORKING;
-        }
-        RecipeMatch match = findRecipeMatch(definition, state);
-        if (match == null && state.hasAnyInput()) {
-            return MachineRenderStatus.NO_RECIPE;
-        }
-        if (match != null && findOutputSlot(state, match.recipe().output()) == null) {
-            return MachineRenderStatus.OUTPUT_FULL;
-        }
-        return MachineRenderStatus.IDLE;
-    }
-
-    private int requiredWork(SfxElectricRecipe recipe) {
-        return Math.max(1, recipe.baseTicks() * 20);
-    }
-
-    private RecipeStart tryStartNextRecipe(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
-        RecipeMatch match = findRecipeMatch(definition, state);
-        if (match == null || findOutputSlot(state, match.recipe().output()) == null) {
-            return null;
-        }
-        SfxElectricStack reservedInput = consumeInput(state, match.inputSlot(), match.recipe().input().amount());
-        if (reservedInput == null) {
-            return null;
-        }
-        state.activeRecipeKey(match.recipe().key());
-        state.activeInputSlot(match.inputSlot());
-        state.progressWork(0);
-        state.reservedInput(reservedInput);
-        state.pendingOutput(null);
-        return new RecipeStart(match.recipe(), match.inputSlot());
-    }
-
-    private Integer findOutputSlot(SfxElectricMachineState state, SfxElectricStack recipeOutput) {
-        for (int slot = 0; slot < OUTPUT_SLOTS.length; slot++) {
-            SfxElectricStack current = state.output(slot);
-            if (current != null && recipeOutput.canMerge(current, items)) {
-                return slot;
-            }
-        }
-        for (int slot = 0; slot < OUTPUT_SLOTS.length; slot++) {
-            if (state.output(slot) == null) {
-                return slot;
-            }
-        }
-        return null;
-    }
-
-    private SfxElectricStack consumeInput(SfxElectricMachineState state, int slot, int amount) {
-        SfxElectricStack input = state.input(slot);
-        if (input == null) {
-            return null;
-        }
-        SfxElectricStack reserved = input.copyWithAmount(amount);
-        int remaining = input.amount() - amount;
-        state.input(slot, remaining <= 0 ? null : input.copyWithAmount(remaining));
-        return reserved;
-    }
-
-    private void pushOutput(SfxElectricMachineState state, int slot, SfxElectricStack recipeOutput) {
-        SfxElectricStack current = state.output(slot);
-        if (current == null) {
-            state.output(slot, recipeOutput);
-            return;
-        }
-        state.output(slot, current.copyWithAmount(current.amount() + recipeOutput.amount()));
     }
 
     private void syncInventoryToState(Inventory inventory, SfxElectricMachineState state) {
@@ -734,199 +615,11 @@ public final class SfxElectricMachineService implements Listener {
         }
     }
 
-    private void render(MachineSession session, SfxElectricMachineDefinition definition, Inventory inventory, SfxElectricMachineState state, SfxElectricRecipe recipe, MachineRenderStatus status) {
+    private void render(SfxElectricMachineSession session, SfxElectricMachineDefinition definition, Inventory inventory, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
         if (session != null) {
             session.markRendered(tickCounter, status);
+            menuRenderer.render(session.viewerId(), definition, inventory, state, recipe, status);
         }
-        fillInventoryFrame(inventory);
-        inventory.setItem(DISPLAY_SLOT, progressIcon(session, definition, state, recipe, status));
-        for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
-            inventory.setItem(INPUT_SLOTS[slot], state.input(slot) == null ? null : state.input(slot).toItemStack(items));
-        }
-        for (int slot = 0; slot < OUTPUT_SLOTS.length; slot++) {
-            inventory.setItem(OUTPUT_SLOTS[slot], state.output(slot) == null ? null : state.output(slot).toItemStack(items));
-        }
-    }
-
-    private void fillInventoryFrame(Inventory inventory) {
-        ItemStack filler = namedItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "), List.of());
-        ItemStack inputBorder = namedItem(
-                Material.CYAN_STAINED_GLASS_PANE,
-                localization.component("electric-ui.input.name", "<aqua>Input</aqua>"),
-                List.of(localization.component("electric-ui.input.lore", "<gray>Place items here.</gray>")));
-        ItemStack outputBorder = namedItem(
-                Material.ORANGE_STAINED_GLASS_PANE,
-                localization.component("electric-ui.output.name", "<gold>Output</gold>"),
-                List.of(localization.component("electric-ui.output.lore", "<gray>Take finished items here.</gray>")));
-        for (int slot : BORDER) {
-            inventory.setItem(slot, filler);
-        }
-        for (int slot : BORDER_IN) {
-            inventory.setItem(slot, inputBorder);
-        }
-        for (int slot : BORDER_OUT) {
-            inventory.setItem(slot, outputBorder);
-        }
-    }
-
-    private ItemStack progressIcon(MachineSession session, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, MachineRenderStatus status) {
-        return switch (status) {
-            case WORKING -> buildProgressIcon(session, definition, state, recipe, false);
-            case BLOCKED_OUTPUT -> recipe == null
-                    ? namedItem(
-                            Material.RED_STAINED_GLASS_PANE,
-                            localization.component("electric-ui.blocked.name", "<red>Blocked</red>"),
-                            List.of(localization.component("electric-ui.blocked.lore", "<gray>Output is full. Free a slot to continue.</gray>")))
-                    : buildProgressIcon(session, definition, state, recipe, true);
-            case OUTPUT_FULL -> namedItem(
-                    Material.RED_STAINED_GLASS_PANE,
-                    localization.component("electric-ui.output-full.name", "<red>Output Full</red>"),
-                    List.of(localization.component("electric-ui.output-full.lore", "<gray>Free an output slot to continue.</gray>")));
-            case NO_POWER -> recipe == null
-                    ? namedItem(
-                            Material.RED_STAINED_GLASS_PANE,
-                            localization.component("electric-ui.no-power.name", "<red>No Power</red>"),
-                            List.of(localization.component("electric-ui.no-power.lore", "<gray>Charge this machine to continue.</gray>")))
-                    : buildNoPowerIcon(definition, state, recipe);
-            case NO_RECIPE -> namedItem(
-                    Material.GRAY_STAINED_GLASS_PANE,
-                    localization.component("electric-ui.no-recipe.name", "<gray>No Recipe</gray>"),
-                    List.of(localization.component("electric-ui.no-recipe.lore", "<gray>The current input has no matching recipe.</gray>")));
-            case IDLE -> namedItem(
-                    Material.BLACK_STAINED_GLASS_PANE,
-                    localization.component("electric-ui.idle.name", "<gray>Idle</gray>"),
-                    List.of(localization.component("electric-ui.idle.lore", "<gray>Waiting for input.</gray>")));
-        };
-    }
-
-    private ItemStack buildProgressIcon(MachineSession session, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, boolean blocked) {
-        int totalWork = requiredWork(recipe);
-        int currentWork = blocked && state.hasPendingOutput() ? totalWork : Math.min(totalWork, state.progressWork());
-        int remainingWork = Math.max(0, totalWork - currentWork);
-        int remainingTicks = blocked ? 0 : (int) Math.ceil(remainingWork / (double) Math.max(1, definition.speed()));
-        boolean extendedUi = isExtendedUiEnabled(session);
-        ItemStack stack = new ItemStack(definition.progressMaterial());
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) {
-            return stack;
-        }
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        if (meta instanceof Damageable damageable && stack.getType().getMaxDurability() > 0) {
-            damageable.setDamage(progressDamage(stack, remainingWork, totalWork));
-        }
-        List<Component> lore = new java.util.ArrayList<>();
-        lore.add(progressBarLine(currentWork, totalWork));
-        lore.add(Component.text(" "));
-        lore.add(localization.component(
-                blocked ? "electric-ui.blocked.time-left" : "electric-ui.progress.time-left",
-                "<gray>{time}</gray>",
-                Map.of("time", formatTimeLeft(Math.max(0, remainingTicks / 20)))));
-        if (extendedUi) {
-            lore.add(Component.empty());
-            lore.add(localization.component(
-                    "electric-ui.progress.recipe",
-                    "<gray>Recipe: </gray><white>{recipe}</white>",
-                    Map.of("recipe", displayStackName(recipe.output()))));
-            lore.add(localization.component(
-                    "electric-ui.progress.speed",
-                    "<gray>Speed: </gray><aqua>{speed}x</aqua>",
-                    Map.of("speed", definition.speed())));
-            lore.add(localization.component(
-                    "electric-ui.progress.work",
-                    "<gray>Progress: </gray><white>{current}</white><gray>/</gray><white>{total}</white><gray> (+{rate}/tick)</gray>",
-                    Map.of("current", currentWork, "total", totalWork, "rate", definition.speed())));
-        }
-        meta.displayName(blocked
-                ? localization.component("electric-ui.blocked.name", "<red>Blocked</red>")
-                : Component.text(" "));
-        meta.lore(lore);
-        stack.setItemMeta(meta);
-        return stack;
-    }
-
-    private ItemStack buildNoPowerIcon(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe) {
-        int totalWork = requiredWork(recipe);
-        int currentWork = Math.min(totalWork, state.progressWork());
-        int remainingWork = Math.max(0, totalWork - currentWork);
-        ItemStack stack = new ItemStack(definition.progressMaterial());
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) {
-            return stack;
-        }
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        if (meta instanceof Damageable damageable && stack.getType().getMaxDurability() > 0) {
-            damageable.setDamage(progressDamage(stack, remainingWork, totalWork));
-        }
-        meta.displayName(localization.component("electric-ui.no-power.name", "<red>No Power</red>"));
-        meta.lore(List.of(
-                progressBarLine(currentWork, totalWork),
-                Component.text(" "),
-                localization.component("electric-ui.no-power.lore", "<gray>Charge this machine to continue.</gray>"),
-                localization.component(
-                        "electric-ui.energy-buffer",
-                        "<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>",
-                        Map.of("stored", state.storedEnergy(), "capacity", definition.energyCapacity()))));
-        stack.setItemMeta(meta);
-        return stack;
-    }
-
-    private Component progressBarLine(int currentWork, int totalWork) {
-        float progressPercentage = Math.round(((currentWork * 100.0F) / totalWork) * 100.0F) / 100.0F;
-        int filled = Math.min(20, Math.max(0, (int) (progressPercentage / 5.0F)));
-        StringBuilder builder = new StringBuilder();
-        builder.append(progressColor(progressPercentage));
-        for (int i = 0; i < filled; i++) {
-            builder.append(':');
-        }
-        builder.append("&7");
-        for (int i = filled; i < 20; i++) {
-            builder.append(':');
-        }
-        builder.append(" - ").append(progressPercentage).append('%');
-        return Text.legacy(builder.toString());
-    }
-
-    private String progressColor(float percentage) {
-        if (percentage < 16.0F) {
-            return "&4";
-        }
-        if (percentage < 32.0F) {
-            return "&c";
-        }
-        if (percentage < 48.0F) {
-            return "&6";
-        }
-        if (percentage < 64.0F) {
-            return "&e";
-        }
-        if (percentage < 80.0F) {
-            return "&2";
-        }
-        return "&a";
-    }
-
-    private int progressDamage(ItemStack item, int remainingWork, int totalWork) {
-        return Math.max(0, Math.min(item.getType().getMaxDurability(), (item.getType().getMaxDurability() / totalWork) * remainingWork));
-    }
-
-    private String formatTimeLeft(int seconds) {
-        int minutes = seconds / 60;
-        int remainingSeconds = seconds - minutes * 60;
-        if (minutes > 0) {
-            return minutes + "m " + remainingSeconds + "s";
-        }
-        return remainingSeconds + "s";
-    }
-
-    private ItemStack namedItem(Material material, Component name, List<Component> lore) {
-        ItemStack stack = new ItemStack(material);
-        ItemMeta meta = stack.getItemMeta();
-        if (meta != null) {
-            meta.displayName(name);
-            meta.lore(lore);
-            stack.setItemMeta(meta);
-        }
-        return stack;
     }
 
     private Location locationFor(SfxBlockInstanceRecord instance) {
@@ -950,7 +643,7 @@ public final class SfxElectricMachineService implements Listener {
         dropped.setPickupDelay(0);
     }
 
-    private void playCompleteSound(MachineSession session) {
+    private void playCompleteSound(SfxElectricMachineSession session) {
         if (session == null) {
             return;
         }
@@ -964,22 +657,13 @@ public final class SfxElectricMachineService implements Listener {
         player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.8f);
     }
 
-    private boolean isExtendedUiEnabled(MachineSession session) {
-        if (session == null) {
-            return true;
-        }
-        return profiles.find(session.viewerId())
-                .map(profile -> profile.machineUiExtended())
-                .orElse(true);
-    }
-
     private boolean isSmoothUiEnabled(UUID viewerId) {
         return profiles.find(viewerId)
                 .map(profile -> profile.machineSmoothUi())
                 .orElse(true);
     }
 
-    private boolean shouldRenderSession(MachineSession session, MachineRenderStatus status) {
+    private boolean shouldRenderSession(SfxElectricMachineSession session, SfxElectricMachineRenderStatus status) {
         if (isSmoothUiEnabled(session.viewerId())) {
             session.markRendered(tickCounter, status);
             return true;
@@ -989,23 +673,6 @@ public final class SfxElectricMachineService implements Listener {
             return true;
         }
         return false;
-    }
-
-    private String displayStackName(SfxElectricStack stack) {
-        if (stack == null) {
-            return "";
-        }
-        if (stack.isSfxItem()) {
-            ItemStack item = stack.toItemStack(items);
-            ItemMeta meta = item.getItemMeta();
-            Component fallback = meta != null && meta.hasDisplayName() ? meta.displayName() : Component.text(stack.itemId());
-            return plainText(localization.itemName(stack.itemId(), fallback));
-        }
-        return plainText(Component.translatable(stack.material().translationKey()));
-    }
-
-    private String plainText(Component component) {
-        return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(component);
     }
 
     private boolean contains(int[] slots, int value) {
@@ -1063,64 +730,6 @@ public final class SfxElectricMachineService implements Listener {
         return remaining < original;
     }
 
-    private enum MachineRenderStatus {
-        IDLE,
-        NO_RECIPE,
-        WORKING,
-        BLOCKED_OUTPUT,
-        OUTPUT_FULL,
-        NO_POWER
-    }
 
-    private record RecipeMatch(int inputSlot, SfxElectricRecipe recipe) {
-    }
 
-    private record RecipeStart(SfxElectricRecipe recipe, int inputSlot) {
-    }
-
-    private static final class MachineSession {
-        private final UUID viewerId;
-        private final UUID instanceId;
-        private final Inventory inventory;
-        private long lastRenderedTick = Long.MIN_VALUE;
-        private MachineRenderStatus lastRenderedStatus;
-
-        private MachineSession(UUID viewerId, UUID instanceId, Inventory inventory) {
-            this.viewerId = viewerId;
-            this.instanceId = instanceId;
-            this.inventory = inventory;
-        }
-
-        UUID viewerId() {
-            return viewerId;
-        }
-
-        UUID instanceId() {
-            return instanceId;
-        }
-
-        Inventory inventory() {
-            return inventory;
-        }
-
-        long lastRenderedTick() {
-            return lastRenderedTick;
-        }
-
-        MachineRenderStatus lastRenderedStatus() {
-            return lastRenderedStatus;
-        }
-
-        void markRendered(long tick, MachineRenderStatus status) {
-            this.lastRenderedTick = tick;
-            this.lastRenderedStatus = status;
-        }
-    }
-
-    private record MachineHolder(UUID instanceId) implements InventoryHolder {
-        @Override
-        public Inventory getInventory() {
-            return null;
-        }
-    }
 }

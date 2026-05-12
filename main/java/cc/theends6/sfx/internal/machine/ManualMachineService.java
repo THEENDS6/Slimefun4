@@ -949,25 +949,5 @@ public final class ManualMachineService {
         player.sendMessage(Text.prefixed(plugin, message));
     }
 
-    private record ShapedMatchPlan(ManualMachineRecipe recipe, int[] consumed, ItemStack[] inputAfterConsume, OutputPlan outputPlan) {
-        private ShapedMatchPlan(ManualMachineRecipe recipe, int[] consumed, ItemStack[] inputAfterConsume) {
-            this(recipe, consumed, inputAfterConsume, null);
-        }
 
-        private ShapedMatchPlan withOutputPlan(OutputPlan outputPlan) {
-            return new ShapedMatchPlan(recipe, consumed, inputAfterConsume, outputPlan);
-        }
-    }
-
-    private record OutputPlan(ItemStack[] contents) {
-    }
-
-    private record ShapelessMatchPlan(ManualMachineRecipe recipe, int[] consumed, ItemStack[] inputAfterConsume) {
-    }
-
-    private enum MatchResult {
-        INPUT_MATCH_AND_FITS,
-        INPUT_MATCH_BUT_FULL,
-        NO_INPUT_MATCH
-    }
 }

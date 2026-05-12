@@ -544,16 +544,5 @@ public final class SfxBackpackListener implements Listener {
         player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback)));
     }
 
-    private record BackpackBinding(UUID ownerId, int backpackId) {
-    }
 
-    private record OpenBackpackSession(String uniqueKey, UUID ownerId, int backpackId, String itemId, Inventory inventory) {
-    }
-
-    private record BackpackHolder(UUID ownerId, int backpackId) implements InventoryHolder {
-        @Override
-        public Inventory getInventory() {
-            return null;
-        }
-    }
 }

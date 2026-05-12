@@ -1,8 +1,6 @@
-package cc.theends6.sfx.internal.energy;
+package cc.theends6.sfx.internal.display;
 
 import cc.theends6.sfx.api.runtime.SfxRuntime;
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
-import cc.theends6.sfx.internal.util.SfxLocalization;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
@@ -24,8 +22,14 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-final class SfxEnergyDisplayService {
-    private static final int VIEW_DISTANCE_SQUARED = 32 * 32;
+/**
+ * Reusable PacketEvents-backed floating text projector.
+ *
+ * <p>This service owns only client-side virtual Text Display entities. It does not create, store,
+ * or depend on real world entities. Business systems should feed it already-rendered projection
+ * models and keep authoritative state elsewhere.</p>
+ */
+public final class SfxFloatingTextDisplayService {
     private static final byte ENTITY_FLAGS = 0x20;
     private static final byte BILLBOARD_CENTER = 3;
     private static final byte TEXT_OPACITY = (byte) 255;
@@ -41,31 +45,28 @@ final class SfxEnergyDisplayService {
 
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
-    private final SfxLocalization localization;
     private final AtomicInteger entityIds = new AtomicInteger(2_000_000);
-    private final Map<SfxBlockAnchorKey, DisplayState> states = new ConcurrentHashMap<>();
+    private final Map<SfxFloatingTextKey, SfxFloatingTextDisplayState> states = new ConcurrentHashMap<>();
 
-    SfxEnergyDisplayService(JavaPlugin plugin, SfxRuntime runtime, SfxLocalization localization) {
+    public SfxFloatingTextDisplayService(JavaPlugin plugin, SfxRuntime runtime) {
         this.plugin = plugin;
         this.runtime = runtime;
-        this.localization = localization;
     }
 
-    void update(SfxBlockAnchorKey anchorKey, DisplayText displayText) {
-        DisplayState state = states.computeIfAbsent(anchorKey, ignored -> new DisplayState(entityIds.incrementAndGet()));
-        Component text = displayText.toComponent(localization);
-        state.lastText = text;
+    public void update(SfxFloatingTextProjection projection) {
+        SfxFloatingTextDisplayState state = states.computeIfAbsent(projection.key(), ignored -> new SfxFloatingTextDisplayState(entityIds.incrementAndGet()));
+        state.projection(projection);
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            runtime.executeForPlayer(player, () -> updateForPlayer(player, anchorKey, state, text));
+            runtime.executeForPlayer(player, () -> updateForPlayer(player, state, projection));
         }
     }
 
-    void remove(SfxBlockAnchorKey anchorKey) {
-        DisplayState state = states.remove(anchorKey);
+    public void remove(SfxFloatingTextKey key) {
+        SfxFloatingTextDisplayState state = states.remove(key);
         if (state == null) {
             return;
         }
-        for (UUID viewerId : new ArrayList<>(state.viewers.keySet())) {
+        for (UUID viewerId : new ArrayList<>(state.viewers().keySet())) {
             Player player = plugin.getServer().getPlayer(viewerId);
             if (player != null && player.isOnline()) {
                 runtime.executeForPlayer(player, () -> destroyForPlayer(player, state));
@@ -73,44 +74,71 @@ final class SfxEnergyDisplayService {
         }
     }
 
-    void shutdown() {
-        for (SfxBlockAnchorKey key : List.copyOf(states.keySet())) {
+
+    public void clearViewer(Player player) {
+        if (player == null) {
+            return;
+        }
+        UUID viewerId = player.getUniqueId();
+        for (SfxFloatingTextDisplayState state : states.values()) {
+            if (state.viewers().remove(viewerId) != null) {
+                state.viewerText().remove(viewerId);
+                if (player.isOnline()) {
+                    runtime.executeForPlayer(player, () -> PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerDestroyEntities(state.entityId())));
+                }
+            }
+        }
+    }
+
+    public void refreshViewer(Player player) {
+        if (player == null) {
+            return;
+        }
+        for (SfxFloatingTextDisplayState state : states.values()) {
+            SfxFloatingTextProjection projection = state.projection();
+            if (projection != null) {
+                runtime.executeForPlayer(player, () -> updateForPlayer(player, state, projection));
+            }
+        }
+    }
+
+    public void shutdown() {
+        for (SfxFloatingTextKey key : List.copyOf(states.keySet())) {
             remove(key);
         }
         states.clear();
     }
 
-    private void updateForPlayer(Player player, SfxBlockAnchorKey anchorKey, DisplayState state, Component text) {
+    private void updateForPlayer(Player player, SfxFloatingTextDisplayState state, SfxFloatingTextProjection projection) {
         if (!player.isOnline()) {
-            state.viewers.remove(player.getUniqueId());
+            state.viewers().remove(player.getUniqueId());
+            state.viewerText().remove(player.getUniqueId());
             return;
         }
         World world = player.getWorld();
-        boolean sameWorld = world.getUID().equals(anchorKey.worldId());
-        Location location = sameWorld ? new Location(world, anchorKey.x() + 0.5, anchorKey.y() + 1.15, anchorKey.z() + 0.5) : null;
-        if (!sameWorld || player.getLocation().distanceSquared(location) > VIEW_DISTANCE_SQUARED) {
-            if (state.viewers.remove(player.getUniqueId()) != null) {
-                PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerDestroyEntities(state.entityId));
+        boolean sameWorld = world.getUID().equals(projection.key().worldId());
+        Location location = sameWorld ? new Location(world, projection.x(), projection.y(), projection.z()) : null;
+        if (!sameWorld || player.getLocation().distanceSquared(location) > projection.viewDistanceSquared()) {
+            if (state.viewers().remove(player.getUniqueId()) != null) {
+                state.viewerText().remove(player.getUniqueId());
+                PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerDestroyEntities(state.entityId()));
             }
             return;
         }
-        Component previousText = state.viewerText.put(player.getUniqueId(), text);
-        if (state.viewers.put(player.getUniqueId(), Boolean.TRUE) == null) {
-            spawn(player, state.entityId, location, text);
-        } else if (!text.equals(previousText)) {
-            updateMetadata(player, state.entityId, text);
+        Component previousText = state.viewerText().put(player.getUniqueId(), projection.text());
+        if (state.viewers().put(player.getUniqueId(), Boolean.TRUE) == null) {
+            spawn(player, state.entityId(), location, projection.text());
+        } else if (!projection.text().equals(previousText)) {
+            updateMetadata(player, state.entityId(), projection.text());
         }
     }
 
-    private void destroyForPlayer(Player player, DisplayState state) {
-        if (!player.isOnline()) {
-            state.viewers.remove(player.getUniqueId());
-            state.viewerText.remove(player.getUniqueId());
-            return;
+    private void destroyForPlayer(Player player, SfxFloatingTextDisplayState state) {
+        state.viewers().remove(player.getUniqueId());
+        state.viewerText().remove(player.getUniqueId());
+        if (player.isOnline()) {
+            PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerDestroyEntities(state.entityId()));
         }
-        state.viewers.remove(player.getUniqueId());
-        state.viewerText.remove(player.getUniqueId());
-        PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerDestroyEntities(state.entityId));
     }
 
     private void spawn(Player player, int entityId, Location location, Component text) {
@@ -142,20 +170,5 @@ final class SfxEnergyDisplayService {
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerEntityMetadata(entityId, metadata));
     }
 
-    record DisplayText(String key, Map<String, ?> placeholders, String fallback) {
-        Component toComponent(SfxLocalization localization) {
-            return localization.component(key, fallback, placeholders);
-        }
-    }
 
-    private static final class DisplayState {
-        private final int entityId;
-        private final Map<UUID, Boolean> viewers = new ConcurrentHashMap<>();
-        private final Map<UUID, Component> viewerText = new ConcurrentHashMap<>();
-        private volatile Component lastText = Component.empty();
-
-        private DisplayState(int entityId) {
-            this.entityId = entityId;
-        }
-    }
 }

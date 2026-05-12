@@ -891,8 +891,5 @@ public final class SfxLegacyCombatToolListener implements Listener {
         return builder.toString();
     }
 
-    private enum BowEffect {
-        EXPLOSIVE,
-        ICY
-    }
+
 }
