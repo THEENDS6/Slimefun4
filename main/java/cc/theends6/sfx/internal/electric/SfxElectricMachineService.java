@@ -157,7 +157,9 @@ public final class SfxElectricMachineService implements Listener {
         for (int slot = 0; slot < OUTPUT_SLOTS.length; slot++) {
             dropStack(block, state.output(slot));
         }
-        dropStack(block, state.reservedInput());
+        for (SfxElectricStack reservedInput : state.reservedInputs()) {
+            dropStack(block, reservedInput);
+        }
         dropStack(block, state.pendingOutput());
         dropPluginBlock(block, typeId);
         stateCache.remove(instanceId);
@@ -346,14 +348,18 @@ public final class SfxElectricMachineService implements Listener {
             return 0;
         }
         SfxElectricRecipe activeRecipe = recipeProcessor.activeRecipe(definition, state);
-        if (activeRecipe != null && state.reservedInput() != null) {
+        if (activeRecipe != null && state.hasReservedInput()) {
+            if (state.progressWork() >= recipeProcessor.requiredWork(activeRecipe)
+                    && !recipeProcessor.canFitCompletionOutputForRecipe(state, activeRecipe)) {
+                return 0;
+            }
             return definition.energyConsumptionPerTick();
         }
         SfxElectricRecipeMatch match = recipeProcessor.findRecipeMatch(definition, state);
         if (match == null) {
             return 0;
         }
-        if (recipeProcessor.findOutputSlot(state, match.recipe().output()) == null) {
+        if (!recipeProcessor.canFitOutputForRecipe(state, match.recipe())) {
             return 0;
         }
         return definition.energyConsumptionPerTick();
@@ -478,58 +484,43 @@ public final class SfxElectricMachineService implements Listener {
                 }
                 status = state.hasAnyInput() ? SfxElectricMachineRenderStatus.NO_RECIPE : SfxElectricMachineRenderStatus.IDLE;
             } else {
-                if (recipeProcessor.findOutputSlot(state, match.recipe().output()) == null) {
+                if (!recipeProcessor.canFitOutputForRecipe(state, match.recipe())) {
                     status = SfxElectricMachineRenderStatus.OUTPUT_FULL;
                 } else {
-                    SfxElectricStack reservedInput = recipeProcessor.consumeInput(state, match.inputSlot(), match.recipe().input().amount());
-                    state.activeRecipeKey(match.recipe().key());
-                    state.activeInputSlot(match.inputSlot());
-                    state.progressWork(0);
-                    state.reservedInput(reservedInput);
-                    state.pendingOutput(null);
-                    activeRecipe = match.recipe();
-                    status = SfxElectricMachineRenderStatus.WORKING;
+                    SfxElectricRecipeStart start = recipeProcessor.tryStartNextRecipe(definition, state);
+                    if (start != null) {
+                        activeRecipe = start.recipe();
+                        status = SfxElectricMachineRenderStatus.WORKING;
+                        activeInstances.add(instanceId);
+                    } else {
+                        activeRecipe = null;
+                        status = recipeProcessor.deriveStatus(definition, state);
+                    }
                     dirtyInstances.add(instanceId);
-                    activeInstances.add(instanceId);
                 }
             }
         } else {
             activeInstances.add(instanceId);
-            if (state.reservedInput() == null) {
+            if (!state.hasReservedInput()) {
                 state.resetProgress();
                 dirtyInstances.add(instanceId);
                 status = state.hasAnyInput() ? recipeProcessor.deriveStatus(definition, state) : SfxElectricMachineRenderStatus.IDLE;
             } else {
-                if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
+                int totalWork = recipeProcessor.requiredWork(activeRecipe);
+                if (state.progressWork() >= totalWork) {
+                    status = completeActiveRecipe(instanceId, state, activeRecipe, definition, session);
+                } else if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
                     status = SfxElectricMachineRenderStatus.NO_POWER;
                 } else {
                     if (definition.energyConsumptionPerTick() > 0) {
                         state.storedEnergy(state.storedEnergy() - definition.energyConsumptionPerTick());
                         recentEnergyConsumption.merge(instanceId, definition.energyConsumptionPerTick(), Integer::sum);
                     }
-                    int totalWork = recipeProcessor.requiredWork(activeRecipe);
                     int progressed = Math.min(totalWork, state.progressWork() + definition.speed());
                     state.progressWork(progressed);
-                    status = SfxElectricMachineRenderStatus.WORKING;
-                    if (progressed >= totalWork) {
-                        Integer outputSlot = recipeProcessor.findOutputSlot(state, activeRecipe.output());
-                        if (outputSlot == null) {
-                            state.pendingOutput(activeRecipe.output());
-                            status = SfxElectricMachineRenderStatus.BLOCKED_OUTPUT;
-                        } else {
-                            recipeProcessor.pushOutput(state, outputSlot, activeRecipe.output());
-                            state.resetProgress();
-                            SfxElectricRecipeStart nextStart = recipeProcessor.tryStartNextRecipe(definition, state);
-                            if (nextStart != null) {
-                                activeRecipe = nextStart.recipe();
-                                status = SfxElectricMachineRenderStatus.WORKING;
-                                activeInstances.add(instanceId);
-                            } else {
-                                status = state.hasAnyInput() ? recipeProcessor.deriveStatus(definition, state) : SfxElectricMachineRenderStatus.IDLE;
-                            }
-                            playCompleteSound(session);
-                        }
-                    }
+                    status = progressed >= totalWork
+                            ? completeActiveRecipe(instanceId, state, activeRecipe, definition, session)
+                            : SfxElectricMachineRenderStatus.WORKING;
                 }
                 dirtyInstances.add(instanceId);
             }
@@ -542,6 +533,38 @@ public final class SfxElectricMachineService implements Listener {
             activeInstances.remove(instanceId);
         }
     }
+
+
+    private SfxElectricMachineRenderStatus completeActiveRecipe(
+            UUID instanceId,
+            SfxElectricMachineState state,
+            SfxElectricRecipe activeRecipe,
+            SfxElectricMachineDefinition definition,
+            SfxElectricMachineSession session
+    ) {
+        List<SfxElectricStack> recipeOutputs = activeRecipe.hasRandomOutput()
+                ? recipeProcessor.rollOutputs(activeRecipe)
+                : activeRecipe.outputs();
+        int[] outputSlots = recipeProcessor.findCompletionOutputSlots(state, activeRecipe, recipeOutputs);
+        if (outputSlots == null) {
+            activeInstances.add(instanceId);
+            return SfxElectricMachineRenderStatus.BLOCKED_OUTPUT;
+        }
+        List<SfxElectricStack> completionOutputs = activeRecipe.hasRandomOutput()
+                ? recipeOutputs
+                : activeRecipe.outputs();
+        recipeProcessor.pushOutputs(state, outputSlots, completionOutputs);
+        state.resetProgress();
+        SfxElectricRecipeStart nextStart = recipeProcessor.tryStartNextRecipe(definition, state);
+        if (nextStart != null) {
+            activeInstances.add(instanceId);
+            playCompleteSound(session);
+            return SfxElectricMachineRenderStatus.WORKING;
+        }
+        playCompleteSound(session);
+        return state.hasAnyInput() ? recipeProcessor.deriveStatus(definition, state) : SfxElectricMachineRenderStatus.IDLE;
+    }
+
 
     private void openMachine(Player player, SfxBlockInstanceRecord instance) {
         SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);

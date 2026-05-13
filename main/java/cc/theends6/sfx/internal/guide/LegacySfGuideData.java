@@ -641,10 +641,10 @@ static Map<String, SfxItemCategory> createVirtualCategories() {
     return Collections.unmodifiableMap(map);
 }
 
-static Map<String, Integer> createClassicItemOrder() {
+static Map<String, Integer> createClassicItemOrder(Map<String, String> exactCategoryByItem) {
     Map<String, Integer> byItem = new LinkedHashMap<>();
     Map<String, Integer> nextByCategory = new LinkedHashMap<>();
-    for (Map.Entry<String, String> entry : EXACT_CATEGORY_BY_ITEM.entrySet()) {
+    for (Map.Entry<String, String> entry : exactCategoryByItem.entrySet()) {
         int next = nextByCategory.merge(entry.getValue(), 10, Integer::sum);
         byItem.put(entry.getKey(), next);
     }

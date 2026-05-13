@@ -5,16 +5,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class SfxElectricMachineState {
-    private static final int SCHEMA = 4;
+    private static final int SCHEMA = 5;
 
     private final SfxElectricStack[] inputs = new SfxElectricStack[2];
     private final SfxElectricStack[] outputs = new SfxElectricStack[2];
+    private final SfxElectricStack[] reservedInputs = new SfxElectricStack[2];
     private int progressWork;
     private String activeRecipeKey;
     private int activeInputSlot = -1;
-    private SfxElectricStack reservedInput;
     private SfxElectricStack pendingOutput;
     private int storedEnergy;
 
@@ -68,7 +70,7 @@ public final class SfxElectricMachineState {
                 }
                 return legacy;
             }
-            if (schema == 3) {
+            if (schema == 3 || schema == 4) {
                 SfxElectricMachineState state = new SfxElectricMachineState();
                 for (int slot = 0; slot < state.inputs.length; slot++) {
                     if (input.readBoolean()) {
@@ -85,10 +87,13 @@ public final class SfxElectricMachineState {
                 state.activeRecipeKey = recipeKey.isBlank() ? null : recipeKey;
                 state.activeInputSlot = Math.max(-1, Math.min(1, input.readInt()));
                 if (input.readBoolean()) {
-                    state.reservedInput = SfxElectricStack.read(input);
+                    state.reservedInputs[0] = SfxElectricStack.read(input);
                 }
                 if (input.readBoolean()) {
                     state.pendingOutput = SfxElectricStack.read(input);
+                }
+                if (schema == 4) {
+                    state.storedEnergy = Math.max(0, input.readInt());
                 }
                 return state;
             }
@@ -110,8 +115,10 @@ public final class SfxElectricMachineState {
             String recipeKey = input.readUTF();
             state.activeRecipeKey = recipeKey.isBlank() ? null : recipeKey;
             state.activeInputSlot = Math.max(-1, Math.min(1, input.readInt()));
-            if (input.readBoolean()) {
-                state.reservedInput = SfxElectricStack.read(input);
+            for (int slot = 0; slot < state.reservedInputs.length; slot++) {
+                if (input.readBoolean()) {
+                    state.reservedInputs[slot] = SfxElectricStack.read(input);
+                }
             }
             if (input.readBoolean()) {
                 state.pendingOutput = SfxElectricStack.read(input);
@@ -142,9 +149,11 @@ public final class SfxElectricMachineState {
             output.writeInt(progressWork);
             output.writeUTF(activeRecipeKey == null ? "" : activeRecipeKey);
             output.writeInt(activeInputSlot);
-            output.writeBoolean(reservedInput != null);
-            if (reservedInput != null) {
-                reservedInput.write(output);
+            for (SfxElectricStack reservedInput : reservedInputs) {
+                output.writeBoolean(reservedInput != null);
+                if (reservedInput != null) {
+                    reservedInput.write(output);
+                }
             }
             output.writeBoolean(pendingOutput != null);
             if (pendingOutput != null) {
@@ -199,11 +208,33 @@ public final class SfxElectricMachineState {
     }
 
     public SfxElectricStack reservedInput() {
-        return reservedInput;
+        return reservedInputs[0];
     }
 
     public void reservedInput(SfxElectricStack reservedInput) {
-        this.reservedInput = reservedInput;
+        reservedInputs[0] = reservedInput;
+        reservedInputs[1] = null;
+    }
+
+    public List<SfxElectricStack> reservedInputs() {
+        List<SfxElectricStack> stacks = new ArrayList<>(reservedInputs.length);
+        for (SfxElectricStack reservedInput : reservedInputs) {
+            if (reservedInput != null) {
+                stacks.add(reservedInput);
+            }
+        }
+        return List.copyOf(stacks);
+    }
+
+    public void reservedInputs(List<SfxElectricStack> stacks) {
+        reservedInputs[0] = null;
+        reservedInputs[1] = null;
+        if (stacks == null) {
+            return;
+        }
+        for (int index = 0; index < Math.min(reservedInputs.length, stacks.size()); index++) {
+            reservedInputs[index] = stacks.get(index);
+        }
     }
 
     public SfxElectricStack pendingOutput() {
@@ -233,11 +264,16 @@ public final class SfxElectricMachineState {
     }
 
     public boolean hasReservedInput() {
-        return reservedInput != null;
+        for (SfxElectricStack reservedInput : reservedInputs) {
+            if (reservedInput != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean hasProgress() {
-        return progressWork > 0 || activeRecipeKey != null || reservedInput != null || pendingOutput != null;
+        return progressWork > 0 || activeRecipeKey != null || hasReservedInput() || pendingOutput != null;
     }
 
     public int storedEnergy() {
@@ -252,7 +288,8 @@ public final class SfxElectricMachineState {
         progressWork = 0;
         activeRecipeKey = null;
         activeInputSlot = -1;
-        reservedInput = null;
+        reservedInputs[0] = null;
+        reservedInputs[1] = null;
         pendingOutput = null;
     }
 }

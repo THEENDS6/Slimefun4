@@ -5091,6 +5091,10 @@ items:
   lore:
   - ''
   - '&fRefines Oil to create Fuel'
+  - ''
+  - '&6Advanced Machine'
+  - '&8⇨ &b⚡&7Speed: &b1x'
+  - '&8⇨ &e⚡&732 J/t'
   flags:
   - legacy-sf
 - id: sf:combustion_reactor

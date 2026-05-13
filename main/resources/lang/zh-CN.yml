@@ -1771,7 +1771,7 @@ items:
     - ''
     - '&7这个多方块机器会开采任何矿石'
     - '&7范围为其下方 11x11 区域。'
-    - '&7将燃料桶或岩浆桶放入'
+    - '&7将燃油桶或岩浆桶放入'
     - '&7其箱子中，为这台机器提供燃料。'
     - ''
     - '&9+ 精准采集'
@@ -2351,12 +2351,16 @@ items:
   sf.bucket_of_oil:
     name: '&f石油桶'
   sf.bucket_of_fuel:
-    name: '&f燃料桶'
+    name: '&f燃油桶'
   sf.refinery:
     name: '&c精炼厂'
     lore:
     - ''
-    - '&f将石油精炼为燃料'
+    - '&f将石油精炼为燃油'
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &732 J/t'
   sf.combustion_reactor:
     name: '&c燃油发电机'
     lore:
@@ -3463,7 +3467,7 @@ energy:
   generator:
     fuel:
       oil: 石油桶
-      fuel: 燃料桶
+      fuel: 燃油桶
     fuel-duration: '<gray>持续时间：</gray><aqua>{seconds}</aqua>'
     fuel-total-energy: '<gray>总能量：</gray><aqua>{energy} J</aqua>'
     active:

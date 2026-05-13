@@ -92,7 +92,7 @@ public final class SfxEnergyService implements Listener {
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
         this.displayController = new SfxEnergyDisplayController(plugin, localization, Objects.requireNonNull(floatingTextDisplay, "floatingTextDisplay"));
-        this.capacitorProjector = new SfxCapacitorAppearanceProjector(runtime);
+        this.capacitorProjector = new SfxCapacitorAppearanceProjector(runtime, blockData, definitions);
         this.generatorMenuRenderer = new SfxEnergyGeneratorMenuRenderer(items, localization);
         this.definitions.putAll(SfxEnergyDefinitions.create(plugin));
         this.gridBuilder = new SfxEnergyGridBuilder(blockData, definitions, electricMachines, RANGE);

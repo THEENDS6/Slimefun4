@@ -1,320 +1,355 @@
 recipes:
-  - id: legacy:fertilizer_apple
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 1
-    source: slimefun-rc37
-    input: sf:organic_food_apple
-    outputs:
-      - sf:fertilizer_apple
-  - id: legacy:fertilizer_beetroot
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 2
-    source: slimefun-rc37
-    input: sf:organic_food_beetroot
-    outputs:
-      - sf:fertilizer_beetroot
-  - id: legacy:fertilizer_carrot
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 3
-    source: slimefun-rc37
-    input: sf:organic_food_carrot
-    outputs:
-      - sf:fertilizer_carrot
-  - id: legacy:fertilizer_cocoa
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 4
-    source: slimefun-rc37
-    input: sf:organic_food_cocoa
-    outputs:
-      - sf:fertilizer_cocoa
-  - id: legacy:fertilizer_kelp
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 5
-    source: slimefun-rc37
-    input: sf:organic_food_kelp
-    outputs:
-      - sf:fertilizer_kelp
-  - id: legacy:fertilizer_melon
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 6
-    source: slimefun-rc37
-    input: sf:organic_food_melon
-    outputs:
-      - sf:fertilizer_melon
-  - id: legacy:fertilizer_potato
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 7
-    source: slimefun-rc37
-    input: sf:organic_food_potato
-    outputs:
-      - sf:fertilizer_potato
-  - id: legacy:fertilizer_seagrass
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 8
-    source: slimefun-rc37
-    input: sf:organic_food_seagrass
-    outputs:
-      - sf:fertilizer_seagrass
-  - id: legacy:fertilizer_seeds
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 9
-    source: slimefun-rc37
-    input: sf:organic_food_seeds
-    outputs:
-      - sf:fertilizer_seeds
-  - id: legacy:fertilizer_sweet_berries
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 10
-    source: slimefun-rc37
-    input: sf:organic_food_sweet_berries
-    outputs:
-      - sf:fertilizer_sweet_berries
-  - id: legacy:fertilizer_wheat
-    recipe-type: sf:food_composter
-    operation: single
-    guide-order: 11
-    source: slimefun-rc37
-    input: sf:organic_food_wheat
-    outputs:
-      - sf:fertilizer_wheat
-  - id: legacy:organic_food_apple
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 12
-    source: slimefun-rc37
-    input: APPLE
-    outputs:
-      - sf:organic_food_apple
-  - id: legacy:organic_food_beetroot
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 13
-    source: slimefun-rc37
-    input: BEETROOT
-    outputs:
-      - sf:organic_food_beetroot
-  - id: legacy:organic_food_carrot
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 14
-    source: slimefun-rc37
-    input: CARROT
-    outputs:
-      - sf:organic_food_carrot
-  - id: legacy:organic_food_cocoa
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 15
-    source: slimefun-rc37
-    input: COCOA_BEANS
-    outputs:
-      - sf:organic_food_cocoa
-  - id: legacy:organic_food_kelp
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 16
-    source: slimefun-rc37
-    input: DRIED_KELP
-    outputs:
-      - sf:organic_food_kelp
-  - id: legacy:organic_food_melon
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 17
-    source: slimefun-rc37
-    input: MELON_SLICE
-    outputs:
-      - sf:organic_food_melon
-  - id: legacy:organic_food_potato
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 18
-    source: slimefun-rc37
-    input: POTATO
-    outputs:
-      - sf:organic_food_potato
-  - id: legacy:organic_food_seagrass
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 19
-    source: slimefun-rc37
-    input: SEAGRASS
-    outputs:
-      - sf:organic_food_seagrass
-  - id: legacy:organic_food_seeds
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 20
-    source: slimefun-rc37
-    input: WHEAT_SEEDS
-    outputs:
-      - sf:organic_food_seeds
-  - id: legacy:organic_food_sweet_berries
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 21
-    source: slimefun-rc37
-    input: SWEET_BERRIES
-    outputs:
-      - sf:organic_food_sweet_berries
-  - id: legacy:organic_food_wheat
-    recipe-type: sf:food_fabricator
-    operation: single
-    guide-order: 22
-    source: slimefun-rc37
-    input: WHEAT
-    outputs:
-      - sf:organic_food_wheat
-  - id: legacy:reactor_coolant_cell
-    recipe-type: sf:freezer
-    operation: single
-    guide-order: 23
-    source: slimefun-rc37
-    input: BLUE_ICE
-    outputs:
-      - sf:reactor_coolant_cell
-  - id: legacy:nether_ice
-    recipe-type: sf:geo_miner
-    operation: shaped
-    guide-order: 24
-    source: slimefun-rc37
-    matrix:
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-    outputs:
-      - sf:nether_ice
-  - id: legacy:blistering_ingot
-    recipe-type: sf:heated_pressure_chamber
-    operation: single
-    guide-order: 25
-    source: slimefun-rc37
-    input: sf:gold_24k
-    outputs:
-      - sf:blistering_ingot
-  - id: legacy:blistering_ingot_2
-    recipe-type: sf:heated_pressure_chamber
-    operation: single
-    guide-order: 26
-    source: slimefun-rc37
-    input: sf:blistering_ingot
-    outputs:
-      - sf:blistering_ingot_2
-  - id: legacy:blistering_ingot_3
-    recipe-type: sf:heated_pressure_chamber
-    operation: single
-    guide-order: 27
-    source: slimefun-rc37
-    input: sf:blistering_ingot_2
-    outputs:
-      - sf:blistering_ingot_3
-  - id: legacy:boosted_uranium
-    recipe-type: sf:heated_pressure_chamber
-    operation: single
-    guide-order: 28
-    source: slimefun-rc37
-    input: sf:plutonium
-    outputs:
-      - sf:boosted_uranium
-  - id: legacy:enriched_nether_ice
-    recipe-type: sf:heated_pressure_chamber
-    operation: single
-    guide-order: 29
-    source: slimefun-rc37
-    input: sf:nether_ice
-    outputs:
-      - sf:enriched_nether_ice*4
-  - id: legacy:magnesium_salt
-    recipe-type: sf:heated_pressure_chamber
-    operation: single
-    guide-order: 30
-    source: slimefun-rc37
-    input: sf:magnesium_dust
-    outputs:
-      - sf:magnesium_salt
-  - id: legacy:nether_ice_coolant_cell
-    recipe-type: sf:heated_pressure_chamber
-    operation: single
-    guide-order: 31
-    source: slimefun-rc37
-    input: sf:enriched_nether_ice
-    outputs:
-      - sf:nether_ice_coolant_cell*8
-  - id: legacy:plastic_sheet
-    recipe-type: sf:heated_pressure_chamber
-    operation: single
-    guide-order: 32
-    source: slimefun-rc37
-    input: sf:bucket_of_oil
-    outputs:
-      - sf:plastic_sheet*8
-  - id: legacy:neptunium
-    recipe-type: sf:nuclear_reactor
-    operation: shaped
-    guide-order: 33
-    source: slimefun-rc37
-    matrix:
-      - sf:uranium
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-    outputs:
-      - sf:neptunium
-  - id: legacy:plutonium
-    recipe-type: sf:nuclear_reactor
-    operation: shaped
-    guide-order: 34
-    source: slimefun-rc37
-    matrix:
-      - sf:neptunium
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-      - empty
-    outputs:
-      - sf:plutonium
-  - id: legacy:carbonado
-    recipe-type: sf:pressure_chamber
-    operation: single
-    guide-order: 35
-    source: slimefun-rc37
-    runtime: true
-    machine: sf:pressure_chamber
-    input: sf:raw_carbonado
-    outputs:
-      - sf:carbonado
-  - id: legacy:synthetic_diamond
-    recipe-type: sf:pressure_chamber
-    operation: single
-    guide-order: 36
-    source: slimefun-rc37
-    runtime: true
-    machine: sf:pressure_chamber
-    input: sf:carbon_chunk
-    outputs:
-      - sf:synthetic_diamond
+- id: legacy:fertilizer_apple
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 1
+  source: slimefun-rc37
+  input: sf:organic_food_apple
+  outputs:
+  - sf:fertilizer_apple*2
+- id: legacy:fertilizer_beetroot
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 2
+  source: slimefun-rc37
+  input: sf:organic_food_beetroot
+  outputs:
+  - sf:fertilizer_beetroot*2
+- id: legacy:fertilizer_carrot
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 3
+  source: slimefun-rc37
+  input: sf:organic_food_carrot
+  outputs:
+  - sf:fertilizer_carrot*2
+- id: legacy:fertilizer_cocoa
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 4
+  source: slimefun-rc37
+  input: sf:organic_food_cocoa
+  outputs:
+  - sf:fertilizer_cocoa*2
+- id: legacy:fertilizer_kelp
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 5
+  source: slimefun-rc37
+  input: sf:organic_food_kelp
+  outputs:
+  - sf:fertilizer_kelp*2
+- id: legacy:fertilizer_melon
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 6
+  source: slimefun-rc37
+  input: sf:organic_food_melon
+  outputs:
+  - sf:fertilizer_melon*2
+- id: legacy:fertilizer_potato
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 7
+  source: slimefun-rc37
+  input: sf:organic_food_potato
+  outputs:
+  - sf:fertilizer_potato*2
+- id: legacy:fertilizer_seagrass
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 8
+  source: slimefun-rc37
+  input: sf:organic_food_seagrass
+  outputs:
+  - sf:fertilizer_seagrass*2
+- id: legacy:fertilizer_seeds
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 9
+  source: slimefun-rc37
+  input: sf:organic_food_seeds
+  outputs:
+  - sf:fertilizer_seeds*2
+- id: legacy:fertilizer_sweet_berries
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 10
+  source: slimefun-rc37
+  input: sf:organic_food_sweet_berries
+  outputs:
+  - sf:fertilizer_sweet_berries*2
+- id: legacy:fertilizer_wheat
+  recipe-type: sf:food_composter
+  operation: single
+  guide-order: 11
+  source: slimefun-rc37
+  input: sf:organic_food_wheat
+  outputs:
+  - sf:fertilizer_wheat*2
+- id: legacy:organic_food_apple
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 12
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_apple*2
+  inputs:
+  - sf:can
+  - APPLE
+- id: legacy:organic_food_beetroot
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 13
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_beetroot*2
+  inputs:
+  - sf:can
+  - BEETROOT
+- id: legacy:organic_food_carrot
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 14
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_carrot*2
+  inputs:
+  - sf:can
+  - CARROT
+- id: legacy:organic_food_cocoa
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 15
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_cocoa*2
+  inputs:
+  - sf:can
+  - COCOA_BEANS
+- id: legacy:organic_food_kelp
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 16
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_kelp*2
+  inputs:
+  - sf:can
+  - DRIED_KELP
+- id: legacy:organic_food_melon
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 17
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_melon*2
+  inputs:
+  - sf:can
+  - MELON_SLICE
+- id: legacy:organic_food_potato
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 18
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_potato*2
+  inputs:
+  - sf:can
+  - POTATO
+- id: legacy:organic_food_seagrass
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 19
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_seagrass*2
+  inputs:
+  - sf:can
+  - SEAGRASS
+- id: legacy:organic_food_seeds
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 20
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_seeds*2
+  inputs:
+  - sf:can
+  - WHEAT_SEEDS
+- id: legacy:organic_food_sweet_berries
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 21
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_sweet_berries*2
+  inputs:
+  - sf:can
+  - SWEET_BERRIES
+- id: legacy:organic_food_wheat
+  recipe-type: sf:food_fabricator
+  operation: shapeless
+  guide-order: 22
+  source: slimefun-rc37
+  outputs:
+  - sf:organic_food_wheat*2
+  inputs:
+  - sf:can
+  - WHEAT
+- id: legacy:reactor_coolant_cell
+  recipe-type: sf:freezer
+  operation: single
+  guide-order: 23
+  source: slimefun-rc37
+  input: BLUE_ICE
+  outputs:
+  - sf:reactor_coolant_cell
+- id: legacy:nether_ice
+  recipe-type: sf:geo_miner
+  operation: shaped
+  guide-order: 24
+  source: slimefun-rc37
+  matrix:
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  outputs:
+  - sf:nether_ice
+- id: legacy:blistering_ingot
+  recipe-type: sf:heated_pressure_chamber
+  operation: shapeless
+  guide-order: 25
+  source: slimefun-rc37
+  outputs:
+  - sf:blistering_ingot
+  inputs:
+  - sf:gold_24k
+  - sf:uranium
+- id: legacy:blistering_ingot_2
+  recipe-type: sf:heated_pressure_chamber
+  operation: shapeless
+  guide-order: 26
+  source: slimefun-rc37
+  outputs:
+  - sf:blistering_ingot_2
+  inputs:
+  - sf:blistering_ingot
+  - sf:carbonado
+- id: legacy:blistering_ingot_3
+  recipe-type: sf:heated_pressure_chamber
+  operation: shapeless
+  guide-order: 27
+  source: slimefun-rc37
+  outputs:
+  - sf:blistering_ingot_3
+  inputs:
+  - sf:blistering_ingot_2
+  - NETHER_STAR
+- id: legacy:boosted_uranium
+  recipe-type: sf:heated_pressure_chamber
+  operation: shapeless
+  guide-order: 28
+  source: slimefun-rc37
+  outputs:
+  - sf:boosted_uranium
+  inputs:
+  - sf:plutonium
+  - sf:uranium
+- id: legacy:enriched_nether_ice
+  recipe-type: sf:heated_pressure_chamber
+  operation: shapeless
+  guide-order: 29
+  source: slimefun-rc37
+  outputs:
+  - sf:enriched_nether_ice*4
+  inputs:
+  - sf:nether_ice
+  - sf:plutonium
+- id: legacy:magnesium_salt
+  recipe-type: sf:heated_pressure_chamber
+  operation: shapeless
+  guide-order: 30
+  source: slimefun-rc37
+  outputs:
+  - sf:magnesium_salt
+  inputs:
+  - sf:magnesium_dust
+  - sf:salt
+- id: legacy:nether_ice_coolant_cell
+  recipe-type: sf:heated_pressure_chamber
+  operation: single
+  guide-order: 31
+  source: slimefun-rc37
+  input: sf:enriched_nether_ice
+  outputs:
+  - sf:nether_ice_coolant_cell*8
+- id: legacy:plastic_sheet
+  recipe-type: sf:heated_pressure_chamber
+  operation: single
+  guide-order: 32
+  source: slimefun-rc37
+  input: sf:bucket_of_oil
+  outputs:
+  - BUCKET
+  - sf:plastic_sheet*8
+- id: legacy:neptunium
+  recipe-type: sf:nuclear_reactor
+  operation: shaped
+  guide-order: 33
+  source: slimefun-rc37
+  matrix:
+  - sf:uranium
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  outputs:
+  - sf:neptunium
+- id: legacy:plutonium
+  recipe-type: sf:nuclear_reactor
+  operation: shaped
+  guide-order: 34
+  source: slimefun-rc37
+  matrix:
+  - sf:neptunium
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  - empty
+  outputs:
+  - sf:plutonium
+- id: legacy:carbonado
+  recipe-type: sf:pressure_chamber
+  operation: single
+  guide-order: 35
+  source: slimefun-rc37
+  runtime: true
+  machine: sf:pressure_chamber
+  input: sf:raw_carbonado
+  outputs:
+  - sf:carbonado
+- id: legacy:synthetic_diamond
+  recipe-type: sf:pressure_chamber
+  operation: single
+  guide-order: 36
+  source: slimefun-rc37
+  runtime: true
+  machine: sf:pressure_chamber
+  input: sf:carbon_chunk
+  outputs:
+  - sf:synthetic_diamond

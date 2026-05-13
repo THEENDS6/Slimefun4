@@ -1,7 +1,11 @@
 package cc.theends6.sfx.internal.energy;
 
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.block.SfxAnchorRecord;
+import cc.theends6.sfx.internal.block.SfxBlockDataService;
+import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.util.HeadTextures;
+import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -10,9 +14,13 @@ import org.bukkit.block.Skull;
 
 final class SfxCapacitorAppearanceProjector {
     private final SfxRuntime runtime;
+    private final SfxBlockDataService blockData;
+    private final Map<String, SfxEnergyComponentDefinition> definitions;
 
-    SfxCapacitorAppearanceProjector(SfxRuntime runtime) {
+    SfxCapacitorAppearanceProjector(SfxRuntime runtime, SfxBlockDataService blockData, Map<String, SfxEnergyComponentDefinition> definitions) {
         this.runtime = runtime;
+        this.blockData = blockData;
+        this.definitions = definitions;
     }
 
     void scheduleUpdate(Location location, int stored, int capacity) {
@@ -27,9 +35,21 @@ final class SfxCapacitorAppearanceProjector {
         if (location == null || location.getWorld() == null || texture == null) {
             return;
         }
+        SfxAnchorRecord anchor = blockData.findAnchor(location).orElse(null);
+        if (anchor == null) {
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
+        if (definition == null || definition.componentType() != SfxEnergyComponentType.CAPACITOR) {
+            return;
+        }
         Block block = location.getBlock();
         if (block.getType() != Material.PLAYER_HEAD && block.getType() != Material.PLAYER_WALL_HEAD) {
-            block.setType(Material.PLAYER_HEAD, false);
+            return;
         }
         BlockState state = block.getState();
         if (state instanceof Skull skull) {

@@ -73,6 +73,7 @@ options:
   # the normal smeltery consumes fire by chance after a successful craft.
   fire-breaking-chance: 34
 
+
 energy:
   regulator-display:
     mode: 'sfx'

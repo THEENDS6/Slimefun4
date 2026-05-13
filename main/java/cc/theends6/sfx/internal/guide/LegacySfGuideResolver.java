@@ -25,7 +25,7 @@ public final class LegacySfGuideResolver {
     private static final Map<String, SfxItemCategory> VIRTUAL_CATEGORIES = LegacySfGuideData.createVirtualCategories();
     private static final Map<String, String> EXACT_CATEGORY_BY_ITEM = LegacySfGuideData.createExactCategoryByItem();
     private static final Map<String, String> SOURCE_CATEGORY_FALLBACKS = LegacySfGuideData.createSourceCategoryFallbacks();
-    private static final Map<String, Integer> CLASSIC_ITEM_ORDER = LegacySfGuideData.createClassicItemOrder();
+    private static final Map<String, Integer> CLASSIC_ITEM_ORDER = LegacySfGuideData.createClassicItemOrder(EXACT_CATEGORY_BY_ITEM);
     private static final Map<String, Integer> CLASSIC_BASIC_MACHINE_ORDER = LegacySfGuideData.createClassicBasicMachineOrder();
     private static final Map<String, Integer> CLASSIC_CARGO_ORDER = LegacySfGuideData.createClassicCargoOrder();
     private static final Map<String, Integer> CLASSIC_ARMOR_ORDER = LegacySfGuideData.createClassicArmorOrder();
