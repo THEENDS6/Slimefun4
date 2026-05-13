@@ -91,13 +91,15 @@ final class SfxEnergyDisplayController {
         Component text = localization.component(displayText.key(), displayText.fallback(), displayText.placeholders());
         SfxFloatingTextKey key = key(anchorKey);
         ownedKeys.add(key);
+        boolean seeThrough = plugin.getConfig().getBoolean("energy.regulator-display.see-through", false);
         floatingText.update(new SfxFloatingTextProjection(
                 key,
                 anchorKey.x() + 0.5D,
                 anchorKey.y() + 1.15D,
                 anchorKey.z() + 0.5D,
                 text,
-                VIEW_DISTANCE_SQUARED));
+                VIEW_DISTANCE_SQUARED,
+                seeThrough));
     }
 
     private SfxFloatingTextKey key(SfxBlockAnchorKey anchorKey) {

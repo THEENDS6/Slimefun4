@@ -9,8 +9,20 @@ public record SfxFloatingTextProjection(
         double y,
         double z,
         Component text,
-        int viewDistanceSquared
+        int viewDistanceSquared,
+        boolean seeThrough
 ) {
+    public SfxFloatingTextProjection(
+            SfxFloatingTextKey key,
+            double x,
+            double y,
+            double z,
+            Component text,
+            int viewDistanceSquared
+    ) {
+        this(key, x, y, z, text, viewDistanceSquared, false);
+    }
+
     public SfxFloatingTextProjection {
         key = Objects.requireNonNull(key, "key");
         text = Objects.requireNonNull(text, "text");

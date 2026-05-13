@@ -122,6 +122,9 @@ public final class SfxLocalization {
         if ("items.sf.netherstar_reactor.lore".equals(path)) {
             return netherStarReactorLore(values, sfxGeneratorBalance);
         }
+        if (sfxGeneratorBalance && path.startsWith("items.sf.electrified_crucible")) {
+            return electrifiedCrucibleLore(path, values);
+        }
         if (!sfxGeneratorBalance) {
             return values;
         }
@@ -136,6 +139,30 @@ public final class SfxLocalization {
         }
         List<String> copy = new ArrayList<>(values);
         copy.add(line);
+        return copy;
+    }
+
+    private List<String> electrifiedCrucibleLore(String path, List<String> values) {
+        int classicEnergy;
+        if ("items.sf.electrified_crucible_3.lore".equals(path)) {
+            classicEnergy = 120;
+        } else if ("items.sf.electrified_crucible_2.lore".equals(path)) {
+            classicEnergy = 80;
+        } else if ("items.sf.electrified_crucible.lore".equals(path)) {
+            classicEnergy = 48;
+        } else {
+            return values;
+        }
+        double multiplier = Math.max(1.0D, plugin.getConfig().getDouble("energy.generator-balance.electrified-crucible-consumption-multiplier", 1.5D));
+        String energy = String.valueOf(Math.max(1, (int) Math.round(classicEnergy * multiplier)));
+        List<String> copy = new ArrayList<>(values.size());
+        for (String line : values) {
+            if (line != null && line.contains("J/t")) {
+                copy.add(line.replaceFirst("\\d+\\s*J/t", energy + " J/t"));
+            } else {
+                copy.add(line);
+            }
+        }
         return copy;
     }
 

@@ -17,8 +17,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 final class SfxElectricMachineMenuRenderer {
     private static final int DISPLAY_SLOT = 22;
-    private static final int[] INPUT_SLOTS = {19, 20};
-    private static final int[] OUTPUT_SLOTS = {24, 25};
     private static final int[] BORDER = {0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 31, 36, 37, 38, 39, 40, 41, 42, 43, 44};
     private static final int[] BORDER_IN = {9, 10, 11, 12, 18, 21, 27, 28, 29, 30};
     private static final int[] BORDER_OUT = {14, 15, 16, 17, 23, 26, 32, 33, 34, 35};
@@ -36,11 +34,13 @@ final class SfxElectricMachineMenuRenderer {
     void render(UUID viewerId, SfxElectricMachineDefinition definition, Inventory inventory, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
         fillInventoryFrame(inventory);
         inventory.setItem(DISPLAY_SLOT, progressIcon(viewerId, definition, state, recipe, status));
-        for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
-            inventory.setItem(INPUT_SLOTS[slot], state.input(slot) == null ? null : state.input(slot).toItemStack(items));
+        int[] inputSlots = definition.inputSlots();
+        for (int slot = 0; slot < inputSlots.length; slot++) {
+            inventory.setItem(inputSlots[slot], state.input(slot) == null ? null : state.input(slot).toItemStack(items));
         }
-        for (int slot = 0; slot < OUTPUT_SLOTS.length; slot++) {
-            inventory.setItem(OUTPUT_SLOTS[slot], state.output(slot) == null ? null : state.output(slot).toItemStack(items));
+        int[] outputSlots = definition.outputSlots();
+        for (int slot = 0; slot < outputSlots.length; slot++) {
+            inventory.setItem(outputSlots[slot], state.output(slot) == null ? null : state.output(slot).toItemStack(items));
         }
     }
 
@@ -67,7 +67,12 @@ final class SfxElectricMachineMenuRenderer {
 
     private ItemStack progressIcon(UUID viewerId, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
         return switch (status) {
-            case WORKING -> buildProgressIcon(viewerId, definition, state, recipe, false);
+            case WORKING -> recipe == null
+                    ? namedItem(
+                            definition.progressMaterial(),
+                            localization.component("electric-ui.progress.name", "<yellow>Working</yellow>"),
+                            List.of(localization.component("electric-ui.progress.lore", "<gray>The machine is working.</gray>")))
+                    : buildProgressIcon(viewerId, definition, state, recipe, false);
             case BLOCKED_OUTPUT -> recipe == null
                     ? namedItem(
                             Material.RED_STAINED_GLASS_PANE,
@@ -84,6 +89,14 @@ final class SfxElectricMachineMenuRenderer {
                             localization.component("electric-ui.no-power.name", "<red>No Power</red>"),
                             List.of(localization.component("electric-ui.no-power.lore", "<gray>Charge this machine to continue.</gray>")))
                     : buildNoPowerIcon(definition, state, recipe);
+            case NO_INPUT -> namedItem(
+                    Material.ORANGE_STAINED_GLASS_PANE,
+                    localization.component("electric-ui.simple-io.no-input.name", "<gold>缺少输入</gold>"),
+                    List.of(localization.component("electric-ui.simple-io.no-input.lore", "<gray>放入所需输入后开始工作。</gray>")));
+            case NO_TARGET -> namedItem(
+                    Material.ORANGE_STAINED_GLASS_PANE,
+                    localization.component("electric-ui.simple-io.no-target.name", "<gold>无可作用目标</gold>"),
+                    List.of(localization.component("electric-ui.produce-collector.no-target.lore", "<gray>没有可采集实体：牛 / 山羊 / 哞菇。</gray>")));
             case NO_RECIPE -> namedItem(
                     Material.GRAY_STAINED_GLASS_PANE,
                     localization.component("electric-ui.no-recipe.name", "<gray>No Recipe</gray>"),
