@@ -23,7 +23,7 @@ final class SfxElectricRecipeProcessor {
             if (!activeOutputs.isEmpty()) {
                 return SfxElectricRecipe.fixedOutputs(key, List.of(SfxRecipeSlot.vanilla(org.bukkit.Material.STONE)), activeOutputs, state.activeBaseTicks());
             }
-            if (definition.recipeProvider().hasSpecialTick()) {
+            if (definition.recipeProvider().hasSpecialTick() || definition.recipeProvider().hasWorldAction()) {
                 return null;
             }
         }

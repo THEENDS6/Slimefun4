@@ -16,7 +16,15 @@ public interface SfxElectricRecipeProvider {
         return null;
     }
 
+    default SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        return null;
+    }
+
     default boolean hasSpecialTick() {
+        return false;
+    }
+
+    default boolean hasWorldAction() {
         return false;
     }
 

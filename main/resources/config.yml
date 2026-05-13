@@ -84,6 +84,16 @@ options:
 electric-machines:
   
   
+  sfx-balance:
+    crop-growth-accelerator: true
+    tree-growth-accelerator: true
+    auto-breeder: true
+    animal-growth-accelerator: true
+    produce-collector: true
+    xp-collector: true
+
+  
+  
   allow-sfx-item-enchanting: true
 
   
