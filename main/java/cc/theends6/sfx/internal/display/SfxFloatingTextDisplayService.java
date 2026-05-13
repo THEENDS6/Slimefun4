@@ -33,7 +33,8 @@ public final class SfxFloatingTextDisplayService {
     private static final byte ENTITY_FLAGS = 0x20;
     private static final byte BILLBOARD_CENTER = 3;
     private static final byte TEXT_OPACITY = (byte) 255;
-    private static final byte TEXT_STYLE_FLAGS = 0x01;
+    private static final byte TEXT_STYLE_SHADOW = 0x01;
+    private static final byte TEXT_STYLE_SEE_THROUGH = 0x02;
     private static final int BACKGROUND_COLOR = 0x40000000;
     private static final int METADATA_BILLBOARD = 15;
     private static final int METADATA_VIEW_RANGE = 17;
@@ -127,9 +128,9 @@ public final class SfxFloatingTextDisplayService {
         }
         Component previousText = state.viewerText().put(player.getUniqueId(), projection.text());
         if (state.viewers().put(player.getUniqueId(), Boolean.TRUE) == null) {
-            spawn(player, state.entityId(), location, projection.text());
+            spawn(player, state.entityId(), location, projection);
         } else if (!projection.text().equals(previousText)) {
-            updateMetadata(player, state.entityId(), projection.text());
+            updateMetadata(player, state.entityId(), projection);
         }
     }
 
@@ -141,7 +142,7 @@ public final class SfxFloatingTextDisplayService {
         }
     }
 
-    private void spawn(Player player, int entityId, Location location, Component text) {
+    private void spawn(Player player, int entityId, Location location, SfxFloatingTextProjection projection) {
         WrapperPlayServerSpawnEntity spawn = new WrapperPlayServerSpawnEntity(
                 entityId,
                 Optional.of(UUID.randomUUID()),
@@ -153,21 +154,25 @@ public final class SfxFloatingTextDisplayService {
                 0,
                 Optional.empty());
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, spawn);
-        updateMetadata(player, entityId, text);
+        updateMetadata(player, entityId, projection);
     }
 
-    private void updateMetadata(Player player, int entityId, Component text) {
+    private void updateMetadata(Player player, int entityId, SfxFloatingTextProjection projection) {
         List<EntityData<?>> metadata = List.of(
                 new EntityData<>(0, EntityDataTypes.BYTE, ENTITY_FLAGS),
                 new EntityData<>(5, EntityDataTypes.BOOLEAN, true),
                 new EntityData<>(METADATA_BILLBOARD, EntityDataTypes.BYTE, BILLBOARD_CENTER),
                 new EntityData<>(METADATA_VIEW_RANGE, EntityDataTypes.FLOAT, 1.0f),
-                new EntityData<>(METADATA_TEXT, EntityDataTypes.ADV_COMPONENT, text),
+                new EntityData<>(METADATA_TEXT, EntityDataTypes.ADV_COMPONENT, projection.text()),
                 new EntityData<>(METADATA_LINE_WIDTH, EntityDataTypes.INT, 200),
                 new EntityData<>(METADATA_BACKGROUND, EntityDataTypes.INT, BACKGROUND_COLOR),
                 new EntityData<>(METADATA_OPACITY, EntityDataTypes.BYTE, TEXT_OPACITY),
-                new EntityData<>(METADATA_STYLE_FLAGS, EntityDataTypes.BYTE, TEXT_STYLE_FLAGS));
+                new EntityData<>(METADATA_STYLE_FLAGS, EntityDataTypes.BYTE, styleFlags(projection)));
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerEntityMetadata(entityId, metadata));
+    }
+
+    private byte styleFlags(SfxFloatingTextProjection projection) {
+        return (byte) (TEXT_STYLE_SHADOW | (projection.seeThrough() ? TEXT_STYLE_SEE_THROUGH : 0));
     }
 
 

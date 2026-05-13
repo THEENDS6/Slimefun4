@@ -701,6 +701,11 @@ items:
     - '&7&oRestores &b&o3.0 &7&oHunger'
   sf.golden_apple_juice:
     name: '&bGolden Apple Juice'
+  sf.enchanted_golden_apple:
+    name: '&dEnchanted Golden Apple'
+    lore:
+    - ''
+    - '&7Classic enhanced crafting recipe.'
   sf.beef_jerky:
     name: '&6Beef Jerky'
     lore:

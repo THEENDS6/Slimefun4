@@ -1,5 +1,6 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -8,7 +9,7 @@ final class SfxElectricMachineDefinitions {
     private SfxElectricMachineDefinitions() {
     }
 
-    static SfxElectricMachineRegistry create(JavaPlugin plugin, DefaultManualMachineRegistry manualMachines) {
+    static SfxElectricMachineRegistry create(JavaPlugin plugin, SfxItems items, DefaultManualMachineRegistry manualMachines) {
         SfxElectricMachineRegistry result = new SfxElectricMachineRegistry();
         SfxElectricRecipeProvider furnaceRecipes = new SfxVanillaFurnaceRecipeProvider(plugin, 4);
         SfxElectricRecipeProvider grinderRecipes = new SfxClassicOreGrinderRecipeProvider(
@@ -27,6 +28,24 @@ final class SfxElectricMachineDefinitions {
         SfxElectricRecipeProvider goldPanRecipes = SfxLegacyElectricRecipeProviders.electricGoldPan();
         SfxElectricRecipeProvider dustWasherRecipes = SfxLegacyElectricRecipeProviders.electricDustWasher();
         SfxElectricRecipeProvider refineryRecipes = SfxLegacyElectricRecipeProviders.refinery();
+        SfxElectricRecipeProvider ingotPulverizerRecipes = new SfxElectricIngotPulverizerRecipeProvider();
+        SfxElectricRecipeProvider electricSmelteryRecipes = new SfxElectricSmelteryRecipeProvider(manualMachines.recipesFor("sf:smeltery"), 6);
+        SfxElectricRecipeProvider autoEnchanterRecipes = SfxSpecialElectricRecipeProviders.autoEnchanter(plugin, items);
+        SfxElectricRecipeProvider autoDisenchanterRecipes = SfxSpecialElectricRecipeProviders.autoDisenchanter(plugin, items);
+        SfxElectricRecipeProvider bookBinderRecipes = SfxSpecialElectricRecipeProviders.bookBinder(plugin);
+        SfxElectricRecipeProvider autoAnvilRecipes = SfxSpecialElectricRecipeProviders.autoAnvil(plugin, items, 10);
+        SfxElectricRecipeProvider autoAnvil2Recipes = SfxSpecialElectricRecipeProviders.autoAnvil(plugin, items, 25);
+        SfxElectricRecipeProvider produceCollectorRecipes = SfxAreaElectricMachineProviders.produceCollector();
+        SfxElectricRecipeProvider autoBreederRecipes = SfxAreaElectricMachineProviders.autoBreeder();
+        SfxElectricRecipeProvider animalGrowthRecipes = SfxAreaElectricMachineProviders.animalGrowthAccelerator();
+        SfxElectricRecipeProvider cropGrowthRecipes = SfxAreaElectricMachineProviders.cropGrowthAccelerator(3);
+        SfxElectricRecipeProvider cropGrowth2Recipes = SfxAreaElectricMachineProviders.cropGrowthAccelerator(4);
+        SfxElectricRecipeProvider treeGrowthRecipes = SfxAreaElectricMachineProviders.treeGrowthAccelerator();
+        SfxElectricRecipeProvider expCollectorRecipes = SfxAreaElectricMachineProviders.expCollector();
+
+        double crucibleEnergyMultiplier = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true)
+                ? Math.max(1.0D, plugin.getConfig().getDouble("energy.generator-balance.electrified-crucible-consumption-multiplier", 1.5D))
+                : 1.0D;
 
         result.register(new SfxElectricMachineDefinition("sf:electric_furnace", "Electric Furnace", 1, 1280, 4, Material.FLINT_AND_STEEL, furnaceRecipes));
         result.register(new SfxElectricMachineDefinition("sf:electric_furnace_2", "Electric Furnace - II", 2, 2560, 6, Material.FLINT_AND_STEEL, furnaceRecipes));
@@ -48,9 +67,9 @@ final class SfxElectricMachineDefinitions {
         result.register(new SfxElectricMachineDefinition("sf:electric_press", "Electric Press", 1, 1280, 16, Material.IRON_HOE, electricPressRecipes));
         result.register(new SfxElectricMachineDefinition("sf:electric_press_2", "Electric Press - II", 3, 2560, 40, Material.IRON_HOE, electricPressRecipes));
 
-        result.register(new SfxElectricMachineDefinition("sf:electrified_crucible", "Electrified Crucible", 1, 1024, 48, Material.FLINT_AND_STEEL, crucibleRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electrified_crucible_2", "Electrified Crucible - II", 2, 2048, 80, Material.FLINT_AND_STEEL, crucibleRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:electrified_crucible_3", "Electrified Crucible - III", 4, 4096, 120, Material.FLINT_AND_STEEL, crucibleRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:electrified_crucible", "Electrified Crucible", 1, 1024, adjustedEnergy(48, crucibleEnergyMultiplier), Material.FLINT_AND_STEEL, crucibleRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:electrified_crucible_2", "Electrified Crucible - II", 2, 2048, adjustedEnergy(80, crucibleEnergyMultiplier), Material.FLINT_AND_STEEL, crucibleRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:electrified_crucible_3", "Electrified Crucible - III", 4, 4096, adjustedEnergy(120, crucibleEnergyMultiplier), Material.FLINT_AND_STEEL, crucibleRecipes));
 
         result.register(new SfxElectricMachineDefinition("sf:freezer", "Freezer", 1, 256, 18, Material.GOLDEN_PICKAXE, freezerRecipes));
         result.register(new SfxElectricMachineDefinition("sf:freezer_2", "Freezer - II", 2, 256, 30, Material.GOLDEN_PICKAXE, freezerRecipes));
@@ -66,6 +85,26 @@ final class SfxElectricMachineDefinitions {
 
         result.register(new SfxElectricMachineDefinition("sf:refinery", "Refinery", 1, 256, 32, Material.PISTON, refineryRecipes));
 
+        result.register(new SfxElectricMachineDefinition("sf:electric_ingot_pulverizer", "Electric Ingot Pulverizer", 1, 512, 14, Material.IRON_PICKAXE, ingotPulverizerRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:electric_smeltery", "Electric Smeltery", 1, 512, 20, Material.FLINT_AND_STEEL, electricSmelteryRecipes, SfxElectricMachineDefinition.SIX_INPUT_SLOTS, new int[]{24, 25}));
+        result.register(new SfxElectricMachineDefinition("sf:electric_smeltery_2", "Electric Smeltery - II", 3, 512, 40, Material.FLINT_AND_STEEL, electricSmelteryRecipes, SfxElectricMachineDefinition.SIX_INPUT_SLOTS, new int[]{24, 25}));
+
+        result.register(new SfxElectricMachineDefinition("sf:auto_enchanter", "Auto Enchanter", 1, 128, 18, Material.GOLDEN_CHESTPLATE, autoEnchanterRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:auto_enchanter_2", "Auto Enchanter - II", 3, 1028, 48, Material.GOLDEN_CHESTPLATE, autoEnchanterRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:auto_disenchanter", "Auto Disenchanter", 1, 128, 18, Material.DIAMOND_CHESTPLATE, autoDisenchanterRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:auto_disenchanter_2", "Auto Disenchanter - II", 3, 1028, 48, Material.DIAMOND_CHESTPLATE, autoDisenchanterRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:book_binder", "Book Binder", 1, 128, 16, Material.IRON_CHESTPLATE, bookBinderRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:auto_anvil", "Auto Anvil", 1, 128, 24, Material.IRON_PICKAXE, autoAnvilRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:auto_anvil_2", "Auto Anvil - II", 1, 128, 32, Material.IRON_PICKAXE, autoAnvil2Recipes));
+
+        result.register(new SfxElectricMachineDefinition("sf:produce_collector", "Produce Collector", 1, 512, 32, Material.SHEARS, produceCollectorRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:auto_breeder", "Auto Breeder", 1, 1024, 60, Material.HAY_BLOCK, autoBreederRecipes, SfxElectricMachineDefinition.SIMPLE_IO_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.SIMPLE_IO));
+        result.register(new SfxElectricMachineDefinition("sf:animal_growth_accelerator", "Animal Growth Accelerator", 1, 1024, 14, Material.WHEAT, animalGrowthRecipes, SfxElectricMachineDefinition.SIMPLE_IO_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.SIMPLE_IO));
+        result.register(new SfxElectricMachineDefinition("sf:crop_growth_accelerator", "Crop Growth Accelerator", 1, 1024, 50, Material.WHEAT_SEEDS, cropGrowthRecipes, SfxElectricMachineDefinition.SIMPLE_IO_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.SIMPLE_IO));
+        result.register(new SfxElectricMachineDefinition("sf:crop_growth_accelerator_2", "Crop Growth Accelerator - II", 1, 1024, 60, Material.WHEAT_SEEDS, cropGrowth2Recipes, SfxElectricMachineDefinition.SIMPLE_IO_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.SIMPLE_IO));
+        result.register(new SfxElectricMachineDefinition("sf:tree_growth_accelerator", "Tree Growth Accelerator", 1, 1024, 24, Material.OAK_SAPLING, treeGrowthRecipes, SfxElectricMachineDefinition.SIMPLE_IO_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.SIMPLE_IO));
+        result.register(new SfxElectricMachineDefinition("sf:xp_collector", "EXP Collector", 1, 1024, 20, Material.EXPERIENCE_BOTTLE, expCollectorRecipes, SfxElectricMachineDefinition.NO_INPUT_SLOTS, SfxElectricMachineDefinition.SIMPLE_IO_SLOTS, SfxElectricMachineMenuStyle.SIMPLE_IO));
+
         result.register(new SfxElectricMachineDefinition("sf:electric_gold_pan", "Electric Gold Pan", 1, 128, 2, Material.DIAMOND_SHOVEL, goldPanRecipes));
         result.register(new SfxElectricMachineDefinition("sf:electric_gold_pan_2", "Electric Gold Pan - II", 3, 256, 4, Material.DIAMOND_SHOVEL, goldPanRecipes));
         result.register(new SfxElectricMachineDefinition("sf:electric_gold_pan_3", "Electric Gold Pan - III", 10, 512, 14, Material.DIAMOND_SHOVEL, goldPanRecipes));
@@ -74,5 +113,9 @@ final class SfxElectricMachineDefinitions {
         result.register(new SfxElectricMachineDefinition("sf:electric_dust_washer_2", "Electric Dust Washer - II", 2, 512, 10, Material.GOLDEN_SHOVEL, dustWasherRecipes));
         result.register(new SfxElectricMachineDefinition("sf:electric_dust_washer_3", "Electric Dust Washer - III", 10, 1024, 30, Material.GOLDEN_SHOVEL, dustWasherRecipes));
         return result;
+    }
+
+    private static int adjustedEnergy(int classicEnergy, double multiplier) {
+        return Math.max(1, (int) Math.round(classicEnergy * multiplier));
     }
 }

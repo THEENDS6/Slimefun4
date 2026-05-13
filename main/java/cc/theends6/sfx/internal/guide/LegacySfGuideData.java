@@ -88,6 +88,7 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:sweet_berry_juice", "guide:sf:food");
     map.put("sf:glow_berry_juice", "guide:sf:food");
     map.put("sf:golden_apple_juice", "guide:sf:food");
+    map.put("sf:enchanted_golden_apple", "guide:sf:food");
     map.put("sf:beef_jerky", "guide:sf:food");
     map.put("sf:pork_jerky", "guide:sf:food");
     map.put("sf:chicken_jerky", "guide:sf:food");
@@ -300,7 +301,7 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:magnesium_dust", "guide:sf:resources");
     map.put("sf:sulfate", "guide:sf:resources");
     map.put("sf:silicon", "guide:sf:resources");
-    map.put("sf:gold_24k_block", "guide:sf:food");
+    map.put("sf:gold_24k_block", "guide:sf:resources");
     map.put("sf:synthetic_diamond", "guide:sf:resources");
     map.put("sf:synthetic_emerald", "guide:sf:resources");
     map.put("sf:synthetic_sapphire", "guide:sf:resources");

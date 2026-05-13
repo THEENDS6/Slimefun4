@@ -929,6 +929,31 @@ items:
   colorRgb: 16701501
   flags:
   - legacy-sf
+- id: sf:enchanted_golden_apple
+  category: sf:food
+  material: ENCHANTED_GOLDEN_APPLE
+  name: '&dEnchanted Golden Apple'
+  priority: 69
+  giveable: false
+  lore:
+  - ''
+  - '&7Classic enhanced crafting recipe.'
+  recipes:
+  - type: sf:enhanced_crafting_table
+    note: '<gray>Crafted in an Enhanced Crafting Table.</gray>'
+    matrix:
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+      - APPLE
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+      - sf:gold_24k_block
+  flags:
+  - legacy-sf
+  - guide-only
 - id: sf:beef_jerky
   category: sf:food
   material: COOKED_BEEF

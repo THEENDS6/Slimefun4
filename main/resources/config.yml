@@ -50,6 +50,12 @@ options:
   # Allows selected SFX diamond equipment to be upgraded in the vanilla Smithing Table
   # with a Netherite Upgrade Smithing Template and a Netherite Ingot.
   # The output keeps the original SFX item id and metadata, only the vanilla material changes.
+
+  # Allows SFX tools to use the vanilla anvil safely for renaming and enchanted-book application.
+  # The result is cloned from the original SFX item so PDC, lore, durability and custom metadata are preserved.
+  sfx-vanilla-anvil-enchanting:
+    enabled: true
+
   sfx-netherite-smithing:
     enabled: true
     allowed-items:
@@ -74,13 +80,29 @@ options:
   fire-breaking-chance: 34
 
 
+
+electric-machines:
+  # Allows SFX tools/items to be processed by special electric machines such as
+  # Auto Anvil, Auto Enchanter and Auto Disenchanter. Runtime item metadata is preserved.
+  allow-sfx-item-enchanting: true
+
+  # Allows mutually exclusive vanilla enchantments to coexist, e.g. Sharpness + Smite.
+  # Book Binder also uses this setting.
+  allow-conflicting-enchantments: true
+
+  # Allows enchantments on item types they normally cannot be applied to, e.g. Efficiency on a sword.
+  allow-illegal-enchantments: false
+
 energy:
   regulator-display:
     mode: 'sfx'
+    # TextDisplay see-through can cause visual artifacts behind skulls/water; keep disabled by default.
+    see-through: false
   bucket-fuels:
     instant-empty-bucket-return: true
   generator-balance:
     use-sfx-balance: true
+    electrified-crucible-consumption-multiplier: 1.5
     future:
       nether-star-reactor:
         production: 2048

@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Objects;
 
 final class SfxElectricRecipeProcessor {
-    private static final int[] INPUT_SLOTS = {19, 20};
-    private static final int[] OUTPUT_SLOTS = {24, 25};
-
     private final SfxItems items;
 
     SfxElectricRecipeProcessor(SfxItems items) {
@@ -21,6 +18,15 @@ final class SfxElectricRecipeProcessor {
         if (key == null) {
             return null;
         }
+        List<SfxElectricStack> activeOutputs = state.activeOutputs();
+        if (state.activeBaseTicks() > 0) {
+            if (!activeOutputs.isEmpty()) {
+                return SfxElectricRecipe.fixedOutputs(key, List.of(SfxRecipeSlot.vanilla(org.bukkit.Material.STONE)), activeOutputs, state.activeBaseTicks());
+            }
+            if (definition.recipeProvider().hasSpecialTick()) {
+                return null;
+            }
+        }
         for (SfxElectricRecipe recipe : definition.recipeProvider().recipes()) {
             if (recipe.key().equals(key)) {
                 return recipe;
@@ -31,8 +37,12 @@ final class SfxElectricRecipeProcessor {
     }
 
     SfxElectricRecipeMatch findRecipeMatch(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
+        SfxElectricRecipeMatch dynamic = definition.recipeProvider().findDynamicMatch(definition, state);
+        if (dynamic != null) {
+            return dynamic;
+        }
         for (SfxElectricRecipe recipe : definition.recipeProvider().recipes()) {
-            int[] slots = matchInputSlots(state, recipe.inputs());
+            int[] slots = matchInputSlots(state, definition.inputSlots(), recipe.inputs());
             if (slots != null) {
                 return new SfxElectricRecipeMatch(slots, recipe);
             }
@@ -55,7 +65,7 @@ final class SfxElectricRecipeProcessor {
         if (match == null && state.hasAnyInput()) {
             return SfxElectricMachineRenderStatus.NO_RECIPE;
         }
-        if (match != null && !canFitOutputForRecipe(state, match.recipe())) {
+        if (match != null && !canFitOutputForRecipe(definition, state, match.recipe())) {
             return SfxElectricMachineRenderStatus.OUTPUT_FULL;
         }
         return SfxElectricMachineRenderStatus.IDLE;
@@ -67,7 +77,11 @@ final class SfxElectricRecipeProcessor {
 
     SfxElectricRecipeStart tryStartNextRecipe(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
         SfxElectricRecipeMatch match = findRecipeMatch(definition, state);
-        if (match == null || !canFitOutputForRecipe(state, match.recipe())) {
+        if (match == null || !canFitOutputForRecipe(definition, state, match.recipe())) {
+            return null;
+        }
+        List<SfxElectricStack> outputs = match.recipe().rollOutputs();
+        if (findCompletionOutputSlots(definition, state, match.recipe(), outputs) == null) {
             return null;
         }
         List<SfxElectricStack> reservedInputs = consumeInputs(state, match.inputSlots(), match.recipe().inputs());
@@ -77,40 +91,39 @@ final class SfxElectricRecipeProcessor {
         state.activeRecipeKey(match.recipe().key());
         state.activeInputSlot(match.primaryInputSlot());
         state.progressWork(0);
+        state.activeBaseTicks(match.recipe().baseTicks());
+        state.activeOutputs(outputs);
         state.reservedInputs(reservedInputs);
         state.pendingOutput(null);
         return new SfxElectricRecipeStart(match.recipe(), match.inputSlots());
     }
 
-    Integer findOutputSlotForRecipe(SfxElectricMachineState state, SfxElectricRecipe recipe) {
-        int[] slots = findOutputSlotsForRecipe(state, recipe);
-        return slots == null || slots.length == 0 ? null : slots[0];
+    Integer findOutputSlot(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricStack recipeOutput) {
+        return findMergeSlot(currentOutputs(definition, state), recipeOutput);
     }
 
-    boolean canFitOutputForRecipe(SfxElectricMachineState state, SfxElectricRecipe recipe) {
-        return findOutputSlotsForRecipe(state, recipe) != null;
+    boolean canFitOutputForRecipe(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe) {
+        return findOutputSlots(definition, state, recipe.outputs()) != null;
     }
 
-    boolean canFitCompletionOutputForRecipe(SfxElectricMachineState state, SfxElectricRecipe recipe) {
-        return findOutputSlots(state, recipe.outputs()) != null;
+    boolean canFitCompletionOutputForRecipe(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe) {
+        List<SfxElectricStack> activeOutputs = state.activeOutputs();
+        return findOutputSlots(definition, state, activeOutputs.isEmpty() ? recipe.outputs() : activeOutputs) != null;
     }
 
-    int[] findOutputSlotsForRecipe(SfxElectricMachineState state, SfxElectricRecipe recipe) {
-        if (recipe.hasRandomOutput()) {
-            return findEmptyOutputSlot(state) == null ? null : new int[]{findEmptyOutputSlot(state)};
+    int[] findCompletionOutputSlots(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, List<SfxElectricStack> rolledOutputs) {
+        List<SfxElectricStack> outputs = rolledOutputs == null || rolledOutputs.isEmpty()
+                ? recipe.outputs()
+                : rolledOutputs;
+        return findOutputSlots(definition, state, outputs);
+    }
+
+    int[] findOutputSlots(SfxElectricMachineDefinition definition, SfxElectricMachineState state, List<SfxElectricStack> outputs) {
+        int outputCapacity = definition.outputSlots().length;
+        if (outputs == null || outputs.isEmpty() || outputs.size() > outputCapacity || outputCapacity > SfxElectricMachineState.MAX_OUTPUTS) {
+            return null;
         }
-        return findOutputSlots(state, recipe.outputs());
-    }
-
-    int[] findCompletionOutputSlots(SfxElectricMachineState state, SfxElectricRecipe recipe, List<SfxElectricStack> rolledOutputs) {
-        List<SfxElectricStack> outputs = recipe.hasRandomOutput()
-                ? rolledOutputs
-                : recipe.outputs();
-        return findOutputSlots(state, outputs);
-    }
-
-    int[] findOutputSlots(SfxElectricMachineState state, List<SfxElectricStack> outputs) {
-        SfxElectricStack[] simulated = {state.output(0), state.output(1)};
+        SfxElectricStack[] simulated = currentOutputs(definition, state);
         int[] slots = new int[outputs.size()];
         for (int outputIndex = 0; outputIndex < outputs.size(); outputIndex++) {
             SfxElectricStack output = outputs.get(outputIndex);
@@ -126,21 +139,12 @@ final class SfxElectricRecipeProcessor {
         return slots;
     }
 
-    Integer findOutputSlot(SfxElectricMachineState state, SfxElectricStack recipeOutput) {
-        return findMergeSlot(new SfxElectricStack[]{state.output(0), state.output(1)}, recipeOutput);
-    }
-
-    List<SfxElectricStack> rollOutputs(SfxElectricRecipe recipe) {
-        return recipe.rollOutputs();
-    }
-
-    private Integer findEmptyOutputSlot(SfxElectricMachineState state) {
-        for (int slot = 0; slot < OUTPUT_SLOTS.length; slot++) {
-            if (state.output(slot) == null) {
-                return slot;
-            }
+    private SfxElectricStack[] currentOutputs(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
+        SfxElectricStack[] result = new SfxElectricStack[definition.outputSlots().length];
+        for (int slot = 0; slot < result.length; slot++) {
+            result[slot] = state.output(slot);
         }
-        return null;
+        return result;
     }
 
     private Integer findMergeSlot(SfxElectricStack[] simulatedOutputs, SfxElectricStack recipeOutput) {
@@ -216,35 +220,35 @@ final class SfxElectricRecipeProcessor {
         }
     }
 
-    private int[] matchInputSlots(SfxElectricMachineState state, List<SfxRecipeSlot> requiredInputs) {
-        if (requiredInputs.size() == 1) {
-            SfxRecipeSlot required = requiredInputs.getFirst();
-            for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
-                SfxElectricStack input = state.input(slot);
-                if (input != null && input.matches(required)) {
-                    return new int[]{slot};
-                }
-            }
+    private int[] matchInputSlots(SfxElectricMachineState state, int[] availableSlots, List<SfxRecipeSlot> requiredInputs) {
+        if (requiredInputs.isEmpty() || requiredInputs.size() > availableSlots.length) {
             return null;
         }
-        if (requiredInputs.size() == 2) {
-            for (int firstSlot = 0; firstSlot < INPUT_SLOTS.length; firstSlot++) {
-                SfxElectricStack firstInput = state.input(firstSlot);
-                if (firstInput == null || !firstInput.matches(requiredInputs.get(0))) {
-                    continue;
+        boolean[] used = new boolean[availableSlots.length];
+        int[] matched = new int[requiredInputs.size()];
+        return matchInputSlotsRecursive(state, availableSlots, requiredInputs, used, matched, 0) ? matched : null;
+    }
+
+    private boolean matchInputSlotsRecursive(SfxElectricMachineState state, int[] availableSlots, List<SfxRecipeSlot> requiredInputs, boolean[] used, int[] matched, int depth) {
+        if (depth >= requiredInputs.size()) {
+            return true;
+        }
+        SfxRecipeSlot required = requiredInputs.get(depth);
+        for (int index = 0; index < availableSlots.length; index++) {
+            if (used[index]) {
+                continue;
+            }
+            SfxElectricStack input = state.input(index);
+            if (input != null && input.matches(required)) {
+                used[index] = true;
+                matched[depth] = index;
+                if (matchInputSlotsRecursive(state, availableSlots, requiredInputs, used, matched, depth + 1)) {
+                    return true;
                 }
-                for (int secondSlot = 0; secondSlot < INPUT_SLOTS.length; secondSlot++) {
-                    if (secondSlot == firstSlot) {
-                        continue;
-                    }
-                    SfxElectricStack secondInput = state.input(secondSlot);
-                    if (secondInput != null && secondInput.matches(requiredInputs.get(1))) {
-                        return new int[]{firstSlot, secondSlot};
-                    }
-                }
+                used[index] = false;
             }
         }
-        return null;
+        return false;
     }
 
     private record ConsumedInput(int slot, SfxElectricStack previous) {

@@ -549,6 +549,11 @@ items:
     - '&7&o恢复 &b&o3.0 &7&o饱食度'
   sf.golden_apple_juice:
     name: '&b金色苹果汁'
+  sf.enchanted_golden_apple:
+    name: '&d附魔金苹果'
+    lore:
+    - ''
+    - '&7经典增强型工作台配方展示。'
   sf.beef_jerky:
     name: '&6牛肉干'
     lore:
@@ -3453,6 +3458,26 @@ electric-ui:
     power-disabled: <dark_gray>当前版本暂不消耗电力。</dark_gray>
     time-left: <gray>{time}</gray>
     work: <gray>进度：</gray><white>{current}</white><gray>/</gray><white>{total}</white><gray> (+{rate}/tick)</gray>
+  simple-io:
+    no-input:
+      name: <gold>缺少输入</gold>
+      lore: <gray>放入 {input} 后开始工作。</gray>
+    no-target:
+      name: <gold>无可作用目标</gold>
+      lore: <gray>{target}</gray>
+    waiting:
+      name: <gray>等待下一次工作</gray>
+      lore: <gray>机器会在下一次 SFX Tick 尝试工作。</gray>
+    working:
+      lore: <gray>机器刚刚完成了一次区域工作。</gray>
+    work-interval: '<gray>工作间隔：</gray><white>{ticks}</white><gray> tick</gray>'
+    xp-progress: '<gray>经验进度：</gray><white>{current}</white><gray>/</gray><white>{total}</white>'
+    xp-waiting:
+      name: <gray>等待经验球中</gray>
+      lore: <gray>范围内出现经验球后会自动收集。</gray>
+    xp-working:
+      name: <yellow>收集经验中</yellow>
+      lore: <gray>正在收集附近所有经验球。</gray>
 energy:
   regulator:
     no-network: <red>未连接到任意电力机器</red>

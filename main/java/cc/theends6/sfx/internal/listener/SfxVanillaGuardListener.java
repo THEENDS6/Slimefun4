@@ -1,11 +1,16 @@
 package cc.theends6.sfx.internal.listener;
 
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.internal.util.SfxEnchantmentRules;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -28,8 +33,11 @@ import org.bukkit.event.inventory.PrepareSmithingEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -213,9 +221,20 @@ public final class SfxVanillaGuardListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPrepareAnvil(PrepareAnvilEvent event) {
-        if (isSfxItem(event.getInventory().getItem(0)) || isSfxItem(event.getInventory().getItem(1))) {
-            event.setResult(null);
+        ItemStack input = event.getInventory().getItem(0);
+        ItemStack addition = event.getInventory().getItem(1);
+        boolean inputIsSfx = isSfxItem(input);
+        boolean additionIsSfx = isSfxItem(addition);
+        if (!inputIsSfx && !additionIsSfx) {
+            return;
         }
+        if (!inputIsSfx || additionIsSfx || !plugin.getConfig().getBoolean("options.sfx-vanilla-anvil-enchanting.enabled", true)) {
+            event.setResult(null);
+            return;
+        }
+
+        ItemStack result = createSfxAnvilResult(input, addition, event.getView().getRenameText());
+        event.setResult(result);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -295,6 +314,56 @@ public final class SfxVanillaGuardListener implements Listener {
         if (isSmeltingInventory(event.getDestination().getType()) && isSfxItem(event.getItem())) {
             event.setCancelled(true);
         }
+    }
+
+    private ItemStack createSfxAnvilResult(ItemStack input, ItemStack addition, String renameText) {
+        if (input == null || input.getType().isAir()) {
+            return null;
+        }
+        ItemStack result = input.clone();
+        result.setAmount(1);
+        boolean changed = false;
+
+        if (addition != null && !addition.getType().isAir()) {
+            if (addition.getType() != Material.ENCHANTED_BOOK || !(addition.getItemMeta() instanceof EnchantmentStorageMeta storageMeta)) {
+                return null;
+            }
+            Map<Enchantment, Integer> applicable = new HashMap<>();
+            boolean allowConflicting = plugin.getConfig().getBoolean("electric-machines.allow-conflicting-enchantments", true);
+            boolean allowIllegal = plugin.getConfig().getBoolean("electric-machines.allow-illegal-enchantments", false);
+            for (Map.Entry<Enchantment, Integer> entry : storageMeta.getStoredEnchants().entrySet()) {
+                if (SfxEnchantmentRules.canApplyToTarget(result, entry.getKey(), entry.getValue(), allowConflicting, allowIllegal)) {
+                    applicable.put(entry.getKey(), entry.getValue());
+                }
+            }
+            if (applicable.isEmpty()) {
+                return null;
+            }
+            result.addUnsafeEnchantments(applicable);
+            changed = true;
+        }
+
+        if (shouldApplyAnvilRename(input, renameText)) {
+            ItemMeta meta = result.getItemMeta();
+            if (meta != null) {
+                meta.displayName(Component.text(renameText));
+                result.setItemMeta(meta);
+                changed = true;
+            }
+        }
+        return changed ? result : null;
+    }
+
+    private boolean shouldApplyAnvilRename(ItemStack input, String renameText) {
+        if (renameText == null || renameText.isBlank()) {
+            return false;
+        }
+        ItemMeta meta = input.getItemMeta();
+        String current = "";
+        if (meta != null && meta.hasDisplayName()) {
+            current = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+        }
+        return !renameText.equals(current);
     }
 
     private ItemStack createNetheriteUpgradeResult(ItemStack inputEquipment, ItemStack inputMineral, ItemStack inputTemplate) {

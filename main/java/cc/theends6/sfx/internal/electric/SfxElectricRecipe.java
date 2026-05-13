@@ -23,14 +23,14 @@ public final class SfxElectricRecipe {
         this.key = Objects.requireNonNull(key, "key");
         Objects.requireNonNull(inputs, "inputs");
         Objects.requireNonNull(outputGroups, "outputGroups");
-        if (inputs.isEmpty() || inputs.size() > 2) {
-            throw new IllegalArgumentException("Electric recipes support one or two input slots.");
+        if (inputs.isEmpty() || inputs.size() > SfxElectricMachineState.MAX_INPUTS) {
+            throw new IllegalArgumentException("Electric recipes support one to six input slots.");
         }
         if (outputGroups.isEmpty()) {
             throw new IllegalArgumentException("Electric recipes must declare at least one output group.");
         }
         for (List<SfxElectricStack> group : outputGroups) {
-            if (group == null || group.isEmpty() || group.size() > 2) {
+            if (group == null || group.isEmpty() || group.size() > SfxElectricMachineState.MAX_OUTPUTS) {
                 throw new IllegalArgumentException("Electric recipe output groups must contain one or two stacks.");
             }
         }
