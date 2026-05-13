@@ -3556,6 +3556,8 @@ energy:
     tier2-fuel-consumption-lore: '&8⇨ &6🔥 &7燃料消耗：&b1.5x'
   messages:
     capacitor-status: <yellow>当前储能 {stored}/{capacity} J</yellow>
+    connected: '<green>已连接</green>'
+    disconnected: '<red>未连接</red>'
     regulator-status: <yellow>能源调度器已激活。</yellow>
     connector-status: <yellow>能源连接器已接入附近电网。</yellow>
 
@@ -3631,3 +3633,32 @@ configurable-ui:
     output-slot:
       name: '<aqua>副产物槽</aqua>'
       lore: '<gray>从这里取出反应堆副产物。</gray>'
+
+tools:
+  multimeter:
+    classic: '<gray>储存电量：<yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
+    unsupported: '<red>这个方块没有可读取的电量信息。</red>'
+    types:
+      consumer: '用电器'
+      producer: '发电机'
+      generator: '发电机'
+      capacitor: '电容'
+      connector: '能量节点'
+      regulator: '能量调度器'
+    enhanced:
+      title: '<yellow>万用表</yellow>'
+      machine: '<gray>机器：<white>{name}</white></gray>'
+      type: '<gray>类型：<white>{type}</white></gray>'
+      location: '<gray>位置：<white>{location}</white></gray>'
+      energy: '<gray>电量：{bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
+      generation: '<gray>发电：<green>{value}</green> J/t</gray>'
+      consumption: '<gray>耗电：<yellow>{value}</yellow> J/t</gray>'
+      connected: '<gray>连接：<green>已连接</green></gray>'
+      disconnected: '<gray>连接：<red>未连接</red></gray>'
+      auto-paused: '<gray>自动暂停：<yellow>已启用</yellow></gray>'
+      scheduler: '<gray>调度器：<white>{location}</white></gray>'
+      scheduler-missing: '<gray>调度器：<red>未连接</red></gray>'
+      grid-energy: '<gray>电网电量：{bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
+      grid-rates: '<gray>发电：<green>{generation}</green> J/t <dark_gray>|</dark_gray> 耗电：<yellow>{consumption}</yellow> J/t</gray>'
+      grid-members: '<gray>连接组件：<white>{members}</white> <dark_gray>(发电机:{generators}, 反应堆:{reactors}, 电容:{capacitors}, 节点:{connectors}, 用电器:{consumers})</dark_gray></gray>'
+      grid-auto-paused: '<gray>自动暂停发电机：<yellow>{amount}</yellow></gray>'

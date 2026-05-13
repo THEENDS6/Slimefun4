@@ -123,3 +123,9 @@ energy:
         duration-seconds: 1800
         coolant-rate-multiplier: 2.0
         coolant-units: 144
+
+tools:
+  multimeter:
+    
+    
+    use-sfx-enhanced: true

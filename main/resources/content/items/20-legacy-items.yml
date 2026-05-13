@@ -935,6 +935,9 @@ items:
   name: '&dEnchanted Golden Apple'
   priority: 69
   giveable: false
+  flags:
+  - legacy-sf
+  - visual-glint
   lore:
   - ''
   - '&7Classic enhanced crafting recipe.'

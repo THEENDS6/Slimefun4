@@ -1775,7 +1775,9 @@ public final class DefaultSfxGuide implements SfxGuide {
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
             meta.displayName(Text.noItalic(localization.categoryName(category.id(), category.name())));
-            if ("guide:sf:magical_gadgets".equals(category.id())) {
+            if ("guide:sf:magical_gadgets".equals(category.id())
+                    || "guide:sf:magical_armor".equals(category.id())
+                    || "guide:sf:armor".equals(category.id())) {
                 meta.setEnchantmentGlintOverride(Boolean.TRUE);
             }
             icon.setItemMeta(meta);

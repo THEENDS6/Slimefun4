@@ -22,7 +22,7 @@ final class LegacySfCategoryBootstrap {
         LegacySfBootstrapSupport.registerCategory(registry, "sf:tools", "&fTools", Material.DIAMOND_PICKAXE, "&6Smelter's Pickaxe", null, null, 1110);
         LegacySfBootstrapSupport.registerCategory(registry, "sf:armor", "&fArmor", Material.LEATHER_HELMET, "&e&lGlowstone Helmet", null, 0xFED83D, 1120);
         LegacySfBootstrapSupport.registerCategory(registry, "sf:magical_components", "&fMagical components", Material.GOLD_NUGGET, "&6Magical Lump &7- &eI", null, null, 1130);
-        LegacySfBootstrapSupport.registerCategory(registry, "sf:technical_components", "&fTechnical components", Material.ACTIVATOR_RAIL, "&bBasic Circuit Board", null, null, 1140);
+        LegacySfBootstrapSupport.registerCategory(registry, "sf:technical_components", "&fTechnical components", Material.PLAYER_HEAD, "&cHeating Coil", "7e3bc4893ba41a3f73ee28174cdf4fef6b145e41fe6c82cb7be8d8e9771a5", null, 1140);
         LegacySfBootstrapSupport.registerCategory(registry, "sf:resources", "&fResources", Material.BUCKET, "&fBucket of Oil", null, null, 1145);
         LegacySfBootstrapSupport.registerCategory(registry, "sf:rainbow_blocks", "&fRainbow blocks", Material.WHITE_WOOL, "&5Rainbow Wool", null, null, 1150);
         LegacySfBootstrapSupport.registerCategory(registry, "sf:seasonal", "&fSeasonal", Material.WHITE_WOOL, "&5Rainbow Wool &7(Christmas)", null, null, 1160);
