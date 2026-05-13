@@ -1061,7 +1061,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private DisplayEntry fuelDisplayEntry(SfxRecipeSlot slot, double seconds, int energyPerTick, int priority, GuideMode mode) {
-        long totalEnergy = Math.round(seconds * energyPerTick);
+        long totalEnergy = Math.round(seconds * 20.0D * energyPerTick);
         ItemStack icon = withLore(ingredientIcon(slot), List.of(
                 Component.empty(),
                 Text.mm(tr("energy.generator.fuel-duration", "<gray>Duration: </gray><aqua>{seconds}</aqua>").replace("{seconds}", formatDuration(seconds))),

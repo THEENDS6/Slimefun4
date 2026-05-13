@@ -73,6 +73,7 @@ options:
   
   fire-breaking-chance: 34
 
+
 energy:
   regulator-display:
     mode: 'sfx'
