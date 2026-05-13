@@ -622,8 +622,8 @@ static Map<String, SfxItemCategory> createVirtualCategories() {
     map.put("guide:sf:resources", category("guide:sf:resources", "&7Resources", icon(Material.PLAYER_HEAD, "&bSynthetic Sapphire", "e35032f4d7d01de8ec99d89f8723012d4e74fa73022c4facf1b57c7ff6ff0", null), 1040));
     map.put("guide:sf:food", category("guide:sf:food", "&7Food", icon(Material.COOKIE, "&6Fortune Cookie", null, null), 1050));
     map.put("guide:sf:magical_items", category("guide:sf:magical_items", "&7Magical Items", icon(Material.ENDER_EYE, "&5Ender Rune", null, null), 1060));
-    map.put("guide:sf:magical_armor", category("guide:sf:magical_armor", "&7Magical Armor", icon(Material.DIAMOND_HELMET, "&5Ender Helmet", null, null), 1070));
-    map.put("guide:sf:technical_components", category("guide:sf:technical_components", "&7Technical Components", icon(Material.BLAZE_POWDER, "&6Heating Coil", null, null), 1080));
+    map.put("guide:sf:magical_armor", category("guide:sf:magical_armor", "&7Magical Armor", icon(Material.LEATHER_HELMET, "&5Ender Helmet", null, 0x1C1970), 1070));
+    map.put("guide:sf:technical_components", category("guide:sf:technical_components", "&7Technical Components", icon(Material.PLAYER_HEAD, "&cHeating Coil", "7e3bc4893ba41a3f73ee28174cdf4fef6b145e41fe6c82cb7be8d8e9771a5", null), 1080));
     map.put("guide:sf:misc", category("guide:sf:misc", "&7Miscellaneous", icon(Material.BUCKET, "&7Tin Can", null, null), 1090));
     map.put("guide:sf:armor", category("guide:sf:armor", "&7Armor", icon(Material.IRON_CHESTPLATE, "&bWatered Steel Chestplate", null, null), 1100));
     map.put("guide:sf:talismans", category("guide:sf:talismans", "&7Talismans - &aTier I", icon(Material.EMERALD, "&7Common Talisman", null, null), 1110));

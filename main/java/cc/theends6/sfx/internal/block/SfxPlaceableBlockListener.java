@@ -4,11 +4,17 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
+import cc.theends6.sfx.api.runtime.SfxRuntime;
 import java.util.Objects;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.Levelled;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Wither;
+import org.bukkit.entity.WitherSkull;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
@@ -19,6 +25,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -27,12 +34,14 @@ import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 
 public final class SfxPlaceableBlockListener implements Listener {
+    private static final BlockFace[] HORIZONTAL_FACES = {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST};
     private final SfxItems items;
     private final SfxBlockDataService blockData;
     private final SfxBasicMachineBlockListener basicMachines;
     private final SfxElectricMachineService electricMachines;
     private final SfxConfigurableMachineService configurableMachines;
     private final SfxEnergyService energyService;
+    private final SfxRuntime runtime;
 
     public SfxPlaceableBlockListener(
             SfxItems items,
@@ -40,7 +49,8 @@ public final class SfxPlaceableBlockListener implements Listener {
             SfxBasicMachineBlockListener basicMachines,
             SfxElectricMachineService electricMachines,
             SfxConfigurableMachineService configurableMachines,
-            SfxEnergyService energyService
+            SfxEnergyService energyService,
+            SfxRuntime runtime
     ) {
         this.items = Objects.requireNonNull(items, "items");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
@@ -48,6 +58,7 @@ public final class SfxPlaceableBlockListener implements Listener {
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
         this.configurableMachines = Objects.requireNonNull(configurableMachines, "configurableMachines");
         this.energyService = Objects.requireNonNull(energyService, "energyService");
+        this.runtime = Objects.requireNonNull(runtime, "runtime");
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -85,12 +96,36 @@ public final class SfxPlaceableBlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntityExplode(EntityExplodeEvent event) {
-        destroyExplodedBlocks(event.blockList());
+        destroyExplodedBlocks(event.blockList(), event.getLocation(), isWitherExplosion(event.getEntity()));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockExplode(BlockExplodeEvent event) {
-        destroyExplodedBlocks(event.blockList());
+        destroyExplodedBlocks(event.blockList(), event.getBlock().getLocation().add(0.5, 0.5, 0.5), false);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onEntityChangeBlock(EntityChangeBlockEvent event) {
+        if (!isWitherExplosion(event.getEntity())) {
+            return;
+        }
+        Block block = event.getBlock();
+        SfxAnchorRecord anchor = blockData.findAnchor(block.getLocation()).orElse(null);
+        if (anchor == null) {
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+        event.setCancelled(true);
+        if (instance == null) {
+            blockData.unregisterAt(block.getLocation());
+            block.setType(Material.AIR, false);
+            return;
+        }
+        if (isWitherProof(instance.typeId())) {
+            return;
+        }
+        destroyAnchoredBlock(block, instance.instanceId(), instance.typeId());
+        block.setType(Material.AIR, false);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -110,8 +145,14 @@ public final class SfxPlaceableBlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onFluidFlow(BlockFromToEvent event) {
-        if (blockData.findAnchor(event.getToBlock().getLocation()).isPresent()) {
+        Block to = event.getToBlock();
+        if (blockData.findAnchor(to.getLocation()).isPresent()) {
             event.setCancelled(true);
+            scheduleWaterSourceCheckAbove(to);
+            return;
+        }
+        if (blockData.findAnchor(to.getRelative(BlockFace.DOWN).getLocation()).isPresent()) {
+            scheduleWaterSourceCheck(to);
         }
     }
 
@@ -120,6 +161,12 @@ public final class SfxPlaceableBlockListener implements Listener {
         // Do not cancel neighbouring water physics. Liquid flow into the anchored block
         // itself is blocked by BlockFromToEvent / bucket handling; allowing physics here
         // lets water above SFX skull blocks form source blocks normally.
+        Block block = event.getBlock();
+        if (blockData.findAnchor(block.getRelative(BlockFace.DOWN).getLocation()).isPresent()) {
+            scheduleWaterSourceCheck(block);
+        } else if (blockData.findAnchor(block.getLocation()).isPresent()) {
+            scheduleWaterSourceCheckAbove(block);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -127,7 +174,54 @@ public final class SfxPlaceableBlockListener implements Listener {
         Block target = event.getBlockClicked().getRelative(event.getBlockFace());
         if (blockData.findAnchor(target.getLocation()).isPresent()) {
             event.setCancelled(true);
+            scheduleWaterSourceCheckAbove(target);
+            return;
         }
+        if (blockData.findAnchor(target.getRelative(BlockFace.DOWN).getLocation()).isPresent()) {
+            scheduleWaterSourceCheck(target);
+        }
+    }
+
+
+    private void scheduleWaterSourceCheckAbove(Block anchoredBlock) {
+        scheduleWaterSourceCheck(anchoredBlock.getRelative(BlockFace.UP));
+    }
+
+    private void scheduleWaterSourceCheck(Block block) {
+        if (block == null || block.getWorld() == null) {
+            return;
+        }
+        Location location = block.getLocation();
+        runtime.executeAtLater(location, 1L, () -> normalizeWaterSourceAboveAnchoredBlock(block));
+    }
+
+    private void normalizeWaterSourceAboveAnchoredBlock(Block block) {
+        if (block == null || block.getType() != Material.WATER) {
+            return;
+        }
+        if (blockData.findAnchor(block.getRelative(BlockFace.DOWN).getLocation()).isEmpty()) {
+            return;
+        }
+        if (horizontalWaterSourceCount(block) < 2) {
+            return;
+        }
+        if (block.getBlockData() instanceof Levelled levelled && levelled.getLevel() != 0) {
+            levelled.setLevel(0);
+            block.setBlockData(levelled, false);
+        }
+    }
+
+    private int horizontalWaterSourceCount(Block block) {
+        int count = 0;
+        for (BlockFace face : HORIZONTAL_FACES) {
+            Block relative = block.getRelative(face);
+            if (relative.getType() == Material.WATER
+                    && relative.getBlockData() instanceof Levelled levelled
+                    && levelled.getLevel() == 0) {
+                count++;
+            }
+        }
+        return count;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -141,18 +235,25 @@ public final class SfxPlaceableBlockListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        event.getPlayer().getInventory().setItem(event.getTargetSlot(), items.create(instance.typeId()));
-        event.getPlayer().updateInventory();
+        SfxPickBlockSupport.selectOrCreate(event.getPlayer(), items, instance.typeId(), event.getTargetSlot());
     }
 
-    private void destroyExplodedBlocks(java.util.List<Block> blocks) {
+    private void destroyExplodedBlocks(java.util.List<Block> blocks, Location explosionCenter, boolean witherExplosion) {
         java.util.List<Block> targets = new java.util.ArrayList<>(blocks);
         for (Block block : targets) {
             SfxAnchorRecord anchor = blockData.findAnchor(block.getLocation()).orElse(null);
+            SfxBlockInstanceRecord instance = anchor == null ? null : blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (instance != null && isExplosionProtected(instance.typeId(), witherExplosion)) {
+                blocks.remove(block);
+                continue;
+            }
+            if (isExplosionRayBlocked(explosionCenter, block, witherExplosion)) {
+                blocks.remove(block);
+                continue;
+            }
             if (anchor == null) {
                 continue;
             }
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
             blocks.remove(block);
             if (instance == null) {
                 blockData.unregisterAt(block.getLocation());
@@ -162,6 +263,92 @@ public final class SfxPlaceableBlockListener implements Listener {
             destroyAnchoredBlock(block, instance.instanceId(), instance.typeId());
             block.setType(Material.AIR, false);
         }
+    }
+
+    private boolean isExplosionRayBlocked(Location explosionCenter, Block target, boolean witherExplosion) {
+        if (explosionCenter == null || explosionCenter.getWorld() == null || target.getWorld() == null
+                || !explosionCenter.getWorld().equals(target.getWorld())) {
+            return false;
+        }
+        Location targetCenter = target.getLocation().add(0.5, 0.5, 0.5);
+        double dx = targetCenter.getX() - explosionCenter.getX();
+        double dy = targetCenter.getY() - explosionCenter.getY();
+        double dz = targetCenter.getZ() - explosionCenter.getZ();
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (distance <= 0.0D) {
+            return false;
+        }
+        // Sample the ray at a sub-block interval. This mirrors the gameplay intent of
+        // hardened glass behaving as a blast barrier: blocks behind the protected block
+        // are removed from the affected block list, but the explosion itself is not
+        // globally cancelled.
+        double step = 0.2D;
+        int steps = Math.max(1, (int) Math.ceil(distance / step));
+        int targetX = target.getX();
+        int targetY = target.getY();
+        int targetZ = target.getZ();
+        int lastX = Integer.MIN_VALUE;
+        int lastY = Integer.MIN_VALUE;
+        int lastZ = Integer.MIN_VALUE;
+        for (int i = 1; i < steps; i++) {
+            double t = i / (double) steps;
+            int x = floorBlockCoordinate(explosionCenter.getX() + dx * t);
+            int y = floorBlockCoordinate(explosionCenter.getY() + dy * t);
+            int z = floorBlockCoordinate(explosionCenter.getZ() + dz * t);
+            if (x == targetX && y == targetY && z == targetZ) {
+                break;
+            }
+            if (x == lastX && y == lastY && z == lastZ) {
+                continue;
+            }
+            lastX = x;
+            lastY = y;
+            lastZ = z;
+            Block rayBlock = explosionCenter.getWorld().getBlockAt(x, y, z);
+            SfxAnchorRecord anchor = blockData.findAnchor(rayBlock.getLocation()).orElse(null);
+            if (anchor == null) {
+                continue;
+            }
+            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (instance != null && blocksExplosionRay(instance.typeId(), witherExplosion)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int floorBlockCoordinate(double coordinate) {
+        return (int) Math.floor(coordinate);
+    }
+
+    private boolean isExplosionProtected(String typeId, boolean witherExplosion) {
+        if (typeId == null) {
+            return false;
+        }
+        if (isWitherProof(typeId)) {
+            return true;
+        }
+        return !witherExplosion && typeId.equals("sf:hardened_glass");
+    }
+
+    private boolean blocksExplosionRay(String typeId, boolean witherExplosion) {
+        if (typeId == null) {
+            return false;
+        }
+        if (isWitherProof(typeId)) {
+            return true;
+        }
+        return !witherExplosion && typeId.equals("sf:hardened_glass");
+    }
+
+    private boolean isWitherProof(String typeId) {
+        return typeId.equals("sf:wither_proof_obsidian")
+                || typeId.equals("sf:wither_proof_glass")
+                || typeId.equals("sf:wither_assembler");
+    }
+
+    private boolean isWitherExplosion(Entity entity) {
+        return entity instanceof Wither || entity instanceof WitherSkull;
     }
 
     private boolean touchesAnchoredBlock(java.util.List<Block> movedBlocks, BlockFace moveDirection) {

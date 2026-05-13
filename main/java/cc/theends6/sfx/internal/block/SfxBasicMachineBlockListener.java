@@ -172,11 +172,8 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (typeId == null) {
             return;
         }
-        if (items.readMarker(items.create(typeId)).map(marker -> marker.flags().contains("creative-clone")).orElse(false)) {
-            event.setCancelled(true);
-            event.getPlayer().getInventory().setItem(event.getTargetSlot(), items.create(typeId));
-            event.getPlayer().updateInventory();
-        }
+        event.setCancelled(true);
+        SfxPickBlockSupport.selectOrCreate(event.getPlayer(), items, typeId, event.getTargetSlot());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

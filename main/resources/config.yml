@@ -123,3 +123,9 @@ energy:
         duration-seconds: 1800
         coolant-rate-multiplier: 2.0
         coolant-units: 144
+
+tools:
+  multimeter:
+    # false = classic Slimefun behavior: only display stored/capacity.
+    # true = SFX enhanced inspection with grid and machine details.
+    use-sfx-enhanced: true

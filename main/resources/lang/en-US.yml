@@ -3452,6 +3452,8 @@ energy:
     tier2-fuel-consumption-lore: '&8⇨ &6🔥 &7Fuel consumption: &b1.5x'
   messages:
     capacitor-status: <yellow>Stored {stored}/{capacity} J</yellow>
+    connected: '<green>Connected</green>'
+    disconnected: '<red>Not connected</red>'
     regulator-status: <yellow>Energy regulator active.</yellow>
     connector-status: <yellow>Energy connector linked to nearby networks.</yellow>
 
@@ -3527,3 +3529,32 @@ configurable-ui:
     output-slot:
       name: '<aqua>Byproduct Slot</aqua>'
       lore: '<gray>Take reactor byproducts here.</gray>'
+
+tools:
+  multimeter:
+    classic: '<gray>Stored Energy: <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
+    unsupported: '<red>This block has no readable energy storage.</red>'
+    types:
+      consumer: 'Consumer'
+      producer: 'Producer'
+      generator: 'Generator'
+      capacitor: 'Capacitor'
+      connector: 'Energy Node'
+      regulator: 'Energy Regulator'
+    enhanced:
+      title: '<yellow>Multimeter</yellow>'
+      machine: '<gray>Machine: <white>{name}</white></gray>'
+      type: '<gray>Type: <white>{type}</white></gray>'
+      location: '<gray>Location: <white>{location}</white></gray>'
+      energy: '<gray>Energy: {bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
+      generation: '<gray>Generation: <green>{value}</green> J/t</gray>'
+      consumption: '<gray>Consumption: <yellow>{value}</yellow> J/t</gray>'
+      connected: '<gray>Connection: <green>Connected</green></gray>'
+      disconnected: '<gray>Connection: <red>Disconnected</red></gray>'
+      auto-paused: '<gray>Auto pause: <yellow>enabled</yellow></gray>'
+      scheduler: '<gray>Scheduler: <white>{location}</white></gray>'
+      scheduler-missing: '<gray>Scheduler: <red>not connected</red></gray>'
+      grid-energy: '<gray>Grid energy: {bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
+      grid-rates: '<gray>Generation: <green>{generation}</green> J/t <dark_gray>|</dark_gray> Consumption: <yellow>{consumption}</yellow> J/t</gray>'
+      grid-members: '<gray>Connected components: <white>{members}</white> <dark_gray>(G:{generators}, R:{reactors}, C:{capacitors}, N:{connectors}, M:{consumers})</dark_gray></gray>'
+      grid-auto-paused: '<gray>Auto-paused generators: <yellow>{amount}</yellow></gray>'

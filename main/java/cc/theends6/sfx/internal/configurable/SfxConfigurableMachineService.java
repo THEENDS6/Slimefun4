@@ -636,6 +636,9 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         SfxConfigurableMachineState state = currentState(instanceId, instance);
         SfxConfigurableMachineSession session = sessionsByHost.get(instanceId);
+        if (session != null) {
+            syncInventoryToState(session.inventory(), state, definition, session.panelType());
+        }
         Location location = locationFor(instance);
         boolean changed = switch (definition.kind()) {
             case ASSEMBLER -> tickAssembler(instanceId, definition, state, location);
@@ -702,6 +705,10 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         SfxConfigurableMachineDefinition definition = definitions.get(instance.typeId());
         SfxConfigurableMachineState state = currentState(instanceId, instance);
+        SfxConfigurableMachineSession session = sessionsByHost.get(instanceId);
+        if (session != null) {
+            syncInventoryToState(session.inventory(), state, definition, session.panelType());
+        }
         Location location = locationFor(instance);
         if (autoPausedProducers.contains(instanceId) && canAutoPauseProducer(instanceId)) {
             return 0;
@@ -710,8 +717,7 @@ public final class SfxConfigurableMachineService implements Listener {
         if (result.changed()) {
             if (blockData.findInstance(instanceId).isPresent()) {
                 dirtyInstances.add(instanceId);
-                SfxConfigurableMachineSession session = sessionsByHost.get(instanceId);
-                if (session != null) {
+                if (session != null && sessionsByHost.get(instanceId) == session) {
                     render(session, instance, definition, state);
                 }
             }
@@ -724,6 +730,10 @@ public final class SfxConfigurableMachineService implements Listener {
             return new ReactorTickResult(0, false);
         }
         boolean changed = false;
+        if (isReactorOutputBlocked(definition, state)) {
+            updateReactorHologram(instance.anchorKey(), state);
+            return new ReactorTickResult(0, false);
+        }
         if (!state.hasActiveFuel()) {
             SfxConfigurableMachineDefinition.ReactorFuel fuel = findFuel(definition, state);
             if (fuel == null || (fuel.output() != null && !canFitOutput(items, state, fuel.output(), 0, 1))) {
@@ -779,6 +789,14 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         updateReactorHologram(instance.anchorKey(), state);
         return new ReactorTickResult(generated, true);
+    }
+
+    private boolean isReactorOutputBlocked(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
+        if (!state.hasActiveFuel() || state.fuelTotalTicks() <= 0 || state.fuelProgressTicks() < state.fuelTotalTicks()) {
+            return false;
+        }
+        SfxConfigurableMachineDefinition.ReactorFuel activeFuel = fuelByKey(definition, state.activeFuelKey());
+        return activeFuel != null && activeFuel.output() != null && !canFitOutput(items, state, activeFuel.output(), 0, 1);
     }
 
     private boolean consumeCoolantIfNeeded(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition definition) {
@@ -1103,12 +1121,17 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private ItemStack reactorProgressItem(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
         boolean active = state.hasActiveFuel();
-        ItemStack icon = active
-                ? (definition.id().equals("sf:netherstar_reactor") ? new ItemStack(Material.NETHER_STAR) : items.create("sf:lava_crystal"))
-                : new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        Component name = active
-                ? localization.component("configurable-ui.reactor.progress.name", "<yellow>Reactor Status</yellow>")
-                : localization.component("electric-ui.idle.name", "<gray>Idle</gray>");
+        boolean outputBlocked = isReactorOutputBlocked(definition, state);
+        ItemStack icon = outputBlocked
+                ? new ItemStack(Material.RED_STAINED_GLASS_PANE)
+                : active
+                        ? (definition.id().equals("sf:netherstar_reactor") ? new ItemStack(Material.NETHER_STAR) : items.create("sf:lava_crystal"))
+                        : new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+        Component name = outputBlocked
+                ? localization.component("electric-ui.blocked.name", "<red>Blocked</red>")
+                : active
+                        ? localization.component("configurable-ui.reactor.progress.name", "<yellow>Reactor Status</yellow>")
+                        : localization.component("electric-ui.idle.name", "<gray>Idle</gray>");
         SfxConfigurableMachineDefinition.ReactorFuel activeFuel = fuelByKey(definition, state.activeFuelKey());
         String byproduct = activeFuel == null || activeFuel.output() == null
                 ? localization.text("configurable-ui.none", "None")
@@ -1123,7 +1146,10 @@ public final class SfxConfigurableMachineService implements Listener {
                 .extraLore(localization.component("configurable-ui.reactor.progress.byproduct", "<gray>Byproduct: {item}</gray>", Map.of("item", byproduct)))
                 .extraLore(localization.component("configurable-ui.reactor.progress.ticks", "<gray>Progress ticks: {current}/{total}</gray>", Map.of("current", state.fuelProgressTicks(), "total", state.fuelTotalTicks())))
                 .extraLore(localization.component("configurable-ui.reactor.progress.coolant-ticks", "<gray>Coolant ticks: {current}/{total}</gray>", Map.of("current", state.coolantProgressTicks(), "total", state.coolantTotalTicks())));
-        if (active) {
+        if (outputBlocked) {
+            view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), 0, false)
+                    .statusLore(localization.component("electric-ui.blocked.lore", "<gray>The output is full. Free a slot to commit the finished item.</gray>"));
+        } else if (active) {
             view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), Math.max(0, state.fuelTotalTicks() - state.fuelProgressTicks()), true)
                     .statusLore(localization.component("configurable-ui.reactor.progress.working", "<gray>Reactor is running.</gray>"));
         } else {
