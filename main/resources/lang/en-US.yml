@@ -2668,7 +2668,8 @@ items:
     lore:
     - ''
     - '&fThis machine allows you to'
-    - '&fcollect produce from nearby animals.'
+    - '&fcollect produce from nearby animals and hives.'
+    - '&7SFX: supports shears, bottles and brushes.'
     - ''
     - '&6Advanced Machine'
     - '&8⇨ &e⚡&710240 J Buffer'
@@ -2785,7 +2786,7 @@ items:
     - '&fRuns on &aOrganic Fertilizer'
     - ''
     - '&4End-Game Machine'
-    - '&8⇨ &7Radius: 7x7'
+    - '&8⇨ &7Radius: &b7x7'
     - '&8⇨ &7Speed: &a3/time'
     - '&8⇨ &e⚡&720480 J Buffer'
     - '&8⇨ &e⚡&750 J/t'
@@ -2796,7 +2797,7 @@ items:
     - '&fRuns on &aOrganic Fertilizer'
     - ''
     - '&4End-Game Machine'
-    - '&8⇨ &7Radius: 9x9'
+    - '&8⇨ &7Radius: &b9x9'
     - '&8⇨ &7Speed: &a4/time'
     - '&8⇨ &e⚡&720480 J Buffer'
     - '&8⇨ &e⚡&760 J/t'
@@ -2807,7 +2808,7 @@ items:
     - '&fRuns on &aOrganic Fertilizer'
     - ''
     - '&4End-Game Machine'
-    - '&8⇨ &7Radius: 9x9'
+    - '&8⇨ &7Radius: &b9x9'
     - '&8⇨ &7Speed: &a4/time'
     - '&8⇨ &e⚡&720480 J Buffer'
     - '&8⇨ &e⚡&748 J/t'
@@ -3356,6 +3357,41 @@ electric-ui:
   no-power:
     name: <red>No Power</red>
     lore: <gray>Charge this machine to continue.</gray>
+  no-input:
+    name: <red>Missing Input</red>
+    lore: <gray>Insert {input} to start.</gray>
+  overlapping-area:
+    name: <red>Work Area Conflict</red>
+    lore: <gray>Machines of the same type cannot have overlapping work areas.</gray>
+  no-target:
+    name: <red>No Target</red>
+    lore: <gray>{target}</gray>
+  required-input:
+    produce: bucket, bowl, shears, glass bottle or brush
+    organic-food: Organic Food
+    organic-fertilizer: Organic Fertilizer
+    generic: input item
+  target-text:
+    produce: 'No collectable target for the current tool nearby.'
+    auto-breeder: No breedable animals in range.
+    animal-growth: No baby animals in range.
+    crop-growth: No growable crops in range.
+    tree-growth: No saplings in range.
+    generic: No valid target in range.
+  action:
+    produce:
+      working: <gray>Collecting nearby animal products.</gray>
+    auto-breeder:
+      working: <gray>Feeding nearby animals.</gray>
+    animal-growth:
+      working: <gray>Accelerating nearby baby animals.</gray>
+    crop-growth:
+      working: <gray>Accelerating nearby crops.</gray>
+    tree-growth:
+      working: <gray>Accelerating nearby saplings.</gray>
+  time:
+    seconds: '{seconds}s'
+    minutes-seconds: '{minutes}m {seconds}s'
   energy-buffer: '<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
   progress:
     name: <yellow>Working</yellow>
@@ -3365,6 +3401,15 @@ electric-ui:
     power-disabled: <dark_gray>Power usage is disabled for now.</dark_gray>
     time-left: <gray>{time}</gray>
     work: '<gray>Progress: </gray><white>{current}</white><gray>/</gray><white>{total}</white><gray> (+{rate}/tick)</gray>'
+    working-lore: <gray>The machine is working.</gray>
+  simple-io:
+    xp-progress: '<gray>Stored XP: </gray><white>{current}</white><gray>/</gray><white>{total}</white>'
+    xp-waiting:
+      name: <gray>Waiting for experience orbs</gray>
+      lore: <gray>Nearby experience orbs will be collected automatically.</gray>
+    xp-working:
+      name: <yellow>Collecting XP</yellow>
+      lore: <gray>Collecting all nearby experience orbs.</gray>
 energy:
   regulator:
     no-network: <red>Not connected to any electric machines</red>

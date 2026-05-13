@@ -2609,7 +2609,8 @@ items:
     lore:
     - ''
     - '&f这台机器可让你'
-    - '&f收集附近动物的产物。'
+    - '&f收集附近动物和蜂箱的产物。'
+    - '&7SFX：支持剪刀、玻璃瓶和刷子。'
     - ''
     - '&6高级机器'
     - '&8⇨ &e⚡ &710240 J 储能'
@@ -2726,8 +2727,8 @@ items:
     - '&f使用 &a有机肥料 &f运行'
     - ''
     - '&4终极机器'
-    - '&8⇨ &7范围：7x7'
-    - '&8⇨ &7速度：&a3/次'
+    - '&8⇨ &7范围： &b7x7'
+    - '&8⇨ &7速度： &a3/次'
     - '&8⇨ &e⚡ &720480 J 储能'
     - '&8⇨ &e⚡ &750 J/t'
   sf.crop_growth_accelerator_2:
@@ -2737,8 +2738,8 @@ items:
     - '&f使用 &a有机肥料 &f运行'
     - ''
     - '&4终极机器'
-    - '&8⇨ &7范围：9x9'
-    - '&8⇨ &7速度：&a4/次'
+    - '&8⇨ &7范围： &b9x9'
+    - '&8⇨ &7速度： &a4/次'
     - '&8⇨ &e⚡ &720480 J 储能'
     - '&8⇨ &e⚡ &760 J/t'
   sf.tree_growth_accelerator:
@@ -2748,8 +2749,8 @@ items:
     - '&f使用 &a有机肥料 &f运行'
     - ''
     - '&4终极机器'
-    - '&8⇨ &7范围：9x9'
-    - '&8⇨ &7速度：&a4/次'
+    - '&8⇨ &7范围： &b9x9'
+    - '&8⇨ &7速度： &a4/次'
     - '&8⇨ &e⚡ &720480 J 储能'
     - '&8⇨ &e⚡ &748 J/t'
   sf.food_fabricator:
@@ -3434,7 +3435,7 @@ electric-ui:
     name: <gold>输出</gold>
     lore: <gray>在这里取出成品。</gray>
   idle:
-    name: <gray>待机</gray>
+    name: <gray>闲置中</gray>
     lore: <gray>等待输入物品。</gray>
   no-recipe:
     name: <gray>无配方</gray>
@@ -3449,6 +3450,41 @@ electric-ui:
   no-power:
     name: <red>电力不足</red>
     lore: <gray>为机器充能后继续工作。</gray>
+  no-input:
+    name: <red>缺少输入</red>
+    lore: <gray>放入 {input} 后开始工作。</gray>
+  overlapping-area:
+    name: <red>工作范围冲突</red>
+    lore: <gray>同类机器的工作范围不可重叠</gray>
+  no-target:
+    name: <red>无可作用目标</red>
+    lore: <gray>{target}</gray>
+  required-input:
+    produce: 桶、碗、剪刀、玻璃瓶或刷子
+    organic-food: 有机食物
+    organic-fertilizer: 有机肥料
+    generic: 输入物品
+  target-text:
+    produce: '没有可采集目标，或当前工具不可用于附近目标。'
+    auto-breeder: 范围内没有可繁殖动物。
+    animal-growth: 范围内没有幼年动物。
+    crop-growth: 范围内没有可生长作物。
+    tree-growth: 范围内没有树苗。
+    generic: 范围内没有可作用目标。
+  action:
+    produce:
+      working: <gray>正在采集附近动物产物。</gray>
+    auto-breeder:
+      working: <gray>正在喂养附近动物。</gray>
+    animal-growth:
+      working: <gray>正在加速幼年动物成长。</gray>
+    crop-growth:
+      working: <gray>正在催熟附近作物。</gray>
+    tree-growth:
+      working: <gray>正在催生附近树苗。</gray>
+  time:
+    seconds: '{seconds}s'
+    minutes-seconds: '{minutes}m {seconds}s'
   energy-buffer: '<gray>储能: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
   progress:
     name: <yellow>工作中</yellow>
@@ -3458,20 +3494,20 @@ electric-ui:
     power-disabled: <dark_gray>当前版本暂不消耗电力。</dark_gray>
     time-left: <gray>{time}</gray>
     work: <gray>进度：</gray><white>{current}</white><gray>/</gray><white>{total}</white><gray> (+{rate}/tick)</gray>
+    working-lore: <gray>机器正在工作。</gray>
   simple-io:
     no-input:
-      name: <gold>缺少输入</gold>
+      name: <red>缺少输入</red>
       lore: <gray>放入 {input} 后开始工作。</gray>
     no-target:
-      name: <gold>无可作用目标</gold>
+      name: <red>无可作用目标</red>
       lore: <gray>{target}</gray>
     waiting:
-      name: <gray>等待下一次工作</gray>
-      lore: <gray>机器会在下一次 SFX Tick 尝试工作。</gray>
+      name: <gray>待机</gray>
+      lore: <gray>等待可处理目标。</gray>
     working:
-      lore: <gray>机器刚刚完成了一次区域工作。</gray>
-    work-interval: '<gray>工作间隔：</gray><white>{ticks}</white><gray> tick</gray>'
-    xp-progress: '<gray>经验进度：</gray><white>{current}</white><gray>/</gray><white>{total}</white>'
+      lore: <gray>机器正在处理，完成时会触发效果。</gray>
+    xp-progress: '<gray>经验库存：</gray><white>{current}</white><gray>/</gray><white>{total}</white>'
     xp-waiting:
       name: <gray>等待经验球中</gray>
       lore: <gray>范围内出现经验球后会自动收集。</gray>

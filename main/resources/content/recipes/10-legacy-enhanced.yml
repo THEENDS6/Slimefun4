@@ -4517,7 +4517,7 @@ recipes:
       - sf:carbonado
       - empty
       - sf:electric_motor
-      - DIAMOND_AXE
+      - sf:crop_growth_accelerator
       - sf:electric_motor
       - sf:magnesium_salt
       - sf:big_capacitor

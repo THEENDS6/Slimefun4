@@ -82,6 +82,16 @@ options:
 
 
 electric-machines:
+  # SFX balance switches for world-interacting electric machines.
+  # false = classic behavior for that machine.
+  sfx-balance:
+    crop-growth-accelerator: true
+    tree-growth-accelerator: true
+    auto-breeder: true
+    animal-growth-accelerator: true
+    produce-collector: true
+    xp-collector: true
+
   # Allows SFX tools/items to be processed by special electric machines such as
   # Auto Anvil, Auto Enchanter and Auto Disenchanter. Runtime item metadata is preserved.
   allow-sfx-item-enchanting: true

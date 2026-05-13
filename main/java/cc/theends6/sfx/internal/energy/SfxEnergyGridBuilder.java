@@ -44,11 +44,8 @@ final class SfxEnergyGridBuilder {
             if (current == null) {
                 continue;
             }
-            if (!currentId.equals(regulatorId)) {
-                SfxEnergyComponentDefinition currentDefinition = definitions.get(current.typeId());
-                if (currentDefinition != null && !currentDefinition.expandsNetwork()) {
-                    continue;
-                }
+            if (!currentId.equals(regulatorId) && !canExpandNetwork(current)) {
+                continue;
             }
 
             for (SfxBlockInstanceRecord neighbour : registeredEnergyNeighbours(current.anchorKey())) {
@@ -67,6 +64,18 @@ final class SfxEnergyGridBuilder {
             return new SfxEnergyGridResult(regulatorId, regulatorKey, members, SfxEnergyGridStatus.NO_NETWORK);
         }
         return new SfxEnergyGridResult(regulatorId, regulatorKey, members, multipleRegulators ? SfxEnergyGridStatus.MULTIPLE_REGULATORS : SfxEnergyGridStatus.ONLINE);
+    }
+
+
+    private boolean canExpandNetwork(SfxBlockInstanceRecord instance) {
+        SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
+        if (definition != null) {
+            return definition.expandsNetwork();
+        }
+        if (electricMachines.supportsType(instance.typeId())) {
+            return false;
+        }
+        return false;
     }
 
     private List<SfxBlockInstanceRecord> registeredEnergyNeighbours(SfxBlockAnchorKey origin) {

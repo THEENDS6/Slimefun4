@@ -8,5 +8,6 @@ enum SfxElectricMachineRenderStatus {
     WORKING,
     BLOCKED_OUTPUT,
     OUTPUT_FULL,
-    NO_POWER
+    NO_POWER,
+    OVERLAPPING_AREA
 }

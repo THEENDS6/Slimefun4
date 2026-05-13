@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -125,6 +126,12 @@ public final class SfxLocalization {
         if (sfxGeneratorBalance && path.startsWith("items.sf.electrified_crucible")) {
             return electrifiedCrucibleLore(path, values);
         }
+        if (isGrowthAcceleratorLore(path)) {
+            return growthAcceleratorLore(path, values);
+        }
+        if ("items.sf.xp_collector.lore".equals(path)) {
+            return xpCollectorLore(values);
+        }
         if (!sfxGeneratorBalance) {
             return values;
         }
@@ -139,6 +146,74 @@ public final class SfxLocalization {
         }
         List<String> copy = new ArrayList<>(values);
         copy.add(line);
+        return copy;
+    }
+
+    private boolean isGrowthAcceleratorLore(String path) {
+        return "items.sf.crop_growth_accelerator.lore".equals(path)
+                || "items.sf.crop_growth_accelerator_2.lore".equals(path)
+                || "items.sf.tree_growth_accelerator.lore".equals(path);
+    }
+
+    private List<String> growthAcceleratorLore(String path, List<String> values) {
+        boolean crop = "items.sf.crop_growth_accelerator.lore".equals(path)
+                || "items.sf.crop_growth_accelerator_2.lore".equals(path);
+        boolean tree = "items.sf.tree_growth_accelerator.lore".equals(path);
+        boolean enabled = crop
+                ? plugin.getConfig().getBoolean("electric-machines.sfx-balance.crop-growth-accelerator", true)
+                : plugin.getConfig().getBoolean("electric-machines.sfx-balance.tree-growth-accelerator", true);
+        if (!enabled || values.size() < 4) {
+            return values;
+        }
+
+        boolean zh = language().toLowerCase(Locale.ROOT).startsWith("zh");
+        boolean cropOne = "items.sf.crop_growth_accelerator.lore".equals(path);
+        int attempts = cropOne ? 20 : 30;
+        int energy = cropOne ? 100 : (tree ? 96 : 120);
+
+        List<String> copy = new ArrayList<>();
+        copy.add(values.get(0));
+        copy.add(values.get(1));
+        copy.add(values.get(2));
+        copy.add(values.get(3));
+        if (zh) {
+            copy.add("&8⇨ &7范围： &b19x19");
+            copy.add("&8⇨ &7速度： &a" + attempts + "/次");
+            copy.add("&8⇨ &7间隔： &b10 秒");
+            copy.add("&8⇨ &e⚡ &740960 J 储能");
+            copy.add("&8⇨ &e⚡ &7" + energy + " J/t");
+        } else {
+            copy.add("&8⇨ &7Radius: &b19x19");
+            copy.add("&8⇨ &7Speed: &a" + attempts + "/time");
+            copy.add("&8⇨ &7Interval: &b10 Seconds");
+            copy.add("&8⇨ &e⚡&740960 J Buffer");
+            copy.add("&8⇨ &e⚡&7" + energy + " J/t");
+        }
+        return copy;
+    }
+
+    private List<String> xpCollectorLore(List<String> values) {
+        boolean enabled = plugin.getConfig().getBoolean("electric-machines.sfx-balance.xp-collector", true);
+        if (!enabled || values.isEmpty()) {
+            return values;
+        }
+        boolean zh = language().toLowerCase(Locale.ROOT).startsWith("zh");
+        String perFlask = zh ? "&8⇨ &e⚡ &71000 J/学识之瓶" : "&8⇨ &e⚡&71000 J/Knowledge Flask";
+        if (values.contains(perFlask)) {
+            return values;
+        }
+        List<String> copy = new ArrayList<>(values.size() + 1);
+        boolean inserted = false;
+        for (String value : values) {
+            if (!inserted && value != null && value.contains("J/t")) {
+                copy.add(perFlask);
+                inserted = true;
+            }
+            copy.add(value);
+        }
+        if (!inserted) {
+            copy.add(perFlask);
+        }
         return copy;
     }
 

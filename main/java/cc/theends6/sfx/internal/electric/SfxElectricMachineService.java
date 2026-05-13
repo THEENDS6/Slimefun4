@@ -58,6 +58,9 @@ public final class SfxElectricMachineService implements Listener {
     private final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
     private final Set<UUID> activeInstances = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> recentEnergyConsumption = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> supplementalEnergyThisSecond = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> supplementalEnergyAveragePerTick = new ConcurrentHashMap<>();
+    private volatile long supplementalEnergyWindow = -1L;
     private final Map<UUID, SfxElectricMachineSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, SfxElectricMachineSession> sessionsByInstance = new ConcurrentHashMap<>();
     private volatile boolean running;
@@ -78,9 +81,9 @@ public final class SfxElectricMachineService implements Listener {
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.profiles = Objects.requireNonNull(profiles, "profiles");
-        this.registry = SfxElectricMachineDefinitions.create(plugin, items, manualMachines);
+        this.registry = SfxElectricMachineDefinitions.create(plugin, items, manualMachines, blockData);
         this.menuRenderer = new SfxElectricMachineMenuRenderer(items, localization, profiles);
-        this.simpleIoMenuRenderer = new SfxSimpleIoMachineMenuRenderer(items, localization);
+        this.simpleIoMenuRenderer = new SfxSimpleIoMachineMenuRenderer(items, localization, profiles);
         this.recipeProcessor = new SfxElectricRecipeProcessor(items);
         bootstrapLoadedStates();
         running = true;
@@ -294,6 +297,9 @@ public final class SfxElectricMachineService implements Listener {
         dirtyInstances.clear();
         activeInstances.clear();
         recentEnergyConsumption.clear();
+        supplementalEnergyThisSecond.clear();
+        supplementalEnergyAveragePerTick.clear();
+        supplementalEnergyWindow = -1L;
     }
 
     private void bootstrapLoadedStates() {
@@ -337,11 +343,29 @@ public final class SfxElectricMachineService implements Listener {
         if (instanceIds == null || instanceIds.isEmpty()) {
             return 0;
         }
+        refreshSupplementalEnergyAverages();
         int total = 0;
         for (UUID instanceId : instanceIds) {
             total += requestedEnergyConsumption(instanceId);
+            total += supplementalEnergyAveragePerTick.getOrDefault(instanceId, 0);
         }
         return total;
+    }
+
+    private void refreshSupplementalEnergyAverages() {
+        long window = Math.max(0L, tickCounter / 20L);
+        if (window == supplementalEnergyWindow) {
+            return;
+        }
+        supplementalEnergyWindow = window;
+        supplementalEnergyAveragePerTick.clear();
+        for (Map.Entry<UUID, Integer> entry : supplementalEnergyThisSecond.entrySet()) {
+            int total = Math.max(0, entry.getValue());
+            if (total > 0) {
+                supplementalEnergyAveragePerTick.put(entry.getKey(), (total + 19) / 20);
+            }
+        }
+        supplementalEnergyThisSecond.clear();
     }
 
     private int requestedEnergyConsumption(UUID instanceId) {
@@ -355,9 +379,14 @@ public final class SfxElectricMachineService implements Listener {
         }
         SfxElectricMachineState state = currentState(instanceId, instance);
         Location location = locationFor(instance);
-        int specialRequest = location == null ? 0 : definition.recipeProvider().requestedEnergyConsumption(plugin, items, definition, state, location);
-        if (specialRequest > 0) {
-            return specialRequest;
+        if (definition.recipeProvider().hasWorldAction()) {
+            return location == null ? 0 : definition.recipeProvider().requestedEnergyConsumption(plugin, items, definition, state, location);
+        }
+        if (location != null && definition.recipeProvider().hasSpecialTick()) {
+            int customRequest = definition.recipeProvider().requestedEnergyConsumption(plugin, items, definition, state, location);
+            if (customRequest > 0) {
+                return customRequest;
+            }
         }
         if (state.hasPendingOutput()) {
             return 0;
@@ -467,30 +496,35 @@ public final class SfxElectricMachineService implements Listener {
         }
 
         Location location = locationFor(instance);
-        SfxElectricMachineTickResult specialResult = null;
-        if (location != null && definition.recipeProvider().hasSpecialTick()) {
+        SfxElectricMachineTickResult customResult = null;
+        if (location != null && definition.recipeProvider().hasWorldAction()) {
+            customResult = definition.recipeProvider().tickWorldAction(plugin, items, definition, state, location);
+        } else if (location != null && definition.recipeProvider().hasSpecialTick()) {
             int interval = Math.max(1, definition.recipeProvider().specialTickIntervalTicks());
-            if (state.hasProgress() || tickCounter % interval == 0L) {
-                specialResult = definition.recipeProvider().tickSpecial(plugin, items, definition, state, location);
+            if (state.hasProgress() || interval <= 1 || tickCounter % interval == 0L) {
+                customResult = definition.recipeProvider().tickSpecial(plugin, items, definition, state, location);
             } else {
                 SfxElectricMachineRenderStatus status = retainedSpecialStatus(definition, state, session);
-                specialResult = new SfxElectricMachineTickResult(status, 0, false, true);
+                customResult = new SfxElectricMachineTickResult(status, 0, false, true);
             }
         }
-        if (specialResult != null) {
-            if (specialResult.consumedEnergy() > 0) {
-                recentEnergyConsumption.merge(instanceId, specialResult.consumedEnergy(), Integer::sum);
+        if (customResult != null) {
+            if (customResult.consumedEnergy() > 0) {
+                recentEnergyConsumption.merge(instanceId, customResult.consumedEnergy(), Integer::sum);
             }
-            if (specialResult.changed()) {
+            if (customResult.supplementalEnergy() > 0) {
+                supplementalEnergyThisSecond.merge(instanceId, customResult.supplementalEnergy(), Integer::sum);
+            }
+            if (customResult.changed()) {
                 dirtyInstances.add(instanceId);
             }
-            if (session != null && shouldRenderSession(session, specialResult.status())) {
+            if (session != null && shouldRenderSession(session, customResult.status())) {
                 SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO
                         ? null
                         : recipeProcessor.activeRecipe(definition, state);
-                render(session, definition, session.inventory(), state, renderRecipe, specialResult.status());
+                render(session, definition, session.inventory(), state, renderRecipe, customResult.status());
             }
-            if (specialResult.keepActive() || state.hasAnyInput()) {
+            if (customResult.keepActive() || state.hasAnyInput()) {
                 activeInstances.add(instanceId);
             } else if (session == null && !state.hasProgress()) {
                 activeInstances.remove(instanceId);
@@ -634,7 +668,7 @@ public final class SfxElectricMachineService implements Listener {
         sessionsByViewer.put(player.getUniqueId(), session);
         sessionsByInstance.put(instance.instanceId(), session);
         activeInstances.add(instance.instanceId());
-        render(session, definition, inventory, state, recipeProcessor.activeRecipe(definition, state), recipeProcessor.deriveStatus(definition, state));
+        render(session, definition, inventory, state, recipeProcessor.activeRecipe(definition, state), sessionRenderStatus(definition, state, session));
         player.openInventory(inventory);
     }
 
@@ -655,7 +689,14 @@ public final class SfxElectricMachineService implements Listener {
         syncInventoryToState(session.inventory(), state);
         dirtyInstances.add(instanceId);
         activeInstances.add(instanceId);
-        render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), recipeProcessor.deriveStatus(definition, state));
+        render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), sessionRenderStatus(definition, state, session));
+    }
+
+    private SfxElectricMachineRenderStatus sessionRenderStatus(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineSession session) {
+        if (definition.recipeProvider().hasSpecialTick() || definition.recipeProvider().hasWorldAction()) {
+            return retainedSpecialStatus(definition, state, session);
+        }
+        return recipeProcessor.deriveStatus(definition, state);
     }
 
     private SfxElectricMachineState currentState(UUID instanceId, SfxBlockInstanceRecord instance) {
