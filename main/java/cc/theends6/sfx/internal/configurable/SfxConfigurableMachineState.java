@@ -50,7 +50,7 @@ final class SfxConfigurableMachineState {
             }
             state.storedEnergy = Math.max(0, input.readInt());
             state.enabled = input.readBoolean();
-            state.offsetTenths = Math.max(1, Math.min(128, input.readInt()));
+            state.offsetTenths = Math.max(-100, Math.min(100, input.readInt()));
             state.cooldownTicks = Math.max(0, input.readInt());
             state.mode = Math.max(0, Math.min(1, input.readInt()));
             String key = input.readUTF();
@@ -143,7 +143,7 @@ final class SfxConfigurableMachineState {
     }
 
     void offsetTenths(int offsetTenths) {
-        this.offsetTenths = Math.max(1, Math.min(128, offsetTenths));
+        this.offsetTenths = Math.max(-100, Math.min(100, offsetTenths));
     }
 
     int cooldownTicks() {

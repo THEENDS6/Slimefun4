@@ -15,6 +15,7 @@ import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -73,6 +74,7 @@ public final class SfxEnergyService implements Listener {
     private final Map<UUID, SfxEnergyGridStatus> nodeGridStatuses = new ConcurrentHashMap<>();
     private final Set<UUID> dirtyNodes = ConcurrentHashMap.newKeySet();
     private final Set<UUID> activeNodes = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> autoPausedGenerators = ConcurrentHashMap.newKeySet();
     private final Map<UUID, SfxEnergyGeneratorSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, SfxEnergyGeneratorSession> sessionsByInstance = new ConcurrentHashMap<>();
     private volatile SfxFuelBurnTimeBridge fuelBurnTimeBridge;
@@ -298,6 +300,7 @@ public final class SfxEnergyService implements Listener {
         nodeStates.remove(instanceId);
         dirtyNodes.remove(instanceId);
         activeNodes.remove(instanceId);
+        autoPausedGenerators.remove(instanceId);
         if (instance != null) {
             displayController.remove(instance.anchorKey());
         }
@@ -321,6 +324,7 @@ public final class SfxEnergyService implements Listener {
         nodeGridStatuses.clear();
         dirtyNodes.clear();
         activeNodes.clear();
+        autoPausedGenerators.clear();
     }
 
     private void bootstrapLoadedStates() {
@@ -445,22 +449,42 @@ public final class SfxEnergyService implements Listener {
 
         sortCapacitors(capacitorRefs);
 
+        int requestedConsumption = electricMachines.requestedEnergyConsumption(electricConsumerIds)
+                + configurableMachines.requestedEnergyConsumption(configurableConsumerIds);
+        int totalStoredBefore = totalStoredEnergy(capacitorRefs, generatorRefs, electricConsumers)
+                + configurableMachines.totalStoredEnergy(join(configurableConsumers, configurableProducers));
+        int totalCapacityBefore = totalCapacity(capacitorRefs, generatorRefs, electricConsumers)
+                + configurableMachines.totalCapacity(join(configurableConsumers, configurableProducers));
+        boolean autoPauseEnabled = plugin.getConfig().getBoolean("energy.generator-balance.pause-generators-when-grid-full", true);
+        int potentialSupply = potentialGeneration(generatorRefs, configurableProducers);
+        if (autoPauseEnabled) {
+            applyGeneratorAutoPause(generatorRefs, configurableProducers, totalStoredBefore, totalCapacityBefore, potentialSupply, requestedConsumption);
+        } else {
+            autoPausedGenerators.clear();
+            for (SfxBlockInstanceRecord producer : configurableProducers) {
+                configurableMachines.setProducerAutoPaused(producer.instanceId(), false);
+            }
+        }
+
         for (SfxEnergyNodeRef generator : generatorRefs) {
             if (generator.state().storedEnergy() > 0) {
                 available += generator.state().storedEnergy();
                 generator.state().storedEnergy(0);
                 dirtyNodes.add(generator.instance().instanceId());
             }
-            int produced = generate(generator.instance(), generator.definition(), generator.state());
+            int produced = autoPausedGenerators.contains(generator.instance().instanceId()) ? 0 : generate(generator.instance(), generator.definition(), generator.state());
             available += produced;
             supply += produced;
         }
 
         for (SfxBlockInstanceRecord producer : configurableProducers) {
-            int produced = configurableMachines.drainProducerEnergy(producer.instanceId());
+            int produced = configurableMachines.generateProducerEnergy(producer.instanceId());
             if (produced > 0) {
-                available += produced;
                 supply += produced;
+            }
+            int cached = configurableMachines.drainProducerEnergy(producer.instanceId());
+            if (cached > 0) {
+                available += cached;
             }
         }
 
@@ -556,20 +580,31 @@ public final class SfxEnergyService implements Listener {
             }
         }
 
+        for (SfxBlockInstanceRecord producer : configurableProducers) {
+            if (available <= 0) {
+                break;
+            }
+            int accepted = configurableMachines.chargeProducer(producer.instanceId(), available);
+            if (accepted > 0) {
+                available -= accepted;
+            }
+        }
+
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {
             scheduleCapacitorAppearanceUpdate(capacitor);
         }
 
-        int requestedConsumption = electricMachines.requestedEnergyConsumption(electricConsumerIds)
-                + configurableMachines.requestedEnergyConsumption(configurableConsumerIds);
         electricMachines.drainRecentEnergyConsumption(result.members());
         configurableMachines.drainRecentEnergyConsumption(new ArrayList<>(result.members()));
         int totalStored = totalStoredEnergy(capacitorRefs, generatorRefs, electricConsumers)
                 + configurableMachines.totalStoredEnergy(join(configurableConsumers, configurableProducers));
         int totalCapacity = totalCapacity(capacitorRefs, generatorRefs, electricConsumers)
                 + configurableMachines.totalCapacity(join(configurableConsumers, configurableProducers));
-        int net = supply - requestedConsumption;
-        displayStatus(result.regulatorKey(), SfxEnergyGridStatus.ONLINE, supply, requestedConsumption, net, totalStored, totalCapacity);
+        boolean hasAutoPaused = generatorRefs.stream().anyMatch(generator -> autoPausedGenerators.contains(generator.instance().instanceId())) || configurableProducers.stream().anyMatch(producer -> configurableMachines.isProducerAutoPaused(producer.instanceId()));
+        int displayStored = hasAutoPaused && totalCapacity > 0 && totalStored >= Math.floor(totalCapacity * 0.99D) ? totalCapacity : totalStored;
+        int displaySupply = autoPauseEnabled ? potentialSupply : supply;
+        int net = displaySupply - requestedConsumption;
+        displayStatus(result.regulatorKey(), SfxEnergyGridStatus.ONLINE, displaySupply, requestedConsumption, net, displayStored, totalCapacity);
         refreshOpenSfxEnergyGeneratorSessions();
     }
 
@@ -578,6 +613,111 @@ public final class SfxEnergyService implements Listener {
         result.addAll(first);
         result.addAll(second);
         return result;
+    }
+
+
+    private int potentialGeneration(List<SfxEnergyNodeRef> generatorRefs, List<SfxBlockInstanceRecord> configurableProducers) {
+        int total = 0;
+        for (SfxEnergyNodeRef generator : generatorRefs) {
+            total += generatorPotentialGeneration(generator.instance(), generator.definition(), generator.state());
+        }
+        for (SfxBlockInstanceRecord producer : configurableProducers) {
+            total += configurableMachines.producerPotentialGeneration(producer.instanceId());
+        }
+        return total;
+    }
+
+    private void applyGeneratorAutoPause(
+            List<SfxEnergyNodeRef> generatorRefs,
+            List<SfxBlockInstanceRecord> configurableProducers,
+            int totalStored,
+            int totalCapacity,
+            int potentialSupply,
+            int requestedConsumption
+    ) {
+        if (totalCapacity <= 0) {
+            autoPausedGenerators.clear();
+            for (SfxBlockInstanceRecord producer : configurableProducers) {
+                configurableMachines.setProducerAutoPaused(producer.instanceId(), false);
+            }
+            return;
+        }
+        if (totalStored < Math.floor(totalCapacity * 0.99D)) {
+            autoPausedGenerators.clear();
+            for (SfxBlockInstanceRecord producer : configurableProducers) {
+                configurableMachines.setProducerAutoPaused(producer.instanceId(), false);
+            }
+            return;
+        }
+        if (totalStored < totalCapacity) {
+            return;
+        }
+        int surplus = potentialSupply - requestedConsumption;
+        if (surplus <= 0) {
+            return;
+        }
+        List<AutoPauseCandidate> candidates = new ArrayList<>();
+        for (SfxEnergyNodeRef generator : generatorRefs) {
+            int potential = generatorPotentialGeneration(generator.instance(), generator.definition(), generator.state());
+            if (potential > 0) {
+                candidates.add(new AutoPauseCandidate(generator.instance().instanceId(), potential, false));
+            }
+        }
+        for (SfxBlockInstanceRecord producer : configurableProducers) {
+            int potential = configurableMachines.producerPotentialGeneration(producer.instanceId());
+            if (potential > 0 && configurableMachines.canAutoPauseProducer(producer.instanceId())) {
+                candidates.add(new AutoPauseCandidate(producer.instanceId(), potential, true));
+            }
+        }
+        Collections.shuffle(candidates);
+        int closed = 0;
+        for (AutoPauseCandidate candidate : candidates) {
+            if (closed + candidate.generation() > surplus) {
+                break;
+            }
+            if (candidate.configurable()) {
+                configurableMachines.setProducerAutoPaused(candidate.instanceId(), true);
+            } else {
+                autoPausedGenerators.add(candidate.instanceId());
+            }
+            closed += candidate.generation();
+        }
+    }
+
+    private int generatorPotentialGeneration(SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+        if (definition.componentType() != SfxEnergyComponentType.GENERATOR) {
+            return 0;
+        }
+        if (definition.isSolarGenerator()) {
+            Location location = toLocation(instance.anchorKey());
+            if (location == null) {
+                return 0;
+            }
+            World world = location.getWorld();
+            if (world == null || world.getEnvironment() != World.Environment.NORMAL) {
+                return definition.nightEnergyPerTick();
+            }
+            long time = world.getTime();
+            boolean isDaytime = !world.hasStorm() && !world.isThundering() && (time < 12300 || time > 23850);
+            return isDaytime ? definition.energyPerTick() : definition.nightEnergyPerTick();
+        }
+        if (state.hasPendingOutput() && findOutputSlot(state, state.pendingOutput()) == null) {
+            return 0;
+        }
+        if (state.hasActiveFuel()) {
+            return definition.energyPerTick();
+        }
+        SfxEnergyFuelMatch fuel = findFuelMatch(definition, state);
+        if (fuel == null) {
+            return 0;
+        }
+        if (fuel.output() != null && findOutputSlot(state, fuel.output()) == null) {
+            return 0;
+        }
+        return definition.energyPerTick();
+    }
+
+    private record AutoPauseCandidate(UUID instanceId, int generation, boolean configurable) {
     }
 
     private void sortCapacitors(List<SfxEnergyNodeRef> capacitorRefs) {

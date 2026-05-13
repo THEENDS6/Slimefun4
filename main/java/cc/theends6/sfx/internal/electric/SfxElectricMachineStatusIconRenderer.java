@@ -4,6 +4,8 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,50 +24,60 @@ final class SfxElectricMachineStatusIconRenderer {
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxPlayerDataService profiles;
+    private final SfxMachineStatusIconRenderer commonStatusIcons;
 
     SfxElectricMachineStatusIconRenderer(SfxItems items, SfxLocalization localization, SfxPlayerDataService profiles) {
         this.items = items;
         this.localization = localization;
         this.profiles = profiles;
+        this.commonStatusIcons = new SfxMachineStatusIconRenderer(localization);
     }
 
     ItemStack render(UUID viewerId, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
         SfxElectricMachineRenderStatus effectiveStatus = effectiveStatus(definition, state, status);
         Material material = material(definition, effectiveStatus);
-        ItemStack stack = new ItemStack(material);
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) {
-            return stack;
-        }
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        meta.displayName(displayName(viewerId, effectiveStatus));
+        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(material, displayName(viewerId, effectiveStatus))
+                .energy(state.storedEnergy(), definition.energyCapacity());
 
-        List<Component> lore = new ArrayList<>();
-        addProgressLore(definition, state, recipe, effectiveStatus, lore, stack, meta);
+        if (effectiveStatus == SfxElectricMachineRenderStatus.WORKING) {
+            if (isExpCollector(definition)) {
+                int current = Math.min(XP_PER_FLASK, Math.max(0, state.specialData() % XP_PER_FLASK));
+                if (state.specialData() >= XP_PER_FLASK) {
+                    current = XP_PER_FLASK;
+                }
+                view.progress(current, XP_PER_FLASK, -1, true)
+                        .statusLore(localization.component(
+                                "electric-ui.simple-io.xp-progress",
+                                "<gray>Stored XP: </gray><white>{current}</white><gray>/</gray><white>{total}</white>",
+                                Map.of("current", current, "total", XP_PER_FLASK)));
+            } else {
+                int totalWork = totalWork(definition, state, recipe);
+                int currentWork = Math.min(totalWork, Math.max(0, state.progressWork()));
+                int remainingTicks = Math.max(0, (int) Math.ceil((totalWork - currentWork) / (double) Math.max(1, definition.speed())));
+                view.progress(currentWork, totalWork, remainingTicks, true);
+            }
+        }
+
         Component statusLore = statusLore(definition, recipe, effectiveStatus);
         if (!Component.empty().equals(statusLore)) {
-            lore.add(statusLore);
+            view.statusLore(statusLore);
         }
-        lore.add(Component.empty());
-        lore.add(localization.component(
-                "electric-ui.energy-buffer",
-                "<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>",
-                Map.of("stored", state.storedEnergy(), "capacity", definition.energyCapacity())));
+        if (definition.energyConsumptionPerTick() > 0) {
+            view.consumption(definition.energyConsumptionPerTick());
+        }
         if (isExtendedUiEnabled(viewerId)) {
-            lore.add(localization.component(
+            view.extraLore(localization.component(
                     "electric-ui.progress.speed",
                     "<gray>Speed: </gray><aqua>{speed}x</aqua>",
                     Map.of("speed", definition.speed())));
             if (effectiveStatus == SfxElectricMachineRenderStatus.WORKING && recipe != null && recipe.output() != null) {
-                lore.add(localization.component(
+                view.extraLore(localization.component(
                         "electric-ui.progress.recipe",
                         "<gray>Recipe: </gray><white>{recipe}</white>",
                         Map.of("recipe", displayStackName(recipe.output()))));
             }
         }
-        meta.lore(lore);
-        stack.setItemMeta(meta);
-        return stack;
+        return commonStatusIcons.render(view.build());
     }
 
     private SfxElectricMachineRenderStatus effectiveStatus(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineRenderStatus status) {

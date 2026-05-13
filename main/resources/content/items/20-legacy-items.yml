@@ -6240,9 +6240,9 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8⇨ &7Cooldown: &b30 Seconds'
-  - '&8⇨ &e⚡&74096 J Buffer'
-  - '&8⇨ &e⚡&72048 J/Golem'
+  - '&8⇨ &7Work Time: &b30 Seconds'
+  - '&8⇨ &e⚡&781920 J Buffer'
+  - '&8⇨ &e⚡&775 J/t'
   flags:
   - legacy-sf
 - id: sf:wither_assembler
@@ -6253,9 +6253,9 @@ items:
   lore:
   - ''
   - '&4End-Game Machine'
-  - '&8⇨ &7Cooldown: &b30 Seconds'
-  - '&8⇨ &e⚡&74096 J Buffer'
-  - '&8⇨ &e⚡&74096 J/Wither'
+  - '&8⇨ &7Work Time: &b30 Seconds'
+  - '&8⇨ &e⚡&781920 J Buffer'
+  - '&8⇨ &e⚡&7150 J/t'
   flags:
   - legacy-sf
 - id: sf:trash_can_block

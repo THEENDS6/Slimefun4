@@ -112,6 +112,9 @@ energy:
     instant-empty-bucket-return: true
   generator-balance:
     use-sfx-balance: true
+    # SFX extension: pause redundant generators when a grid is fully charged.
+    # Reactors in production mode are never auto-paused.
+    pause-generators-when-grid-full: true
     electrified-crucible-consumption-multiplier: 1.5
     future:
       nether-star-reactor:

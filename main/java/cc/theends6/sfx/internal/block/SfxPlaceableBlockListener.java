@@ -5,10 +5,13 @@ import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import java.util.Objects;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Item;
 import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -20,6 +23,7 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 
 public final class SfxPlaceableBlockListener implements Listener {
@@ -103,6 +107,29 @@ public final class SfxPlaceableBlockListener implements Listener {
         }
     }
 
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onFluidFlow(BlockFromToEvent event) {
+        if (blockData.findAnchor(event.getToBlock().getLocation()).isPresent()) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockPhysics(BlockPhysicsEvent event) {
+        // Do not cancel neighbouring water physics. Liquid flow into the anchored block
+        // itself is blocked by BlockFromToEvent / bucket handling; allowing physics here
+        // lets water above SFX skull blocks form source blocks normally.
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBucketEmpty(PlayerBucketEmptyEvent event) {
+        Block target = event.getBlockClicked().getRelative(event.getBlockFace());
+        if (blockData.findAnchor(target.getLocation()).isPresent()) {
+            event.setCancelled(true);
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPickBlock(PlayerPickBlockEvent event) {
         SfxAnchorRecord anchor = blockData.findAnchor(event.getBlock().getLocation()).orElse(null);
@@ -129,11 +156,11 @@ public final class SfxPlaceableBlockListener implements Listener {
             blocks.remove(block);
             if (instance == null) {
                 blockData.unregisterAt(block.getLocation());
-                block.setType(org.bukkit.Material.AIR, false);
+                block.setType(Material.AIR, false);
                 continue;
             }
             destroyAnchoredBlock(block, instance.instanceId(), instance.typeId());
-            block.setType(org.bukkit.Material.AIR, false);
+            block.setType(Material.AIR, false);
         }
     }
 
