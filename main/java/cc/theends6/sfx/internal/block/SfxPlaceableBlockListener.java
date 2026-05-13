@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.block;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
+import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import java.util.Objects;
 import org.bukkit.block.Block;
@@ -26,6 +27,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxBlockDataService blockData;
     private final SfxBasicMachineBlockListener basicMachines;
     private final SfxElectricMachineService electricMachines;
+    private final SfxConfigurableMachineService configurableMachines;
     private final SfxEnergyService energyService;
 
     public SfxPlaceableBlockListener(
@@ -33,12 +35,14 @@ public final class SfxPlaceableBlockListener implements Listener {
             SfxBlockDataService blockData,
             SfxBasicMachineBlockListener basicMachines,
             SfxElectricMachineService electricMachines,
+            SfxConfigurableMachineService configurableMachines,
             SfxEnergyService energyService
     ) {
         this.items = Objects.requireNonNull(items, "items");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.basicMachines = Objects.requireNonNull(basicMachines, "basicMachines");
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
+        this.configurableMachines = Objects.requireNonNull(configurableMachines, "configurableMachines");
         this.energyService = Objects.requireNonNull(energyService, "energyService");
     }
 
@@ -154,6 +158,10 @@ public final class SfxPlaceableBlockListener implements Listener {
             electricMachines.destroyAnchoredBlock(block, instanceId, typeId);
             return;
         }
+        if (configurableMachines.supportsType(typeId)) {
+            configurableMachines.destroyAnchoredBlock(block, instanceId, typeId);
+            return;
+        }
         if (energyService.supportsType(typeId)) {
             energyService.destroyAnchoredBlock(block, instanceId, typeId);
             return;
@@ -169,6 +177,7 @@ public final class SfxPlaceableBlockListener implements Listener {
         }
         return basicMachines.supportsType(itemId)
                 || electricMachines.supportsType(itemId)
+                || configurableMachines.supportsType(itemId)
                 || energyService.supportsType(itemId);
     }
 

@@ -178,6 +178,7 @@ final class SfxElectricMachineStatusIconRenderer {
             case "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2" -> localization.component("electric-ui.action.crop-growth.working", "<gray>Accelerating nearby crops.</gray>");
             case "sf:tree_growth_accelerator" -> localization.component("electric-ui.action.tree-growth.working", "<gray>Accelerating nearby saplings.</gray>");
             case "sf:xp_collector" -> localization.component("electric-ui.simple-io.xp-working.lore", "<gray>Collecting nearby experience orbs.</gray>");
+            case "sf:fluid_pump" -> localization.component("electric-ui.action.fluid-pump.working", "<gray>Pumping fluid from below.</gray>");
             default -> localization.component("electric-ui.progress.working-lore", "<gray>The machine is working.</gray>");
         };
     }
@@ -187,6 +188,7 @@ final class SfxElectricMachineStatusIconRenderer {
             case "sf:produce_collector" -> "produce";
             case "sf:auto_breeder", "sf:animal_growth_accelerator" -> "organic-food";
             case "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2", "sf:tree_growth_accelerator" -> "organic-fertilizer";
+            case "sf:fluid_pump" -> "fluid-pump";
             default -> "generic";
         };
         return localization.text("electric-ui.required-input." + key, key);
@@ -199,6 +201,7 @@ final class SfxElectricMachineStatusIconRenderer {
             case "sf:animal_growth_accelerator" -> "animal-growth";
             case "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2" -> "crop-growth";
             case "sf:tree_growth_accelerator" -> "tree-growth";
+            case "sf:fluid_pump" -> "fluid-pump";
             default -> "generic";
         };
         return localization.text("electric-ui.target-text." + key, key);

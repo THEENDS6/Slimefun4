@@ -23,6 +23,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Beehive;
+import org.bukkit.block.data.Levelled;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.Armadillo;
@@ -36,6 +37,8 @@ import org.bukkit.entity.Sheep;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
@@ -61,6 +64,41 @@ final class SfxAreaElectricMachineProviders {
     private static final Enchantment MENDING = Enchantment.getByKey(NamespacedKey.minecraft("mending"));
 
     private SfxAreaElectricMachineProviders() {
+    }
+
+
+    static SfxElectricRecipeProvider fluidPump() {
+        return new WorldActionProvider() {
+            @Override
+            public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+                FluidPumpAction action = findFluidPumpAction(items, definition, state, location);
+                if (action.status() == SfxElectricMachineRenderStatus.NO_INPUT) {
+                    return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_INPUT, false);
+                }
+                if (action.status() == SfxElectricMachineRenderStatus.NO_TARGET) {
+                    return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
+                }
+                if (action.status() == SfxElectricMachineRenderStatus.OUTPUT_FULL) {
+                    return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OUTPUT_FULL, true);
+                }
+                if (state.storedEnergy() < definition.energyConsumptionPerTick()) {
+                    return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_POWER, true);
+                }
+                consumeInput(state, action.inputSlot(), 1);
+                pushOutput(items, definition, state, action.output());
+                if (action.consumeSource()) {
+                    action.source().setType(Material.AIR, false);
+                }
+                state.storedEnergy(state.storedEnergy() - definition.energyConsumptionPerTick());
+                return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
+            }
+
+            @Override
+            public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+                FluidPumpAction action = findFluidPumpAction(items, definition, state, location);
+                return action.status() == SfxElectricMachineRenderStatus.WORKING ? definition.energyConsumptionPerTick() : 0;
+            }
+        };
     }
 
     static SfxElectricRecipeProvider produceCollector() {
@@ -1202,6 +1240,105 @@ final class SfxAreaElectricMachineProviders {
         return plugin == null || plugin.getConfig().getBoolean("electric-machines.sfx-balance." + key, true);
     }
 
+
+    private static FluidPumpAction findFluidPumpAction(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        int inputSlot = -1;
+        SfxElectricStack input = null;
+        for (int slot = 0; slot < state.inputCapacity(); slot++) {
+            SfxElectricStack candidate = state.input(slot);
+            if (candidate == null || candidate.isSfxItem()) {
+                continue;
+            }
+            if (candidate.material() == Material.BUCKET || candidate.material() == Material.GLASS_BOTTLE) {
+                inputSlot = slot;
+                input = candidate;
+                break;
+            }
+        }
+        if (inputSlot < 0 || input == null) {
+            return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_INPUT);
+        }
+        Block source = findFluidSource(location, input.material());
+        if (source == null) {
+            return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_TARGET);
+        }
+        SfxElectricStack output;
+        boolean consumeSource = true;
+        if (input.material() == Material.BUCKET) {
+            if (source.getType() == Material.LAVA) {
+                output = SfxElectricStack.vanilla(Material.LAVA_BUCKET, 1);
+            } else if (source.getType() == Material.WATER || source.getType() == Material.BUBBLE_COLUMN) {
+                output = SfxElectricStack.vanilla(Material.WATER_BUCKET, 1);
+            } else {
+                return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_TARGET);
+            }
+        } else {
+            if (source.getType() != Material.WATER && source.getType() != Material.BUBBLE_COLUMN) {
+                return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_TARGET);
+            }
+            output = waterBottle(items);
+            consumeSource = ThreadLocalRandom.current().nextDouble() < 0.30D;
+        }
+        if (!canFitOutput(items, definition, state, output)) {
+            return FluidPumpAction.status(SfxElectricMachineRenderStatus.OUTPUT_FULL);
+        }
+        return new FluidPumpAction(SfxElectricMachineRenderStatus.WORKING, inputSlot, output, source, consumeSource);
+    }
+
+    private static Block findFluidSource(Location location, Material container) {
+        if (location == null || location.getWorld() == null) {
+            return null;
+        }
+        Block below = location.getBlock().getRelative(BlockFace.DOWN);
+        if (container == Material.GLASS_BOTTLE) {
+            return (below.getType() == Material.WATER || below.getType() == Material.BUBBLE_COLUMN) && isSourceLiquid(below) ? below : null;
+        }
+        if ((below.getType() == Material.WATER || below.getType() == Material.BUBBLE_COLUMN) && isSourceLiquid(below)) {
+            return below;
+        }
+        if (below.getType() != Material.LAVA) {
+            return null;
+        }
+        return findConnectedLavaSource(below, 42);
+    }
+
+    private static Block findConnectedLavaSource(Block start, int limit) {
+        List<Block> queue = new ArrayList<>();
+        List<Block> seen = new ArrayList<>();
+        queue.add(start);
+        seen.add(start);
+        for (int index = 0; index < queue.size() && seen.size() <= limit; index++) {
+            Block block = queue.get(index);
+            if (block.getType() == Material.LAVA && isSourceLiquid(block)) {
+                return block;
+            }
+            for (BlockFace face : new BlockFace[] {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN}) {
+                Block relative = block.getRelative(face);
+                if (relative.getType() != Material.LAVA || seen.contains(relative)) {
+                    continue;
+                }
+                seen.add(relative);
+                queue.add(relative);
+            }
+        }
+        return isSourceLiquid(start) ? start : null;
+    }
+
+    private static boolean isSourceLiquid(Block block) {
+        BlockData data = block.getBlockData();
+        return !(data instanceof Levelled levelled) || levelled.getLevel() == 0;
+    }
+
+    private static SfxElectricStack waterBottle(SfxItems items) {
+        ItemStack stack = new ItemStack(Material.POTION, 1);
+        ItemMeta meta = stack.getItemMeta();
+        if (meta instanceof PotionMeta potionMeta) {
+            potionMeta.setBasePotionType(PotionType.WATER);
+            stack.setItemMeta(potionMeta);
+        }
+        return SfxElectricStack.snapshot(stack);
+    }
+
     private abstract static class WorldActionProvider implements SfxElectricRecipeProvider {
         @Override
         public List<SfxElectricRecipe> recipes() {
@@ -1228,6 +1365,13 @@ final class SfxAreaElectricMachineProviders {
         @Override
         public int specialTickIntervalTicks() {
             return 1;
+        }
+    }
+
+
+    private record FluidPumpAction(SfxElectricMachineRenderStatus status, int inputSlot, SfxElectricStack output, Block source, boolean consumeSource) {
+        static FluidPumpAction status(SfxElectricMachineRenderStatus status) {
+            return new FluidPumpAction(status, -1, null, null, false);
         }
     }
 
