@@ -2976,17 +2976,17 @@ items:
     lore:
     - ''
     - '&4终极机器'
-    - '&8⇨ &7冷却： &b30 秒'
+    - '&8⇨ &7工作时间： &b30 秒'
     - '&8⇨ &e⚡ &781920 J 储能'
-    - '&8⇨ &e⚡ &740960 J/铁傀儡'
+    - '&8⇨ &e⚡ &775 J/t'
   sf.wither_assembler:
     name: '&5凋零组装机'
     lore:
     - ''
     - '&4终极机器'
-    - '&8⇨ &7冷却： &b30 秒'
+    - '&8⇨ &7工作时间： &b30 秒'
     - '&8⇨ &e⚡ &781920 J 储能'
-    - '&8⇨ &e⚡ &781920 J/凋灵'
+    - '&8⇨ &e⚡ &7150 J/t'
   sf.trash_can_block:
     name: '&3垃圾桶'
     lore:
@@ -3485,6 +3485,8 @@ electric-ui:
   time:
     seconds: '{seconds}s'
     minutes-seconds: '{minutes}m {seconds}s'
+  energy-consumption: '<gray>耗电: </gray><yellow>{energy}</yellow><gray> J/t</gray>'
+  energy-generation: '<gray>发电: </gray><yellow>{energy}</yellow><gray> J/t</gray>'
   energy-buffer: '<gray>储能: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
   progress:
     name: <yellow>工作中</yellow>
@@ -3556,3 +3558,76 @@ energy:
     capacitor-status: <yellow>当前储能 {stored}/{capacity} J</yellow>
     regulator-status: <yellow>能源调度器已激活。</yellow>
     connector-status: <yellow>能源连接器已接入附近电网。</yellow>
+
+configurable-ui:
+  none: '无'
+  energy:
+    stored: '<gray>储能：{stored}/{capacity} J</gray>'
+    cost: '<gray>消耗：{cost} J</gray>'
+    cost-per-tick: '<gray>消耗：{cost} J/t</gray>'
+  assembler:
+    enabled:
+      name: '<green>已启用：✔</green>'
+    disabled:
+      name: '<red>已启用：✘</red>'
+      lore: '<gray>该组装机已关闭。</gray>'
+    toggle:
+      lore: '<gray>点击切换组装机启用状态。</gray>'
+    offset:
+      name: '<yellow>生成偏移：{offset} 格</yellow>'
+      left: '<gray>左键：+0.1</gray>'
+      right: '<gray>右键：-0.1</gray>'
+      range: '<gray>范围：-10.0 到 10.0</gray>'
+      status: '<gray>生成偏移：{offset} 格</gray>'
+    cooldown:
+      name: '<yellow>冷却：30 秒</yellow>'
+      remaining: '<gray>剩余：{time}</gray>'
+    paused:
+      name: '<yellow>暂停中</yellow>'
+      lore: '<gray>启用该组装机以继续工作。</gray>'
+    working:
+      lore: '<gray>正在组装实体结构。</gray>'
+    work-time: '<gray>工作时间：{time}</gray>'
+    head-slot:
+      name: '<aqua>头部材料槽</aqua>'
+    body-slot:
+      name: '<aqua>身体材料槽</aqua>'
+    required:
+      lore: '<gray>需要：{amount}</gray>'
+  reactor:
+    focus-electricity:
+      name: '<yellow>模式：发电优先</yellow>'
+    focus-production:
+      name: '<yellow>模式：产物优先</yellow>'
+    focus:
+      lore: '<gray>点击切换反应堆运行模式。</gray>'
+    progress:
+      name: '<yellow>反应堆进度</yellow>'
+      working: '<gray>反应堆正在运行。</gray>'
+      idle: '<gray>等待燃料和冷却剂。</gray>'
+      nuclear-fuel: '<gray>核燃料：{percent}%</gray>'
+      fuel: '<gray>燃料：{progress}</gray>'
+      coolant: '<gray>冷却剂：{percent}%</gray>'
+      output: '<gray>输出：{energy} J/t</gray>'
+      ticks: '<gray>进度 tick：{current}/{total}</gray>'
+      coolant-ticks: '<gray>冷却 tick：{current}/{total}</gray>'
+      byproduct: '<gray>副产物：{item}</gray>'
+      mode: '<gray>模式：{mode}</gray>'
+    mode-electricity: '发电优先'
+    mode-production: '产物优先'
+    access-port:
+      detected:
+        name: '<green>已检测到反应堆访问端口</green>'
+        lore: '<gray>点击打开反应堆访问端口。</gray>'
+      missing:
+        name: '<red>未检测到反应堆访问端口</red>'
+        lore: '<gray>将访问端口放在反应堆上方 3 格处。</gray>'
+    fuel-slots:
+      name: '<aqua>燃料槽</aqua>'
+      lore: '<gray>只能放入该反应堆可用的燃料。</gray>'
+    coolant-slots:
+      name: '<aqua>冷却剂槽</aqua>'
+      lore: '<red>缺少冷却剂时反应堆会融毁。</red>'
+    output-slot:
+      name: '<aqua>副产物槽</aqua>'
+      lore: '<gray>从这里取出反应堆副产物。</gray>'

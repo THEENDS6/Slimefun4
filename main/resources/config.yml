@@ -112,6 +112,9 @@ energy:
     instant-empty-bucket-return: true
   generator-balance:
     use-sfx-balance: true
+    
+    
+    pause-generators-when-grid-full: true
     electrified-crucible-consumption-multiplier: 1.5
     future:
       nether-star-reactor:

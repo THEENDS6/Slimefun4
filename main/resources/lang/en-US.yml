@@ -3035,17 +3035,17 @@ items:
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8⇨ &7Cooldown: &b30 Seconds'
+    - '&8⇨ &7Work Time: &b30 Seconds'
     - '&8⇨ &e⚡&781920 J Buffer'
-    - '&8⇨ &e⚡&72048 J/Golem'
+    - '&8⇨ &e⚡&775 J/t'
   sf.wither_assembler:
     name: '&5Wither Assembler'
     lore:
     - ''
     - '&4End-Game Machine'
-    - '&8⇨ &7Cooldown: &b30 Seconds'
+    - '&8⇨ &7Work Time: &b30 Seconds'
     - '&8⇨ &e⚡&781920 J Buffer'
-    - '&8⇨ &e⚡&74096 J/Wither'
+    - '&8⇨ &e⚡&7150 J/t'
   sf.trash_can_block:
     name: '&3Trash Can'
     lore:
@@ -3392,6 +3392,8 @@ electric-ui:
   time:
     seconds: '{seconds}s'
     minutes-seconds: '{minutes}m {seconds}s'
+  energy-consumption: '<gray>Consumption: </gray><yellow>{energy}</yellow><gray> J/t</gray>'
+  energy-generation: '<gray>Generation: </gray><yellow>{energy}</yellow><gray> J/t</gray>'
   energy-buffer: '<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
   progress:
     name: <yellow>Working</yellow>
@@ -3452,3 +3454,76 @@ energy:
     capacitor-status: <yellow>Stored {stored}/{capacity} J</yellow>
     regulator-status: <yellow>Energy regulator active.</yellow>
     connector-status: <yellow>Energy connector linked to nearby networks.</yellow>
+
+configurable-ui:
+  none: 'None'
+  energy:
+    stored: '<gray>Stored: {stored}/{capacity} J</gray>'
+    cost: '<gray>Cost: {cost} J</gray>'
+    cost-per-tick: '<gray>Consumption: {cost} J/t</gray>'
+  assembler:
+    enabled:
+      name: '<green>Enabled: ✔</green>'
+    disabled:
+      name: '<red>Enabled: ✘</red>'
+      lore: '<gray>This assembler is disabled.</gray>'
+    toggle:
+      lore: '<gray>Click to toggle this assembler.</gray>'
+    offset:
+      name: '<yellow>Offset: {offset} Block(s)</yellow>'
+      left: '<gray>Left-click: +0.1</gray>'
+      right: '<gray>Right-click: -0.1</gray>'
+      range: '<gray>Range: -10.0 to 10.0</gray>'
+      status: '<gray>Offset: {offset} Block(s)</gray>'
+    cooldown:
+      name: '<yellow>Cooldown: 30 Seconds</yellow>'
+      remaining: '<gray>Remaining: {time}</gray>'
+    paused:
+      name: '<yellow>Paused</yellow>'
+      lore: '<gray>Enable this assembler to continue.</gray>'
+    working:
+      lore: '<gray>Assembling entity structure.</gray>'
+    work-time: '<gray>Work time: {time}</gray>'
+    head-slot:
+      name: '<aqua>Head Slot</aqua>'
+    body-slot:
+      name: '<aqua>Body Slot</aqua>'
+    required:
+      lore: '<gray>Required: {amount}</gray>'
+  reactor:
+    focus-electricity:
+      name: '<yellow>Focus: Electricity</yellow>'
+    focus-production:
+      name: '<yellow>Focus: Production</yellow>'
+    focus:
+      lore: '<gray>Click to switch reactor focus.</gray>'
+    progress:
+      name: '<yellow>Reactor Progress</yellow>'
+      working: '<gray>Reactor is running.</gray>'
+      idle: '<gray>Waiting for fuel and coolant.</gray>'
+      nuclear-fuel: '<gray>Nuclear Fuel: {percent}%</gray>'
+      fuel: '<gray>Fuel: {progress}</gray>'
+      coolant: '<gray>Coolant: {percent}%</gray>'
+      output: '<gray>Output: {energy} J/t</gray>'
+      ticks: '<gray>Ticks: {current}/{total}</gray>'
+      coolant-ticks: '<gray>Coolant ticks: {current}/{total}</gray>'
+      byproduct: '<gray>Byproduct: {item}</gray>'
+      mode: '<gray>Mode: {mode}</gray>'
+    mode-electricity: 'Electricity'
+    mode-production: 'Production'
+    access-port:
+      detected:
+        name: '<green>Access Port detected</green>'
+        lore: '<gray>Click to open the access port.</gray>'
+      missing:
+        name: '<red>No Access Port</red>'
+        lore: '<gray>Place this access port 3 blocks above a reactor.</gray>'
+    fuel-slots:
+      name: '<aqua>Fuel Slots</aqua>'
+      lore: '<gray>Insert valid reactor fuel here.</gray>'
+    coolant-slots:
+      name: '<aqua>Coolant Slots</aqua>'
+      lore: '<red>The reactor will melt down without coolant.</red>'
+    output-slot:
+      name: '<aqua>Byproduct Slot</aqua>'
+      lore: '<gray>Take reactor byproducts here.</gray>'

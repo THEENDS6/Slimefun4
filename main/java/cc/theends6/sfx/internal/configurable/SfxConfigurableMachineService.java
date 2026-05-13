@@ -14,6 +14,8 @@ import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,8 +24,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -48,6 +50,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -55,18 +59,20 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class SfxConfigurableMachineService implements Listener {
     private static final int INVENTORY_SIZE = 54;
     private static final long FLUSH_INTERVAL = 20L;
-    private static final int[] ASSEMBLER_HEAD_SLOTS = {20};
-    private static final int[] ASSEMBLER_BODY_SLOTS = {24};
+    private static final int[] ASSEMBLER_HEAD_SLOTS = {19, 28};
+    private static final int[] ASSEMBLER_BODY_SLOTS = {25, 34};
+    private static final int[] ASSEMBLER_HEAD_STATE_SLOTS = {0, 1};
+    private static final int[] ASSEMBLER_BODY_STATE_SLOTS = {2, 3};
     private static final int[] REACTOR_FUEL_SLOTS = {19, 28, 37};
     private static final int[] REACTOR_COOLANT_SLOTS = {25, 34, 43};
     private static final int[] REACTOR_OUTPUT_SLOTS = {40};
-    private static final int ENABLE_SLOT = 4;
-    private static final int OFFSET_SLOT = 22;
-    private static final int COOLDOWN_SLOT = 31;
+    private static final int ENABLE_SLOT = 13;
+    private static final int OFFSET_SLOT = 31;
+    private static final int ASSEMBLER_STATUS_SLOT = 22;
     private static final int REACTOR_MODE_SLOT = 4;
     private static final int REACTOR_PROGRESS_SLOT = 22;
     private static final int REACTOR_STATUS_SLOT = 49;
-    private static final int ASSEMBLER_COOLDOWN_TICKS = 30 * 20;
+    private static final int ASSEMBLER_WORK_TICKS = 30 * 20;
     private static final int REACTOR_COOLANT_TICKS = 300;
     private static final int HOLOGRAM_VIEW_DISTANCE_SQUARED = 32 * 32;
 
@@ -81,10 +87,16 @@ public final class SfxConfigurableMachineService implements Listener {
     private final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
     private final Set<UUID> activeInstances = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> recentEnergyConsumption = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> recentGeneratedEnergy = new ConcurrentHashMap<>();
+    private final Set<UUID> autoPausedProducers = ConcurrentHashMap.newKeySet();
+    private final SfxMachineStatusIconRenderer statusIcons;
     private final Map<UUID, SfxConfigurableMachineSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, SfxConfigurableMachineSession> sessionsByHost = new ConcurrentHashMap<>();
     private volatile boolean running;
     private volatile long tickCounter;
+
+    private record ReactorTickResult(int generatedEnergy, boolean changed) {
+    }
 
     public SfxConfigurableMachineService(
             JavaPlugin plugin,
@@ -100,6 +112,7 @@ public final class SfxConfigurableMachineService implements Listener {
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.floatingText = Objects.requireNonNull(floatingText, "floatingText");
+        this.statusIcons = new SfxMachineStatusIconRenderer(localization);
         registerDefinitions();
         bootstrapLoadedStates();
         running = true;
@@ -225,6 +238,11 @@ public final class SfxConfigurableMachineService implements Listener {
                 event.setCancelled(true);
                 return;
             }
+            ItemStack cursor = event.getCursor();
+            if (cursor != null && !cursor.getType().isAir() && !isValidInputItem(holder.panelType(), raw, cursor, definition)) {
+                event.setCancelled(true);
+                return;
+            }
         }
         runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
     }
@@ -239,11 +257,25 @@ public final class SfxConfigurableMachineService implements Listener {
         if (!touchesTop) {
             return;
         }
+        SfxBlockInstanceRecord host = blockData.findInstance(holder.hostInstanceId()).orElse(null);
+        SfxConfigurableMachineDefinition definition = host == null ? null : definitions.get(host.typeId());
+        if (host == null || definition == null) {
+            event.setCancelled(true);
+            return;
+        }
         int[] allowed = editableInputSlots(holder.panelType());
-        boolean onlyEditable = event.getRawSlots().stream()
-                .filter(slot -> slot < topSize)
-                .allMatch(slot -> contains(allowed, slot));
-        if (!onlyEditable) {
+        boolean valid = true;
+        for (Map.Entry<Integer, ItemStack> entry : event.getNewItems().entrySet()) {
+            int slot = entry.getKey();
+            if (slot >= topSize) {
+                continue;
+            }
+            if (!contains(allowed, slot) || !isValidInputItem(holder.panelType(), slot, entry.getValue(), definition)) {
+                valid = false;
+                break;
+            }
+        }
+        if (!valid) {
             event.setCancelled(true);
             return;
         }
@@ -294,6 +326,8 @@ public final class SfxConfigurableMachineService implements Listener {
         dirtyInstances.clear();
         activeInstances.clear();
         recentEnergyConsumption.clear();
+        recentGeneratedEnergy.clear();
+        autoPausedProducers.clear();
         sessionsByViewer.clear();
         sessionsByHost.clear();
     }
@@ -335,6 +369,9 @@ public final class SfxConfigurableMachineService implements Listener {
         states.remove(instanceId);
         dirtyInstances.remove(instanceId);
         activeInstances.remove(instanceId);
+        recentEnergyConsumption.remove(instanceId);
+        recentGeneratedEnergy.remove(instanceId);
+        autoPausedProducers.remove(instanceId);
         blockData.unregisterAt(block.getLocation());
     }
 
@@ -382,11 +419,11 @@ public final class SfxConfigurableMachineService implements Listener {
             }
             SfxConfigurableMachineDefinition definition = definitions.get(instance.typeId());
             SfxConfigurableMachineState state = currentState(instanceId, instance);
-            if (!state.enabled() || state.cooldownTicks() > 0 || state.storedEnergy() < definition.energyPerAction()) {
+            if (!state.enabled() || state.storedEnergy() < definition.energyPerAction()) {
                 continue;
             }
-            if (hasAssemblerMaterials(state, definition)) {
-                total += Math.max(1, definition.energyPerAction() / 20);
+            if (isAssemblerWorking(state) || hasAssemblerMaterials(state, definition)) {
+                total += definition.energyPerAction();
             }
         }
         return total;
@@ -399,6 +436,20 @@ public final class SfxConfigurableMachineService implements Listener {
         int total = 0;
         for (UUID id : instanceIds) {
             Integer value = recentEnergyConsumption.remove(id);
+            if (value != null && value > 0) {
+                total += value;
+            }
+        }
+        return total;
+    }
+
+    public int drainRecentGeneratedEnergy(List<UUID> instanceIds) {
+        if (instanceIds == null || instanceIds.isEmpty()) {
+            return 0;
+        }
+        int total = 0;
+        for (UUID id : instanceIds) {
+            Integer value = recentGeneratedEnergy.remove(id);
             if (value != null && value > 0) {
                 total += value;
             }
@@ -431,6 +482,76 @@ public final class SfxConfigurableMachineService implements Listener {
             dirtyInstances.add(instanceId);
         }
         return available;
+    }
+
+    public int chargeProducer(UUID instanceId, int amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null || !isProducer(instance.typeId())) {
+            return 0;
+        }
+        SfxConfigurableMachineDefinition definition = definitions.get(instance.typeId());
+        SfxConfigurableMachineState state = currentState(instanceId, instance);
+        int accepted = Math.max(0, Math.min(amount, definition.capacity() - state.storedEnergy()));
+        if (accepted > 0) {
+            state.storedEnergy(state.storedEnergy() + accepted);
+            dirtyInstances.add(instanceId);
+            activeInstances.add(instanceId);
+        }
+        return accepted;
+    }
+
+
+    public boolean isProducerAutoPaused(UUID instanceId) {
+        return autoPausedProducers.contains(instanceId);
+    }
+
+    public void setProducerAutoPaused(UUID instanceId, boolean paused) {
+        if (instanceId == null) {
+            return;
+        }
+        if (paused) {
+            autoPausedProducers.add(instanceId);
+        } else {
+            autoPausedProducers.remove(instanceId);
+        }
+        activeInstances.add(instanceId);
+    }
+
+    public boolean canAutoPauseProducer(UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null || !isProducer(instance.typeId())) {
+            return false;
+        }
+        SfxConfigurableMachineDefinition definition = definitions.get(instance.typeId());
+        SfxConfigurableMachineState state = currentState(instanceId, instance);
+        return definition != null && definition.kind() == SfxConfigurableMachineKind.REACTOR && state.mode() == 0;
+    }
+
+    public int producerPotentialGeneration(UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null || !isProducer(instance.typeId())) {
+            return 0;
+        }
+        SfxConfigurableMachineDefinition definition = definitions.get(instance.typeId());
+        SfxConfigurableMachineState state = currentState(instanceId, instance);
+        if (definition == null || definition.kind() != SfxConfigurableMachineKind.REACTOR || state.mode() != 0) {
+            return 0;
+        }
+        Location location = locationFor(instance);
+        if (location == null || !hasWaterCooling(location)) {
+            return 0;
+        }
+        if (state.hasActiveFuel()) {
+            return definition.energyPerTick();
+        }
+        SfxConfigurableMachineDefinition.ReactorFuel fuel = findFuel(definition, state);
+        if (fuel == null || (fuel.output() != null && !canFitOutput(items, state, fuel.output(), 0, 1))) {
+            return 0;
+        }
+        return definition.energyPerTick();
     }
 
     public int totalStoredEnergy(List<SfxBlockInstanceRecord> instances) {
@@ -515,19 +636,18 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         SfxConfigurableMachineState state = currentState(instanceId, instance);
         SfxConfigurableMachineSession session = sessionsByHost.get(instanceId);
-        if (session != null) {
-            syncInventoryToState(session.inventory(), state, definition, session.panelType());
-        }
         Location location = locationFor(instance);
         boolean changed = switch (definition.kind()) {
             case ASSEMBLER -> tickAssembler(instanceId, definition, state, location);
-            case REACTOR -> tickReactor(instanceId, instance, definition, state, location);
-            case ACCESS_PORT -> false;
+            case REACTOR, ACCESS_PORT -> false;
         };
         if (changed) {
+            if (blockData.findInstance(instanceId).isEmpty()) {
+                return;
+            }
             dirtyInstances.add(instanceId);
         }
-        if (session != null && tickCounter % 10L == 0L) {
+        if (session != null && sessionsByHost.get(instanceId) == session && changed) {
             render(session, instance, definition, state);
         }
         if (session == null && !state.isActive() && !state.hasInventory()) {
@@ -536,48 +656,83 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private boolean tickAssembler(UUID instanceId, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location) {
-        boolean changed = false;
-        if (state.cooldownTicks() > 0) {
-            state.cooldownTicks(state.cooldownTicks() - 1);
-            changed = true;
-            return changed;
+        if (location == null) {
+            return false;
         }
-        if (!state.enabled() || location == null || !hasAssemblerMaterials(state, definition) || state.storedEnergy() < definition.energyPerAction()) {
-            return changed;
-        }
-        consumeAssemblerMaterials(state, definition);
-        state.storedEnergy(state.storedEnergy() - definition.energyPerAction());
-        state.cooldownTicks(ASSEMBLER_COOLDOWN_TICKS);
-        recentEnergyConsumption.merge(instanceId, definition.energyPerAction(), Integer::sum);
-        Location spawn = location.clone().add(0.5D, definition == null ? 3.0D : state.offsetTenths() / 10.0D, 0.5D);
-        if (definition.spawnType() == EntityType.IRON_GOLEM) {
-            IronGolem golem = (IronGolem) location.getWorld().spawnEntity(spawn, EntityType.IRON_GOLEM);
-            golem.setPlayerCreated(true);
-            location.getWorld().playSound(location, Sound.ENTITY_IRON_GOLEM_REPAIR, 1.0F, 1.0F);
-        } else if (definition.spawnType() == EntityType.WITHER) {
-            Wither wither = (Wither) location.getWorld().spawnEntity(spawn, EntityType.WITHER);
-            wither.setInvulnerableTicks(220);
-        }
-        return true;
-    }
-
-    private boolean tickReactor(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location) {
-        if (location == null || location.getWorld() == null) {
+        if (!state.enabled()) {
             return false;
         }
         boolean changed = false;
-        if (definition.witherAura()) {
-            applyWitherAura(location);
+        if (!isAssemblerWorking(state)) {
+            if (!hasAssemblerMaterials(state, definition)) {
+                return false;
+            }
+            consumeAssemblerMaterials(state, definition);
+            state.activeFuelKey("assembler");
+            state.fuelProgressTicks(0);
+            state.fuelTotalTicks(ASSEMBLER_WORK_TICKS);
+            changed = true;
         }
+        if (state.storedEnergy() < definition.energyPerAction()) {
+            return changed;
+        }
+        state.storedEnergy(state.storedEnergy() - definition.energyPerAction());
+        recentEnergyConsumption.merge(instanceId, definition.energyPerAction(), Integer::sum);
+        state.fuelProgressTicks(state.fuelProgressTicks() + 1);
+        changed = true;
+        if (state.fuelProgressTicks() >= state.fuelTotalTicks()) {
+            Location spawn = location.clone().add(0.5D, state.offsetTenths() / 10.0D, 0.5D);
+            if (definition.spawnType() == EntityType.IRON_GOLEM) {
+                IronGolem golem = (IronGolem) location.getWorld().spawnEntity(spawn, EntityType.IRON_GOLEM);
+                golem.setPlayerCreated(true);
+                location.getWorld().playSound(location, Sound.ENTITY_IRON_GOLEM_REPAIR, 1.0F, 1.0F);
+            } else if (definition.spawnType() == EntityType.WITHER) {
+                Wither wither = (Wither) location.getWorld().spawnEntity(spawn, EntityType.WITHER);
+                wither.setInvulnerableTicks(220);
+            }
+            state.clearFuel();
+        }
+        return changed;
+    }
+
+    public int generateProducerEnergy(UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null || !isProducer(instance.typeId())) {
+            return 0;
+        }
+        SfxConfigurableMachineDefinition definition = definitions.get(instance.typeId());
+        SfxConfigurableMachineState state = currentState(instanceId, instance);
+        Location location = locationFor(instance);
+        if (autoPausedProducers.contains(instanceId) && canAutoPauseProducer(instanceId)) {
+            return 0;
+        }
+        ReactorTickResult result = tickReactor(instanceId, instance, definition, state, location);
+        if (result.changed()) {
+            if (blockData.findInstance(instanceId).isPresent()) {
+                dirtyInstances.add(instanceId);
+                SfxConfigurableMachineSession session = sessionsByHost.get(instanceId);
+                if (session != null) {
+                    render(session, instance, definition, state);
+                }
+            }
+        }
+        return result.generatedEnergy();
+    }
+
+    private ReactorTickResult tickReactor(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location) {
+        if (location == null || location.getWorld() == null) {
+            return new ReactorTickResult(0, false);
+        }
+        boolean changed = false;
         if (!state.hasActiveFuel()) {
             SfxConfigurableMachineDefinition.ReactorFuel fuel = findFuel(definition, state);
             if (fuel == null || (fuel.output() != null && !canFitOutput(items, state, fuel.output(), 0, 1))) {
                 removeReactorHologram(instance.anchorKey());
-                return false;
+                return new ReactorTickResult(0, false);
             }
             if (!hasWaterCooling(location) || !consumeCoolantIfNeeded(state, definition)) {
-                explodeReactor(instance, location);
-                return true;
+                meltDownReactor(instance, location);
+                return new ReactorTickResult(0, true);
             }
             consumeInput(state, fuelSlotIndex(state, fuel), fuel.amount());
             state.activeFuelKey(fuel.key());
@@ -586,24 +741,29 @@ public final class SfxConfigurableMachineService implements Listener {
             changed = true;
         }
         if (!hasWaterCooling(location)) {
-            explodeReactor(instance, location);
-            return true;
+            meltDownReactor(instance, location);
+            return new ReactorTickResult(0, true);
         }
         if (!consumeCoolantIfNeeded(state, definition)) {
-            explodeReactor(instance, location);
-            return true;
+            meltDownReactor(instance, location);
+            return new ReactorTickResult(0, true);
         }
         boolean electricityFocus = state.mode() == 0;
         if (electricityFocus && state.storedEnergy() + definition.energyPerTick() > definition.capacity()) {
             updateReactorHologram(instance.anchorKey(), state);
-            return changed;
+            return new ReactorTickResult(0, changed);
         }
         state.fuelProgressTicks(state.fuelProgressTicks() + 1);
         if (state.coolantTotalTicks() > 0) {
             state.coolantProgressTicks(state.coolantProgressTicks() + 1);
         }
+        int generated = 0;
         if (state.storedEnergy() + definition.energyPerTick() <= definition.capacity()) {
-            state.storedEnergy(state.storedEnergy() + definition.energyPerTick());
+            generated = definition.energyPerTick();
+            state.storedEnergy(state.storedEnergy() + generated);
+        }
+        if (definition.witherAura() && tickCounter % 20L == 0L) {
+            applyWitherAura(location);
         }
         if (state.fuelProgressTicks() >= state.fuelTotalTicks()) {
             SfxConfigurableMachineDefinition.ReactorFuel completed = fuelByKey(definition, state.activeFuelKey());
@@ -611,14 +771,14 @@ public final class SfxConfigurableMachineService implements Listener {
                 if (!canFitOutput(items, state, completed.output(), 0, 1)) {
                     state.fuelProgressTicks(state.fuelTotalTicks());
                     updateReactorHologram(instance.anchorKey(), state);
-                    return true;
+                    return new ReactorTickResult(generated, true);
                 }
                 pushOutput(items, state, completed.output(), 0, 1);
             }
             state.clearFuel();
         }
         updateReactorHologram(instance.anchorKey(), state);
-        return true;
+        return new ReactorTickResult(generated, true);
     }
 
     private boolean consumeCoolantIfNeeded(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition definition) {
@@ -639,12 +799,12 @@ public final class SfxConfigurableMachineService implements Listener {
         for (org.bukkit.entity.Entity entity : location.getWorld().getNearbyEntities(location, 5.0D, 5.0D, 5.0D,
                 candidate -> candidate instanceof LivingEntity && candidate.isValid())) {
             if (entity instanceof LivingEntity living) {
-                living.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 1, true, true, true));
+                living.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 1, true, true, true), false);
             }
         }
     }
 
-    private void explodeReactor(SfxBlockInstanceRecord instance, Location location) {
+    private void meltDownReactor(SfxBlockInstanceRecord instance, Location location) {
         removeReactorHologram(instance.anchorKey());
         SfxConfigurableMachineSession session = sessionsByHost.remove(instance.instanceId());
         if (session != null) {
@@ -654,20 +814,14 @@ public final class SfxConfigurableMachineService implements Listener {
                 runtime.executeForPlayer(viewer, viewer::closeInventory);
             }
         }
-        SfxConfigurableMachineState state = states.remove(instance.instanceId());
-        if (state != null) {
-            for (int slot = 0; slot < state.inputCapacity(); slot++) {
-                dropStack(location.getBlock(), state.input(slot));
-            }
-            for (int slot = 0; slot < state.outputCapacity(); slot++) {
-                dropStack(location.getBlock(), state.output(slot));
-            }
-        }
+        states.remove(instance.instanceId());
         dirtyInstances.remove(instance.instanceId());
         activeInstances.remove(instance.instanceId());
+        recentEnergyConsumption.remove(instance.instanceId());
+        recentGeneratedEnergy.remove(instance.instanceId());
+        autoPausedProducers.remove(instance.instanceId());
         blockData.unregisterAt(location);
-        location.getBlock().setType(Material.AIR, false);
-        location.getWorld().createExplosion(location.clone().add(0.5D, 0.5D, 0.5D), 6.0F, true, true);
+        location.getBlock().setType(Material.OBSIDIAN, false);
     }
 
     private void openMachine(Player player, SfxBlockInstanceRecord instance) {
@@ -692,10 +846,10 @@ public final class SfxConfigurableMachineService implements Listener {
     private void openAccessPortWithoutReactor(Player player, SfxBlockInstanceRecord accessPort, SfxConfigurableMachineDefinition definition) {
         Component title = localization.itemName(definition.id(), Component.text(definition.id()));
         Inventory inventory = plugin.getServer().createInventory(new SfxConfigurableMachineHolder(accessPort.instanceId(), accessPort.instanceId(), SfxConfigurableMachineHolder.PanelType.ACCESS_PORT), INVENTORY_SIZE, title);
-        fill(inventory, Material.GRAY_STAINED_GLASS_PANE);
+        fillReactorPanel(inventory);
         inventory.setItem(REACTOR_STATUS_SLOT, ItemBuilder.of(Material.RED_WOOL)
-                .name("<red>No Reactor</red>")
-                .lore("<gray>Place this access port 3 blocks above a reactor.</gray>")
+                .name(localization.text("configurable-ui.reactor.access-port.missing.name", "<red>No Reactor</red>"))
+                .lore(localization.text("configurable-ui.reactor.access-port.missing.lore", "<gray>Place this access port 3 blocks above a reactor.</gray>"))
                 .build());
         player.openInventory(inventory);
     }
@@ -772,8 +926,10 @@ public final class SfxConfigurableMachineService implements Listener {
     private void syncInventoryToState(Inventory inventory, SfxConfigurableMachineState state, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineHolder.PanelType panelType) {
         if (panelType == SfxConfigurableMachineHolder.PanelType.ASSEMBLER) {
             state.input(0, SfxElectricStack.fromItemStack(items, inventory.getItem(ASSEMBLER_HEAD_SLOTS[0])));
-            state.input(1, SfxElectricStack.fromItemStack(items, inventory.getItem(ASSEMBLER_BODY_SLOTS[0])));
-            for (int i = 2; i < state.inputCapacity(); i++) {
+            state.input(1, SfxElectricStack.fromItemStack(items, inventory.getItem(ASSEMBLER_HEAD_SLOTS[1])));
+            state.input(2, SfxElectricStack.fromItemStack(items, inventory.getItem(ASSEMBLER_BODY_SLOTS[0])));
+            state.input(3, SfxElectricStack.fromItemStack(items, inventory.getItem(ASSEMBLER_BODY_SLOTS[1])));
+            for (int i = 4; i < state.inputCapacity(); i++) {
                 state.input(i, null);
             }
             for (int i = 0; i < state.outputCapacity(); i++) {
@@ -801,71 +957,228 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private void renderAssembler(Inventory inventory, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
-        ItemStack head = inventory.getItem(ASSEMBLER_HEAD_SLOTS[0]);
-        ItemStack body = inventory.getItem(ASSEMBLER_BODY_SLOTS[0]);
-        fill(inventory, Material.GRAY_STAINED_GLASS_PANE);
-        inventory.setItem(ASSEMBLER_HEAD_SLOTS[0], head);
-        inventory.setItem(ASSEMBLER_BODY_SLOTS[0], body);
-        inventory.setItem(ENABLE_SLOT, ItemBuilder.of(state.enabled() ? Material.LIME_WOOL : Material.RED_WOOL)
-                .name(state.enabled() ? "<green>Enabled: ✔</green>" : "<red>Enabled: ✘</red>")
-                .lore("<gray>Click to toggle this assembler.</gray>")
+        inventory.clear();
+        setSlots(inventory, Material.GRAY_STAINED_GLASS_PANE, 0, 2, 3, 4, 5, 6, 8, 12, 14, 21, 23, 30, 32, 39, 40, 41, 50);
+        Material headPane = definition.spawnType() == EntityType.IRON_GOLEM ? Material.ORANGE_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE;
+        Material bodyPane = definition.spawnType() == EntityType.IRON_GOLEM ? Material.WHITE_STAINED_GLASS_PANE : Material.BROWN_STAINED_GLASS_PANE;
+        setSlots(inventory, headPane, 9, 10, 11, 18, 20, 27, 29, 36, 37, 38);
+        setSlots(inventory, bodyPane, 15, 16, 17, 24, 26, 33, 35, 42, 43, 44);
+        inventory.setItem(ASSEMBLER_HEAD_SLOTS[0], toItemStack(state.input(0)));
+        inventory.setItem(ASSEMBLER_HEAD_SLOTS[1], toItemStack(state.input(1)));
+        inventory.setItem(ASSEMBLER_BODY_SLOTS[0], toItemStack(state.input(2)));
+        inventory.setItem(ASSEMBLER_BODY_SLOTS[1], toItemStack(state.input(3)));
+        inventory.setItem(1, ItemBuilder.of(definition.headMaterial())
+                .name(localization.text("configurable-ui.assembler.head-slot.name", "<aqua>Head Slot</aqua>"))
+                .lore(localization.text("configurable-ui.assembler.required.lore", "<gray>Required: {amount}</gray>", Map.of("amount", definition.headAmount())))
                 .build());
-        inventory.setItem(OFFSET_SLOT, ItemBuilder.of(Material.COMPASS)
-                .name("<yellow>Offset: " + (state.offsetTenths() / 10.0D) + " Block(s)</yellow>")
-                .lore("<gray>Left-click: +0.1</gray>", "<gray>Right-click: -0.1</gray>")
+        inventory.setItem(7, ItemBuilder.of(definition.bodyMaterial())
+                .name(localization.text("configurable-ui.assembler.body-slot.name", "<aqua>Body Slot</aqua>"))
+                .lore(localization.text("configurable-ui.assembler.required.lore", "<gray>Required: {amount}</gray>", Map.of("amount", definition.bodyAmount())))
                 .build());
-        inventory.setItem(COOLDOWN_SLOT, ItemBuilder.of(Material.CLOCK)
-                .name("<yellow>Cooldown: 30 Seconds</yellow>")
-                .lore("<gray>Remaining: " + formatSeconds(state.cooldownTicks()) + "</gray>",
-                        "<gray>Stored: " + state.storedEnergy() + "/" + definition.capacity() + " J</gray>",
-                        "<gray>Cost: " + definition.energyPerAction() + " J</gray>")
+        inventory.setItem(ENABLE_SLOT, ItemBuilder.of(state.enabled() ? Material.REDSTONE_TORCH : Material.GUNPOWDER)
+                .name(state.enabled()
+                        ? localization.text("configurable-ui.assembler.enabled.name", "<green>Enabled: ✔</green>")
+                        : localization.text("configurable-ui.assembler.disabled.name", "<red>Enabled: ✘</red>"))
+                .lore(localization.text("configurable-ui.assembler.toggle.lore", "<gray>Click to toggle this assembler.</gray>"))
                 .build());
-        inventory.setItem(19, ItemBuilder.of(definition.headMaterial()).name("<aqua>Head Slot</aqua>").lore("<gray>Required: " + definition.headAmount() + "</gray>").build());
-        inventory.setItem(23, ItemBuilder.of(definition.bodyMaterial()).name("<aqua>Body Slot</aqua>").lore("<gray>Required: " + definition.bodyAmount() + "</gray>").build());
+        inventory.setItem(OFFSET_SLOT, ItemBuilder.of(Material.PISTON)
+                .name(localization.text("configurable-ui.assembler.offset.name", "<yellow>Offset: {offset} Block(s)</yellow>", Map.of("offset", state.offsetTenths() / 10.0D)))
+                .lore(localization.text("configurable-ui.assembler.offset.left", "<gray>Left-click: +0.1</gray>"),
+                        localization.text("configurable-ui.assembler.offset.right", "<gray>Right-click: -0.1</gray>"),
+                        localization.text("configurable-ui.assembler.offset.range", "<gray>Range: -10.0 to 10.0</gray>"))
+                .build());
+        inventory.setItem(ASSEMBLER_STATUS_SLOT, assemblerStatusItem(definition, state));
     }
 
     private void renderReactor(Inventory inventory, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, SfxConfigurableMachineHolder.PanelType panelType) {
-        ItemStack[] fuel = slots(inventory, REACTOR_FUEL_SLOTS);
-        ItemStack[] coolant = slots(inventory, REACTOR_COOLANT_SLOTS);
-        ItemStack output = inventory.getItem(REACTOR_OUTPUT_SLOTS[0]);
-        fill(inventory, Material.GRAY_STAINED_GLASS_PANE);
-        restoreSlots(inventory, REACTOR_FUEL_SLOTS, fuel);
-        restoreSlots(inventory, REACTOR_COOLANT_SLOTS, coolant);
-        inventory.setItem(REACTOR_OUTPUT_SLOTS[0], output);
-        inventory.setItem(REACTOR_MODE_SLOT, ItemBuilder.of(state.mode() == 0 ? Material.REDSTONE : Material.HOPPER)
-                .name(state.mode() == 0 ? "<yellow>Focus: Electricity</yellow>" : "<yellow>Focus: Production</yellow>")
-                .lore("<gray>Click to switch reactor focus.</gray>")
-                .build());
-        inventory.setItem(REACTOR_PROGRESS_SLOT, ItemBuilder.of(definition.id().equals("sf:netherstar_reactor") ? Material.NETHER_STAR : Material.GREEN_DYE)
-                .name("<yellow>Reactor Progress</yellow>")
-                .lore("<gray>Fuel: " + progressText(state.fuelProgressTicks(), state.fuelTotalTicks()) + "</gray>",
-                        "<gray>Coolant: " + coolantPercent(state) + "%</gray>",
-                        "<gray>Stored: " + state.storedEnergy() + "/" + definition.capacity() + " J</gray>",
-                        "<gray>Output: " + definition.energyPerTick() + " J/t</gray>")
-                .build());
+        fillReactorPanel(inventory);
+        for (int i = 0; i < REACTOR_FUEL_SLOTS.length; i++) {
+            inventory.setItem(REACTOR_FUEL_SLOTS[i], toItemStack(state.input(i)));
+        }
+        for (int i = 0; i < REACTOR_COOLANT_SLOTS.length; i++) {
+            inventory.setItem(REACTOR_COOLANT_SLOTS[i], toItemStack(state.input(3 + i)));
+        }
+        inventory.setItem(REACTOR_OUTPUT_SLOTS[0], toItemStack(state.output(0)));
+
+        inventory.setItem(REACTOR_MODE_SLOT, namedIcon(
+                state.mode() == 0 ? items.create(definition.id()) : items.create("sf:plutonium"),
+                state.mode() == 0
+                        ? localization.text("configurable-ui.reactor.focus-electricity.name", "<yellow>Focus: Electricity</yellow>")
+                        : localization.text("configurable-ui.reactor.focus-production.name", "<yellow>Focus: Production</yellow>"),
+                localization.text("configurable-ui.reactor.focus.lore", "<gray>Click to switch reactor focus.</gray>")));
+        inventory.setItem(REACTOR_PROGRESS_SLOT, reactorProgressItem(definition, state));
         SfxBlockInstanceRecord accessPort = accessPortAbove(instance);
         boolean hasPort = accessPort != null;
         inventory.setItem(REACTOR_STATUS_SLOT, ItemBuilder.of(hasPort ? Material.LIME_WOOL : Material.RED_WOOL)
-                .name(hasPort ? "<green>Access Port detected</green>" : "<red>No Access Port</red>")
-                .lore(hasPort ? new String[] {"<gray>Click to open the access port.</gray>"} : new String[] {"<gray>Place an access port 3 blocks above this reactor.</gray>"})
+                .name(hasPort
+                        ? localization.text("configurable-ui.reactor.access-port.detected.name", "<green>Access Port detected</green>")
+                        : localization.text("configurable-ui.reactor.access-port.missing.name", "<red>No Access Port</red>"))
+                .lore(hasPort
+                        ? localization.text("configurable-ui.reactor.access-port.detected.lore", "<gray>Click to open the access port.</gray>")
+                        : localization.text("configurable-ui.reactor.access-port.missing.lore", "<gray>Place an access port 3 blocks above this reactor.</gray>"))
                 .build());
-        inventory.setItem(18, ItemBuilder.of(Material.CHEST).name("<aqua>Fuel Slots</aqua>").build());
-        inventory.setItem(26, ItemBuilder.of(Material.PACKED_ICE).name("<aqua>Coolant Slots</aqua>").lore("<red>The reactor will explode without coolant.</red>").build());
-        inventory.setItem(39, ItemBuilder.of(Material.CHEST).name("<aqua>Byproduct Slot</aqua>").build());
+        inventory.setItem(1, namedIcon(
+                representativeFuelIcon(definition),
+                localization.text("configurable-ui.reactor.fuel-slots.name", "<aqua>Fuel Slots</aqua>"),
+                localization.text("configurable-ui.reactor.fuel-slots.lore", "<gray>Insert valid reactor fuel here.</gray>")));
+        inventory.setItem(7, namedIcon(
+                items.create(definition.coolantItemId()),
+                localization.text("configurable-ui.reactor.coolant-slots.name", "<aqua>Coolant Slots</aqua>"),
+                localization.text("configurable-ui.reactor.coolant-slots.lore", "<red>The reactor will melt down without coolant.</red>")));
     }
 
-    private ItemStack[] slots(Inventory inventory, int[] slots) {
-        ItemStack[] result = new ItemStack[slots.length];
-        for (int i = 0; i < slots.length; i++) {
-            result[i] = inventory.getItem(slots[i]);
-        }
-        return result;
+    private void fillReactorPanel(Inventory inventory) {
+        inventory.clear();
+        setSlots(inventory, Material.GRAY_STAINED_GLASS_PANE, 0, 1, 2, 3, 5, 6, 7, 8, 12, 13, 14, 21, 23);
+        setSlots(inventory, Material.LIME_STAINED_GLASS_PANE, 9, 10, 11, 18, 20, 27, 29, 36, 38, 45, 46, 47);
+        setSlots(inventory, Material.CYAN_STAINED_GLASS_PANE, 15, 16, 17, 24, 26, 33, 35, 42, 44, 51, 52, 53);
+        setSlots(inventory, Material.GREEN_STAINED_GLASS_PANE, 30, 31, 32, 39, 41, 48, 50);
+        setSlots(inventory, Material.BLACK_STAINED_GLASS_PANE, REACTOR_PROGRESS_SLOT);
     }
 
-    private void restoreSlots(Inventory inventory, int[] slots, ItemStack[] contents) {
-        for (int i = 0; i < slots.length; i++) {
-            inventory.setItem(slots[i], contents[i]);
+    private void setSlots(Inventory inventory, Material material, int... slots) {
+        ItemStack filler = ItemBuilder.of(material).name(" ").build();
+        for (int slot : slots) {
+            inventory.setItem(slot, filler);
         }
+    }
+
+    private ItemStack representativeFuelIcon(SfxConfigurableMachineDefinition definition) {
+        if (definition.id().equals("sf:netherstar_reactor")) {
+            return new ItemStack(Material.NETHER_STAR);
+        }
+        return items.create("sf:uranium");
+    }
+
+    private ItemStack namedIcon(ItemStack base, String name, String... lore) {
+        ItemStack item = base == null || base.getType().isAir() ? new ItemStack(Material.STONE) : base.clone();
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Text.mm(name));
+            if (lore != null && lore.length > 0) {
+                meta.lore(Text.lore(lore));
+            }
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private ItemStack assemblerStatusItem(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
+        boolean working = isAssemblerWorking(state);
+        boolean paused = working && !state.enabled();
+        boolean hasMaterials = hasAssemblerMaterials(state, definition);
+        boolean noPower = state.enabled() && (working || hasMaterials) && state.storedEnergy() < definition.energyPerAction();
+        Material material = paused
+                ? Material.RED_STAINED_GLASS_PANE
+                : working
+                        ? definition.headMaterial()
+                        : noPower ? Material.RED_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE;
+        Component name = paused
+                ? localization.component("configurable-ui.assembler.paused.name", "<yellow>Paused</yellow>")
+                : working
+                        ? localization.component("electric-ui.progress.name", "<yellow>Working</yellow>")
+                        : noPower
+                                ? localization.component("electric-ui.no-power.name", "<red>No Power</red>")
+                                : localization.component("electric-ui.idle.name", "<gray>Idle</gray>");
+        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(material, name)
+                .energy(state.storedEnergy(), definition.capacity())
+                .consumption(definition.energyPerAction())
+                .extraLore(localization.component("configurable-ui.assembler.work-time", "<gray>Work time: {time}</gray>", Map.of("time", statusIcons.formatTimeLeft(ASSEMBLER_WORK_TICKS))))
+                .extraLore(localization.component("configurable-ui.assembler.offset.status", "<gray>Offset: {offset} Block(s)</gray>", Map.of("offset", state.offsetTenths() / 10.0D)));
+        if (working) {
+            int remainingTicks = Math.max(0, state.fuelTotalTicks() - state.fuelProgressTicks());
+            view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), remainingTicks, !paused)
+                    .statusLore(paused
+                            ? localization.component("configurable-ui.assembler.paused.lore", "<gray>Enable this assembler to continue.</gray>")
+                            : localization.component("configurable-ui.assembler.working.lore", "<gray>Assembling entity structure.</gray>"));
+        } else if (noPower) {
+            view.statusLore(localization.component("electric-ui.no-power.lore", "<gray>Charge this machine to continue.</gray>"));
+        } else if (!state.enabled()) {
+            view.statusLore(localization.component("configurable-ui.assembler.disabled.lore", "<gray>This assembler is disabled.</gray>"));
+        } else {
+            view.statusLore(localization.component("electric-ui.idle.lore", "<gray>Waiting for input.</gray>"));
+        }
+        return statusIcons.render(view.build());
+    }
+
+    private ItemStack reactorProgressItem(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
+        boolean active = state.hasActiveFuel();
+        ItemStack icon = active
+                ? (definition.id().equals("sf:netherstar_reactor") ? new ItemStack(Material.NETHER_STAR) : items.create("sf:lava_crystal"))
+                : new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+        Component name = active
+                ? localization.component("configurable-ui.reactor.progress.name", "<yellow>Reactor Status</yellow>")
+                : localization.component("electric-ui.idle.name", "<gray>Idle</gray>");
+        SfxConfigurableMachineDefinition.ReactorFuel activeFuel = fuelByKey(definition, state.activeFuelKey());
+        String byproduct = activeFuel == null || activeFuel.output() == null
+                ? localization.text("configurable-ui.none", "None")
+                : stackDisplayName(activeFuel.output());
+        int fuelRemainingPercent = fuelRemainingPercent(state);
+        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(icon, name)
+                .energy(state.storedEnergy(), definition.capacity())
+                .generation(definition.energyPerTick())
+                .extraLore(localization.component("configurable-ui.reactor.progress.nuclear-fuel", "<gray>Nuclear Fuel: {percent}%</gray>", Map.of("percent", fuelRemainingPercent)))
+                .extraLore(localization.component("configurable-ui.reactor.progress.coolant", "<gray>Coolant: {percent}%</gray>", Map.of("percent", coolantPercent(state))))
+                .extraLore(localization.component("configurable-ui.reactor.progress.mode", "<gray>Mode: {mode}</gray>", Map.of("mode", state.mode() == 0 ? localization.text("configurable-ui.reactor.mode-electricity", "Electricity") : localization.text("configurable-ui.reactor.mode-production", "Production"))))
+                .extraLore(localization.component("configurable-ui.reactor.progress.byproduct", "<gray>Byproduct: {item}</gray>", Map.of("item", byproduct)))
+                .extraLore(localization.component("configurable-ui.reactor.progress.ticks", "<gray>Progress ticks: {current}/{total}</gray>", Map.of("current", state.fuelProgressTicks(), "total", state.fuelTotalTicks())))
+                .extraLore(localization.component("configurable-ui.reactor.progress.coolant-ticks", "<gray>Coolant ticks: {current}/{total}</gray>", Map.of("current", state.coolantProgressTicks(), "total", state.coolantTotalTicks())));
+        if (active) {
+            view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), Math.max(0, state.fuelTotalTicks() - state.fuelProgressTicks()), true)
+                    .statusLore(localization.component("configurable-ui.reactor.progress.working", "<gray>Reactor is running.</gray>"));
+        } else {
+            view.statusLore(localization.component("configurable-ui.reactor.progress.idle", "<gray>Waiting for fuel and coolant.</gray>"));
+        }
+        return statusIcons.render(view.build());
+    }
+
+    private Component progressBarLine(int current, int total) {
+        int segments = 20;
+        int filled = total <= 0 ? 0 : Math.max(0, Math.min(segments, (int) Math.round(current * segments / (double) total)));
+        StringBuilder bar = new StringBuilder("<dark_gray>[</dark_gray>");
+        for (int i = 0; i < segments; i++) {
+            bar.append(i < filled ? "<green>|</green>" : "<gray>|</gray>");
+        }
+        bar.append("<dark_gray>]</dark_gray>");
+        return Text.mm(bar.toString());
+    }
+
+    private void applyProgressDamage(ItemStack stack, int current, int total) {
+        if (total <= 0) {
+            return;
+        }
+        ItemMeta meta = stack.getItemMeta();
+        if (!(meta instanceof Damageable damageable)) {
+            return;
+        }
+        int maxDamage = Math.max(1, stack.getType().getMaxDurability());
+        if (maxDamage <= 1) {
+            return;
+        }
+        double ratio = Math.max(0.0D, Math.min(1.0D, current / (double) total));
+        damageable.setDamage(Math.max(0, Math.min(maxDamage - 1, maxDamage - 1 - (int) Math.round(ratio * (maxDamage - 1)))));
+        stack.setItemMeta(meta);
+    }
+
+    private String stackDisplayName(SfxElectricStack stack) {
+        if (stack == null) {
+            return localization.text("configurable-ui.none", "None");
+        }
+        if (stack.isSfxItem()) {
+            ItemStack item = stack.toItemStack(items);
+            ItemMeta meta = item.getItemMeta();
+            Component fallback = meta != null && meta.hasDisplayName() ? meta.displayName() : Component.text(stack.itemId());
+            return plainText(localization.itemName(stack.itemId(), fallback));
+        }
+        return plainText(Component.translatable(stack.material().translationKey()));
+    }
+
+    private String plainText(Component component) {
+        return PlainTextComponentSerializer.plainText().serialize(component);
+    }
+
+    private ItemStack toItemStack(SfxElectricStack stack) {
+        return stack == null ? null : stack.toItemStack(items);
     }
 
     private void handleButtonClick(Player player, SfxConfigurableMachineHolder holder, SfxBlockInstanceRecord host, SfxConfigurableMachineDefinition definition, int slot, ClickType clickType) {
@@ -922,16 +1235,46 @@ public final class SfxConfigurableMachineService implements Listener {
         }
     }
 
+    private boolean isAssemblerWorking(SfxConfigurableMachineState state) {
+        return "assembler".equals(state.activeFuelKey()) && state.fuelTotalTicks() > 0;
+    }
+
     private boolean hasAssemblerMaterials(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition definition) {
-        SfxElectricStack head = state.input(0);
-        SfxElectricStack body = state.input(1);
-        return head != null && !head.isSfxItem() && head.material() == definition.headMaterial() && head.amount() >= definition.headAmount()
-                && body != null && !body.isSfxItem() && body.material() == definition.bodyMaterial() && body.amount() >= definition.bodyAmount();
+        return totalMaterialAmount(state, ASSEMBLER_HEAD_STATE_SLOTS, definition.headMaterial()) >= definition.headAmount()
+                && totalMaterialAmount(state, ASSEMBLER_BODY_STATE_SLOTS, definition.bodyMaterial()) >= definition.bodyAmount();
+    }
+
+    private int totalMaterialAmount(SfxConfigurableMachineState state, int[] slots, Material material) {
+        int total = 0;
+        for (int slot : slots) {
+            SfxElectricStack stack = state.input(slot);
+            if (stack != null && !stack.isSfxItem() && stack.material() == material) {
+                total += stack.amount();
+            }
+        }
+        return total;
     }
 
     private void consumeAssemblerMaterials(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition definition) {
-        consumeInput(state, 0, definition.headAmount());
-        consumeInput(state, 1, definition.bodyAmount());
+        consumeMaterialFromInputs(state, ASSEMBLER_HEAD_STATE_SLOTS, definition.headMaterial(), definition.headAmount());
+        consumeMaterialFromInputs(state, ASSEMBLER_BODY_STATE_SLOTS, definition.bodyMaterial(), definition.bodyAmount());
+    }
+
+    private void consumeMaterialFromInputs(SfxConfigurableMachineState state, int[] slots, Material material, int amount) {
+        int remaining = amount;
+        for (int slot : slots) {
+            if (remaining <= 0) {
+                return;
+            }
+            SfxElectricStack stack = state.input(slot);
+            if (stack == null || stack.isSfxItem() || stack.material() != material) {
+                continue;
+            }
+            int consumed = Math.min(remaining, stack.amount());
+            remaining -= consumed;
+            int left = stack.amount() - consumed;
+            state.input(slot, left <= 0 ? null : stack.copyWithAmount(left));
+        }
     }
 
     private int fuelSlotIndex(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition.ReactorFuel fuel) {
@@ -1030,14 +1373,20 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private boolean hasWaterCooling(Location location) {
         Block center = location.getBlock();
-        int[][] offsets = {
-                {-1, -1}, {-1, 0}, {-1, 1},
-                {0, -1},           {0, 1},
-                {1, -1},  {1, 0},  {1, 1}
-        };
-        int[] offset = offsets[ThreadLocalRandom.current().nextInt(offsets.length)];
-        Material type = center.getRelative(offset[0], 0, offset[1]).getType();
-        return type == Material.WATER || type == Material.BUBBLE_COLUMN;
+        for (int y = -1; y <= 1; y++) {
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -1; z <= 1; z++) {
+                    if (x == 0 && y == 0 && z == 0) {
+                        continue;
+                    }
+                    Material type = center.getRelative(x, y, z).getType();
+                    if (type != Material.WATER && type != Material.BUBBLE_COLUMN) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     private SfxBlockInstanceRecord reactorBelowAccessPort(SfxBlockInstanceRecord accessPort) {
@@ -1076,7 +1425,7 @@ public final class SfxConfigurableMachineService implements Listener {
                 key.z() + 0.5D,
                 text,
                 HOLOGRAM_VIEW_DISTANCE_SQUARED,
-                true));
+                false));
     }
 
     private void removeReactorHologram(SfxBlockAnchorKey key) {
@@ -1093,6 +1442,14 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         int remaining = Math.max(0, state.coolantTotalTicks() - state.coolantProgressTicks());
         return Math.max(0, Math.min(100, (int) Math.round(remaining * 100.0D / state.coolantTotalTicks())));
+    }
+
+    private int fuelRemainingPercent(SfxConfigurableMachineState state) {
+        if (state.fuelTotalTicks() <= 0) {
+            return 0;
+        }
+        int remaining = Math.max(0, state.fuelTotalTicks() - state.fuelProgressTicks());
+        return Math.max(0, Math.min(100, (int) Math.round(remaining * 100.0D / state.fuelTotalTicks())));
     }
 
     private String progressText(int current, int total) {
@@ -1124,7 +1481,7 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private int[] editableInputSlots(SfxConfigurableMachineHolder.PanelType panelType) {
         if (panelType == SfxConfigurableMachineHolder.PanelType.ASSEMBLER) {
-            return new int[] {ASSEMBLER_HEAD_SLOTS[0], ASSEMBLER_BODY_SLOTS[0]};
+            return new int[] {ASSEMBLER_HEAD_SLOTS[0], ASSEMBLER_HEAD_SLOTS[1], ASSEMBLER_BODY_SLOTS[0], ASSEMBLER_BODY_SLOTS[1]};
         }
         return new int[] {19, 28, 37, 25, 34, 43};
     }
@@ -1138,7 +1495,7 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private boolean isButtonSlot(SfxConfigurableMachineHolder.PanelType panelType, int slot) {
         if (panelType == SfxConfigurableMachineHolder.PanelType.ASSEMBLER) {
-            return slot == ENABLE_SLOT || slot == OFFSET_SLOT || slot == COOLDOWN_SLOT;
+            return slot == ENABLE_SLOT || slot == OFFSET_SLOT || slot == ASSEMBLER_STATUS_SLOT;
         }
         return slot == REACTOR_MODE_SLOT || slot == REACTOR_PROGRESS_SLOT || slot == REACTOR_STATUS_SLOT;
     }
@@ -1150,6 +1507,9 @@ public final class SfxConfigurableMachineService implements Listener {
         int original = current.getAmount();
         int remaining = current.getAmount();
         for (int slot : targetSlots) {
+            if (!isValidInputItem(slot, current, definition)) {
+                continue;
+            }
             ItemStack existing = inventory.getItem(slot);
             if (existing == null || existing.getType().isAir() || !existing.isSimilar(current)) {
                 continue;
@@ -1167,6 +1527,9 @@ public final class SfxConfigurableMachineService implements Listener {
             }
         }
         for (int slot : targetSlots) {
+            if (!isValidInputItem(slot, current, definition)) {
+                continue;
+            }
             ItemStack existing = inventory.getItem(slot);
             if (existing != null && !existing.getType().isAir()) {
                 continue;
@@ -1183,6 +1546,41 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         current.setAmount(remaining);
         return remaining < original;
+    }
+
+    private boolean isValidInputItem(SfxConfigurableMachineHolder.PanelType panelType, int slot, ItemStack item, SfxConfigurableMachineDefinition definition) {
+        if (item == null || item.getType().isAir()) {
+            return true;
+        }
+        return isValidInputItem(slot, item, definition);
+    }
+
+    private boolean isValidInputItem(int slot, ItemStack item, SfxConfigurableMachineDefinition definition) {
+        if (item == null || item.getType().isAir()) {
+            return true;
+        }
+        SfxElectricStack stack = SfxElectricStack.fromItemStack(items, item);
+        if (definition.kind() == SfxConfigurableMachineKind.ASSEMBLER) {
+            if (contains(ASSEMBLER_HEAD_SLOTS, slot)) {
+                return stack != null && !stack.isSfxItem() && stack.material() == definition.headMaterial();
+            }
+            if (contains(ASSEMBLER_BODY_SLOTS, slot)) {
+                return stack != null && !stack.isSfxItem() && stack.material() == definition.bodyMaterial();
+            }
+            return false;
+        }
+        if (contains(REACTOR_FUEL_SLOTS, slot)) {
+            for (SfxConfigurableMachineDefinition.ReactorFuel fuel : definition.fuels()) {
+                if (fuel.matches(stack)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (contains(REACTOR_COOLANT_SLOTS, slot)) {
+            return stack != null && stack.isSfxItem() && definition.coolantItemId().equals(stack.itemId());
+        }
+        return false;
     }
 
     private boolean isTakingFromOutput(InventoryClickEvent event) {

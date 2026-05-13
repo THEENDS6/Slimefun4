@@ -3,6 +3,8 @@ package cc.theends6.sfx.internal.energy;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
 import java.util.List;
 import java.util.Map;
 import net.kyori.adventure.text.Component;
@@ -23,10 +25,12 @@ final class SfxEnergyGeneratorMenuRenderer {
 
     private final SfxItems items;
     private final SfxLocalization localization;
+    private final SfxMachineStatusIconRenderer statusIcons;
 
     SfxEnergyGeneratorMenuRenderer(SfxItems items, SfxLocalization localization) {
         this.items = items;
         this.localization = localization;
+        this.statusIcons = new SfxMachineStatusIconRenderer(localization);
     }
 
     void render(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxEnergyGeneratorRenderStatus status) {
@@ -63,73 +67,58 @@ final class SfxEnergyGeneratorMenuRenderer {
 
     private ItemStack progressIcon(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, SfxEnergyGeneratorRenderStatus status) {
         if (status == SfxEnergyGeneratorRenderStatus.NO_NETWORK) {
-            return namedItem(
-                    Material.RED_STAINED_GLASS_PANE,
-                    localization.component("energy.generator.no-network.name", "<red>Not Connected</red>"),
-                    List.of(localization.component("energy.generator.no-network.lore", "<gray>This generator is not connected to an energy network.</gray>")));
+            return statusIcons.render(SfxMachineStatusView.builder(
+                            Material.RED_STAINED_GLASS_PANE,
+                            localization.component("energy.generator.no-network.name", "<red>Not Connected</red>"))
+                    .energy(state.storedEnergy(), definition.capacity())
+                    .statusLore(localization.component("energy.generator.no-network.lore", "<gray>This generator is not connected to an energy network.</gray>"))
+                    .build());
         }
         if (status == SfxEnergyGeneratorRenderStatus.CONFLICT) {
-            return namedItem(
-                    Material.RED_STAINED_GLASS_PANE,
-                    localization.component("energy.generator.conflict.name", "<red>Network Conflict</red>"),
-                    List.of(localization.component("energy.generator.conflict.lore", "<gray>Resolve regulator or shared-node conflicts first.</gray>")));
+            return statusIcons.render(SfxMachineStatusView.builder(
+                            Material.RED_STAINED_GLASS_PANE,
+                            localization.component("energy.generator.conflict.name", "<red>Network Conflict</red>"))
+                    .energy(state.storedEnergy(), definition.capacity())
+                    .statusLore(localization.component("energy.generator.conflict.lore", "<gray>Resolve regulator or shared-node conflicts first.</gray>"))
+                    .build());
         }
         if (status == SfxEnergyGeneratorRenderStatus.OUTPUT_FULL) {
-            return namedItem(
-                    Material.ORANGE_STAINED_GLASS_PANE,
-                    localization.component("energy.generator.output-full.name", "<red>Output Full</red>"),
-                    List.of(localization.component("energy.generator.output-full.lore", "<gray>Clear the output slots to continue.</gray>")));
+            return statusIcons.render(SfxMachineStatusView.builder(
+                            Material.ORANGE_STAINED_GLASS_PANE,
+                            localization.component("energy.generator.output-full.name", "<red>Output Full</red>"))
+                    .energy(state.storedEnergy(), definition.capacity())
+                    .statusLore(localization.component("energy.generator.output-full.lore", "<gray>Clear the output slots to continue.</gray>"))
+                    .build());
         }
         if (status == SfxEnergyGeneratorRenderStatus.IDLE && !definition.isSolarGenerator()) {
-            return namedItem(
-                    Material.BLACK_STAINED_GLASS_PANE,
-                    localization.component("energy.generator.idle.name", "<gray>Idle</gray>"),
-                    List.of(localization.component("energy.generator.idle.lore", "<gray>Insert fuel to start generating power.</gray>")));
+            return statusIcons.render(SfxMachineStatusView.builder(
+                            Material.BLACK_STAINED_GLASS_PANE,
+                            localization.component("energy.generator.idle.name", "<gray>Idle</gray>"))
+                    .energy(state.storedEnergy(), definition.capacity())
+                    .generation(definition.energyPerTick())
+                    .statusLore(localization.component("energy.generator.idle.lore", "<gray>Insert fuel to start generating power.</gray>"))
+                    .build());
         }
         if (definition.isSolarGenerator()) {
-            return namedItem(
-                    definition.progressMaterial(),
-                    localization.component("energy.generator.solar.name", "<yellow>Solar Generator</yellow>"),
-                    List.of(localization.component(
-                            "energy.generator.buffer",
-                            "<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>",
-                            Map.of("stored", state.storedEnergy(), "capacity", definition.capacity())),
-                            localization.component(
-                                    "energy.generator.production",
-                                    "<gray>Production: </gray><green>{energy} J/t</green>",
-                                    Map.of("energy", definition.energyPerTick()))));
+            return statusIcons.render(SfxMachineStatusView.builder(
+                            definition.progressMaterial(),
+                            localization.component("energy.generator.solar.name", "<yellow>Solar Generator</yellow>"))
+                    .energy(state.storedEnergy(), definition.capacity())
+                    .generation(definition.energyPerTick())
+                    .build());
         }
 
         int total = Math.max(1, state.fuelTotalTenths());
         int progress = Math.min(total, state.fuelProgressTenths());
-        ItemStack stack = new ItemStack(definition.progressMaterial());
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) {
-            return stack;
-        }
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        if (meta instanceof Damageable damageable && stack.getType().getMaxDurability() > 0) {
-            damageable.setDamage(Math.max(0, Math.min(stack.getType().getMaxDurability(),
-                    (stack.getType().getMaxDurability() * (total - progress)) / total)));
-        }
-        meta.displayName(localization.component("energy.generator.active.name", "<green>Generating</green>"));
-        meta.lore(List.of(
-                progressBarLine(progress, total),
-                localization.component(
-                        "energy.generator.time-left",
-                        "<gray>{time}s</gray>",
-                        Map.of("time", formatGeneratorSeconds(total - progress, definition.fuelBurnRateTenths()))),
-                localization.component("energy.generator.active.lore", "<gray>Fuel is currently being converted into energy.</gray>"),
-                localization.component(
-                        "energy.generator.buffer",
-                        "<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>",
-                        Map.of("stored", state.storedEnergy(), "capacity", definition.capacity())),
-                localization.component(
-                        "energy.generator.production",
-                        "<gray>Production: </gray><green>{energy} J/t</green>",
-                        Map.of("energy", definition.energyPerTick()))));
-        stack.setItemMeta(meta);
-        return stack;
+        int remainingTicks = (int) Math.ceil(Math.max(0, total - progress) / (double) Math.max(1, definition.fuelBurnRateTenths()));
+        return statusIcons.render(SfxMachineStatusView.builder(
+                        definition.progressMaterial(),
+                        localization.component("energy.generator.active.name", "<green>Generating</green>"))
+                .progress(progress, total, remainingTicks, true)
+                .energy(state.storedEnergy(), definition.capacity())
+                .generation(definition.energyPerTick())
+                .statusLore(localization.component("energy.generator.active.lore", "<gray>Fuel is currently being converted into energy.</gray>"))
+                .build());
     }
 
     private Component progressBarLine(int current, int total) {
