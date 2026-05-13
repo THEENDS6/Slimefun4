@@ -5,6 +5,7 @@ import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
+import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -17,17 +18,20 @@ final class SfxEnergyGridBuilder {
     private final SfxBlockDataService blockData;
     private final Map<String, SfxEnergyComponentDefinition> definitions;
     private final SfxElectricMachineService electricMachines;
+    private final SfxConfigurableMachineService configurableMachines;
     private final int range;
 
     SfxEnergyGridBuilder(
             SfxBlockDataService blockData,
             Map<String, SfxEnergyComponentDefinition> definitions,
             SfxElectricMachineService electricMachines,
+            SfxConfigurableMachineService configurableMachines,
             int range
     ) {
         this.blockData = blockData;
         this.definitions = definitions;
         this.electricMachines = electricMachines;
+        this.configurableMachines = configurableMachines;
         this.range = range;
     }
 
@@ -75,6 +79,9 @@ final class SfxEnergyGridBuilder {
         if (electricMachines.supportsType(instance.typeId())) {
             return false;
         }
+        if (configurableMachines.isEnergyNode(instance.typeId())) {
+            return false;
+        }
         return false;
     }
 
@@ -91,7 +98,7 @@ final class SfxEnergyGridBuilder {
             if (instance == null) {
                 continue;
             }
-            if (definitions.containsKey(instance.typeId()) || electricMachines.supportsType(instance.typeId())) {
+            if (definitions.containsKey(instance.typeId()) || electricMachines.supportsType(instance.typeId()) || configurableMachines.isEnergyNode(instance.typeId())) {
                 neighbours.add(instance);
             }
         }
