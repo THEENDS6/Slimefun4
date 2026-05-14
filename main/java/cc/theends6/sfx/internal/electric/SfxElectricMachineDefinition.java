@@ -14,7 +14,8 @@ public record SfxElectricMachineDefinition(
         SfxElectricRecipeProvider recipeProvider,
         int[] inputSlots,
         int[] outputSlots,
-        SfxElectricMachineMenuStyle menuStyle
+        SfxElectricMachineMenuStyle menuStyle,
+        SfxElectricAssemblerSpec assemblerSpec
 ) {
     private static final int[] DEFAULT_INPUT_SLOTS = {19, 20};
     private static final int[] DEFAULT_OUTPUT_SLOTS = {24, 25};
@@ -22,6 +23,7 @@ public record SfxElectricMachineDefinition(
     public static final int[] SIMPLE_IO_SLOTS = {10, 11, 12, 13, 14, 15, 16};
     public static final int[] SEVEN_INPUT_SLOTS = SIMPLE_IO_SLOTS;
     public static final int[] THREE_OUTPUT_SLOTS = {12, 13, 14};
+    public static final int[] ASSEMBLER_INPUT_SLOTS = {19, 28, 25, 34};
     public static final int[] NO_INPUT_SLOTS = {};
     public static final int[] NO_OUTPUT_SLOTS = {};
 
@@ -34,7 +36,7 @@ public record SfxElectricMachineDefinition(
             Material progressMaterial,
             SfxElectricRecipeProvider recipeProvider
     ) {
-        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, DEFAULT_INPUT_SLOTS, DEFAULT_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.STANDARD);
+        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, DEFAULT_INPUT_SLOTS, DEFAULT_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.STANDARD, null);
     }
 
     public SfxElectricMachineDefinition(
@@ -48,7 +50,22 @@ public record SfxElectricMachineDefinition(
             int[] inputSlots,
             int[] outputSlots
     ) {
-        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, SfxElectricMachineMenuStyle.STANDARD);
+        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, SfxElectricMachineMenuStyle.STANDARD, null);
+    }
+
+    public SfxElectricMachineDefinition(
+            String id,
+            String title,
+            int speed,
+            int energyCapacity,
+            int energyConsumptionPerTick,
+            Material progressMaterial,
+            SfxElectricRecipeProvider recipeProvider,
+            int[] inputSlots,
+            int[] outputSlots,
+            SfxElectricMachineMenuStyle menuStyle
+    ) {
+        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, menuStyle, null);
     }
 
     public SfxElectricMachineDefinition {

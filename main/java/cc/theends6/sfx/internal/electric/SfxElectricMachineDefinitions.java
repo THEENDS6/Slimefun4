@@ -3,7 +3,9 @@ package cc.theends6.sfx.internal.electric;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
+import java.util.Set;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 final class SfxElectricMachineDefinitions {
@@ -44,6 +46,29 @@ final class SfxElectricMachineDefinitions {
         SfxElectricRecipeProvider treeGrowthRecipes = SfxAreaElectricMachineProviders.treeGrowthAccelerator();
         SfxElectricRecipeProvider expCollectorRecipes = SfxAreaElectricMachineProviders.expCollector();
         SfxElectricRecipeProvider fluidPumpRecipes = SfxAreaElectricMachineProviders.fluidPump();
+        boolean allowSoulSoil = plugin.getConfig().getBoolean("configurable-machines.wither-assembler.allow-soul-soil", true);
+        SfxElectricAssemblerSpec ironGolemAssemblerSpec = new SfxElectricAssemblerSpec(Material.CARVED_PUMPKIN, 1, Set.of(Material.IRON_BLOCK), 4);
+        SfxElectricAssemblerSpec witherAssemblerSpec = new SfxElectricAssemblerSpec(
+                Material.WITHER_SKELETON_SKULL,
+                3,
+                allowSoulSoil ? Set.of(Material.SOUL_SAND, Material.SOUL_SOIL) : Set.of(Material.SOUL_SAND),
+                4);
+        SfxElectricRecipeProvider ironGolemAssemblerRecipes = SfxAreaElectricMachineProviders.assembler(
+                "iron_golem",
+                EntityType.IRON_GOLEM,
+                Material.CARVED_PUMPKIN,
+                1,
+                Set.of(Material.IRON_BLOCK),
+                4,
+                30 * 20);
+        SfxElectricRecipeProvider witherAssemblerRecipes = SfxAreaElectricMachineProviders.assembler(
+                "wither",
+                EntityType.WITHER,
+                Material.WITHER_SKELETON_SKULL,
+                3,
+                allowSoulSoil ? Set.of(Material.SOUL_SAND, Material.SOUL_SOIL) : Set.of(Material.SOUL_SAND),
+                4,
+                30 * 20);
         SfxElectricRecipeProvider autoBrewerRecipes = new SfxAutoBrewerRecipeProvider();
 
         double crucibleEnergyMultiplier = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true)
@@ -115,7 +140,9 @@ final class SfxElectricMachineDefinitions {
         result.register(new SfxElectricMachineDefinition("sf:crop_growth_accelerator_2", "Crop Growth Accelerator - II", 1, cropGrowthCapacity, cropGrowth2Energy, Material.BONE_MEAL, cropGrowth2Recipes, SfxElectricMachineDefinition.SIMPLE_IO_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.SIMPLE_IO));
         result.register(new SfxElectricMachineDefinition("sf:tree_growth_accelerator", "Tree Growth Accelerator", 1, treeGrowthCapacity, treeGrowthEnergy, Material.OAK_SAPLING, treeGrowthRecipes, SfxElectricMachineDefinition.SIMPLE_IO_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.SIMPLE_IO));
         result.register(new SfxElectricMachineDefinition("sf:xp_collector", "EXP Collector", 1, buffer(1024), 20, Material.EXPERIENCE_BOTTLE, expCollectorRecipes, SfxElectricMachineDefinition.NO_INPUT_SLOTS, SfxElectricMachineDefinition.SIMPLE_IO_SLOTS, SfxElectricMachineMenuStyle.SIMPLE_IO));
-        result.register(new SfxElectricMachineDefinition("sf:fluid_pump", "Fluid Pump", 1, 512, 32, Material.BUCKET, fluidPumpRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:fluid_pump", "Fluid Pump", 1, 512, 8, Material.BUCKET, fluidPumpRecipes));
+        result.register(new SfxElectricMachineDefinition("sf:iron_golem_assembler", "Iron Golem Assembler", 1, 81920, 75, Material.CARVED_PUMPKIN, ironGolemAssemblerRecipes, SfxElectricMachineDefinition.ASSEMBLER_INPUT_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.ASSEMBLER, ironGolemAssemblerSpec));
+        result.register(new SfxElectricMachineDefinition("sf:wither_assembler", "Wither Assembler", 1, 81920, 150, Material.WITHER_SKELETON_SKULL, witherAssemblerRecipes, SfxElectricMachineDefinition.ASSEMBLER_INPUT_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.ASSEMBLER, witherAssemblerSpec));
 
         result.register(new SfxElectricMachineDefinition("sf:electric_gold_pan", "Electric Gold Pan", 1, buffer(128), 2, Material.DIAMOND_SHOVEL, goldPanRecipes));
         result.register(new SfxElectricMachineDefinition("sf:electric_gold_pan_2", "Electric Gold Pan - II", 3, buffer(256), 4, Material.DIAMOND_SHOVEL, goldPanRecipes));

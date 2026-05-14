@@ -2987,7 +2987,7 @@ items:
     lore:
     - ''
     - '&6Advanced Machine'
-    - '&8⇨ &e⚡&732 J/Block'
+    - '&8⇨ &e⚡&78 J/t'
   sf.charging_bench:
     name: '&6Charging Bench'
     lore:
@@ -3357,6 +3357,9 @@ electric-ui:
   no-power:
     name: <red>No Power</red>
     lore: <gray>Charge this machine to continue.</gray>
+  paused:
+    name: <yellow>Paused</yellow>
+    lore: <gray>This machine is paused. Enable it to continue.</gray>
   no-input:
     name: <red>Missing Input</red>
     lore: <gray>Insert {input} to start.</gray>
@@ -3370,6 +3373,7 @@ electric-ui:
     produce: bucket, bowl, shears, glass bottle or brush
     organic-food: Organic Food
     organic-fertilizer: Organic Fertilizer
+    fluid-pump: empty bucket or glass bottle
     generic: input item
   target-text:
     produce: 'No collectable target for the current tool nearby.'
@@ -3377,6 +3381,7 @@ electric-ui:
     animal-growth: No baby animals in range.
     crop-growth: No growable crops in range.
     tree-growth: No saplings in range.
+    fluid-pump: No pumpable water source, lava source or traceable flowing fluid below.
     generic: No valid target in range.
   action:
     produce:
@@ -3389,6 +3394,8 @@ electric-ui:
       working: <gray>Accelerating nearby crops.</gray>
     tree-growth:
       working: <gray>Accelerating nearby saplings.</gray>
+    fluid-pump:
+      working: <gray>Pumping fluid from below.</gray>
   time:
     seconds: '{seconds}s'
     minutes-seconds: '{minutes}m {seconds}s'
@@ -3492,6 +3499,8 @@ configurable-ui:
       name: '<aqua>Body Slot</aqua>'
     required:
       lore: '<gray>Required: {amount}</gray>'
+    accepted:
+      lore: '<gray>Accepted materials:</gray>'
   reactor:
     focus-electricity:
       name: '<yellow>Focus: Electricity</yellow>'

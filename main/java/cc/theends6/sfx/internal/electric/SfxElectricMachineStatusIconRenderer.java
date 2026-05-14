@@ -36,7 +36,7 @@ final class SfxElectricMachineStatusIconRenderer {
     ItemStack render(UUID viewerId, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
         SfxElectricMachineRenderStatus effectiveStatus = effectiveStatus(definition, state, status);
         Material material = material(definition, effectiveStatus);
-        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(material, displayName(viewerId, effectiveStatus))
+        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(material, displayName(viewerId, definition, effectiveStatus))
                 .energy(state.storedEnergy(), definition.energyCapacity());
 
         if (effectiveStatus == SfxElectricMachineRenderStatus.WORKING) {
@@ -81,6 +81,9 @@ final class SfxElectricMachineStatusIconRenderer {
     }
 
     private SfxElectricMachineRenderStatus effectiveStatus(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineRenderStatus status) {
+        if (status == SfxElectricMachineRenderStatus.PAUSED) {
+            return SfxElectricMachineRenderStatus.PAUSED;
+        }
         if (status == SfxElectricMachineRenderStatus.BLOCKED_OUTPUT
                 || status == SfxElectricMachineRenderStatus.OUTPUT_FULL
                 || status == SfxElectricMachineRenderStatus.OVERLAPPING_AREA
@@ -111,11 +114,12 @@ final class SfxElectricMachineStatusIconRenderer {
         return switch (status) {
             case WORKING -> definition.progressMaterial();
             case IDLE, NO_INPUT -> Material.BLACK_STAINED_GLASS_PANE;
+            case PAUSED -> Material.YELLOW_STAINED_GLASS_PANE;
             case NO_POWER, NO_TARGET, NO_RECIPE, BLOCKED_OUTPUT, OUTPUT_FULL, OVERLAPPING_AREA -> Material.RED_STAINED_GLASS_PANE;
         };
     }
 
-    private Component displayName(UUID viewerId, SfxElectricMachineRenderStatus status) {
+    private Component displayName(UUID viewerId, SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status) {
         return switch (status) {
             case WORKING -> isExtendedUiEnabled(viewerId)
                     ? localization.component("electric-ui.progress.name", "<yellow>Working</yellow>")
@@ -127,6 +131,9 @@ final class SfxElectricMachineStatusIconRenderer {
             case OUTPUT_FULL -> localization.component("electric-ui.output-full.name", "<red>Output Full</red>");
             case NO_RECIPE -> localization.component("electric-ui.no-recipe.name", "<gray>No Recipe</gray>");
             case OVERLAPPING_AREA -> localization.component("electric-ui.overlapping-area.name", "<red>Work Area Conflict</red>");
+            case PAUSED -> isAssembler(definition)
+                    ? localization.component("configurable-ui.assembler.paused.name", "<yellow>Paused</yellow>")
+                    : localization.component("electric-ui.paused.name", "<yellow>Paused</yellow>");
             case IDLE -> localization.component("electric-ui.idle.name", "<gray>Idle</gray>");
         };
     }
@@ -176,6 +183,9 @@ final class SfxElectricMachineStatusIconRenderer {
             case OUTPUT_FULL -> localization.component("electric-ui.output-full.lore", "<gray>Free an output slot to continue.</gray>");
             case NO_RECIPE -> localization.component("electric-ui.no-recipe.lore", "<gray>The current input has no matching recipe.</gray>");
             case OVERLAPPING_AREA -> localization.component("electric-ui.overlapping-area.lore", "<gray>Machines of the same type cannot have overlapping work areas.</gray>");
+            case PAUSED -> isAssembler(definition)
+                    ? localization.component("configurable-ui.assembler.paused.lore", "<gray>Enable this assembler to continue.</gray>")
+                    : localization.component("electric-ui.paused.lore", "<gray>This machine is paused.</gray>");
             case IDLE -> isExpCollector(definition)
                     ? localization.component("electric-ui.simple-io.xp-waiting.lore", "<gray>Waiting for nearby experience orbs.</gray>")
                     : localization.component("electric-ui.idle.lore", "<gray>Waiting for input.</gray>");
@@ -191,6 +201,7 @@ final class SfxElectricMachineStatusIconRenderer {
             case "sf:tree_growth_accelerator" -> localization.component("electric-ui.action.tree-growth.working", "<gray>Accelerating nearby saplings.</gray>");
             case "sf:xp_collector" -> localization.component("electric-ui.simple-io.xp-working.lore", "<gray>Collecting nearby experience orbs.</gray>");
             case "sf:fluid_pump" -> localization.component("electric-ui.action.fluid-pump.working", "<gray>Pumping fluid from below.</gray>");
+            case "sf:iron_golem_assembler", "sf:wither_assembler" -> localization.component("configurable-ui.assembler.working.lore", "<gray>Assembling entity structure.</gray>");
             default -> localization.component("electric-ui.progress.working-lore", "<gray>The machine is working.</gray>");
         };
     }
@@ -231,6 +242,10 @@ final class SfxElectricMachineStatusIconRenderer {
 
     private boolean isExpCollector(SfxElectricMachineDefinition definition) {
         return "sf:xp_collector".equals(definition.id());
+    }
+
+    private boolean isAssembler(SfxElectricMachineDefinition definition) {
+        return definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER;
     }
 
     private int totalWork(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe) {

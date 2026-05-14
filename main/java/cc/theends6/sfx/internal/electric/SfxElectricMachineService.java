@@ -53,6 +53,7 @@ public final class SfxElectricMachineService implements Listener {
     private final SfxElectricMachineRegistry registry;
     private final SfxElectricMachineMenuRenderer menuRenderer;
     private final SfxSimpleIoMachineMenuRenderer simpleIoMenuRenderer;
+    private final SfxElectricAssemblerMenuRenderer assemblerMenuRenderer;
     private final SfxElectricRecipeProcessor recipeProcessor;
     private final Map<UUID, SfxElectricMachineState> stateCache = new ConcurrentHashMap<>();
     private final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
@@ -84,6 +85,7 @@ public final class SfxElectricMachineService implements Listener {
         this.registry = SfxElectricMachineDefinitions.create(plugin, items, manualMachines, blockData);
         this.menuRenderer = new SfxElectricMachineMenuRenderer(items, localization, profiles);
         this.simpleIoMenuRenderer = new SfxSimpleIoMachineMenuRenderer(items, localization, profiles);
+        this.assemblerMenuRenderer = new SfxElectricAssemblerMenuRenderer(items, localization, profiles);
         this.recipeProcessor = new SfxElectricRecipeProcessor(items);
         bootstrapLoadedStates();
         running = true;
@@ -109,6 +111,9 @@ public final class SfxElectricMachineService implements Listener {
                             event.getBlockPlaced().getType(),
                             event.getPlayer().getUniqueId()));
             stateCache.putIfAbsent(instanceId, SfxElectricMachineState.empty());
+            if ("sf:fluid_pump".equals(marker.itemId())) {
+                SfxAreaElectricMachineProviders.warmFluidPumpPoolCache(plugin, event.getBlockPlaced().getLocation());
+            }
         });
     }
 
@@ -207,7 +212,7 @@ public final class SfxElectricMachineService implements Listener {
         }
         boolean topSlot = event.getRawSlot() < event.getView().getTopInventory().getSize();
         if (event.isShiftClick() && !topSlot) {
-            if (moveShiftClickedStackToInputs(event.getView().getTopInventory(), event.getCurrentItem(), clickDefinition.inputSlots())) {
+            if (moveShiftClickedStackToInputs(event.getView().getTopInventory(), event.getCurrentItem(), clickDefinition)) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getAmount() <= 0) {
                     event.setCurrentItem(null);
                 }
@@ -216,6 +221,12 @@ public final class SfxElectricMachineService implements Listener {
             } else {
                 event.setCancelled(true);
             }
+            return;
+        }
+        if (topSlot && clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER && isAssemblerButton(event.getRawSlot())) {
+            event.setCancelled(true);
+            handleAssemblerButton(holder.instanceId(), event.getRawSlot(), event.getClick());
+            runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
             return;
         }
         if (topSlot && contains(clickDefinition.outputSlots(), event.getRawSlot())) {
@@ -229,6 +240,13 @@ public final class SfxElectricMachineService implements Listener {
         if (topSlot && !contains(clickDefinition.inputSlots(), event.getRawSlot())) {
             event.setCancelled(true);
             return;
+        }
+        if (topSlot && clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) {
+            ItemStack cursor = event.getCursor();
+            if (cursor != null && !cursor.getType().isAir() && !isValidAssemblerInput(clickDefinition, event.getRawSlot(), cursor)) {
+                event.setCancelled(true);
+                return;
+            }
         }
         runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
     }
@@ -248,10 +266,12 @@ public final class SfxElectricMachineService implements Listener {
             event.setCancelled(true);
             return;
         }
-        boolean onlyEditable = event.getRawSlots().stream()
+        boolean valid = event.getRawSlots().stream()
                 .filter(slot -> slot < topSize)
-                .allMatch(slot -> contains(dragDefinition.inputSlots(), slot));
-        if (!onlyEditable) {
+                .allMatch(slot -> contains(dragDefinition.inputSlots(), slot)
+                        && (dragDefinition.menuStyle() != SfxElectricMachineMenuStyle.ASSEMBLER
+                        || isValidAssemblerInput(dragDefinition, slot, event.getNewItems().get(slot))));
+        if (!valid) {
             event.setCancelled(true);
             return;
         }
@@ -378,6 +398,9 @@ public final class SfxElectricMachineService implements Listener {
             return 0;
         }
         SfxElectricMachineState state = currentState(instanceId, instance);
+        if (!state.enabled()) {
+            return 0;
+        }
         Location location = locationFor(instance);
         if (definition.recipeProvider().hasWorldAction()) {
             return location == null ? 0 : definition.recipeProvider().requestedEnergyConsumption(plugin, items, definition, state, location);
@@ -494,6 +517,18 @@ public final class SfxElectricMachineService implements Listener {
         if (session != null) {
             syncInventoryToState(session.inventory(), state);
         }
+        if (!state.enabled()) {
+            SfxElectricMachineRenderStatus paused = SfxElectricMachineRenderStatus.PAUSED;
+            if (session != null && shouldRenderSession(session, paused)) {
+                render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), paused);
+            }
+            if (session != null || state.hasProgress() || state.hasAnyInput()) {
+                activeInstances.add(instanceId);
+            } else {
+                activeInstances.remove(instanceId);
+            }
+            return;
+        }
 
         Location location = locationFor(instance);
         SfxElectricMachineTickResult customResult = null;
@@ -519,7 +554,7 @@ public final class SfxElectricMachineService implements Listener {
                 dirtyInstances.add(instanceId);
             }
             if (session != null && shouldRenderSession(session, customResult.status())) {
-                SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO
+                SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO || definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER
                         ? null
                         : recipeProcessor.activeRecipe(definition, state);
                 render(session, definition, session.inventory(), state, renderRecipe, customResult.status());
@@ -693,6 +728,9 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private SfxElectricMachineRenderStatus sessionRenderStatus(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineSession session) {
+        if (!state.enabled()) {
+            return SfxElectricMachineRenderStatus.PAUSED;
+        }
         if (definition.recipeProvider().hasSpecialTick() || definition.recipeProvider().hasWorldAction()) {
             return retainedSpecialStatus(definition, state, session);
         }
@@ -704,6 +742,9 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private SfxElectricMachineRenderStatus retainedSpecialStatus(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineSession session) {
+        if (!state.enabled()) {
+            return SfxElectricMachineRenderStatus.PAUSED;
+        }
         if (state.hasProgress()) {
             return SfxElectricMachineRenderStatus.WORKING;
         }
@@ -759,6 +800,8 @@ public final class SfxElectricMachineService implements Listener {
             session.markRendered(tickCounter, status);
             if (definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO) {
                 simpleIoMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
+            } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) {
+                assemblerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
             } else {
                 menuRenderer.render(session.viewerId(), definition, inventory, state, recipe, status);
             }
@@ -847,13 +890,17 @@ public final class SfxElectricMachineService implements Listener {
         return instance == null ? null : registry.definition(instance.typeId()).orElse(null);
     }
 
-    private boolean moveShiftClickedStackToInputs(Inventory topInventory, ItemStack current, int[] inputSlots) {
+    private boolean moveShiftClickedStackToInputs(Inventory topInventory, ItemStack current, SfxElectricMachineDefinition definition) {
         if (current == null || current.getType().isAir()) {
             return false;
         }
+        int[] inputSlots = definition.inputSlots();
         int original = current.getAmount();
         int remaining = current.getAmount();
         for (int slot : inputSlots) {
+            if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER && !isValidAssemblerInput(definition, slot, current)) {
+                continue;
+            }
             ItemStack existing = topInventory.getItem(slot);
             if (existing == null || existing.getType().isAir() || !existing.isSimilar(current)) {
                 continue;
@@ -871,6 +918,9 @@ public final class SfxElectricMachineService implements Listener {
             }
         }
         for (int slot : inputSlots) {
+            if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER && !isValidAssemblerInput(definition, slot, current)) {
+                continue;
+            }
             ItemStack existing = topInventory.getItem(slot);
             if (existing != null && !existing.getType().isAir()) {
                 continue;
@@ -891,6 +941,49 @@ public final class SfxElectricMachineService implements Listener {
         }
         current.setAmount(remaining);
         return remaining < original;
+    }
+
+    private boolean isAssemblerButton(int slot) {
+        return slot == SfxElectricAssemblerMenuRenderer.ENABLE_SLOT
+                || slot == SfxElectricAssemblerMenuRenderer.STATUS_SLOT
+                || slot == SfxElectricAssemblerMenuRenderer.OFFSET_SLOT;
+    }
+
+    private void handleAssemblerButton(UUID instanceId, int slot, ClickType click) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        if (slot == SfxElectricAssemblerMenuRenderer.ENABLE_SLOT) {
+            state.enabled(!state.enabled());
+            dirtyInstances.add(instanceId);
+            activeInstances.add(instanceId);
+            return;
+        }
+        if (slot == SfxElectricAssemblerMenuRenderer.OFFSET_SLOT) {
+            int delta = click.isRightClick() ? -5 : 5;
+            SfxAreaElectricMachineProviders.assemblerOffsetTenths(state, SfxAreaElectricMachineProviders.assemblerOffsetTenths(state) + delta);
+            dirtyInstances.add(instanceId);
+            activeInstances.add(instanceId);
+        }
+    }
+
+    private boolean isValidAssemblerInput(SfxElectricMachineDefinition definition, int rawSlot, ItemStack item) {
+        if (item == null || item.getType().isAir()) {
+            return true;
+        }
+        SfxElectricAssemblerSpec spec = definition.assemblerSpec();
+        if (spec == null) {
+            return false;
+        }
+        if (contains(SfxElectricAssemblerMenuRenderer.HEAD_SLOTS, rawSlot)) {
+            return item.getType() == spec.headMaterial();
+        }
+        if (contains(SfxElectricAssemblerMenuRenderer.BODY_SLOTS, rawSlot)) {
+            return spec.bodyMaterials().contains(item.getType());
+        }
+        return false;
     }
 
 

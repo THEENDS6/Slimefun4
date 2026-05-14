@@ -2928,7 +2928,7 @@ items:
     lore:
     - ''
     - '&6高级机器'
-    - '&8⇨ &e⚡ &732 J/方块'
+    - '&8⇨ &e⚡ &78 J/t'
   sf.charging_bench:
     name: '&6充电台'
     lore:
@@ -3450,6 +3450,9 @@ electric-ui:
   no-power:
     name: <red>电力不足</red>
     lore: <gray>为机器充能后继续工作。</gray>
+  paused:
+    name: <yellow>已暂停</yellow>
+    lore: <gray>该机器已暂停，启用后继续工作。</gray>
   no-input:
     name: <red>缺少输入</red>
     lore: <gray>放入 {input} 后开始工作。</gray>
@@ -3463,6 +3466,7 @@ electric-ui:
     produce: 桶、碗、剪刀、玻璃瓶或刷子
     organic-food: 有机食物
     organic-fertilizer: 有机肥料
+    fluid-pump: 空桶或玻璃瓶
     generic: 输入物品
   target-text:
     produce: '没有可采集目标，或当前工具不可用于附近目标。'
@@ -3470,6 +3474,7 @@ electric-ui:
     animal-growth: 范围内没有幼年动物。
     crop-growth: 范围内没有可生长作物。
     tree-growth: 范围内没有树苗。
+    fluid-pump: 下方没有可抽取的水源、岩浆源或可溯源流体。
     generic: 范围内没有可作用目标。
   action:
     produce:
@@ -3482,6 +3487,8 @@ electric-ui:
       working: <gray>正在催熟附近作物。</gray>
     tree-growth:
       working: <gray>正在催生附近树苗。</gray>
+    fluid-pump:
+      working: <gray>正在从下方抽取流体。</gray>
   time:
     seconds: '{seconds}s'
     minutes-seconds: '{minutes}m {seconds}s'
@@ -3596,6 +3603,8 @@ configurable-ui:
       name: '<aqua>身体材料槽</aqua>'
     required:
       lore: '<gray>需要：{amount}</gray>'
+    accepted:
+      lore: '<gray>可用材料：</gray>'
   reactor:
     focus-electricity:
       name: '<yellow>模式：发电优先</yellow>'

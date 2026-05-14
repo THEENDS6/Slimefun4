@@ -93,6 +93,14 @@ electric-machines:
     xp-collector: true
 
   
+  sfx-extensions:
+    fluid-pump-optimization:
+      enabled: true
+      water-source-threshold: 4
+      lava-source-threshold: 300
+      check-interval-ticks: 200
+
+  
   
   allow-sfx-item-enchanting: true
 
@@ -102,6 +110,10 @@ electric-machines:
 
   
   allow-illegal-enchantments: false
+
+configurable-machines:
+  wither-assembler:
+    allow-soul-soil: true
 
 energy:
   regulator-display:
