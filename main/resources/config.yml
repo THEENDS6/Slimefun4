@@ -92,6 +92,14 @@ electric-machines:
     produce-collector: true
     xp-collector: true
 
+  # SFX extensions for electric machines.
+  sfx-extensions:
+    fluid-pump-optimization:
+      enabled: true
+      water-source-threshold: 4
+      lava-source-threshold: 300
+      check-interval-ticks: 200
+
   # Allows SFX tools/items to be processed by special electric machines such as
   # Auto Anvil, Auto Enchanter and Auto Disenchanter. Runtime item metadata is preserved.
   allow-sfx-item-enchanting: true
@@ -102,6 +110,10 @@ electric-machines:
 
   # Allows enchantments on item types they normally cannot be applied to, e.g. Efficiency on a sword.
   allow-illegal-enchantments: false
+
+configurable-machines:
+  wither-assembler:
+    allow-soul-soil: true
 
 energy:
   regulator-display:

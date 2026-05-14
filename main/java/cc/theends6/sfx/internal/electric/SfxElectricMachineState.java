@@ -11,7 +11,7 @@ import java.util.List;
 public final class SfxElectricMachineState {
     static final int MAX_INPUTS = 7;
     static final int MAX_OUTPUTS = 7;
-    private static final int SCHEMA = 9;
+    private static final int SCHEMA = 10;
 
     private final SfxElectricStack[] inputs = new SfxElectricStack[MAX_INPUTS];
     private final SfxElectricStack[] outputs = new SfxElectricStack[MAX_OUTPUTS];
@@ -24,6 +24,7 @@ public final class SfxElectricMachineState {
     private SfxElectricStack pendingOutput;
     private int storedEnergy;
     private int specialData;
+    private boolean enabled = true;
 
     public static SfxElectricMachineState empty() {
         return new SfxElectricMachineState();
@@ -133,7 +134,7 @@ public final class SfxElectricMachineState {
                 state.specialData = Math.max(0, input.readInt());
                 return state;
             }
-            if (schema != SCHEMA) {
+            if (schema != SCHEMA && schema != 9) {
                 return empty();
             }
             SfxElectricMachineState state = new SfxElectricMachineState();
@@ -151,6 +152,9 @@ public final class SfxElectricMachineState {
             }
             state.storedEnergy = Math.max(0, input.readInt());
             state.specialData = Math.max(0, input.readInt());
+            if (schema >= 10) {
+                state.enabled = input.readBoolean();
+            }
             return state;
         } catch (IOException | IllegalArgumentException ignored) {
             return empty();
@@ -201,6 +205,7 @@ public final class SfxElectricMachineState {
             }
             output.writeInt(storedEnergy);
             output.writeInt(specialData);
+            output.writeBoolean(enabled);
             output.flush();
             return buffer.toByteArray();
         } catch (IOException exception) {
@@ -384,6 +389,14 @@ public final class SfxElectricMachineState {
 
     public void specialData(int specialData) {
         this.specialData = Math.max(0, specialData);
+    }
+
+    public boolean enabled() {
+        return enabled;
+    }
+
+    public void enabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public void resetProgress() {

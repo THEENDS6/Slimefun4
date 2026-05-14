@@ -123,8 +123,6 @@ public final class SfxConfigurableMachineService implements Listener {
     private void registerDefinitions() {
         boolean sfxGeneratorBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
         int netherStarEnergy = sfxGeneratorBalance ? 2048 : 1024;
-        register(SfxConfigurableMachineDefinition.ironGolemAssembler());
-        register(SfxConfigurableMachineDefinition.witherAssembler());
         register(SfxConfigurableMachineDefinition.nuclearReactor());
         register(SfxConfigurableMachineDefinition.netherStarReactor(netherStarEnergy));
         register(SfxConfigurableMachineDefinition.reactorAccessPort());

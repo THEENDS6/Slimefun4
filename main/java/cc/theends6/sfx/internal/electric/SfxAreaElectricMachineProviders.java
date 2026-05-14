@@ -6,10 +6,14 @@ import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -18,6 +22,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -29,11 +34,14 @@ import org.bukkit.entity.Animals;
 import org.bukkit.entity.Armadillo;
 import org.bukkit.entity.Cow;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Goat;
+import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.MushroomCow;
 import org.bukkit.entity.Sheep;
+import org.bukkit.entity.Wither;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -60,6 +68,12 @@ final class SfxAreaElectricMachineProviders {
     private static final double XP_COLLECTOR_ATTRACT_SPEED = 0.18D;
     private static final int XP_PER_FLASK = 10;
     private static final int XP_FLASK_ENERGY_COST = 1000;
+    private static final int FLUID_PUMP_WORK_TICKS = 10;
+    private static final int FLUID_SOURCE_SEARCH_LIMIT = 42;
+    private static final int DEFAULT_FLUID_POOL_CHECK_INTERVAL_TICKS = 200;
+    private static final int DEFAULT_WATER_POOL_SOURCE_THRESHOLD = 4;
+    private static final int DEFAULT_LAVA_POOL_SOURCE_THRESHOLD = 300;
+    private static final Map<FluidPoolCacheKey, FluidPoolCacheEntry> FLUID_POOL_CACHE = new ConcurrentHashMap<>();
     private static final Enchantment UNBREAKING = Enchantment.getByKey(NamespacedKey.minecraft("unbreaking"));
     private static final Enchantment MENDING = Enchantment.getByKey(NamespacedKey.minecraft("mending"));
 
@@ -67,36 +81,107 @@ final class SfxAreaElectricMachineProviders {
     }
 
 
+    static void warmFluidPumpPoolCache(JavaPlugin plugin, Location location) {
+        if (location == null || location.getWorld() == null) {
+            return;
+        }
+        Block below = location.getBlock().getRelative(BlockFace.DOWN);
+        Material fluid = fluidMaterial(below);
+        if (fluid != null && isSourceLiquid(below)) {
+            hasLargeEnoughSourcePool(plugin, location, below, fluid);
+        }
+    }
+
     static SfxElectricRecipeProvider fluidPump() {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                FluidPumpAction action = findFluidPumpAction(items, definition, state, location);
-                if (action.status() == SfxElectricMachineRenderStatus.NO_INPUT) {
+                if (isActive(state, "sf:fluid_pump")) {
+                    return advanceFluidPump(plugin, items, definition, state, location);
+                }
+                FluidPumpAction action = findFluidPumpStart(plugin, items, definition, state, location);
+                if (action.status() != SfxElectricMachineRenderStatus.WORKING) {
+                    return SfxElectricMachineTickResult.status(action.status(), action.status() != SfxElectricMachineRenderStatus.NO_INPUT);
+                }
+                SfxElectricStack reserved = consumeInput(state, action.inputSlot(), 1);
+                if (reserved == null) {
                     return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_INPUT, false);
                 }
-                if (action.status() == SfxElectricMachineRenderStatus.NO_TARGET) {
-                    return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
+                state.activeRecipeKey("sf:fluid_pump");
+                state.activeInputSlot(action.inputSlot());
+                state.activeBaseTicks(FLUID_PUMP_WORK_TICKS);
+                state.activeOutputs(List.of(action.output()));
+                state.reservedInputs(List.of(reserved));
+                state.pendingOutput(null);
+                state.progressWork(0);
+                return advanceFluidPump(plugin, items, definition, state, location);
+            }
+
+            @Override
+            public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+                if (isActive(state, "sf:fluid_pump")) {
+                    if (state.progressWork() >= Math.max(1, state.activeBaseTicks())) {
+                        FluidPumpAction completion = findFluidPumpCompletion(plugin, items, definition, state, location, false);
+                        return completion.status() == SfxElectricMachineRenderStatus.WORKING ? 0 : 0;
+                    }
+                    return definition.energyConsumptionPerTick();
                 }
-                if (action.status() == SfxElectricMachineRenderStatus.OUTPUT_FULL) {
-                    return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OUTPUT_FULL, true);
+                FluidPumpAction action = findFluidPumpStart(plugin, items, definition, state, location);
+                return action.status() == SfxElectricMachineRenderStatus.WORKING ? definition.energyConsumptionPerTick() : 0;
+            }
+        };
+    }
+
+    static SfxElectricRecipeProvider assembler(String key, EntityType spawnType, Material headMaterial, int headAmount, Set<Material> bodyMaterials, int bodyAmount, int workTicks) {
+        return new WorldActionProvider() {
+            @Override
+            public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+                if (!assemblerEnabled(state)) {
+                    return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.IDLE, state.hasProgress() || state.hasAnyInput());
+                }
+                String recipeKey = "sf:assembler:" + key;
+                if (!isActive(state, recipeKey)) {
+                    AssemblerStart start = findAssemblerStart(state, headMaterial, headAmount, bodyMaterials, bodyAmount);
+                    if (start.status() != SfxElectricMachineRenderStatus.WORKING) {
+                        return SfxElectricMachineTickResult.status(start.status(), start.status() != SfxElectricMachineRenderStatus.NO_INPUT);
+                    }
+                    consumeAssemblerStacks(state, start.reservedInputs());
+                    state.activeRecipeKey(recipeKey);
+                    state.activeInputSlot(start.primaryInputSlot());
+                    state.activeBaseTicks(workTicks);
+                    state.activeOutputs(List.of());
+                    state.reservedInputs(start.reservedInputs());
+                    state.pendingOutput(null);
+                    state.progressWork(0);
+                }
+                int totalWork = Math.max(1, state.activeBaseTicks());
+                if (state.progressWork() >= totalWork) {
+                    return completeAssembler(definition, state, location, spawnType);
                 }
                 if (state.storedEnergy() < definition.energyConsumptionPerTick()) {
                     return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_POWER, true);
                 }
-                consumeInput(state, action.inputSlot(), 1);
-                pushOutput(items, definition, state, action.output());
-                if (action.consumeSource()) {
-                    action.source().setType(Material.AIR, false);
-                }
                 state.storedEnergy(state.storedEnergy() - definition.energyConsumptionPerTick());
+                int progressed = Math.min(totalWork, state.progressWork() + definition.speed());
+                state.progressWork(progressed);
+                if (progressed >= totalWork) {
+                    SfxElectricMachineTickResult complete = completeAssembler(definition, state, location, spawnType);
+                    return new SfxElectricMachineTickResult(complete.status(), definition.energyConsumptionPerTick(), true, complete.keepActive());
+                }
                 return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
             }
 
             @Override
             public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                FluidPumpAction action = findFluidPumpAction(items, definition, state, location);
-                return action.status() == SfxElectricMachineRenderStatus.WORKING ? definition.energyConsumptionPerTick() : 0;
+                if (!assemblerEnabled(state)) {
+                    return 0;
+                }
+                String recipeKey = "sf:assembler:" + key;
+                if (isActive(state, recipeKey)) {
+                    return state.progressWork() >= Math.max(1, state.activeBaseTicks()) ? 0 : definition.energyConsumptionPerTick();
+                }
+                AssemblerStart start = findAssemblerStart(state, headMaterial, headAmount, bodyMaterials, bodyAmount);
+                return start.status() == SfxElectricMachineRenderStatus.WORKING ? definition.energyConsumptionPerTick() : 0;
             }
         };
     }
@@ -1241,10 +1326,44 @@ final class SfxAreaElectricMachineProviders {
     }
 
 
-    private static FluidPumpAction findFluidPumpAction(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+    private static SfxElectricMachineTickResult advanceFluidPump(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        int totalWork = Math.max(1, state.activeBaseTicks());
+        if (state.progressWork() >= totalWork) {
+            return completeFluidPump(plugin, items, definition, state, location);
+        }
+        if (state.storedEnergy() < definition.energyConsumptionPerTick()) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_POWER, true);
+        }
+        state.storedEnergy(state.storedEnergy() - definition.energyConsumptionPerTick());
+        int progressed = Math.min(totalWork, state.progressWork() + definition.speed());
+        state.progressWork(progressed);
+        if (progressed >= totalWork) {
+            SfxElectricMachineTickResult completion = completeFluidPump(plugin, items, definition, state, location);
+            return new SfxElectricMachineTickResult(completion.status(), definition.energyConsumptionPerTick(), true, completion.keepActive());
+        }
+        return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
+    }
+
+    private static SfxElectricMachineTickResult completeFluidPump(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        FluidPumpAction action = findFluidPumpCompletion(plugin, items, definition, state, location, true);
+        if (action.status() == SfxElectricMachineRenderStatus.NO_INPUT || action.status() == SfxElectricMachineRenderStatus.NO_TARGET) {
+            return SfxElectricMachineTickResult.status(action.status(), true);
+        }
+        if (action.status() == SfxElectricMachineRenderStatus.OUTPUT_FULL) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OUTPUT_FULL, true);
+        }
+        pushOutput(items, definition, state, action.output());
+        if (action.consumeSource()) {
+            action.source().setType(Material.AIR, true);
+        }
+        state.resetProgress();
+        return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, 0, true);
+    }
+
+    private static FluidPumpAction findFluidPumpStart(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
         int inputSlot = -1;
         SfxElectricStack input = null;
-        for (int slot = 0; slot < state.inputCapacity(); slot++) {
+        for (int slot = 0; slot < Math.min(state.inputCapacity(), definition.inputSlots().length); slot++) {
             SfxElectricStack candidate = state.input(slot);
             if (candidate == null || candidate.isSfxItem()) {
                 continue;
@@ -1258,30 +1377,43 @@ final class SfxAreaElectricMachineProviders {
         if (inputSlot < 0 || input == null) {
             return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_INPUT);
         }
-        Block source = findFluidSource(location, input.material());
+        return buildFluidPumpAction(plugin, items, definition, state, location, input.material(), inputSlot, false);
+    }
+
+    private static FluidPumpAction findFluidPumpCompletion(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, boolean rollChance) {
+        SfxElectricStack reserved = state.reservedInputs().isEmpty() ? null : state.reservedInputs().getFirst();
+        if (reserved == null || reserved.isSfxItem() || (reserved.material() != Material.BUCKET && reserved.material() != Material.GLASS_BOTTLE)) {
+            return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_INPUT);
+        }
+        return buildFluidPumpAction(plugin, items, definition, state, location, reserved.material(), state.activeInputSlot(), rollChance);
+    }
+
+    private static FluidPumpAction buildFluidPumpAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, Material container, int inputSlot, boolean rollChance) {
+        Block source = findFluidSource(location, container);
         if (source == null) {
             return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_TARGET);
         }
         SfxElectricStack output;
-        boolean consumeSource = true;
-        if (input.material() == Material.BUCKET) {
-            if (source.getType() == Material.LAVA) {
+        Material fluid = fluidMaterial(source);
+        if (container == Material.BUCKET) {
+            if (fluid == Material.LAVA) {
                 output = SfxElectricStack.vanilla(Material.LAVA_BUCKET, 1);
-            } else if (source.getType() == Material.WATER || source.getType() == Material.BUBBLE_COLUMN) {
+            } else if (fluid == Material.WATER) {
                 output = SfxElectricStack.vanilla(Material.WATER_BUCKET, 1);
             } else {
                 return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_TARGET);
             }
         } else {
-            if (source.getType() != Material.WATER && source.getType() != Material.BUBBLE_COLUMN) {
+            if (fluid != Material.WATER) {
                 return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_TARGET);
             }
             output = waterBottle(items);
-            consumeSource = ThreadLocalRandom.current().nextDouble() < 0.30D;
         }
         if (!canFitOutput(items, definition, state, output)) {
             return FluidPumpAction.status(SfxElectricMachineRenderStatus.OUTPUT_FULL);
         }
+        boolean largePool = hasLargeEnoughSourcePool(plugin, location, source, fluid);
+        boolean consumeSource = !largePool && (container != Material.GLASS_BOTTLE || (rollChance && ThreadLocalRandom.current().nextDouble() < 0.30D));
         return new FluidPumpAction(SfxElectricMachineRenderStatus.WORKING, inputSlot, output, source, consumeSource);
     }
 
@@ -1291,37 +1423,129 @@ final class SfxAreaElectricMachineProviders {
         }
         Block below = location.getBlock().getRelative(BlockFace.DOWN);
         if (container == Material.GLASS_BOTTLE) {
-            return (below.getType() == Material.WATER || below.getType() == Material.BUBBLE_COLUMN) && isSourceLiquid(below) ? below : null;
+            return isSameFluid(below, Material.WATER) ? findConnectedFluidSource(below, Material.WATER, FLUID_SOURCE_SEARCH_LIMIT) : null;
         }
-        if ((below.getType() == Material.WATER || below.getType() == Material.BUBBLE_COLUMN) && isSourceLiquid(below)) {
-            return below;
+        if (isSameFluid(below, Material.WATER)) {
+            return findConnectedFluidSource(below, Material.WATER, FLUID_SOURCE_SEARCH_LIMIT);
         }
-        if (below.getType() != Material.LAVA) {
-            return null;
+        if (isSameFluid(below, Material.LAVA)) {
+            return findConnectedFluidSource(below, Material.LAVA, FLUID_SOURCE_SEARCH_LIMIT);
         }
-        return findConnectedLavaSource(below, 42);
+        return null;
     }
 
-    private static Block findConnectedLavaSource(Block start, int limit) {
+    private static Block findConnectedFluidSource(Block start, Material fluid, int limit) {
         List<Block> queue = new ArrayList<>();
-        List<Block> seen = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
         queue.add(start);
-        seen.add(start);
+        seen.add(blockKey(start));
         for (int index = 0; index < queue.size() && seen.size() <= limit; index++) {
             Block block = queue.get(index);
-            if (block.getType() == Material.LAVA && isSourceLiquid(block)) {
+            if (isSameFluid(block, fluid) && isSourceLiquid(block)) {
                 return block;
             }
             for (BlockFace face : new BlockFace[] {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN}) {
                 Block relative = block.getRelative(face);
-                if (relative.getType() != Material.LAVA || seen.contains(relative)) {
+                if (!isSameFluid(relative, fluid) || !seen.add(blockKey(relative))) {
                     continue;
                 }
-                seen.add(relative);
                 queue.add(relative);
             }
         }
-        return isSourceLiquid(start) ? start : null;
+        return isSameFluid(start, fluid) && isSourceLiquid(start) ? start : null;
+    }
+
+    private static boolean hasLargeEnoughSourcePool(JavaPlugin plugin, Location machine, Block source, Material fluid) {
+        if (plugin != null && !plugin.getConfig().getBoolean("electric-machines.sfx-extensions.fluid-pump-optimization.enabled", true)) {
+            return false;
+        }
+        if (machine == null || source == null || fluid == null || source.getWorld() == null) {
+            return false;
+        }
+        Block below = machine.getBlock().getRelative(BlockFace.DOWN);
+        if (!sameBlock(below, source) || !isSameFluid(below, fluid) || !isSourceLiquid(below)) {
+            return false;
+        }
+        int threshold = fluid == Material.LAVA
+                ? configInt(plugin, "electric-machines.sfx-extensions.fluid-pump-optimization.lava-source-threshold", DEFAULT_LAVA_POOL_SOURCE_THRESHOLD)
+                : configInt(plugin, "electric-machines.sfx-extensions.fluid-pump-optimization.water-source-threshold", DEFAULT_WATER_POOL_SOURCE_THRESHOLD);
+        int interval = configInt(plugin, "electric-machines.sfx-extensions.fluid-pump-optimization.check-interval-ticks", DEFAULT_FLUID_POOL_CHECK_INTERVAL_TICKS);
+        FluidPoolCacheKey key = new FluidPoolCacheKey(source.getWorld().getUID(), source.getX(), source.getY(), source.getZ(), fluid, threshold);
+        long now = source.getWorld().getFullTime();
+        FluidPoolCacheEntry cached = FLUID_POOL_CACHE.get(key);
+        if (cached != null && now - cached.checkedTick() < Math.max(1, interval)) {
+            return cached.largeEnough();
+        }
+        boolean largeEnough = hasAtLeastConnectedSourceBlocks(source, fluid, threshold);
+        FLUID_POOL_CACHE.put(key, new FluidPoolCacheEntry(now, largeEnough));
+        return largeEnough;
+    }
+
+    private static boolean hasAtLeastConnectedSourceBlocks(Block start, Material fluid, int threshold) {
+        if (threshold <= 1) {
+            return true;
+        }
+        List<Block> queue = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        queue.add(start);
+        seen.add(blockKey(start));
+        int sources = 0;
+        int maxVisited = Math.max(threshold * 8, threshold + 16);
+        for (int index = 0; index < queue.size() && seen.size() <= maxVisited; index++) {
+            Block block = queue.get(index);
+            if (!isSameFluid(block, fluid)) {
+                continue;
+            }
+            if (isSourceLiquid(block) && ++sources >= threshold) {
+                return true;
+            }
+            for (BlockFace face : new BlockFace[] {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN}) {
+                Block relative = block.getRelative(face);
+                if (!isSameFluid(relative, fluid) || !seen.add(blockKey(relative))) {
+                    continue;
+                }
+                queue.add(relative);
+            }
+        }
+        return false;
+    }
+
+    private static int configInt(JavaPlugin plugin, String path, int fallback) {
+        return plugin == null ? fallback : Math.max(1, plugin.getConfig().getInt(path, fallback));
+    }
+
+    private static Material fluidMaterial(Block block) {
+        if (block == null) {
+            return null;
+        }
+        if (block.getType() == Material.WATER || block.getType() == Material.BUBBLE_COLUMN) {
+            return Material.WATER;
+        }
+        if (block.getType() == Material.LAVA) {
+            return Material.LAVA;
+        }
+        return null;
+    }
+
+    private static boolean isSameFluid(Block block, Material fluid) {
+        if (block == null || fluid == null) {
+            return false;
+        }
+        return fluid == Material.WATER
+                ? block.getType() == Material.WATER || block.getType() == Material.BUBBLE_COLUMN
+                : block.getType() == fluid;
+    }
+
+    private static boolean sameBlock(Block first, Block second) {
+        return first != null && second != null
+                && first.getWorld().getUID().equals(second.getWorld().getUID())
+                && first.getX() == second.getX()
+                && first.getY() == second.getY()
+                && first.getZ() == second.getZ();
+    }
+
+    private static String blockKey(Block block) {
+        return block.getX() + ":" + block.getY() + ":" + block.getZ();
     }
 
     private static boolean isSourceLiquid(Block block) {
@@ -1337,6 +1561,101 @@ final class SfxAreaElectricMachineProviders {
             stack.setItemMeta(potionMeta);
         }
         return SfxElectricStack.snapshot(stack);
+    }
+
+    static boolean assemblerEnabled(SfxElectricMachineState state) {
+        return state.enabled();
+    }
+
+    static int assemblerOffsetTenths(SfxElectricMachineState state) {
+        if (state.specialData() == 0) {
+            return 30;
+        }
+        return Math.max(-100, Math.min(100, (state.specialData() & 0xFF) - 100));
+    }
+
+    static void assemblerEnabled(SfxElectricMachineState state, boolean enabled) {
+        state.enabled(enabled);
+    }
+
+    static void assemblerOffsetTenths(SfxElectricMachineState state, int offsetTenths) {
+        state.specialData(encodeAssemblerData(offsetTenths));
+    }
+
+    private static int encodeAssemblerData(int offsetTenths) {
+        int clamped = Math.max(-100, Math.min(100, offsetTenths));
+        return 0x200 | ((clamped + 100) & 0xFF);
+    }
+
+    private static AssemblerStart findAssemblerStart(SfxElectricMachineState state, Material headMaterial, int headAmount, Set<Material> bodyMaterials, int bodyAmount) {
+        List<SfxElectricStack> reserved = new ArrayList<>();
+        List<AssemblerConsume> consumed = new ArrayList<>();
+        if (!collectMaterialForAssembler(state, reserved, consumed, new int[] {0, 1}, Set.of(headMaterial), headAmount)) {
+            return AssemblerStart.status(SfxElectricMachineRenderStatus.NO_INPUT);
+        }
+        if (!collectMaterialForAssembler(state, reserved, consumed, new int[] {2, 3}, bodyMaterials, bodyAmount)) {
+            return AssemblerStart.status(SfxElectricMachineRenderStatus.NO_INPUT);
+        }
+        return new AssemblerStart(SfxElectricMachineRenderStatus.WORKING, List.copyOf(reserved), consumed.isEmpty() ? -1 : consumed.getFirst().slot());
+    }
+
+    private static boolean collectMaterialForAssembler(SfxElectricMachineState state, List<SfxElectricStack> reserved, List<AssemblerConsume> consumed, int[] slots, Set<Material> materials, int amount) {
+        int remaining = amount;
+        for (int slot : slots) {
+            SfxElectricStack stack = state.input(slot);
+            if (stack == null || stack.isSfxItem() || !materials.contains(stack.material())) {
+                continue;
+            }
+            int take = Math.min(remaining, stack.amount());
+            if (take <= 0) {
+                continue;
+            }
+            reserved.add(stack.copyWithAmount(take));
+            consumed.add(new AssemblerConsume(slot, take));
+            remaining -= take;
+            if (remaining <= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void consumeAssemblerStacks(SfxElectricMachineState state, List<SfxElectricStack> reservedInputs) {
+        if (reservedInputs == null || reservedInputs.isEmpty()) {
+            return;
+        }
+        for (SfxElectricStack reserved : reservedInputs) {
+            int remaining = reserved.amount();
+            for (int slot = 0; slot < state.inputCapacity() && remaining > 0; slot++) {
+                SfxElectricStack stack = state.input(slot);
+                if (stack == null || !stack.sameKind(reserved)) {
+                    continue;
+                }
+                int take = Math.min(remaining, stack.amount());
+                remaining -= take;
+                int left = stack.amount() - take;
+                state.input(slot, left <= 0 ? null : stack.copyWithAmount(left));
+            }
+        }
+    }
+
+    private static SfxElectricMachineTickResult completeAssembler(SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, EntityType spawnType) {
+        if (location == null || location.getWorld() == null) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
+        }
+        Location spawn = location.clone().add(0.5D, assemblerOffsetTenths(state) / 10.0D, 0.5D);
+        if (spawnType == EntityType.IRON_GOLEM) {
+            IronGolem golem = (IronGolem) location.getWorld().spawnEntity(spawn, EntityType.IRON_GOLEM);
+            golem.setPlayerCreated(true);
+            location.getWorld().playSound(location, Sound.ENTITY_IRON_GOLEM_REPAIR, 1.0F, 1.0F);
+        } else if (spawnType == EntityType.WITHER) {
+            Wither wither = (Wither) location.getWorld().spawnEntity(spawn, EntityType.WITHER);
+            wither.setInvulnerableTicks(220);
+        } else {
+            location.getWorld().spawnEntity(spawn, spawnType);
+        }
+        state.resetProgress();
+        return SfxElectricMachineTickResult.changed(state.hasAnyInput() ? SfxElectricMachineRenderStatus.WORKING : SfxElectricMachineRenderStatus.IDLE, 0, state.hasAnyInput());
     }
 
     private abstract static class WorldActionProvider implements SfxElectricRecipeProvider {
@@ -1373,6 +1692,21 @@ final class SfxAreaElectricMachineProviders {
         static FluidPumpAction status(SfxElectricMachineRenderStatus status) {
             return new FluidPumpAction(status, -1, null, null, false);
         }
+    }
+
+    private record FluidPoolCacheKey(UUID worldId, int x, int y, int z, Material fluid, int threshold) {
+    }
+
+    private record FluidPoolCacheEntry(long checkedTick, boolean largeEnough) {
+    }
+
+    private record AssemblerStart(SfxElectricMachineRenderStatus status, List<SfxElectricStack> reservedInputs, int primaryInputSlot) {
+        static AssemblerStart status(SfxElectricMachineRenderStatus status) {
+            return new AssemblerStart(status, List.of(), -1);
+        }
+    }
+
+    private record AssemblerConsume(int slot, int amount) {
     }
 
     private enum GrowthTarget {
