@@ -4,5 +4,6 @@ public enum SfxEnergyComponentType {
     REGULATOR,
     CONNECTOR,
     CAPACITOR,
-    GENERATOR
+    GENERATOR,
+    CHARGER
 }

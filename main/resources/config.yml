@@ -162,3 +162,17 @@ tools:
     # false = classic Slimefun behavior: only display stored/capacity.
     # true = SFX enhanced inspection with grid and machine details.
     use-sfx-enhanced: true
+
+radiation:
+  enabled: true
+  # Radiation inventory exposure is calculated twice per second.
+  scan-interval-ticks: 10
+  # If the player carries no radioactive items, exposure decays by this amount per scan.
+  recovery-per-scan: 10
+  max-exposure: 3000
+  # After respawn, players ignore radiation exposure and symptoms for this duration.
+  respawn-immunity-ticks: 200
+  protection:
+    # Each armor piece with the armor-hazmat flag reduces new exposure by 25%.
+    # Four pieces prevent new exposure from radioactive inventory items.
+    reduction-per-piece: 0.25

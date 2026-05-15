@@ -38,6 +38,10 @@ public record SfxEnergyComponentDefinition(
                 && (usesVanillaCoalResolver || !fuelRules.isEmpty());
     }
 
+    public boolean isCharger() {
+        return componentType == SfxEnergyComponentType.CHARGER;
+    }
+
     public boolean isSolarGenerator() {
         return componentType == SfxEnergyComponentType.GENERATOR
                 && !usesVanillaCoalResolver

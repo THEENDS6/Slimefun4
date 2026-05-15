@@ -11,6 +11,7 @@ import cc.theends6.sfx.internal.util.Text;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -37,6 +38,7 @@ import org.bukkit.block.Dropper;
 import org.bukkit.block.Furnace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Levelled;
+import org.bukkit.block.data.Lightable;
 import org.bukkit.block.data.Waterlogged;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -56,6 +58,7 @@ import org.bukkit.inventory.FurnaceRecipe;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -749,45 +752,53 @@ public final class SfxBasicMachineBlockListener implements Listener {
         FurnaceInventory inventory = furnace.getInventory();
         VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
         state.sleeping(false);
-        ItemStack input = inventory.getSmelting();
-        VirtualFurnaceRecipe recipe = resolveFurnaceRecipe(input).orElse(null);
-        if (recipe == null || input == null || input.getType().isAir()) {
-            state.cookProgress(0);
-            state.inputKey(null);
-            state.sleeping(!context.hasViewers());
-            syncVirtualFurnaceVisual(furnace, inventory, state, 0, true, context.hasViewers());
-            return;
-        }
-        String inputKey = inputKey(input);
-        if (!inputKey.equals(state.inputKey())) {
-            state.inputKey(inputKey);
-            state.cookProgress(0);
-        }
-        int elapsed = context.elapsedTicksInt();
-        int remainingSteps = Math.max(1, elapsed);
-        int cookTime = recipe.cookingTime();
+
+        int elapsed = Math.max(1, context.elapsedTicksInt());
+        int cookTime = currentCookTime(inventory, state);
         boolean forceVisual = false;
-        while (remainingSteps > 0) {
-            input = inventory.getSmelting();
-            recipe = resolveFurnaceRecipe(input).orElse(null);
+
+        for (int tick = 0; tick < elapsed; tick++) {
+            ItemStack input = inventory.getSmelting();
+            VirtualFurnaceRecipe recipe = resolveFurnaceRecipe(input).orElse(null);
             if (recipe == null || input == null || input.getType().isAir()) {
+                if (state.cookProgress() != 0 || state.inputKey() != null) {
+                    forceVisual = true;
+                }
                 state.cookProgress(0);
                 state.inputKey(null);
-                state.sleeping(!context.hasViewers());
-                break;
+                // Already-lit fuel must keep burning even when the recipe/input disappears.
+                burnOneVirtualFuelTick(state);
+                continue;
             }
+
             cookTime = recipe.cookingTime();
-            ItemStack result = applyEnhancedFurnaceFortune(recipe.result(), input.getType(), stats);
-            if (!canFitResult(inventory, result)) {
-                state.sleeping(!context.hasViewers());
-                break;
+            String inputKey = inputKey(input);
+            if (!inputKey.equals(state.inputKey())) {
+                state.inputKey(inputKey);
+                state.cookProgress(0);
+                forceVisual = true;
             }
+
+            ItemStack result = applyEnhancedFurnaceFortune(recipe.result(), input.getType(), stats);
+            boolean canSmelt = canFitResult(inventory, result);
+            if (!canSmelt) {
+                if (state.cookProgress() != 0) {
+                    state.cookProgress(0);
+                    forceVisual = true;
+                }
+                // Fuel already accepted by the furnace is consumed by time, not by work done.
+                burnOneVirtualFuelTick(state);
+                continue;
+            }
+
             if (state.burnTimeRemaining() <= 0) {
                 ItemStack fuel = inventory.getFuel();
                 int burnTicks = enhancedFuelTicks(fuel, stats);
                 if (burnTicks <= 0) {
-                    state.cookProgress(0);
-                    state.sleeping(!context.hasViewers());
+                    if (state.cookProgress() != 0) {
+                        state.cookProgress(0);
+                        forceVisual = true;
+                    }
                     break;
                 }
                 consumeFuel(inventory, fuel);
@@ -795,41 +806,70 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 state.burnTimeTotal(burnTicks);
                 forceVisual = true;
             }
-            int consumedBurn = Math.min(remainingSteps, state.burnTimeRemaining());
-            state.burnTimeRemaining(Math.max(0, state.burnTimeRemaining() - consumedBurn));
-            state.cookProgress(state.cookProgress() + Math.max(1, stats.processingSpeed()) * consumedBurn);
-            remainingSteps -= consumedBurn;
-            if (state.cookProgress() >= cookTime) {
-                consumeSmeltingInput(inventory, input);
-                pushFurnaceResult(inventory, result);
-                state.cookProgress(0);
-                ItemStack next = inventory.getSmelting();
-                state.inputKey(next == null || next.getType().isAir() ? null : inputKey(next));
-                forceVisual = true;
-            }
-            if (consumedBurn <= 0) {
-                break;
+
+            if (state.burnTimeRemaining() > 0) {
+                burnOneVirtualFuelTick(state);
+                state.cookProgress(state.cookProgress() + Math.max(1, stats.processingSpeed()));
+                if (state.cookProgress() >= cookTime) {
+                    consumeSmeltingInput(inventory, input);
+                    pushFurnaceResult(inventory, result);
+                    state.cookProgress(0);
+                    ItemStack next = inventory.getSmelting();
+                    state.inputKey(next == null || next.getType().isAir() ? null : inputKey(next));
+                    forceVisual = true;
+                }
             }
         }
-        syncVirtualFurnaceVisual(furnace, inventory, state, cookTime, forceVisual, context.hasViewers());
+
+        if (!context.hasViewers() && state.burnTimeRemaining() <= 0 && !canStartOrContinueVirtualSmelting(inventory, stats)) {
+            state.sleeping(true);
+        }
+        syncVirtualFurnaceVisualAndRestoreInventory(furnace, inventory, state, cookTime, forceVisual, context.hasViewers());
+    }
+
+    private void burnOneVirtualFuelTick(VirtualFurnaceState state) {
+        if (state.burnTimeRemaining() > 0) {
+            state.burnTimeRemaining(state.burnTimeRemaining() - 1);
+        }
+    }
+
+    private int currentCookTime(FurnaceInventory inventory, VirtualFurnaceState state) {
+        ItemStack input = inventory.getSmelting();
+        VirtualFurnaceRecipe recipe = resolveFurnaceRecipe(input).orElse(null);
+        if (recipe != null) {
+            return Math.max(1, recipe.cookingTime());
+        }
+        return Math.max(1, state.cookTimeTotal());
+    }
+
+    private boolean canStartOrContinueVirtualSmelting(FurnaceInventory inventory, FurnaceStats stats) {
+        ItemStack input = inventory.getSmelting();
+        VirtualFurnaceRecipe recipe = resolveFurnaceRecipe(input).orElse(null);
+        if (recipe == null || input == null || input.getType().isAir()) {
+            return false;
+        }
+        ItemStack result = recipe.result();
+        if (!canFitResult(inventory, result)) {
+            return false;
+        }
+        return enhancedFuelTicks(inventory.getFuel(), stats) > 0;
     }
 
     private Optional<VirtualFurnaceRecipe> resolveFurnaceRecipe(ItemStack input) {
         if (input == null || input.getType().isAir()) {
             return Optional.empty();
         }
+        ItemStack probe = input.clone();
+        probe.setAmount(1);
         return furnaceRecipeCache.computeIfAbsent(input.getType(), material -> {
-            ItemStack probe = new ItemStack(material, 1);
-            for (Recipe recipe : plugin.getServer().getRecipesFor(probe)) {
+            Iterator<Recipe> iterator = plugin.getServer().recipeIterator();
+            while (iterator.hasNext()) {
+                Recipe recipe = iterator.next();
                 if (!(recipe instanceof FurnaceRecipe furnaceRecipe)) {
                     continue;
                 }
-                try {
-                    if (!furnaceRecipe.getInputChoice().test(probe)) {
-                        continue;
-                    }
-                } catch (Throwable ignored) {
-                    // Older Bukkit forks can throw for exotic RecipeChoice implementations.
+                if (!matchesFurnaceInput(furnaceRecipe, probe)) {
+                    continue;
                 }
                 ItemStack result = furnaceRecipe.getResult();
                 if (result == null || result.getType().isAir()) {
@@ -840,6 +880,19 @@ public final class SfxBasicMachineBlockListener implements Listener {
             }
             return Optional.empty();
         });
+    }
+
+    private boolean matchesFurnaceInput(FurnaceRecipe furnaceRecipe, ItemStack probe) {
+        try {
+            RecipeChoice choice = furnaceRecipe.getInputChoice();
+            if (choice != null) {
+                return choice.test(probe);
+            }
+        } catch (Throwable ignored) {
+            // Some forks or exotic RecipeChoice implementations can throw; fall back below.
+        }
+        ItemStack legacy = furnaceRecipe.getInput();
+        return legacy != null && !legacy.getType().isAir() && legacy.getType() == probe.getType();
     }
 
     private ItemStack applyEnhancedFurnaceFortune(ItemStack baseResult, Material inputType, FurnaceStats stats) {
@@ -856,15 +909,21 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return 0;
         }
         SfxFuelBurnTimeBridge bridge = fuelBurnTimeBridge;
+        int burnTicks = 0;
         if (bridge == null) {
             try {
                 bridge = SfxFuelBurnTimeBridge.create();
                 fuelBurnTimeBridge = bridge;
-            } catch (RuntimeException exception) {
-                return 0;
+            } catch (RuntimeException ignored) {
+                // Fall back to the static vanilla-equivalent table below.
             }
         }
-        int burnTicks = bridge.burnTicks(fuel);
+        if (bridge != null) {
+            burnTicks = bridge.burnTicks(fuel);
+        }
+        if (burnTicks <= 0) {
+            burnTicks = fallbackFuelTicks(fuel.getType());
+        }
         if (burnTicks <= 0) {
             return 0;
         }
@@ -874,6 +933,65 @@ public final class SfxBasicMachineBlockListener implements Listener {
             burnMultiplier /= stats.processingSpeed();
         }
         return Math.max(1, Math.min(Short.MAX_VALUE - 1, (int) Math.ceil(burnTicks * burnMultiplier)));
+    }
+
+    private int fallbackFuelTicks(Material type) {
+        if (type == null || type.isAir()) {
+            return 0;
+        }
+        return switch (type) {
+            case LAVA_BUCKET -> 20_000;
+            case COAL_BLOCK -> 16_000;
+            case DRIED_KELP_BLOCK -> 4_000;
+            case BLAZE_ROD -> 2_400;
+            case COAL, CHARCOAL -> 1_600;
+            case BAMBOO -> 50;
+            case STICK, BOWL, OAK_SAPLING, SPRUCE_SAPLING, BIRCH_SAPLING, JUNGLE_SAPLING, ACACIA_SAPLING,
+                    DARK_OAK_SAPLING, MANGROVE_PROPAGULE, CHERRY_SAPLING, AZALEA, FLOWERING_AZALEA -> 100;
+            case WOODEN_SWORD, WOODEN_SHOVEL, WOODEN_PICKAXE, WOODEN_AXE, WOODEN_HOE -> 200;
+            default -> fallbackWoodFuelTicks(type);
+        };
+    }
+
+    private int fallbackWoodFuelTicks(Material type) {
+        String name = type.name();
+        if (!isOverworldWoodFamily(name) && !name.contains("BAMBOO")) {
+            return 0;
+        }
+        if (name.endsWith("_SLAB")) {
+            return 150;
+        }
+        if (name.endsWith("_PLANKS")
+                || name.endsWith("_LOG")
+                || name.endsWith("_WOOD")
+                || name.endsWith("_STAIRS")
+                || name.endsWith("_FENCE")
+                || name.endsWith("_FENCE_GATE")
+                || name.endsWith("_DOOR")
+                || name.endsWith("_TRAPDOOR")
+                || name.endsWith("_PRESSURE_PLATE")
+                || name.endsWith("_SIGN")
+                || name.endsWith("_HANGING_SIGN")
+                || name.endsWith("_BOAT")
+                || name.endsWith("_CHEST_BOAT")) {
+            return 300;
+        }
+        if (name.endsWith("_BUTTON")) {
+            return 100;
+        }
+        return 0;
+    }
+
+    private boolean isOverworldWoodFamily(String name) {
+        return name.contains("OAK")
+                || name.contains("SPRUCE")
+                || name.contains("BIRCH")
+                || name.contains("JUNGLE")
+                || name.contains("ACACIA")
+                || name.contains("DARK_OAK")
+                || name.contains("MANGROVE")
+                || name.contains("CHERRY")
+                || name.contains("PALE_OAK");
     }
 
     private void consumeFuel(FurnaceInventory inventory, ItemStack fuel) {
@@ -921,16 +1039,66 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
     }
 
+    private void syncVirtualFurnaceVisualAndRestoreInventory(Furnace furnace, FurnaceInventory inventory, VirtualFurnaceState state, int cookTimeTotal, boolean force, boolean hasViewers) {
+        ItemStack smelting = cloneSlot(inventory.getSmelting());
+        ItemStack fuel = cloneSlot(inventory.getFuel());
+        ItemStack result = cloneSlot(inventory.getResult());
+        syncVirtualFurnaceVisual(furnace, inventory, state, cookTimeTotal, force, hasViewers);
+        // BlockState#update is required for the vanilla furnace progress bars, but on some
+        // Paper/Bukkit versions the snapshot update can overwrite live FurnaceInventory slots.
+        // Restore the slots after the visual update so SFX's virtual smelting remains authoritative.
+        restoreFurnaceInventory(inventory, smelting, fuel, result);
+    }
+
+    private ItemStack cloneSlot(ItemStack stack) {
+        if (stack == null || stack.getType().isAir()) {
+            return null;
+        }
+        return stack.clone();
+    }
+
+    private void restoreFurnaceInventory(FurnaceInventory inventory, ItemStack smelting, ItemStack fuel, ItemStack result) {
+        inventory.setSmelting(cloneSlot(smelting));
+        inventory.setFuel(cloneSlot(fuel));
+        inventory.setResult(cloneSlot(result));
+    }
+
     private void syncVirtualFurnaceVisual(Furnace furnace, FurnaceInventory inventory, VirtualFurnaceState state, int cookTimeTotal, boolean force, boolean hasViewers) {
-        if (!force && !hasViewers) {
+        boolean burning = state.burnTimeRemaining() > 0;
+
+        // A vanilla Furnace block keeps its lit model by ticking the tile entity burnTime.
+        // If SFX only toggles BlockData#lit while leaving the tile burnTime at 0, the
+        // vanilla furnace tick can immediately set lit=false again. That is what caused
+        // unloaded/unviewed enhanced furnaces to blink. Keep the real tile burnTime in
+        // step with the virtual burn while still letting SFX own all input/output logic.
+        int totalCookTime = Math.max(1, cookTimeTotal);
+        state.cookTimeTotal(totalCookTime);
+        furnace.setCookTimeTotal(totalCookTime);
+        if (hasViewers) {
+            furnace.setCookTime((short) Math.min(Short.MAX_VALUE, Math.max(0, Math.min(state.cookProgress(), totalCookTime - 1))));
+            furnace.setBurnTime((short) Math.min(Short.MAX_VALUE, Math.max(0, state.burnTimeRemaining())));
+        } else {
+            // No one is looking at the vanilla UI. Keep cook progress visually idle, but
+            // keep burnTime positive while the virtual furnace is burning so vanilla
+            // will not extinguish the block between SFX lazy ticks.
+            furnace.setCookTime((short) 0);
+            furnace.setBurnTime((short) Math.min(Short.MAX_VALUE, Math.max(0, state.burnTimeRemaining())));
+        }
+        furnace.update(true, false);
+
+        // BlockState#update may apply the snapshot BlockData, so force the lit flag after
+        // the tile update. This makes the visible block state follow the virtual burn.
+        syncFurnaceLitAppearance(furnace, burning);
+    }
+
+    private void syncFurnaceLitAppearance(Furnace furnace, boolean lit) {
+        Block block = furnace.getBlock();
+        BlockData data = block.getBlockData();
+        if (!(data instanceof Lightable lightable) || lightable.isLit() == lit) {
             return;
         }
-        // Keep the real vanilla furnace block idle. SFX owns the working progress in memory;
-        // the placed FurnaceInventory only provides the player/hopper-compatible slots.
-        furnace.setBurnTime((short) 0);
-        furnace.setCookTime((short) 0);
-        furnace.setCookTimeTotal(Math.max(1, cookTimeTotal));
-        furnace.update(true, false);
+        lightable.setLit(lit);
+        block.setBlockData(lightable, false);
     }
 
     private String inputKey(ItemStack input) {
@@ -1045,6 +1213,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         private int burnTimeTotal;
         private int cookProgress;
         private int visualTick;
+        private int cookTimeTotal = 200;
         private long lastLogicTick;
         private boolean sleeping;
         private String inputKey;
@@ -1059,6 +1228,14 @@ public final class SfxBasicMachineBlockListener implements Listener {
 
         void burnTimeTotal(int burnTimeTotal) {
             this.burnTimeTotal = burnTimeTotal;
+        }
+
+        int cookTimeTotal() {
+            return Math.max(1, cookTimeTotal);
+        }
+
+        void cookTimeTotal(int cookTimeTotal) {
+            this.cookTimeTotal = Math.max(1, cookTimeTotal);
         }
 
         int cookProgress() {
@@ -1076,6 +1253,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         void visualTick(int visualTick) {
             this.visualTick = visualTick;
         }
+
 
         long lastLogicTick() {
             return lastLogicTick;

@@ -5,6 +5,7 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
+import cc.theends6.sfx.internal.radiation.SfxRadiationService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.text.DecimalFormat;
@@ -74,19 +75,21 @@ public final class SfxLegacyUtilityListener implements Listener {
     private final SfxLocalization localization;
     private final SfxLegacyItemBehaviorConfig behaviorConfig;
     private final SfxBlockDataService blockData;
+    private final SfxRadiationService radiationService;
     private final NamespacedKey tapeAnchorKey;
     private final DecimalFormat distanceFormat = new DecimalFormat("##.###");
     private final Map<UUID, Long> magnetTick = new HashMap<>();
     private final Map<UUID, GrappleState> grapples = new HashMap<>();
     private final Map<UUID, Long> grapplingNoFallUntil = new HashMap<>();
 
-    public SfxLegacyUtilityListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig, SfxBlockDataService blockData) {
+    public SfxLegacyUtilityListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig, SfxBlockDataService blockData, SfxRadiationService radiationService) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.behaviorConfig = Objects.requireNonNull(behaviorConfig, "behaviorConfig");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
+        this.radiationService = Objects.requireNonNull(radiationService, "radiationService");
         this.tapeAnchorKey = new NamespacedKey(plugin, "tape_anchor");
     }
 
@@ -410,6 +413,7 @@ public final class SfxLegacyUtilityListener implements Listener {
         consumeOne(event.getItem(), player);
         player.setFireTicks(0);
         clearNegativeEffects(player);
+        radiationService.clearExposure(player);
         heal(player, healAmount);
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_BURP, 0.7f, 1.2f);
     }

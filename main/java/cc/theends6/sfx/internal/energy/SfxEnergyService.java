@@ -11,6 +11,7 @@ import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
@@ -69,6 +70,7 @@ public final class SfxEnergyService implements Listener {
     private final SfxEnergyDisplayController displayController;
     private final SfxCapacitorAppearanceProjector capacitorProjector;
     private final SfxEnergyGeneratorMenuRenderer generatorMenuRenderer;
+    private final SfxRechargeableItemService rechargeableItems;
     private final SfxTopologyService topology;
     private final Map<String, SfxEnergyComponentDefinition> definitions = new LinkedHashMap<>();
     private final Map<UUID, SfxEnergyNodeState> nodeStates = new ConcurrentHashMap<>();
@@ -89,7 +91,8 @@ public final class SfxEnergyService implements Listener {
             SfxBlockDataService blockData,
             SfxElectricMachineService electricMachines,
             SfxConfigurableMachineService configurableMachines,
-            SfxFloatingTextDisplayService floatingTextDisplay
+            SfxFloatingTextDisplayService floatingTextDisplay,
+            SfxRechargeableItemService rechargeableItems
     ) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
@@ -98,6 +101,7 @@ public final class SfxEnergyService implements Listener {
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
         this.configurableMachines = Objects.requireNonNull(configurableMachines, "configurableMachines");
+        this.rechargeableItems = Objects.requireNonNull(rechargeableItems, "rechargeableItems");
         this.displayController = new SfxEnergyDisplayController(plugin, localization, Objects.requireNonNull(floatingTextDisplay, "floatingTextDisplay"));
         this.capacitorProjector = new SfxCapacitorAppearanceProjector(runtime, blockData, definitions);
         this.generatorMenuRenderer = new SfxEnergyGeneratorMenuRenderer(items, localization);
@@ -172,7 +176,7 @@ public final class SfxEnergyService implements Listener {
             return;
         }
         event.setCancelled(true);
-        if (definition.isFueledGenerator()) {
+        if (definition.isFueledGenerator() || definition.isCharger()) {
             runtime.executeForPlayer(event.getPlayer(), () -> openGenerator(event.getPlayer(), instance, definition));
             return;
         }
@@ -431,6 +435,7 @@ public final class SfxEnergyService implements Listener {
         int supply = 0;
         List<SfxEnergyNodeRef> capacitorRefs = new ArrayList<>();
         List<SfxEnergyNodeRef> generatorRefs = new ArrayList<>();
+        List<SfxEnergyNodeRef> chargerRefs = new ArrayList<>();
         List<SfxBlockInstanceRecord> electricConsumers = new ArrayList<>();
         List<SfxBlockInstanceRecord> configurableConsumers = new ArrayList<>();
         List<SfxBlockInstanceRecord> configurableProducers = new ArrayList<>();
@@ -446,7 +451,7 @@ public final class SfxEnergyService implements Listener {
             boolean loaded = isInstanceChunkLoaded(instance);
             SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
             if (definition != null) {
-                if (definition.componentType() == SfxEnergyComponentType.CAPACITOR || definition.componentType() == SfxEnergyComponentType.GENERATOR) {
+                if (definition.componentType() == SfxEnergyComponentType.CAPACITOR || definition.componentType() == SfxEnergyComponentType.GENERATOR || definition.componentType() == SfxEnergyComponentType.CHARGER) {
                     if (!loaded) {
                         continue;
                     }
@@ -455,6 +460,7 @@ public final class SfxEnergyService implements Listener {
                     switch (definition.componentType()) {
                         case CAPACITOR -> capacitorRefs.add(new SfxEnergyNodeRef(instance, definition, state));
                         case GENERATOR -> generatorRefs.add(new SfxEnergyNodeRef(instance, definition, state));
+                        case CHARGER -> chargerRefs.add(new SfxEnergyNodeRef(instance, definition, state));
                         case REGULATOR, CONNECTOR -> {
                         }
                     }
@@ -485,10 +491,11 @@ public final class SfxEnergyService implements Listener {
         sortCapacitors(capacitorRefs);
 
         int requestedConsumption = electricMachines.requestedEnergyConsumption(electricConsumerIds)
-                + configurableMachines.requestedEnergyConsumption(configurableConsumerIds);
-        int totalStoredBefore = totalStoredEnergy(capacitorRefs, generatorRefs, electricConsumers)
+                + configurableMachines.requestedEnergyConsumption(configurableConsumerIds)
+                + requestedChargerEnergy(chargerRefs);
+        int totalStoredBefore = totalStoredEnergy(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
                 + configurableMachines.totalStoredEnergy(join(configurableConsumers, configurableProducers));
-        int totalCapacityBefore = totalCapacity(capacitorRefs, generatorRefs, electricConsumers)
+        int totalCapacityBefore = totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
                 + configurableMachines.totalCapacity(join(configurableConsumers, configurableProducers));
         boolean autoPauseEnabled = plugin.getConfig().getBoolean("energy.generator-balance.pause-generators-when-grid-full", true);
         int potentialSupply = potentialGeneration(generatorRefs, configurableProducers);
@@ -542,6 +549,21 @@ public final class SfxEnergyService implements Listener {
             }
         }
 
+        for (SfxEnergyNodeRef charger : chargerRefs) {
+            if (available <= 0) {
+                break;
+            }
+            if (!canChargeAnyInput(charger.state())) {
+                continue;
+            }
+            int accepted = Math.max(0, Math.min(available, charger.definition().capacity() - charger.state().storedEnergy()));
+            if (accepted > 0) {
+                charger.state().storedEnergy(charger.state().storedEnergy() + accepted);
+                dirtyNodes.add(charger.instance().instanceId());
+                available -= accepted;
+            }
+        }
+
         for (SfxBlockInstanceRecord consumer : electricConsumers) {
             int remainingDemand = Math.max(0, electricMachines.consumerCapacity(consumer.typeId()) - electricMachines.consumerStoredEnergy(consumer.instanceId()));
             if (remainingDemand <= 0) {
@@ -589,6 +611,32 @@ public final class SfxEnergyService implements Listener {
             }
         }
 
+        for (SfxEnergyNodeRef charger : chargerRefs) {
+            int remainingDemand = Math.max(0, charger.definition().capacity() - charger.state().storedEnergy());
+            if (remainingDemand <= 0 || !canChargeAnyInput(charger.state())) {
+                continue;
+            }
+            for (SfxEnergyNodeRef capacitor : capacitorRefs) {
+                if (remainingDemand <= 0) {
+                    break;
+                }
+                int stored = capacitor.state().storedEnergy();
+                if (stored <= 0) {
+                    continue;
+                }
+                int accepted = Math.min(stored, remainingDemand);
+                charger.state().storedEnergy(charger.state().storedEnergy() + accepted);
+                capacitor.state().storedEnergy(stored - accepted);
+                dirtyNodes.add(charger.instance().instanceId());
+                dirtyNodes.add(capacitor.instance().instanceId());
+                remainingDemand -= accepted;
+            }
+        }
+
+        for (SfxEnergyNodeRef charger : chargerRefs) {
+            tickChargingBench(charger);
+        }
+
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {
             if (available <= 0) {
                 break;
@@ -631,9 +679,9 @@ public final class SfxEnergyService implements Listener {
 
         electricMachines.drainRecentEnergyConsumption(loadedRuntimeMembers);
         configurableMachines.drainRecentEnergyConsumption(new ArrayList<>(loadedRuntimeMembers));
-        int totalStored = totalStoredEnergy(capacitorRefs, generatorRefs, electricConsumers)
+        int totalStored = totalStoredEnergy(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
                 + configurableMachines.totalStoredEnergy(join(configurableConsumers, configurableProducers));
-        int totalCapacity = totalCapacity(capacitorRefs, generatorRefs, electricConsumers)
+        int totalCapacity = totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
                 + configurableMachines.totalCapacity(join(configurableConsumers, configurableProducers));
         boolean hasAutoPaused = generatorRefs.stream().anyMatch(generator -> autoPausedGenerators.contains(generator.instance().instanceId())) || configurableProducers.stream().anyMatch(producer -> configurableMachines.isProducerAutoPaused(producer.instanceId()));
         int displayStored = hasAutoPaused && totalCapacity > 0 && totalStored >= Math.floor(totalCapacity * 0.99D) ? totalCapacity : totalStored;
@@ -826,7 +874,7 @@ public final class SfxEnergyService implements Listener {
         return distance > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) distance;
     }
 
-    private int totalStoredEnergy(List<SfxEnergyNodeRef> capacitorRefs, List<SfxEnergyNodeRef> generatorRefs, List<SfxBlockInstanceRecord> consumers) {
+    private int totalStoredEnergy(List<SfxEnergyNodeRef> capacitorRefs, List<SfxEnergyNodeRef> generatorRefs, List<SfxEnergyNodeRef> chargerRefs, List<SfxBlockInstanceRecord> consumers) {
         int total = 0;
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {
             total += capacitor.state().storedEnergy();
@@ -834,13 +882,16 @@ public final class SfxEnergyService implements Listener {
         for (SfxEnergyNodeRef generator : generatorRefs) {
             total += generator.state().storedEnergy();
         }
+        for (SfxEnergyNodeRef charger : chargerRefs) {
+            total += charger.state().storedEnergy();
+        }
         for (SfxBlockInstanceRecord consumer : consumers) {
             total += electricMachines.consumerStoredEnergy(consumer.instanceId());
         }
         return total;
     }
 
-    private int totalCapacity(List<SfxEnergyNodeRef> capacitorRefs, List<SfxEnergyNodeRef> generatorRefs, List<SfxBlockInstanceRecord> consumers) {
+    private int totalCapacity(List<SfxEnergyNodeRef> capacitorRefs, List<SfxEnergyNodeRef> generatorRefs, List<SfxEnergyNodeRef> chargerRefs, List<SfxBlockInstanceRecord> consumers) {
         int total = 0;
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {
             total += capacitor.definition().capacity();
@@ -848,10 +899,93 @@ public final class SfxEnergyService implements Listener {
         for (SfxEnergyNodeRef generator : generatorRefs) {
             total += generator.definition().capacity();
         }
+        for (SfxEnergyNodeRef charger : chargerRefs) {
+            total += charger.definition().capacity();
+        }
         for (SfxBlockInstanceRecord consumer : consumers) {
             total += electricMachines.consumerCapacity(consumer.typeId());
         }
         return total;
+    }
+
+    private int requestedChargerEnergy(List<SfxEnergyNodeRef> chargerRefs) {
+        int total = 0;
+        for (SfxEnergyNodeRef charger : chargerRefs) {
+            if (!canChargeAnyInput(charger.state())) {
+                continue;
+            }
+            total += Math.max(0, charger.definition().capacity() - charger.state().storedEnergy());
+        }
+        return total;
+    }
+
+    private boolean canChargeAnyInput(SfxEnergyNodeState state) {
+        for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
+            SfxElectricStack input = state.input(slot);
+            if (input == null || input.amount() != 1) {
+                continue;
+            }
+            ItemStack item = input.toItemStack(items);
+            if (!rechargeableItems.isRechargeable(item)) {
+                continue;
+            }
+            if (rechargeableItems.charge(item) < rechargeableItems.capacity(item)) {
+                return true;
+            }
+            if (findOutputSlot(state, SfxElectricStack.fromItemStack(items, item)) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void tickChargingBench(SfxEnergyNodeRef charger) {
+        SfxEnergyNodeState state = charger.state();
+        for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
+            SfxElectricStack input = state.input(slot);
+            if (input == null || input.amount() != 1) {
+                continue;
+            }
+            ItemStack item = input.toItemStack(items);
+            if (!rechargeableItems.isRechargeable(item)) {
+                if (items.isSfxItem(item)) {
+                    moveChargingBenchInputToOutput(charger, slot, input);
+                }
+                return;
+            }
+            double currentCharge = rechargeableItems.charge(item);
+            double capacity = rechargeableItems.capacity(item);
+            if (currentCharge >= capacity) {
+                moveChargingBenchInputToOutput(charger, slot, SfxElectricStack.fromItemStack(items, item));
+                return;
+            }
+            int spend = Math.min(charger.definition().energyPerTick(), state.storedEnergy());
+            if (spend <= 0) {
+                return;
+            }
+            double chargeAdded = spend / 2.0D;
+            double missing = capacity - currentCharge;
+            int actualSpend = (int) Math.max(1, Math.ceil(Math.min(chargeAdded, missing) * 2.0D));
+            actualSpend = Math.min(actualSpend, state.storedEnergy());
+            if (actualSpend <= 0) {
+                return;
+            }
+            rechargeableItems.addCharge(item, actualSpend / 2.0D);
+            state.storedEnergy(state.storedEnergy() - actualSpend);
+            state.input(slot, SfxElectricStack.fromItemStack(items, item));
+            dirtyNodes.add(charger.instance().instanceId());
+            return;
+        }
+    }
+
+    private void moveChargingBenchInputToOutput(SfxEnergyNodeRef charger, int inputSlot, SfxElectricStack stack) {
+        Integer outputSlot = findOutputSlot(charger.state(), stack);
+        if (outputSlot == null) {
+            return;
+        }
+        charger.state().input(inputSlot, null);
+        pushOutput(charger.state(), outputSlot, stack);
+        dirtyNodes.add(charger.instance().instanceId());
     }
 
     private int generate(SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
@@ -1364,6 +1498,7 @@ public final class SfxEnergyService implements Listener {
                         generatorRefs.add(new SfxEnergyNodeRef(instance, definition, state));
                     }
                     case CAPACITOR -> capacitors++;
+                    case CHARGER -> consumers++;
                     case CONNECTOR -> connectors++;
                     case REGULATOR -> connectors++;
                 }
