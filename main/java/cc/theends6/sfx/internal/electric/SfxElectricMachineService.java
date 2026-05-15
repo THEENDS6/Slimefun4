@@ -487,7 +487,7 @@ public final class SfxElectricMachineService implements Listener {
                     continue;
                 }
                 Location location = locationFor(instance);
-                if (location == null) {
+                if (location == null || !isInstanceChunkLoaded(instance)) {
                     continue;
                 }
                 runtime.executeAt(location, () -> tickMachine(instanceId));
@@ -550,6 +550,10 @@ public final class SfxElectricMachineService implements Listener {
         }
 
         Location location = locationFor(instance);
+        if (location == null || !isInstanceChunkLoaded(instance)) {
+            activeInstances.add(instanceId);
+            return;
+        }
         SfxElectricMachineTickResult customResult = null;
         if (location != null && definition.recipeProvider().hasWorldAction()) {
             customResult = definition.recipeProvider().tickWorldAction(plugin, items, definition, state, location);
@@ -844,6 +848,15 @@ public final class SfxElectricMachineService implements Listener {
                 menuRenderer.render(session.viewerId(), definition, inventory, state, recipe, status);
             }
         }
+    }
+
+
+    private boolean isInstanceChunkLoaded(SfxBlockInstanceRecord instance) {
+        if (instance == null) {
+            return false;
+        }
+        org.bukkit.World world = plugin.getServer().getWorld(instance.anchorKey().worldId());
+        return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);
     }
 
     private Location locationFor(SfxBlockInstanceRecord instance) {

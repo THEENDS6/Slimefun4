@@ -1,5 +1,6 @@
 package cc.theends6.sfx.internal.machine;
 
+import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayList;
@@ -32,11 +33,13 @@ public final class SfxManualMachineDeployListener implements Listener {
     private final JavaPlugin plugin;
     private final DefaultManualMachineRegistry registry;
     private final SfxLocalization localization;
+    private final SfxBlockDataService blockData;
 
-    public SfxManualMachineDeployListener(JavaPlugin plugin, DefaultManualMachineRegistry registry, SfxLocalization localization) {
+    public SfxManualMachineDeployListener(JavaPlugin plugin, DefaultManualMachineRegistry registry, SfxLocalization localization, SfxBlockDataService blockData) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.registry = Objects.requireNonNull(registry, "registry");
         this.localization = Objects.requireNonNull(localization, "localization");
+        this.blockData = Objects.requireNonNull(blockData, "blockData");
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -115,6 +118,9 @@ public final class SfxManualMachineDeployListener implements Listener {
                 continue;
             }
             Block block = entry.getKey();
+            if (isSfxAnchored(block)) {
+                return false;
+            }
             if (allowAnchorOccupied && block.equals(anchor)) {
                 continue;
             }
@@ -125,6 +131,10 @@ public final class SfxManualMachineDeployListener implements Listener {
             return false;
         }
         return true;
+    }
+
+    private boolean isSfxAnchored(Block block) {
+        return block != null && blockData.findAnchor(block.getLocation()).isPresent();
     }
 
     private DeploymentPlan deploymentPlan(Block anchor, ManualMachineDefinition definition, BlockFace sideDirection) {

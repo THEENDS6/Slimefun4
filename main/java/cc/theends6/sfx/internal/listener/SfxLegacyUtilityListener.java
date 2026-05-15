@@ -3,6 +3,7 @@ package cc.theends6.sfx.internal.listener;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
@@ -72,18 +73,20 @@ public final class SfxLegacyUtilityListener implements Listener {
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxLegacyItemBehaviorConfig behaviorConfig;
+    private final SfxBlockDataService blockData;
     private final NamespacedKey tapeAnchorKey;
     private final DecimalFormat distanceFormat = new DecimalFormat("##.###");
     private final Map<UUID, Long> magnetTick = new HashMap<>();
     private final Map<UUID, GrappleState> grapples = new HashMap<>();
     private final Map<UUID, Long> grapplingNoFallUntil = new HashMap<>();
 
-    public SfxLegacyUtilityListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig) {
+    public SfxLegacyUtilityListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig, SfxBlockDataService blockData) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.behaviorConfig = Objects.requireNonNull(behaviorConfig, "behaviorConfig");
+        this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.tapeAnchorKey = new NamespacedKey(plugin, "tape_anchor");
     }
 
@@ -330,7 +333,7 @@ public final class SfxLegacyUtilityListener implements Listener {
     private void useGoldPan(PlayerInteractEvent event, Set<Material> inputs, List<WeightedDrop> drops) {
         denyItemUse(event);
         Block block = event.getClickedBlock();
-        if (block == null || !inputs.contains(block.getType())) {
+        if (block == null || !inputs.contains(block.getType()) || isSfxAnchored(block)) {
             return;
         }
 
@@ -348,6 +351,10 @@ public final class SfxLegacyUtilityListener implements Listener {
         if (output != null && output.getType() != Material.AIR) {
             block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), output);
         }
+    }
+
+    private boolean isSfxAnchored(Block block) {
+        return block != null && blockData.findAnchor(block.getLocation()).isPresent();
     }
 
     private void useGrapplingHook(PlayerInteractEvent event) {

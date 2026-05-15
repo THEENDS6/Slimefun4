@@ -598,7 +598,7 @@ public final class SfxConfigurableMachineService implements Listener {
                     continue;
                 }
                 Location location = locationFor(instance);
-                if (location == null) {
+                if (location == null || !isInstanceChunkLoaded(instance)) {
                     continue;
                 }
                 runtime.executeAt(location, () -> tickMachine(instanceId));
@@ -638,6 +638,10 @@ public final class SfxConfigurableMachineService implements Listener {
             syncInventoryToState(session.inventory(), state, definition, session.panelType());
         }
         Location location = locationFor(instance);
+        if (location == null || !isInstanceChunkLoaded(instance)) {
+            activeInstances.add(instanceId);
+            return;
+        }
         boolean changed = switch (definition.kind()) {
             case ASSEMBLER -> tickAssembler(instanceId, definition, state, location);
             case REACTOR, ACCESS_PORT -> false;
@@ -1486,6 +1490,15 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private String formatSeconds(int ticks) {
         return String.format(java.util.Locale.ROOT, "%.1f Seconds", Math.max(0, ticks) / 20.0D);
+    }
+
+
+    private boolean isInstanceChunkLoaded(SfxBlockInstanceRecord instance) {
+        if (instance == null) {
+            return false;
+        }
+        org.bukkit.World world = plugin.getServer().getWorld(instance.anchorKey().worldId());
+        return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);
     }
 
     private Location locationFor(SfxBlockInstanceRecord instance) {

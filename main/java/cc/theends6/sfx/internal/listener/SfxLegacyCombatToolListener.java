@@ -3,6 +3,7 @@ package cc.theends6.sfx.internal.listener;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
@@ -123,16 +124,18 @@ public final class SfxLegacyCombatToolListener implements Listener {
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxLegacyItemBehaviorConfig behaviorConfig;
+    private final SfxBlockDataService blockData;
     private final NamespacedKey spawnerTypeKey;
     private final NamespacedKey bowEffectKey;
     private final Set<UUID> climbingCooldown = new HashSet<>();
 
-    public SfxLegacyCombatToolListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig) {
+    public SfxLegacyCombatToolListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig, SfxBlockDataService blockData) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.behaviorConfig = Objects.requireNonNull(behaviorConfig, "behaviorConfig");
+        this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.spawnerTypeKey = new NamespacedKey(plugin, "spawner_type");
         this.bowEffectKey = new NamespacedKey(plugin, "bow_effect");
     }
@@ -213,6 +216,9 @@ public final class SfxLegacyCombatToolListener implements Listener {
         ItemStack tool = player.getInventory().getItemInMainHand();
         String itemId = itemId(tool);
         if (itemId == null) {
+            return;
+        }
+        if (isSfxAnchored(event.getBlock())) {
             return;
         }
 
@@ -665,6 +671,9 @@ public final class SfxLegacyCombatToolListener implements Listener {
     }
 
     private void stripLog(Block block) {
+        if (isSfxAnchored(block)) {
+            return;
+        }
         Material stripped = Material.matchMaterial("STRIPPED_" + block.getType().name());
         if (stripped == null) {
             return;
@@ -683,7 +692,7 @@ public final class SfxLegacyCombatToolListener implements Listener {
     }
 
     private boolean breakBlock(Block block, ItemStack tool, boolean allowFortune) {
-        if (block.getType().isAir()) {
+        if (block.getType().isAir() || isSfxAnchored(block)) {
             return false;
         }
         Material type = block.getType();
@@ -695,6 +704,10 @@ public final class SfxLegacyCombatToolListener implements Listener {
             broken = true;
         }
         return broken;
+    }
+
+    private boolean isSfxAnchored(Block block) {
+        return block != null && blockData.findAnchor(block.getLocation()).isPresent();
     }
 
     private Block findGround(Block block) {
