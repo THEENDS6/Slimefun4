@@ -24,6 +24,7 @@ public record SfxElectricMachineDefinition(
     public static final int[] SEVEN_INPUT_SLOTS = SIMPLE_IO_SLOTS;
     public static final int[] THREE_OUTPUT_SLOTS = {12, 13, 14};
     public static final int[] ASSEMBLER_INPUT_SLOTS = {19, 28, 25, 34};
+    public static final int[] AUTO_BREWER_INPUT_SLOTS = {10, 16, 37, 39, 41, 43};
     public static final int[] NO_INPUT_SLOTS = {};
     public static final int[] NO_OUTPUT_SLOTS = {};
 

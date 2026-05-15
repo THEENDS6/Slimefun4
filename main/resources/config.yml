@@ -99,6 +99,8 @@ electric-machines:
       water-source-threshold: 4
       lava-source-threshold: 300
       check-interval-ticks: 200
+    auto-brewer:
+      enabled: true
 
   
   

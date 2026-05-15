@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Item;
@@ -54,6 +55,7 @@ public final class SfxElectricMachineService implements Listener {
     private final SfxElectricMachineMenuRenderer menuRenderer;
     private final SfxSimpleIoMachineMenuRenderer simpleIoMenuRenderer;
     private final SfxElectricAssemblerMenuRenderer assemblerMenuRenderer;
+    private final SfxAutoBrewerMenuRenderer autoBrewerMenuRenderer;
     private final SfxElectricRecipeProcessor recipeProcessor;
     private final Map<UUID, SfxElectricMachineState> stateCache = new ConcurrentHashMap<>();
     private final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
@@ -86,6 +88,7 @@ public final class SfxElectricMachineService implements Listener {
         this.menuRenderer = new SfxElectricMachineMenuRenderer(items, localization, profiles);
         this.simpleIoMenuRenderer = new SfxSimpleIoMachineMenuRenderer(items, localization, profiles);
         this.assemblerMenuRenderer = new SfxElectricAssemblerMenuRenderer(items, localization, profiles);
+        this.autoBrewerMenuRenderer = new SfxAutoBrewerMenuRenderer(items, localization, profiles);
         this.recipeProcessor = new SfxElectricRecipeProcessor(items);
         bootstrapLoadedStates();
         running = true;
@@ -155,6 +158,13 @@ public final class SfxElectricMachineService implements Listener {
         if (state == null) {
             state = SfxElectricMachineState.empty();
         }
+        SfxElectricMachineDefinition destroyDefinition = registry.definition(typeId).orElse(null);
+        if (destroyDefinition != null) {
+            Location destroyLocation = block.getLocation();
+            for (SfxElectricStack extraDrop : destroyDefinition.recipeProvider().dropsOnDestroy(plugin, items, destroyDefinition, state, destroyLocation)) {
+                dropStack(block, extraDrop);
+            }
+        }
         for (int slot = 0; slot < state.inputCapacity(); slot++) {
             dropStack(block, state.input(slot));
         }
@@ -212,7 +222,7 @@ public final class SfxElectricMachineService implements Listener {
         }
         boolean topSlot = event.getRawSlot() < event.getView().getTopInventory().getSize();
         if (event.isShiftClick() && !topSlot) {
-            if (moveShiftClickedStackToInputs(event.getView().getTopInventory(), event.getCurrentItem(), clickDefinition)) {
+            if (moveShiftClickedStackToInputs(holder.instanceId(), event.getView().getTopInventory(), event.getCurrentItem(), clickDefinition)) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getAmount() <= 0) {
                     event.setCurrentItem(null);
                 }
@@ -248,6 +258,13 @@ public final class SfxElectricMachineService implements Listener {
                 return;
             }
         }
+        if (topSlot && clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+            ItemStack cursor = event.getCursor();
+            if (cursor != null && !cursor.getType().isAir() && !isValidAutoBrewerInput(event.getRawSlot(), cursor)) {
+                event.setCancelled(true);
+                return;
+            }
+        }
         runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
     }
 
@@ -270,7 +287,9 @@ public final class SfxElectricMachineService implements Listener {
                 .filter(slot -> slot < topSize)
                 .allMatch(slot -> contains(dragDefinition.inputSlots(), slot)
                         && (dragDefinition.menuStyle() != SfxElectricMachineMenuStyle.ASSEMBLER
-                        || isValidAssemblerInput(dragDefinition, slot, event.getNewItems().get(slot))));
+                        || isValidAssemblerInput(dragDefinition, slot, event.getNewItems().get(slot)))
+                        && (dragDefinition.menuStyle() != SfxElectricMachineMenuStyle.AUTO_BREWER
+                        || isValidAutoBrewerInput(slot, event.getNewItems().get(slot))));
         if (!valid) {
             event.setCancelled(true);
             return;
@@ -554,7 +573,9 @@ public final class SfxElectricMachineService implements Listener {
                 dirtyInstances.add(instanceId);
             }
             if (session != null && shouldRenderSession(session, customResult.status())) {
-                SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO || definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER
+                SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO
+                        || definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER
+                        || definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER
                         ? null
                         : recipeProcessor.activeRecipe(definition, state);
                 render(session, definition, session.inventory(), state, renderRecipe, customResult.status());
@@ -746,12 +767,22 @@ public final class SfxElectricMachineService implements Listener {
             return SfxElectricMachineRenderStatus.PAUSED;
         }
         if (state.hasProgress()) {
+            if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+                int remainingWork = Math.max(0, state.activeBaseTicks() - state.progressWork());
+                int requiredFuel = Math.min(Math.max(1, definition.speed()), Math.max(1, remainingWork));
+                if (state.specialData() < requiredFuel) {
+                    return SfxElectricMachineRenderStatus.NO_BLAZE_FUEL;
+                }
+            }
             return SfxElectricMachineRenderStatus.WORKING;
         }
         if (definition.id().equals("sf:xp_collector")) {
             if (session != null && session.lastRenderedStatus() == SfxElectricMachineRenderStatus.OUTPUT_FULL) {
                 return SfxElectricMachineRenderStatus.OUTPUT_FULL;
             }
+            return SfxElectricMachineRenderStatus.IDLE;
+        }
+        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
             return SfxElectricMachineRenderStatus.IDLE;
         }
         if (definition.inputSlots().length > 0 && !state.hasAnyInput()) {
@@ -781,7 +812,12 @@ public final class SfxElectricMachineService implements Listener {
         }
         int[] inputSlots = definition.inputSlots();
         for (int slot = 0; slot < inputSlots.length; slot++) {
-            state.input(slot, SfxElectricStack.fromItemStack(items, inventory.getItem(inputSlots[slot])));
+            ItemStack stack = inventory.getItem(inputSlots[slot]);
+            if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER && slot == 0) {
+                state.input(slot, autoBrewerBlazeStackFromDisplay(stack));
+            } else {
+                state.input(slot, SfxElectricStack.fromItemStack(items, stack));
+            }
         }
         for (int slot = inputSlots.length; slot < state.inputCapacity(); slot++) {
             state.input(slot, null);
@@ -802,6 +838,8 @@ public final class SfxElectricMachineService implements Listener {
                 simpleIoMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
             } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) {
                 assemblerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
+            } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+                autoBrewerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
             } else {
                 menuRenderer.render(session.viewerId(), definition, inventory, state, recipe, status);
             }
@@ -890,18 +928,32 @@ public final class SfxElectricMachineService implements Listener {
         return instance == null ? null : registry.definition(instance.typeId()).orElse(null);
     }
 
-    private boolean moveShiftClickedStackToInputs(Inventory topInventory, ItemStack current, SfxElectricMachineDefinition definition) {
+    private boolean moveShiftClickedStackToInputs(UUID instanceId, Inventory topInventory, ItemStack current, SfxElectricMachineDefinition definition) {
         if (current == null || current.getType().isAir()) {
             return false;
         }
         int[] inputSlots = definition.inputSlots();
+        SfxElectricMachineState shiftState = null;
+        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+            if (instance != null) {
+                shiftState = currentState(instanceId, instance);
+            }
+        }
         int original = current.getAmount();
         int remaining = current.getAmount();
         for (int slot : inputSlots) {
             if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER && !isValidAssemblerInput(definition, slot, current)) {
                 continue;
             }
+            if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER && !isValidAutoBrewerInput(slot, current)) {
+                continue;
+            }
             ItemStack existing = topInventory.getItem(slot);
+            if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER && slot == SfxAutoBrewerMenuRenderer.BLAZE_SLOT) {
+                SfxElectricStack storedBlaze = shiftState == null ? null : shiftState.input(0);
+                existing = storedBlaze == null ? null : new ItemStack(Material.BLAZE_POWDER, storedBlaze.amount());
+            }
             if (existing == null || existing.getType().isAir() || !existing.isSimilar(current)) {
                 continue;
             }
@@ -911,6 +963,9 @@ public final class SfxElectricMachineService implements Listener {
             }
             int moved = Math.min(room, remaining);
             existing.setAmount(existing.getAmount() + moved);
+            if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER && slot == SfxAutoBrewerMenuRenderer.BLAZE_SLOT) {
+                topInventory.setItem(slot, existing);
+            }
             remaining -= moved;
             if (remaining <= 0) {
                 current.setAmount(0);
@@ -921,7 +976,14 @@ public final class SfxElectricMachineService implements Listener {
             if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER && !isValidAssemblerInput(definition, slot, current)) {
                 continue;
             }
+            if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER && !isValidAutoBrewerInput(slot, current)) {
+                continue;
+            }
             ItemStack existing = topInventory.getItem(slot);
+            if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER && slot == SfxAutoBrewerMenuRenderer.BLAZE_SLOT) {
+                SfxElectricStack storedBlaze = shiftState == null ? null : shiftState.input(0);
+                existing = storedBlaze == null ? null : new ItemStack(Material.BLAZE_POWDER, storedBlaze.amount());
+            }
             if (existing != null && !existing.getType().isAir()) {
                 continue;
             }
@@ -987,5 +1049,32 @@ public final class SfxElectricMachineService implements Listener {
     }
 
 
+
+    private SfxElectricStack autoBrewerBlazeStackFromDisplay(ItemStack stack) {
+        if (stack == null || stack.getType().isAir() || stack.getType() != Material.BLAZE_POWDER || stack.hasItemMeta()) {
+            return null;
+        }
+        return SfxElectricStack.vanilla(Material.BLAZE_POWDER, stack.getAmount());
+    }
+
+    private boolean isValidAutoBrewerInput(int rawSlot, ItemStack item) {
+        if (item == null || item.getType().isAir()) {
+            return true;
+        }
+        if (rawSlot == SfxAutoBrewerMenuRenderer.BLAZE_SLOT) {
+            return item.getType() == Material.BLAZE_POWDER && !item.hasItemMeta();
+        }
+        SfxPotionBrewEngine brewEngine = new SfxPotionBrewEngine(plugin);
+        if (rawSlot == SfxAutoBrewerMenuRenderer.INGREDIENT_SLOT) {
+            SfxElectricStack stack = SfxElectricStack.fromItemStack(items, item);
+            return stack != null && brewEngine.isBrewingIngredient(stack);
+        }
+        for (int potionSlot : SfxAutoBrewerMenuRenderer.POTION_SLOTS) {
+            if (rawSlot == potionSlot) {
+                return brewEngine.isValidPotionItem(items, item);
+            }
+        }
+        return false;
+    }
 
 }

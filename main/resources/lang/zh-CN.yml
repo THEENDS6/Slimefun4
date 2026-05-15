@@ -2109,6 +2109,13 @@ items:
     - '&a中型机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
     - '&8⇨ &e⚡ &712 J/t'
+  sf.auto_brewer_2:
+    name: '&6自动酿造机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &b⚡ &7速度：&b5x'
+    - '&8⇨ &e⚡ &750 J/t'
   sf.book_binder:
     name: '&6附魔书装订机'
     lore:
@@ -3489,6 +3496,26 @@ electric-ui:
       working: <gray>正在催生附近树苗。</gray>
     fluid-pump:
       working: <gray>正在从下方抽取流体。</gray>
+  auto-brewer:
+    blaze:
+      frame: <gold>烈焰粉</gold>
+      name: <gold>烈焰粉</gold>
+      missing-name: <red>缺少烈焰粉</red>
+      missing-lore: <gray>放入烈焰粉后才能开始酿造。</gray>
+      consuming: '<gray>本次酿造已消耗：</gray><yellow>{fuel}</yellow><gray> tick</gray>'
+      fuel-left: '<gray>已储存烈焰粉：</gray><yellow>{fuel}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> tick</gray>'
+      powder: '<gray>槽内烈焰粉：</gray><yellow>{amount}</yellow>'
+      recipe-cost: '<gray>当前配方消耗：</gray><yellow>{fuel}</yellow><gray> tick，最多 </gray><yellow>{powders}</yellow><gray> 个烈焰粉</gray>'
+    ingredient:
+      frame: <blue>酿造材料</blue>
+      missing-name: <red>缺少酿造材料</red>
+      missing-lore: <gray>放入有效酿造材料。</gray>
+    potion:
+      frame: <green>药水槽</green>
+      missing-name: <red>缺少药水</red>
+      missing-lore: <gray>至少放入一瓶水瓶或可酿造药水。</gray>
+    progress:
+      brewing: <gray>正在酿造药水。</gray>
   time:
     seconds: '{seconds}s'
     minutes-seconds: '{minutes}m {seconds}s'

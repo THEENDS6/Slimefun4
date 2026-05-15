@@ -274,20 +274,39 @@ recipes:
     machine: sf:enhanced_crafting_table
     matrix:
       - empty
-      - sf:heating_coil
-      - empty
-      - sf:reinforced_plate
-      - BREWING_STAND
-      - sf:reinforced_plate
-      - empty
       - sf:electric_motor
       - empty
+      - POTION
+      - BREWING_STAND
+      - POTION
+      - sf:corinthian_bronze_ingot
+      - sf:heating_coil
+      - sf:corinthian_bronze_ingot
     outputs:
       - sf:auto_brewer
-  - id: legacy:auto_disenchanter
+  - id: legacy:auto_brewer_2
     recipe-type: sf:enhanced_crafting_table
     operation: shaped
     guide-order: 16
+    source: sfx
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:reinforced_plate
+      - sf:electric_motor
+      - sf:reinforced_plate
+      - sf:hardened_glass
+      - sf:auto_brewer
+      - sf:hardened_glass
+      - sf:cooling_unit
+      - sf:blistering_ingot_3
+      - sf:cooling_unit
+    outputs:
+      - sf:auto_brewer_2
+  - id: legacy:auto_disenchanter
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 17
     source: slimefun-rc37
     runtime: true
     machine: sf:enhanced_crafting_table

@@ -381,6 +381,7 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:auto_anvil", "guide:sf:electricity");
     map.put("sf:auto_anvil_2", "guide:sf:electricity");
     map.put("sf:auto_brewer", "guide:sf:electricity");
+    map.put("sf:auto_brewer_2", "guide:sf:electricity");
     map.put("sf:book_binder", "guide:sf:electricity");
     map.put("sf:bio_reactor", "guide:sf:electricity");
     map.put("sf:bio_reactor_2", "guide:sf:electricity");
@@ -805,7 +806,7 @@ static Map<String, Integer> createClassicElectricityOrder() {
     order = putRange(map, order, "sf:auto_enchanter", "sf:auto_enchanter_2");
     order = putRange(map, order, "sf:auto_disenchanter", "sf:auto_disenchanter_2");
     order = putRange(map, order, "sf:auto_anvil", "sf:auto_anvil_2");
-    order = putRange(map, order, "sf:auto_brewer");
+    order = putRange(map, order, "sf:auto_brewer", "sf:auto_brewer_2");
     order = putRange(map, order, "sf:book_binder");
     order = putRange(map, order, "sf:auto_breeder");
     order = putRange(map, order, "sf:animal_growth_accelerator", "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2", "sf:tree_growth_accelerator");

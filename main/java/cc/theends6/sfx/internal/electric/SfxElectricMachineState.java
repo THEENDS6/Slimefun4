@@ -11,7 +11,7 @@ import java.util.List;
 public final class SfxElectricMachineState {
     static final int MAX_INPUTS = 7;
     static final int MAX_OUTPUTS = 7;
-    private static final int SCHEMA = 10;
+    private static final int SCHEMA = 11;
 
     private final SfxElectricStack[] inputs = new SfxElectricStack[MAX_INPUTS];
     private final SfxElectricStack[] outputs = new SfxElectricStack[MAX_OUTPUTS];
@@ -24,7 +24,10 @@ public final class SfxElectricMachineState {
     private SfxElectricStack pendingOutput;
     private int storedEnergy;
     private int specialData;
+    private int specialData2;
     private boolean enabled = true;
+    private final SfxElectricStack[] specialInputs = new SfxElectricStack[MAX_INPUTS];
+    private final SfxElectricStack[] specialOutputs = new SfxElectricStack[MAX_OUTPUTS];
 
     public static SfxElectricMachineState empty() {
         return new SfxElectricMachineState();
@@ -134,7 +137,7 @@ public final class SfxElectricMachineState {
                 state.specialData = Math.max(0, input.readInt());
                 return state;
             }
-            if (schema != SCHEMA && schema != 9) {
+            if (schema != SCHEMA && schema != 9 && schema != 10) {
                 return empty();
             }
             SfxElectricMachineState state = new SfxElectricMachineState();
@@ -154,6 +157,11 @@ public final class SfxElectricMachineState {
             state.specialData = Math.max(0, input.readInt());
             if (schema >= 10) {
                 state.enabled = input.readBoolean();
+            }
+            if (schema >= 11) {
+                state.specialData2 = Math.max(0, input.readInt());
+                readStacksV2(input, state.specialInputs);
+                readStacksV2(input, state.specialOutputs);
             }
             return state;
         } catch (IOException | IllegalArgumentException ignored) {
@@ -206,6 +214,9 @@ public final class SfxElectricMachineState {
             output.writeInt(storedEnergy);
             output.writeInt(specialData);
             output.writeBoolean(enabled);
+            output.writeInt(specialData2);
+            writeStacksV2(output, specialInputs);
+            writeStacksV2(output, specialOutputs);
             output.flush();
             return buffer.toByteArray();
         } catch (IOException exception) {
@@ -389,6 +400,44 @@ public final class SfxElectricMachineState {
 
     public void specialData(int specialData) {
         this.specialData = Math.max(0, specialData);
+    }
+
+    public int specialData2() {
+        return specialData2;
+    }
+
+    public void specialData2(int specialData2) {
+        this.specialData2 = Math.max(0, specialData2);
+    }
+
+    public SfxElectricStack specialInput(int slot) {
+        return specialInputs[slot];
+    }
+
+    public void specialInput(int slot, SfxElectricStack stack) {
+        specialInputs[slot] = stack;
+    }
+
+    public SfxElectricStack specialOutput(int slot) {
+        return specialOutputs[slot];
+    }
+
+    public void specialOutput(int slot, SfxElectricStack stack) {
+        specialOutputs[slot] = stack;
+    }
+
+    public void clearSpecialInputs() {
+        clear(specialInputs);
+    }
+
+    public void clearSpecialOutputs() {
+        clear(specialOutputs);
+    }
+
+    public void clearSpecialWorkData() {
+        specialData2 = 0;
+        clear(specialInputs);
+        clear(specialOutputs);
     }
 
     public boolean enabled() {
