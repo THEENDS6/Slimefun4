@@ -6,6 +6,7 @@ import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import java.util.Objects;
+import java.util.Set;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -15,7 +16,13 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Wither;
 import org.bukkit.entity.WitherSkull;
+import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockFadeEvent;
+import org.bukkit.event.block.BlockFormEvent;
+import org.bukkit.event.block.BlockGrowEvent;
+import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.EventHandler;
@@ -25,6 +32,9 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
+import org.bukkit.event.block.LeavesDecayEvent;
+import org.bukkit.event.block.SpongeAbsorbEvent;
+import org.bukkit.event.block.EntityBlockFormEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.Inventory;
@@ -35,6 +45,11 @@ import io.papermc.paper.event.player.PlayerPickBlockEvent;
 
 public final class SfxPlaceableBlockListener implements Listener {
     private static final BlockFace[] HORIZONTAL_FACES = {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST};
+    private static final Set<String> GENERIC_ANCHORED_BLOCKS = Set.of(
+            "sf:hardened_glass",
+            "sf:wither_proof_obsidian",
+            "sf:wither_proof_glass"
+    );
     private final SfxItems items;
     private final SfxBlockDataService blockData;
     private final SfxBasicMachineBlockListener basicMachines;
@@ -61,20 +76,27 @@ public final class SfxPlaceableBlockListener implements Listener {
         this.runtime = Objects.requireNonNull(runtime, "runtime");
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         items.readMarker(event.getItemInHand()).ifPresent(marker -> {
             if (!isPlaceableMarker(marker.itemId(), marker.flags())) {
+                if (marker.flags().contains("placeable-block")) {
+                    event.setCancelled(true);
+                }
                 return;
             }
             if (blockData.findAnchor(event.getBlockPlaced().getLocation()).isPresent()) {
                 return;
             }
-            blockData.registerSingleBlock(
-                    marker.itemId(),
-                    event.getBlockPlaced().getLocation(),
-                    event.getBlockPlaced().getType(),
-                    event.getPlayer().getUniqueId());
+            try {
+                blockData.registerSingleBlock(
+                        marker.itemId(),
+                        event.getBlockPlaced().getLocation(),
+                        event.getBlockPlaced().getType(),
+                        event.getPlayer().getUniqueId());
+            } catch (RuntimeException exception) {
+                event.setCancelled(true);
+            }
         });
     }
 
@@ -106,9 +128,6 @@ public final class SfxPlaceableBlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntityChangeBlock(EntityChangeBlockEvent event) {
-        if (!isWitherExplosion(event.getEntity())) {
-            return;
-        }
         Block block = event.getBlock();
         SfxAnchorRecord anchor = blockData.findAnchor(block.getLocation()).orElse(null);
         if (anchor == null) {
@@ -119,6 +138,9 @@ public final class SfxPlaceableBlockListener implements Listener {
         if (instance == null) {
             blockData.unregisterAt(block.getLocation());
             block.setType(Material.AIR, false);
+            return;
+        }
+        if (!isWitherExplosion(event.getEntity())) {
             return;
         }
         if (isWitherProof(instance.typeId())) {
@@ -222,6 +244,58 @@ public final class SfxPlaceableBlockListener implements Listener {
             }
         }
         return count;
+    }
+
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockBurn(BlockBurnEvent event) {
+        cancelIfAnchored(event, event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockFade(BlockFadeEvent event) {
+        cancelIfAnchored(event, event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockSpread(BlockSpreadEvent event) {
+        cancelIfAnchored(event, event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockForm(BlockFormEvent event) {
+        cancelIfAnchored(event, event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onEntityBlockForm(EntityBlockFormEvent event) {
+        cancelIfAnchored(event, event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockGrow(BlockGrowEvent event) {
+        cancelIfAnchored(event, event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onLeavesDecay(LeavesDecayEvent event) {
+        cancelIfAnchored(event, event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockIgnite(BlockIgniteEvent event) {
+        cancelIfAnchored(event, event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onSpongeAbsorb(SpongeAbsorbEvent event) {
+        event.getBlocks().removeIf(state -> blockData.findAnchor(state.getLocation()).isPresent());
+    }
+
+    private void cancelIfAnchored(org.bukkit.event.Cancellable event, Block block) {
+        if (block != null && blockData.findAnchor(block.getLocation()).isPresent()) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -386,13 +460,16 @@ public final class SfxPlaceableBlockListener implements Listener {
     }
 
     private boolean isPlaceableMarker(String itemId, java.util.List<String> flags) {
-        if (flags.contains("placeable-block")) {
-            return true;
-        }
-        return basicMachines.supportsType(itemId)
+        if (basicMachines.supportsType(itemId)
                 || electricMachines.supportsType(itemId)
                 || configurableMachines.supportsType(itemId)
-                || energyService.supportsType(itemId);
+                || energyService.supportsType(itemId)) {
+            return true;
+        }
+        
+        
+        
+        return flags.contains("placeable-block") && GENERIC_ANCHORED_BLOCKS.contains(itemId);
     }
 
     private void dropPluginBlock(Block block, String typeId) {

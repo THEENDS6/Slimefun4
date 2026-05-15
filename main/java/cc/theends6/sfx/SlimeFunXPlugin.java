@@ -7,6 +7,7 @@ import cc.theends6.sfx.internal.bootstrap.SfxYamlContentLoader;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBasicMachineBlockListener;
 import cc.theends6.sfx.internal.block.SfxPlaceableBlockListener;
+import cc.theends6.sfx.internal.block.SfxBlockPersistenceListener;
 import cc.theends6.sfx.internal.block.SqliteSfxBlockDataRepository;
 import cc.theends6.sfx.internal.command.SfxCommand;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
@@ -55,6 +56,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxLegacyItemBehaviorConfig legacyItemBehaviorConfig;
     private SfxPlayerDataService playerDataService;
     private SfxBlockDataService blockDataService;
+    private SfxBlockPersistenceListener blockPersistenceListener;
     private SfxResearchRegistry researchRegistry;
     private SfxResearchService researchService;
     private SfxBackpackListener backpackListener;
@@ -108,10 +110,11 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.configurableMachineService = new SfxConfigurableMachineService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService);
         this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService);
         SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, api.runtime());
+        this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService);
 
         this.backpackListener = new SfxBackpackListener(this, api.runtime(), api.items(), localization, playerDataService, researchService);
-        SfxLegacyUtilityListener utilityListener = new SfxLegacyUtilityListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig);
-        SfxLegacyCombatToolListener combatToolListener = new SfxLegacyCombatToolListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig);
+        SfxLegacyUtilityListener utilityListener = new SfxLegacyUtilityListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig, blockDataService);
+        SfxLegacyCombatToolListener combatToolListener = new SfxLegacyCombatToolListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig, blockDataService);
         SfxLegacyFoodListener foodListener = new SfxLegacyFoodListener(this, api.runtime(), api.items(), localization);
         SfxTalismanListener talismanListener = new SfxTalismanListener(this, api.runtime(), api.items(), researchService);
 
@@ -121,9 +124,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SfxGuideListener(this, api.items(), api.guide()), this);
         getServer().getPluginManager().registerEvents(new SfxItemUseDispatcher(api.items(), backpackListener, utilityListener, combatToolListener, foodListener, researchService, localization), this);
         getServer().getPluginManager().registerEvents(new SfxManualMachineListener(manualMachineService), this);
-        getServer().getPluginManager().registerEvents(new SfxManualMachineDeployListener(this, api.internalManualMachines(), localization), this);
+        getServer().getPluginManager().registerEvents(new SfxManualMachineDeployListener(this, api.internalManualMachines(), localization, blockDataService), this);
         getServer().getPluginManager().registerEvents(new SfxMultimeterListener(this, api.items(), localization, blockDataService, electricMachineService, configurableMachineService, energyService), this);
         getServer().getPluginManager().registerEvents(placeableBlockListener, this);
+        getServer().getPluginManager().registerEvents(blockPersistenceListener, this);
         getServer().getPluginManager().registerEvents(basicMachineBlockListener, this);
         getServer().getPluginManager().registerEvents(electricMachineService, this);
         getServer().getPluginManager().registerEvents(configurableMachineService, this);
@@ -175,6 +179,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         if (playerDataService != null) {
             playerDataService.shutdown();
+        }
+        if (blockPersistenceListener != null) {
+            blockPersistenceListener.shutdown();
         }
         if (blockDataService != null) {
             blockDataService.shutdown();

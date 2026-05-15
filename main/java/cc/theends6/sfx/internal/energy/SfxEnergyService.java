@@ -11,12 +11,12 @@ import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
+import cc.theends6.sfx.internal.topology.SfxTopologyService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -68,7 +68,7 @@ public final class SfxEnergyService implements Listener {
     private final SfxEnergyDisplayController displayController;
     private final SfxCapacitorAppearanceProjector capacitorProjector;
     private final SfxEnergyGeneratorMenuRenderer generatorMenuRenderer;
-    private final SfxEnergyGridBuilder gridBuilder;
+    private final SfxTopologyService topology;
     private final Map<String, SfxEnergyComponentDefinition> definitions = new LinkedHashMap<>();
     private final Map<UUID, SfxEnergyNodeState> nodeStates = new ConcurrentHashMap<>();
     private final Map<UUID, SfxEnergyGridStatus> nodeGridStatuses = new ConcurrentHashMap<>();
@@ -101,8 +101,12 @@ public final class SfxEnergyService implements Listener {
         this.capacitorProjector = new SfxCapacitorAppearanceProjector(runtime, blockData, definitions);
         this.generatorMenuRenderer = new SfxEnergyGeneratorMenuRenderer(items, localization);
         this.definitions.putAll(SfxEnergyDefinitions.create(plugin));
-        this.gridBuilder = new SfxEnergyGridBuilder(blockData, definitions, electricMachines, configurableMachines, RANGE);
+        this.topology = new SfxTopologyService(
+                blockData,
+                new SfxEnergyTopologyPolicy(definitions, electricMachines, configurableMachines),
+                new SfxEnergyConnectivityPolicy(RANGE));
         bootstrapLoadedStates();
+        topology.rebuild();
         running = true;
         scheduleTick();
         scheduleFlush();
@@ -368,46 +372,53 @@ public final class SfxEnergyService implements Listener {
 
     private void tickAllRegulators() {
         syncOpenSfxEnergyGeneratorSessionsToState();
-        Map<UUID, SfxEnergyGridResult> results = new LinkedHashMap<>();
-        Map<UUID, Set<UUID>> memberships = new HashMap<>();
+        topology.rebuildIfStale();
         nodeGridStatuses.clear();
 
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance == null) {
-                continue;
+        for (SfxTopologyComponent component : topology.components()) {
+            SfxEnergyGridStatus status = switch (component.status()) {
+                case ONLINE -> SfxEnergyGridStatus.ONLINE;
+                case MULTIPLE_CONTROLLERS -> SfxEnergyGridStatus.MULTIPLE_REGULATORS;
+                case INACTIVE -> SfxEnergyGridStatus.NO_NETWORK;
+            };
+            if (status == SfxEnergyGridStatus.ONLINE && component.members().size() <= 1) {
+                status = SfxEnergyGridStatus.NO_NETWORK;
             }
-            SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
-            if (definition == null || definition.componentType() != SfxEnergyComponentType.REGULATOR) {
-                continue;
-            }
-            SfxEnergyGridResult result = gridBuilder.buildGrid(instance.instanceId(), anchor.key());
-            results.put(instance.instanceId(), result);
-            for (UUID memberId : result.members()) {
-                memberships.computeIfAbsent(memberId, ignored -> new LinkedHashSet<>()).add(instance.instanceId());
-            }
-        }
-
-        Set<UUID> sharedMembers = new LinkedHashSet<>();
-        memberships.forEach((member, regulators) -> {
-            if (regulators.size() > 1) {
-                sharedMembers.add(member);
-            }
-        });
-
-        for (SfxEnergyGridResult result : results.values()) {
-            SfxEnergyGridStatus status = result.status();
-            if (status == SfxEnergyGridStatus.ONLINE && result.members().stream().anyMatch(sharedMembers::contains)) {
-                status = SfxEnergyGridStatus.SHARED_NODE_CONFLICT;
-            }
-            for (UUID memberId : result.members()) {
+            for (UUID memberId : component.members()) {
                 nodeGridStatuses.put(memberId, status);
             }
-            if (status == SfxEnergyGridStatus.ONLINE) {
-                processGrid(result);
-            } else {
-                displayStatus(result.regulatorKey(), status, 0, 0, 0, 0, 0);
+            if (status != SfxEnergyGridStatus.ONLINE) {
+                for (UUID controllerId : component.controllers()) {
+                    SfxBlockInstanceRecord regulator = blockData.findInstance(controllerId).orElse(null);
+                    if (regulator != null) {
+                        displayStatus(regulator.anchorKey(), status, 0, 0, 0, 0, 0);
+                    }
+                }
+                continue;
             }
+            UUID regulatorId = component.controllers().stream().findFirst().orElse(null);
+            if (regulatorId == null) {
+                continue;
+            }
+            SfxBlockInstanceRecord regulator = blockData.findInstance(regulatorId).orElse(null);
+            if (regulator == null) {
+                continue;
+            }
+            if (!isInstanceChunkLoaded(regulator)) {
+                for (UUID memberId : component.members()) {
+                    nodeGridStatuses.put(memberId, SfxEnergyGridStatus.NO_NETWORK);
+                }
+                continue;
+            }
+            SfxEnergyGridResult result = new SfxEnergyGridResult(regulatorId, regulator.anchorKey(), component.members(), SfxEnergyGridStatus.ONLINE);
+            processGrid(result);
+        }
+
+        for (UUID conflictedTerminal : topology.conflictedTerminals()) {
+            nodeGridStatuses.put(conflictedTerminal, SfxEnergyGridStatus.SHARED_NODE_CONFLICT);
+        }
+        for (UUID detachedTerminal : topology.detachedTerminals()) {
+            nodeGridStatuses.put(detachedTerminal, SfxEnergyGridStatus.NO_NETWORK);
         }
     }
 
@@ -421,28 +432,48 @@ public final class SfxEnergyService implements Listener {
         List<SfxBlockInstanceRecord> configurableProducers = new ArrayList<>();
         List<UUID> electricConsumerIds = new ArrayList<>();
         List<UUID> configurableConsumerIds = new ArrayList<>();
+        Set<UUID> loadedRuntimeMembers = new LinkedHashSet<>();
 
         for (UUID memberId : result.members()) {
             SfxBlockInstanceRecord instance = blockData.findInstance(memberId).orElse(null);
             if (instance == null) {
                 continue;
             }
+            boolean loaded = isInstanceChunkLoaded(instance);
             SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
             if (definition != null) {
-                SfxEnergyNodeState state = currentState(memberId, instance);
-                switch (definition.componentType()) {
-                    case CAPACITOR -> capacitorRefs.add(new SfxEnergyNodeRef(instance, definition, state));
-                    case GENERATOR -> generatorRefs.add(new SfxEnergyNodeRef(instance, definition, state));
-                    case REGULATOR, CONNECTOR -> {
+                if (definition.componentType() == SfxEnergyComponentType.CAPACITOR || definition.componentType() == SfxEnergyComponentType.GENERATOR) {
+                    if (!loaded) {
+                        continue;
+                    }
+                    loadedRuntimeMembers.add(memberId);
+                    SfxEnergyNodeState state = currentState(memberId, instance);
+                    switch (definition.componentType()) {
+                        case CAPACITOR -> capacitorRefs.add(new SfxEnergyNodeRef(instance, definition, state));
+                        case GENERATOR -> generatorRefs.add(new SfxEnergyNodeRef(instance, definition, state));
+                        case REGULATOR, CONNECTOR -> {
+                        }
                     }
                 }
             } else if (electricMachines.supportsType(instance.typeId())) {
+                if (!loaded) {
+                    continue;
+                }
+                loadedRuntimeMembers.add(memberId);
                 electricConsumers.add(instance);
                 electricConsumerIds.add(instance.instanceId());
             } else if (configurableMachines.isConsumer(instance.typeId())) {
+                if (!loaded) {
+                    continue;
+                }
+                loadedRuntimeMembers.add(memberId);
                 configurableConsumers.add(instance);
                 configurableConsumerIds.add(instance.instanceId());
             } else if (configurableMachines.isProducer(instance.typeId())) {
+                if (!loaded) {
+                    continue;
+                }
+                loadedRuntimeMembers.add(memberId);
                 configurableProducers.add(instance);
             }
         }
@@ -594,8 +625,8 @@ public final class SfxEnergyService implements Listener {
             scheduleCapacitorAppearanceUpdate(capacitor);
         }
 
-        electricMachines.drainRecentEnergyConsumption(result.members());
-        configurableMachines.drainRecentEnergyConsumption(new ArrayList<>(result.members()));
+        electricMachines.drainRecentEnergyConsumption(loadedRuntimeMembers);
+        configurableMachines.drainRecentEnergyConsumption(new ArrayList<>(loadedRuntimeMembers));
         int totalStored = totalStoredEnergy(capacitorRefs, generatorRefs, electricConsumers)
                 + configurableMachines.totalStoredEnergy(join(configurableConsumers, configurableProducers));
         int totalCapacity = totalCapacity(capacitorRefs, generatorRefs, electricConsumers)
@@ -1202,6 +1233,15 @@ public final class SfxEnergyService implements Listener {
         return false;
     }
 
+
+    private boolean isInstanceChunkLoaded(SfxBlockInstanceRecord instance) {
+        if (instance == null) {
+            return false;
+        }
+        World world = plugin.getServer().getWorld(instance.anchorKey().worldId());
+        return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);
+    }
+
     private Location toLocation(SfxBlockAnchorKey key) {
         World world = plugin.getServer().getWorld(key.worldId());
         if (world == null) {
@@ -1259,22 +1299,34 @@ public final class SfxEnergyService implements Listener {
         if (memberId == null) {
             return null;
         }
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord regulator = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (regulator == null) {
-                continue;
-            }
-            SfxEnergyComponentDefinition regulatorDefinition = definitions.get(regulator.typeId());
-            if (regulatorDefinition == null || regulatorDefinition.componentType() != SfxEnergyComponentType.REGULATOR) {
-                continue;
-            }
-            SfxEnergyGridResult grid = gridBuilder.buildGrid(regulator.instanceId(), anchor.key());
-            if (!grid.members().contains(memberId)) {
-                continue;
-            }
-            return inspectGrid(grid);
+        topology.rebuildIfStale();
+        SfxTopologyComponent component = topology.componentForMember(memberId).orElse(null);
+        if (component == null) {
+            return null;
         }
-        return null;
+        UUID regulatorId = component.controllers().stream().findFirst().orElse(null);
+        if (regulatorId == null) {
+            return null;
+        }
+        SfxBlockInstanceRecord regulator = blockData.findInstance(regulatorId).orElse(null);
+        if (regulator == null) {
+            return null;
+        }
+        SfxEnergyGridStatus status = switch (component.status()) {
+            case ONLINE -> SfxEnergyGridStatus.ONLINE;
+            case MULTIPLE_CONTROLLERS -> SfxEnergyGridStatus.MULTIPLE_REGULATORS;
+            case INACTIVE -> SfxEnergyGridStatus.NO_NETWORK;
+        };
+        if (status == SfxEnergyGridStatus.ONLINE && component.members().size() <= 1) {
+            status = SfxEnergyGridStatus.NO_NETWORK;
+        }
+        if (topology.isConflictedTerminal(memberId)) {
+            status = SfxEnergyGridStatus.SHARED_NODE_CONFLICT;
+        }
+        if (status == SfxEnergyGridStatus.ONLINE && !isInstanceChunkLoaded(regulator)) {
+            status = SfxEnergyGridStatus.NO_NETWORK;
+        }
+        return inspectGrid(new SfxEnergyGridResult(regulatorId, regulator.anchorKey(), component.members(), status));
     }
 
     private SfxEnergyGridInspection inspectGrid(SfxEnergyGridResult grid) {

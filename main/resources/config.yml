@@ -10,6 +10,8 @@ storage:
   sqlite-file: 'data/player-data.db'
   block-data:
     sqlite-file: 'data/block-data.db'
+    
+    autosave-interval-ticks: -1
 
 backpacks:
   allow-foreign-open: true
