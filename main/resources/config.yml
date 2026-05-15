@@ -83,6 +83,19 @@ options:
 
 
 
+
+machines:
+  lazy-tick:
+    enabled: true
+    
+    
+    interval-ticks: 5
+    
+    
+    viewer-interval-ticks: 1
+    
+    sleeping-probe-interval-ticks: 100
+
 electric-machines:
   
   
@@ -124,6 +137,10 @@ energy:
     mode: 'sfx'
     
     see-through: false
+    
+    update-interval-ticks: 1
+    
+    update-only-on-change: true
   bucket-fuels:
     instant-empty-bucket-return: true
   generator-balance:

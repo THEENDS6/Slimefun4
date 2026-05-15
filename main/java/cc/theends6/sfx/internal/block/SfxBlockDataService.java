@@ -3,6 +3,8 @@ package cc.theends6.sfx.internal.block;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,7 +12,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -21,27 +22,28 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxBlockDataService {
     private final JavaPlugin plugin;
-    private final SfxRuntime runtime;
     private final SfxBlockDataRepository repository;
     private final Map<SfxBlockAnchorKey, SfxAnchorRecord> anchors = new ConcurrentHashMap<>();
     private final Map<UUID, SfxBlockInstanceRecord> instances = new ConcurrentHashMap<>();
-    private final Set<CompletableFuture<Void>> pendingWrites = ConcurrentHashMap.newKeySet();
+    private final Set<SfxBlockAnchorKey> dirtyAnchorKeys = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> dirtyInstanceIds = ConcurrentHashMap.newKeySet();
     private final Set<SfxBlockAnchorKey> pendingAnchorDeletes = ConcurrentHashMap.newKeySet();
-    private final Set<UUID> pendingInstanceDeletes = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, SfxBlockAnchorKey> pendingInstanceDeletes = new ConcurrentHashMap<>();
     private final AtomicLong revision = new AtomicLong();
     private volatile boolean shuttingDown;
 
     public SfxBlockDataService(JavaPlugin plugin, SfxRuntime runtime, SfxBlockDataRepository repository) {
         this.plugin = plugin;
-        this.runtime = runtime;
         this.repository = repository;
     }
 
-    public void initialize() throws Exception {
+    public synchronized void initialize() throws Exception {
         repository.initialize();
         SfxBlockDataSnapshot snapshot = repository.loadAll();
         anchors.clear();
         instances.clear();
+        dirtyAnchorKeys.clear();
+        dirtyInstanceIds.clear();
         pendingAnchorDeletes.clear();
         pendingInstanceDeletes.clear();
         snapshot.anchors().forEach(anchor -> anchors.put(anchor.key(), anchor));
@@ -51,6 +53,10 @@ public final class SfxBlockDataService {
     }
 
     public Optional<SfxAnchorRecord> findAnchor(Location location) {
+        return findAnchorAndValidate(location);
+    }
+
+    public Optional<SfxAnchorRecord> findAnchorAndValidate(Location location) {
         if (location == null) {
             return Optional.empty();
         }
@@ -69,8 +75,18 @@ public final class SfxBlockDataService {
         return Optional.of(anchor);
     }
 
+    public Optional<SfxAnchorRecord> findAnchorFast(Location location) {
+        if (location == null) {
+            return Optional.empty();
+        }
+        return findAnchorFast(SfxBlockAnchorKey.fromLocation(location));
+    }
 
     public Optional<SfxAnchorRecord> findAnchor(SfxBlockAnchorKey key) {
+        return findAnchorFast(key);
+    }
+
+    public Optional<SfxAnchorRecord> findAnchorFast(SfxBlockAnchorKey key) {
         if (key == null) {
             return Optional.empty();
         }
@@ -113,14 +129,15 @@ public final class SfxBlockDataService {
         return registerSingleBlock(typeId, location, material, ownerId, SfxBlockInstanceRecord.DEFAULT_ENERGY_PRIORITY_DISTANCE);
     }
 
-    public UUID registerSingleBlock(String typeId, Location location, Material material, UUID ownerId, int energyPriorityDistance) {
+    public synchronized UUID registerSingleBlock(String typeId, Location location, Material material, UUID ownerId, int energyPriorityDistance) {
         long now = Instant.now().toEpochMilli();
         UUID instanceId = UUID.randomUUID();
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(location);
         SfxAnchorRecord replaced = anchors.remove(key);
         if (replaced != null) {
             instances.remove(replaced.instanceId());
-            pendingInstanceDeletes.add(replaced.instanceId());
+            dirtyInstanceIds.remove(replaced.instanceId());
+            pendingInstanceDeletes.put(replaced.instanceId(), replaced.key());
         }
         SfxBlockInstanceRecord instance = new SfxBlockInstanceRecord(
                 instanceId,
@@ -143,41 +160,43 @@ public final class SfxBlockDataService {
         pendingAnchorDeletes.remove(key);
         instances.put(instanceId, instance);
         anchors.put(key, anchor);
+        markDirty(anchor, instance);
         revision.incrementAndGet();
         return instanceId;
     }
 
-    public void updateEnergyPriorityDistance(UUID instanceId, int energyPriorityDistance) {
+    public synchronized void updateEnergyPriorityDistance(UUID instanceId, int energyPriorityDistance) {
         SfxBlockInstanceRecord existing = instances.get(instanceId);
         if (existing == null || existing.energyPriorityDistance() == energyPriorityDistance) {
             return;
         }
         SfxBlockInstanceRecord updated = existing.withEnergyPriorityDistance(energyPriorityDistance, Instant.now().toEpochMilli());
         instances.put(instanceId, updated);
+        markDirty(updated);
     }
 
-    public void updateInstanceState(UUID instanceId, byte[] stateBlob, SfxBlockLifecycleState lifecycleState) {
+    public synchronized void updateInstanceState(UUID instanceId, byte[] stateBlob, SfxBlockLifecycleState lifecycleState) {
         SfxBlockInstanceRecord existing = instances.get(instanceId);
         if (existing == null) {
             return;
         }
         SfxBlockInstanceRecord updated = existing.withState(stateBlob, lifecycleState, Instant.now().toEpochMilli());
         instances.put(instanceId, updated);
-        enqueueWrite(() -> saveInstance(updated));
+        markDirty(updated);
     }
 
-    public void markAnchorIntegrity(Location location, SfxBlockIntegrityState integrityState) {
+    public synchronized void markAnchorIntegrity(Location location, SfxBlockIntegrityState integrityState) {
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(location);
         SfxAnchorRecord existing = anchors.get(key);
         if (existing == null) {
             return;
         }
         SfxAnchorRecord updated = updateAnchorIntegrityInMemory(existing, integrityState);
+        markDirty(updated);
         revision.incrementAndGet();
-        enqueueWrite(() -> saveAnchor(updated));
     }
 
-    public void unregisterAt(Location location) {
+    public synchronized void unregisterAt(Location location) {
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(location);
         SfxAnchorRecord anchor = anchors.remove(key);
         if (anchor == null) {
@@ -185,41 +204,60 @@ public final class SfxBlockDataService {
         }
         UUID instanceId = anchor.instanceId();
         instances.remove(instanceId);
+        dirtyAnchorKeys.remove(key);
+        dirtyInstanceIds.remove(instanceId);
         pendingAnchorDeletes.add(key);
-        pendingInstanceDeletes.add(instanceId);
+        pendingInstanceDeletes.put(instanceId, key);
         revision.incrementAndGet();
     }
 
-    public void flushNow() {
-        awaitPendingWrites();
-        flushDeletes();
-        for (SfxBlockInstanceRecord instance : instances.values()) {
-            saveInstance(instance);
-        }
-        for (SfxAnchorRecord anchor : anchors.values()) {
-            saveAnchor(anchor);
-        }
-        flushDeletes();
-        awaitPendingWrites();
+    public void requestDirtyFlushAsync() {
+        persistBatchAsync(snapshotAllDirty());
     }
 
-    public void flushChunk(World world, int chunkX, int chunkZ) {
+    public void requestChunkFlushAsync(World world, int chunkX, int chunkZ) {
         if (world == null) {
             return;
         }
-        awaitPendingWrites();
-        for (SfxAnchorRecord anchor : anchors.values()) {
-            SfxBlockAnchorKey key = anchor.key();
-            if (!key.worldId().equals(world.getUID()) || (key.x() >> 4) != chunkX || (key.z() >> 4) != chunkZ) {
-                continue;
-            }
-            saveAnchor(anchor);
-            SfxBlockInstanceRecord instance = instances.get(anchor.instanceId());
-            if (instance != null) {
-                saveInstance(instance);
+        persistBatchAsync(snapshotDirtyChunk(world.getUID(), chunkX, chunkZ));
+    }
+
+    public void flushNow() {
+        requestDirtyFlushAsync();
+    }
+
+    public void flushAllBlocking() {
+        PersistenceBatch batch;
+        synchronized (this) {
+            batch = snapshotAllCurrentAndPending();
+        }
+        boolean success = true;
+        if (!batch.isEmpty()) {
+            try {
+                repository.persistChanges(batch.anchorUpserts(), batch.instanceUpserts(), batch.anchorDeletes(), batch.instanceDeletes());
+            } catch (Exception exception) {
+                success = false;
+                plugin.getLogger().warning("Failed to persist all SFX block data: " + exception.getMessage());
             }
         }
-        flushDeletes();
+        try {
+            repository.awaitPendingWrites();
+        } catch (Exception exception) {
+            success = false;
+            plugin.getLogger().warning("Failed to drain SFX block data writer: " + exception.getMessage());
+        }
+        if (success) {
+            synchronized (this) {
+                dirtyAnchorKeys.clear();
+                dirtyInstanceIds.clear();
+                pendingAnchorDeletes.clear();
+                pendingInstanceDeletes.clear();
+            }
+        }
+    }
+
+    public void flushChunk(World world, int chunkX, int chunkZ) {
+        requestChunkFlushAsync(world, chunkX, chunkZ);
     }
 
     public void reconcileLoadedAnchors() {
@@ -257,12 +295,14 @@ public final class SfxBlockDataService {
         }
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
         shuttingDown = true;
-        flushNow();
+        flushAllBlocking();
         repository.close();
         anchors.clear();
         instances.clear();
+        dirtyAnchorKeys.clear();
+        dirtyInstanceIds.clear();
         pendingAnchorDeletes.clear();
         pendingInstanceDeletes.clear();
     }
@@ -297,13 +337,13 @@ public final class SfxBlockDataService {
         return actual.key().toString().equals(anchor.materialKey());
     }
 
-    private void markAnchorIntegritySync(SfxBlockAnchorKey key, SfxAnchorRecord existing, SfxBlockIntegrityState integrityState) {
+    private synchronized void markAnchorIntegritySync(SfxBlockAnchorKey key, SfxAnchorRecord existing, SfxBlockIntegrityState integrityState) {
         if (existing.integrityState() == integrityState) {
             return;
         }
         SfxAnchorRecord updated = updateAnchorIntegrityInMemory(existing, integrityState);
+        markDirty(updated);
         revision.incrementAndGet();
-        saveAnchor(updated);
         if (integrityState == SfxBlockIntegrityState.INVALID) {
             plugin.getLogger().warning("Marked invalid SFX block anchor at " + key + " because the world block no longer matches " + existing.materialKey());
         }
@@ -315,70 +355,181 @@ public final class SfxBlockDataService {
         return updated;
     }
 
-    private void enqueueWrite(Runnable write) {
-        if (shuttingDown) {
-            write.run();
+    private void markDirty(SfxAnchorRecord anchor, SfxBlockInstanceRecord instance) {
+        markDirty(anchor);
+        markDirty(instance);
+    }
+
+    private void markDirty(SfxAnchorRecord anchor) {
+        if (anchor != null) {
+            dirtyAnchorKeys.add(anchor.key());
+        }
+    }
+
+    private void markDirty(SfxBlockInstanceRecord instance) {
+        if (instance != null) {
+            dirtyInstanceIds.add(instance.instanceId());
+        }
+    }
+
+    private synchronized PersistenceBatch snapshotAllDirty() {
+        return snapshotDirty(null, 0, 0);
+    }
+
+    private synchronized PersistenceBatch snapshotDirtyChunk(UUID worldId, int chunkX, int chunkZ) {
+        return snapshotDirty(new ChunkSelector(worldId, chunkX, chunkZ), chunkX, chunkZ);
+    }
+
+    private PersistenceBatch snapshotDirty(ChunkSelector selector, int chunkX, int chunkZ) {
+        Set<SfxBlockAnchorKey> dirtyAnchors = new HashSet<>();
+        Set<UUID> dirtyInstances = new HashSet<>();
+        Set<SfxBlockAnchorKey> anchorDeletes = new HashSet<>();
+        Set<UUID> instanceDeletes = new HashSet<>();
+        Map<UUID, SfxBlockInstanceRecord> instanceUpserts = new HashMap<>();
+        Map<SfxBlockAnchorKey, SfxAnchorRecord> anchorUpserts = new HashMap<>();
+
+        for (SfxBlockAnchorKey key : new HashSet<>(dirtyAnchorKeys)) {
+            if (!matches(selector, key)) {
+                continue;
+            }
+            SfxAnchorRecord anchor = anchors.get(key);
+            if (anchor == null) {
+                continue;
+            }
+            dirtyAnchors.add(key);
+            anchorUpserts.put(key, anchor);
+            SfxBlockInstanceRecord instance = instances.get(anchor.instanceId());
+            if (instance != null) {
+                instanceUpserts.put(instance.instanceId(), instance);
+            }
+        }
+
+        for (UUID instanceId : new HashSet<>(dirtyInstanceIds)) {
+            SfxBlockInstanceRecord instance = instances.get(instanceId);
+            if (instance == null || !matches(selector, instance.anchorKey())) {
+                continue;
+            }
+            dirtyInstances.add(instanceId);
+            instanceUpserts.put(instanceId, instance);
+        }
+
+        for (SfxBlockAnchorKey key : new HashSet<>(pendingAnchorDeletes)) {
+            if (matches(selector, key)) {
+                anchorDeletes.add(key);
+            }
+        }
+
+        for (Map.Entry<UUID, SfxBlockAnchorKey> entry : new HashSet<>(pendingInstanceDeletes.entrySet())) {
+            if (matches(selector, entry.getValue())) {
+                instanceDeletes.add(entry.getKey());
+            }
+        }
+
+        dirtyAnchorKeys.removeAll(dirtyAnchors);
+        dirtyInstanceIds.removeAll(dirtyInstances);
+        pendingAnchorDeletes.removeAll(anchorDeletes);
+        Map<UUID, SfxBlockAnchorKey> instanceDeleteAnchorKeys = new HashMap<>();
+        for (UUID instanceId : instanceDeletes) {
+            SfxBlockAnchorKey deleteKey = pendingInstanceDeletes.remove(instanceId);
+            if (deleteKey != null) {
+                instanceDeleteAnchorKeys.put(instanceId, deleteKey);
+            }
+        }
+
+        return new PersistenceBatch(
+                new ArrayList<>(anchorUpserts.values()),
+                new ArrayList<>(instanceUpserts.values()),
+                new ArrayList<>(anchorDeletes),
+                new ArrayList<>(instanceDeletes),
+                dirtyAnchors,
+                dirtyInstances,
+                anchorDeletes,
+                instanceDeletes,
+                instanceDeleteAnchorKeys);
+    }
+
+    private PersistenceBatch snapshotAllCurrentAndPending() {
+        Set<SfxBlockAnchorKey> allAnchorKeys = new HashSet<>(dirtyAnchorKeys);
+        allAnchorKeys.addAll(anchors.keySet());
+        Set<UUID> allInstanceIds = new HashSet<>(dirtyInstanceIds);
+        allInstanceIds.addAll(instances.keySet());
+        Map<SfxBlockAnchorKey, SfxAnchorRecord> anchorUpserts = new HashMap<>();
+        Map<UUID, SfxBlockInstanceRecord> instanceUpserts = new HashMap<>();
+        for (SfxBlockAnchorKey key : allAnchorKeys) {
+            SfxAnchorRecord anchor = anchors.get(key);
+            if (anchor != null) {
+                anchorUpserts.put(key, anchor);
+            }
+        }
+        for (UUID instanceId : allInstanceIds) {
+            SfxBlockInstanceRecord instance = instances.get(instanceId);
+            if (instance != null) {
+                instanceUpserts.put(instanceId, instance);
+            }
+        }
+        Set<SfxBlockAnchorKey> anchorDeletes = new HashSet<>(pendingAnchorDeletes);
+        Set<UUID> instanceDeletes = new HashSet<>(pendingInstanceDeletes.keySet());
+        Map<UUID, SfxBlockAnchorKey> instanceDeleteAnchorKeys = new HashMap<>(pendingInstanceDeletes);
+        return new PersistenceBatch(
+                new ArrayList<>(anchorUpserts.values()),
+                new ArrayList<>(instanceUpserts.values()),
+                new ArrayList<>(anchorDeletes),
+                new ArrayList<>(instanceDeletes),
+                new HashSet<>(dirtyAnchorKeys),
+                new HashSet<>(dirtyInstanceIds),
+                anchorDeletes,
+                instanceDeletes,
+                instanceDeleteAnchorKeys);
+    }
+
+    private boolean matches(ChunkSelector selector, SfxBlockAnchorKey key) {
+        return selector == null || selector.matches(key);
+    }
+
+    private void persistBatchAsync(PersistenceBatch batch) {
+        if (batch.isEmpty()) {
             return;
         }
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        pendingWrites.add(future);
-        runtime.executeAsync(() -> {
-            try {
-                write.run();
-                future.complete(null);
-            } catch (Throwable throwable) {
-                future.completeExceptionally(throwable);
-                plugin.getLogger().warning("Failed to execute SFX block data write: " + throwable.getMessage());
-            } finally {
-                pendingWrites.remove(future);
+        CompletableFuture<Void> future = repository.persistChangesAsync(batch.anchorUpserts(), batch.instanceUpserts(), batch.anchorDeletes(), batch.instanceDeletes());
+        future.whenComplete((ignored, throwable) -> {
+            if (throwable == null) {
+                return;
             }
+            plugin.getLogger().warning("Failed to persist SFX block data batch: " + throwable.getMessage());
+            restoreDirtyBatch(batch);
         });
     }
 
-    private void awaitPendingWrites() {
-        CompletableFuture<?>[] futures = pendingWrites.toArray(CompletableFuture[]::new);
-        if (futures.length == 0) {
-            return;
-        }
-        try {
-            CompletableFuture.allOf(futures).get(5L, TimeUnit.SECONDS);
-        } catch (Exception exception) {
-            plugin.getLogger().warning("Timed out while flushing SFX block data writes: " + exception.getMessage());
-        }
-    }
-
-    private void flushDeletes() {
-        for (SfxBlockAnchorKey key : new ArrayList<>(pendingAnchorDeletes)) {
-            try {
-                repository.deleteAnchor(key);
-                pendingAnchorDeletes.remove(key);
-            } catch (Exception exception) {
-                plugin.getLogger().warning("Failed to delete SFX anchor " + key + ": " + exception.getMessage());
-            }
-        }
-        for (UUID instanceId : new ArrayList<>(pendingInstanceDeletes)) {
-            try {
-                repository.deleteInstance(instanceId);
-                pendingInstanceDeletes.remove(instanceId);
-            } catch (Exception exception) {
-                plugin.getLogger().warning("Failed to delete SFX block instance " + instanceId + ": " + exception.getMessage());
+    private synchronized void restoreDirtyBatch(PersistenceBatch batch) {
+        dirtyAnchorKeys.addAll(batch.dirtyAnchorKeys());
+        dirtyInstanceIds.addAll(batch.dirtyInstanceIds());
+        pendingAnchorDeletes.addAll(batch.anchorDeleteKeys());
+        for (UUID instanceId : batch.instanceDeleteIds()) {
+            SfxBlockAnchorKey key = batch.instanceDeleteAnchorKeys().get(instanceId);
+            if (key != null) {
+                pendingInstanceDeletes.put(instanceId, key);
             }
         }
     }
 
-    private void saveInstance(SfxBlockInstanceRecord instance) {
-        try {
-            repository.upsertInstance(instance);
-        } catch (Exception exception) {
-            plugin.getLogger().warning("Failed to save SFX block instance " + instance.instanceId() + ": " + exception.getMessage());
+    private record ChunkSelector(UUID worldId, int chunkX, int chunkZ) {
+        boolean matches(SfxBlockAnchorKey key) {
+            return key.worldId().equals(worldId) && (key.x() >> 4) == chunkX && (key.z() >> 4) == chunkZ;
         }
     }
 
-    private void saveAnchor(SfxAnchorRecord anchor) {
-        try {
-            repository.upsertAnchor(anchor);
-        } catch (Exception exception) {
-            plugin.getLogger().warning("Failed to save SFX anchor " + anchor.key() + ": " + exception.getMessage());
+    private record PersistenceBatch(
+            List<SfxAnchorRecord> anchorUpserts,
+            List<SfxBlockInstanceRecord> instanceUpserts,
+            List<SfxBlockAnchorKey> anchorDeletes,
+            List<UUID> instanceDeletes,
+            Set<SfxBlockAnchorKey> dirtyAnchorKeys,
+            Set<UUID> dirtyInstanceIds,
+            Set<SfxBlockAnchorKey> anchorDeleteKeys,
+            Set<UUID> instanceDeleteIds,
+            Map<UUID, SfxBlockAnchorKey> instanceDeleteAnchorKeys) {
+        boolean isEmpty() {
+            return anchorUpserts.isEmpty() && instanceUpserts.isEmpty() && anchorDeletes.isEmpty() && instanceDeletes.isEmpty();
         }
     }
 }

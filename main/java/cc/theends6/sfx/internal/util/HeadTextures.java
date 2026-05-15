@@ -3,6 +3,8 @@ package cc.theends6.sfx.internal.util;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
@@ -14,6 +16,7 @@ import org.bukkit.profile.PlayerTextures;
 
 public final class HeadTextures {
     private static final Logger LOGGER = Logger.getLogger(HeadTextures.class.getName());
+    private static final Map<String, PlayerProfile> PROFILE_CACHE = new ConcurrentHashMap<>();
 
     private HeadTextures() {
     }
@@ -24,7 +27,7 @@ public final class HeadTextures {
             return;
         }
         try {
-            skullMeta.setOwnerProfile(createProfile(normalized));
+            skullMeta.setOwnerProfile(profile(normalized));
         } catch (Throwable ex) {
             LOGGER.log(Level.FINE, "Failed to apply head texture", ex);
         }
@@ -36,7 +39,7 @@ public final class HeadTextures {
             return;
         }
         try {
-            skull.setOwnerProfile(createProfile(normalized));
+            skull.setOwnerProfile(profile(normalized));
             skull.update(true, false);
         } catch (Throwable ex) {
             LOGGER.log(Level.FINE, "Failed to apply placed head texture", ex);
@@ -57,6 +60,17 @@ public final class HeadTextures {
             return null;
         }
         return normalized;
+    }
+
+    private static PlayerProfile profile(String textureHash) {
+        return PROFILE_CACHE.computeIfAbsent(textureHash, key -> {
+            try {
+                return createProfile(key);
+            } catch (Exception exception) {
+                LOGGER.log(Level.FINE, "Failed to create SFX head texture profile", exception);
+                throw new IllegalStateException(exception);
+            }
+        });
     }
 
     private static PlayerProfile createProfile(String textureHash) throws Exception {

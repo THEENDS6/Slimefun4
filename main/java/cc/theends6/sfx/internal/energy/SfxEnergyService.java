@@ -13,6 +13,7 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
+import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayList;
@@ -165,6 +166,9 @@ public final class SfxEnergyService implements Listener {
         }
         SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
         if (definition == null) {
+            return;
+        }
+        if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
         event.setCancelled(true);

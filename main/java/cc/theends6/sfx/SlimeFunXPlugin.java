@@ -123,7 +123,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SfxPlayerProfileListener(playerDataService), this);
         getServer().getPluginManager().registerEvents(new SfxGuideListener(this, api.items(), api.guide()), this);
         getServer().getPluginManager().registerEvents(new SfxItemUseDispatcher(api.items(), backpackListener, utilityListener, combatToolListener, foodListener, researchService, localization), this);
-        getServer().getPluginManager().registerEvents(new SfxManualMachineListener(manualMachineService), this);
+        getServer().getPluginManager().registerEvents(new SfxManualMachineListener(manualMachineService, api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxManualMachineDeployListener(this, api.internalManualMachines(), localization, blockDataService), this);
         getServer().getPluginManager().registerEvents(new SfxMultimeterListener(this, api.items(), localization, blockDataService, electricMachineService, configurableMachineService, energyService), this);
         getServer().getPluginManager().registerEvents(placeableBlockListener, this);

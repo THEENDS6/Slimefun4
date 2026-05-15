@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 
-final class SfxFuelBurnTimeBridge {
+public final class SfxFuelBurnTimeBridge {
     private final Method asNmsCopy;
     private final Method vanillaBurnTimes;
     private final Method registryAccess;
@@ -25,7 +25,7 @@ final class SfxFuelBurnTimeBridge {
         this.burnDuration = burnDuration;
     }
 
-    static SfxFuelBurnTimeBridge create() {
+    public static SfxFuelBurnTimeBridge create() {
         try {
             Class<?> craftServer = Class.forName("org.bukkit.craftbukkit.CraftServer");
             Class<?> craftItemStack = Class.forName("org.bukkit.craftbukkit.inventory.CraftItemStack");
@@ -46,7 +46,7 @@ final class SfxFuelBurnTimeBridge {
         }
     }
 
-    int burnTicks(ItemStack stack) {
+    public int burnTicks(ItemStack stack) {
         try {
             Object craftServerInstance = Bukkit.getServer();
             Object minecraftServerInstance = getServer.invoke(craftServerInstance);

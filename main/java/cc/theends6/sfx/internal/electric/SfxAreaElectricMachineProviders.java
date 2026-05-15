@@ -1436,7 +1436,7 @@ final class SfxAreaElectricMachineProviders {
 
     private static Block findConnectedFluidSource(Block start, Material fluid, int limit) {
         List<Block> queue = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
+        Set<Long> seen = new HashSet<>();
         queue.add(start);
         seen.add(blockKey(start));
         for (int index = 0; index < queue.size() && seen.size() <= limit; index++) {
@@ -1486,7 +1486,7 @@ final class SfxAreaElectricMachineProviders {
             return true;
         }
         List<Block> queue = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
+        Set<Long> seen = new HashSet<>();
         queue.add(start);
         seen.add(blockKey(start));
         int sources = 0;
@@ -1544,8 +1544,10 @@ final class SfxAreaElectricMachineProviders {
                 && first.getZ() == second.getZ();
     }
 
-    private static String blockKey(Block block) {
-        return block.getX() + ":" + block.getY() + ":" + block.getZ();
+    private static long blockKey(Block block) {
+        return ((long) (block.getX() & 0x3FFFFFF) << 38)
+                | ((long) (block.getZ() & 0x3FFFFFF) << 12)
+                | (long) (block.getY() & 0xFFF);
     }
 
     private static boolean isSourceLiquid(Block block) {

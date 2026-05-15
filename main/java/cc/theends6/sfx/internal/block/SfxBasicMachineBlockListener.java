@@ -2,6 +2,10 @@ package cc.theends6.sfx.internal.block;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.energy.SfxFuelBurnTimeBridge;
+import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
+import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
@@ -43,10 +47,15 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.FurnaceInventory;
+import org.bukkit.inventory.FurnaceRecipe;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -84,7 +93,14 @@ public final class SfxBasicMachineBlockListener implements Listener {
     private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
     private final Map<SfxBlockAnchorKey, ActiveCrucibleProcess> activeCrucibles = new ConcurrentHashMap<>();
+    private final Set<SfxBlockAnchorKey> enhancedFurnaces = ConcurrentHashMap.newKeySet();
+    private final Map<SfxBlockAnchorKey, VirtualFurnaceState> virtualFurnaces = new ConcurrentHashMap<>();
+    private final Set<SfxBlockAnchorKey> viewedFurnaces = ConcurrentHashMap.newKeySet();
+    private final Map<Material, Optional<VirtualFurnaceRecipe>> furnaceRecipeCache = new ConcurrentHashMap<>();
+    private volatile SfxFuelBurnTimeBridge fuelBurnTimeBridge;
+    private final SfxMachineTickSettings tickSettings;
     private volatile boolean furnaceTickerRunning;
+    private volatile long furnaceTickCounter;
 
     public SfxBasicMachineBlockListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -92,6 +108,8 @@ public final class SfxBasicMachineBlockListener implements Listener {
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
+        this.tickSettings = SfxMachineTickSettings.from(plugin.getConfig());
+        bootstrapEnhancedFurnaces();
         startEnhancedFurnaceTicker();
     }
 
@@ -105,6 +123,9 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 return;
             }
             blockData.registerSingleBlock(marker.itemId(), event.getBlockPlaced().getLocation(), event.getBlockPlaced().getType(), event.getPlayer().getUniqueId());
+            if (furnaceStats(marker.itemId()) != null) {
+                enhancedFurnaces.add(SfxBlockAnchorKey.fromLocation(event.getBlockPlaced().getLocation()));
+            }
         });
     }
 
@@ -130,7 +151,11 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (block == null || typeId == null || !SUPPORTED_BLOCKS.contains(typeId)) {
             return;
         }
-        clearActiveCrucible(SfxBlockAnchorKey.fromLocation(block.getLocation()), true);
+        SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(block.getLocation());
+        clearActiveCrucible(key, true);
+        enhancedFurnaces.remove(key);
+        virtualFurnaces.remove(key);
+        viewedFurnaces.remove(key);
         dropStoredContents(block);
         dropPluginBlock(block, typeId);
         blockData.unregisterAt(block.getLocation());
@@ -153,6 +178,15 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         String typeId = instanceType(anchor.get().instanceId());
+        if (typeId != null && SfxInteractionRules.prefersBlockPlacement(items, event)) {
+            return;
+        }
+        if (furnaceStats(typeId) != null) {
+            SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(clicked.getLocation());
+            enhancedFurnaces.add(key);
+            virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState()).sleeping(false);
+            return;
+        }
         if ("sf:composter".equals(typeId)) {
             handleComposter(event, clicked);
             return;
@@ -185,14 +219,8 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (stats == null) {
             return;
         }
-        double burnMultiplier = stats.fuelEfficiency();
-        if (plugin.getConfig().getBoolean("plugin-blocks.enhanced-furnace.speed-affects-fuel-consumption", false)
-                && stats.processingSpeed() > 0) {
-            burnMultiplier /= stats.processingSpeed();
-        }
-        int newBurnTime = (int) Math.ceil(event.getBurnTime() * burnMultiplier);
-        newBurnTime = Math.max(1, newBurnTime);
-        event.setBurnTime(Math.min(newBurnTime, Short.MAX_VALUE - 1));
+        event.setCancelled(true);
+        enhancedFurnaces.add(SfxBlockAnchorKey.fromLocation(event.getBlock().getLocation()));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -204,26 +232,53 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (stats == null) {
             return;
         }
-        BlockState state = event.getBlock().getState();
-        if (!(state instanceof Furnace furnace)) {
+        event.setCancelled(true);
+        enhancedFurnaces.add(SfxBlockAnchorKey.fromLocation(event.getBlock().getLocation()));
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onFurnaceInventoryOpen(InventoryOpenEvent event) {
+        if (!(event.getInventory().getHolder() instanceof Furnace furnace)) {
             return;
         }
-        FurnaceInventory inventory = furnace.getInventory();
-        ItemStack smelting = inventory.getSmelting();
-        if (smelting == null || smelting.getType().isAir()) {
+        SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
+        if (furnaceStats(furnace.getLocation()) == null) {
             return;
         }
-        if (!isEnhancedFurnaceLuckMaterial(smelting.getType())) {
+        enhancedFurnaces.add(key);
+        viewedFurnaces.add(key);
+        virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState()).sleeping(false);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onFurnaceInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getInventory().getHolder() instanceof Furnace furnace)) {
             return;
         }
-        ItemStack result = event.getResult();
-        if (result == null || result.getType().isAir()) {
+        SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
+        runtime.executeGlobalLater(1L, () -> {
+            if (event.getInventory().getViewers().isEmpty()) {
+                viewedFurnaces.remove(key);
+            }
+        });
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onFurnaceInventoryMove(InventoryMoveItemEvent event) {
+        wakeFurnaceInventory(event.getSource());
+        wakeFurnaceInventory(event.getDestination());
+    }
+
+    private void wakeFurnaceInventory(Inventory inventory) {
+        if (!(inventory.getHolder() instanceof Furnace furnace)) {
             return;
         }
-        int previous = inventory.getResult() != null ? inventory.getResult().getAmount() : 0;
-        int bonus = ThreadLocalRandom.current().nextInt(stats.fortuneLevel() + 1);
-        int amount = Math.min(result.getMaxStackSize() - previous, 1 + bonus);
-        event.setResult(new ItemStack(result.getType(), Math.max(1, amount)));
+        if (furnaceStats(furnace.getLocation()) == null) {
+            return;
+        }
+        SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
+        enhancedFurnaces.add(key);
+        virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState()).sleeping(false);
     }
 
     public Optional<Inventory> findOutputChestFor(Block machineBlock, ItemStack output) {
@@ -613,6 +668,14 @@ public final class SfxBasicMachineBlockListener implements Listener {
         return name.endsWith("TERRACOTTA") && !name.endsWith("GLAZED_TERRACOTTA");
     }
 
+    private void bootstrapEnhancedFurnaces() {
+        for (SfxAnchorRecord anchor : blockData.anchors()) {
+            if (furnaceStatsAt(anchor) != null) {
+                enhancedFurnaces.add(anchor.key());
+            }
+        }
+    }
+
     private void startEnhancedFurnaceTicker() {
         furnaceTickerRunning = true;
         scheduleEnhancedFurnaceTick();
@@ -620,7 +683,12 @@ public final class SfxBasicMachineBlockListener implements Listener {
 
     public void shutdown() {
         furnaceTickerRunning = false;
+        furnaceTickCounter = 0L;
         activeCrucibles.clear();
+        enhancedFurnaces.clear();
+        virtualFurnaces.clear();
+        viewedFurnaces.clear();
+        furnaceRecipeCache.clear();
     }
 
     private void scheduleEnhancedFurnaceTick() {
@@ -628,35 +696,245 @@ public final class SfxBasicMachineBlockListener implements Listener {
             if (!furnaceTickerRunning) {
                 return;
             }
-            for (SfxAnchorRecord anchor : blockData.anchors()) {
+            long currentTick = ++furnaceTickCounter;
+            for (SfxBlockAnchorKey key : Set.copyOf(enhancedFurnaces)) {
+                SfxAnchorRecord anchor = blockData.findAnchorFast(key).orElse(null);
+                if (anchor == null) {
+                    enhancedFurnaces.remove(key);
+                    virtualFurnaces.remove(key);
+                    viewedFurnaces.remove(key);
+                    continue;
+                }
                 FurnaceStats stats = furnaceStatsAt(anchor);
                 if (stats == null) {
+                    enhancedFurnaces.remove(key);
+                    virtualFurnaces.remove(key);
+                    viewedFurnaces.remove(key);
                     continue;
                 }
-                Location location = new Location(plugin.getServer().getWorld(anchor.key().worldId()), anchor.key().x(), anchor.key().y(), anchor.key().z());
-                if (location.getWorld() == null) {
+                VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
+                boolean hasViewers = viewedFurnaces.contains(key);
+                int interval = state.sleeping() && !hasViewers
+                        ? tickSettings.sleepingProbeIntervalTicks()
+                        : tickSettings.intervalFor(hasViewers);
+                long lastTick = state.lastLogicTick();
+                if (lastTick > 0L && currentTick - lastTick < interval) {
                     continue;
                 }
-                runtime.executeAt(location, () -> tickEnhancedFurnace(location.getBlock(), stats));
+                long elapsedTicks = lastTick <= 0L ? 1L : Math.max(1L, currentTick - lastTick);
+                state.lastLogicTick(currentTick);
+                World world = plugin.getServer().getWorld(key.worldId());
+                if (world == null || !world.isChunkLoaded(key.x() >> 4, key.z() >> 4)) {
+                    continue;
+                }
+                Location location = new Location(world, key.x(), key.y(), key.z());
+                SfxMachineTickContext context = new SfxMachineTickContext(currentTick, elapsedTicks, hasViewers);
+                runtime.executeAt(location, () -> tickEnhancedFurnace(location.getBlock(), key, stats, context));
             }
             scheduleEnhancedFurnaceTick();
         });
     }
 
-    private void tickEnhancedFurnace(Block block, FurnaceStats stats) {
+    private void tickEnhancedFurnace(Block block, SfxBlockAnchorKey key, FurnaceStats stats, SfxMachineTickContext context) {
         if (block.getType() != Material.FURNACE) {
+            enhancedFurnaces.remove(key);
+            virtualFurnaces.remove(key);
+            viewedFurnaces.remove(key);
             return;
         }
-        BlockState state = block.getState();
-        if (!(state instanceof Furnace furnace)) {
+        BlockState blockState = block.getState();
+        if (!(blockState instanceof Furnace furnace)) {
             return;
         }
-        if (furnace.getCookTime() <= 0 || stats.processingSpeed() <= 1) {
+        FurnaceInventory inventory = furnace.getInventory();
+        VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
+        state.sleeping(false);
+        ItemStack input = inventory.getSmelting();
+        VirtualFurnaceRecipe recipe = resolveFurnaceRecipe(input).orElse(null);
+        if (recipe == null || input == null || input.getType().isAir()) {
+            state.cookProgress(0);
+            state.inputKey(null);
+            state.sleeping(!context.hasViewers());
+            syncVirtualFurnaceVisual(furnace, inventory, state, 0, true, context.hasViewers());
             return;
         }
-        int cookTime = furnace.getCookTime() + (stats.processingSpeed() - 1) * 10;
-        furnace.setCookTime((short) Math.min(cookTime, furnace.getCookTimeTotal() - 1));
-        state.update(true, false);
+        String inputKey = inputKey(input);
+        if (!inputKey.equals(state.inputKey())) {
+            state.inputKey(inputKey);
+            state.cookProgress(0);
+        }
+        int elapsed = context.elapsedTicksInt();
+        int remainingSteps = Math.max(1, elapsed);
+        int cookTime = recipe.cookingTime();
+        boolean forceVisual = false;
+        while (remainingSteps > 0) {
+            input = inventory.getSmelting();
+            recipe = resolveFurnaceRecipe(input).orElse(null);
+            if (recipe == null || input == null || input.getType().isAir()) {
+                state.cookProgress(0);
+                state.inputKey(null);
+                state.sleeping(!context.hasViewers());
+                break;
+            }
+            cookTime = recipe.cookingTime();
+            ItemStack result = applyEnhancedFurnaceFortune(recipe.result(), input.getType(), stats);
+            if (!canFitResult(inventory, result)) {
+                state.sleeping(!context.hasViewers());
+                break;
+            }
+            if (state.burnTimeRemaining() <= 0) {
+                ItemStack fuel = inventory.getFuel();
+                int burnTicks = enhancedFuelTicks(fuel, stats);
+                if (burnTicks <= 0) {
+                    state.cookProgress(0);
+                    state.sleeping(!context.hasViewers());
+                    break;
+                }
+                consumeFuel(inventory, fuel);
+                state.burnTimeRemaining(burnTicks);
+                state.burnTimeTotal(burnTicks);
+                forceVisual = true;
+            }
+            int consumedBurn = Math.min(remainingSteps, state.burnTimeRemaining());
+            state.burnTimeRemaining(Math.max(0, state.burnTimeRemaining() - consumedBurn));
+            state.cookProgress(state.cookProgress() + Math.max(1, stats.processingSpeed()) * consumedBurn);
+            remainingSteps -= consumedBurn;
+            if (state.cookProgress() >= cookTime) {
+                consumeSmeltingInput(inventory, input);
+                pushFurnaceResult(inventory, result);
+                state.cookProgress(0);
+                ItemStack next = inventory.getSmelting();
+                state.inputKey(next == null || next.getType().isAir() ? null : inputKey(next));
+                forceVisual = true;
+            }
+            if (consumedBurn <= 0) {
+                break;
+            }
+        }
+        syncVirtualFurnaceVisual(furnace, inventory, state, cookTime, forceVisual, context.hasViewers());
+    }
+
+    private Optional<VirtualFurnaceRecipe> resolveFurnaceRecipe(ItemStack input) {
+        if (input == null || input.getType().isAir()) {
+            return Optional.empty();
+        }
+        return furnaceRecipeCache.computeIfAbsent(input.getType(), material -> {
+            ItemStack probe = new ItemStack(material, 1);
+            for (Recipe recipe : plugin.getServer().getRecipesFor(probe)) {
+                if (!(recipe instanceof FurnaceRecipe furnaceRecipe)) {
+                    continue;
+                }
+                try {
+                    if (!furnaceRecipe.getInputChoice().test(probe)) {
+                        continue;
+                    }
+                } catch (Throwable ignored) {
+                    
+                }
+                ItemStack result = furnaceRecipe.getResult();
+                if (result == null || result.getType().isAir()) {
+                    continue;
+                }
+                int cookingTime = Math.max(1, furnaceRecipe.getCookingTime());
+                return Optional.of(new VirtualFurnaceRecipe(result.clone(), cookingTime));
+            }
+            return Optional.empty();
+        });
+    }
+
+    private ItemStack applyEnhancedFurnaceFortune(ItemStack baseResult, Material inputType, FurnaceStats stats) {
+        ItemStack result = baseResult.clone();
+        if (stats.fortuneLevel() > 0 && isEnhancedFurnaceLuckMaterial(inputType)) {
+            int bonus = ThreadLocalRandom.current().nextInt(stats.fortuneLevel() + 1);
+            result.setAmount(Math.min(result.getMaxStackSize(), result.getAmount() + bonus));
+        }
+        return result;
+    }
+
+    private int enhancedFuelTicks(ItemStack fuel, FurnaceStats stats) {
+        if (fuel == null || fuel.getType().isAir()) {
+            return 0;
+        }
+        SfxFuelBurnTimeBridge bridge = fuelBurnTimeBridge;
+        if (bridge == null) {
+            try {
+                bridge = SfxFuelBurnTimeBridge.create();
+                fuelBurnTimeBridge = bridge;
+            } catch (RuntimeException exception) {
+                return 0;
+            }
+        }
+        int burnTicks = bridge.burnTicks(fuel);
+        if (burnTicks <= 0) {
+            return 0;
+        }
+        double burnMultiplier = stats.fuelEfficiency();
+        if (plugin.getConfig().getBoolean("plugin-blocks.enhanced-furnace.speed-affects-fuel-consumption", false)
+                && stats.processingSpeed() > 0) {
+            burnMultiplier /= stats.processingSpeed();
+        }
+        return Math.max(1, Math.min(Short.MAX_VALUE - 1, (int) Math.ceil(burnTicks * burnMultiplier)));
+    }
+
+    private void consumeFuel(FurnaceInventory inventory, ItemStack fuel) {
+        if (fuel == null || fuel.getType().isAir()) {
+            return;
+        }
+        if (fuel.getType() == Material.LAVA_BUCKET) {
+            inventory.setFuel(new ItemStack(Material.BUCKET, 1));
+            return;
+        }
+        int next = fuel.getAmount() - 1;
+        if (next <= 0) {
+            inventory.setFuel(null);
+        } else {
+            fuel.setAmount(next);
+            inventory.setFuel(fuel);
+        }
+    }
+
+    private void consumeSmeltingInput(FurnaceInventory inventory, ItemStack input) {
+        int next = input.getAmount() - 1;
+        if (next <= 0) {
+            inventory.setSmelting(null);
+        } else {
+            input.setAmount(next);
+            inventory.setSmelting(input);
+        }
+    }
+
+    private boolean canFitResult(FurnaceInventory inventory, ItemStack result) {
+        ItemStack existing = inventory.getResult();
+        return existing == null || existing.getType().isAir()
+                || (existing.isSimilar(result) && existing.getAmount() + result.getAmount() <= existing.getMaxStackSize());
+    }
+
+    private void pushFurnaceResult(FurnaceInventory inventory, ItemStack result) {
+        ItemStack existing = inventory.getResult();
+        if (existing == null || existing.getType().isAir()) {
+            inventory.setResult(result.clone());
+            return;
+        }
+        if (existing.isSimilar(result)) {
+            existing.setAmount(Math.min(existing.getMaxStackSize(), existing.getAmount() + result.getAmount()));
+            inventory.setResult(existing);
+        }
+    }
+
+    private void syncVirtualFurnaceVisual(Furnace furnace, FurnaceInventory inventory, VirtualFurnaceState state, int cookTimeTotal, boolean force, boolean hasViewers) {
+        if (!force && !hasViewers) {
+            return;
+        }
+        
+        
+        furnace.setBurnTime((short) 0);
+        furnace.setCookTime((short) 0);
+        furnace.setCookTimeTotal(Math.max(1, cookTimeTotal));
+        furnace.update(true, false);
+    }
+
+    private String inputKey(ItemStack input) {
+        return input.getType().key().toString();
     }
 
     private boolean canStartCrucible(Block block, boolean water) {
@@ -749,5 +1027,79 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
     }
 
+
+    private record ActiveCrucibleProcess(UUID token, Location outputLocation, boolean water) {
+    }
+
+    private record CruciblePlan(int inputAmount, boolean water) {
+    }
+
+    private record FurnaceStats(int processingSpeed, int fuelEfficiency, int fortuneLevel) {
+    }
+
+    private record VirtualFurnaceRecipe(ItemStack result, int cookingTime) {
+    }
+
+    private static final class VirtualFurnaceState {
+        private int burnTimeRemaining;
+        private int burnTimeTotal;
+        private int cookProgress;
+        private int visualTick;
+        private long lastLogicTick;
+        private boolean sleeping;
+        private String inputKey;
+
+        int burnTimeRemaining() {
+            return burnTimeRemaining;
+        }
+
+        void burnTimeRemaining(int burnTimeRemaining) {
+            this.burnTimeRemaining = burnTimeRemaining;
+        }
+
+        void burnTimeTotal(int burnTimeTotal) {
+            this.burnTimeTotal = burnTimeTotal;
+        }
+
+        int cookProgress() {
+            return cookProgress;
+        }
+
+        void cookProgress(int cookProgress) {
+            this.cookProgress = cookProgress;
+        }
+
+        int visualTick() {
+            return visualTick;
+        }
+
+        void visualTick(int visualTick) {
+            this.visualTick = visualTick;
+        }
+
+        long lastLogicTick() {
+            return lastLogicTick;
+        }
+
+        void lastLogicTick(long lastLogicTick) {
+            this.lastLogicTick = lastLogicTick;
+        }
+
+        boolean sleeping() {
+            return sleeping;
+        }
+
+        void sleeping(boolean sleeping) {
+            this.sleeping = sleeping;
+        }
+
+        String inputKey() {
+            return inputKey;
+        }
+
+        void inputKey(String inputKey) {
+            this.inputKey = inputKey;
+        }
+    }
 
 }
