@@ -472,7 +472,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bDuralumin'
-  - '&8⇨ &e⚡&70 / 20 J'
+  - '&8⇨ &e⚡&70 / 2000 J'
   - '&8⇨ &7Thrust: &c0.35'
   - ''
   - '&eCrouch&7 to use'
@@ -487,7 +487,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bSolder'
-  - '&8⇨ &e⚡&70 / 30 J'
+  - '&8⇨ &e⚡&70 / 3000 J'
   - '&8⇨ &7Thrust: &c0.4'
   - ''
   - '&eCrouch&7 to use'
@@ -502,7 +502,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bBillon'
-  - '&8⇨ &e⚡&70 / 45 J'
+  - '&8⇨ &e⚡&70 / 4500 J'
   - '&8⇨ &7Thrust: &c0.45'
   - ''
   - '&eCrouch&7 to use'
@@ -517,7 +517,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bSteel'
-  - '&8⇨ &e⚡&70 / 60 J'
+  - '&8⇨ &e⚡&70 / 6000 J'
   - '&8⇨ &7Thrust: &c0.5'
   - ''
   - '&eCrouch&7 to use'
@@ -532,7 +532,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bDamascus Steel'
-  - '&8⇨ &e⚡&70 / 75 J'
+  - '&8⇨ &e⚡&70 / 7500 J'
   - '&8⇨ &7Thrust: &c0.55'
   - ''
   - '&eCrouch&7 to use'
@@ -547,7 +547,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bReinforced Alloy'
-  - '&8⇨ &e⚡&70 / 100 J'
+  - '&8⇨ &e⚡&70 / 10000 J'
   - '&8⇨ &7Thrust: &c0.6'
   - ''
   - '&eCrouch&7 to use'
@@ -562,7 +562,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bCarbonado'
-  - '&8⇨ &e⚡&70 / 150 J'
+  - '&8⇨ &e⚡&70 / 15000 J'
   - '&8⇨ &7Thrust: &c0.7'
   - ''
   - '&eCrouch&7 to use'
@@ -576,7 +576,7 @@ items:
   lore:
   - '&8⇨ &7Material: &bSteel'
   - ''
-  - '&8⇨ &e⚡&70 / 50 J'
+  - '&8⇨ &e⚡&70 / 5000 J'
   - '&8⇨ &7Thrust: &c0.5'
   - ''
   - '&eCrouch&7 to use'
@@ -591,7 +591,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bDuralumin'
-  - '&8⇨ &e⚡&70 / 20 J'
+  - '&8⇨ &e⚡&70 / 2000 J'
   - '&8⇨ &b⚡&7Speed: &b0.35x'
   - '&8⇨ &7Accuracy: &c50%'
   - ''
@@ -608,7 +608,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bSolder'
-  - '&8⇨ &e⚡&70 / 30 J'
+  - '&8⇨ &e⚡&70 / 3000 J'
   - '&8⇨ &b⚡&7Speed: &b0.4x'
   - '&8⇨ &7Accuracy: &660%'
   - ''
@@ -625,7 +625,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bBillon'
-  - '&8⇨ &e⚡&70 / 40 J'
+  - '&8⇨ &e⚡&70 / 4000 J'
   - '&8⇨ &b⚡&7Speed: &b0.45x'
   - '&8⇨ &7Accuracy: &665%'
   - ''
@@ -642,7 +642,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bSteel'
-  - '&8⇨ &e⚡&70 / 50 J'
+  - '&8⇨ &e⚡&70 / 5000 J'
   - '&8⇨ &b⚡&7Speed: &b0.5x'
   - '&8⇨ &7Accuracy: &e70%'
   - ''
@@ -659,7 +659,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bDamascus Steel'
-  - '&8⇨ &e⚡&70 / 75 J'
+  - '&8⇨ &e⚡&70 / 7500 J'
   - '&8⇨ &b⚡&7Speed: &b0.55x'
   - '&8⇨ &7Accuracy: &a75%'
   - ''
@@ -676,7 +676,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bReinforced Alloy'
-  - '&8⇨ &e⚡&70 / 100 J'
+  - '&8⇨ &e⚡&70 / 10000 J'
   - '&8⇨ &b⚡&7Speed: &b0.6x'
   - '&8⇨ &7Accuracy: &c80%'
   - ''
@@ -693,7 +693,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bCarbonado'
-  - '&8⇨ &e⚡&70 / 125 J'
+  - '&8⇨ &e⚡&70 / 12500 J'
   - '&8⇨ &b⚡&7Speed: &b0.7x'
   - '&8⇨ &7Accuracy: &c99.9%'
   - ''
@@ -709,7 +709,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bSteel'
-  - '&8⇨ &e⚡&70 / 50 J'
+  - '&8⇨ &e⚡&70 / 5000 J'
   - '&8⇨ &b⚡&7Speed: &b0.45x'
   - '&8⇨ &7Accuracy: &e70%'
   - ''
@@ -725,7 +725,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bDuralumin'
-  - '&8⇨ &e⚡&70 / 20 J'
+  - '&8⇨ &e⚡&70 / 2000 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -739,7 +739,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bSolder'
-  - '&8⇨ &e⚡&70 / 30 J'
+  - '&8⇨ &e⚡&70 / 3000 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -753,7 +753,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bBillon'
-  - '&8⇨ &e⚡&70 / 40 J'
+  - '&8⇨ &e⚡&70 / 4000 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -767,7 +767,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bSteel'
-  - '&8⇨ &e⚡&70 / 50 J'
+  - '&8⇨ &e⚡&70 / 5000 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -781,7 +781,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bDamascus Steel'
-  - '&8⇨ &e⚡&70 / 60 J'
+  - '&8⇨ &e⚡&70 / 6000 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -795,7 +795,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bReinforced Alloy'
-  - '&8⇨ &e⚡&70 / 75 J'
+  - '&8⇨ &e⚡&70 / 7500 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -809,7 +809,7 @@ items:
   lore:
   - ''
   - '&8⇨ &7Material: &bCarbonado'
-  - '&8⇨ &e⚡&70 / 100 J'
+  - '&8⇨ &e⚡&70 / 10000 J'
   - ''
   - '&eRight Click&7 to use'
   - '&eCrouch & Right Click&7 to switch modes'
@@ -5218,7 +5218,7 @@ items:
   - '&fThis device allows you to teleport'
   - '&fto your waypoints from anywhere'
   - ''
-  - '&8⇨ &e⚡&70 / 50 J'
+  - '&8⇨ &e⚡&70 / 5000 J'
   - ''
   - '&eRight Click&7 to use'
   flags:
@@ -6192,8 +6192,8 @@ items:
   - '&fCharges Items such as Jetpacks'
   - ''
   - '&eBasic Machine'
-  - '&8⇨ &e⚡&7128 J Buffer'
-  - '&8⇨ &e⚡&7Energy Loss: &c50%'
+  - '&8⇨ &e⚡&72560 J Buffer'
+  - '&8⇨ &e⚡&7Energy Loss: &c80%'
   flags:
   - legacy-sf
 - id: sf:vanilla_auto_crafter

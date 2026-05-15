@@ -96,6 +96,33 @@ machines:
     # Sleeping machines are probed infrequently unless inventory/player events wake them.
     sleeping-probe-interval-ticks: 100
 
+technical-gadgets:
+  # Classic Slimefun rechargeable values are defined per second-scale legacy balance.
+  # SFX converts them to per-tick energy units with base-multiplier, then optionally applies extra SFX balance.
+  rechargeable:
+    base-multiplier: 20
+  sfx-balance:
+    enabled: true
+    rechargeable-multiplier: 5
+    charging-bench:
+      energy-consumption-per-tick: 100
+      energy-loss: 0.80
+  classic:
+    # Classic Slimefun-style pulse intervals. SF4 schedules Jetpack every 3 ticks and JetBoots every 2 ticks.
+    jetpack-interval-ticks: 3
+    jetboots-interval-ticks: 2
+    # Backwards-compatible fallback if the specific values above are removed.
+    interval-ticks: 10
+    charging-bench:
+      energy-consumption-per-tick: 20
+      energy-loss: 0.50
+
+
+floating-text:
+  # PacketEvents virtual text displays are resent periodically so players entering range, teleporting,
+  # respawning or missing a previous packet can still see regulator status text.
+  resync-interval-ticks: 20
+
 electric-machines:
   # SFX balance switches for world-interacting electric machines.
   # false = classic behavior for that machine.

@@ -65,7 +65,7 @@ final class SfxCapacitorAppearanceProjector {
         }
     }
 
-    private String capacitorTexture(int stored, int capacity) {
+    static String capacitorTexture(int stored, int capacity) {
         double percent = stored <= 0 ? 0D : (stored * 100D) / Math.max(1, capacity);
         if (percent <= 25D) {
             return "91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4";

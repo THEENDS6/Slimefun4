@@ -34,6 +34,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -104,7 +105,7 @@ public final class SfxEnergyService implements Listener {
         this.rechargeableItems = Objects.requireNonNull(rechargeableItems, "rechargeableItems");
         this.displayController = new SfxEnergyDisplayController(plugin, localization, Objects.requireNonNull(floatingTextDisplay, "floatingTextDisplay"));
         this.capacitorProjector = new SfxCapacitorAppearanceProjector(runtime, blockData, definitions);
-        this.generatorMenuRenderer = new SfxEnergyGeneratorMenuRenderer(items, localization);
+        this.generatorMenuRenderer = new SfxEnergyGeneratorMenuRenderer(plugin, items, localization, rechargeableItems);
         this.definitions.putAll(SfxEnergyDefinitions.create(plugin));
         this.topology = new SfxTopologyService(
                 blockData,
@@ -153,9 +154,6 @@ public final class SfxEnergyService implements Listener {
         if (event.getAction().isLeftClick() || event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) {
             return;
         }
-        if (event.getPlayer().isSneaking()) {
-            return;
-        }
         Block clicked = event.getClickedBlock();
         if (clicked == null) {
             return;
@@ -175,12 +173,13 @@ public final class SfxEnergyService implements Listener {
         if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
+        event.setUseInteractedBlock(Event.Result.DENY);
+        event.setUseItemInHand(Event.Result.DENY);
         event.setCancelled(true);
         if (definition.isFueledGenerator() || definition.isCharger()) {
             runtime.executeForPlayer(event.getPlayer(), () -> openGenerator(event.getPlayer(), instance, definition));
             return;
         }
-        SfxEnergyNodeState state = currentState(instance.instanceId(), instance);
         if (definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
             return;
         } else if (definition.componentType() == SfxEnergyComponentType.REGULATOR) {
@@ -914,7 +913,8 @@ public final class SfxEnergyService implements Listener {
             if (!canChargeAnyInput(charger.state())) {
                 continue;
             }
-            total += Math.max(0, charger.definition().capacity() - charger.state().storedEnergy());
+            int demand = Math.max(0, charger.definition().capacity() - charger.state().storedEnergy());
+            total += Math.min(charger.definition().energyPerTick(), demand);
         }
         return total;
     }
@@ -959,23 +959,30 @@ public final class SfxEnergyService implements Listener {
                 moveChargingBenchInputToOutput(charger, slot, SfxElectricStack.fromItemStack(items, item));
                 return;
             }
-            int spend = Math.min(charger.definition().energyPerTick(), state.storedEnergy());
-            if (spend <= 0) {
+            double efficiency = chargingBenchEfficiency();
+            if (efficiency <= 0.0D) {
                 return;
             }
-            double chargeAdded = spend / 2.0D;
             double missing = capacity - currentCharge;
-            int actualSpend = (int) Math.max(1, Math.ceil(Math.min(chargeAdded, missing) * 2.0D));
-            actualSpend = Math.min(actualSpend, state.storedEnergy());
+            int spendLimit = Math.max(1, charger.definition().energyPerTick());
+            int actualSpend = Math.min(spendLimit, state.storedEnergy());
+            actualSpend = Math.min(actualSpend, (int) Math.max(1, Math.ceil(missing / efficiency)));
             if (actualSpend <= 0) {
                 return;
             }
-            rechargeableItems.addCharge(item, actualSpend / 2.0D);
+            rechargeableItems.addCharge(item, actualSpend * efficiency);
             state.storedEnergy(state.storedEnergy() - actualSpend);
             state.input(slot, SfxElectricStack.fromItemStack(items, item));
             dirtyNodes.add(charger.instance().instanceId());
             return;
         }
+    }
+
+    private double chargingBenchEfficiency() {
+        double loss = plugin.getConfig().getBoolean("technical-gadgets.sfx-balance.enabled", true)
+                ? plugin.getConfig().getDouble("technical-gadgets.sfx-balance.charging-bench.energy-loss", 0.80D)
+                : plugin.getConfig().getDouble("technical-gadgets.classic.charging-bench.energy-loss", 0.50D);
+        return Math.max(0.0D, Math.min(1.0D, 1.0D - loss));
     }
 
     private void moveChargingBenchInputToOutput(SfxEnergyNodeRef charger, int inputSlot, SfxElectricStack stack) {

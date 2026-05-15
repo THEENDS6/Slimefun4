@@ -26,7 +26,11 @@ final class SfxEnergyDefinitions {
 
         define(definitions, new SfxEnergyComponentDefinition("sf:energy_regulator", SfxEnergyComponentType.REGULATOR, 0, 0, 0, 10, false, Material.REDSTONE, List.of()));
         define(definitions, new SfxEnergyComponentDefinition("sf:energy_connector", SfxEnergyComponentType.CONNECTOR, 0, 0, 0, 10, false, Material.REDSTONE, List.of()));
-        define(definitions, new SfxEnergyComponentDefinition("sf:charging_bench", SfxEnergyComponentType.CHARGER, 2560, 128, 0, 10, false, Material.GOLDEN_PICKAXE, List.of()));
+        boolean useTechnicalSfxBalance = plugin.getConfig().getBoolean("technical-gadgets.sfx-balance.enabled", true);
+        int chargingBenchEnergy = useTechnicalSfxBalance
+                ? plugin.getConfig().getInt("technical-gadgets.sfx-balance.charging-bench.energy-consumption-per-tick", 100)
+                : plugin.getConfig().getInt("technical-gadgets.classic.charging-bench.energy-consumption-per-tick", 20);
+        define(definitions, new SfxEnergyComponentDefinition("sf:charging_bench", SfxEnergyComponentType.CHARGER, 2560, chargingBenchEnergy, 0, 10, false, Material.GOLDEN_PICKAXE, List.of()));
         define(definitions, new SfxEnergyComponentDefinition("sf:small_capacitor", SfxEnergyComponentType.CAPACITOR, 2560, 0, 0, 10, false, Material.REDSTONE, List.of()));
         define(definitions, new SfxEnergyComponentDefinition("sf:medium_capacitor", SfxEnergyComponentType.CAPACITOR, 10240, 0, 0, 10, false, Material.REDSTONE, List.of()));
         define(definitions, new SfxEnergyComponentDefinition("sf:big_capacitor", SfxEnergyComponentType.CAPACITOR, 20480, 0, 0, 10, false, Material.REDSTONE, List.of()));
