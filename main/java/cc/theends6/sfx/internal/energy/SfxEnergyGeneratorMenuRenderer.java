@@ -66,6 +66,14 @@ final class SfxEnergyGeneratorMenuRenderer {
     }
 
     private ItemStack progressIcon(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, SfxEnergyGeneratorRenderStatus status) {
+        if (definition.isCharger()) {
+            return statusIcons.render(SfxMachineStatusView.builder(
+                            definition.progressMaterial(),
+                            localization.component("energy.charging-bench.name", "<yellow>Charging Bench</yellow>"))
+                    .energy(state.storedEnergy(), definition.capacity())
+                    .statusLore(localization.component("energy.charging-bench.lore", "<gray>Charges one rechargeable item at a time. Consumes twice the transferred charge.</gray>"))
+                    .build());
+        }
         if (status == SfxEnergyGeneratorRenderStatus.NO_NETWORK) {
             return statusIcons.render(SfxMachineStatusView.builder(
                             Material.RED_STAINED_GLASS_PANE,

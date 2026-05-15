@@ -8,7 +8,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public final class SfxEnergyNodeState {
-    private static final int SCHEMA = 1;
+    private static final int SCHEMA = 2;
+    private static final int LEGACY_SCHEMA = 1;
 
     private final SfxElectricStack[] inputs = new SfxElectricStack[2];
     private final SfxElectricStack[] outputs = new SfxElectricStack[2];
@@ -27,18 +28,19 @@ public final class SfxEnergyNodeState {
             return empty();
         }
         try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(blob))) {
-            if (input.readInt() != SCHEMA) {
+            int schema = input.readInt();
+            if (schema != SCHEMA && schema != LEGACY_SCHEMA) {
                 return empty();
             }
             SfxEnergyNodeState state = new SfxEnergyNodeState();
             for (int i = 0; i < state.inputs.length; i++) {
                 if (input.readBoolean()) {
-                    state.inputs[i] = SfxElectricStack.read(input);
+                    state.inputs[i] = schema == LEGACY_SCHEMA ? SfxElectricStack.read(input) : SfxElectricStack.readV2(input);
                 }
             }
             for (int i = 0; i < state.outputs.length; i++) {
                 if (input.readBoolean()) {
-                    state.outputs[i] = SfxElectricStack.read(input);
+                    state.outputs[i] = schema == LEGACY_SCHEMA ? SfxElectricStack.read(input) : SfxElectricStack.readV2(input);
                 }
             }
             state.storedEnergy = Math.max(0, input.readInt());
@@ -47,7 +49,7 @@ public final class SfxEnergyNodeState {
             state.fuelProgressTenths = Math.max(0, input.readInt());
             state.fuelTotalTenths = Math.max(0, input.readInt());
             if (input.readBoolean()) {
-                state.pendingOutput = SfxElectricStack.read(input);
+                state.pendingOutput = schema == LEGACY_SCHEMA ? SfxElectricStack.read(input) : SfxElectricStack.readV2(input);
             }
             return state;
         } catch (IOException | IllegalArgumentException ignored) {
@@ -62,13 +64,13 @@ public final class SfxEnergyNodeState {
             for (SfxElectricStack inputStack : inputs) {
                 output.writeBoolean(inputStack != null);
                 if (inputStack != null) {
-                    inputStack.write(output);
+                    inputStack.writeV2(output);
                 }
             }
             for (SfxElectricStack outputStack : outputs) {
                 output.writeBoolean(outputStack != null);
                 if (outputStack != null) {
-                    outputStack.write(output);
+                    outputStack.writeV2(output);
                 }
             }
             output.writeInt(storedEnergy);
@@ -77,7 +79,7 @@ public final class SfxEnergyNodeState {
             output.writeInt(fuelTotalTenths);
             output.writeBoolean(pendingOutput != null);
             if (pendingOutput != null) {
-                pendingOutput.write(output);
+                pendingOutput.writeV2(output);
             }
             output.flush();
             return buffer.toByteArray();

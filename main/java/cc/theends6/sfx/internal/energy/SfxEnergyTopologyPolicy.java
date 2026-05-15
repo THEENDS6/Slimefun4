@@ -41,7 +41,7 @@ final class SfxEnergyTopologyPolicy implements SfxTopologyDomainPolicy {
             return switch (definition.componentType()) {
                 case REGULATOR -> new SfxTopologyCapabilities(true, true, false);
                 case CONNECTOR, CAPACITOR -> new SfxTopologyCapabilities(true, false, false);
-                case GENERATOR -> new SfxTopologyCapabilities(false, false, true);
+                case GENERATOR, CHARGER -> new SfxTopologyCapabilities(false, false, true);
             };
         }
         if (electricMachines.supportsType(instance.typeId()) || configurableMachines.isEnergyNode(instance.typeId())) {

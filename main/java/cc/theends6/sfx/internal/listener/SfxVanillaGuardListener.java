@@ -69,7 +69,8 @@ public final class SfxVanillaGuardListener implements Listener {
             "sf:lava_generator_2",
             "sf:bio_reactor",
             "sf:combustion_reactor",
-            "sf:magnesium_generator"
+            "sf:magnesium_generator",
+            "sf:charging_bench"
     );
     private static final Set<String> VANILLA_USE_IDS = Set.of(
             "sf:explosive_bow",
@@ -103,7 +104,23 @@ public final class SfxVanillaGuardListener implements Listener {
             "sf:christmas_caramel_apple",
             "sf:christmas_chocolate_apple",
             "sf:carrot_pie",
-            "sf:easter_apple_pie"
+            "sf:easter_apple_pie",
+            "sf:duralumin_jetpack",
+            "sf:solder_jetpack",
+            "sf:billon_jetpack",
+            "sf:steel_jetpack",
+            "sf:damascus_steel_jetpack",
+            "sf:reinforced_alloy_jetpack",
+            "sf:carbonado_jetpack",
+            "sf:armored_jetpack",
+            "sf:duralumin_jetboots",
+            "sf:solder_jetboots",
+            "sf:billon_jetboots",
+            "sf:steel_jetboots",
+            "sf:damascus_steel_jetboots",
+            "sf:reinforced_alloy_jetboots",
+            "sf:carbonado_jetboots",
+            "sf:armored_jetboots"
     );
     private static final Set<String> VANILLA_BOW_IDS = Set.of("sf:explosive_bow", "sf:icy_bow");
     private static final Set<String> DEFAULT_NETHERITE_UPGRADE_IDS = Set.of(

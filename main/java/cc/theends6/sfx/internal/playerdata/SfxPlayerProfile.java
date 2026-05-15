@@ -21,6 +21,7 @@ public final class SfxPlayerProfile {
     private boolean machineUiExtended = true;
     private boolean machineCompletionSound = true;
     private boolean machineSmoothUi = true;
+    private int radiationExposure;
     private boolean dirty;
 
     public SfxPlayerProfile(UUID ownerId, String lastKnownName) {
@@ -233,6 +234,20 @@ public final class SfxPlayerProfile {
             return;
         }
         this.machineSmoothUi = machineSmoothUi;
+        this.dirty = true;
+    }
+
+
+    public synchronized int radiationExposure() {
+        return radiationExposure;
+    }
+
+    public synchronized void setRadiationExposure(int radiationExposure) {
+        int normalized = Math.max(0, radiationExposure);
+        if (this.radiationExposure == normalized) {
+            return;
+        }
+        this.radiationExposure = normalized;
         this.dirty = true;
     }
 

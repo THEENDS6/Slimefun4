@@ -47,6 +47,7 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
                       machine_ui_extended INTEGER NOT NULL DEFAULT 1,
                       machine_completion_sound INTEGER NOT NULL DEFAULT 1,
                       machine_smooth_ui INTEGER NOT NULL DEFAULT 1,
+                      radiation_exposure INTEGER NOT NULL DEFAULT 0,
                       updated_at INTEGER NOT NULL
                     )
                     """);
@@ -80,6 +81,7 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
             ensureProfileColumn(connection, "machine_ui_extended", "INTEGER NOT NULL DEFAULT 1");
             ensureProfileColumn(connection, "machine_completion_sound", "INTEGER NOT NULL DEFAULT 1");
             ensureProfileColumn(connection, "machine_smooth_ui", "INTEGER NOT NULL DEFAULT 1");
+            ensureProfileColumn(connection, "radiation_exposure", "INTEGER NOT NULL DEFAULT 0");
         }
     }
 
@@ -98,7 +100,8 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
                            guide_last_location,
                            machine_ui_extended,
                            machine_completion_sound,
-                           machine_smooth_ui
+                           machine_smooth_ui,
+                           radiation_exposure
                     FROM sfx_player_profiles
                     WHERE uuid = ?
                     """)) {
@@ -116,6 +119,7 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
                         profile.setMachineUiExtended(result.getInt("machine_ui_extended") != 0);
                         profile.setMachineCompletionSound(result.getInt("machine_completion_sound") != 0);
                         profile.setMachineSmoothUi(result.getInt("machine_smooth_ui") != 0);
+                        profile.setRadiationExposure(result.getInt("radiation_exposure"));
                     }
                 }
             }
@@ -169,9 +173,10 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
                             machine_ui_extended,
                             machine_completion_sound,
                             machine_smooth_ui,
+                            radiation_exposure,
                             updated_at
                         )
-                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ON CONFLICT(uuid) DO UPDATE SET
                             last_name = excluded.last_name,
                             guide_layout = excluded.guide_layout,
@@ -184,6 +189,7 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
                             machine_ui_extended = excluded.machine_ui_extended,
                             machine_completion_sound = excluded.machine_completion_sound,
                             machine_smooth_ui = excluded.machine_smooth_ui,
+                            radiation_exposure = excluded.radiation_exposure,
                             updated_at = excluded.updated_at
                         """)) {
                     statement.setString(1, profile.ownerId().toString());
@@ -198,7 +204,8 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
                     statement.setInt(10, profile.machineUiExtended() ? 1 : 0);
                     statement.setInt(11, profile.machineCompletionSound() ? 1 : 0);
                     statement.setInt(12, profile.machineSmoothUi() ? 1 : 0);
-                    statement.setLong(13, now);
+                    statement.setInt(13, profile.radiationExposure());
+                    statement.setLong(14, now);
                     statement.executeUpdate();
                 }
 

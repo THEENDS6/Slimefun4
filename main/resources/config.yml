@@ -162,3 +162,17 @@ tools:
     
     
     use-sfx-enhanced: true
+
+radiation:
+  enabled: true
+  
+  scan-interval-ticks: 10
+  
+  recovery-per-scan: 10
+  max-exposure: 3000
+  
+  respawn-immunity-ticks: 200
+  protection:
+    
+    
+    reduction-per-piece: 0.25
