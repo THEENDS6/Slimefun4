@@ -37,6 +37,12 @@ final class SfxEnergyDisplayController {
                 plugin.getConfig().getBoolean("energy.regulator-display.update-only-on-change", true));
         if (previous != null) {
             if (updateOnlyOnChange && previous.displayText().equals(displayText)) {
+                long resendInterval = Math.max(1L, plugin.getConfig().getLong("floating-text.resync-interval-ticks", 20L));
+                if (previous.updatedTick() + resendInterval > now) {
+                    return;
+                }
+                lastDisplays.put(cacheKey, new CachedDisplay(previous.displayText(), previous.renderedText(), now));
+                update(regulatorKey, previous.renderedText());
                 return;
             }
             if (!updateOnlyOnChange && previous.updatedTick() + interval > now) {

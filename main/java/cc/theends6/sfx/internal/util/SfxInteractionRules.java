@@ -14,6 +14,7 @@ public final class SfxInteractionRules {
     private static final Set<String> KNOWN_PLACEABLE_SFX_IDS = Set.of(
             "sf:energy_regulator",
             "sf:energy_connector",
+            "sf:charging_bench",
             "sf:small_capacitor",
             "sf:medium_capacitor",
             "sf:big_capacitor",

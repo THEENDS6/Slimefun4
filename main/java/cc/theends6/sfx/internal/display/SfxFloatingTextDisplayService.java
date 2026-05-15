@@ -48,10 +48,12 @@ public final class SfxFloatingTextDisplayService {
     private final SfxRuntime runtime;
     private final AtomicInteger entityIds = new AtomicInteger(2_000_000);
     private final Map<SfxFloatingTextKey, SfxFloatingTextDisplayState> states = new ConcurrentHashMap<>();
+    private volatile boolean running = true;
 
     public SfxFloatingTextDisplayService(JavaPlugin plugin, SfxRuntime runtime) {
         this.plugin = plugin;
         this.runtime = runtime;
+        scheduleResync();
     }
 
     public void update(SfxFloatingTextProjection projection) {
@@ -95,6 +97,7 @@ public final class SfxFloatingTextDisplayService {
         if (player == null) {
             return;
         }
+        clearViewer(player);
         for (SfxFloatingTextDisplayState state : states.values()) {
             SfxFloatingTextProjection projection = state.projection();
             if (projection != null) {
@@ -103,11 +106,45 @@ public final class SfxFloatingTextDisplayService {
         }
     }
 
+    public void refreshViewerLater(Player player, long delayTicks) {
+        if (player == null) {
+            return;
+        }
+        runtime.executeForPlayerLater(player, Math.max(1L, delayTicks), () -> refreshViewer(player));
+    }
+
     public void shutdown() {
+        running = false;
         for (SfxFloatingTextKey key : List.copyOf(states.keySet())) {
             remove(key);
         }
         states.clear();
+    }
+
+    private void scheduleResync() {
+        long interval = Math.max(1L, plugin.getConfig().getLong("floating-text.resync-interval-ticks", 20L));
+        runtime.executeGlobalLater(interval, () -> {
+            if (!running) {
+                return;
+            }
+            refreshVisibleViewers();
+            scheduleResync();
+        });
+    }
+
+    private void refreshVisibleViewers() {
+        if (states.isEmpty()) {
+            return;
+        }
+        for (SfxFloatingTextDisplayState state : states.values()) {
+            SfxFloatingTextProjection projection = state.projection();
+            if (projection == null) {
+                continue;
+            }
+            for (Player player : plugin.getServer().getOnlinePlayers()) {
+                runtime.executeForPlayer(player, () -> updateForPlayer(player, state, projection));
+            }
+        }
     }
 
     private void updateForPlayer(Player player, SfxFloatingTextDisplayState state, SfxFloatingTextProjection projection) {

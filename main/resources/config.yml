@@ -96,6 +96,33 @@ machines:
     
     sleeping-probe-interval-ticks: 100
 
+technical-gadgets:
+  
+  
+  rechargeable:
+    base-multiplier: 20
+  sfx-balance:
+    enabled: true
+    rechargeable-multiplier: 5
+    charging-bench:
+      energy-consumption-per-tick: 100
+      energy-loss: 0.80
+  classic:
+    
+    jetpack-interval-ticks: 3
+    jetboots-interval-ticks: 2
+    
+    interval-ticks: 10
+    charging-bench:
+      energy-consumption-per-tick: 20
+      energy-loss: 0.50
+
+
+floating-text:
+  
+  
+  resync-interval-ticks: 20
+
 electric-machines:
   
   

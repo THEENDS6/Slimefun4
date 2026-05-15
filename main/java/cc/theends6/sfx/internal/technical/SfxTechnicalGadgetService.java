@@ -2,10 +2,13 @@ package cc.theends6.sfx.internal.technical;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import org.bukkit.Effect;
 import org.bukkit.GameMode;
-import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
@@ -14,18 +17,24 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
 public final class SfxTechnicalGadgetService {
-    private static final double JETPACK_COST = 0.08D;
-    private static final double JETBOOTS_COST = 0.075D;
-
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final SfxRechargeableItemService rechargeableItems;
     private boolean running;
+    private final int jetpackIntervalTicks;
+    private final int jetBootsIntervalTicks;
+    private final Map<UUID, Long> nextJetpackUseTick = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> nextJetBootsUseTick = new ConcurrentHashMap<>();
+    private long tickCounter;
 
     public SfxTechnicalGadgetService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.rechargeableItems = new SfxRechargeableItemService(plugin, Objects.requireNonNull(items, "items"));
+        int legacyInterval = Math.max(1, plugin.getConfig().getInt("technical-gadgets.classic.interval-ticks", 10));
+        this.jetpackIntervalTicks = Math.max(1, plugin.getConfig().getInt("technical-gadgets.classic.jetpack-interval-ticks", legacyInterval == 10 ? 3 : legacyInterval));
+        this.jetBootsIntervalTicks = Math.max(1, plugin.getConfig().getInt("technical-gadgets.classic.jetboots-interval-ticks", legacyInterval == 10 ? 2 : legacyInterval));
+        this.tickCounter = 0L;
         this.running = true;
         scheduleTick();
     }
@@ -39,10 +48,11 @@ public final class SfxTechnicalGadgetService {
     }
 
     private void scheduleTick() {
-        runtime.executeGlobalLater(1L, () -> {
+        runtime.executeGlobalLater(1, () -> {
             if (!running) {
                 return;
             }
+            tickCounter++;
             tickOnlinePlayers();
             scheduleTick();
         });
@@ -50,16 +60,18 @@ public final class SfxTechnicalGadgetService {
 
     private void tickOnlinePlayers() {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            if (!player.isSneaking() || player.isDead()) {
+            UUID id = player.getUniqueId();
+            if (!player.isSneaking() || player.isDead() || player.getGameMode() == GameMode.SPECTATOR) {
+                nextJetpackUseTick.remove(id);
+                nextJetBootsUseTick.remove(id);
                 continue;
             }
-            if (player.getGameMode() == GameMode.SPECTATOR) {
-                continue;
+            if (tickCounter >= nextJetpackUseTick.getOrDefault(id, 0L) && tryUseJetpack(player)) {
+                nextJetpackUseTick.put(id, tickCounter + jetpackIntervalTicks);
             }
-            if (tryUseJetpack(player)) {
-                continue;
+            if (tickCounter >= nextJetBootsUseTick.getOrDefault(id, 0L) && tryUseJetBoots(player)) {
+                nextJetBootsUseTick.put(id, tickCounter + jetBootsIntervalTicks);
             }
-            tryUseJetBoots(player);
         }
     }
 
@@ -69,7 +81,7 @@ public final class SfxTechnicalGadgetService {
         if (definition == null || definition.kind() != SfxRechargeableItemService.RechargeableKind.JETPACK) {
             return false;
         }
-        if (!rechargeableItems.removeCharge(chestplate, JETPACK_COST)) {
+        if (!rechargeableItems.removeCharge(chestplate, definition.useCost())) {
             return false;
         }
         player.getInventory().setChestplate(chestplate);
@@ -88,7 +100,7 @@ public final class SfxTechnicalGadgetService {
         if (definition == null || definition.kind() != SfxRechargeableItemService.RechargeableKind.JETBOOTS) {
             return false;
         }
-        if (!rechargeableItems.removeCharge(boots, JETBOOTS_COST)) {
+        if (!rechargeableItems.removeCharge(boots, definition.useCost())) {
             return false;
         }
         player.getInventory().setBoots(boots);
@@ -103,7 +115,7 @@ public final class SfxTechnicalGadgetService {
     }
 
     private void playThrustEffects(Player player, boolean jetpack) {
-        player.getWorld().spawnParticle(Particle.SMOKE, player.getLocation().add(0.0D, 0.2D, 0.0D), 4, 0.15D, 0.15D, 0.15D, 0.01D);
-        player.getWorld().playSound(player.getLocation(), jetpack ? Sound.ENTITY_FIREWORK_ROCKET_LAUNCH : Sound.ENTITY_FIREWORK_ROCKET_BLAST, SoundCategory.PLAYERS, 0.25F, jetpack ? 1.25F : 1.6F);
+        player.getWorld().playEffect(player.getLocation(), Effect.SMOKE, 1, 1);
+        player.getWorld().playSound(player.getLocation(), jetpack ? Sound.ENTITY_GENERIC_EXPLODE : Sound.ENTITY_TNT_PRIMED, SoundCategory.PLAYERS, 0.25F, 1.0F);
     }
 }

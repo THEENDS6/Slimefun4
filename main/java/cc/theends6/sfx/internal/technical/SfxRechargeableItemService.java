@@ -24,10 +24,12 @@ public final class SfxRechargeableItemService {
     private final SfxItems items;
     private final NamespacedKey chargeKey;
     private final Map<String, Definition> definitions = new LinkedHashMap<>();
+    private final double rechargeableMultiplier;
 
     public SfxRechargeableItemService(JavaPlugin plugin, SfxItems items) {
         this.items = items;
         this.chargeKey = new NamespacedKey(plugin, "item_charge");
+        this.rechargeableMultiplier = rechargeableMultiplier(plugin);
         registerDefaults();
     }
 
@@ -162,16 +164,29 @@ public final class SfxRechargeableItemService {
         generic("sf:carbonado_multi_tool", 100.0D);
     }
 
-    private void jetpack(String id, double capacity, double thrust) {
-        definitions.put(id, new Definition(id, RechargeableKind.JETPACK, capacity, thrust));
+    private void jetpack(String id, double classicCapacity, double thrust) {
+        definitions.put(id, new Definition(id, RechargeableKind.JETPACK, scaled(classicCapacity), thrust, scaled(0.08D)));
     }
 
-    private void jetBoots(String id, double capacity, double speed) {
-        definitions.put(id, new Definition(id, RechargeableKind.JETBOOTS, capacity, speed));
+    private void jetBoots(String id, double classicCapacity, double speed) {
+        definitions.put(id, new Definition(id, RechargeableKind.JETBOOTS, scaled(classicCapacity), speed, scaled(0.075D)));
     }
 
-    private void generic(String id, double capacity) {
-        definitions.put(id, new Definition(id, RechargeableKind.GENERIC, capacity, 0.0D));
+    private void generic(String id, double classicCapacity) {
+        definitions.put(id, new Definition(id, RechargeableKind.GENERIC, scaled(classicCapacity), 0.0D, 0.0D));
+    }
+
+    private double scaled(double classicValue) {
+        return classicValue * rechargeableMultiplier;
+    }
+
+    private double rechargeableMultiplier(JavaPlugin plugin) {
+        double base = plugin.getConfig().getDouble("technical-gadgets.rechargeable.base-multiplier", 20.0D);
+        if (!plugin.getConfig().getBoolean("technical-gadgets.sfx-balance.enabled", true)) {
+            return Math.max(1.0D, base);
+        }
+        double balance = plugin.getConfig().getDouble("technical-gadgets.sfx-balance.rechargeable-multiplier", 5.0D);
+        return Math.max(1.0D, base * Math.max(1.0D, balance));
     }
 
     public enum RechargeableKind {
@@ -180,6 +195,6 @@ public final class SfxRechargeableItemService {
         JETBOOTS
     }
 
-    public record Definition(String itemId, RechargeableKind kind, double capacity, double movementValue) {
+    public record Definition(String itemId, RechargeableKind kind, double capacity, double movementValue, double useCost) {
     }
 }
