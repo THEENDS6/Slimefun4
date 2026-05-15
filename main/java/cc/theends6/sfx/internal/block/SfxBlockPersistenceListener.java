@@ -31,7 +31,7 @@ public final class SfxBlockPersistenceListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldSave(WorldSaveEvent event) {
-        blockData.flushNow();
+        blockData.requestDirtyFlushAsync();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -44,12 +44,11 @@ public final class SfxBlockPersistenceListener implements Listener {
     public void onChunkUnload(ChunkUnloadEvent event) {
         Chunk chunk = event.getChunk();
         blockData.reconcileChunk(chunk.getWorld(), chunk.getX(), chunk.getZ());
-        blockData.flushChunk(chunk.getWorld(), chunk.getX(), chunk.getZ());
+        blockData.requestChunkFlushAsync(chunk.getWorld(), chunk.getX(), chunk.getZ());
     }
 
     public void shutdown() {
         running = false;
-        blockData.flushNow();
     }
 
     private void scheduleAutosaveFlush() {
@@ -60,7 +59,7 @@ public final class SfxBlockPersistenceListener implements Listener {
             if (!running) {
                 return;
             }
-            blockData.flushNow();
+            blockData.requestDirtyFlushAsync();
             scheduleAutosaveFlush();
         });
     }

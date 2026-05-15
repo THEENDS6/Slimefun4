@@ -83,6 +83,19 @@ options:
 
 
 
+
+machines:
+  lazy-tick:
+    enabled: true
+    # Regular machines are processed lazily by default. elapsedTicks compensates
+    # progress, energy use and production so gameplay speed stays unchanged.
+    interval-ticks: 5
+    # A machine that currently has a player viewer is processed every tick so
+    # its UI updates at vanilla responsiveness without a separate interpolation layer.
+    viewer-interval-ticks: 1
+    # Sleeping machines are probed infrequently unless inventory/player events wake them.
+    sleeping-probe-interval-ticks: 100
+
 electric-machines:
   # SFX balance switches for world-interacting electric machines.
   # false = classic behavior for that machine.
@@ -124,6 +137,10 @@ energy:
     mode: 'sfx'
     # TextDisplay see-through can cause visual artifacts behind skulls/water; keep disabled by default.
     see-through: false
+    # Check every tick by default; update-only-on-change prevents redundant display entity writes.
+    update-interval-ticks: 1
+    # Change means the final rendered display content changed, not merely raw energy numbers.
+    update-only-on-change: true
   bucket-fuels:
     instant-empty-bucket-return: true
   generator-balance:

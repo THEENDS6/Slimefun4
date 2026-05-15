@@ -4,6 +4,7 @@ import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
@@ -32,6 +33,7 @@ public final class SfxArmorEffectListener implements Listener {
     private final SfxItems items;
     private final Map<UUID, Long> lastEffectTick = new HashMap<>();
     private final Map<UUID, Long> recentGlideUntil = new HashMap<>();
+    private final Map<UUID, ArmorSnapshot> armorSnapshots = new HashMap<>();
 
     public SfxArmorEffectListener(SfxItems items) {
         this.items = items;
@@ -102,22 +104,23 @@ public final class SfxArmorEffectListener implements Listener {
             return;
         }
         lastEffectTick.put(player.getUniqueId(), now);
-        if (hasEquippedFlag(player, "armor-night-vision")) {
+        ArmorSnapshot snapshot = refreshSnapshot(player);
+        if (snapshot.has("armor-night-vision")) {
             addPotion(player, "NIGHT_VISION", 20 * 12, 0);
         }
-        if (hasEquippedFlag(player, "armor-speed")) {
-            addPotion(player, "SPEED", 20 * 4, leggingsSpeedAmplifier(player));
+        if (snapshot.has("armor-speed")) {
+            addPotion(player, "SPEED", 20 * 4, leggingsSpeedAmplifier(snapshot));
         }
-        if (hasEquippedFlag(player, "armor-jump")) {
-            addPotion(player, "JUMP_BOOST", 20 * 4, bootsJumpAmplifier(player));
+        if (snapshot.has("armor-jump")) {
+            addPotion(player, "JUMP_BOOST", 20 * 4, bootsJumpAmplifier(snapshot));
         }
-        if (hasEquippedFlag(player, "armor-water-breathing")) {
+        if (snapshot.has("armor-water-breathing")) {
             addPotion(player, "WATER_BREATHING", 20 * 4, 0);
         }
-        if (hasEquippedFlag(player, "armor-fire-resistance")) {
+        if (snapshot.has("armor-fire-resistance")) {
             addPotion(player, "FIRE_RESISTANCE", 20 * 4, 0);
         }
-        if (hasChestFlag(player, "armor-bee-wings") && shouldSlowFall(player, event)) {
+        if (snapshot.chestHas("armor-bee-wings") && shouldSlowFall(player, event)) {
             player.setFallDistance(0.0f);
             addPotion(player, "SLOW_FALLING", 20 * 3, 0);
         }
@@ -128,6 +131,7 @@ public final class SfxArmorEffectListener implements Listener {
         UUID uuid = event.getPlayer().getUniqueId();
         lastEffectTick.remove(uuid);
         recentGlideUntil.remove(uuid);
+        armorSnapshots.remove(uuid);
     }
 
     private void addPotion(Player player, String typeName, int durationTicks, int amplifier) {
@@ -146,28 +150,43 @@ public final class SfxArmorEffectListener implements Listener {
     }
 
     private boolean hasEquippedFlag(Player player, String flag) {
-        for (ItemStack armor : player.getInventory().getArmorContents()) {
-            if (hasArmorFlag(armor, flag)) {
-                return true;
-            }
-        }
-        return false;
+        return snapshot(player).has(flag);
     }
 
     private boolean hasHelmetFlag(Player player, String flag) {
-        return hasArmorFlag(player.getInventory().getHelmet(), flag);
+        return snapshot(player).helmetHas(flag);
     }
 
     private boolean hasChestFlag(Player player, String flag) {
-        return hasArmorFlag(player.getInventory().getChestplate(), flag);
+        return snapshot(player).chestHas(flag);
     }
 
     private boolean hasBootFlag(Player player, String flag) {
-        return hasArmorFlag(player.getInventory().getBoots(), flag);
+        return snapshot(player).bootsHas(flag);
     }
 
-    private boolean hasArmorFlag(ItemStack armor, String flag) {
-        return items.readMarker(armor).map(SfxItemMarker::flags).map(flags -> flags.contains(flag)).orElse(false);
+    private ArmorSnapshot snapshot(Player player) {
+        return armorSnapshots.computeIfAbsent(player.getUniqueId(), ignored -> readSnapshot(player));
+    }
+
+    private ArmorSnapshot refreshSnapshot(Player player) {
+        ArmorSnapshot snapshot = readSnapshot(player);
+        armorSnapshots.put(player.getUniqueId(), snapshot);
+        return snapshot;
+    }
+
+    private ArmorSnapshot readSnapshot(Player player) {
+        ArmorPiece helmet = readPiece(player.getInventory().getHelmet());
+        ArmorPiece chest = readPiece(player.getInventory().getChestplate());
+        ArmorPiece leggings = readPiece(player.getInventory().getLeggings());
+        ArmorPiece boots = readPiece(player.getInventory().getBoots());
+        return new ArmorSnapshot(helmet, chest, leggings, boots);
+    }
+
+    private ArmorPiece readPiece(ItemStack armor) {
+        return items.readMarker(armor)
+                .map(marker -> new ArmorPiece(marker.itemId(), Set.copyOf(marker.flags())))
+                .orElse(ArmorPiece.EMPTY);
     }
 
     private boolean wasRecentlyGliding(Player player) {
@@ -195,16 +214,16 @@ public final class SfxArmorEffectListener implements Listener {
         return false;
     }
 
-    private int leggingsSpeedAmplifier(Player player) {
-        String itemId = armorItemId(player.getInventory().getLeggings());
+    private int leggingsSpeedAmplifier(ArmorSnapshot snapshot) {
+        String itemId = snapshot.leggings().itemId();
         if ("sf:slime_leggings".equals(itemId) || "sf:slime_steel_leggings".equals(itemId)) {
             return 2;
         }
         return 0;
     }
 
-    private int bootsJumpAmplifier(Player player) {
-        String itemId = armorItemId(player.getInventory().getBoots());
+    private int bootsJumpAmplifier(ArmorSnapshot snapshot) {
+        String itemId = snapshot.boots().itemId();
         if ("sf:slime_boots".equals(itemId) || "sf:slime_steel_boots".equals(itemId)) {
             return 5;
         }
@@ -212,10 +231,6 @@ public final class SfxArmorEffectListener implements Listener {
             return 2;
         }
         return 0;
-    }
-
-    private String armorItemId(ItemStack armor) {
-        return items.readMarker(armor).map(SfxItemMarker::itemId).orElse(null);
     }
 
     private void stomp(Player player, double fallDamage) {
@@ -239,4 +254,30 @@ public final class SfxArmorEffectListener implements Listener {
             player.getWorld().spawnParticle(Particle.BLOCK, floor.getLocation().add(0.5, 0.5, 0.5), 20, 0.8, 0.2, 0.8, floor.getBlockData());
         }
     }
+    private record ArmorPiece(String itemId, Set<String> flags) {
+        private static final ArmorPiece EMPTY = new ArmorPiece(null, Set.of());
+
+        boolean has(String flag) {
+            return flags.contains(flag);
+        }
+    }
+
+    private record ArmorSnapshot(ArmorPiece helmet, ArmorPiece chest, ArmorPiece leggings, ArmorPiece boots) {
+        boolean has(String flag) {
+            return helmet.has(flag) || chest.has(flag) || leggings.has(flag) || boots.has(flag);
+        }
+
+        boolean helmetHas(String flag) {
+            return helmet.has(flag);
+        }
+
+        boolean chestHas(String flag) {
+            return chest.has(flag);
+        }
+
+        boolean bootsHas(String flag) {
+            return boots.has(flag);
+        }
+    }
+
 }

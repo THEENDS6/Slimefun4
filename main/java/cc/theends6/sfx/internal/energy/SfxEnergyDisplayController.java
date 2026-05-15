@@ -18,6 +18,7 @@ final class SfxEnergyDisplayController {
     private final SfxLocalization localization;
     private final SfxFloatingTextDisplayService floatingText;
     private final Set<SfxFloatingTextKey> ownedKeys = ConcurrentHashMap.newKeySet();
+    private final Map<SfxFloatingTextKey, CachedDisplay> lastDisplays = new ConcurrentHashMap<>();
 
     SfxEnergyDisplayController(JavaPlugin plugin, SfxLocalization localization, SfxFloatingTextDisplayService floatingText) {
         this.plugin = plugin;
@@ -26,57 +27,77 @@ final class SfxEnergyDisplayController {
     }
 
     void displayStatus(SfxBlockAnchorKey regulatorKey, SfxEnergyGridStatus status, int supply, int consumption, int net, int totalStored, int totalCapacity) {
-        switch (status) {
-            case NO_NETWORK -> update(regulatorKey, new DisplayText(
-                    "energy.regulator.no-network",
-                    Map.of(),
-                    "<red>Not connected to any electric machines</red>"));
-            case MULTIPLE_REGULATORS -> update(regulatorKey, new DisplayText(
-                    "energy.regulator.multi-regulator",
-                    Map.of(),
-                    "<red>Multiple energy regulators in this connection</red>"));
-            case SHARED_NODE_CONFLICT -> update(regulatorKey, new DisplayText(
-                    "energy.regulator.shared-node-conflict",
-                    Map.of(),
-                    "<red>Energy network conflict</red>"));
-            case ONLINE -> {
-                boolean classic = "classic".equalsIgnoreCase(plugin.getConfig().getString("energy.regulator-display.mode", "sfx"));
-                String key;
-                String fallback;
-                if (classic) {
-                    key = net >= 0 ? "energy.regulator.classic-positive" : "energy.regulator.classic-negative";
-                    fallback = net >= 0
-                            ? "<green>+{net} J ⚡</green>"
-                            : "<red>{net} J ⚡</red>";
-                    update(regulatorKey, new DisplayText(
-                            key,
-                            Map.of("net", net, "supply", supply, "consumption", consumption, "stored", totalStored, "capacity", totalCapacity),
-                            fallback));
-                } else {
-                    key = net >= 0 ? "energy.regulator.sfx-positive" : "energy.regulator.sfx-negative";
-                    EnergyDisplayParts parts = energyDisplayParts(supply, consumption, net, totalStored, totalCapacity);
-                    fallback = (net >= 0 ? "<green>+{net_text} J/t</green>" : "<red>-{net_text} J/t</red>")
-                            + "<newline>{flow_line}<newline>{storage_line}";
-                    update(regulatorKey, new DisplayText(
-                            key,
-                            Map.of(
-                                    "net", net,
-                                    "supply", supply,
-                                    "consumption", consumption,
-                                    "stored", totalStored,
-                                    "capacity", totalCapacity,
-                                    "net_text", parts.netText(),
-                                    "flow_line", parts.flowLine(),
-                                    "storage_line", parts.storageLine()),
-                            fallback));
-                }
+        SfxFloatingTextKey cacheKey = key(regulatorKey);
+        DisplayText displayText = renderDisplayText(status, supply, consumption, net, totalStored, totalCapacity);
+        CachedDisplay previous = lastDisplays.get(cacheKey);
+        long now = System.currentTimeMillis() / 50L;
+        int interval = Math.max(1, plugin.getConfig().getInt("energy.display-update-interval-ticks",
+                plugin.getConfig().getInt("energy.regulator-display.update-interval-ticks", 1)));
+        boolean updateOnlyOnChange = plugin.getConfig().getBoolean("energy.update-only-on-change",
+                plugin.getConfig().getBoolean("energy.regulator-display.update-only-on-change", true));
+        if (previous != null) {
+            if (updateOnlyOnChange && previous.displayText().equals(displayText)) {
+                return;
+            }
+            if (!updateOnlyOnChange && previous.updatedTick() + interval > now) {
+                return;
             }
         }
+        Component renderedText = localization.component(displayText.key(), displayText.fallback(), displayText.placeholders());
+        lastDisplays.put(cacheKey, new CachedDisplay(displayText, renderedText, now));
+        update(regulatorKey, renderedText);
+    }
+
+    private DisplayText renderDisplayText(SfxEnergyGridStatus status, int supply, int consumption, int net, int totalStored, int totalCapacity) {
+        return switch (status) {
+            case NO_NETWORK -> new DisplayText(
+                    "energy.regulator.no-network",
+                    Map.of(),
+                    "<red>Not connected to any electric machines</red>");
+            case MULTIPLE_REGULATORS -> new DisplayText(
+                    "energy.regulator.multi-regulator",
+                    Map.of(),
+                    "<red>Multiple energy regulators in this connection</red>");
+            case SHARED_NODE_CONFLICT -> new DisplayText(
+                    "energy.regulator.shared-node-conflict",
+                    Map.of(),
+                    "<red>Energy network conflict</red>");
+            case ONLINE -> {
+                boolean classic = "classic".equalsIgnoreCase(plugin.getConfig().getString("energy.regulator-display.mode", "sfx"));
+                if (classic) {
+                    String key = net >= 0 ? "energy.regulator.classic-positive" : "energy.regulator.classic-negative";
+                    String fallback = net >= 0
+                            ? "<green>+{net} J ⚡</green>"
+                            : "<red>{net} J ⚡</red>";
+                    yield new DisplayText(
+                            key,
+                            Map.of("net", net, "supply", supply, "consumption", consumption, "stored", totalStored, "capacity", totalCapacity),
+                            fallback);
+                }
+                String key = net >= 0 ? "energy.regulator.sfx-positive" : "energy.regulator.sfx-negative";
+                EnergyDisplayParts parts = energyDisplayParts(supply, consumption, net, totalStored, totalCapacity);
+                String fallback = (net >= 0 ? "<green>+{net_text} J/t</green>" : "<red>-{net_text} J/t</red>")
+                        + "<newline>{flow_line}<newline>{storage_line}";
+                yield new DisplayText(
+                        key,
+                        Map.of(
+                                "net", net,
+                                "supply", supply,
+                                "consumption", consumption,
+                                "stored", totalStored,
+                                "capacity", totalCapacity,
+                                "net_text", parts.netText(),
+                                "flow_line", parts.flowLine(),
+                                "storage_line", parts.storageLine()),
+                        fallback);
+            }
+        };
     }
 
     void remove(SfxBlockAnchorKey anchorKey) {
         SfxFloatingTextKey key = key(anchorKey);
         ownedKeys.remove(key);
+        lastDisplays.remove(key);
         floatingText.remove(key);
     }
 
@@ -84,11 +105,11 @@ final class SfxEnergyDisplayController {
         for (SfxFloatingTextKey key : Set.copyOf(ownedKeys)) {
             floatingText.remove(key);
             ownedKeys.remove(key);
+            lastDisplays.remove(key);
         }
     }
 
-    private void update(SfxBlockAnchorKey anchorKey, DisplayText displayText) {
-        Component text = localization.component(displayText.key(), displayText.fallback(), displayText.placeholders());
+    private void update(SfxBlockAnchorKey anchorKey, Component text) {
         SfxFloatingTextKey key = key(anchorKey);
         ownedKeys.add(key);
         boolean seeThrough = plugin.getConfig().getBoolean("energy.regulator-display.see-through", false);
@@ -148,6 +169,9 @@ final class SfxEnergyDisplayController {
             number = number.substring(0, number.length() - 2);
         }
         return (value < 0 ? "-" : "") + number + units[unitIndex];
+    }
+
+    private record CachedDisplay(DisplayText displayText, Component renderedText, long updatedTick) {
     }
 
     private record DisplayText(String key, Map<String, ?> placeholders, String fallback) {

@@ -11,7 +11,10 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
 import cc.theends6.sfx.internal.util.ItemBuilder;
+import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
@@ -87,9 +90,11 @@ public final class SfxConfigurableMachineService implements Listener {
     private final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
     private final Set<UUID> activeInstances = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> recentEnergyConsumption = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastLogicTicks = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> recentGeneratedEnergy = new ConcurrentHashMap<>();
     private final Set<UUID> autoPausedProducers = ConcurrentHashMap.newKeySet();
     private final SfxMachineStatusIconRenderer statusIcons;
+    private final SfxMachineTickSettings tickSettings;
     private final Map<UUID, SfxConfigurableMachineSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, SfxConfigurableMachineSession> sessionsByHost = new ConcurrentHashMap<>();
     private volatile boolean running;
@@ -113,6 +118,7 @@ public final class SfxConfigurableMachineService implements Listener {
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.floatingText = Objects.requireNonNull(floatingText, "floatingText");
         this.statusIcons = new SfxMachineStatusIconRenderer(localization);
+        this.tickSettings = SfxMachineTickSettings.from(plugin.getConfig());
         registerDefinitions();
         bootstrapLoadedStates();
         running = true;
@@ -184,6 +190,9 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
         if (instance == null || !definitions.containsKey(instance.typeId())) {
+            return;
+        }
+        if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
         event.setCancelled(true);
@@ -323,6 +332,7 @@ public final class SfxConfigurableMachineService implements Listener {
         states.clear();
         dirtyInstances.clear();
         activeInstances.clear();
+        lastLogicTicks.clear();
         recentEnergyConsumption.clear();
         recentGeneratedEnergy.clear();
         autoPausedProducers.clear();
@@ -367,6 +377,7 @@ public final class SfxConfigurableMachineService implements Listener {
         states.remove(instanceId);
         dirtyInstances.remove(instanceId);
         activeInstances.remove(instanceId);
+        lastLogicTicks.remove(instanceId);
         recentEnergyConsumption.remove(instanceId);
         recentGeneratedEnergy.remove(instanceId);
         autoPausedProducers.remove(instanceId);
@@ -595,13 +606,38 @@ public final class SfxConfigurableMachineService implements Listener {
                 SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
                 if (instance == null) {
                     activeInstances.remove(instanceId);
+                    lastLogicTicks.remove(instanceId);
+                    continue;
+                }
+                SfxConfigurableMachineDefinition loopDefinition = definitions.get(instance.typeId());
+                if (loopDefinition == null) {
+                    activeInstances.remove(instanceId);
+                    lastLogicTicks.remove(instanceId);
+                    continue;
+                }
+                if (loopDefinition.kind() == SfxConfigurableMachineKind.ACCESS_PORT) {
+                    activeInstances.remove(instanceId);
+                    lastLogicTicks.remove(instanceId);
+                    continue;
+                }
+                if (loopDefinition.kind() == SfxConfigurableMachineKind.REACTOR) {
+                    // Producer reactors are ticked by the energy grid when it requests generation.
                     continue;
                 }
                 Location location = locationFor(instance);
                 if (location == null || !isInstanceChunkLoaded(instance)) {
                     continue;
                 }
-                runtime.executeAt(location, () -> tickMachine(instanceId));
+                boolean hasViewers = sessionsByHost.containsKey(instanceId);
+                long lastTick = lastLogicTicks.getOrDefault(instanceId, 0L);
+                int interval = tickSettings.intervalFor(hasViewers);
+                if (lastTick > 0L && tickCounter - lastTick < interval) {
+                    continue;
+                }
+                long elapsedTicks = lastTick <= 0L ? 1L : Math.max(1L, tickCounter - lastTick);
+                lastLogicTicks.put(instanceId, tickCounter);
+                SfxMachineTickContext context = new SfxMachineTickContext(tickCounter, elapsedTicks, hasViewers);
+                runtime.executeAt(location, () -> tickMachine(instanceId, context));
             }
             scheduleTick();
         });
@@ -617,7 +653,7 @@ public final class SfxConfigurableMachineService implements Listener {
         });
     }
 
-    private void tickMachine(UUID instanceId) {
+    private void tickMachine(UUID instanceId, SfxMachineTickContext context) {
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         if (instance == null) {
             activeInstances.remove(instanceId);
@@ -643,7 +679,7 @@ public final class SfxConfigurableMachineService implements Listener {
             return;
         }
         boolean changed = switch (definition.kind()) {
-            case ASSEMBLER -> tickAssembler(instanceId, definition, state, location);
+            case ASSEMBLER -> tickAssembler(instanceId, definition, state, location, context);
             case REACTOR, ACCESS_PORT -> false;
         };
         if (changed) {
@@ -652,7 +688,7 @@ public final class SfxConfigurableMachineService implements Listener {
             }
             dirtyInstances.add(instanceId);
         }
-        if (session != null && sessionsByHost.get(instanceId) == session && changed) {
+        if (session != null && sessionsByHost.get(instanceId) == session) {
             render(session, instance, definition, state);
         }
         if (session == null && !state.isActive() && !state.hasInventory()) {
@@ -660,7 +696,7 @@ public final class SfxConfigurableMachineService implements Listener {
         }
     }
 
-    private boolean tickAssembler(UUID instanceId, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location) {
+    private boolean tickAssembler(UUID instanceId, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location, SfxMachineTickContext context) {
         if (location == null) {
             return false;
         }
@@ -678,12 +714,21 @@ public final class SfxConfigurableMachineService implements Listener {
             state.fuelTotalTicks(ASSEMBLER_WORK_TICKS);
             changed = true;
         }
-        if (state.storedEnergy() < definition.energyPerAction()) {
+        int elapsed = Math.max(1, context.elapsedTicksInt());
+        int remaining = Math.max(0, state.fuelTotalTicks() - state.fuelProgressTicks());
+        int progressTicks = Math.min(elapsed, Math.max(1, remaining));
+        if (definition.energyPerAction() > 0) {
+            progressTicks = Math.min(progressTicks, state.storedEnergy() / definition.energyPerAction());
+        }
+        if (progressTicks <= 0) {
             return changed;
         }
-        state.storedEnergy(state.storedEnergy() - definition.energyPerAction());
-        recentEnergyConsumption.merge(instanceId, definition.energyPerAction(), Integer::sum);
-        state.fuelProgressTicks(state.fuelProgressTicks() + 1);
+        int consumed = definition.energyPerAction() * progressTicks;
+        state.storedEnergy(state.storedEnergy() - consumed);
+        if (consumed > 0) {
+            recentEnergyConsumption.merge(instanceId, consumed, Integer::sum);
+        }
+        state.fuelProgressTicks(state.fuelProgressTicks() + progressTicks);
         changed = true;
         if (state.fuelProgressTicks() >= state.fuelTotalTicks()) {
             Location spawn = location.clone().add(0.5D, state.offsetTenths() / 10.0D, 0.5D);
@@ -708,6 +753,14 @@ public final class SfxConfigurableMachineService implements Listener {
         SfxConfigurableMachineDefinition definition = definitions.get(instance.typeId());
         SfxConfigurableMachineState state = currentState(instanceId, instance);
         SfxConfigurableMachineSession session = sessionsByHost.get(instanceId);
+        boolean hasViewers = session != null;
+        long lastTick = lastLogicTicks.getOrDefault(instanceId, 0L);
+        int interval = tickSettings.intervalFor(hasViewers);
+        if (lastTick > 0L && tickCounter - lastTick < interval) {
+            return 0;
+        }
+        long elapsedTicks = lastTick <= 0L ? 1L : Math.max(1L, tickCounter - lastTick);
+        lastLogicTicks.put(instanceId, tickCounter);
         if (session != null) {
             syncInventoryToState(session.inventory(), state, definition, session.panelType());
         }
@@ -715,16 +768,26 @@ public final class SfxConfigurableMachineService implements Listener {
         if (autoPausedProducers.contains(instanceId) && canAutoPauseProducer(instanceId)) {
             return 0;
         }
-        ReactorTickResult result = tickReactor(instanceId, instance, definition, state, location);
-        if (result.changed()) {
-            if (blockData.findInstance(instanceId).isPresent()) {
-                dirtyInstances.add(instanceId);
-                if (session != null && sessionsByHost.get(instanceId) == session) {
-                    render(session, instance, definition, state);
-                }
+        int totalGenerated = 0;
+        boolean changed = false;
+        int loops = Math.max(1, Math.min(100, (int) elapsedTicks));
+        for (int i = 0; i < loops; i++) {
+            ReactorTickResult result = tickReactor(instanceId, instance, definition, state, location);
+            totalGenerated += result.generatedEnergy();
+            changed |= result.changed();
+            if (blockData.findInstance(instanceId).isEmpty()) {
+                return totalGenerated;
             }
         }
-        return result.generatedEnergy();
+        if (changed) {
+            if (blockData.findInstance(instanceId).isPresent()) {
+                dirtyInstances.add(instanceId);
+            }
+        }
+        if (session != null && sessionsByHost.get(instanceId) == session && blockData.findInstance(instanceId).isPresent()) {
+            render(session, instance, definition, state);
+        }
+        return totalGenerated;
     }
 
     private ReactorTickResult tickReactor(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location) {
