@@ -69,7 +69,10 @@ final class SfxElectricMachineDefinitions {
                 allowSoulSoil ? Set.of(Material.SOUL_SAND, Material.SOUL_SOIL) : Set.of(Material.SOUL_SAND),
                 4,
                 30 * 20);
-        SfxElectricRecipeProvider autoBrewerRecipes = new SfxAutoBrewerRecipeProvider();
+        boolean sfxAutoBrewer = plugin.getConfig().getBoolean("electric-machines.sfx-extensions.auto-brewer.enabled", true);
+        SfxElectricRecipeProvider autoBrewerRecipes = sfxAutoBrewer
+                ? new SfxAdvancedAutoBrewerRecipeProvider(plugin)
+                : new SfxAutoBrewerRecipeProvider();
 
         double crucibleEnergyMultiplier = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true)
                 ? Math.max(1.0D, plugin.getConfig().getDouble("energy.generator-balance.electrified-crucible-consumption-multiplier", 1.5D))
@@ -90,7 +93,12 @@ final class SfxElectricMachineDefinitions {
         result.register(new SfxElectricMachineDefinition("sf:electric_ore_grinder_3", "Electric Ore Grinder - III", 10, 20480, 90, Material.IRON_PICKAXE, grinderRecipes));
 
         result.register(new SfxElectricMachineDefinition("sf:auto_drier", "Auto Drier", 1, buffer(1280), 10, Material.FLINT_AND_STEEL, autoDrierRecipes));
-        result.register(new SfxElectricMachineDefinition("sf:auto_brewer", "Auto Brewer", 1, buffer(256), 12, Material.FISHING_ROD, autoBrewerRecipes));
+        if (sfxAutoBrewer) {
+            result.register(new SfxElectricMachineDefinition("sf:auto_brewer", "Auto Brewer", 1, buffer(512), 12, Material.BREWING_STAND, autoBrewerRecipes, SfxElectricMachineDefinition.AUTO_BREWER_INPUT_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.AUTO_BREWER));
+            result.register(new SfxElectricMachineDefinition("sf:auto_brewer_2", "Auto Brewer II", 5, buffer(1024), 50, Material.BREWING_STAND, autoBrewerRecipes, SfxElectricMachineDefinition.AUTO_BREWER_INPUT_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.AUTO_BREWER));
+        } else {
+            result.register(new SfxElectricMachineDefinition("sf:auto_brewer", "Auto Brewer", 1, buffer(256), 12, Material.FISHING_ROD, autoBrewerRecipes));
+        }
 
         result.register(new SfxElectricMachineDefinition("sf:electric_ingot_factory", "Electric Ingot Factory", 1, buffer(512), 8, Material.FLINT_AND_STEEL, ingotFactoryRecipes));
         result.register(new SfxElectricMachineDefinition("sf:electric_ingot_factory_2", "Electric Ingot Factory - II", 2, buffer(1024), 14, Material.FLINT_AND_STEEL, ingotFactoryRecipes));

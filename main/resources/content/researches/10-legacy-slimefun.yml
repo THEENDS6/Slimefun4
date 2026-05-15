@@ -1624,6 +1624,7 @@ researches:
     cost: 30
     items:
       - sf:auto_brewer
+      - sf:auto_brewer_2
   - id: enchantment_rune
     order: 259
     name: 'Ancient Enchanting'

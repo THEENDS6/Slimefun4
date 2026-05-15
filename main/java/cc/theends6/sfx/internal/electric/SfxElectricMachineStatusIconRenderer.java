@@ -58,8 +58,8 @@ final class SfxElectricMachineStatusIconRenderer {
             }
         }
 
-        Component statusLore = statusLore(definition, recipe, effectiveStatus);
-        if (!Component.empty().equals(statusLore)) {
+        List<Component> statusLore = statusLore(definition, state, recipe, effectiveStatus);
+        if (!statusLore.isEmpty()) {
             view.statusLore(statusLore);
         }
         if (definition.energyConsumptionPerTick() > 0) {
@@ -88,7 +88,10 @@ final class SfxElectricMachineStatusIconRenderer {
                 || status == SfxElectricMachineRenderStatus.OUTPUT_FULL
                 || status == SfxElectricMachineRenderStatus.OVERLAPPING_AREA
                 || status == SfxElectricMachineRenderStatus.NO_TARGET
-                || status == SfxElectricMachineRenderStatus.NO_RECIPE) {
+                || status == SfxElectricMachineRenderStatus.NO_RECIPE
+                || status == SfxElectricMachineRenderStatus.NO_BLAZE_FUEL
+                || status == SfxElectricMachineRenderStatus.NO_BREWING_INGREDIENT
+                || status == SfxElectricMachineRenderStatus.NO_POTION) {
             return status;
         }
         if (status == SfxElectricMachineRenderStatus.NO_POWER) {
@@ -111,11 +114,19 @@ final class SfxElectricMachineStatusIconRenderer {
 
 
     private Material material(SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status) {
+        if (isAutoBrewer(definition)) {
+            return switch (status) {
+                case WORKING -> definition.progressMaterial();
+                case PAUSED -> Material.YELLOW_STAINED_GLASS_PANE;
+                case NO_POWER, NO_RECIPE, NO_BLAZE_FUEL -> Material.RED_STAINED_GLASS_PANE;
+                default -> Material.BLACK_STAINED_GLASS_PANE;
+            };
+        }
         return switch (status) {
             case WORKING -> definition.progressMaterial();
             case IDLE, NO_INPUT -> Material.BLACK_STAINED_GLASS_PANE;
             case PAUSED -> Material.YELLOW_STAINED_GLASS_PANE;
-            case NO_POWER, NO_TARGET, NO_RECIPE, BLOCKED_OUTPUT, OUTPUT_FULL, OVERLAPPING_AREA -> Material.RED_STAINED_GLASS_PANE;
+            case NO_POWER, NO_TARGET, NO_RECIPE, NO_BLAZE_FUEL, NO_BREWING_INGREDIENT, NO_POTION, BLOCKED_OUTPUT, OUTPUT_FULL, OVERLAPPING_AREA -> Material.RED_STAINED_GLASS_PANE;
         };
     }
 
@@ -130,6 +141,9 @@ final class SfxElectricMachineStatusIconRenderer {
             case BLOCKED_OUTPUT -> localization.component("electric-ui.blocked.name", "<red>Blocked</red>");
             case OUTPUT_FULL -> localization.component("electric-ui.output-full.name", "<red>Output Full</red>");
             case NO_RECIPE -> localization.component("electric-ui.no-recipe.name", "<gray>No Recipe</gray>");
+            case NO_BLAZE_FUEL -> localization.component("electric-ui.auto-brewer.blaze.missing-name", "<red>No Blaze Powder</red>");
+            case NO_BREWING_INGREDIENT -> localization.component("electric-ui.auto-brewer.ingredient.missing-name", "<red>No Ingredient</red>");
+            case NO_POTION -> localization.component("electric-ui.auto-brewer.potion.missing-name", "<red>No Potion</red>");
             case OVERLAPPING_AREA -> localization.component("electric-ui.overlapping-area.name", "<red>Work Area Conflict</red>");
             case PAUSED -> isAssembler(definition)
                     ? localization.component("configurable-ui.assembler.paused.name", "<yellow>Paused</yellow>")
@@ -170,8 +184,11 @@ final class SfxElectricMachineStatusIconRenderer {
         applyProgressDamage(stack, meta, currentWork, totalWork);
     }
 
-    private Component statusLore(SfxElectricMachineDefinition definition, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
-        return switch (status) {
+    private List<Component> statusLore(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
+        if (isAutoBrewer(definition) && status == SfxElectricMachineRenderStatus.IDLE) {
+            return autoBrewerIdleLore(state);
+        }
+        Component component = switch (status) {
             case WORKING -> workingLore(definition);
             case NO_POWER -> localization.component("electric-ui.no-power.lore", "<gray>Charge this machine to continue.</gray>");
             case NO_INPUT -> localization.component("electric-ui.idle.lore", "<gray>Waiting for input.</gray>");
@@ -182,6 +199,9 @@ final class SfxElectricMachineStatusIconRenderer {
             case BLOCKED_OUTPUT -> localization.component("electric-ui.blocked.lore", "<gray>The output is full. Free a slot to commit the finished item.</gray>");
             case OUTPUT_FULL -> localization.component("electric-ui.output-full.lore", "<gray>Free an output slot to continue.</gray>");
             case NO_RECIPE -> localization.component("electric-ui.no-recipe.lore", "<gray>The current input has no matching recipe.</gray>");
+            case NO_BLAZE_FUEL -> localization.component("electric-ui.auto-brewer.blaze.missing-lore", "<gray>Add blaze powder before brewing.</gray>");
+            case NO_BREWING_INGREDIENT -> localization.component("electric-ui.auto-brewer.ingredient.missing-lore", "<gray>Add a valid brewing ingredient.</gray>");
+            case NO_POTION -> localization.component("electric-ui.auto-brewer.potion.missing-lore", "<gray>Add at least one valid potion bottle.</gray>");
             case OVERLAPPING_AREA -> localization.component("electric-ui.overlapping-area.lore", "<gray>Machines of the same type cannot have overlapping work areas.</gray>");
             case PAUSED -> isAssembler(definition)
                     ? localization.component("configurable-ui.assembler.paused.lore", "<gray>Enable this assembler to continue.</gray>")
@@ -190,6 +210,7 @@ final class SfxElectricMachineStatusIconRenderer {
                     ? localization.component("electric-ui.simple-io.xp-waiting.lore", "<gray>Waiting for nearby experience orbs.</gray>")
                     : localization.component("electric-ui.idle.lore", "<gray>Waiting for input.</gray>");
         };
+        return Component.empty().equals(component) ? List.of() : List.of(component);
     }
 
     private Component workingLore(SfxElectricMachineDefinition definition) {
@@ -201,6 +222,7 @@ final class SfxElectricMachineStatusIconRenderer {
             case "sf:tree_growth_accelerator" -> localization.component("electric-ui.action.tree-growth.working", "<gray>Accelerating nearby saplings.</gray>");
             case "sf:xp_collector" -> localization.component("electric-ui.simple-io.xp-working.lore", "<gray>Collecting nearby experience orbs.</gray>");
             case "sf:fluid_pump" -> localization.component("electric-ui.action.fluid-pump.working", "<gray>Pumping fluid from below.</gray>");
+            case "sf:auto_brewer", "sf:auto_brewer_2" -> localization.component("electric-ui.auto-brewer.progress.brewing", "<gray>Brewing potions.</gray>");
             case "sf:iron_golem_assembler", "sf:wither_assembler" -> localization.component("configurable-ui.assembler.working.lore", "<gray>Assembling entity structure.</gray>");
             default -> localization.component("electric-ui.progress.working-lore", "<gray>The machine is working.</gray>");
         };
@@ -240,12 +262,46 @@ final class SfxElectricMachineStatusIconRenderer {
                 || status == SfxElectricMachineRenderStatus.OVERLAPPING_AREA;
     }
 
+
+    private List<Component> autoBrewerIdleLore(SfxElectricMachineState state) {
+        List<Component> lore = new ArrayList<>();
+        if (state.specialData() <= 0 && state.input(0) == null) {
+            lore.add(localization.component("electric-ui.auto-brewer.blaze.missing-lore", "<gray>Add blaze powder before brewing.</gray>"));
+        }
+        if (state.input(1) == null) {
+            lore.add(localization.component("electric-ui.auto-brewer.ingredient.missing-lore", "<gray>Add a valid brewing ingredient.</gray>"));
+        }
+        boolean hasPotion = false;
+        for (int slot = 2; slot < 6; slot++) {
+            SfxElectricStack stack = state.input(slot);
+            if (stack == null || stack.isSfxItem() || stack.amount() <= 0) {
+                continue;
+            }
+            Material material = stack.material();
+            if (material == Material.POTION || material == Material.SPLASH_POTION || material == Material.LINGERING_POTION) {
+                hasPotion = true;
+                break;
+            }
+        }
+        if (!hasPotion) {
+            lore.add(localization.component("electric-ui.auto-brewer.potion.missing-lore", "<gray>Add at least one valid potion bottle.</gray>"));
+        }
+        if (lore.isEmpty()) {
+            lore.add(localization.component("electric-ui.idle.lore", "<gray>Waiting for input.</gray>"));
+        }
+        return lore;
+    }
+
     private boolean isExpCollector(SfxElectricMachineDefinition definition) {
         return "sf:xp_collector".equals(definition.id());
     }
 
     private boolean isAssembler(SfxElectricMachineDefinition definition) {
         return definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER;
+    }
+
+    private boolean isAutoBrewer(SfxElectricMachineDefinition definition) {
+        return definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER;
     }
 
     private int totalWork(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe) {

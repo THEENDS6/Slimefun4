@@ -2168,6 +2168,13 @@ items:
     - '&aMedium Machine'
     - '&8⇨ &b⚡&7Speed: &b1x'
     - '&8⇨ &e⚡&712 J/t'
+  sf.auto_brewer_2:
+    name: '&6Auto Brewer &7(&eII&7)'
+    lore:
+    - ''
+    - '&6Advanced Machine'
+    - '&8⇨ &b⚡&7Speed: &b5x'
+    - '&8⇨ &e⚡&750 J/t'
   sf.book_binder:
     name: '&6Book Binder'
     lore:
@@ -3396,6 +3403,26 @@ electric-ui:
       working: <gray>Accelerating nearby saplings.</gray>
     fluid-pump:
       working: <gray>Pumping fluid from below.</gray>
+  auto-brewer:
+    blaze:
+      frame: <gold>Blaze Powder</gold>
+      name: <gold>Blaze Powder</gold>
+      missing-name: <red>No Blaze Powder</red>
+      missing-lore: <gray>Add blaze powder before brewing.</gray>
+      consuming: '<gray>Consumed by this brew: </gray><yellow>{fuel}</yellow><gray> tick(s)</gray>'
+      fuel-left: '<gray>Stored blaze powder: </gray><yellow>{fuel}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> tick(s)</gray>'
+      powder: '<gray>Blaze powder in slot: </gray><yellow>{amount}</yellow>'
+      recipe-cost: '<gray>This recipe consumes: </gray><yellow>{fuel}</yellow><gray> tick(s), up to </gray><yellow>{powders}</yellow><gray> blaze powder</gray>'
+    ingredient:
+      frame: <blue>Brewing Ingredient</blue>
+      missing-name: <red>No Ingredient</red>
+      missing-lore: <gray>Add a valid brewing ingredient.</gray>
+    potion:
+      frame: <green>Potion Bottles</green>
+      missing-name: <red>No Potion</red>
+      missing-lore: <gray>Add at least one water bottle or brewable potion.</gray>
+    progress:
+      brewing: <gray>Brewing potions.</gray>
   time:
     seconds: '{seconds}s'
     minutes-seconds: '{minutes}m {seconds}s'

@@ -35,5 +35,9 @@ public interface SfxElectricRecipeProvider {
     default int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
         return 0;
     }
+
+    default List<SfxElectricStack> dropsOnDestroy(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        return List.of();
+    }
 }
 

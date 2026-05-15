@@ -4642,6 +4642,18 @@ items:
   - '&8⇨ &e⚡&712 J/t'
   flags:
   - legacy-sf
+- id: sf:auto_brewer_2
+  category: sf:electricity
+  material: SMOKER
+  name: '&6Auto Brewer &7(&eII&7)'
+  priority: 361
+  lore:
+  - ''
+  - '&6Advanced Machine'
+  - '&8⇨ &b⚡&7Speed: &b5x'
+  - '&8⇨ &e⚡&750 J/t'
+  flags:
+  - legacy-sf
 - id: sf:book_binder
   category: sf:electricity
   material: BOOKSHELF
