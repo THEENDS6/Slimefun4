@@ -183,6 +183,7 @@ researches:
       - sf:steel_jetpack
       - sf:damascus_steel_jetpack
       - sf:reinforced_alloy_jetpack
+      - sf:fuel_jetpack
   - id: multitools
     order: 27
     name: 'Multi Tools'

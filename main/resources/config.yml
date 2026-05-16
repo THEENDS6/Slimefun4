@@ -107,6 +107,9 @@ technical-gadgets:
     charging-bench:
       energy-consumption-per-tick: 100
       energy-loss: 0.80
+  sfx-extensions:
+    jetpacks-and-jetboots:
+      enabled: true
   classic:
     # Classic Slimefun-style pulse intervals. SF4 schedules Jetpack every 3 ticks and JetBoots every 2 ticks.
     jetpack-interval-ticks: 3

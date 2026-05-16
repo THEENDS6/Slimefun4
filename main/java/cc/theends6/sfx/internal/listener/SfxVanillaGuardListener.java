@@ -112,6 +112,7 @@ public final class SfxVanillaGuardListener implements Listener {
             "sf:damascus_steel_jetpack",
             "sf:reinforced_alloy_jetpack",
             "sf:carbonado_jetpack",
+            "sf:fuel_jetpack",
             "sf:armored_jetpack",
             "sf:duralumin_jetboots",
             "sf:solder_jetboots",
