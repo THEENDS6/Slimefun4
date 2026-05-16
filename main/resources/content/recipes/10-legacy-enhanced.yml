@@ -486,10 +486,10 @@ recipes:
       - empty
       - empty
       - sf:billon_ingot
-      - sf:power_crystal
+      - sf:solder_jetboots
       - sf:billon_ingot
       - sf:steel_thruster
-      - sf:small_capacitor
+      - sf:medium_capacitor
       - sf:steel_thruster
     outputs:
       - sf:billon_jetboots
@@ -505,10 +505,10 @@ recipes:
       - empty
       - sf:billon_ingot
       - sf:billon_ingot
-      - sf:power_crystal
+      - sf:solder_jetpack
       - sf:billon_ingot
       - sf:steel_thruster
-      - sf:small_capacitor
+      - sf:medium_capacitor
       - sf:steel_thruster
     outputs:
       - sf:billon_jetpack
@@ -772,7 +772,7 @@ recipes:
       - empty
       - empty
       - sf:carbonado
-      - sf:power_crystal
+      - sf:reinforced_alloy_jetboots
       - sf:carbonado
       - sf:steel_thruster
       - sf:large_capacitor
@@ -791,13 +791,33 @@ recipes:
       - empty
       - sf:carbon_chunk
       - sf:carbonado
-      - sf:power_crystal
+      - sf:reinforced_alloy_jetpack
       - sf:carbonado
       - sf:steel_thruster
       - sf:large_capacitor
       - sf:steel_thruster
     outputs:
       - sf:carbonado_jetpack
+  - id: legacy:fuel_jetpack
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 41
+    source: sfx-20260516u
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - sf:steel_ingot
+      - empty
+      - sf:steel_ingot
+      - sf:steel_ingot
+      - sf:combustion_reactor
+      - sf:steel_ingot
+      - sf:steel_thruster
+      - sf:reinforced_plate
+      - sf:steel_thruster
+    outputs:
+      - sf:fuel_jetpack
+
   - id: legacy:carbonado_multi_tool
     recipe-type: sf:enhanced_crafting_table
     operation: shaped
@@ -1420,10 +1440,10 @@ recipes:
       - empty
       - empty
       - sf:damascus_steel_ingot
-      - sf:power_crystal
+      - sf:steel_jetboots
       - sf:damascus_steel_ingot
       - sf:steel_thruster
-      - sf:small_capacitor
+      - sf:big_capacitor
       - sf:steel_thruster
     outputs:
       - sf:damascus_steel_jetboots
@@ -1439,10 +1459,10 @@ recipes:
       - empty
       - sf:damascus_steel_ingot
       - sf:damascus_steel_ingot
-      - sf:power_crystal
+      - sf:steel_jetpack
       - sf:damascus_steel_ingot
       - sf:steel_thruster
-      - sf:small_capacitor
+      - sf:big_capacitor
       - sf:steel_thruster
     outputs:
       - sf:damascus_steel_jetpack
@@ -4042,10 +4062,10 @@ recipes:
       - empty
       - empty
       - sf:reinforced_alloy_ingot
-      - sf:power_crystal
+      - sf:damascus_steel_jetboots
       - sf:reinforced_alloy_ingot
       - sf:steel_thruster
-      - sf:medium_capacitor
+      - sf:big_capacitor
       - sf:steel_thruster
     outputs:
       - sf:reinforced_alloy_jetboots
@@ -4061,10 +4081,10 @@ recipes:
       - empty
       - sf:reinforced_alloy_ingot
       - sf:reinforced_alloy_ingot
-      - sf:power_crystal
+      - sf:damascus_steel_jetpack
       - sf:reinforced_alloy_ingot
       - sf:steel_thruster
-      - sf:medium_capacitor
+      - sf:big_capacitor
       - sf:steel_thruster
     outputs:
       - sf:reinforced_alloy_jetpack
@@ -4327,7 +4347,7 @@ recipes:
       - empty
       - empty
       - sf:solder_ingot
-      - sf:power_crystal
+      - sf:duralumin_jetboots
       - sf:solder_ingot
       - sf:steel_thruster
       - sf:small_capacitor
@@ -4346,7 +4366,7 @@ recipes:
       - empty
       - sf:solder_ingot
       - sf:solder_ingot
-      - sf:power_crystal
+      - sf:duralumin_jetpack
       - sf:solder_ingot
       - sf:steel_thruster
       - sf:small_capacitor
@@ -4403,10 +4423,10 @@ recipes:
       - empty
       - empty
       - sf:steel_ingot
-      - sf:power_crystal
+      - sf:billon_jetboots
       - sf:steel_ingot
       - sf:steel_thruster
-      - sf:small_capacitor
+      - sf:medium_capacitor
       - sf:steel_thruster
     outputs:
       - sf:steel_jetboots
@@ -4422,10 +4442,10 @@ recipes:
       - empty
       - sf:steel_ingot
       - sf:steel_ingot
-      - sf:power_crystal
+      - sf:billon_jetpack
       - sf:steel_ingot
       - sf:steel_thruster
-      - sf:small_capacitor
+      - sf:medium_capacitor
       - sf:steel_thruster
     outputs:
       - sf:steel_jetpack

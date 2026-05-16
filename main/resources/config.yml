@@ -107,6 +107,9 @@ technical-gadgets:
     charging-bench:
       energy-consumption-per-tick: 100
       energy-loss: 0.80
+  sfx-extensions:
+    jetpacks-and-jetboots:
+      enabled: true
   classic:
     
     jetpack-interval-ticks: 3

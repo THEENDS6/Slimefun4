@@ -61,6 +61,7 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:damascus_steel_jetpack", "guide:sf:technical_gadgets");
     map.put("sf:reinforced_alloy_jetpack", "guide:sf:technical_gadgets");
     map.put("sf:carbonado_jetpack", "guide:sf:technical_gadgets");
+    map.put("sf:fuel_jetpack", "guide:sf:technical_gadgets");
     map.put("sf:armored_jetpack", "guide:sf:technical_gadgets");
     map.put("sf:duralumin_jetboots", "guide:sf:technical_gadgets");
     map.put("sf:solder_jetboots", "guide:sf:technical_gadgets");

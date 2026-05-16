@@ -139,6 +139,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(electricMachineService, this);
         getServer().getPluginManager().registerEvents(configurableMachineService, this);
         getServer().getPluginManager().registerEvents(energyService, this);
+        getServer().getPluginManager().registerEvents(technicalGadgetService, this);
         getServer().getPluginManager().registerEvents(backpackListener, this);
         getServer().getPluginManager().registerEvents(utilityListener, this);
         getServer().getPluginManager().registerEvents(combatToolListener, this);
