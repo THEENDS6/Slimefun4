@@ -1292,6 +1292,7 @@ researches:
     cost: 30
     items:
       - sf:cargo_node_input
+      - sf:cargo_node_input_advanced
       - sf:cargo_node_output
   - id: electric_ingot_machines
     order: 207

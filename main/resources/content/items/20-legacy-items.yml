@@ -622,7 +622,7 @@ items:
   - '&8⇨ &7Material: &bDuralumin'
   - '&8⇨ &e⚡&70 / 2000 J'
   - '&8⇨ &7Thrust: &c0.10'
-  - '&8⇨ &7Jump Stages: &b2'
+  - '&8⇨ &7Air Jumps: &b1'
   - ''
   - '&eHold Shift&7 to dash'
   - '&eDouble-tap Shift&7 to switch drive mode'
@@ -641,7 +641,7 @@ items:
   - '&8⇨ &7Material: &bSolder'
   - '&8⇨ &e⚡&70 / 4000 J'
   - '&8⇨ &7Thrust: &c0.12'
-  - '&8⇨ &7Jump Stages: &b2'
+  - '&8⇨ &7Air Jumps: &b1'
   - ''
   - '&eHold Shift&7 to dash'
   - '&eDouble-tap Shift&7 to switch drive mode'
@@ -660,7 +660,7 @@ items:
   - '&8⇨ &7Material: &bBillon'
   - '&8⇨ &e⚡&70 / 6000 J'
   - '&8⇨ &7Thrust: &c0.14'
-  - '&8⇨ &7Jump Stages: &b2'
+  - '&8⇨ &7Air Jumps: &b1'
   - ''
   - '&eHold Shift&7 to dash'
   - '&eDouble-tap Shift&7 to switch drive mode'
@@ -679,7 +679,7 @@ items:
   - '&8⇨ &7Material: &bSteel'
   - '&8⇨ &e⚡&70 / 10000 J'
   - '&8⇨ &7Thrust: &c0.16'
-  - '&8⇨ &7Jump Stages: &b3'
+  - '&8⇨ &7Air Jumps: &b2'
   - ''
   - '&eHold Shift&7 to dash'
   - '&eDouble-tap Shift&7 to switch drive mode'
@@ -698,7 +698,7 @@ items:
   - '&8⇨ &7Material: &bDamascus Steel'
   - '&8⇨ &e⚡&70 / 14000 J'
   - '&8⇨ &7Thrust: &c0.18'
-  - '&8⇨ &7Jump Stages: &b3'
+  - '&8⇨ &7Air Jumps: &b2'
   - ''
   - '&eHold Shift&7 to dash'
   - '&eDouble-tap Shift&7 to switch drive mode'
@@ -717,7 +717,7 @@ items:
   - '&8⇨ &7Material: &bReinforced Alloy'
   - '&8⇨ &e⚡&70 / 22000 J'
   - '&8⇨ &7Thrust: &c0.20'
-  - '&8⇨ &7Jump Stages: &b3'
+  - '&8⇨ &7Air Jumps: &b2'
   - ''
   - '&eHold Shift&7 to dash'
   - '&eDouble-tap Shift&7 to switch drive mode'
@@ -736,7 +736,7 @@ items:
   - '&8⇨ &7Material: &bCarbonado'
   - '&8⇨ &e⚡&70 / 30000 J'
   - '&8⇨ &7Thrust: &c0.25'
-  - '&8⇨ &7Jump Stages: &b4'
+  - '&8⇨ &7Air Jumps: &b3'
   - ''
   - '&eHold Shift&7 to dash'
   - '&eDouble-tap Shift&7 to switch drive mode'
@@ -754,7 +754,7 @@ items:
   - '&8⇨ &7Material: &bSteel'
   - '&8⇨ &e⚡&70 / 10000 J'
   - '&8⇨ &7Thrust: &c0.16'
-  - '&8⇨ &7Jump Stages: &b3'
+  - '&8⇨ &7Air Jumps: &b2'
   - ''
   - '&eHold Shift&7 to dash'
   - '&eDouble-tap Shift&7 to switch drive mode'
@@ -5581,6 +5581,19 @@ items:
   - '&fCargo Input Pipe'
   flags:
   - legacy-sf
+- id: sf:cargo_node_input_advanced
+  category: sf:cargo
+  material: PLAYER_HEAD
+  name: '&6Advanced Cargo Node &c(Input)'
+  priority: 505
+  headTexture: 16d1c1a69a3de9fec962a77bf3b2e376dd25c873a3d8f14f1dd345dae4c4
+  lore:
+  - ''
+  - '&fAdvanced Cargo Input Pipe'
+  - '&8⇨ &7Batch size: &b128 Items'
+  - '&8⇨ &7Distribution: &aAverage Mode'
+  flags:
+  - legacy-sf
 - id: sf:cargo_node_output
   category: sf:cargo
   material: PLAYER_HEAD
@@ -6276,7 +6289,7 @@ items:
   flags:
   - legacy-sf
 - id: sf:armor_auto_crafter
-  category: sf:electricity
+  category: sf:cargo
   material: PLAYER_HEAD
   name: '&2Auto-Crafter &8(Armor Forge)'
   priority: 455

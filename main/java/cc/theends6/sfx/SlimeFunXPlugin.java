@@ -12,6 +12,8 @@ import cc.theends6.sfx.internal.block.SqliteSfxBlockDataRepository;
 import cc.theends6.sfx.internal.command.SfxCommand;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
+import cc.theends6.sfx.internal.cargo.SfxCargoService;
+import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayListener;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
@@ -66,6 +68,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxElectricMachineService electricMachineService;
     private SfxConfigurableMachineService configurableMachineService;
     private SfxEnergyService energyService;
+    private SfxVirtualContainerService virtualContainerService;
+    private SfxCargoService cargoService;
     private SfxRadiationService radiationService;
     private SfxTechnicalGadgetService technicalGadgetService;
     private SfxFloatingTextDisplayService floatingTextDisplayService;
@@ -112,9 +116,11 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.floatingTextDisplayService = new SfxFloatingTextDisplayService(this, api.runtime());
         this.electricMachineService = new SfxElectricMachineService(this, api.runtime(), api.items(), localization, blockDataService, playerDataService, api.internalManualMachines());
         this.configurableMachineService = new SfxConfigurableMachineService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService);
-        this.technicalGadgetService = new SfxTechnicalGadgetService(this, api.runtime(), api.items());
+        this.technicalGadgetService = new SfxTechnicalGadgetService(this, api.runtime(), api.items(), localization);
         this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService, technicalGadgetService.rechargeableItems());
-        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, api.runtime());
+        this.virtualContainerService = new SfxVirtualContainerService(this, api.runtime());
+        this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService);
+        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, api.runtime());
         this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService);
         this.radiationService = new SfxRadiationService(this, api.runtime(), api.items(), api.itemRegistry(), playerDataService);
 
@@ -139,6 +145,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(electricMachineService, this);
         getServer().getPluginManager().registerEvents(configurableMachineService, this);
         getServer().getPluginManager().registerEvents(energyService, this);
+        getServer().getPluginManager().registerEvents(virtualContainerService, this);
+        getServer().getPluginManager().registerEvents(cargoService, this);
         getServer().getPluginManager().registerEvents(technicalGadgetService, this);
         getServer().getPluginManager().registerEvents(backpackListener, this);
         getServer().getPluginManager().registerEvents(utilityListener, this);
@@ -179,6 +187,12 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         if (configurableMachineService != null) {
             configurableMachineService.shutdown();
+        }
+        if (cargoService != null) {
+            cargoService.shutdown();
+        }
+        if (virtualContainerService != null) {
+            virtualContainerService.shutdown();
         }
         if (energyService != null) {
             energyService.shutdown();
