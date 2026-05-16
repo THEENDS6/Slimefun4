@@ -27,9 +27,6 @@ public final class SfxManualMachineListener implements Listener {
         if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
-        if (event.getPlayer().isSneaking()) {
-            return;
-        }
         if (service.tryInteract(event.getPlayer(), event.getClickedBlock())) {
             event.setCancelled(true);
         }

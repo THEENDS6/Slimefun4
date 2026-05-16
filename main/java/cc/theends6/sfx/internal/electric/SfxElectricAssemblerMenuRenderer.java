@@ -2,6 +2,8 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
+import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
+import cc.theends6.sfx.internal.ui.SfxUiItems;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +13,6 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 final class SfxElectricAssemblerMenuRenderer {
     static final int ENABLE_SLOT = 13;
@@ -57,9 +58,9 @@ final class SfxElectricAssemblerMenuRenderer {
         SfxElectricAssemblerSpec spec = definition.assemblerSpec();
         Material headPane = definition.id().equals("sf:iron_golem_assembler") ? Material.ORANGE_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE;
         Material bodyPane = definition.id().equals("sf:iron_golem_assembler") ? Material.WHITE_STAINED_GLASS_PANE : Material.BROWN_STAINED_GLASS_PANE;
-        setSlots(inventory, namedItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "), List.of()), BACKGROUND_SLOTS);
-        setSlots(inventory, namedItem(headPane, localization.component("configurable-ui.assembler.head-slot.name", "<yellow>Head Material</yellow>"), List.of()), HEAD_FRAME);
-        setSlots(inventory, namedItem(bodyPane, localization.component("configurable-ui.assembler.body-slot.name", "<gold>Body Material</gold>"), List.of()), BODY_FRAME);
+        SfxInventoryPainter.setSlots(inventory, namedItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "), List.of()), BACKGROUND_SLOTS);
+        SfxInventoryPainter.setSlots(inventory, namedItem(headPane, localization.component("configurable-ui.assembler.head-slot.name", "<yellow>Head Material</yellow>"), List.of()), HEAD_FRAME);
+        SfxInventoryPainter.setSlots(inventory, namedItem(bodyPane, localization.component("configurable-ui.assembler.body-slot.name", "<gold>Body Material</gold>"), List.of()), BODY_FRAME);
         if (spec != null) {
             inventory.setItem(1, displayMaterial(spec.headMaterial(), localization.component("configurable-ui.assembler.head-slot.name", "<yellow>Head Material</yellow>"), spec.headAmount(), List.of(spec.headMaterial())));
             inventory.setItem(7, displayMaterial(spec.primaryBodyMaterial(), localization.component("configurable-ui.assembler.body-slot.name", "<gold>Body Material</gold>"), spec.bodyAmount(), new ArrayList<>(spec.bodyMaterials())));
@@ -104,20 +105,7 @@ final class SfxElectricAssemblerMenuRenderer {
         return namedItem(material, name, lore);
     }
 
-    private void setSlots(Inventory inventory, ItemStack item, int... slots) {
-        for (int slot : slots) {
-            inventory.setItem(slot, item);
-        }
-    }
-
     private ItemStack namedItem(Material material, Component name, List<Component> lore) {
-        ItemStack stack = new ItemStack(material);
-        ItemMeta meta = stack.getItemMeta();
-        if (meta != null) {
-            meta.displayName(name);
-            meta.lore(lore);
-            stack.setItemMeta(meta);
-        }
-        return stack;
+        return SfxUiItems.named(material, name, lore);
     }
 }

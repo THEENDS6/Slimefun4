@@ -6,11 +6,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 final class SfxConfigurableMachineState {
     private static final int SCHEMA = 1;
     private static final int MAX_INPUTS = 6;
     private static final int MAX_OUTPUTS = 3;
+    private static final Logger LOGGER = Logger.getLogger(SfxConfigurableMachineState.class.getName());
     private final SfxElectricStack[] inputs = new SfxElectricStack[MAX_INPUTS];
     private final SfxElectricStack[] outputs = new SfxElectricStack[MAX_OUTPUTS];
     private int storedEnergy;
@@ -35,6 +38,7 @@ final class SfxConfigurableMachineState {
         try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(blob))) {
             int schema = input.readInt();
             if (schema != SCHEMA) {
+                LOGGER.warning("Unsupported configurable machine state schema " + schema + "; returning empty state to keep the machine usable");
                 return empty();
             }
             SfxConfigurableMachineState state = new SfxConfigurableMachineState();
@@ -60,7 +64,8 @@ final class SfxConfigurableMachineState {
             state.coolantProgressTicks = Math.max(0, input.readInt());
             state.coolantTotalTicks = Math.max(0, input.readInt());
             return state;
-        } catch (IOException | IllegalArgumentException ignored) {
+        } catch (IOException | IllegalArgumentException exception) {
+            LOGGER.log(Level.WARNING, "Failed to decode configurable machine state; returning empty state to keep the machine usable", exception);
             return empty();
         }
     }

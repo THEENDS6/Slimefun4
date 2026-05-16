@@ -3710,3 +3710,53 @@ tools:
       grid-rates: '<gray>发电：<green>{generation}</green> J/t <dark_gray>|</dark_gray> 耗电：<yellow>{consumption}</yellow> J/t</gray>'
       grid-members: '<gray>连接组件：<white>{members}</white> <dark_gray>(发电机:{generators}, 反应堆:{reactors}, 电容:{capacitors}, 节点:{connectors}, 用电器:{consumers})</dark_gray></gray>'
       grid-auto-paused: '<gray>自动暂停发电机：<yellow>{amount}</yellow></gray>'
+
+machine-status:
+  idle:
+    name: '<gray>闲置</gray>'
+    lore: '<gray>正在等待输入。</gray>'
+  working:
+    name: '<yellow>工作中</yellow>'
+    lore: '<gray>机器正在工作。</gray>'
+  no-power:
+    name: '<red>电力不足</red>'
+    lore: '<gray>为这台机器供电后才能继续。</gray>'
+  paused:
+    name: '<yellow>暂停中</yellow>'
+    lore: '<gray>这台机器已暂停。</gray>'
+  disabled:
+    name: '<gray>已禁用</gray>'
+    lore: '<gray>这台机器已被禁用。</gray>'
+  no-input:
+    name: '<gray>无输入</gray>'
+    lore: '<gray>正在等待输入。</gray>'
+  no-recipe:
+    name: '<gray>无配方</gray>'
+    lore: '<gray>当前输入没有匹配的配方。</gray>'
+  no-target:
+    name: '<red>无目标</red>'
+    lore: '<gray>没有找到有效目标。</gray>'
+  output-full:
+    name: '<red>输出已满</red>'
+    lore: '<gray>清理输出槽后才能继续。</gray>'
+  blocked-output:
+    name: '<red>输出阻塞</red>'
+    lore: '<gray>输出已满，清理空位后才能提交完成物品。</gray>'
+  invalid-input:
+    name: '<red>无效输入</red>'
+    lore: '<gray>放入的物品不能在这里处理。</gray>'
+  full:
+    name: '<green>已满</green>'
+    lore: '<gray>这台机器已满。</gray>'
+  no-network:
+    name: '<red>未连接</red>'
+    lore: '<gray>这台机器未连接到能源网络。</gray>'
+  network-conflict:
+    name: '<red>网络冲突</red>'
+    lore: '<gray>请先解决调度器或共享节点冲突。</gray>'
+  area-conflict:
+    name: '<red>工作区域冲突</red>'
+    lore: '<gray>同类型机器的工作区域不能重叠。</gray>'
+  missing-resource:
+    name: '<red>缺少资源</red>'
+    lore: '<gray>补充缺少的资源后才能继续。</gray>'

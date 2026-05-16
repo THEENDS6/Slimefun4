@@ -3606,3 +3606,53 @@ tools:
       grid-rates: '<gray>Generation: <green>{generation}</green> J/t <dark_gray>|</dark_gray> Consumption: <yellow>{consumption}</yellow> J/t</gray>'
       grid-members: '<gray>Connected components: <white>{members}</white> <dark_gray>(G:{generators}, R:{reactors}, C:{capacitors}, N:{connectors}, M:{consumers})</dark_gray></gray>'
       grid-auto-paused: '<gray>Auto-paused generators: <yellow>{amount}</yellow></gray>'
+
+machine-status:
+  idle:
+    name: '<gray>Idle</gray>'
+    lore: '<gray>Waiting for input.</gray>'
+  working:
+    name: '<yellow>Working</yellow>'
+    lore: '<gray>The machine is working.</gray>'
+  no-power:
+    name: '<red>No Power</red>'
+    lore: '<gray>Charge this machine to continue.</gray>'
+  paused:
+    name: '<yellow>Paused</yellow>'
+    lore: '<gray>This machine is paused.</gray>'
+  disabled:
+    name: '<gray>Disabled</gray>'
+    lore: '<gray>This machine is disabled.</gray>'
+  no-input:
+    name: '<gray>No Input</gray>'
+    lore: '<gray>Waiting for input.</gray>'
+  no-recipe:
+    name: '<gray>No Recipe</gray>'
+    lore: '<gray>The current input has no matching recipe.</gray>'
+  no-target:
+    name: '<red>No Target</red>'
+    lore: '<gray>No valid target was found.</gray>'
+  output-full:
+    name: '<red>Output Full</red>'
+    lore: '<gray>Free an output slot to continue.</gray>'
+  blocked-output:
+    name: '<red>Blocked</red>'
+    lore: '<gray>The output is full. Free a slot to commit the finished item.</gray>'
+  invalid-input:
+    name: '<red>Invalid Input</red>'
+    lore: '<gray>The inserted item cannot be processed here.</gray>'
+  full:
+    name: '<green>Full</green>'
+    lore: '<gray>This machine is full.</gray>'
+  no-network:
+    name: '<red>Not Connected</red>'
+    lore: '<gray>This machine is not connected to an energy network.</gray>'
+  network-conflict:
+    name: '<red>Network Conflict</red>'
+    lore: '<gray>Resolve regulator or shared-node conflicts first.</gray>'
+  area-conflict:
+    name: '<red>Work Area Conflict</red>'
+    lore: '<gray>Machines of the same type cannot have overlapping work areas.</gray>'
+  missing-resource:
+    name: '<red>Missing Resource</red>'
+    lore: '<gray>Add the missing resource to continue.</gray>'

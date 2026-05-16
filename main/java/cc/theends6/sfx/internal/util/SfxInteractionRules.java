@@ -45,6 +45,9 @@ public final class SfxInteractionRules {
                 || event.getClickedBlock() == null) {
             return false;
         }
+        if (!event.getPlayer().isSneaking()) {
+            return false;
+        }
         return isPlaceableHeldItem(items, event.getItem());
     }
 

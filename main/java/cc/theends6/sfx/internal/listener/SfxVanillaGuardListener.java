@@ -181,8 +181,7 @@ public final class SfxVanillaGuardListener implements Listener {
 
         event.setUseItemInHand(Event.Result.DENY);
         if (action == Action.RIGHT_CLICK_BLOCK) {
-            event.setUseInteractedBlock(Event.Result.ALLOW);
-            return;
+            event.setUseInteractedBlock(Event.Result.DENY);
         }
         event.setCancelled(true);
     }
