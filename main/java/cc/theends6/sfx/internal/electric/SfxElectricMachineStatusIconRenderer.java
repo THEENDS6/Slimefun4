@@ -2,20 +2,18 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
-import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusDefaults;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
-import java.lang.reflect.Method;
+import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 
 final class SfxElectricMachineStatusIconRenderer {
@@ -35,9 +33,15 @@ final class SfxElectricMachineStatusIconRenderer {
 
     ItemStack render(UUID viewerId, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
         SfxElectricMachineRenderStatus effectiveStatus = effectiveStatus(definition, state, status);
-        Material material = material(definition, effectiveStatus);
-        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(material, displayName(viewerId, definition, effectiveStatus))
+        SfxMachineStatusKey statusKey = effectiveStatus.statusKey();
+        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(statusKey)
+                .material(material(definition, effectiveStatus, statusKey))
                 .energy(state.storedEnergy(), definition.energyCapacity());
+
+        Component nameOverride = displayNameOverride(viewerId, definition, effectiveStatus);
+        if (nameOverride != null) {
+            view.name(nameOverride);
+        }
 
         if (effectiveStatus == SfxElectricMachineRenderStatus.WORKING) {
             if (isExpCollector(definition)) {
@@ -46,7 +50,8 @@ final class SfxElectricMachineStatusIconRenderer {
                     current = XP_PER_FLASK;
                 }
                 view.progress(current, XP_PER_FLASK, -1, true)
-                        .statusLore(localization.component(
+                        .includeDefaultStatusLore(false)
+                .statusLore(localization.component(
                                 "electric-ui.simple-io.xp-progress",
                                 "<gray>Stored XP: </gray><white>{current}</white><gray>/</gray><white>{total}</white>",
                                 Map.of("current", current, "total", XP_PER_FLASK)));
@@ -54,14 +59,18 @@ final class SfxElectricMachineStatusIconRenderer {
                 int totalWork = totalWork(definition, state, recipe);
                 int currentWork = Math.min(totalWork, Math.max(0, state.progressWork()));
                 int remainingTicks = Math.max(0, (int) Math.ceil((totalWork - currentWork) / (double) Math.max(1, definition.speed())));
-                view.progress(currentWork, totalWork, remainingTicks, true);
+                view.progress(currentWork, totalWork, remainingTicks, true)
+                        .includeDefaultStatusLore(false)
+                .statusLore(workingLore(definition));
+            }
+        } else {
+            List<Component> overrideLore = statusLoreOverride(definition, state, effectiveStatus);
+            if (!overrideLore.isEmpty()) {
+                view.includeDefaultStatusLore(false)
+                .statusLore(overrideLore);
             }
         }
 
-        List<Component> statusLore = statusLore(definition, state, recipe, effectiveStatus);
-        if (!statusLore.isEmpty()) {
-            view.statusLore(statusLore);
-        }
         if (definition.energyConsumptionPerTick() > 0) {
             view.consumption(definition.energyConsumptionPerTick());
         }
@@ -112,103 +121,50 @@ final class SfxElectricMachineStatusIconRenderer {
         return status;
     }
 
-
-    private Material material(SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status) {
+    private Material material(SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status, SfxMachineStatusKey statusKey) {
+        if (status == SfxElectricMachineRenderStatus.WORKING) {
+            return definition.progressMaterial();
+        }
         if (isAutoBrewer(definition)) {
             return switch (status) {
-                case WORKING -> definition.progressMaterial();
                 case PAUSED -> Material.YELLOW_STAINED_GLASS_PANE;
                 case NO_POWER, NO_RECIPE, NO_BLAZE_FUEL -> Material.RED_STAINED_GLASS_PANE;
                 default -> Material.BLACK_STAINED_GLASS_PANE;
             };
         }
-        return switch (status) {
-            case WORKING -> definition.progressMaterial();
-            case IDLE, NO_INPUT -> Material.BLACK_STAINED_GLASS_PANE;
-            case PAUSED -> Material.YELLOW_STAINED_GLASS_PANE;
-            case NO_POWER, NO_TARGET, NO_RECIPE, NO_BLAZE_FUEL, NO_BREWING_INGREDIENT, NO_POTION, BLOCKED_OUTPUT, OUTPUT_FULL, OVERLAPPING_AREA -> Material.RED_STAINED_GLASS_PANE;
-        };
+        return SfxMachineStatusDefaults.material(statusKey);
     }
 
-    private Component displayName(UUID viewerId, SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status) {
+    private Component displayNameOverride(UUID viewerId, SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status) {
         return switch (status) {
-            case WORKING -> isExtendedUiEnabled(viewerId)
-                    ? localization.component("electric-ui.progress.name", "<yellow>Working</yellow>")
-                    : Component.text(" ");
-            case NO_POWER -> localization.component("electric-ui.no-power.name", "<red>No Power</red>");
-            case NO_INPUT -> localization.component("electric-ui.idle.name", "<gray>Idle</gray>");
-            case NO_TARGET -> localization.component("electric-ui.no-target.name", "<red>No Target</red>");
-            case BLOCKED_OUTPUT -> localization.component("electric-ui.blocked.name", "<red>Blocked</red>");
-            case OUTPUT_FULL -> localization.component("electric-ui.output-full.name", "<red>Output Full</red>");
-            case NO_RECIPE -> localization.component("electric-ui.no-recipe.name", "<gray>No Recipe</gray>");
+            case WORKING -> isExtendedUiEnabled(viewerId) ? null : Component.text(" ");
             case NO_BLAZE_FUEL -> localization.component("electric-ui.auto-brewer.blaze.missing-name", "<red>No Blaze Powder</red>");
             case NO_BREWING_INGREDIENT -> localization.component("electric-ui.auto-brewer.ingredient.missing-name", "<red>No Ingredient</red>");
             case NO_POTION -> localization.component("electric-ui.auto-brewer.potion.missing-name", "<red>No Potion</red>");
-            case OVERLAPPING_AREA -> localization.component("electric-ui.overlapping-area.name", "<red>Work Area Conflict</red>");
-            case PAUSED -> isAssembler(definition)
-                    ? localization.component("configurable-ui.assembler.paused.name", "<yellow>Paused</yellow>")
-                    : localization.component("electric-ui.paused.name", "<yellow>Paused</yellow>");
-            case IDLE -> localization.component("electric-ui.idle.name", "<gray>Idle</gray>");
+            case PAUSED -> isAssembler(definition) ? localization.component("configurable-ui.assembler.paused.name", "<yellow>Paused</yellow>") : null;
+            default -> null;
         };
     }
 
-    private void addProgressLore(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status, List<Component> lore, ItemStack stack, ItemMeta meta) {
-        if (isExpCollector(definition)) {
-            if (status == SfxElectricMachineRenderStatus.WORKING) {
-                int current = Math.min(XP_PER_FLASK, Math.max(0, state.specialData() % XP_PER_FLASK));
-                if (state.specialData() >= XP_PER_FLASK) {
-                    current = XP_PER_FLASK;
-                }
-                lore.add(progressBarLine(current, XP_PER_FLASK));
-                lore.add(localization.component(
-                        "electric-ui.simple-io.xp-progress",
-                        "<gray>Stored XP: </gray><white>{current}</white><gray>/</gray><white>{total}</white>",
-                        Map.of("current", current, "total", XP_PER_FLASK)));
-                lore.add(Component.empty());
-                applyProgressDamage(stack, meta, current, XP_PER_FLASK);
-            }
-            return;
-        }
-
-        if (status != SfxElectricMachineRenderStatus.WORKING) {
-            return;
-        }
-        int totalWork = totalWork(definition, state, recipe);
-        int currentWork = Math.min(totalWork, Math.max(0, state.progressWork()));
-        lore.add(progressBarLine(currentWork, totalWork));
-        lore.add(Component.text(" "));
-        lore.add(localization.component(
-                "electric-ui.progress.time-left",
-                "<gray>{time}</gray>",
-                Map.of("time", formatTimeLeft(remainingSeconds(definition, currentWork, totalWork)))));
-        applyProgressDamage(stack, meta, currentWork, totalWork);
-    }
-
-    private List<Component> statusLore(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
+    private List<Component> statusLoreOverride(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineRenderStatus status) {
         if (isAutoBrewer(definition) && status == SfxElectricMachineRenderStatus.IDLE) {
             return autoBrewerIdleLore(state);
         }
         Component component = switch (status) {
-            case WORKING -> workingLore(definition);
-            case NO_POWER -> localization.component("electric-ui.no-power.lore", "<gray>Charge this machine to continue.</gray>");
-            case NO_INPUT -> localization.component("electric-ui.idle.lore", "<gray>Waiting for input.</gray>");
             case NO_TARGET -> localization.component(
                     "electric-ui.no-target.lore",
                     "<gray>{target}</gray>",
                     Map.of("target", noTargetText(definition)));
-            case BLOCKED_OUTPUT -> localization.component("electric-ui.blocked.lore", "<gray>The output is full. Free a slot to commit the finished item.</gray>");
-            case OUTPUT_FULL -> localization.component("electric-ui.output-full.lore", "<gray>Free an output slot to continue.</gray>");
-            case NO_RECIPE -> localization.component("electric-ui.no-recipe.lore", "<gray>The current input has no matching recipe.</gray>");
             case NO_BLAZE_FUEL -> localization.component("electric-ui.auto-brewer.blaze.missing-lore", "<gray>Add blaze powder before brewing.</gray>");
             case NO_BREWING_INGREDIENT -> localization.component("electric-ui.auto-brewer.ingredient.missing-lore", "<gray>Add a valid brewing ingredient.</gray>");
             case NO_POTION -> localization.component("electric-ui.auto-brewer.potion.missing-lore", "<gray>Add at least one valid potion bottle.</gray>");
-            case OVERLAPPING_AREA -> localization.component("electric-ui.overlapping-area.lore", "<gray>Machines of the same type cannot have overlapping work areas.</gray>");
             case PAUSED -> isAssembler(definition)
                     ? localization.component("configurable-ui.assembler.paused.lore", "<gray>Enable this assembler to continue.</gray>")
-                    : localization.component("electric-ui.paused.lore", "<gray>This machine is paused.</gray>");
+                    : Component.empty();
             case IDLE -> isExpCollector(definition)
                     ? localization.component("electric-ui.simple-io.xp-waiting.lore", "<gray>Waiting for nearby experience orbs.</gray>")
-                    : localization.component("electric-ui.idle.lore", "<gray>Waiting for input.</gray>");
+                    : Component.empty();
+            default -> Component.empty();
         };
         return Component.empty().equals(component) ? List.of() : List.of(component);
     }
@@ -224,19 +180,8 @@ final class SfxElectricMachineStatusIconRenderer {
             case "sf:fluid_pump" -> localization.component("electric-ui.action.fluid-pump.working", "<gray>Pumping fluid from below.</gray>");
             case "sf:auto_brewer", "sf:auto_brewer_2" -> localization.component("electric-ui.auto-brewer.progress.brewing", "<gray>Brewing potions.</gray>");
             case "sf:iron_golem_assembler", "sf:wither_assembler" -> localization.component("configurable-ui.assembler.working.lore", "<gray>Assembling entity structure.</gray>");
-            default -> localization.component("electric-ui.progress.working-lore", "<gray>The machine is working.</gray>");
+            default -> SfxMachineStatusDefaults.lore(localization, SfxMachineStatusKey.WORKING);
         };
-    }
-
-    private String requiredInputName(SfxElectricMachineDefinition definition) {
-        String key = switch (definition.id()) {
-            case "sf:produce_collector" -> "produce";
-            case "sf:auto_breeder", "sf:animal_growth_accelerator" -> "organic-food";
-            case "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2", "sf:tree_growth_accelerator" -> "organic-fertilizer";
-            case "sf:fluid_pump" -> "fluid-pump";
-            default -> "generic";
-        };
-        return localization.text("electric-ui.required-input." + key, key);
     }
 
     private String noTargetText(SfxElectricMachineDefinition definition) {
@@ -251,17 +196,6 @@ final class SfxElectricMachineStatusIconRenderer {
         };
         return localization.text("electric-ui.target-text." + key, key);
     }
-
-    private boolean isError(SfxElectricMachineRenderStatus status) {
-        return status == SfxElectricMachineRenderStatus.NO_POWER
-                || status == SfxElectricMachineRenderStatus.NO_INPUT
-                || status == SfxElectricMachineRenderStatus.NO_TARGET
-                || status == SfxElectricMachineRenderStatus.NO_RECIPE
-                || status == SfxElectricMachineRenderStatus.BLOCKED_OUTPUT
-                || status == SfxElectricMachineRenderStatus.OUTPUT_FULL
-                || status == SfxElectricMachineRenderStatus.OVERLAPPING_AREA;
-    }
-
 
     private List<Component> autoBrewerIdleLore(SfxElectricMachineState state) {
         List<Component> lore = new ArrayList<>();
@@ -287,7 +221,7 @@ final class SfxElectricMachineStatusIconRenderer {
             lore.add(localization.component("electric-ui.auto-brewer.potion.missing-lore", "<gray>Add at least one valid potion bottle.</gray>"));
         }
         if (lore.isEmpty()) {
-            lore.add(localization.component("electric-ui.idle.lore", "<gray>Waiting for input.</gray>"));
+            lore.add(SfxMachineStatusDefaults.lore(localization, SfxMachineStatusKey.IDLE));
         }
         return lore;
     }
@@ -312,137 +246,6 @@ final class SfxElectricMachineStatusIconRenderer {
             return Math.max(1, recipe.baseTicks() * 20);
         }
         return Math.max(1, state.activeBaseTicks());
-    }
-
-    private int remainingSeconds(SfxElectricMachineDefinition definition, int currentWork, int totalWork) {
-        int remainingWork = Math.max(0, totalWork - currentWork);
-        int remainingTicks = (int) Math.ceil(remainingWork / (double) Math.max(1, definition.speed()));
-        return Math.max(0, (int) Math.ceil(remainingTicks / 20.0D));
-    }
-
-    private Component progressBarLine(int currentWork, int totalWork) {
-        int total = Math.max(1, totalWork);
-        float progressPercentage = Math.round(((Math.max(0, currentWork) * 100.0F) / total) * 100.0F) / 100.0F;
-        int filled = Math.min(20, Math.max(0, (int) (progressPercentage / 5.0F)));
-        StringBuilder builder = new StringBuilder();
-        builder.append(progressColor(progressPercentage));
-        for (int i = 0; i < filled; i++) {
-            builder.append(':');
-        }
-        builder.append("&7");
-        for (int i = filled; i < 20; i++) {
-            builder.append(':');
-        }
-        builder.append(" - ").append(progressPercentage).append('%');
-        return Text.legacy(builder.toString());
-    }
-
-    private String progressColor(float percentage) {
-        if (percentage < 16.0F) {
-            return "&4";
-        }
-        if (percentage < 32.0F) {
-            return "&c";
-        }
-        if (percentage < 48.0F) {
-            return "&6";
-        }
-        if (percentage < 64.0F) {
-            return "&e";
-        }
-        if (percentage < 80.0F) {
-            return "&2";
-        }
-        return "&a";
-    }
-
-    private String formatTimeLeft(int seconds) {
-        int minutes = seconds / 60;
-        int remainingSeconds = seconds - minutes * 60;
-        if (minutes > 0) {
-            return localization.text("electric-ui.time.minutes-seconds", "{minutes}m {seconds}s", Map.of("minutes", minutes, "seconds", remainingSeconds));
-        }
-        return localization.text("electric-ui.time.seconds", "{seconds}s", Map.of("seconds", remainingSeconds));
-    }
-
-    private void applyProgressDamage(ItemStack stack, ItemMeta meta, int current, int total) {
-        int max = stack.getType().getMaxDurability();
-        if (max <= 0) {
-            max = applyCustomMaxDamage(meta, 100);
-        }
-        if (max <= 0) {
-            return;
-        }
-        int safeTotal = Math.max(1, total);
-        int safeCurrent = Math.max(0, Math.min(safeTotal, current));
-        int visible = Math.max(1, (int) Math.round((safeCurrent / (double) safeTotal) * max));
-        int damage = Math.max(0, Math.min(max - 1, max - visible));
-        if (meta instanceof Damageable damageable) {
-            damageable.setDamage(damage);
-            return;
-        }
-        applyCustomDamage(meta, damage);
-    }
-
-    private int applyCustomMaxDamage(ItemMeta meta, int maxDamage) {
-        for (Class<?> type = meta.getClass(); type != null; type = type.getSuperclass()) {
-            Integer applied = invokeMaxDamage(type, meta, maxDamage);
-            if (applied != null) {
-                return applied;
-            }
-        }
-        for (Class<?> type : meta.getClass().getInterfaces()) {
-            Integer applied = invokeMaxDamage(type, meta, maxDamage);
-            if (applied != null) {
-                return applied;
-            }
-        }
-        return 0;
-    }
-
-    private Integer invokeMaxDamage(Class<?> type, ItemMeta meta, int maxDamage) {
-        try {
-            Method method = type.getMethod("setMaxDamage", Integer.class);
-            method.invoke(meta, maxDamage);
-            return maxDamage;
-        } catch (ReflectiveOperationException | RuntimeException ignored) {
-            try {
-                Method method = type.getMethod("setMaxDamage", Integer.TYPE);
-                method.invoke(meta, maxDamage);
-                return maxDamage;
-            } catch (ReflectiveOperationException | RuntimeException ignoredAgain) {
-                return null;
-            }
-        }
-    }
-
-    private void applyCustomDamage(ItemMeta meta, int damage) {
-        for (Class<?> type = meta.getClass(); type != null; type = type.getSuperclass()) {
-            if (invokeDamage(type, meta, damage)) {
-                return;
-            }
-        }
-        for (Class<?> type : meta.getClass().getInterfaces()) {
-            if (invokeDamage(type, meta, damage)) {
-                return;
-            }
-        }
-    }
-
-    private boolean invokeDamage(Class<?> type, ItemMeta meta, int damage) {
-        try {
-            Method method = type.getMethod("setDamage", Integer.TYPE);
-            method.invoke(meta, damage);
-            return true;
-        } catch (ReflectiveOperationException | RuntimeException ignored) {
-            try {
-                Method method = type.getMethod("setDamage", Integer.class);
-                method.invoke(meta, damage);
-                return true;
-            } catch (ReflectiveOperationException | RuntimeException ignoredAgain) {
-                return false;
-            }
-        }
     }
 
     private boolean isExtendedUiEnabled(UUID viewerId) {

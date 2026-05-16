@@ -3,6 +3,7 @@ package cc.theends6.sfx.internal.configurable;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
+import cc.theends6.sfx.internal.block.SfxAnchoredInteraction;
 import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
@@ -13,11 +14,17 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
+import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
+import cc.theends6.sfx.internal.ui.SfxUiItems;
 import cc.theends6.sfx.internal.util.ItemBuilder;
+import cc.theends6.sfx.internal.util.SfxBlockDrops;
+import cc.theends6.sfx.internal.util.SfxEventGuards;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
+import cc.theends6.sfx.internal.util.SfxInventorySlots;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,7 +44,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.IronGolem;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Wither;
@@ -53,7 +59,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -177,25 +182,18 @@ public final class SfxConfigurableMachineService implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onInteract(PlayerInteractEvent event) {
-        if (event.getAction().isLeftClick() || event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND || event.getPlayer().isSneaking()) {
+        if (event.getAction().isLeftClick() || event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) {
             return;
         }
-        Block clicked = event.getClickedBlock();
-        if (clicked == null) {
+        SfxAnchoredInteraction interaction = SfxAnchoredInteraction.resolve(event, blockData);
+        if (interaction == null || !definitions.containsKey(interaction.instance().typeId())) {
             return;
         }
-        SfxAnchorRecord anchor = blockData.findAnchor(clicked.getLocation()).orElse(null);
-        if (anchor == null) {
-            return;
-        }
-        SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-        if (instance == null || !definitions.containsKey(instance.typeId())) {
-            return;
-        }
+        SfxBlockInstanceRecord instance = interaction.instance();
         if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
-        event.setCancelled(true);
+        SfxEventGuards.denyBlockAndItemUse(event);
         runtime.executeForPlayer(event.getPlayer(), () -> openMachine(event.getPlayer(), instance));
     }
 
@@ -1120,10 +1118,7 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private void setSlots(Inventory inventory, Material material, int... slots) {
-        ItemStack filler = ItemBuilder.of(material).name(" ").build();
-        for (int slot : slots) {
-            inventory.setItem(slot, filler);
-        }
+        SfxInventoryPainter.setSlots(inventory, material, slots);
     }
 
     private ItemStack representativeFuelIcon(SfxConfigurableMachineDefinition definition) {
@@ -1134,16 +1129,10 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private ItemStack namedIcon(ItemStack base, String name, String... lore) {
-        ItemStack item = base == null || base.getType().isAir() ? new ItemStack(Material.STONE) : base.clone();
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.displayName(Text.mm(name));
-            if (lore != null && lore.length > 0) {
-                meta.lore(Text.lore(lore));
-            }
-            item.setItemMeta(meta);
-        }
-        return item;
+        return SfxUiItems.named(
+                base == null || base.getType().isAir() ? new ItemStack(Material.STONE) : base,
+                Text.mm(name),
+                lore == null ? List.of() : Text.lore(lore));
     }
 
     private ItemStack assemblerStatusItem(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
@@ -1151,19 +1140,16 @@ public final class SfxConfigurableMachineService implements Listener {
         boolean paused = working && !state.enabled();
         boolean hasMaterials = hasAssemblerMaterials(state, definition);
         boolean noPower = state.enabled() && (working || hasMaterials) && state.storedEnergy() < definition.energyPerAction();
-        Material material = paused
-                ? Material.RED_STAINED_GLASS_PANE
+        SfxMachineStatusKey statusKey = paused
+                ? SfxMachineStatusKey.PAUSED
                 : working
-                        ? definition.headMaterial()
-                        : noPower ? Material.RED_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE;
-        Component name = paused
-                ? localization.component("configurable-ui.assembler.paused.name", "<yellow>Paused</yellow>")
-                : working
-                        ? localization.component("electric-ui.progress.name", "<yellow>Working</yellow>")
+                        ? SfxMachineStatusKey.WORKING
                         : noPower
-                                ? localization.component("electric-ui.no-power.name", "<red>No Power</red>")
-                                : localization.component("electric-ui.idle.name", "<gray>Idle</gray>");
-        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(material, name)
+                                ? SfxMachineStatusKey.NO_POWER
+                                : state.enabled() ? SfxMachineStatusKey.IDLE : SfxMachineStatusKey.DISABLED;
+
+        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(statusKey)
+                .material(working && !paused ? definition.headMaterial() : null)
                 .energy(state.storedEnergy(), definition.capacity())
                 .consumption(definition.energyPerAction())
                 .extraLore(localization.component("configurable-ui.assembler.work-time", "<gray>Work time: {time}</gray>", Map.of("time", statusIcons.formatTimeLeft(ASSEMBLER_WORK_TICKS))))
@@ -1171,15 +1157,16 @@ public final class SfxConfigurableMachineService implements Listener {
         if (working) {
             int remainingTicks = Math.max(0, state.fuelTotalTicks() - state.fuelProgressTicks());
             view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), remainingTicks, !paused)
-                    .statusLore(paused
+                    .includeDefaultStatusLore(false)
+                .statusLore(paused
                             ? localization.component("configurable-ui.assembler.paused.lore", "<gray>Enable this assembler to continue.</gray>")
                             : localization.component("configurable-ui.assembler.working.lore", "<gray>Assembling entity structure.</gray>"));
-        } else if (noPower) {
-            view.statusLore(localization.component("electric-ui.no-power.lore", "<gray>Charge this machine to continue.</gray>"));
+            if (paused) {
+                view.name(localization.component("configurable-ui.assembler.paused.name", "<yellow>Paused</yellow>"));
+            }
         } else if (!state.enabled()) {
-            view.statusLore(localization.component("configurable-ui.assembler.disabled.lore", "<gray>This assembler is disabled.</gray>"));
-        } else {
-            view.statusLore(localization.component("electric-ui.idle.lore", "<gray>Waiting for input.</gray>"));
+            view.includeDefaultStatusLore(false)
+                .statusLore(localization.component("configurable-ui.assembler.disabled.lore", "<gray>This assembler is disabled.</gray>"));
         }
         return statusIcons.render(view.build());
     }
@@ -1187,22 +1174,18 @@ public final class SfxConfigurableMachineService implements Listener {
     private ItemStack reactorProgressItem(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
         boolean active = state.hasActiveFuel();
         boolean outputBlocked = isReactorOutputBlocked(definition, state);
-        ItemStack icon = outputBlocked
-                ? new ItemStack(Material.RED_STAINED_GLASS_PANE)
-                : active
-                        ? (definition.id().equals("sf:netherstar_reactor") ? new ItemStack(Material.NETHER_STAR) : items.create("sf:lava_crystal"))
-                        : new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        Component name = outputBlocked
-                ? localization.component("electric-ui.blocked.name", "<red>Blocked</red>")
-                : active
-                        ? localization.component("configurable-ui.reactor.progress.name", "<yellow>Reactor Status</yellow>")
-                        : localization.component("electric-ui.idle.name", "<gray>Idle</gray>");
+        SfxMachineStatusKey statusKey = outputBlocked
+                ? SfxMachineStatusKey.BLOCKED_OUTPUT
+                : active ? SfxMachineStatusKey.WORKING : SfxMachineStatusKey.IDLE;
+        ItemStack activeIcon = definition.id().equals("sf:netherstar_reactor") ? new ItemStack(Material.NETHER_STAR) : items.create("sf:lava_crystal");
         SfxConfigurableMachineDefinition.ReactorFuel activeFuel = fuelByKey(definition, state.activeFuelKey());
         String byproduct = activeFuel == null || activeFuel.output() == null
                 ? localization.text("configurable-ui.none", "None")
                 : stackDisplayName(activeFuel.output());
         int fuelRemainingPercent = fuelRemainingPercent(state);
-        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(icon, name)
+        SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(statusKey)
+                .icon(active && !outputBlocked ? activeIcon : null)
+                .name(active && !outputBlocked ? localization.component("configurable-ui.reactor.progress.name", "<yellow>Reactor Status</yellow>") : null)
                 .energy(state.storedEnergy(), definition.capacity())
                 .generation(definition.energyPerTick())
                 .extraLore(localization.component("configurable-ui.reactor.progress.nuclear-fuel", "<gray>Nuclear Fuel: {percent}%</gray>", Map.of("percent", fuelRemainingPercent)))
@@ -1212,43 +1195,16 @@ public final class SfxConfigurableMachineService implements Listener {
                 .extraLore(localization.component("configurable-ui.reactor.progress.ticks", "<gray>Progress ticks: {current}/{total}</gray>", Map.of("current", state.fuelProgressTicks(), "total", state.fuelTotalTicks())))
                 .extraLore(localization.component("configurable-ui.reactor.progress.coolant-ticks", "<gray>Coolant ticks: {current}/{total}</gray>", Map.of("current", state.coolantProgressTicks(), "total", state.coolantTotalTicks())));
         if (outputBlocked) {
-            view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), 0, false)
-                    .statusLore(localization.component("electric-ui.blocked.lore", "<gray>The output is full. Free a slot to commit the finished item.</gray>"));
+            view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), 0, false);
         } else if (active) {
             view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), Math.max(0, state.fuelTotalTicks() - state.fuelProgressTicks()), true)
-                    .statusLore(localization.component("configurable-ui.reactor.progress.working", "<gray>Reactor is running.</gray>"));
+                    .includeDefaultStatusLore(false)
+                .statusLore(localization.component("configurable-ui.reactor.progress.working", "<gray>Reactor is running.</gray>"));
         } else {
-            view.statusLore(localization.component("configurable-ui.reactor.progress.idle", "<gray>Waiting for fuel and coolant.</gray>"));
+            view.includeDefaultStatusLore(false)
+                .statusLore(localization.component("configurable-ui.reactor.progress.idle", "<gray>Waiting for fuel and coolant.</gray>"));
         }
         return statusIcons.render(view.build());
-    }
-
-    private Component progressBarLine(int current, int total) {
-        int segments = 20;
-        int filled = total <= 0 ? 0 : Math.max(0, Math.min(segments, (int) Math.round(current * segments / (double) total)));
-        StringBuilder bar = new StringBuilder("<dark_gray>[</dark_gray>");
-        for (int i = 0; i < segments; i++) {
-            bar.append(i < filled ? "<green>|</green>" : "<gray>|</gray>");
-        }
-        bar.append("<dark_gray>]</dark_gray>");
-        return Text.mm(bar.toString());
-    }
-
-    private void applyProgressDamage(ItemStack stack, int current, int total) {
-        if (total <= 0) {
-            return;
-        }
-        ItemMeta meta = stack.getItemMeta();
-        if (!(meta instanceof Damageable damageable)) {
-            return;
-        }
-        int maxDamage = Math.max(1, stack.getType().getMaxDurability());
-        if (maxDamage <= 1) {
-            return;
-        }
-        double ratio = Math.max(0.0D, Math.min(1.0D, current / (double) total));
-        damageable.setDamage(Math.max(0, Math.min(maxDamage - 1, maxDamage - 1 - (int) Math.round(ratio * (maxDamage - 1)))));
-        stack.setItemMeta(meta);
     }
 
     private String stackDisplayName(SfxElectricStack stack) {
@@ -1573,10 +1529,7 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private void fill(Inventory inventory, Material material) {
-        ItemStack filler = ItemBuilder.of(material).name(" ").build();
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            inventory.setItem(slot, filler);
-        }
+        SfxInventoryPainter.fill(inventory, SfxUiItems.blankPane(material));
     }
 
     private int[] editableInputSlots(SfxConfigurableMachineHolder.PanelType panelType) {
@@ -1601,51 +1554,7 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private boolean moveShiftClickedStack(Inventory inventory, ItemStack current, int[] targetSlots, SfxConfigurableMachineDefinition definition) {
-        if (current == null || current.getType().isAir()) {
-            return false;
-        }
-        int original = current.getAmount();
-        int remaining = current.getAmount();
-        for (int slot : targetSlots) {
-            if (!isValidInputItem(slot, current, definition)) {
-                continue;
-            }
-            ItemStack existing = inventory.getItem(slot);
-            if (existing == null || existing.getType().isAir() || !existing.isSimilar(current)) {
-                continue;
-            }
-            int room = existing.getMaxStackSize() - existing.getAmount();
-            if (room <= 0) {
-                continue;
-            }
-            int moved = Math.min(room, remaining);
-            existing.setAmount(existing.getAmount() + moved);
-            remaining -= moved;
-            if (remaining <= 0) {
-                current.setAmount(0);
-                return true;
-            }
-        }
-        for (int slot : targetSlots) {
-            if (!isValidInputItem(slot, current, definition)) {
-                continue;
-            }
-            ItemStack existing = inventory.getItem(slot);
-            if (existing != null && !existing.getType().isAir()) {
-                continue;
-            }
-            int moved = Math.min(current.getMaxStackSize(), remaining);
-            ItemStack inserted = current.clone();
-            inserted.setAmount(moved);
-            inventory.setItem(slot, inserted);
-            remaining -= moved;
-            if (remaining <= 0) {
-                current.setAmount(0);
-                return true;
-            }
-        }
-        current.setAmount(remaining);
-        return remaining < original;
+        return SfxInventorySlots.moveStackToSlots(inventory, targetSlots, current, (slot, stack) -> isValidInputItem(slot, stack, definition));
     }
 
     private boolean isValidInputItem(SfxConfigurableMachineHolder.PanelType panelType, int slot, ItemStack item, SfxConfigurableMachineDefinition definition) {
@@ -1701,15 +1610,10 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private void dropPluginBlock(Block block, String typeId) {
-        Item dropped = block.getWorld().dropItem(block.getLocation().add(0.5D, 0.5D, 0.5D), items.create(typeId));
-        dropped.setPickupDelay(0);
+        SfxBlockDrops.dropPluginBlock(block, items, typeId);
     }
 
     private void dropStack(Block block, SfxElectricStack stack) {
-        if (stack == null) {
-            return;
-        }
-        Item dropped = block.getWorld().dropItem(block.getLocation().add(0.5D, 0.5D, 0.5D), stack.toItemStack(items));
-        dropped.setPickupDelay(0);
+        SfxBlockDrops.dropStack(block, items, stack);
     }
 }

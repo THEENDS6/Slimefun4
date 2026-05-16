@@ -1,7 +1,7 @@
 package cc.theends6.sfx.internal.energy;
 
 import cc.theends6.sfx.api.item.SfxItems;
-import cc.theends6.sfx.internal.block.SfxAnchorRecord;
+import cc.theends6.sfx.internal.block.SfxAnchoredInteraction;
 import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
@@ -16,7 +16,6 @@ import java.util.Objects;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -58,18 +57,11 @@ public final class SfxMultimeterListener implements Listener {
         if (event.getHand() != EquipmentSlot.HAND || event.getAction().isLeftClick()) {
             return;
         }
-        Block clicked = event.getClickedBlock();
-        if (clicked == null) {
+        SfxAnchoredInteraction interaction = SfxAnchoredInteraction.resolve(event, blockData);
+        if (interaction == null) {
             return;
         }
-        SfxAnchorRecord anchor = blockData.findAnchor(clicked.getLocation()).orElse(null);
-        if (anchor == null) {
-            return;
-        }
-        SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-        if (instance == null) {
-            return;
-        }
+        SfxBlockInstanceRecord instance = interaction.instance();
         Player player = event.getPlayer();
         if (isMultimeter(player.getInventory().getItemInMainHand())) {
             event.setCancelled(true);

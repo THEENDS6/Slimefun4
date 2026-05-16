@@ -5,6 +5,7 @@ import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.energy.SfxFuelBurnTimeBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
+import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
@@ -40,7 +41,6 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.Lightable;
 import org.bukkit.block.data.Waterlogged;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -169,18 +169,12 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (event.getAction().isLeftClick()) {
             return;
         }
-        if (event.getPlayer().isSneaking()) {
+        SfxAnchoredInteraction interaction = SfxAnchoredInteraction.resolve(event, blockData);
+        if (interaction == null) {
             return;
         }
-        Block clicked = event.getClickedBlock();
-        if (clicked == null) {
-            return;
-        }
-        Optional<SfxAnchorRecord> anchor = blockData.findAnchor(clicked.getLocation());
-        if (anchor.isEmpty()) {
-            return;
-        }
-        String typeId = instanceType(anchor.get().instanceId());
+        Block clicked = interaction.block();
+        String typeId = interaction.instance().typeId();
         if (typeId != null && SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
@@ -1141,9 +1135,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private void dropPluginBlock(Block block, String typeId) {
-        ItemStack item = items.create(typeId);
-        Item dropped = block.getWorld().dropItem(block.getLocation().add(0.5, 0.5, 0.5), item);
-        dropped.setPickupDelay(0);
+        SfxBlockDrops.dropPluginBlock(block, items, typeId);
     }
 
     private void dropStoredContents(Block block) {
@@ -1155,8 +1147,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             if (content == null || content.getType().isAir()) {
                 continue;
             }
-            Item dropped = block.getWorld().dropItem(block.getLocation().add(0.5, 0.5, 0.5), content.clone());
-            dropped.setPickupDelay(0);
+            SfxBlockDrops.dropItem(block, content.clone());
         }
         inventory.clear();
     }

@@ -6,10 +6,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class SfxEnergyNodeState {
     private static final int SCHEMA = 2;
     private static final int LEGACY_SCHEMA = 1;
+    private static final Logger LOGGER = Logger.getLogger(SfxEnergyNodeState.class.getName());
 
     private final SfxElectricStack[] inputs = new SfxElectricStack[2];
     private final SfxElectricStack[] outputs = new SfxElectricStack[2];
@@ -30,6 +33,7 @@ public final class SfxEnergyNodeState {
         try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(blob))) {
             int schema = input.readInt();
             if (schema != SCHEMA && schema != LEGACY_SCHEMA) {
+                LOGGER.warning("Unsupported energy node state schema " + schema + "; returning empty state to keep the node usable");
                 return empty();
             }
             SfxEnergyNodeState state = new SfxEnergyNodeState();
@@ -52,7 +56,8 @@ public final class SfxEnergyNodeState {
                 state.pendingOutput = schema == LEGACY_SCHEMA ? SfxElectricStack.read(input) : SfxElectricStack.readV2(input);
             }
             return state;
-        } catch (IOException | IllegalArgumentException ignored) {
+        } catch (IOException | IllegalArgumentException exception) {
+            LOGGER.log(Level.WARNING, "Failed to decode energy node state; returning empty state to keep the node usable", exception);
             return empty();
         }
     }

@@ -3,6 +3,7 @@ package cc.theends6.sfx.internal.listener;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.research.SfxResearchService;
+import cc.theends6.sfx.internal.util.SfxEventGuards;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.util.Objects;
@@ -69,9 +70,7 @@ public final class SfxItemUseDispatcher implements Listener {
 
         if (researches.researchForItem(itemId).isPresent()
                 && researches.findProfile(event.getPlayer().getUniqueId()).isEmpty()) {
-            event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
-            event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
-            event.setCancelled(true);
+            SfxEventGuards.denyBlockAndItemUse(event);
             event.getPlayer().sendMessage(Text.prefixed(
                     org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(getClass()),
                     localization.text("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")
@@ -80,9 +79,7 @@ public final class SfxItemUseDispatcher implements Listener {
         }
 
         if (!researches.canUse(event.getPlayer(), itemId)) {
-            event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
-            event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
-            event.setCancelled(true);
+            SfxEventGuards.denyBlockAndItemUse(event);
             event.getPlayer().sendMessage(Text.prefixed(
                     org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(getClass()),
                     localization.text("messages.not-researched-item", "<red>You have not unlocked this item yet.</red>")

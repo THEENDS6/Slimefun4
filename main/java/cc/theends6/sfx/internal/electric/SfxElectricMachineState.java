@@ -7,11 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class SfxElectricMachineState {
     static final int MAX_INPUTS = 7;
     static final int MAX_OUTPUTS = 7;
     private static final int SCHEMA = 11;
+    private static final Logger LOGGER = Logger.getLogger(SfxElectricMachineState.class.getName());
 
     private final SfxElectricStack[] inputs = new SfxElectricStack[MAX_INPUTS];
     private final SfxElectricStack[] outputs = new SfxElectricStack[MAX_OUTPUTS];
@@ -138,6 +141,7 @@ public final class SfxElectricMachineState {
                 return state;
             }
             if (schema != SCHEMA && schema != 9 && schema != 10) {
+                LOGGER.warning("Unsupported electric machine state schema " + schema + "; returning empty state to keep the machine usable");
                 return empty();
             }
             SfxElectricMachineState state = new SfxElectricMachineState();
@@ -164,7 +168,8 @@ public final class SfxElectricMachineState {
                 readStacksV2(input, state.specialOutputs);
             }
             return state;
-        } catch (IOException | IllegalArgumentException ignored) {
+        } catch (IOException | IllegalArgumentException exception) {
+            LOGGER.log(Level.WARNING, "Failed to decode electric machine state; returning empty state to keep the machine usable", exception);
             return empty();
         }
     }

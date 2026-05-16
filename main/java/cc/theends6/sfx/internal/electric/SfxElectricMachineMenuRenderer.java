@@ -2,6 +2,8 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
+import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
+import cc.theends6.sfx.internal.ui.SfxUiItems;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.util.List;
 import java.util.UUID;
@@ -9,7 +11,6 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 final class SfxElectricMachineMenuRenderer {
     private static final int DISPLAY_SLOT = 22;
@@ -50,25 +51,12 @@ final class SfxElectricMachineMenuRenderer {
                 Material.ORANGE_STAINED_GLASS_PANE,
                 localization.component("electric-ui.output.name", "<gold>Output</gold>"),
                 List.of(localization.component("electric-ui.output.lore", "<gray>Take finished items here.</gray>")));
-        for (int slot : BORDER) {
-            inventory.setItem(slot, filler);
-        }
-        for (int slot : BORDER_IN) {
-            inventory.setItem(slot, inputBorder);
-        }
-        for (int slot : BORDER_OUT) {
-            inventory.setItem(slot, outputBorder);
-        }
+        SfxInventoryPainter.setSlots(inventory, filler, BORDER);
+        SfxInventoryPainter.setSlots(inventory, inputBorder, BORDER_IN);
+        SfxInventoryPainter.setSlots(inventory, outputBorder, BORDER_OUT);
     }
 
     private ItemStack namedItem(Material material, Component name, List<Component> lore) {
-        ItemStack stack = new ItemStack(material);
-        ItemMeta meta = stack.getItemMeta();
-        if (meta != null) {
-            meta.displayName(name);
-            meta.lore(lore);
-            stack.setItemMeta(meta);
-        }
-        return stack;
+        return SfxUiItems.named(material, name, lore);
     }
 }

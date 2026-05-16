@@ -1,5 +1,6 @@
 package cc.theends6.sfx.internal.util;
 
+import java.util.function.BiPredicate;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -17,12 +18,20 @@ public final class SfxInventorySlots {
     }
 
     public static boolean moveStackToSlots(Inventory inventory, int[] targetSlots, ItemStack current) {
+        return moveStackToSlots(inventory, targetSlots, current, (slot, stack) -> true);
+    }
+
+    public static boolean moveStackToSlots(Inventory inventory, int[] targetSlots, ItemStack current, BiPredicate<Integer, ItemStack> validator) {
         if (inventory == null || targetSlots == null || current == null || current.getType().isAir()) {
             return false;
         }
+        BiPredicate<Integer, ItemStack> safeValidator = validator == null ? (slot, stack) -> true : validator;
         int original = current.getAmount();
         int remaining = current.getAmount();
         for (int slot : targetSlots) {
+            if (!safeValidator.test(slot, current)) {
+                continue;
+            }
             ItemStack existing = inventory.getItem(slot);
             if (existing == null || existing.getType().isAir() || !existing.isSimilar(current)) {
                 continue;
@@ -40,6 +49,9 @@ public final class SfxInventorySlots {
             }
         }
         for (int slot : targetSlots) {
+            if (!safeValidator.test(slot, current)) {
+                continue;
+            }
             ItemStack existing = inventory.getItem(slot);
             if (existing != null && !existing.getType().isAir()) {
                 continue;

@@ -5,6 +5,7 @@ import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.Objects;
 import java.util.Set;
 import org.bukkit.Location;
@@ -13,7 +14,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Wither;
 import org.bukkit.entity.WitherSkull;
 import org.bukkit.event.block.BlockBurnEvent;
@@ -473,8 +473,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     }
 
     private void dropPluginBlock(Block block, String typeId) {
-        Item dropped = block.getWorld().dropItem(block.getLocation().add(0.5, 0.5, 0.5), items.create(typeId));
-        dropped.setPickupDelay(0);
+        SfxBlockDrops.dropPluginBlock(block, items, typeId);
     }
 
     private void dropStoredContents(Block block) {
@@ -486,8 +485,7 @@ public final class SfxPlaceableBlockListener implements Listener {
             if (content == null || content.getType().isAir()) {
                 continue;
             }
-            Item dropped = block.getWorld().dropItem(block.getLocation().add(0.5, 0.5, 0.5), content.clone());
-            dropped.setPickupDelay(0);
+            SfxBlockDrops.dropItem(block, content.clone());
         }
         inventory.clear();
     }

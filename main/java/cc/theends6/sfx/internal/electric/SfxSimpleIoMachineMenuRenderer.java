@@ -2,6 +2,8 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
+import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
+import cc.theends6.sfx.internal.ui.SfxUiItems;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.util.List;
 import java.util.UUID;
@@ -9,7 +11,6 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 final class SfxSimpleIoMachineMenuRenderer {
     private static final int STATUS_SLOT = 4;
@@ -41,23 +42,12 @@ final class SfxSimpleIoMachineMenuRenderer {
 
     private void fillBackground(Inventory inventory) {
         ItemStack filler = namedItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "), List.of());
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            inventory.setItem(slot, filler);
-        }
-        for (int slot : IO_SLOTS) {
-            inventory.setItem(slot, null);
-        }
+        SfxInventoryPainter.fill(inventory, filler);
+        SfxInventoryPainter.clearSlots(inventory, IO_SLOTS);
         inventory.setItem(STATUS_SLOT, null);
     }
 
     private ItemStack namedItem(Material material, Component name, List<Component> lore) {
-        ItemStack stack = new ItemStack(material);
-        ItemMeta meta = stack.getItemMeta();
-        if (meta != null) {
-            meta.displayName(name);
-            meta.lore(lore);
-            stack.setItemMeta(meta);
-        }
-        return stack;
+        return SfxUiItems.named(material, name, lore);
     }
 }
