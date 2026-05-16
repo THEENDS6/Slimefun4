@@ -18,6 +18,25 @@ recipes:
       - empty
     outputs:
       - sf:cargo_node_input*2
+  - id: custom:cargo_node_input_advanced
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 2
+    source: slimefunx
+    runtime: true
+    machine: sf:enhanced_crafting_table
+    matrix:
+      - empty
+      - sf:cargo_motor
+      - empty
+      - sf:cobalt_ingot
+      - sf:cargo_node_input
+      - sf:cobalt_ingot
+      - empty
+      - sf:cargo_motor
+      - empty
+    outputs:
+      - sf:cargo_node_input_advanced
   - id: custom:cargo_node_output
     recipe-type: sf:enhanced_crafting_table
     operation: shaped

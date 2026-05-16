@@ -4,6 +4,7 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
+import cc.theends6.sfx.internal.cargo.SfxCargoService;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.Objects;
@@ -56,6 +57,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxElectricMachineService electricMachines;
     private final SfxConfigurableMachineService configurableMachines;
     private final SfxEnergyService energyService;
+    private final SfxCargoService cargoService;
     private final SfxRuntime runtime;
 
     public SfxPlaceableBlockListener(
@@ -65,6 +67,7 @@ public final class SfxPlaceableBlockListener implements Listener {
             SfxElectricMachineService electricMachines,
             SfxConfigurableMachineService configurableMachines,
             SfxEnergyService energyService,
+            SfxCargoService cargoService,
             SfxRuntime runtime
     ) {
         this.items = Objects.requireNonNull(items, "items");
@@ -73,6 +76,7 @@ public final class SfxPlaceableBlockListener implements Listener {
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
         this.configurableMachines = Objects.requireNonNull(configurableMachines, "configurableMachines");
         this.energyService = Objects.requireNonNull(energyService, "energyService");
+        this.cargoService = Objects.requireNonNull(cargoService, "cargoService");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
     }
 
@@ -83,6 +87,10 @@ public final class SfxPlaceableBlockListener implements Listener {
                 if (marker.flags().contains("placeable-block")) {
                     event.setCancelled(true);
                 }
+                return;
+            }
+            if (cargoService.supportsType(marker.itemId()) && !cargoService.canPlace(marker.itemId(), event)) {
+                event.setCancelled(true);
                 return;
             }
             if (blockData.findAnchor(event.getBlockPlaced().getLocation()).isPresent()) {
@@ -454,6 +462,10 @@ public final class SfxPlaceableBlockListener implements Listener {
             energyService.destroyAnchoredBlock(block, instanceId, typeId);
             return;
         }
+        if (cargoService.supportsType(typeId)) {
+            cargoService.destroyAnchoredBlock(block, instanceId, typeId);
+            return;
+        }
         dropStoredContents(block);
         dropPluginBlock(block, typeId);
         blockData.unregisterAt(block.getLocation());
@@ -463,7 +475,8 @@ public final class SfxPlaceableBlockListener implements Listener {
         if (basicMachines.supportsType(itemId)
                 || electricMachines.supportsType(itemId)
                 || configurableMachines.supportsType(itemId)
-                || energyService.supportsType(itemId)) {
+                || energyService.supportsType(itemId)
+                || cargoService.supportsType(itemId)) {
             return true;
         }
         

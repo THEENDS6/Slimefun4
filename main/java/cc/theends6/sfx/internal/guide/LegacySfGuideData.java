@@ -528,6 +528,7 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:debug_fish", "guide:sf:misc");
     map.put("sf:cargo_node", "guide:sf:cargo");
     map.put("sf:cargo_node_input", "guide:sf:cargo");
+    map.put("sf:cargo_node_input_advanced", "guide:sf:cargo");
     map.put("sf:cargo_node_output", "guide:sf:cargo");
     map.put("sf:cargo_node_output_advanced", "guide:sf:cargo");
     map.put("sf:organic_food", "guide:sf:misc");
