@@ -97,6 +97,7 @@ machines:
     sleeping-probe-interval-ticks: 100
 
 technical-gadgets:
+  cleanup-legacy-attribute-base-values: true
   
   
   rechargeable:
@@ -120,6 +121,18 @@ technical-gadgets:
       energy-consumption-per-tick: 20
       energy-loss: 0.50
 
+
+cargo:
+  visualizer:
+    enabled: true
+    particle: dust
+    include-manager: false
+    view-distance-squared: 1024
+    dust:
+      red: 255
+      green: 0
+      blue: 0
+      size: 1.0
 
 floating-text:
   

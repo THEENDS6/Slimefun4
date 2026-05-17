@@ -31,6 +31,15 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxVirtualContainerService implements Listener {
+    public record SlotTake(int slot, ItemStack template, int amount) {
+    }
+
+    public record PlannedStack(ItemStack stack, List<SlotTake> takes) {
+        public boolean isEmpty() {
+            return stack == null || stack.getType().isAir() || stack.getAmount() <= 0 || takes == null || takes.isEmpty();
+        }
+    }
+
     private static final long EXTERNAL_SYNC_INTERVAL = 10L;
 
     private final JavaPlugin plugin;
@@ -52,7 +61,7 @@ public final class SfxVirtualContainerService implements Listener {
         SfxVirtualContainerKey key = keyForInventory(inventory, location).orElseGet(() -> SfxVirtualContainerKey.single(location));
         SfxVirtualContainer container = containers.computeIfAbsent(key, ignored -> new SfxVirtualContainer(key, inventory.getSize()));
         container.cargoAttached(true);
-        hydrateIfNeeded(container, inventory);
+        reconcileBeforeAccess(container, inventory);
         return Optional.of(container);
     }
 
@@ -74,10 +83,10 @@ public final class SfxVirtualContainerService implements Listener {
 
     public void hydrateExternalBeforeLogic() {
         for (SfxVirtualContainer container : containers.values()) {
-            if (!container.externalDirty() && !container.viewerActive()) {
+            if (!container.externalDirty() && !container.mirrorDirty() && container.revision() != 0L) {
                 continue;
             }
-            inventoryFor(container).ifPresent(inventory -> hydrate(container, inventory));
+            inventoryFor(container).ifPresent(inventory -> reconcileBeforeAccess(container, inventory));
         }
     }
 
@@ -86,9 +95,9 @@ public final class SfxVirtualContainerService implements Listener {
             if (!container.mirrorDirty()) {
                 continue;
             }
-            if (!container.viewerActive() && !container.externalActive()) {
-                continue;
-            }
+            
+            
+            
             inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory));
         }
     }
@@ -97,6 +106,176 @@ public final class SfxVirtualContainerService implements Listener {
         for (SfxVirtualContainer container : containers.values()) {
             inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory));
         }
+    }
+
+
+    public PlannedStack planFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
+        if (container == null) {
+            return new PlannedStack(null, List.of());
+        }
+        ItemStack[] mirror = container.rawMirror();
+        for (int i = 0; i < mirror.length; i++) {
+            ItemStack stack = mirror[i];
+            if (isEmpty(stack) || (filter != null && !filter.test(stack))) {
+                continue;
+            }
+            int amount = Math.max(1, Math.min(Math.min(maxAmount, stack.getMaxStackSize()), stack.getAmount()));
+            ItemStack planned = stack.clone();
+            planned.setAmount(amount);
+            ItemStack template = stack.clone();
+            template.setAmount(1);
+            return new PlannedStack(planned, List.of(new SlotTake(i, template, amount)));
+        }
+        return new PlannedStack(null, List.of());
+    }
+
+    public List<PlannedStack> planBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
+        List<PlannedStack> result = new ArrayList<>();
+        if (container == null || maxItems <= 0) {
+            return result;
+        }
+        int remaining = Math.min(128, maxItems);
+        Map<String, ItemStack> grouped = new LinkedHashMap<>();
+        Map<String, List<SlotTake>> takes = new LinkedHashMap<>();
+        ItemStack[] mirror = container.rawMirror();
+        for (int i = 0; i < mirror.length && remaining > 0; i++) {
+            ItemStack stack = mirror[i];
+            if (isEmpty(stack) || (filter != null && !filter.test(stack))) {
+                continue;
+            }
+            String key = itemKey(stack);
+            if (!grouped.containsKey(key) && grouped.size() >= Math.max(1, maxDistinctTypes)) {
+                continue;
+            }
+            int amount = Math.min(stack.getAmount(), remaining);
+            ItemStack batchStack = grouped.computeIfAbsent(key, ignored -> {
+                ItemStack clone = stack.clone();
+                clone.setAmount(0);
+                return clone;
+            });
+            batchStack.setAmount(batchStack.getAmount() + amount);
+            ItemStack template = stack.clone();
+            template.setAmount(1);
+            takes.computeIfAbsent(key, ignored -> new ArrayList<>()).add(new SlotTake(i, template, amount));
+            remaining -= amount;
+            if (!allowMultipleSlots) {
+                break;
+            }
+        }
+        for (Map.Entry<String, ItemStack> entry : grouped.entrySet()) {
+            result.add(new PlannedStack(entry.getValue(), List.copyOf(takes.getOrDefault(entry.getKey(), List.of()))));
+        }
+        return result;
+    }
+
+    public boolean canRemovePlanned(SfxVirtualContainer container, List<SlotTake> takes) {
+        if (container == null || takes == null || takes.isEmpty()) {
+            return false;
+        }
+        ItemStack[] mirror = container.rawMirror();
+        for (SlotTake take : takes) {
+            if (take == null || take.amount() <= 0 || take.slot() < 0 || take.slot() >= mirror.length) {
+                return false;
+            }
+            ItemStack stack = mirror[take.slot()];
+            if (isEmpty(stack) || !stack.isSimilar(take.template()) || stack.getAmount() < take.amount()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean removePlanned(SfxVirtualContainer container, List<SlotTake> takes) {
+        if (!canRemovePlanned(container, takes)) {
+            return false;
+        }
+        ItemStack[] mirror = container.rawMirror();
+        for (SlotTake take : takes) {
+            ItemStack stack = mirror[take.slot()];
+            stack.setAmount(stack.getAmount() - take.amount());
+            if (stack.getAmount() <= 0) {
+                mirror[take.slot()] = null;
+            }
+        }
+        container.mirrorDirty(true);
+        return true;
+    }
+
+    public ItemStack peekFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
+        if (container == null) {
+            return null;
+        }
+        ItemStack[] mirror = container.rawMirror();
+        for (ItemStack stack : mirror) {
+            if (isEmpty(stack) || (filter != null && !filter.test(stack))) {
+                continue;
+            }
+            int amount = Math.max(1, Math.min(Math.min(maxAmount, stack.getMaxStackSize()), stack.getAmount()));
+            ItemStack taken = stack.clone();
+            taken.setAmount(amount);
+            return taken;
+        }
+        return null;
+    }
+
+    public List<ItemStack> peekBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
+        List<ItemStack> result = new ArrayList<>();
+        if (container == null || maxItems <= 0) {
+            return result;
+        }
+        int remaining = Math.min(128, maxItems);
+        Map<String, ItemStack> grouped = new LinkedHashMap<>();
+        ItemStack[] mirror = container.rawMirror();
+        for (ItemStack stack : mirror) {
+            if (remaining <= 0) {
+                break;
+            }
+            if (isEmpty(stack) || (filter != null && !filter.test(stack))) {
+                continue;
+            }
+            String key = itemKey(stack);
+            if (!grouped.containsKey(key) && grouped.size() >= Math.max(1, maxDistinctTypes)) {
+                continue;
+            }
+            int amount = Math.min(stack.getAmount(), remaining);
+            ItemStack batchStack = grouped.computeIfAbsent(key, ignored -> {
+                ItemStack clone = stack.clone();
+                clone.setAmount(0);
+                return clone;
+            });
+            batchStack.setAmount(batchStack.getAmount() + amount);
+            remaining -= amount;
+            if (!allowMultipleSlots) {
+                break;
+            }
+        }
+        result.addAll(grouped.values());
+        return result;
+    }
+
+    public int removeSimilar(SfxVirtualContainer container, ItemStack template, int amount) {
+        if (container == null || isEmpty(template) || amount <= 0) {
+            return 0;
+        }
+        int remaining = amount;
+        ItemStack[] mirror = container.rawMirror();
+        for (int i = 0; i < mirror.length && remaining > 0; i++) {
+            ItemStack stack = mirror[i];
+            if (isEmpty(stack) || !stack.isSimilar(template)) {
+                continue;
+            }
+            int moved = Math.min(stack.getAmount(), remaining);
+            stack.setAmount(stack.getAmount() - moved);
+            remaining -= moved;
+            if (stack.getAmount() <= 0) {
+                mirror[i] = null;
+            }
+        }
+        int removed = amount - remaining;
+        if (removed > 0) {
+            container.mirrorDirty(true);
+        }
+        return removed;
     }
 
     public ItemStack withdrawFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
@@ -160,9 +339,13 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public ItemStack insert(SfxVirtualContainer container, ItemStack input, boolean smartFill) {
-        if (container == null || isEmpty(input)) {
+        if (container == null) {
             return input;
         }
+        if (isEmpty(input)) {
+            return null;
+        }
+        int originalAmount = input.getAmount();
         ItemStack remaining = input.clone();
         if (smartFill) {
             remaining = fillExisting(container.rawMirror(), remaining);
@@ -172,7 +355,8 @@ public final class SfxVirtualContainerService implements Listener {
             }
         }
         remaining = fillEmptyOrExisting(container.rawMirror(), remaining, !smartFill);
-        if (remaining.getAmount() != input.getAmount()) {
+        int remainingAmount = isEmpty(remaining) ? 0 : remaining.getAmount();
+        if (remainingAmount != originalAmount) {
             container.mirrorDirty(true);
         }
         return isEmpty(remaining) ? null : remaining;
@@ -260,8 +444,7 @@ public final class SfxVirtualContainerService implements Listener {
         }
         SfxVirtualContainer container = optional.get();
         container.viewerActive(true);
-        hydrate(container, inventory);
-        syncToWorld(container, inventory);
+        reconcileForViewerOpen(container, inventory);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -276,13 +459,17 @@ public final class SfxVirtualContainerService implements Listener {
             return;
         }
         SfxVirtualContainer container = optional.get();
-        hydrate(container, inventory);
+        if (container.mirrorDirty()) {
+            syncToWorld(container, inventory);
+        } else {
+            hydrate(container, inventory);
+        }
         container.viewerActive(false);
-        container.externalActive(true);
+        container.externalActive(false);
         container.externalDirty(false);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onInventoryMove(InventoryMoveItemEvent event) {
         markExternal(event.getSource());
         markExternal(event.getDestination());
@@ -316,11 +503,11 @@ public final class SfxVirtualContainerService implements Listener {
                     continue;
                 }
                 inventoryFor(container).ifPresent(inventory -> {
-                    if (container.externalDirty() || now - container.lastWorldSyncTick() >= EXTERNAL_SYNC_INTERVAL) {
+                    if (container.externalDirty() || container.mirrorDirty()) {
+                        reconcileBeforeAccess(container, inventory);
+                    } else if (now - container.lastWorldSyncTick() >= EXTERNAL_SYNC_INTERVAL && container.viewerActive()) {
+                        
                         hydrate(container, inventory);
-                        if (container.mirrorDirty()) {
-                            syncToWorld(container, inventory);
-                        }
                     }
                 });
             }
@@ -338,12 +525,44 @@ public final class SfxVirtualContainerService implements Listener {
                 : findRegistered(location);
         optional.ifPresent(container -> {
             container.externalActive(true);
+            if (container.mirrorDirty()) {
+                inventoryFor(container).ifPresent(target -> syncToWorld(container, target));
+            }
+            
+            
             container.externalDirty(true);
         });
     }
 
-    private void hydrateIfNeeded(SfxVirtualContainer container, Inventory inventory) {
-        if (container.revision() == 0L || container.externalDirty() || container.viewerActive()) {
+    private void reconcileForViewerOpen(SfxVirtualContainer container, Inventory inventory) {
+        if (container == null || inventory == null) {
+            return;
+        }
+        if (container.mirrorDirty()) {
+            syncToWorld(container, inventory);
+            return;
+        }
+        if (container.revision() == 0L || container.externalDirty() || container.externalActive()) {
+            hydrate(container, inventory);
+            return;
+        }
+        
+        syncToWorld(container, inventory);
+    }
+
+    private void reconcileBeforeAccess(SfxVirtualContainer container, Inventory inventory) {
+        if (container == null || inventory == null) {
+            return;
+        }
+        if (container.mirrorDirty()) {
+            syncToWorld(container, inventory);
+            return;
+        }
+        if (container.externalDirty()) {
+            hydrate(container, inventory);
+            return;
+        }
+        if (container.revision() == 0L) {
             hydrate(container, inventory);
         }
     }

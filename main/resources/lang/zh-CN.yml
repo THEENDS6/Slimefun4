@@ -2623,6 +2623,11 @@ items:
     lore:
     - ''
     - '&f运输输入管道'
+  sf.cargo_node_input_advanced:
+    name: '&6高级运输节点 &c(输入)'
+    lore:
+    - ''
+    - '&f高级运输输入管道'
   sf.cargo_node_output:
     name: '&7运输节点 &c(输出)'
     lore:
@@ -3801,3 +3806,167 @@ technical:
     mode:
       thrust: '<yellow>喷气鞋：推进模式</yellow>'
       assist: '<aqua>喷气鞋：助力模式</aqua>'
+
+cargo:
+  status:
+    no-nodes: '&c未找到运输节点'
+    multiple-regulators: '&c连接了多个运输调度器'
+    online: '&a状态：在线'
+  message:
+    manager-status: '&e运输网络：&f{status}'
+    manager-size: '&7主干：&f{backbone} &7接口：&f{terminals}'
+    manager-stats: '&7运输量：&f{minute}&7/分钟 &8| &7总计：&f{total}'
+    visualizer-state: '&7粒子显示：&f{state}'
+    visualizer-on: '&a开启'
+    visualizer-off: '&c关闭'
+    visualizer-disabled: '&c配置文件已禁用运输粒子显示。'
+    visualizer-toggled-on: '&7运输粒子：&a开启'
+    visualizer-toggled-off: '&7运输粒子：&c关闭'
+    connector-linked: '&a运输连接器已接入网络。'
+    connector-detached: '&c运输连接器未接入网络。'
+    recipe-selected: '&a已选择配方：&f{recipe}'
+    recipe-not-found: '&c没有找到该物品对应的原版有键配方。'
+    hold-sfx-item: '&c请手持一个 SFX 物品来选择增强/护甲配方目标。'
+  ui:
+    title:
+      input: '&c运输输入接口'
+      advanced-input: '&6高级运输输入接口'
+      output: '&c运输输出接口'
+      advanced-output: '&6高级运输输出接口'
+      vanilla-auto-crafter: '&a自动合成机（原版）'
+      enhanced-auto-crafter: '&a自动合成机（增强工作台）'
+      armor-auto-crafter: '&a自动合成机（护甲锻造台）'
+      trash-can: '&3垃圾桶'
+      generic: '&e运输'
+    items:
+      name: '&3物品'
+      lore:
+      - ''
+      - '&b放入你想加入黑/白名单的'
+      - '&b所有物品'
+    channel:
+      previous:
+        name: '&b上一个频道'
+        lore:
+        - ''
+        - '&e> 点击将频道 ID 减少 1'
+      current:
+        name: '&b频道 ID：&3{channel_display}'
+        lore: []
+      next:
+        name: '&b下一个频道'
+        lore:
+        - ''
+        - '&e> 点击将频道 ID 增加 1'
+    filter:
+      whitelist:
+        name: '&7类型：&r白名单'
+        lore:
+        - ''
+        - '&e> 点击切换为黑名单'
+      blacklist:
+        name: '&7类型：&8黑名单'
+        lore:
+        - ''
+        - '&e> 点击切换为白名单'
+    lore:
+      enabled:
+        name: '&7匹配 Lore：&2✔'
+      disabled:
+        name: '&7匹配 Lore：&4✘'
+      toggle-lore:
+      - ''
+      - '&e> 点击切换是否匹配 Lore'
+    smart-fill:
+      enabled:
+        name: '&7“智能填充”模式：&2✔'
+      disabled:
+        name: '&7“智能填充”模式：&4✘'
+      lore:
+      - ''
+      - '&e> 点击切换智能填充模式'
+      - ''
+      - '&f该模式会尝试让目标容器中'
+      - '&f指定物品保持固定数量。'
+    round-robin:
+      enabled:
+        name: '&7轮询模式：&2✔'
+      disabled:
+        name: '&7轮询模式：&4✘'
+      lore:
+      - ''
+      - '&e> 点击切换轮询模式'
+      - ''
+      - '&f该模式会让输入接口在'
+      - '&f匹配的输出接口之间轮流选择。'
+    multi-slot:
+      enabled:
+        name: '&7跨槽抽取：&2✔'
+      disabled:
+        name: '&7跨槽抽取：&4✘'
+      lore:
+      - ''
+      - '&e> 点击切换'
+      - ''
+      - '&f开启后，本接口每轮可以从'
+      - '&f源容器的多个槽位抽取物品。'
+    batch-limit:
+      name: '&7单次抽取上限：&b{limit} 个物品'
+      lore:
+      - ''
+      - '&e> 左键：切换到更低上限'
+      - '&e> 右键：切换到更高上限'
+      - ''
+      - '&f可选：&b128&7/&b64&7/&b16&7/&b4&7/&b1'
+    distribution:
+      sequential:
+        name: '&7分配：&f顺序'
+        lore:
+        - ''
+        - '&e> 左键：下一个模式'
+        - '&e> 右键：上一个模式'
+        - ''
+        - '&f顺序：按输出顺序填充。'
+        - '&f轮询：轮流选择目标。'
+        - '&f平均：基于配额/债务平均分配。'
+      round-robin:
+        name: '&7分配：&b轮询'
+        lore:
+        - ''
+        - '&e> 左键：下一个模式'
+        - '&e> 右键：上一个模式'
+        - ''
+        - '&f顺序：按输出顺序填充。'
+        - '&f轮询：轮流选择目标。'
+        - '&f平均：基于配额/债务平均分配。'
+      even:
+        name: '&7分配：&a平均'
+        lore:
+        - ''
+        - '&e> 左键：下一个模式'
+        - '&e> 右键：上一个模式'
+        - ''
+        - '&f顺序：按输出顺序填充。'
+        - '&f轮询：轮流选择目标。'
+        - '&f平均：基于配额/债务平均分配。'
+    priority:
+      name: '&e优先级：&f{priority} / 16'
+      lore:
+      - '&7更高优先级的输出接口会先接收物品。'
+      - '&e左键：&7+1'
+      - '&e右键：&7-1'
+      - '&eShift：&7±4'
+    auto-crafter:
+      enabled:
+        name: '&7启用：&2✔'
+        lore:
+        - ''
+        - '&e> 点击切换'
+      disabled:
+        name: '&7启用：&4✘'
+      recipe:
+        name: '&e已选择配方'
+        lore:
+        - '&7{recipe}'
+        - '&e潜行右键并手持目标物品来配置。'
+      none: '无'

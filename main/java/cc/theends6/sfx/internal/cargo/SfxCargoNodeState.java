@@ -15,10 +15,13 @@ final class SfxCargoNodeState {
 
     BlockFace attachedFace = BlockFace.NORTH;
     int channel = 0;
-    SfxCargoFilterMode filterMode = SfxCargoFilterMode.BLACKLIST;
-    boolean matchLore = false;
-    boolean smartFill = true;
-    SfxCargoDistributionMode distributionMode = SfxCargoDistributionMode.CLASSIC;
+    SfxCargoFilterMode filterMode = SfxCargoFilterMode.WHITELIST;
+    boolean matchLore = true;
+    boolean smartFill = false;
+    boolean roundRobin = false;
+    SfxCargoDistributionMode distributionMode = SfxCargoDistributionMode.SEQUENTIAL;
+    boolean allowMultipleSlots = true;
+    int batchLimit = 128;
     int maxItemsPerCycle = 128;
     int maxDistinctTypes = 8;
     int priority = 1;
@@ -33,7 +36,9 @@ final class SfxCargoNodeState {
             state.attachedFace = attachedFace;
         }
         if (type == SfxCargoComponentType.ADVANCED_INPUT_NODE) {
-            state.distributionMode = SfxCargoDistributionMode.EVEN;
+            state.distributionMode = SfxCargoDistributionMode.SEQUENTIAL;
+            state.allowMultipleSlots = true;
+            state.batchLimit = 128;
         }
         if (type == SfxCargoComponentType.ADVANCED_OUTPUT_NODE) {
             state.priority = 1;
@@ -62,6 +67,13 @@ final class SfxCargoNodeState {
                 state.enabled = input.readBoolean();
                 state.selectedRecipeKey = input.readUTF();
             }
+            if (version >= 3) {
+                state.roundRobin = input.readBoolean();
+                state.allowMultipleSlots = input.readBoolean();
+                state.batchLimit = normalizeBatchLimit(input.readInt());
+            } else {
+                state.batchLimit = normalizeBatchLimit(state.maxItemsPerCycle);
+            }
             int filterLength = input.readInt();
             state.filterItems = new ItemStack[FILTER_SIZE];
             for (int i = 0; i < filterLength; i++) {
@@ -89,7 +101,7 @@ final class SfxCargoNodeState {
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             try (DataOutputStream output = new DataOutputStream(buffer)) {
-                output.writeInt(2);
+                output.writeInt(3);
                 output.writeUTF(attachedFace.name());
                 output.writeInt(clamp(channel, 0, 15));
                 output.writeUTF(filterMode.name());
@@ -102,6 +114,9 @@ final class SfxCargoNodeState {
                 output.writeInt(Math.max(0, roundRobinCursor));
                 output.writeBoolean(enabled);
                 output.writeUTF(selectedRecipeKey == null ? "" : selectedRecipeKey);
+                output.writeBoolean(roundRobin);
+                output.writeBoolean(allowMultipleSlots);
+                output.writeInt(normalizeBatchLimit(batchLimit));
                 output.writeInt(filterItems.length);
                 for (ItemStack stack : filterItems) {
                     output.writeBoolean(stack != null && !stack.getType().isAir());
@@ -128,16 +143,55 @@ final class SfxCargoNodeState {
         try {
             return SfxCargoFilterMode.valueOf(raw);
         } catch (RuntimeException ignored) {
-            return SfxCargoFilterMode.BLACKLIST;
+            return SfxCargoFilterMode.WHITELIST;
         }
     }
 
     private static SfxCargoDistributionMode safeDistribution(String raw) {
+        if (raw == null || raw.isBlank() || "CLASSIC".equalsIgnoreCase(raw)) {
+            return SfxCargoDistributionMode.SEQUENTIAL;
+        }
         try {
             return SfxCargoDistributionMode.valueOf(raw);
         } catch (RuntimeException ignored) {
-            return SfxCargoDistributionMode.CLASSIC;
+            return SfxCargoDistributionMode.SEQUENTIAL;
         }
+    }
+
+    static int normalizeBatchLimit(int raw) {
+        if (raw >= 128) {
+            return 128;
+        }
+        if (raw >= 64) {
+            return 64;
+        }
+        if (raw >= 16) {
+            return 16;
+        }
+        if (raw >= 4) {
+            return 4;
+        }
+        return 1;
+    }
+
+    static int nextBatchLimit(int current, boolean reverse) {
+        int normalized = normalizeBatchLimit(current);
+        if (reverse) {
+            return switch (normalized) {
+                case 128 -> 1;
+                case 64 -> 128;
+                case 16 -> 64;
+                case 4 -> 16;
+                default -> 4;
+            };
+        }
+        return switch (normalized) {
+            case 128 -> 64;
+            case 64 -> 16;
+            case 16 -> 4;
+            case 4 -> 1;
+            default -> 128;
+        };
     }
 
     private static BlockFace safeFace(String raw) {

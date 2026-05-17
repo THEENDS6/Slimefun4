@@ -726,6 +726,7 @@ static Map<String, Integer> createClassicCargoOrder() {
             "sf:cargo_manager",
             "sf:cargo_node",
             "sf:cargo_node_input",
+            "sf:cargo_node_input_advanced",
             "sf:cargo_node_output",
             "sf:cargo_node_output_advanced",
             "sf:reactor_access_port",

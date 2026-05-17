@@ -8,6 +8,9 @@ import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
+import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
+import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
 import cc.theends6.sfx.internal.topology.SfxTopologyStatus;
@@ -17,8 +20,14 @@ import cc.theends6.sfx.internal.util.SfxEventGuards;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import org.bukkit.Color;
+import org.bukkit.Particle;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainer;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
+import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService.PlannedStack;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -53,6 +62,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.Keyed;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
@@ -69,8 +79,14 @@ public final class SfxCargoService implements Listener {
     private static final long FLUSH_INTERVAL = 20L;
     private static final int[] FILTER_SLOTS = {19, 20, 21, 28, 29, 30, 37, 38, 39};
     private static final Set<Integer> FILTER_SLOT_SET = Set.of(19, 20, 21, 28, 29, 30, 37, 38, 39);
+    private static final int[] INPUT_BORDER = {0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 22, 23, 26, 27, 31, 32, 33, 34, 35, 36, 40, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53};
+    private static final int[] ADVANCED_OUTPUT_BORDER = {0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 22, 23, 24, 26, 27, 31, 32, 33, 34, 35, 36, 40, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53};
+    private static final int[] OUTPUT_BORDER = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26};
     private static final int[] TRASH_INPUT_SLOTS = {10, 11, 12, 13, 14, 15, 16};
     private static final Set<Integer> TRASH_INPUT_SLOT_SET = Set.of(10, 11, 12, 13, 14, 15, 16);
+    private static final int[] TRASH_BORDER = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26};
+    private static final int[] CHANNEL_INPUT_SLOTS = {41, 42, 43};
+    private static final int[] CHANNEL_OUTPUT_SLOTS = {12, 13, 14};
 
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
@@ -78,24 +94,30 @@ public final class SfxCargoService implements Listener {
     private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
     private final SfxVirtualContainerService virtualContainers;
+    private final SfxFloatingTextDisplayService floatingText;
+    private final Set<SfxFloatingTextKey> displayKeys = ConcurrentHashMap.newKeySet();
     private final Map<String, SfxCargoComponentDefinition> definitions = SfxCargoDefinitions.create();
     private final SfxTopologyService topology;
     private final Map<UUID, SfxCargoNodeState> states = new ConcurrentHashMap<>();
     private final Set<UUID> dirtyStates = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Inventory> openMenus = new ConcurrentHashMap<>();
     private final Map<String, Map<UUID, Integer>> distributionDebt = new ConcurrentHashMap<>();
+    private final Map<UUID, UUID> visualizers = new ConcurrentHashMap<>();
+    private final Map<UUID, CargoTransferStats> managerStats = new ConcurrentHashMap<>();
     private volatile boolean running = true;
 
-    public SfxCargoService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxVirtualContainerService virtualContainers) {
+    public SfxCargoService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxVirtualContainerService virtualContainers, SfxFloatingTextDisplayService floatingText) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.virtualContainers = Objects.requireNonNull(virtualContainers, "virtualContainers");
+        this.floatingText = Objects.requireNonNull(floatingText, "floatingText");
         this.topology = new SfxTopologyService(blockData, new SfxCargoTopologyPolicy(definitions), new SfxCargoConnectivityPolicy(RANGE));
         bootstrapLoadedStates();
         topology.rebuild();
+        scheduleTopologyRefresh();
         scheduleTick();
         scheduleFlush();
     }
@@ -131,6 +153,7 @@ public final class SfxCargoService implements Listener {
             states.put(instanceId, state);
             dirtyStates.add(instanceId);
             persistState(instanceId, state);
+            scheduleTopologyRefresh();
         });
     }
 
@@ -179,9 +202,20 @@ public final class SfxCargoService implements Listener {
         if (definition == null) {
             return;
         }
-        if (event.getClickedInventory() == top && FILTER_SLOT_SET.contains(event.getRawSlot()) && usesFilter(holder.type())) {
+
+        if (usesFilter(holder.type())) {
+            if (event.getClickedInventory() == top && FILTER_SLOT_SET.contains(event.getRawSlot())) {
+                runtime.executeForPlayerLater(player, 1L, () -> saveFilterFromOpenMenu(holder.instanceId(), top));
+                return;
+            }
+            if (event.getClickedInventory() != top) {
+                runtime.executeForPlayerLater(player, 1L, () -> saveFilterFromOpenMenu(holder.instanceId(), top));
+                return;
+            }
+        } else if (event.getClickedInventory() != top) {
             return;
         }
+
         event.setCancelled(true);
         if (event.getClickedInventory() != top) {
             return;
@@ -189,20 +223,44 @@ public final class SfxCargoService implements Listener {
         SfxCargoNodeState state = currentState(holder.instanceId());
         int slot = event.getRawSlot();
         ClickType click = event.getClick();
-        if (slot == 41 || slot == 42 || slot == 43 || slot == 13) {
-            adjustChannel(state, click.isRightClick() ? -1 : 1, click.isShiftClick());
-        } else if (slot == 15) {
+        boolean changed = false;
+        if (isPrevChannelSlot(holder.type(), slot)) {
+            adjustChannel(state, -1, click.isShiftClick());
+            changed = true;
+        } else if (isNextChannelSlot(holder.type(), slot)) {
+            adjustChannel(state, 1, click.isShiftClick());
+            changed = true;
+        } else if (slot == 15 && usesFilter(holder.type())) {
             state.filterMode = state.filterMode.toggle();
-        } else if (slot == 25) {
+            changed = true;
+        } else if (slot == 25 && usesFilter(holder.type())) {
             state.matchLore = !state.matchLore;
-        } else if (slot == 16) {
+            changed = true;
+        } else if (slot == 16 && (holder.type() == SfxCargoComponentType.INPUT_NODE || holder.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE)) {
             state.smartFill = !state.smartFill;
-        } else if (slot == 24) {
-            state.distributionMode = state.distributionMode.toggle();
-        } else if (slot == 34) {
+            changed = true;
+        } else if (slot == 24 && holder.type() == SfxCargoComponentType.INPUT_NODE) {
+            state.roundRobin = !state.roundRobin;
+            changed = true;
+        } else if (slot == 14 && holder.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE) {
+            state.allowMultipleSlots = !state.allowMultipleSlots;
+            changed = true;
+        } else if (slot == 23 && holder.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE) {
+            state.batchLimit = SfxCargoNodeState.nextBatchLimit(state.batchLimit, click.isRightClick());
+            state.maxItemsPerCycle = state.batchLimit;
+            changed = true;
+        } else if (slot == 24 && holder.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE) {
+            state.distributionMode = click.isRightClick() ? state.distributionMode.previous() : state.distributionMode.next();
+            changed = true;
+        } else if (slot == 16 && holder.type() == SfxCargoComponentType.ADVANCED_OUTPUT_NODE) {
             adjustPriority(state, click.isRightClick() ? -1 : 1, click.isShiftClick());
+            changed = true;
         } else if (slot == 31 && isAutoCrafter(holder.type())) {
             state.enabled = !state.enabled;
+            changed = true;
+        }
+        if (!changed) {
+            return;
         }
         syncFilterFromInventory(top, state);
         persistState(holder.instanceId(), state);
@@ -235,6 +293,7 @@ public final class SfxCargoService implements Listener {
                 return;
             }
         }
+        runtime.executeGlobalLater(1L, () -> saveFilterFromOpenMenu(holder.instanceId(), top));
     }
 
     @EventHandler
@@ -253,6 +312,7 @@ public final class SfxCargoService implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        visualizers.remove(event.getPlayer().getUniqueId());
         
         
         openMenus.entrySet().removeIf(entry -> {
@@ -271,10 +331,13 @@ public final class SfxCargoService implements Listener {
                 viewer.closeInventory();
             }
         }
+        SfxFloatingTextKey displayKey = displayKey(SfxBlockAnchorKey.fromLocation(block.getLocation()));
+        floatingText.remove(displayKey);
+        displayKeys.remove(displayKey);
         SfxCargoNodeState state = states.get(instanceId);
         if (state == null) {
             SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
-            state = instance == null ? new SfxCargoNodeState() : SfxCargoNodeState.decode(instance.stateBlob());
+            state = instance == null ? new SfxCargoNodeState() : decodeState(instance);
         }
         SfxCargoComponentDefinition definition = definitions.get(typeId);
         if (definition != null && usesFilter(definition.type())) {
@@ -286,6 +349,7 @@ public final class SfxCargoService implements Listener {
         states.remove(instanceId);
         dirtyStates.remove(instanceId);
         blockData.unregisterAt(block.getLocation());
+        scheduleTopologyRefresh();
     }
 
     public void shutdown() {
@@ -296,9 +360,15 @@ public final class SfxCargoService implements Listener {
             }
         }
         flushDirty();
+        for (SfxFloatingTextKey key : Set.copyOf(displayKeys)) {
+            floatingText.remove(key);
+            displayKeys.remove(key);
+        }
         openMenus.clear();
         states.clear();
         distributionDebt.clear();
+        visualizers.clear();
+        managerStats.clear();
     }
 
     private void bootstrapLoadedStates() {
@@ -307,7 +377,7 @@ public final class SfxCargoService implements Listener {
             if (instance == null || !definitions.containsKey(instance.typeId())) {
                 continue;
             }
-            states.put(instance.instanceId(), SfxCargoNodeState.decode(instance.stateBlob()));
+            states.put(instance.instanceId(), decodeState(instance));
         }
     }
 
@@ -333,9 +403,20 @@ public final class SfxCargoService implements Listener {
         });
     }
 
+    private void scheduleTopologyRefresh() {
+        runtime.executeGlobalLater(1L, () -> {
+            if (!running) {
+                return;
+            }
+            topology.rebuild();
+            updateManagerDisplays();
+        });
+    }
+
     private void tickCargo() {
         virtualContainers.hydrateExternalBeforeLogic();
         topology.rebuildIfStale();
+        updateManagerDisplays();
         for (SfxTopologyComponent component : topology.components()) {
             if (component.status() != SfxTopologyStatus.ONLINE || component.controllers().size() != 1 || component.terminals().isEmpty()) {
                 continue;
@@ -358,56 +439,233 @@ public final class SfxCargoService implements Listener {
                     outputs.add(new NodeRef(instance, definition, state));
                 }
             }
+            UUID managerId = component.controllers().iterator().next();
             inputs.sort(Comparator.comparing(ref -> ref.instance.anchorKey(), this::compareAnchorKeys));
             outputs.sort(Comparator.comparing((NodeRef ref) -> ref.state.priority).reversed().thenComparing(ref -> ref.instance.anchorKey(), this::compareAnchorKeys));
             for (NodeRef input : inputs) {
-                if (input.definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE) {
-                    processAdvancedInput(input, outputs);
-                } else {
-                    processBasicInput(input, outputs);
+                int moved = input.definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE
+                        ? processAdvancedInput(input, outputs)
+                        : processBasicInput(input, outputs);
+                if (moved > 0) {
+                    recordManagerTransfer(managerId, moved);
                 }
             }
         }
         virtualContainers.pushDirtyAfterLogic();
+        renderVisualizers();
     }
 
-    private void processBasicInput(NodeRef input, List<NodeRef> outputs) {
-        Endpoint source = resolveEndpoint(input.instance, input.state, false);
-        if (source == null || source.container == null) {
+    private void recordManagerTransfer(UUID managerId, int amount) {
+        if (managerId == null || amount <= 0) {
             return;
         }
-        Predicate<ItemStack> filter = stack -> acceptsInputFilter(input.state, stack);
-        ItemStack stack = virtualContainers.withdrawFirst(source.container, filter, 64);
-        if (isEmpty(stack)) {
+        managerStats.computeIfAbsent(managerId, ignored -> new CargoTransferStats()).record(amount);
+    }
+
+    private void renderVisualizers() {
+        if (!plugin.getConfig().getBoolean("cargo.visualizer.enabled", true) || visualizers.isEmpty()) {
             return;
         }
-        ItemStack remainder = insertAcrossOutputs(input, stack, outputs, false);
-        if (!isEmpty(remainder)) {
-            virtualContainers.insert(source.container, remainder, false);
+        for (Map.Entry<UUID, UUID> entry : List.copyOf(visualizers.entrySet())) {
+            Player player = Bukkit.getPlayer(entry.getKey());
+            if (player == null || !player.isOnline()) {
+                visualizers.remove(entry.getKey());
+                continue;
+            }
+            UUID managerId = entry.getValue();
+            runtime.executeForPlayer(player, () -> renderVisualizerFor(player, managerId));
         }
     }
 
-    private void processAdvancedInput(NodeRef input, List<NodeRef> outputs) {
-        Endpoint source = resolveEndpoint(input.instance, input.state, false);
-        if (source == null || source.container == null) {
+    private void renderVisualizerFor(Player player, UUID managerId) {
+        if (player == null || !player.isOnline() || managerId == null || !plugin.getConfig().getBoolean("cargo.visualizer.enabled", true)) {
             return;
         }
-        Predicate<ItemStack> filter = stack -> acceptsInputFilter(input.state, stack);
-        List<ItemStack> batch = virtualContainers.withdrawBatch(source.container, filter, input.state.maxItemsPerCycle, input.state.maxDistinctTypes);
-        if (batch.isEmpty()) {
+        SfxTopologyComponent component = topology.componentForMember(managerId).orElse(null);
+        if (component == null) {
             return;
         }
-        for (ItemStack stack : batch) {
-            ItemStack remainder = insertAcrossOutputs(input, stack, outputs, true);
-            if (!isEmpty(remainder)) {
-                virtualContainers.insert(source.container, remainder, false);
+        boolean includeManager = plugin.getConfig().getBoolean("cargo.visualizer.include-manager", false);
+        for (UUID memberId : component.members()) {
+            if (!includeManager && memberId.equals(managerId)) {
+                continue;
+            }
+            SfxBlockInstanceRecord member = blockData.findInstance(memberId).orElse(null);
+            if (member == null || !definitions.containsKey(member.typeId())) {
+                continue;
+            }
+            spawnVisualizerParticle(player, member.anchorKey());
+        }
+    }
+
+    private void spawnVisualizerParticle(Player player, SfxBlockAnchorKey key) {
+        World world = Bukkit.getWorld(key.worldId());
+        if (world == null || player.getWorld() != world) {
+            return;
+        }
+        Location location = new Location(world, key.x() + 0.5D, key.y() + 0.5D, key.z() + 0.5D);
+        if (location.distanceSquared(player.getLocation()) > plugin.getConfig().getInt("cargo.visualizer.view-distance-squared", 32 * 32)) {
+            return;
+        }
+        Particle particle = visualizerParticle();
+        if (particle == Particle.DUST) {
+            int red = SfxCargoNodeState.clamp(plugin.getConfig().getInt("cargo.visualizer.dust.red", 255), 0, 255);
+            int green = SfxCargoNodeState.clamp(plugin.getConfig().getInt("cargo.visualizer.dust.green", 0), 0, 255);
+            int blue = SfxCargoNodeState.clamp(plugin.getConfig().getInt("cargo.visualizer.dust.blue", 0), 0, 255);
+            float size = (float) Math.max(0.1D, plugin.getConfig().getDouble("cargo.visualizer.dust.size", 1.0D));
+            player.spawnParticle(Particle.DUST, location, 1, 0.0D, 0.0D, 0.0D, 0.0D, new Particle.DustOptions(Color.fromRGB(red, green, blue), size));
+            return;
+        }
+        try {
+            player.spawnParticle(particle, location, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        } catch (RuntimeException ignored) {
+            player.spawnParticle(Particle.DUST, location, 1, 0.0D, 0.0D, 0.0D, 0.0D, new Particle.DustOptions(Color.RED, 1.0F));
+        }
+    }
+
+    private Particle visualizerParticle() {
+        String raw = plugin.getConfig().getString("cargo.visualizer.particle", "dust");
+        String normalized = raw == null ? "dust" : raw.trim().toUpperCase(java.util.Locale.ROOT).replace('-', '_');
+        if (normalized.isBlank() || "REDSTONE".equals(normalized)) {
+            normalized = "DUST";
+        }
+        try {
+            return Particle.valueOf(normalized);
+        } catch (IllegalArgumentException ignored) {
+            return Particle.DUST;
+        }
+    }
+
+    private void updateManagerDisplays() {
+        Set<SfxFloatingTextKey> seen = new LinkedHashSet<>();
+        for (SfxAnchorRecord anchor : blockData.anchors()) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (instance == null || !"sf:cargo_manager".equals(instance.typeId())) {
+                continue;
+            }
+            SfxTopologyComponent component = topology.componentForMember(instance.instanceId()).orElse(null);
+            Component text = managerDisplayText(component);
+            SfxFloatingTextKey key = displayKey(instance.anchorKey());
+            seen.add(key);
+            displayKeys.add(key);
+            floatingText.update(new SfxFloatingTextProjection(
+                    key,
+                    instance.anchorKey().x() + 0.5D,
+                    instance.anchorKey().y() + 1.15D,
+                    instance.anchorKey().z() + 0.5D,
+                    text,
+                    plugin.getConfig().getInt("cargo.display.view-distance-squared", 32 * 32),
+                    plugin.getConfig().getBoolean("cargo.display.see-through", false)));
+        }
+        for (SfxFloatingTextKey key : Set.copyOf(displayKeys)) {
+            if (!seen.contains(key)) {
+                floatingText.remove(key);
+                displayKeys.remove(key);
             }
         }
     }
 
-    private ItemStack insertAcrossOutputs(NodeRef input, ItemStack stack, List<NodeRef> outputs, boolean allowSplit) {
+    private Component managerDisplayText(SfxTopologyComponent component) {
+        if (component != null && (component.status() == SfxTopologyStatus.MULTIPLE_CONTROLLERS || component.controllers().size() > 1)) {
+            return lc("cargo.status.multiple-regulators", "&cMultiple Cargo Regulators connected");
+        }
+        if (component == null || component.members().size() <= 1) {
+            return lc("cargo.status.no-nodes", "&cNo Cargo Nodes found");
+        }
+        return lc("cargo.status.online", "&aStatus: ONLINE");
+    }
+
+    private SfxFloatingTextKey displayKey(SfxBlockAnchorKey key) {
+        return new SfxFloatingTextKey("cargo-manager", key.worldId(), key.x(), key.y(), key.z());
+    }
+
+    private int processBasicInput(NodeRef input, List<NodeRef> outputs) {
+        Endpoint source = resolveEndpoint(input.instance, input.state, false);
+        if (source == null || source.container == null) {
+            return 0;
+        }
+        Predicate<ItemStack> filter = stack -> acceptsInputFilter(input.state, stack);
+        PlannedStack plan = virtualContainers.planFirst(source.container, filter, 64);
+        if (plan == null || plan.isEmpty()) {
+            return 0;
+        }
+        return commitPlannedTransfer(input, source.container, plan, outputs, input.state.roundRobin ? SfxCargoDistributionMode.ROUND_ROBIN : SfxCargoDistributionMode.SEQUENTIAL);
+    }
+
+    private int processAdvancedInput(NodeRef input, List<NodeRef> outputs) {
+        Endpoint source = resolveEndpoint(input.instance, input.state, false);
+        if (source == null || source.container == null) {
+            return 0;
+        }
+        Predicate<ItemStack> filter = stack -> acceptsInputFilter(input.state, stack);
+        int limit = SfxCargoNodeState.normalizeBatchLimit(input.state.batchLimit);
+        List<PlannedStack> batch = virtualContainers.planBatch(source.container, filter, limit, input.state.maxDistinctTypes, input.state.allowMultipleSlots);
+        if (batch.isEmpty()) {
+            return 0;
+        }
+        int moved = 0;
+        for (PlannedStack plan : batch) {
+            moved += commitPlannedTransfer(input, source.container, plan, outputs, input.state.distributionMode);
+        }
+        return moved;
+    }
+
+    private int commitPlannedTransfer(NodeRef input, SfxVirtualContainer sourceContainer, PlannedStack plan, List<NodeRef> outputs, SfxCargoDistributionMode mode) {
+        if (plan == null || plan.isEmpty() || !virtualContainers.canRemovePlanned(sourceContainer, plan.takes())) {
+            return 0;
+        }
+        List<OutputMove> moves = planOutputMoves(input, plan.stack(), outputs, mode, sourceContainer);
+        int planned = moves.stream().mapToInt(OutputMove::amount).sum();
+        if (planned <= 0) {
+            return 0;
+        }
+        if (!virtualContainers.removePlanned(sourceContainer, limitTakes(plan, planned))) {
+            return 0;
+        }
+        ItemStack template = plan.stack().clone();
+        template.setAmount(1);
+        int inserted = 0;
+        for (OutputMove move : moves) {
+            if (move.amount() <= 0) {
+                continue;
+            }
+            if (move.endpoint().trash) {
+                inserted += move.amount();
+                continue;
+            }
+            ItemStack part = template.clone();
+            part.setAmount(move.amount());
+            ItemStack remainder = move.endpoint().insert(part, input.state.smartFill);
+            inserted += move.amount() - (isEmpty(remainder) ? 0 : remainder.getAmount());
+            if (!isEmpty(remainder)) {
+                virtualContainers.insert(sourceContainer, remainder, false);
+            }
+        }
+        if (inserted < planned) {
+            ItemStack refund = template.clone();
+            refund.setAmount(planned - inserted);
+            virtualContainers.insert(sourceContainer, refund, false);
+        }
+        return inserted;
+    }
+
+    private List<SfxVirtualContainerService.SlotTake> limitTakes(PlannedStack plan, int amount) {
+        List<SfxVirtualContainerService.SlotTake> limited = new ArrayList<>();
+        int remaining = amount;
+        for (SfxVirtualContainerService.SlotTake take : plan.takes()) {
+            if (remaining <= 0) {
+                break;
+            }
+            int use = Math.min(take.amount(), remaining);
+            limited.add(new SfxVirtualContainerService.SlotTake(take.slot(), take.template(), use));
+            remaining -= use;
+        }
+        return limited;
+    }
+
+    private List<OutputMove> planOutputMoves(NodeRef input, ItemStack stack, List<NodeRef> outputs, SfxCargoDistributionMode mode, SfxVirtualContainer sourceContainer) {
         if (isEmpty(stack)) {
-            return null;
+            return List.of();
         }
         List<NodeRef> candidates = new ArrayList<>();
         for (NodeRef output : outputs) {
@@ -417,98 +675,123 @@ public final class SfxCargoService implements Listener {
             if (!acceptsOutputFilter(output.state, output.definition, stack)) {
                 continue;
             }
-            Endpoint endpoint = resolveEndpoint(output.instance, output.state, true);
-            if (endpoint == null || endpoint.capacityFor(stack, output.state.smartFill) <= 0) {
+            Endpoint endpoint = resolveOutputEndpoint(output.instance, output.state, sourceContainer);
+            if (endpoint == null || (!endpoint.trash && endpoint.container == sourceContainer)) {
+                continue;
+            }
+            if (endpoint.capacityFor(stack, input.state.smartFill) <= 0) {
                 continue;
             }
             candidates.add(output.withEndpoint(endpoint));
         }
         if (candidates.isEmpty()) {
-            return stack;
+            return List.of();
         }
         candidates.sort(Comparator.comparingInt((NodeRef ref) -> ref.priority()).reversed().thenComparing(ref -> ref.instance.anchorKey(), this::compareAnchorKeys));
-        ItemStack remaining = stack.clone();
+        List<OutputMove> moves = new ArrayList<>();
+        int remaining = stack.getAmount();
         int index = 0;
-        while (index < candidates.size() && !isEmpty(remaining)) {
+        while (index < candidates.size() && remaining > 0) {
             int priority = candidates.get(index).priority();
             List<NodeRef> group = new ArrayList<>();
             while (index < candidates.size() && candidates.get(index).priority() == priority) {
                 group.add(candidates.get(index++));
             }
-            if (allowSplit && input.state.distributionMode == SfxCargoDistributionMode.EVEN) {
-                remaining = insertEvenly(input, priority, group, remaining);
+            int before = remaining;
+            if (mode == SfxCargoDistributionMode.EVEN) {
+                remaining = planEvenMoves(input, priority, group, stack, remaining, moves);
+            } else if (mode == SfxCargoDistributionMode.ROUND_ROBIN) {
+                remaining = planRoundRobinMoves(input, group, stack, remaining, moves);
             } else {
-                remaining = insertClassic(input, group, remaining);
+                remaining = planSequentialMoves(input, group, stack, remaining, moves);
+            }
+            if (remaining == before && !group.isEmpty()) {
+                break;
             }
         }
-        return isEmpty(remaining) ? null : remaining;
+        return moves;
     }
 
-    private ItemStack insertClassic(NodeRef input, List<NodeRef> group, ItemStack stack) {
-        if (group.isEmpty() || isEmpty(stack)) {
-            return stack;
-        }
-        int start = input.state.roundRobinCursor % group.size();
-        ItemStack remaining = stack.clone();
-        for (int i = 0; i < group.size(); i++) {
-            NodeRef output = group.get((start + i) % group.size());
-            remaining = output.endpoint.insert(remaining, output.state.smartFill);
-            if (isEmpty(remaining)) {
-                input.state.roundRobinCursor = (start + i + 1) % group.size();
-                persistState(input.instance.instanceId(), input.state);
-                return null;
+    private int planSequentialMoves(NodeRef input, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves) {
+        for (NodeRef output : group) {
+            if (remaining <= 0) {
+                break;
             }
+            int amount = Math.min(remaining, output.endpoint.capacityFor(stack, input.state.smartFill));
+            if (amount <= 0) {
+                continue;
+            }
+            moves.add(new OutputMove(output.endpoint, amount));
+            remaining -= amount;
         }
         return remaining;
     }
 
-    private ItemStack insertEvenly(NodeRef input, int priority, List<NodeRef> group, ItemStack stack) {
-        if (group.isEmpty() || isEmpty(stack)) {
-            return stack;
+    private int planRoundRobinMoves(NodeRef input, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves) {
+        if (group.isEmpty() || remaining <= 0) {
+            return remaining;
         }
-        ItemStack remaining = stack.clone();
+        int start = input.state.roundRobinCursor % group.size();
+        boolean movedAny = false;
+        for (int i = 0; i < group.size() && remaining > 0; i++) {
+            NodeRef output = group.get((start + i) % group.size());
+            int amount = Math.min(remaining, output.endpoint.capacityFor(stack, input.state.smartFill));
+            if (amount <= 0) {
+                continue;
+            }
+            moves.add(new OutputMove(output.endpoint, amount));
+            remaining -= amount;
+            movedAny = true;
+            input.state.roundRobinCursor = (start + i + 1) % group.size();
+            if (input.definition.type() == SfxCargoComponentType.INPUT_NODE) {
+                break;
+            }
+        }
+        if (movedAny) {
+            persistState(input.instance.instanceId(), input.state);
+        }
+        return remaining;
+    }
+
+    private int planEvenMoves(NodeRef input, int priority, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves) {
+        if (group.isEmpty() || remaining <= 0) {
+            return remaining;
+        }
         String key = input.instance.instanceId() + ":" + input.state.channel + ":" + priority + ":" + SfxCargoItemKey.of(items, stack).key();
         Map<UUID, Integer> debts = distributionDebt.computeIfAbsent(key, ignored -> new ConcurrentHashMap<>());
         group.sort(Comparator.comparingInt((NodeRef ref) -> debts.getOrDefault(ref.instance.instanceId(), 0)).reversed()
                 .thenComparing(ref -> ref.instance.anchorKey(), this::compareAnchorKeys));
-        int original = remaining.getAmount();
-        int totalMoved = 0;
+        int originalRemaining = remaining;
         Map<UUID, Integer> movedByNode = new HashMap<>();
-        while (!isEmpty(remaining)) {
+        while (remaining > 0) {
             List<NodeRef> eligible = group.stream()
-                    .filter(ref -> ref.endpoint.capacityFor(remaining, ref.state.smartFill) > 0)
+                    .filter(ref -> ref.endpoint.capacityFor(stack, input.state.smartFill) > movedByNode.getOrDefault(ref.instance.instanceId(), 0))
                     .toList();
             if (eligible.isEmpty()) {
                 break;
             }
-            int base = Math.max(1, (int) Math.ceil(remaining.getAmount() / (double) eligible.size()));
+            int base = Math.max(1, (int) Math.ceil(remaining / (double) eligible.size()));
             boolean any = false;
             for (NodeRef output : eligible) {
-                if (isEmpty(remaining)) {
+                if (remaining <= 0) {
                     break;
                 }
-                int amount = Math.min(base, remaining.getAmount());
-                int capacity = output.endpoint.capacityFor(remaining, output.state.smartFill);
-                amount = Math.min(amount, capacity);
+                int already = movedByNode.getOrDefault(output.instance.instanceId(), 0);
+                int capacity = output.endpoint.capacityFor(stack, input.state.smartFill) - already;
+                int amount = Math.min(Math.min(base, remaining), capacity);
                 if (amount <= 0) {
                     continue;
                 }
-                ItemStack part = remaining.clone();
-                part.setAmount(amount);
-                ItemStack partRemainder = output.endpoint.insert(part, output.state.smartFill);
-                int moved = amount - (isEmpty(partRemainder) ? 0 : partRemainder.getAmount());
-                if (moved <= 0) {
-                    continue;
-                }
-                remaining.setAmount(remaining.getAmount() - moved);
-                totalMoved += moved;
-                movedByNode.merge(output.instance.instanceId(), moved, Integer::sum);
+                moves.add(new OutputMove(output.endpoint, amount));
+                movedByNode.merge(output.instance.instanceId(), amount, Integer::sum);
+                remaining -= amount;
                 any = true;
             }
             if (!any) {
                 break;
             }
         }
+        int totalMoved = originalRemaining - remaining;
         if (totalMoved > 0) {
             int eligibleCount = Math.max(1, group.size());
             int expected = totalMoved / eligibleCount;
@@ -519,14 +802,50 @@ public final class SfxCargoService implements Listener {
                 debts.put(id, Math.max(-4096, Math.min(4096, debt)));
             }
         }
-        if (remaining.getAmount() <= 0 || totalMoved >= original) {
-            return null;
-        }
         return remaining;
     }
 
+
+    private Endpoint resolveOutputEndpoint(SfxBlockInstanceRecord node, SfxCargoNodeState state, SfxVirtualContainer sourceContainer) {
+        Endpoint endpoint = resolveEndpointAt(node, state.attachedFace, true);
+        if (endpoint != null && (endpoint.trash || endpoint.container != sourceContainer)) {
+            return endpoint;
+        }
+        for (BlockFace face : List.of(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST)) {
+            if (face == state.attachedFace) {
+                continue;
+            }
+            endpoint = resolveEndpointAt(node, face, true);
+            if (endpoint != null && (endpoint.trash || endpoint.container != sourceContainer)) {
+                state.attachedFace = face;
+                persistState(node.instanceId(), state);
+                return endpoint;
+            }
+        }
+        return endpoint;
+    }
+
     private Endpoint resolveEndpoint(SfxBlockInstanceRecord node, SfxCargoNodeState state, boolean outputSide) {
-        Location target = targetLocation(node.anchorKey(), state.attachedFace);
+        Endpoint endpoint = resolveEndpointAt(node, state.attachedFace, outputSide);
+        if (endpoint != null) {
+            return endpoint;
+        }
+        for (BlockFace face : List.of(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST)) {
+            if (face == state.attachedFace) {
+                continue;
+            }
+            endpoint = resolveEndpointAt(node, face, outputSide);
+            if (endpoint != null) {
+                state.attachedFace = face;
+                persistState(node.instanceId(), state);
+                return endpoint;
+            }
+        }
+        return null;
+    }
+
+    private Endpoint resolveEndpointAt(SfxBlockInstanceRecord node, BlockFace face, boolean outputSide) {
+        Location target = targetLocation(node.anchorKey(), face);
         if (target == null) {
             return null;
         }
@@ -718,18 +1037,17 @@ public final class SfxCargoService implements Listener {
     private void handleInteract(Player player, Block block, SfxBlockInstanceRecord instance, SfxCargoComponentDefinition definition) {
         if (definition.type() == SfxCargoComponentType.MANAGER) {
             topology.rebuildIfStale();
-            SfxTopologyComponent component = topology.componentForMember(instance.instanceId()).orElse(null);
-            String status = component == null ? "NO_NETWORK" : component.status().name();
-            player.sendMessage(Text.prefixed(plugin, "<yellow>Cargo Network:</yellow> <white>" + status + "</white>"));
-            if (component != null) {
-                player.sendMessage(Text.prefixed(plugin, "<gray>Backbone:</gray> <white>" + component.backboneNodes().size() + "</white> <gray>Terminals:</gray> <white>" + component.terminals().size() + "</white>"));
+            if (player.isSneaking()) {
+                toggleVisualizer(player, instance);
+            } else {
+                showManagerStatus(player, instance);
             }
             return;
         }
         if (definition.type() == SfxCargoComponentType.CONNECTOR) {
             topology.rebuildIfStale();
             boolean linked = topology.componentForMember(instance.instanceId()).isPresent();
-            player.sendMessage(Text.prefixed(plugin, linked ? "<green>Cargo connector linked.</green>" : "<red>Cargo connector is detached.</red>"));
+            player.sendMessage(Text.prefixed(plugin, linked ? lt("cargo.message.connector-linked", "&aCargo connector linked.", Map.of()) : lt("cargo.message.connector-detached", "&cCargo connector is detached.", Map.of())));
             return;
         }
         if (isAutoCrafter(definition.type()) && player.isSneaking() && player.getInventory().getItemInMainHand() != null && !player.getInventory().getItemInMainHand().getType().isAir()) {
@@ -743,6 +1061,36 @@ public final class SfxCargoService implements Listener {
         openMenu(player, instance, definition.type());
     }
 
+    private void showManagerStatus(Player player, SfxBlockInstanceRecord instance) {
+        SfxTopologyComponent component = topology.componentForMember(instance.instanceId()).orElse(null);
+        String status = component == null ? "NO_NETWORK" : component.status().name();
+        player.sendMessage(Text.prefixed(plugin, lt("cargo.message.manager-status", "&eCargo Network: &f{status}", Map.of("status", status))));
+        if (component != null) {
+            player.sendMessage(Text.prefixed(plugin, lt("cargo.message.manager-size", "&7Backbone: &f{backbone} &7Terminals: &f{terminals}", Map.of("backbone", component.backboneNodes().size(), "terminals", component.terminals().size()))));
+        }
+        CargoTransferStats stats = managerStats.computeIfAbsent(instance.instanceId(), ignored -> new CargoTransferStats());
+        player.sendMessage(Text.prefixed(plugin, lt("cargo.message.manager-stats", "&7Transfer: &f{minute}&7/min &8| &7Total: &f{total}", Map.of("minute", stats.lastMinute(), "total", stats.total()))));
+        boolean enabled = instance.instanceId().equals(visualizers.get(player.getUniqueId()));
+        player.sendMessage(Text.prefixed(plugin, lt("cargo.message.visualizer-state", "&7Particles: &f{state}", Map.of("state", enabled ? lt("cargo.message.visualizer-on", "ON", Map.of()) : lt("cargo.message.visualizer-off", "OFF", Map.of())))));
+    }
+
+    private void toggleVisualizer(Player player, SfxBlockInstanceRecord instance) {
+        if (!plugin.getConfig().getBoolean("cargo.visualizer.enabled", true)) {
+            player.sendMessage(Text.prefixed(plugin, lt("cargo.message.visualizer-disabled", "&cCargo particles are disabled in the config.", Map.of())));
+            return;
+        }
+        UUID playerId = player.getUniqueId();
+        UUID current = visualizers.get(playerId);
+        if (instance.instanceId().equals(current)) {
+            visualizers.remove(playerId);
+            player.sendMessage(Text.prefixed(plugin, lt("cargo.message.visualizer-toggled-off", "&7Cargo particles: &cOFF", Map.of())));
+            return;
+        }
+        visualizers.put(playerId, instance.instanceId());
+        player.sendMessage(Text.prefixed(plugin, lt("cargo.message.visualizer-toggled-on", "&7Cargo particles: &aON", Map.of())));
+        renderVisualizerFor(player, instance.instanceId());
+    }
+
     private void configureAutoCrafter(Player player, SfxBlockInstanceRecord instance, SfxCargoComponentDefinition definition, ItemStack hand) {
         SfxCargoNodeState state = currentState(instance.instanceId());
         if (definition.type() == SfxCargoComponentType.VANILLA_AUTO_CRAFTER) {
@@ -750,20 +1098,20 @@ public final class SfxCargoService implements Listener {
             if (recipe instanceof Keyed keyed) {
                 state.selectedRecipeKey = keyed.getKey().toString();
                 persistState(instance.instanceId(), state);
-                player.sendMessage(Text.prefixed(plugin, "<green>Selected vanilla recipe:</green> <white>" + state.selectedRecipeKey + "</white>"));
+                player.sendMessage(Text.prefixed(plugin, lt("cargo.message.recipe-selected", "&aSelected recipe: &f{recipe}", Map.of("recipe", state.selectedRecipeKey))));
                 return;
             }
-            player.sendMessage(Text.prefixed(plugin, "<red>No keyed vanilla recipe was found for this item.</red>"));
+            player.sendMessage(Text.prefixed(plugin, lt("cargo.message.recipe-not-found", "&cNo keyed vanilla recipe was found for this item.", Map.of())));
             return;
         }
         String itemId = items.readMarker(hand).map(marker -> marker.itemId()).orElse("");
         if (itemId.isBlank()) {
-            player.sendMessage(Text.prefixed(plugin, "<red>Hold a SFX item to select an enhanced/armor recipe target.</red>"));
+            player.sendMessage(Text.prefixed(plugin, lt("cargo.message.hold-sfx-item", "&cHold a SFX item to select an enhanced/armor recipe target.", Map.of())));
             return;
         }
         state.selectedRecipeKey = itemId;
         persistState(instance.instanceId(), state);
-        player.sendMessage(Text.prefixed(plugin, "<green>Selected recipe target:</green> <white>" + itemId + "</white>"));
+        player.sendMessage(Text.prefixed(plugin, lt("cargo.message.recipe-selected", "&aSelected recipe: &f{recipe}", Map.of("recipe", itemId))));
     }
 
     private Recipe findRecipeByResult(ItemStack hand) {
@@ -801,7 +1149,7 @@ public final class SfxCargoService implements Listener {
 
     private void openTrashCan(Player player, SfxBlockInstanceRecord instance) {
         SfxTrashCanHolder holder = new SfxTrashCanHolder(instance.instanceId());
-        Inventory inventory = plugin.getServer().createInventory(holder, TRASH_INVENTORY_SIZE, Text.mm("<dark_aqua>Trash Can</dark_aqua>"));
+        Inventory inventory = plugin.getServer().createInventory(holder, TRASH_INVENTORY_SIZE, trashTitle());
         holder.bind(inventory);
         renderTrash(inventory);
         openMenus.put(instance.instanceId(), inventory);
@@ -811,123 +1159,283 @@ public final class SfxCargoService implements Listener {
     private void renderMenu(Inventory inventory, UUID instanceId, SfxCargoComponentType type, SfxCargoNodeState state) {
         inventory.clear();
         if (type == SfxCargoComponentType.OUTPUT_NODE) {
-            fillBorder(inventory, Material.GRAY_STAINED_GLASS_PANE);
-            inventory.setItem(13, channelItem(state));
+            fillSlots(inventory, OUTPUT_BORDER, Material.CYAN_STAINED_GLASS_PANE);
+            renderChannelSelector(inventory, state, 12, 13, 14);
             return;
         }
-        fillBorder(inventory, Material.GRAY_STAINED_GLASS_PANE);
+
+        if (type == SfxCargoComponentType.ADVANCED_OUTPUT_NODE) {
+            fillSlots(inventory, ADVANCED_OUTPUT_BORDER, Material.CYAN_STAINED_GLASS_PANE);
+        } else {
+            fillSlots(inventory, INPUT_BORDER, Material.CYAN_STAINED_GLASS_PANE);
+        }
+
         if (usesFilter(type)) {
+            inventory.setItem(2, uiItem(Material.PAPER, "cargo.ui.items.name", "&3Items", "cargo.ui.items.lore", List.of("", "&bPut in all Items you want to", "&bblacklist/whitelist"), Map.of()));
             for (int i = 0; i < FILTER_SLOTS.length; i++) {
                 inventory.setItem(FILTER_SLOTS[i], cloneOrNull(state.filterItems[i]));
             }
             inventory.setItem(15, modeItem(state));
-            inventory.setItem(25, toggleItem(Material.WRITABLE_BOOK, "<yellow>Match lore/meta</yellow>", state.matchLore));
+            inventory.setItem(25, loreToggleItem(state.matchLore));
         }
-        inventory.setItem(41, channelItem(state));
-        inventory.setItem(42, channelItem(state));
-        inventory.setItem(43, channelItem(state));
+        renderChannelSelector(inventory, state, 41, 42, 43);
         if (type == SfxCargoComponentType.INPUT_NODE || type == SfxCargoComponentType.ADVANCED_INPUT_NODE) {
-            inventory.setItem(16, toggleItem(Material.HOPPER, "<yellow>Smart fill</yellow>", state.smartFill));
-            inventory.setItem(24, ItemBuilder.of(state.distributionMode == SfxCargoDistributionMode.EVEN ? Material.LIME_DYE : Material.GRAY_DYE)
-                    .name("<yellow>Distribution:</yellow> <white>" + state.distributionMode.name() + "</white>")
-                    .lore("<gray>Classic: one destination per stack.</gray>", "<gray>Even: quota/debt fair split.</gray>", "<yellow>Click to toggle.</yellow>").build());
+            inventory.setItem(16, smartFillItem(state.smartFill));
+        }
+        if (type == SfxCargoComponentType.INPUT_NODE) {
+            inventory.setItem(24, roundRobinItem(state.roundRobin));
+        }
+        if (type == SfxCargoComponentType.ADVANCED_INPUT_NODE) {
+            inventory.setItem(14, multiSlotItem(state.allowMultipleSlots));
+            inventory.setItem(23, batchLimitItem(SfxCargoNodeState.normalizeBatchLimit(state.batchLimit)));
+            inventory.setItem(24, distributionItem(state.distributionMode));
         }
         if (type == SfxCargoComponentType.ADVANCED_OUTPUT_NODE) {
-            inventory.setItem(34, priorityItem(state.priority));
+            inventory.setItem(16, priorityItem(state.priority));
         }
         if (isAutoCrafter(type)) {
-            inventory.setItem(31, toggleItem(Material.REDSTONE_TORCH, "<yellow>Enabled</yellow>", state.enabled));
-            inventory.setItem(22, ItemBuilder.of(Material.CRAFTING_TABLE)
-                    .name("<yellow>Selected recipe</yellow>")
-                    .lore("<gray>" + (state.selectedRecipeKey == null || state.selectedRecipeKey.isBlank() ? "None" : state.selectedRecipeKey) + "</gray>", "<yellow>Sneak-right-click with target item to configure.</yellow>")
-                    .build());
+            inventory.setItem(31, enabledItem(state.enabled));
+            inventory.setItem(22, selectedRecipeItem(state.selectedRecipeKey));
         }
+    }
+
+    private void renderChannelSelector(Inventory inventory, SfxCargoNodeState state, int prevSlot, int currentSlot, int nextSlot) {
+        inventory.setItem(prevSlot, uiItem(Material.ARROW, "cargo.ui.channel.previous.name", "&bPrevious Channel", "cargo.ui.channel.previous.lore", List.of("", "&e> Click to decrease the Channel ID by 1"), Map.of()));
+        inventory.setItem(currentSlot, channelItem(state));
+        inventory.setItem(nextSlot, uiItem(Material.ARROW, "cargo.ui.channel.next.name", "&bNext Channel", "cargo.ui.channel.next.lore", List.of("", "&e> Click to increase the Channel ID by 1"), Map.of()));
     }
 
     private void renderTrash(Inventory inventory) {
         inventory.clear();
-        for (int i = 0; i < inventory.getSize(); i++) {
-            if (!TRASH_INPUT_SLOT_SET.contains(i)) {
-                inventory.setItem(i, ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build());
-            }
-        }
+        fillSlots(inventory, TRASH_BORDER, Material.RED_STAINED_GLASS_PANE);
     }
 
-    private void fillBorder(Inventory inventory, Material material) {
+    private void fillSlots(Inventory inventory, int[] slots, Material material) {
         ItemStack pane = ItemBuilder.of(material).name(" ").build();
-        int size = inventory.getSize();
-        for (int i = 0; i < size; i++) {
-            int row = i / 9;
-            int col = i % 9;
-            if (row == 0 || row == size / 9 - 1 || col == 0 || col == 8) {
-                inventory.setItem(i, pane);
+        for (int slot : slots) {
+            if (slot >= 0 && slot < inventory.getSize()) {
+                inventory.setItem(slot, pane);
             }
         }
     }
 
     private Component titleFor(SfxCargoComponentType type) {
         return switch (type) {
-            case INPUT_NODE -> Text.mm("<red>Cargo Input</red>");
-            case ADVANCED_INPUT_NODE -> Text.mm("<gold>Advanced Cargo Input</gold>");
-            case OUTPUT_NODE -> Text.mm("<red>Cargo Output</red>");
-            case ADVANCED_OUTPUT_NODE -> Text.mm("<gold>Advanced Cargo Output</gold>");
-            case VANILLA_AUTO_CRAFTER -> Text.mm("<green>Auto-Crafter (Vanilla)</green>");
-            case ENHANCED_AUTO_CRAFTER -> Text.mm("<green>Auto-Crafter (Enhanced)</green>");
-            case ARMOR_AUTO_CRAFTER -> Text.mm("<green>Auto-Crafter (Armor Forge)</green>");
-            default -> Text.mm("<yellow>Cargo</yellow>");
+            case INPUT_NODE -> lc("cargo.ui.title.input", "&cCargo Input");
+            case ADVANCED_INPUT_NODE -> lc("cargo.ui.title.advanced-input", "&6Advanced Cargo Input");
+            case OUTPUT_NODE -> lc("cargo.ui.title.output", "&cCargo Output");
+            case ADVANCED_OUTPUT_NODE -> lc("cargo.ui.title.advanced-output", "&6Advanced Cargo Output");
+            case VANILLA_AUTO_CRAFTER -> lc("cargo.ui.title.vanilla-auto-crafter", "&aAuto-Crafter (Vanilla)");
+            case ENHANCED_AUTO_CRAFTER -> lc("cargo.ui.title.enhanced-auto-crafter", "&aAuto-Crafter (Enhanced)");
+            case ARMOR_AUTO_CRAFTER -> lc("cargo.ui.title.armor-auto-crafter", "&aAuto-Crafter (Armor Forge)");
+            default -> lc("cargo.ui.title.generic", "&eCargo");
         };
     }
 
+    private Component trashTitle() {
+        return lc("cargo.ui.title.trash-can", "&3Trash Can");
+    }
+
     private ItemStack channelItem(SfxCargoNodeState state) {
-        return ItemBuilder.of(Material.LIGHT_BLUE_STAINED_GLASS_PANE)
-                .name("<yellow>Channel:</yellow> <white>" + state.channel + "</white>")
-                .lore("<yellow>Left-click:</yellow> <gray>+1</gray>", "<yellow>Right-click:</yellow> <gray>-1</gray>", "<yellow>Shift:</yellow> <gray>±4</gray>")
-                .amount(Math.max(1, state.channel + 1))
-                .build();
+        return uiItem(channelMaterial(state.channel), "cargo.ui.channel.current.name", "&bChannel ID: &3{channel_display}", "cargo.ui.channel.current.lore", List.of(), Map.of("channel", state.channel, "channel_display", state.channel + 1));
     }
 
     private ItemStack modeItem(SfxCargoNodeState state) {
-        Material material = state.filterMode == SfxCargoFilterMode.WHITELIST ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE;
-        return ItemBuilder.of(material)
-                .name("<yellow>Filter:</yellow> <white>" + state.filterMode.name() + "</white>")
-                .lore("<gray>Whitelist accepts only listed items.</gray>", "<gray>Blacklist blocks listed items.</gray>", "<yellow>Click to toggle.</yellow>")
-                .build();
+        if (state.filterMode == SfxCargoFilterMode.WHITELIST) {
+            return uiItem(Material.WHITE_WOOL, "cargo.ui.filter.whitelist.name", "&7Type: &rWhitelist", "cargo.ui.filter.whitelist.lore", List.of("", "&e> Click to change it to Blacklist"), Map.of());
+        }
+        return uiItem(Material.BLACK_WOOL, "cargo.ui.filter.blacklist.name", "&7Type: &8Blacklist", "cargo.ui.filter.blacklist.lore", List.of("", "&e> Click to change it to Whitelist"), Map.of());
     }
 
-    private ItemStack toggleItem(Material material, String name, boolean enabled) {
-        return ItemBuilder.of(enabled ? Material.LIME_STAINED_GLASS_PANE : material)
-                .name(name + " <white>" + (enabled ? "ON" : "OFF") + "</white>")
-                .lore("<yellow>Click to toggle.</yellow>")
-                .build();
+    private ItemStack loreToggleItem(boolean enabled) {
+        return uiItem(Material.MAP, enabled ? "cargo.ui.lore.enabled.name" : "cargo.ui.lore.disabled.name",
+                enabled ? "&7Include Lore: &2✔" : "&7Include Lore: &4✘",
+                "cargo.ui.lore.toggle-lore", List.of("", "&e> Click to toggle whether the Lore has to match"), Map.of());
+    }
+
+    private ItemStack smartFillItem(boolean enabled) {
+        return uiItem(enabled ? Material.WRITTEN_BOOK : Material.WRITABLE_BOOK,
+                enabled ? "cargo.ui.smart-fill.enabled.name" : "cargo.ui.smart-fill.disabled.name",
+                enabled ? "&7\"Smart-Filling\" Mode: &2✔" : "&7\"Smart-Filling\" Mode: &4✘",
+                "cargo.ui.smart-fill.lore",
+                List.of("", "&e> Click to toggle Smart-Filling Mode", "", "&fIn this mode, the Cargo node will attempt", "&fto keep a constant amount of items", "&fin the inventory."),
+                Map.of());
+    }
+
+    private ItemStack roundRobinItem(boolean enabled) {
+        return uiItem(enabled ? Material.LIME_DYE : Material.GRAY_DYE,
+                enabled ? "cargo.ui.round-robin.enabled.name" : "cargo.ui.round-robin.disabled.name",
+                enabled ? "&7Round-Robin Mode: &2✔" : "&7Round-Robin Mode: &4✘",
+                "cargo.ui.round-robin.lore",
+                List.of("", "&e> Click to toggle Round-Robin Mode", "", "&fThis mode makes the input node rotate", "&fbetween matching output nodes."),
+                Map.of());
+    }
+
+    private ItemStack multiSlotItem(boolean enabled) {
+        return uiItem(enabled ? Material.CHEST : Material.BARREL,
+                enabled ? "cargo.ui.multi-slot.enabled.name" : "cargo.ui.multi-slot.disabled.name",
+                enabled ? "&7Multi-slot Extraction: &2✔" : "&7Multi-slot Extraction: &4✘",
+                "cargo.ui.multi-slot.lore",
+                List.of("", "&e> Click to toggle", "", "&fWhen enabled, this node may pull", "&ffrom multiple source slots per cycle."),
+                Map.of());
+    }
+
+    private ItemStack batchLimitItem(int limit) {
+        return uiItem(Material.HOPPER,
+                "cargo.ui.batch-limit.name",
+                "&7Transfer Limit: &b{limit} items",
+                "cargo.ui.batch-limit.lore",
+                List.of("", "&e> Left-click: next lower limit", "&e> Right-click: next higher limit", "", "&fAvailable: &b128&7/&b64&7/&b16&7/&b4&7/&b1"),
+                Map.of("limit", limit));
+    }
+
+    private ItemStack distributionItem(SfxCargoDistributionMode mode) {
+        Material material = switch (mode) {
+            case SEQUENTIAL -> Material.COMPASS;
+            case ROUND_ROBIN -> Material.CLOCK;
+            case EVEN -> Material.LIME_DYE;
+        };
+        String key = switch (mode) {
+            case SEQUENTIAL -> "sequential";
+            case ROUND_ROBIN -> "round-robin";
+            case EVEN -> "even";
+        };
+        String fallbackName = switch (mode) {
+            case SEQUENTIAL -> "&7Distribution: &fSequential";
+            case ROUND_ROBIN -> "&7Distribution: &bRound-Robin";
+            case EVEN -> "&7Distribution: &aAverage";
+        };
+        return uiItem(material,
+                "cargo.ui.distribution." + key + ".name",
+                fallbackName,
+                "cargo.ui.distribution." + key + ".lore",
+                List.of("", "&e> Left-click: next mode", "&e> Right-click: previous mode", "", "&fSequential fills outputs in order.", "&fRound-Robin rotates targets.", "&fAverage uses quota/debt balancing."),
+                Map.of());
+    }
+
+    private ItemStack enabledItem(boolean enabled) {
+        return uiItem(enabled ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE,
+                enabled ? "cargo.ui.auto-crafter.enabled.name" : "cargo.ui.auto-crafter.disabled.name",
+                enabled ? "&7Enabled: &2✔" : "&7Enabled: &4✘",
+                "cargo.ui.auto-crafter.enabled.lore", List.of("", "&e> Click to toggle"), Map.of());
+    }
+
+    private ItemStack selectedRecipeItem(String key) {
+        String recipe = key == null || key.isBlank() ? lt("cargo.ui.auto-crafter.none", "None", Map.of()) : key;
+        return uiItem(Material.CRAFTING_TABLE, "cargo.ui.auto-crafter.recipe.name", "&eSelected recipe", "cargo.ui.auto-crafter.recipe.lore", List.of("&7{recipe}", "&eSneak-right-click with target item to configure."), Map.of("recipe", recipe));
     }
 
     private ItemStack priorityItem(int priority) {
-        return ItemBuilder.of(priorityMaterial(priority))
-                .name("<yellow>Priority:</yellow> <white>" + priority + " / 16</white>")
-                .lore("<gray>Higher priority outputs receive items first.</gray>", "<yellow>Left-click:</yellow> <gray>+1</gray>", "<yellow>Right-click:</yellow> <gray>-1</gray>", "<yellow>Shift:</yellow> <gray>±4</gray>")
-                .amount(priority)
-                .build();
+        return uiItem(priorityMaterial(priority), "cargo.ui.priority.name", "&ePriority: &f{priority} / 16", "cargo.ui.priority.lore", List.of("&7Higher priority outputs receive items first.", "&eLeft-click: &7+1", "&eRight-click: &7-1", "&eShift: &7±4"), Map.of("priority", priority));
     }
 
     private Material priorityMaterial(int priority) {
         return switch (SfxCargoNodeState.clamp(priority, 1, 16)) {
             case 1 -> Material.WHITE_STAINED_GLASS;
-            case 2 -> Material.LIGHT_GRAY_STAINED_GLASS;
-            case 3 -> Material.GRAY_STAINED_GLASS;
-            case 4 -> Material.BLACK_STAINED_GLASS;
-            case 5 -> Material.BROWN_STAINED_GLASS;
-            case 6 -> Material.RED_STAINED_GLASS;
-            case 7 -> Material.ORANGE_STAINED_GLASS;
-            case 8 -> Material.YELLOW_STAINED_GLASS;
-            case 9 -> Material.LIME_STAINED_GLASS;
-            case 10 -> Material.GREEN_STAINED_GLASS;
-            case 11 -> Material.CYAN_STAINED_GLASS;
-            case 12 -> Material.LIGHT_BLUE_STAINED_GLASS;
-            case 13 -> Material.BLUE_STAINED_GLASS;
-            case 14 -> Material.PURPLE_STAINED_GLASS;
-            case 15 -> Material.MAGENTA_STAINED_GLASS;
-            default -> Material.PINK_STAINED_GLASS;
+            case 2 -> Material.ORANGE_STAINED_GLASS;
+            case 3 -> Material.MAGENTA_STAINED_GLASS;
+            case 4 -> Material.LIGHT_BLUE_STAINED_GLASS;
+            case 5 -> Material.YELLOW_STAINED_GLASS;
+            case 6 -> Material.LIME_STAINED_GLASS;
+            case 7 -> Material.PINK_STAINED_GLASS;
+            case 8 -> Material.GRAY_STAINED_GLASS;
+            case 9 -> Material.LIGHT_GRAY_STAINED_GLASS;
+            case 10 -> Material.CYAN_STAINED_GLASS;
+            case 11 -> Material.PURPLE_STAINED_GLASS;
+            case 12 -> Material.BLUE_STAINED_GLASS;
+            case 13 -> Material.BROWN_STAINED_GLASS;
+            case 14 -> Material.GREEN_STAINED_GLASS;
+            case 15 -> Material.RED_STAINED_GLASS;
+            default -> Material.BLACK_STAINED_GLASS;
         };
+    }
+
+    private Material channelMaterial(int channel) {
+        return switch (SfxCargoNodeState.clamp(channel, 0, 15)) {
+            case 0 -> Material.WHITE_WOOL;
+            case 1 -> Material.ORANGE_WOOL;
+            case 2 -> Material.MAGENTA_WOOL;
+            case 3 -> Material.LIGHT_BLUE_WOOL;
+            case 4 -> Material.YELLOW_WOOL;
+            case 5 -> Material.LIME_WOOL;
+            case 6 -> Material.PINK_WOOL;
+            case 7 -> Material.GRAY_WOOL;
+            case 8 -> Material.LIGHT_GRAY_WOOL;
+            case 9 -> Material.CYAN_WOOL;
+            case 10 -> Material.PURPLE_WOOL;
+            case 11 -> Material.BLUE_WOOL;
+            case 12 -> Material.BROWN_WOOL;
+            case 13 -> Material.GREEN_WOOL;
+            case 14 -> Material.RED_WOOL;
+            default -> Material.BLACK_WOOL;
+        };
+    }
+
+    private ItemStack uiItem(Material material, String namePath, String fallbackName, String lorePath, List<String> fallbackLore, Map<String, ?> placeholders) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(lc(namePath, fallbackName, placeholders));
+            List<Component> lore = localizedLore(lorePath, fallbackLore, placeholders);
+            if (!lore.isEmpty()) {
+                meta.lore(lore);
+            }
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private Component lc(String path, String fallback) {
+        return localization.component(path, fallback);
+    }
+
+    private Component lc(String path, String fallback, Map<String, ?> placeholders) {
+        return Text.renderFlexible(lt(path, fallback, placeholders));
+    }
+
+    private String lt(String path, String fallback, Map<String, ?> placeholders) {
+        String value = localization.text(path, fallback);
+        if (placeholders != null) {
+            for (Map.Entry<String, ?> entry : placeholders.entrySet()) {
+                value = value.replace("{" + entry.getKey() + "}", String.valueOf(entry.getValue()));
+            }
+        }
+        return value;
+    }
+
+    private List<Component> localizedLore(String path, List<String> fallback, Map<String, ?> placeholders) {
+        List<String> lines = localization.list(path);
+        if (lines.isEmpty()) {
+            lines = fallback == null ? List.of() : fallback;
+        }
+        List<Component> components = new ArrayList<>();
+        for (String line : lines) {
+            if (line == null) {
+                continue;
+            }
+            String rendered = line;
+            if (placeholders != null) {
+                for (Map.Entry<String, ?> entry : placeholders.entrySet()) {
+                    rendered = rendered.replace("{" + entry.getKey() + "}", String.valueOf(entry.getValue()));
+                }
+            }
+            components.add(Text.renderFlexible(rendered));
+        }
+        return components;
+    }
+
+    private void saveFilterFromOpenMenu(UUID instanceId, Inventory inventory) {
+        SfxCargoNodeState state = currentState(instanceId);
+        syncFilterFromInventory(inventory, state);
+        persistState(instanceId, state);
+    }
+
+    private boolean isPrevChannelSlot(SfxCargoComponentType type, int slot) {
+        return type == SfxCargoComponentType.OUTPUT_NODE ? slot == 12 : slot == 41;
+    }
+
+    private boolean isNextChannelSlot(SfxCargoComponentType type, int slot) {
+        return type == SfxCargoComponentType.OUTPUT_NODE ? slot == 14 : slot == 43;
     }
 
     private void syncFilterFromInventory(Inventory inventory, SfxCargoNodeState state) {
@@ -939,9 +1447,7 @@ public final class SfxCargoService implements Listener {
             if (isEmpty(stack)) {
                 state.filterItems[i] = null;
             } else {
-                ItemStack clone = stack.clone();
-                clone.setAmount(1);
-                state.filterItems[i] = clone;
+                state.filterItems[i] = stack.clone();
             }
         }
     }
@@ -973,13 +1479,39 @@ public final class SfxCargoService implements Listener {
         }
     }
 
+    private SfxCargoNodeState decodeState(SfxBlockInstanceRecord instance) {
+        if (instance == null) {
+            return new SfxCargoNodeState();
+        }
+        SfxCargoNodeState state = SfxCargoNodeState.decode(instance.stateBlob());
+        SfxCargoComponentDefinition definition = definitions.get(instance.typeId());
+        if (definition != null && definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE && stateVersion(instance.stateBlob()) < 3) {
+            state.distributionMode = SfxCargoDistributionMode.SEQUENTIAL;
+            state.allowMultipleSlots = true;
+            state.batchLimit = 128;
+            state.maxItemsPerCycle = 128;
+        }
+        return state;
+    }
+
+    private int stateVersion(byte[] blob) {
+        if (blob == null || blob.length < Integer.BYTES) {
+            return 0;
+        }
+        try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(blob))) {
+            return input.readInt();
+        } catch (IOException | RuntimeException ignored) {
+            return 0;
+        }
+    }
+
     private SfxCargoNodeState currentState(UUID instanceId) {
         SfxCargoNodeState cached = states.get(instanceId);
         if (cached != null) {
             return cached;
         }
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
-        SfxCargoNodeState decoded = instance == null ? new SfxCargoNodeState() : SfxCargoNodeState.decode(instance.stateBlob());
+        SfxCargoNodeState decoded = instance == null ? new SfxCargoNodeState() : decodeState(instance);
         states.put(instanceId, decoded);
         return decoded;
     }
@@ -1082,6 +1614,59 @@ public final class SfxCargoService implements Listener {
             return;
         }
         SfxBlockDrops.dropItem(block, stack.clone());
+    }
+
+    private record OutputMove(Endpoint endpoint, int amount) {
+    }
+
+    private static final class CargoTransferStats {
+        private final long[] buckets = new long[60];
+        private long total;
+        private long currentSecond = Long.MIN_VALUE;
+        private int currentBucket;
+
+        synchronized void record(int amount) {
+            if (amount <= 0) {
+                return;
+            }
+            rotateToNow();
+            buckets[currentBucket] += amount;
+            total += amount;
+        }
+
+        synchronized long total() {
+            return total;
+        }
+
+        synchronized long lastMinute() {
+            rotateToNow();
+            long sum = 0L;
+            for (long bucket : buckets) {
+                sum += bucket;
+            }
+            return sum;
+        }
+
+        private void rotateToNow() {
+            long now = System.currentTimeMillis() / 1000L;
+            if (currentSecond == Long.MIN_VALUE) {
+                currentSecond = now;
+                currentBucket = (int) Math.floorMod(now, buckets.length);
+                buckets[currentBucket] = 0L;
+                return;
+            }
+            long delta = now - currentSecond;
+            if (delta <= 0L) {
+                return;
+            }
+            long steps = Math.min(delta, buckets.length);
+            for (int i = 1; i <= steps; i++) {
+                int index = (int) Math.floorMod(currentSecond + i, buckets.length);
+                buckets[index] = 0L;
+            }
+            currentSecond = now;
+            currentBucket = (int) Math.floorMod(now, buckets.length);
+        }
     }
 
     private record NodeRef(SfxBlockInstanceRecord instance, SfxCargoComponentDefinition definition, SfxCargoNodeState state, Endpoint endpoint) {

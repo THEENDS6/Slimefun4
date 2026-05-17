@@ -5590,15 +5590,13 @@ items:
   lore:
   - ''
   - '&fAdvanced Cargo Input Pipe'
-  - '&8⇨ &7Batch size: &b128 Items'
-  - '&8⇨ &7Distribution: &aAverage Mode'
   flags:
   - legacy-sf
 - id: sf:cargo_node_output
   category: sf:cargo
   material: PLAYER_HEAD
   name: '&7Cargo Node &c(Output)'
-  priority: 505
+  priority: 506
   headTexture: 55b21fd480c1c43bf3b9f842c869bdc3bc5acc2599bf2eb6b8a1c95dce978f
   lore:
   - ''
@@ -5609,7 +5607,7 @@ items:
   category: sf:cargo
   material: PLAYER_HEAD
   name: '&6Advanced Cargo Node &c(Output)'
-  priority: 506
+  priority: 507
   headTexture: 55b21fd480c1c43bf3b9f842c869bdc3bc5acc2599bf2eb6b8a1c95dce978f
   lore:
   - ''
