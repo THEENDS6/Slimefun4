@@ -13,6 +13,7 @@ public final class SfxVirtualContainer {
     private boolean mirrorDirty;
     private long revision;
     private long lastWorldSyncTick;
+    private long lastExternalEventTick;
 
     SfxVirtualContainer(SfxVirtualContainerKey key, int size) {
         this.key = key;
@@ -106,6 +107,14 @@ public final class SfxVirtualContainer {
 
     public void lastWorldSyncTick(long lastWorldSyncTick) {
         this.lastWorldSyncTick = lastWorldSyncTick;
+    }
+
+    public long lastExternalEventTick() {
+        return lastExternalEventTick;
+    }
+
+    public void lastExternalEventTick(long lastExternalEventTick) {
+        this.lastExternalEventTick = lastExternalEventTick;
     }
 
     private static ItemStack[] cloneContents(ItemStack[] contents) {

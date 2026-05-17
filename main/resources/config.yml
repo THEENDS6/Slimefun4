@@ -41,6 +41,13 @@ guide:
     always-show: true
   recipe:
     machine-link-enabled: true
+  sounds:
+    enabled: true
+    open: minecraft:item.book.page_turn
+    category: minecraft:item.book.page_turn
+    page: minecraft:item.book.page_turn
+    volume: 0.7
+    pitch: 1.0
   survival-title: '<dark_green>SFX 科技书</dark_green>'
   cheat-title: '<dark_red>SFX 作弊科技书</dark_red>'
 
@@ -137,7 +144,15 @@ cargo:
 floating-text:
   
   
+  
+  
+  mode: armor_stand
   resync-interval-ticks: 20
+  armor-stand:
+    y-offset: -0.25
+    line-spacing: 0.25
+  text-display:
+    y-offset: 0.0
 
 electric-machines:
   

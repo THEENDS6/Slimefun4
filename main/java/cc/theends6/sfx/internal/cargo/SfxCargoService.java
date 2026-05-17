@@ -9,6 +9,7 @@ import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
+import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
@@ -562,7 +563,8 @@ public final class SfxCargoService implements Listener {
                     instance.anchorKey().z() + 0.5D,
                     text,
                     plugin.getConfig().getInt("cargo.display.view-distance-squared", 32 * 32),
-                    plugin.getConfig().getBoolean("cargo.display.see-through", false)));
+                    plugin.getConfig().getBoolean("cargo.display.see-through", false),
+                    SfxFloatingTextDisplayMode.ARMOR_STAND));
         }
         for (SfxFloatingTextKey key : Set.copyOf(displayKeys)) {
             if (!seen.contains(key)) {

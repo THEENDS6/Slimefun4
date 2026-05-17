@@ -47,6 +47,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.Sound;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Firework;
@@ -68,6 +70,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class DefaultSfxGuide implements SfxGuide {
+    private static final String DEFAULT_GUIDE_SOUND_KEY = "minecraft:item.book.page_turn";
+    private static final Map<String, String> SOUND_ALIASES = Map.of(
+            "item_book_page_turn", DEFAULT_GUIDE_SOUND_KEY,
+            "item.book.page_turn", DEFAULT_GUIDE_SOUND_KEY,
+            "minecraft:item_book_page_turn", DEFAULT_GUIDE_SOUND_KEY
+    );
     private static final Set<String> VERTICAL_SINGLE_RECIPE_TYPES = Set.of(
             "sf:composter",
             "sf:crucible",
@@ -176,9 +184,11 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
         GuidePreferences preferences = preferences(player);
         if (preferences.reopenLastLocation() && reopenLastLocation(player, mode, preferences.lastLocation())) {
+            playGuideOpenSound(player);
             return;
         }
         openMain(player, mode, 0, Navigation.ROOT);
+        playGuideOpenSound(player);
     }
 
     @Override
@@ -378,7 +388,10 @@ public final class DefaultSfxGuide implements SfxGuide {
                 builder.button(slot, new SfxMenuButton(lockedCategoryIcon(player, category), click -> {
                 }));
             } else {
-                builder.button(slot, new SfxMenuButton(categoryButtonIcon(category), click -> openCategory(click.player(), mode, category.id(), 0, Navigation.OPEN)));
+                builder.button(slot, new SfxMenuButton(categoryButtonIcon(category), click -> {
+                    playGuideCategorySound(click.player());
+                    openCategory(click.player(), mode, category.id(), 0, Navigation.OPEN);
+                }));
             }
         }
 
@@ -1582,11 +1595,13 @@ public final class DefaultSfxGuide implements SfxGuide {
     private void addContentPagination(SfxMenu.Builder builder, int page, int pageCount, PlayerAction previous, PlayerAction next) {
         builder.button(46, new SfxMenuButton(previousRecipeIcon(page, pageCount), click -> {
             if (page > 0) {
+                playGuidePageSound(click.player());
                 previous.accept(click.player());
             }
         }));
         builder.button(52, new SfxMenuButton(nextRecipeIcon(page, pageCount), click -> {
             if (page + 1 < pageCount) {
+                playGuidePageSound(click.player());
                 next.accept(click.player());
             }
         }));
@@ -1595,11 +1610,13 @@ public final class DefaultSfxGuide implements SfxGuide {
     private void addRecipePagination(SfxMenu.Builder builder, int page, int pageCount, PlayerAction previous, PlayerAction next) {
         builder.button(46, new SfxMenuButton(previousRecipeIcon(page, pageCount), click -> {
             if (page > 0) {
+                playGuidePageSound(click.player());
                 previous.accept(click.player());
             }
         }));
         builder.button(52, new SfxMenuButton(nextRecipeIcon(page, pageCount), click -> {
             if (page + 1 < pageCount) {
+                playGuidePageSound(click.player());
                 next.accept(click.player());
             }
         }));
@@ -1611,11 +1628,13 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
         builder.button(27, new SfxMenuButton(previousRecipeIcon(page, pageCount), click -> {
             if (page > 0) {
+                playGuidePageSound(click.player());
                 previous.accept(click.player());
             }
         }));
         builder.button(35, new SfxMenuButton(nextRecipeIcon(page, pageCount), click -> {
             if (page + 1 < pageCount) {
+                playGuidePageSound(click.player());
                 next.accept(click.player());
             }
         }));
@@ -1848,6 +1867,61 @@ public final class DefaultSfxGuide implements SfxGuide {
             case VANILLA -> openVanillaRecipe(player, mode, location.material(), location.recipeIndex(), Navigation.ROOT);
         }
         return true;
+    }
+
+    private void playGuideOpenSound(Player player) {
+        playGuideSound(player, "guide.sounds.open", DEFAULT_GUIDE_SOUND_KEY, Sound.ITEM_BOOK_PAGE_TURN);
+    }
+
+    private void playGuideCategorySound(Player player) {
+        playGuideSound(player, "guide.sounds.category", DEFAULT_GUIDE_SOUND_KEY, Sound.ITEM_BOOK_PAGE_TURN);
+    }
+
+    private void playGuidePageSound(Player player) {
+        playGuideSound(player, "guide.sounds.page", DEFAULT_GUIDE_SOUND_KEY, Sound.ITEM_BOOK_PAGE_TURN);
+    }
+
+    private void playGuideSound(Player player, String soundPath, String fallbackKey, Sound fallback) {
+        if (player == null || !plugin.getConfig().getBoolean("guide.sounds.enabled", true)) {
+            return;
+        }
+        Sound sound = parseSound(plugin.getConfig().getString(soundPath, fallbackKey), fallback);
+        float volume = (float) plugin.getConfig().getDouble("guide.sounds.volume", 0.7D);
+        float pitch = (float) plugin.getConfig().getDouble("guide.sounds.pitch", 1.0D);
+        player.playSound(player.getLocation(), sound, volume, pitch);
+    }
+
+    private Sound parseSound(String raw, Sound fallback) {
+        if (raw == null || raw.isBlank()) {
+            return fallback;
+        }
+
+        String candidate = raw.trim().toLowerCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+        String aliased = SOUND_ALIASES.get(candidate);
+        if (aliased != null) {
+            Sound sound = resolveSoundKey(aliased);
+            return sound == null ? fallback : sound;
+        }
+
+        Sound matched = Registry.SOUNDS.match(candidate);
+        if (matched != null) {
+            return matched;
+        }
+
+        if (candidate.indexOf(':') < 0 && candidate.indexOf('.') >= 0) {
+            Sound namespaced = resolveSoundKey("minecraft:" + candidate);
+            if (namespaced != null) {
+                return namespaced;
+            }
+        }
+
+        Sound direct = resolveSoundKey(candidate);
+        return direct == null ? fallback : direct;
+    }
+
+    private Sound resolveSoundKey(String rawKey) {
+        NamespacedKey key = NamespacedKey.fromString(rawKey);
+        return key == null ? null : Registry.SOUNDS.get(key);
     }
 
     private void showMenu(Player player, SfxMenu.Builder builder, Navigation navigation) {

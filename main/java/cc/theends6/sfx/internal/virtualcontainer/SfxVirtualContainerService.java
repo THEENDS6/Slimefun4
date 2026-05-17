@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
@@ -21,7 +22,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.DoubleChestInventory;
@@ -37,6 +40,26 @@ public final class SfxVirtualContainerService implements Listener {
     public record PlannedStack(ItemStack stack, List<SlotTake> takes) {
         public boolean isEmpty() {
             return stack == null || stack.getType().isAir() || stack.getAmount() <= 0 || takes == null || takes.isEmpty();
+        }
+    }
+
+    public record IngredientRequest(Predicate<ItemStack> matcher, int amount) {
+        public IngredientRequest {
+            amount = Math.max(1, amount);
+        }
+    }
+
+    public enum CraftingTransactionStatus {
+        SUCCESS,
+        NO_CONTAINER,
+        MISSING_INPUT,
+        OUTPUT_FULL,
+        BUSY
+    }
+
+    public record CraftingTransactionResult(CraftingTransactionStatus status) {
+        public boolean success() {
+            return status == CraftingTransactionStatus.SUCCESS;
         }
     }
 
@@ -106,6 +129,184 @@ public final class SfxVirtualContainerService implements Listener {
         for (SfxVirtualContainer container : containers.values()) {
             inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory));
         }
+    }
+
+
+    public CraftingTransactionResult checkCraftingTransaction(Location location, List<IngredientRequest> ingredients, List<ItemStack> outputs) {
+        SfxVirtualContainer container = ensureRegistered(location).orElse(null);
+        if (container == null) {
+            return new CraftingTransactionResult(CraftingTransactionStatus.NO_CONTAINER);
+        }
+        Inventory inventory = inventoryFor(container).orElse(null);
+        if (inventory == null) {
+            return new CraftingTransactionResult(CraftingTransactionStatus.NO_CONTAINER);
+        }
+        if (!reconcileBeforeTransaction(container, inventory)) {
+            return new CraftingTransactionResult(CraftingTransactionStatus.BUSY);
+        }
+        ItemStack[] simulated = container.snapshot();
+        CraftingTransactionStatus status = simulateCrafting(simulated, ingredients, outputs);
+        return new CraftingTransactionResult(status);
+    }
+
+    public CraftingTransactionResult commitCraftingTransaction(Location location, List<IngredientRequest> ingredients, List<ItemStack> outputs) {
+        SfxVirtualContainer container = ensureRegistered(location).orElse(null);
+        if (container == null) {
+            return new CraftingTransactionResult(CraftingTransactionStatus.NO_CONTAINER);
+        }
+        Inventory inventory = inventoryFor(container).orElse(null);
+        if (inventory == null) {
+            return new CraftingTransactionResult(CraftingTransactionStatus.NO_CONTAINER);
+        }
+        if (!reconcileBeforeTransaction(container, inventory)) {
+            return new CraftingTransactionResult(CraftingTransactionStatus.BUSY);
+        }
+        ItemStack[] before = container.snapshot();
+        ItemStack[] after = cloneContents(before);
+        CraftingTransactionStatus status = simulateCrafting(after, ingredients, outputs);
+        if (status != CraftingTransactionStatus.SUCCESS) {
+            return new CraftingTransactionResult(status);
+        }
+        if (!commitSlotDifferences(container, before, after)) {
+            return new CraftingTransactionResult(CraftingTransactionStatus.BUSY);
+        }
+        syncToWorld(container, inventory);
+        return new CraftingTransactionResult(CraftingTransactionStatus.SUCCESS);
+    }
+
+    private boolean reconcileBeforeTransaction(SfxVirtualContainer container, Inventory inventory) {
+        if (container == null || inventory == null) {
+            return false;
+        }
+        long now = Bukkit.getCurrentTick();
+        if (container.externalDirty() && container.lastExternalEventTick() == now) {
+            
+            
+            return false;
+        }
+        if (container.mirrorDirty()) {
+            syncToWorld(container, inventory);
+        }
+        if (container.viewerActive() || container.externalActive() || container.externalDirty() || container.revision() == 0L) {
+            hydrate(container, inventory);
+        }
+        return true;
+    }
+
+    private CraftingTransactionStatus simulateCrafting(ItemStack[] simulated, List<IngredientRequest> ingredients, List<ItemStack> outputs) {
+        if (simulated == null || simulated.length == 0) {
+            return CraftingTransactionStatus.NO_CONTAINER;
+        }
+        for (IngredientRequest request : ingredients == null ? List.<IngredientRequest>of() : ingredients) {
+            if (!consumeIngredient(simulated, request)) {
+                return CraftingTransactionStatus.MISSING_INPUT;
+            }
+        }
+        for (ItemStack output : outputs == null ? List.<ItemStack>of() : outputs) {
+            if (!placeStack(simulated, output)) {
+                return CraftingTransactionStatus.OUTPUT_FULL;
+            }
+        }
+        return CraftingTransactionStatus.SUCCESS;
+    }
+
+    private boolean consumeIngredient(ItemStack[] contents, IngredientRequest request) {
+        if (request == null || request.matcher() == null || request.amount() <= 0) {
+            return true;
+        }
+        int remaining = request.amount();
+        for (int i = 0; i < contents.length && remaining > 0; i++) {
+            ItemStack stack = contents[i];
+            if (isEmpty(stack) || !request.matcher().test(stack)) {
+                continue;
+            }
+            int taken = Math.min(stack.getAmount(), remaining);
+            stack.setAmount(stack.getAmount() - taken);
+            remaining -= taken;
+            if (stack.getAmount() <= 0) {
+                contents[i] = null;
+            }
+        }
+        return remaining <= 0;
+    }
+
+    private boolean placeStack(ItemStack[] contents, ItemStack output) {
+        if (isEmpty(output)) {
+            return true;
+        }
+        ItemStack remaining = output.clone();
+        
+        for (ItemStack stack : contents) {
+            if (isEmpty(stack) || !stack.isSimilar(remaining)) {
+                continue;
+            }
+            int room = Math.max(0, Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize()) - stack.getAmount());
+            if (room <= 0) {
+                continue;
+            }
+            int moved = Math.min(room, remaining.getAmount());
+            stack.setAmount(stack.getAmount() + moved);
+            remaining.setAmount(remaining.getAmount() - moved);
+            if (remaining.getAmount() <= 0) {
+                return true;
+            }
+        }
+        for (int i = 0; i < contents.length && remaining.getAmount() > 0; i++) {
+            if (!isEmpty(contents[i])) {
+                continue;
+            }
+            int moved = Math.min(remaining.getMaxStackSize(), remaining.getAmount());
+            ItemStack placed = remaining.clone();
+            placed.setAmount(moved);
+            contents[i] = placed;
+            remaining.setAmount(remaining.getAmount() - moved);
+        }
+        return remaining.getAmount() <= 0;
+    }
+
+    private boolean commitSlotDifferences(SfxVirtualContainer container, ItemStack[] before, ItemStack[] after) {
+        if (container == null || before == null || after == null || before.length != after.length) {
+            return false;
+        }
+        ItemStack[] mirror = container.rawMirror();
+        if (mirror.length != before.length) {
+            return false;
+        }
+        for (int i = 0; i < before.length; i++) {
+            if (!sameStack(mirror[i], before[i])) {
+                return false;
+            }
+        }
+        boolean changed = false;
+        for (int i = 0; i < after.length; i++) {
+            if (sameStack(before[i], after[i])) {
+                continue;
+            }
+            mirror[i] = after[i] == null ? null : after[i].clone();
+            changed = true;
+        }
+        if (changed) {
+            container.mirrorDirty(true);
+        }
+        return true;
+    }
+
+    private boolean sameStack(ItemStack a, ItemStack b) {
+        if (isEmpty(a) || isEmpty(b)) {
+            return isEmpty(a) && isEmpty(b);
+        }
+        return a.getAmount() == b.getAmount() && a.isSimilar(b);
+    }
+
+    private ItemStack[] cloneContents(ItemStack[] contents) {
+        if (contents == null) {
+            return new ItemStack[0];
+        }
+        ItemStack[] copy = new ItemStack[contents.length];
+        for (int i = 0; i < contents.length; i++) {
+            copy[i] = contents[i] == null ? null : contents[i].clone();
+        }
+        return copy;
     }
 
 
@@ -651,6 +852,20 @@ public final class SfxVirtualContainerService implements Listener {
         container.externalDirty(false);
     }
 
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onInventoryClick(InventoryClickEvent event) {
+        markExternal(event.getInventory());
+        if (event.getClickedInventory() != null && event.getClickedInventory() != event.getInventory()) {
+            markExternal(event.getClickedInventory());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onInventoryDrag(InventoryDragEvent event) {
+        markExternal(event.getInventory());
+    }
+
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onInventoryMove(InventoryMoveItemEvent event) {
         markExternal(event.getSource());
@@ -707,12 +922,18 @@ public final class SfxVirtualContainerService implements Listener {
                 : findRegistered(location);
         optional.ifPresent(container -> {
             container.externalActive(true);
+            container.lastExternalEventTick(Bukkit.getCurrentTick());
             if (container.mirrorDirty()) {
                 inventoryFor(container).ifPresent(target -> syncToWorld(container, target));
             }
             
             
             container.externalDirty(true);
+            runtime.executeGlobalLater(1L, () -> inventoryFor(container).ifPresent(target -> {
+                if (container.externalDirty()) {
+                    hydrate(container, target);
+                }
+            }));
         });
     }
 

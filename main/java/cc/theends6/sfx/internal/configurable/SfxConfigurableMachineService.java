@@ -9,6 +9,7 @@ import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
+import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
@@ -619,8 +620,11 @@ public final class SfxConfigurableMachineService implements Listener {
                     continue;
                 }
                 if (loopDefinition.kind() == SfxConfigurableMachineKind.REACTOR) {
-                    
-                    continue;
+                    SfxConfigurableMachineState loopState = currentState(instanceId, instance);
+                    if (loopState.mode() == 0) {
+                        
+                        continue;
+                    }
                 }
                 Location location = locationFor(instance);
                 if (location == null || !isInstanceChunkLoaded(instance)) {
@@ -678,7 +682,8 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         boolean changed = switch (definition.kind()) {
             case ASSEMBLER -> tickAssembler(instanceId, definition, state, location, context);
-            case REACTOR, ACCESS_PORT -> false;
+            case REACTOR -> tickProductionFocusReactor(instanceId, instance, definition, state, location, context);
+            case ACCESS_PORT -> false;
         };
         if (changed) {
             if (blockData.findInstance(instanceId).isEmpty()) {
@@ -692,6 +697,22 @@ public final class SfxConfigurableMachineService implements Listener {
         if (session == null && !state.isActive() && !state.hasInventory()) {
             activeInstances.remove(instanceId);
         }
+    }
+
+    private boolean tickProductionFocusReactor(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location, SfxMachineTickContext context) {
+        if (definition.kind() != SfxConfigurableMachineKind.REACTOR || state.mode() == 0 || location == null) {
+            return false;
+        }
+        boolean changed = false;
+        int loops = Math.max(1, Math.min(100, context.elapsedTicksInt()));
+        for (int i = 0; i < loops; i++) {
+            ReactorTickResult result = tickReactor(instanceId, instance, definition, state, location);
+            changed |= result.changed();
+            if (blockData.findInstance(instanceId).isEmpty()) {
+                return changed;
+            }
+        }
+        return changed;
     }
 
     private boolean tickAssembler(UUID instanceId, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location, SfxMachineTickContext context) {
@@ -750,6 +771,9 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         SfxConfigurableMachineDefinition definition = definitions.get(instance.typeId());
         SfxConfigurableMachineState state = currentState(instanceId, instance);
+        if (definition == null || definition.kind() != SfxConfigurableMachineKind.REACTOR || state.mode() != 0) {
+            return 0;
+        }
         SfxConfigurableMachineSession session = sessionsByHost.get(instanceId);
         boolean hasViewers = session != null;
         long lastTick = lastLogicTicks.getOrDefault(instanceId, 0L);
@@ -1247,6 +1271,7 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         if (slot == REACTOR_MODE_SLOT) {
             state.mode(state.mode() == 0 ? 1 : 0);
+            autoPausedProducers.remove(host.instanceId());
             dirtyInstances.add(host.instanceId());
             activeInstances.add(host.instanceId());
             refreshSession(host.instanceId());
@@ -1472,7 +1497,8 @@ public final class SfxConfigurableMachineService implements Listener {
                 key.z() + 0.5D,
                 text,
                 HOLOGRAM_VIEW_DISTANCE_SQUARED,
-                false));
+                false,
+                SfxFloatingTextDisplayMode.ARMOR_STAND));
     }
 
     private void removeReactorHologram(SfxBlockAnchorKey key) {

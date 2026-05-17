@@ -4,8 +4,10 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.machine.ManualMachineOutput;
 import cc.theends6.sfx.internal.machine.ManualMachineRecipe;
-import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainer;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
+import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService.CraftingTransactionResult;
+import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService.CraftingTransactionStatus;
+import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService.IngredientRequest;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -81,12 +83,15 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
             return definition.energyConsumptionPerTick();
         }
         Location below = location == null ? null : location.clone().subtract(0, 1, 0);
-        SfxVirtualContainer container = below == null ? null : virtualContainers.ensureRegistered(below).orElse(null);
-        if (container == null) {
+        if (below == null) {
             return 0;
         }
-        CraftPlan plan = craftPlan(plugin, state.activeRecipeKey(), container.snapshot());
-        return plan.status == SfxElectricMachineRenderStatus.WORKING ? definition.energyConsumptionPerTick() : 0;
+        CraftRequest request = craftRequest(plugin, state.activeRecipeKey());
+        if (request.status != SfxElectricMachineRenderStatus.WORKING) {
+            return 0;
+        }
+        CraftingTransactionResult check = virtualContainers.checkCraftingTransaction(below, request.ingredients, request.outputs);
+        return mapCraftingStatus(check.status()) == SfxElectricMachineRenderStatus.WORKING ? definition.energyConsumptionPerTick() : 0;
     }
 
     @Override
@@ -97,18 +102,26 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
             state.activeBaseTicks(WORK_TICKS);
             return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_RECIPE, false);
         }
-        Location below = location.clone().subtract(0, 1, 0);
-        SfxVirtualContainer container = virtualContainers.ensureRegistered(below).orElse(null);
-        if (container == null) {
+        Location below = location == null ? null : location.clone().subtract(0, 1, 0);
+        if (below == null) {
             state.progressWork(0);
             state.activeBaseTicks(WORK_TICKS);
             return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
         }
-        CraftPlan precheck = craftPlan(plugin, selected, container.snapshot());
-        if (precheck.status != SfxElectricMachineRenderStatus.WORKING) {
+        CraftRequest request = craftRequest(plugin, selected);
+        if (request.status != SfxElectricMachineRenderStatus.WORKING) {
             state.progressWork(0);
             state.activeBaseTicks(WORK_TICKS);
-            return SfxElectricMachineTickResult.status(precheck.status, true);
+            return SfxElectricMachineTickResult.status(request.status, true);
+        }
+        CraftingTransactionResult precheck = virtualContainers.checkCraftingTransaction(below, request.ingredients, request.outputs);
+        SfxElectricMachineRenderStatus precheckStatus = mapCraftingStatus(precheck.status());
+        if (precheckStatus != SfxElectricMachineRenderStatus.WORKING) {
+            if (precheckStatus != SfxElectricMachineRenderStatus.PAUSED) {
+                state.progressWork(0);
+            }
+            state.activeBaseTicks(WORK_TICKS);
+            return SfxElectricMachineTickResult.status(precheckStatus, true);
         }
         int energyPerTick = Math.max(0, definition.energyConsumptionPerTick());
         int elapsed = Math.max(1, context == null ? 1 : context.elapsedTicksInt());
@@ -131,13 +144,20 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
         if (progress < WORK_TICKS) {
             return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, consumed, true);
         }
-        CraftPlan finish = craftPlan(plugin, selected, container.snapshot());
         state.progressWork(0);
-        if (finish.status != SfxElectricMachineRenderStatus.WORKING || finish.contents == null) {
-            return SfxElectricMachineTickResult.changed(finish.status, consumed, true);
-        }
-        container.setContents(finish.contents);
-        return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, consumed, true);
+        CraftingTransactionResult finish = virtualContainers.commitCraftingTransaction(below, request.ingredients, request.outputs);
+        SfxElectricMachineRenderStatus finishStatus = mapCraftingStatus(finish.status());
+        return SfxElectricMachineTickResult.changed(finishStatus, consumed, true);
+    }
+
+    private SfxElectricMachineRenderStatus mapCraftingStatus(CraftingTransactionStatus status) {
+        return switch (status) {
+            case SUCCESS -> SfxElectricMachineRenderStatus.WORKING;
+            case NO_CONTAINER -> SfxElectricMachineRenderStatus.NO_TARGET;
+            case MISSING_INPUT -> SfxElectricMachineRenderStatus.NO_INPUT;
+            case OUTPUT_FULL -> SfxElectricMachineRenderStatus.OUTPUT_FULL;
+            case BUSY -> SfxElectricMachineRenderStatus.PAUSED;
+        };
     }
 
     boolean canSelect(JavaPlugin plugin, String selected) {
@@ -244,54 +264,55 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
         return new ItemStack(Material.PAPER);
     }
 
-    private CraftPlan craftPlan(JavaPlugin plugin, String selected, ItemStack[] contents) {
+    private CraftRequest craftRequest(JavaPlugin plugin, String selected) {
         return switch (kind) {
-            case VANILLA -> vanillaCraftPlan(plugin, selected, contents);
-            case ENHANCED, ARMOR -> manualCraftPlan(selected, contents);
+            case VANILLA -> vanillaCraftRequest(plugin, selected);
+            case ENHANCED, ARMOR -> manualCraftRequest(selected);
         };
     }
 
-    private CraftPlan vanillaCraftPlan(JavaPlugin plugin, String selected, ItemStack[] contents) {
+    private CraftRequest vanillaCraftRequest(JavaPlugin plugin, String selected) {
         Recipe recipe = findVanillaRecipe(plugin, selected);
         if (recipe == null) {
-            return CraftPlan.status(SfxElectricMachineRenderStatus.NO_RECIPE);
+            return CraftRequest.status(SfxElectricMachineRenderStatus.NO_RECIPE);
         }
         List<RecipeChoice> choices = recipeChoices(recipe);
         if (choices.isEmpty() || isEmpty(recipe.getResult())) {
-            return CraftPlan.status(SfxElectricMachineRenderStatus.NO_RECIPE);
+            return CraftRequest.status(SfxElectricMachineRenderStatus.NO_RECIPE);
         }
-        ItemStack[] simulated = cloneContents(contents);
+        List<IngredientRequest> ingredients = new ArrayList<>();
         for (RecipeChoice choice : choices) {
-            if (!consumeChoice(simulated, choice)) {
-                return CraftPlan.status(SfxElectricMachineRenderStatus.NO_INPUT);
+            if (choice == null) {
+                continue;
             }
+            ingredients.add(new IngredientRequest(choice::test, 1));
         }
-        if (!tryPlace(simulated, recipe.getResult().clone())) {
-            return CraftPlan.status(SfxElectricMachineRenderStatus.OUTPUT_FULL);
-        }
-        return new CraftPlan(SfxElectricMachineRenderStatus.WORKING, simulated);
+        return new CraftRequest(SfxElectricMachineRenderStatus.WORKING, ingredients, List.of(recipe.getResult().clone()));
     }
 
-    private CraftPlan manualCraftPlan(String selected, ItemStack[] contents) {
+    private CraftRequest manualCraftRequest(String selected) {
         ManualMachineRecipe recipe = findManualRecipe(selected);
         if (recipe == null) {
-            return CraftPlan.status(SfxElectricMachineRenderStatus.NO_RECIPE);
+            return CraftRequest.status(SfxElectricMachineRenderStatus.NO_RECIPE);
         }
-        ItemStack[] simulated = cloneContents(contents);
+        List<IngredientRequest> ingredients = new ArrayList<>();
         for (SfxRecipeSlot slot : recipe.input()) {
             if (slot == null || slot.isEmpty()) {
                 continue;
             }
-            if (!consumeSlot(simulated, slot)) {
-                return CraftPlan.status(SfxElectricMachineRenderStatus.NO_INPUT);
-            }
+            ingredients.add(new IngredientRequest(stack -> matchesSlot(stack, slot), Math.max(1, slot.amount())));
         }
+        List<ItemStack> outputs = new ArrayList<>();
         for (ManualMachineOutput output : recipe.fixedOutputs()) {
-            if (!tryPlace(simulated, output.create(items))) {
-                return CraftPlan.status(SfxElectricMachineRenderStatus.OUTPUT_FULL);
+            ItemStack stack = output.create(items);
+            if (!isEmpty(stack)) {
+                outputs.add(stack);
             }
         }
-        return new CraftPlan(SfxElectricMachineRenderStatus.WORKING, simulated);
+        if (outputs.isEmpty()) {
+            return CraftRequest.status(SfxElectricMachineRenderStatus.NO_RECIPE);
+        }
+        return new CraftRequest(SfxElectricMachineRenderStatus.WORKING, ingredients, outputs);
     }
 
     private ManualMachineRecipe findManualRecipe(String selected) {
@@ -396,38 +417,6 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
         return choices;
     }
 
-    private boolean consumeChoice(ItemStack[] contents, RecipeChoice choice) {
-        for (int i = 0; i < contents.length; i++) {
-            ItemStack stack = contents[i];
-            if (isEmpty(stack) || !choice.test(stack)) {
-                continue;
-            }
-            stack.setAmount(stack.getAmount() - 1);
-            if (stack.getAmount() <= 0) {
-                contents[i] = null;
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private boolean consumeSlot(ItemStack[] contents, SfxRecipeSlot slot) {
-        int remaining = Math.max(1, slot.amount());
-        for (int i = 0; i < contents.length && remaining > 0; i++) {
-            ItemStack stack = contents[i];
-            if (isEmpty(stack) || !matchesSlot(stack, slot)) {
-                continue;
-            }
-            int taken = Math.min(stack.getAmount(), remaining);
-            stack.setAmount(stack.getAmount() - taken);
-            remaining -= taken;
-            if (stack.getAmount() <= 0) {
-                contents[i] = null;
-            }
-        }
-        return remaining <= 0;
-    }
-
     private boolean matchesSlot(ItemStack stack, SfxRecipeSlot slot) {
         if (slot.isSfxItem()) {
             return items.readMarker(stack).map(marker -> marker.itemId().equals(slot.sfxItemId())).orElse(false);
@@ -438,50 +427,13 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
         return stack.getType() == slot.material();
     }
 
-    private boolean tryPlace(ItemStack[] contents, ItemStack output) {
-        if (isEmpty(output)) {
-            return true;
-        }
-        ItemStack remaining = output.clone();
-        int maxStack = remaining.getMaxStackSize();
-        for (int i = 0; i < contents.length && remaining.getAmount() > 0; i++) {
-            ItemStack current = contents[i];
-            if (isEmpty(current)) {
-                int moved = Math.min(maxStack, remaining.getAmount());
-                ItemStack created = remaining.clone();
-                created.setAmount(moved);
-                contents[i] = created;
-                remaining.setAmount(remaining.getAmount() - moved);
-            } else if (current.isSimilar(remaining)) {
-                int room = Math.max(0, Math.min(current.getMaxStackSize(), maxStack) - current.getAmount());
-                if (room > 0) {
-                    int moved = Math.min(room, remaining.getAmount());
-                    current.setAmount(current.getAmount() + moved);
-                    remaining.setAmount(remaining.getAmount() - moved);
-                }
-            }
-        }
-        return remaining.getAmount() <= 0;
-    }
-
-    private ItemStack[] cloneContents(ItemStack[] contents) {
-        if (contents == null) {
-            return new ItemStack[0];
-        }
-        ItemStack[] copy = new ItemStack[contents.length];
-        for (int i = 0; i < contents.length; i++) {
-            copy[i] = contents[i] == null ? null : contents[i].clone();
-        }
-        return copy;
-    }
-
     private boolean isEmpty(ItemStack stack) {
         return stack == null || stack.getType() == Material.AIR || stack.getAmount() <= 0;
     }
 
-    private record CraftPlan(SfxElectricMachineRenderStatus status, ItemStack[] contents) {
-        static CraftPlan status(SfxElectricMachineRenderStatus status) {
-            return new CraftPlan(status, null);
+    private record CraftRequest(SfxElectricMachineRenderStatus status, List<IngredientRequest> ingredients, List<ItemStack> outputs) {
+        static CraftRequest status(SfxElectricMachineRenderStatus status) {
+            return new CraftRequest(status, List.of(), List.of());
         }
     }
 }
