@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.List;
@@ -14,6 +15,10 @@ public interface SfxElectricRecipeProvider {
 
     default SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
         return null;
+    }
+
+    default SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, SfxMachineTickContext context) {
+        return tickSpecial(plugin, items, definition, state, location);
     }
 
     default SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {

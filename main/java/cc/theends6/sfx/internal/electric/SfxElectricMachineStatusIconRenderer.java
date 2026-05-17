@@ -106,6 +106,15 @@ final class SfxElectricMachineStatusIconRenderer {
         if (status == SfxElectricMachineRenderStatus.NO_POWER) {
             return SfxElectricMachineRenderStatus.NO_POWER;
         }
+        if (isAutoCrafter(definition)) {
+            if (state.progressWork() > 0) {
+                if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
+                    return SfxElectricMachineRenderStatus.NO_POWER;
+                }
+                return SfxElectricMachineRenderStatus.WORKING;
+            }
+            return status;
+        }
         if (state.hasProgress()) {
             if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
                 return SfxElectricMachineRenderStatus.NO_POWER;
@@ -236,6 +245,10 @@ final class SfxElectricMachineStatusIconRenderer {
 
     private boolean isAutoBrewer(SfxElectricMachineDefinition definition) {
         return definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER;
+    }
+
+    private boolean isAutoCrafter(SfxElectricMachineDefinition definition) {
+        return definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER;
     }
 
     private int totalWork(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe) {

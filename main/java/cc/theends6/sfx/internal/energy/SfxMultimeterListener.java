@@ -69,6 +69,9 @@ public final class SfxMultimeterListener implements Listener {
             return;
         }
         if (energyService.isConnectionStatusNode(instance.typeId())) {
+            if (cc.theends6.sfx.internal.util.SfxInteractionRules.isPlaceableHeldItem(items, event.getItem())) {
+                return;
+            }
             event.setCancelled(true);
             sendConnectionStatus(player, instance.instanceId());
         }

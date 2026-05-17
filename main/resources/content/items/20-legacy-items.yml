@@ -6266,7 +6266,9 @@ items:
   - '&fnormal &eCrafting Table'
   - ''
   - '&6Advanced Machine'
-  - '&8⇨ &e⚡&716 J/Item'
+  - '&8⇨ &e⚡&75120 J Buffer'
+  - '&8⇨ &e⚡&732 J/t'
+  - '&8⇨ &e⚡&7Work Time: &b10 ticks'
   flags:
   - legacy-sf
 - id: sf:enhanced_auto_crafter
@@ -6283,7 +6285,9 @@ items:
   - '&eEnhanced Crafting Table'
   - ''
   - '&6Advanced Machine'
-  - '&8⇨ &e⚡&716 J/Item'
+  - '&8⇨ &e⚡&75120 J Buffer'
+  - '&8⇨ &e⚡&732 J/t'
+  - '&8⇨ &e⚡&7Work Time: &b10 ticks'
   flags:
   - legacy-sf
 - id: sf:armor_auto_crafter
@@ -6300,7 +6304,9 @@ items:
   - '&eArmor Forge'
   - ''
   - '&6Advanced Machine'
-  - '&8⇨ &e⚡&732 J/Item'
+  - '&8⇨ &e⚡&75120 J Buffer'
+  - '&8⇨ &e⚡&764 J/t'
+  - '&8⇨ &e⚡&7Work Time: &b10 ticks'
   flags:
   - legacy-sf
 - id: sf:iron_golem_assembler

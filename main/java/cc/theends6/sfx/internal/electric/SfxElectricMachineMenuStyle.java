@@ -4,7 +4,8 @@ public enum SfxElectricMachineMenuStyle {
     STANDARD(45),
     SIMPLE_IO(27),
     ASSEMBLER(54),
-    AUTO_BREWER(54);
+    AUTO_BREWER(54),
+    AUTO_CRAFTER(54);
 
     private final int inventorySize;
 

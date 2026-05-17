@@ -166,6 +166,10 @@ public final class SfxEnergyService implements Listener {
         if (definition == null) {
             return;
         }
+        if ((definition.componentType() == SfxEnergyComponentType.CONNECTOR || definition.componentType() == SfxEnergyComponentType.CAPACITOR)
+                && SfxInteractionRules.isPlaceableHeldItem(items, event.getItem())) {
+            return;
+        }
         if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }

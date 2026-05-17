@@ -347,14 +347,44 @@ public final class SfxVirtualContainerService implements Listener {
         }
         int originalAmount = input.getAmount();
         ItemStack remaining = input.clone();
+        ItemStack[] mirror = container.rawMirror();
         if (smartFill) {
-            remaining = fillExisting(container.rawMirror(), remaining);
-            if (isEmpty(remaining)) {
-                container.mirrorDirty(true);
-                return null;
+            boolean hasSimilar = hasSimilar(mirror, remaining);
+            if (hasSimilar) {
+                remaining = fillExisting(mirror, remaining);
+            } else {
+                remaining = fillEmptyOnly(mirror, remaining);
             }
+        } else {
+            remaining = fillEmptyOrExisting(mirror, remaining, true);
         }
-        remaining = fillEmptyOrExisting(container.rawMirror(), remaining, !smartFill);
+        int remainingAmount = isEmpty(remaining) ? 0 : remaining.getAmount();
+        if (remainingAmount != originalAmount) {
+            container.mirrorDirty(true);
+        }
+        return isEmpty(remaining) ? null : remaining;
+    }
+
+    /**
+     * Inserts into at most one inventory slot. This is used by the classic/basic Cargo Input Node
+     * to preserve the single-slot output semantics instead of spreading one transfer across several slots.
+     */
+    public ItemStack insertSingleSlot(SfxVirtualContainer container, ItemStack input, boolean smartFill) {
+        if (container == null) {
+            return input;
+        }
+        if (isEmpty(input)) {
+            return null;
+        }
+        int originalAmount = input.getAmount();
+        ItemStack remaining = input.clone();
+        ItemStack[] mirror = container.rawMirror();
+        if (smartFill) {
+            boolean hasSimilar = hasSimilar(mirror, remaining);
+            remaining = hasSimilar ? fillOneExistingSlot(mirror, remaining) : fillOneEmptySlot(mirror, remaining);
+        } else {
+            remaining = fillOneEmptyOrExistingSlot(mirror, remaining);
+        }
         int remainingAmount = isEmpty(remaining) ? 0 : remaining.getAmount();
         if (remainingAmount != originalAmount) {
             container.mirrorDirty(true);
@@ -366,26 +396,100 @@ public final class SfxVirtualContainerService implements Listener {
         if (container == null || isEmpty(probe)) {
             return 0;
         }
+        ItemStack[] mirror = container.rawMirror();
+        if (smartFill) {
+            int existingCapacity = existingCapacity(mirror, probe);
+            if (hasSimilar(mirror, probe)) {
+                return existingCapacity;
+            }
+            return emptyCapacity(mirror, probe);
+        }
         int capacity = 0;
-        for (ItemStack stack : container.rawMirror()) {
+        for (ItemStack stack : mirror) {
             if (isEmpty(stack)) {
-                if (!smartFill) {
-                    capacity += probe.getMaxStackSize();
-                }
+                capacity += probe.getMaxStackSize();
                 continue;
             }
             if (stack.isSimilar(probe)) {
                 capacity += Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
             }
         }
-        if (smartFill && capacity <= 0) {
-            for (ItemStack stack : container.rawMirror()) {
-                if (isEmpty(stack)) {
-                    capacity += probe.getMaxStackSize();
+        return capacity;
+    }
+
+    /**
+     * Capacity in the first slot that would be used by {@link #insertSingleSlot}.
+     */
+    public int capacityForSingleSlot(SfxVirtualContainer container, ItemStack probe, boolean smartFill) {
+        if (container == null || isEmpty(probe)) {
+            return 0;
+        }
+        ItemStack[] mirror = container.rawMirror();
+        if (smartFill) {
+            boolean hasSimilar = hasSimilar(mirror, probe);
+            if (hasSimilar) {
+                for (ItemStack stack : mirror) {
+                    if (!isEmpty(stack) && stack.isSimilar(probe)) {
+                        int capacity = Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
+                        if (capacity > 0) {
+                            return capacity;
+                        }
+                    }
+                }
+                return 0;
+            }
+            return firstEmptyCapacity(mirror, probe);
+        }
+        for (ItemStack stack : mirror) {
+            if (isEmpty(stack)) {
+                return probe.getMaxStackSize();
+            }
+            if (stack.isSimilar(probe)) {
+                int capacity = Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
+                if (capacity > 0) {
+                    return capacity;
                 }
             }
         }
+        return 0;
+    }
+
+    private boolean hasSimilar(ItemStack[] mirror, ItemStack probe) {
+        for (ItemStack stack : mirror) {
+            if (!isEmpty(stack) && stack.isSimilar(probe)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int existingCapacity(ItemStack[] mirror, ItemStack probe) {
+        int capacity = 0;
+        for (ItemStack stack : mirror) {
+            if (!isEmpty(stack) && stack.isSimilar(probe)) {
+                capacity += Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
+            }
+        }
         return capacity;
+    }
+
+    private int emptyCapacity(ItemStack[] mirror, ItemStack probe) {
+        int capacity = 0;
+        for (ItemStack stack : mirror) {
+            if (isEmpty(stack)) {
+                capacity += probe.getMaxStackSize();
+            }
+        }
+        return capacity;
+    }
+
+    private int firstEmptyCapacity(ItemStack[] mirror, ItemStack probe) {
+        for (ItemStack stack : mirror) {
+            if (isEmpty(stack)) {
+                return probe.getMaxStackSize();
+            }
+        }
+        return 0;
     }
 
     private ItemStack fillExisting(ItemStack[] mirror, ItemStack input) {
@@ -403,6 +507,84 @@ public final class SfxVirtualContainerService implements Listener {
             remaining.setAmount(remaining.getAmount() - moved);
             if (remaining.getAmount() <= 0) {
                 return null;
+            }
+        }
+        return remaining;
+    }
+
+    private ItemStack fillEmptyOnly(ItemStack[] mirror, ItemStack input) {
+        ItemStack remaining = input.clone();
+        for (int i = 0; i < mirror.length; i++) {
+            if (!isEmpty(mirror[i])) {
+                continue;
+            }
+            int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
+            ItemStack placed = remaining.clone();
+            placed.setAmount(moved);
+            mirror[i] = placed;
+            remaining.setAmount(remaining.getAmount() - moved);
+            if (remaining.getAmount() <= 0) {
+                return null;
+            }
+        }
+        return remaining;
+    }
+
+    private ItemStack fillOneExistingSlot(ItemStack[] mirror, ItemStack input) {
+        ItemStack remaining = input.clone();
+        for (ItemStack stack : mirror) {
+            if (isEmpty(stack) || !stack.isSimilar(remaining)) {
+                continue;
+            }
+            int limit = Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize());
+            int moved = Math.min(remaining.getAmount(), Math.max(0, limit - stack.getAmount()));
+            if (moved <= 0) {
+                continue;
+            }
+            stack.setAmount(stack.getAmount() + moved);
+            remaining.setAmount(remaining.getAmount() - moved);
+            return remaining.getAmount() <= 0 ? null : remaining;
+        }
+        return remaining;
+    }
+
+    private ItemStack fillOneEmptySlot(ItemStack[] mirror, ItemStack input) {
+        ItemStack remaining = input.clone();
+        for (int i = 0; i < mirror.length; i++) {
+            if (!isEmpty(mirror[i])) {
+                continue;
+            }
+            int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
+            ItemStack placed = remaining.clone();
+            placed.setAmount(moved);
+            mirror[i] = placed;
+            remaining.setAmount(remaining.getAmount() - moved);
+            return remaining.getAmount() <= 0 ? null : remaining;
+        }
+        return remaining;
+    }
+
+    private ItemStack fillOneEmptyOrExistingSlot(ItemStack[] mirror, ItemStack input) {
+        ItemStack remaining = input.clone();
+        for (int i = 0; i < mirror.length; i++) {
+            ItemStack stack = mirror[i];
+            if (isEmpty(stack)) {
+                int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
+                ItemStack placed = remaining.clone();
+                placed.setAmount(moved);
+                mirror[i] = placed;
+                remaining.setAmount(remaining.getAmount() - moved);
+                return remaining.getAmount() <= 0 ? null : remaining;
+            }
+            if (stack.isSimilar(remaining)) {
+                int limit = Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize());
+                int moved = Math.min(remaining.getAmount(), Math.max(0, limit - stack.getAmount()));
+                if (moved <= 0) {
+                    continue;
+                }
+                stack.setAmount(stack.getAmount() + moved);
+                remaining.setAmount(remaining.getAmount() - moved);
+                return remaining.getAmount() <= 0 ? null : remaining;
             }
         }
         return remaining;

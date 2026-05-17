@@ -3,6 +3,8 @@ package cc.theends6.sfx.internal.electric;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
+import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
+import java.util.List;
 import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
@@ -12,7 +14,7 @@ final class SfxElectricMachineDefinitions {
     private SfxElectricMachineDefinitions() {
     }
 
-    static SfxElectricMachineRegistry create(JavaPlugin plugin, SfxItems items, DefaultManualMachineRegistry manualMachines, SfxBlockDataService blockData) {
+    static SfxElectricMachineRegistry create(JavaPlugin plugin, SfxItems items, DefaultManualMachineRegistry manualMachines, SfxBlockDataService blockData, SfxVirtualContainerService virtualContainers) {
         SfxElectricMachineRegistry result = new SfxElectricMachineRegistry();
         SfxElectricRecipeProvider furnaceRecipes = new SfxVanillaFurnaceRecipeProvider(plugin, 4);
         SfxElectricRecipeProvider grinderRecipes = new SfxClassicOreGrinderRecipeProvider(
@@ -73,6 +75,9 @@ final class SfxElectricMachineDefinitions {
         SfxElectricRecipeProvider autoBrewerRecipes = sfxAutoBrewer
                 ? new SfxAdvancedAutoBrewerRecipeProvider(plugin)
                 : new SfxAutoBrewerRecipeProvider();
+        SfxElectricRecipeProvider vanillaAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.vanilla(virtualContainers, items);
+        SfxElectricRecipeProvider enhancedAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.enhanced(virtualContainers, items, List.copyOf(manualMachines.recipesFor("sf:enhanced_crafting_table")));
+        SfxElectricRecipeProvider armorAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.armor(virtualContainers, items, List.copyOf(manualMachines.recipesFor("sf:armor_forge")));
 
         double crucibleEnergyMultiplier = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true)
                 ? Math.max(1.0D, plugin.getConfig().getDouble("energy.generator-balance.electrified-crucible-consumption-multiplier", 1.5D))
@@ -99,6 +104,10 @@ final class SfxElectricMachineDefinitions {
         } else {
             result.register(new SfxElectricMachineDefinition("sf:auto_brewer", "Auto Brewer", 1, buffer(256), 12, Material.FISHING_ROD, autoBrewerRecipes));
         }
+
+        result.register(new SfxElectricMachineDefinition("sf:vanilla_auto_crafter", "Auto-Crafter (Vanilla)", 1, 5120, 32, Material.CRAFTING_TABLE, vanillaAutoCrafterRecipes, SfxElectricMachineDefinition.NO_INPUT_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.AUTO_CRAFTER));
+        result.register(new SfxElectricMachineDefinition("sf:enhanced_auto_crafter", "Auto-Crafter (Enhanced)", 1, 5120, 32, Material.CRAFTING_TABLE, enhancedAutoCrafterRecipes, SfxElectricMachineDefinition.NO_INPUT_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.AUTO_CRAFTER));
+        result.register(new SfxElectricMachineDefinition("sf:armor_auto_crafter", "Auto-Crafter (Armor Forge)", 1, 5120, 64, Material.ANVIL, armorAutoCrafterRecipes, SfxElectricMachineDefinition.NO_INPUT_SLOTS, SfxElectricMachineDefinition.NO_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.AUTO_CRAFTER));
 
         result.register(new SfxElectricMachineDefinition("sf:electric_ingot_factory", "Electric Ingot Factory", 1, buffer(512), 8, Material.FLINT_AND_STEEL, ingotFactoryRecipes));
         result.register(new SfxElectricMachineDefinition("sf:electric_ingot_factory_2", "Electric Ingot Factory - II", 2, buffer(1024), 14, Material.FLINT_AND_STEEL, ingotFactoryRecipes));

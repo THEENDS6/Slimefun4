@@ -2991,7 +2991,9 @@ items:
     - '&f普通&e工作台'
     - ''
     - '&6高级机器'
-    - '&8⇨ &e⚡ &716 J/物品'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &732 J/t'
+    - '&8⇨ &e⚡ &7工作时间：&b10 tick'
   sf.enhanced_auto_crafter:
     name: '&2自动合成机 &8(增强型)'
     lore:
@@ -3002,7 +3004,9 @@ items:
     - '&e增强型工作台'
     - ''
     - '&6高级机器'
-    - '&8⇨ &e⚡ &716 J/物品'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &732 J/t'
+    - '&8⇨ &e⚡ &7工作时间：&b10 tick'
   sf.armor_auto_crafter:
     name: '&2自动合成机 &8(护甲锻造台)'
     lore:
@@ -3013,7 +3017,9 @@ items:
     - '&e护甲锻造台'
     - ''
     - '&6高级机器'
-    - '&8⇨ &e⚡ &732 J/物品'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &764 J/t'
+    - '&8⇨ &e⚡ &7工作时间：&b10 tick'
   sf.iron_golem_assembler:
     name: '&6铁傀儡组装机'
     lore:
@@ -3532,6 +3538,32 @@ electric-ui:
       working: <gray>正在催生附近树苗。</gray>
     fluid-pump:
       working: <gray>正在从下方抽取流体。</gray>
+  auto-crafter:
+    enabled:
+      name: <green>配方已启用</green>
+      lore: <yellow>左键：切换配方启用状态。</yellow>
+    disabled:
+      name: <red>配方已停用</red>
+    recipe:
+      current: '<gray>配方：</gray><white>{recipe}</white>'
+      configure: <gray>潜行右键此机器并手持目标物品来配置。</gray>
+      clear: '<yellow>右键：清除配方</yellow>'
+      none: 无
+      none-title: <yellow>未选择配方</yellow>
+    container:
+      name: <gold>连接容器</gold>
+      lore: <gray>该机器使用正下方的容器。</gray>
+    select:
+      name: <green>选择配方</green>
+      lore: <yellow>点击选择此配方。</yellow>
+    previous:
+      name: <yellow>上一个配方</yellow>
+    next:
+      name: <yellow>下一个配方</yellow>
+    page: '<gray>配方 {page} / {total}</gray>'
+    select-a-recipe: <yellow>手持目标物品并潜行右键来选择配方。</yellow>
+    recipe-selected: '<green>已选择配方：</green><white>{recipe}</white>'
+    recipe-not-found: <red>没有找到该物品对应的自动合成配方。</red>
   auto-brewer:
     blaze:
       frame: <gold>烈焰粉</gold>
@@ -3806,6 +3838,24 @@ technical:
     mode:
       thrust: '<yellow>喷气鞋：推进模式</yellow>'
       assist: '<aqua>喷气鞋：助力模式</aqua>'
+
+  auto-crafter:
+    enabled:
+      name: <green>已启用</green>
+      lore: <yellow>点击切换。</yellow>
+    disabled:
+      name: <red>已停用</red>
+    recipe:
+      name: <yellow>已选择配方</yellow>
+      current: '<gray>配方：</gray><white>{recipe}</white>'
+      configure: <gray>潜行右键此机器并手持目标物品来配置。</gray>
+      clear: '<yellow>右键：清除配方</yellow>'
+      none: 无
+    container:
+      name: <gold>连接容器</gold>
+      lore: <gray>该机器使用正下方的容器。</gray>
+    recipe-selected: '<green>已选择配方：</green><white>{recipe}</white>'
+    recipe-not-found: <red>没有找到该物品对应的自动合成配方。</red>
 
 cargo:
   status:

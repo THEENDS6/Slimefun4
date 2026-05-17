@@ -171,11 +171,10 @@ public final class SfxCargoService implements Listener {
         if (definition == null) {
             return;
         }
-        boolean autoCrafterSelection = isAutoCrafter(definition.type())
-                && event.getPlayer().isSneaking()
-                && event.getItem() != null
-                && !event.getItem().getType().isAir();
-        if (!autoCrafterSelection && SfxInteractionRules.prefersBlockPlacement(items, event)) {
+        if (definition.type() == SfxCargoComponentType.CONNECTOR && SfxInteractionRules.isPlaceableHeldItem(items, event.getItem())) {
+            return;
+        }
+        if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
         SfxEventGuards.denyBlockAndItemUse(event);
@@ -189,7 +188,16 @@ public final class SfxCargoService implements Listener {
         }
         Inventory top = event.getView().getTopInventory();
         if (top.getHolder() instanceof SfxTrashCanHolder) {
-            if (event.getClickedInventory() != top || !TRASH_INPUT_SLOT_SET.contains(event.getRawSlot())) {
+            boolean topSlot = event.getRawSlot() < top.getSize();
+            if (topSlot) {
+                if (!TRASH_INPUT_SLOT_SET.contains(event.getRawSlot())) {
+                    event.setCancelled(true);
+                }
+                runtime.executeForPlayerLater(player, 1L, () -> clearTrash(top));
+                return;
+            }
+            if (event.isShiftClick() && event.getCurrentItem() != null && !event.getCurrentItem().getType().isAir()) {
+                event.setCurrentItem(null);
                 event.setCancelled(true);
             }
             runtime.executeForPlayerLater(player, 1L, () -> clearTrash(top));
@@ -387,7 +395,6 @@ public final class SfxCargoService implements Listener {
                 return;
             }
             tickCargo();
-            tickAutoCrafters();
             clearOpenTrashMenus();
             scheduleTick();
         });
@@ -635,7 +642,9 @@ public final class SfxCargoService implements Listener {
             }
             ItemStack part = template.clone();
             part.setAmount(move.amount());
-            ItemStack remainder = move.endpoint().insert(part, input.state.smartFill);
+            ItemStack remainder = input.definition.type() == SfxCargoComponentType.INPUT_NODE
+                    ? move.endpoint().insertSingleSlot(part, input.state.smartFill)
+                    : move.endpoint().insert(part, input.state.smartFill);
             inserted += move.amount() - (isEmpty(remainder) ? 0 : remainder.getAmount());
             if (!isEmpty(remainder)) {
                 virtualContainers.insert(sourceContainer, remainder, false);
@@ -679,7 +688,10 @@ public final class SfxCargoService implements Listener {
             if (endpoint == null || (!endpoint.trash && endpoint.container == sourceContainer)) {
                 continue;
             }
-            if (endpoint.capacityFor(stack, input.state.smartFill) <= 0) {
+            int capacity = input.definition.type() == SfxCargoComponentType.INPUT_NODE
+                    ? endpoint.capacityForSingleSlot(stack, input.state.smartFill)
+                    : endpoint.capacityFor(stack, input.state.smartFill);
+            if (capacity <= 0) {
                 continue;
             }
             candidates.add(output.withEndpoint(endpoint));
@@ -705,6 +717,9 @@ public final class SfxCargoService implements Listener {
             } else {
                 remaining = planSequentialMoves(input, group, stack, remaining, moves);
             }
+            if (input.definition.type() == SfxCargoComponentType.INPUT_NODE && !moves.isEmpty()) {
+                break;
+            }
             if (remaining == before && !group.isEmpty()) {
                 break;
             }
@@ -717,12 +732,17 @@ public final class SfxCargoService implements Listener {
             if (remaining <= 0) {
                 break;
             }
-            int amount = Math.min(remaining, output.endpoint.capacityFor(stack, input.state.smartFill));
+            int amount = Math.min(remaining, input.definition.type() == SfxCargoComponentType.INPUT_NODE
+                    ? output.endpoint.capacityForSingleSlot(stack, input.state.smartFill)
+                    : output.endpoint.capacityFor(stack, input.state.smartFill));
             if (amount <= 0) {
                 continue;
             }
             moves.add(new OutputMove(output.endpoint, amount));
             remaining -= amount;
+            if (input.definition.type() == SfxCargoComponentType.INPUT_NODE) {
+                break;
+            }
         }
         return remaining;
     }
@@ -735,7 +755,9 @@ public final class SfxCargoService implements Listener {
         boolean movedAny = false;
         for (int i = 0; i < group.size() && remaining > 0; i++) {
             NodeRef output = group.get((start + i) % group.size());
-            int amount = Math.min(remaining, output.endpoint.capacityFor(stack, input.state.smartFill));
+            int amount = Math.min(remaining, input.definition.type() == SfxCargoComponentType.INPUT_NODE
+                    ? output.endpoint.capacityForSingleSlot(stack, input.state.smartFill)
+                    : output.endpoint.capacityFor(stack, input.state.smartFill));
             if (amount <= 0) {
                 continue;
             }
@@ -1709,11 +1731,25 @@ public final class SfxCargoService implements Listener {
             return virtualContainers.capacityFor(container, stack, smartFill);
         }
 
+        int capacityForSingleSlot(ItemStack stack, boolean smartFill) {
+            if (trash) {
+                return stack == null ? 0 : stack.getAmount();
+            }
+            return virtualContainers.capacityForSingleSlot(container, stack, smartFill);
+        }
+
         ItemStack insert(ItemStack stack, boolean smartFill) {
             if (trash || isEmpty(stack)) {
                 return null;
             }
             return virtualContainers.insert(container, stack, smartFill);
+        }
+
+        ItemStack insertSingleSlot(ItemStack stack, boolean smartFill) {
+            if (trash || isEmpty(stack)) {
+                return null;
+            }
+            return virtualContainers.insertSingleSlot(container, stack, smartFill);
         }
     }
 }
