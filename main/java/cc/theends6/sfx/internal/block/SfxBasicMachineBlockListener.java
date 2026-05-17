@@ -253,7 +253,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
-        runtime.executeGlobalLater(1L, () -> {
+        runtime.executeAtLater(furnace.getLocation(), 1L, () -> {
             if (event.getInventory().getViewers().isEmpty()) {
                 viewedFurnaces.remove(key);
             }
@@ -721,7 +721,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 long elapsedTicks = lastTick <= 0L ? 1L : Math.max(1L, currentTick - lastTick);
                 state.lastLogicTick(currentTick);
                 World world = plugin.getServer().getWorld(key.worldId());
-                if (world == null || !world.isChunkLoaded(key.x() >> 4, key.z() >> 4)) {
+                if (world == null) {
                     continue;
                 }
                 Location location = new Location(world, key.x(), key.y(), key.z());

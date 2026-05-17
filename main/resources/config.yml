@@ -1,10 +1,10 @@
 language: 'zh-CN'
 
 content:
-  sync-bundled-languages-on-startup: true
-  sync-bundled-items-on-startup: true
-  sync-bundled-recipes-on-startup: true
-  sync-bundled-researches-on-startup: true
+  sync-bundled-languages-on-startup: false
+  sync-bundled-items-on-startup: false
+  sync-bundled-recipes-on-startup: false
+  sync-bundled-researches-on-startup: false
 
 storage:
   sqlite-file: 'data/player-data.db'
@@ -53,7 +53,7 @@ guide:
 
 
 debug-text:
-  enabled: true
+  enabled: false
 
 options:
   
@@ -234,3 +234,12 @@ radiation:
     
     
     reduction-per-piece: 0.25
+
+
+folia:
+  
+  
+  
+  strict-region-checks: true
+  disable-cross-region-cargo: true
+  disable-cross-region-energy: true

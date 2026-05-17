@@ -32,7 +32,7 @@ public final class SfxDebugJoinListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        if (!plugin.getConfig().getBoolean("debug-text.enabled", true)) {
+        if (!plugin.getConfig().getBoolean("debug-text.enabled", false)) {
             return;
         }
         Player player = event.getPlayer();

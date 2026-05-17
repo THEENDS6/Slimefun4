@@ -627,7 +627,7 @@ public final class SfxConfigurableMachineService implements Listener {
                     }
                 }
                 Location location = locationFor(instance);
-                if (location == null || !isInstanceChunkLoaded(instance)) {
+                if (location == null) {
                     continue;
                 }
                 boolean hasViewers = sessionsByHost.containsKey(instanceId);
@@ -787,6 +787,9 @@ public final class SfxConfigurableMachineService implements Listener {
             syncInventoryToState(session.inventory(), state, definition, session.panelType());
         }
         Location location = locationFor(instance);
+        if (location == null || !runtime.isOwnedByCurrentRegion(location)) {
+            return 0;
+        }
         if (autoPausedProducers.contains(instanceId) && canAutoPauseProducer(instanceId)) {
             return 0;
         }
@@ -1542,7 +1545,11 @@ public final class SfxConfigurableMachineService implements Listener {
         if (instance == null) {
             return false;
         }
-        org.bukkit.World world = plugin.getServer().getWorld(instance.anchorKey().worldId());
+        Location location = locationFor(instance);
+        if (location == null || !runtime.isOwnedByCurrentRegion(location)) {
+            return false;
+        }
+        org.bukkit.World world = location.getWorld();
         return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);
     }
 

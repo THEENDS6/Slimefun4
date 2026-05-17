@@ -77,6 +77,9 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public Optional<SfxVirtualContainer> ensureRegistered(Location location) {
+        if (!owns(location)) {
+            return Optional.empty();
+        }
         Inventory inventory = inventoryAt(location).orElse(null);
         if (inventory == null) {
             return Optional.empty();
@@ -109,7 +112,7 @@ public final class SfxVirtualContainerService implements Listener {
             if (!container.externalDirty() && !container.mirrorDirty() && container.revision() != 0L) {
                 continue;
             }
-            inventoryFor(container).ifPresent(inventory -> reconcileBeforeAccess(container, inventory));
+            runAtContainer(container, () -> inventoryFor(container).ifPresent(inventory -> reconcileBeforeAccess(container, inventory)));
         }
     }
 
@@ -121,13 +124,13 @@ public final class SfxVirtualContainerService implements Listener {
             
             
             
-            inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory));
+            runAtContainer(container, () -> inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory)));
         }
     }
 
     public void flushAllToWorld() {
         for (SfxVirtualContainer container : containers.values()) {
-            inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory));
+            runAtContainer(container, () -> inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory)));
         }
     }
 
@@ -184,10 +187,11 @@ public final class SfxVirtualContainerService implements Listener {
             
             return false;
         }
-        if (container.mirrorDirty()) {
+        if (container.externalDirty()) {
+            hydrate(container, inventory);
+        } else if (container.mirrorDirty()) {
             syncToWorld(container, inventory);
-        }
-        if (container.viewerActive() || container.externalActive() || container.externalDirty() || container.revision() == 0L) {
+        } else if (container.viewerActive() || container.externalActive() || container.revision() == 0L) {
             hydrate(container, inventory);
         }
         return true;
@@ -842,7 +846,9 @@ public final class SfxVirtualContainerService implements Listener {
             return;
         }
         SfxVirtualContainer container = optional.get();
-        if (container.mirrorDirty()) {
+        if (container.externalDirty() || container.externalActive()) {
+            hydrate(container, inventory);
+        } else if (container.mirrorDirty()) {
             syncToWorld(container, inventory);
         } else {
             hydrate(container, inventory);
@@ -899,14 +905,14 @@ public final class SfxVirtualContainerService implements Listener {
                 if (!container.externalActive() && !container.viewerActive()) {
                     continue;
                 }
-                inventoryFor(container).ifPresent(inventory -> {
+                runAtContainer(container, () -> inventoryFor(container).ifPresent(inventory -> {
                     if (container.externalDirty() || container.mirrorDirty()) {
                         reconcileBeforeAccess(container, inventory);
                     } else if (now - container.lastWorldSyncTick() >= EXTERNAL_SYNC_INTERVAL && container.viewerActive()) {
                         
                         hydrate(container, inventory);
                     }
-                });
+                }));
             }
             scheduleExternalSync();
         });
@@ -923,13 +929,10 @@ public final class SfxVirtualContainerService implements Listener {
         optional.ifPresent(container -> {
             container.externalActive(true);
             container.lastExternalEventTick(Bukkit.getCurrentTick());
-            if (container.mirrorDirty()) {
-                inventoryFor(container).ifPresent(target -> syncToWorld(container, target));
-            }
             
             
             container.externalDirty(true);
-            runtime.executeGlobalLater(1L, () -> inventoryFor(container).ifPresent(target -> {
+            runAtContainerLater(container, 1L, () -> inventoryFor(container).ifPresent(target -> {
                 if (container.externalDirty()) {
                     hydrate(container, target);
                 }
@@ -941,11 +944,15 @@ public final class SfxVirtualContainerService implements Listener {
         if (container == null || inventory == null) {
             return;
         }
+        if (container.externalDirty() || container.externalActive()) {
+            hydrate(container, inventory);
+            return;
+        }
         if (container.mirrorDirty()) {
             syncToWorld(container, inventory);
             return;
         }
-        if (container.revision() == 0L || container.externalDirty() || container.externalActive()) {
+        if (container.revision() == 0L) {
             hydrate(container, inventory);
             return;
         }
@@ -957,12 +964,12 @@ public final class SfxVirtualContainerService implements Listener {
         if (container == null || inventory == null) {
             return;
         }
-        if (container.mirrorDirty()) {
-            syncToWorld(container, inventory);
-            return;
-        }
         if (container.externalDirty()) {
             hydrate(container, inventory);
+            return;
+        }
+        if (container.mirrorDirty()) {
+            syncToWorld(container, inventory);
             return;
         }
         if (container.revision() == 0L) {
@@ -997,7 +1004,7 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     private Optional<Inventory> inventoryAt(Location location) {
-        if (location == null || location.getWorld() == null) {
+        if (location == null || location.getWorld() == null || !owns(location)) {
             return Optional.empty();
         }
         Block block = location.getBlock();
@@ -1008,14 +1015,11 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     private Optional<Inventory> inventoryFor(SfxVirtualContainer container) {
-        if (container == null) {
+        Location location = primaryLocation(container);
+        if (location == null || !owns(location)) {
             return Optional.empty();
         }
-        World world = Bukkit.getWorld(container.key().worldId());
-        if (world == null) {
-            return Optional.empty();
-        }
-        Block block = world.getBlockAt(container.key().x1(), container.key().y1(), container.key().z1());
+        Block block = location.getBlock();
         if (!(block.getState() instanceof InventoryHolder holder)) {
             return Optional.empty();
         }
@@ -1037,6 +1041,41 @@ public final class SfxVirtualContainerService implements Listener {
             }
         }
         return fallback == null ? Optional.empty() : Optional.of(SfxVirtualContainerKey.single(fallback));
+    }
+
+    private void runAtContainer(SfxVirtualContainer container, Runnable task) {
+        Location location = primaryLocation(container);
+        if (location == null) {
+            return;
+        }
+        if (owns(location)) {
+            task.run();
+        } else {
+            runtime.executeAt(location, task);
+        }
+    }
+
+    private void runAtContainerLater(SfxVirtualContainer container, long delayTicks, Runnable task) {
+        Location location = primaryLocation(container);
+        if (location == null) {
+            return;
+        }
+        runtime.executeAtLater(location, Math.max(1L, delayTicks), task);
+    }
+
+    private Location primaryLocation(SfxVirtualContainer container) {
+        if (container == null) {
+            return null;
+        }
+        World world = Bukkit.getWorld(container.key().worldId());
+        if (world == null) {
+            return null;
+        }
+        return new Location(world, container.key().x1(), container.key().y1(), container.key().z1());
+    }
+
+    private boolean owns(Location location) {
+        return location != null && location.getWorld() != null && runtime.isOwnedByCurrentRegion(location);
     }
 
     private Location holderLocation(InventoryHolder holder) {

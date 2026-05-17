@@ -22,6 +22,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxBlockDataService {
     private final JavaPlugin plugin;
+    private final SfxRuntime runtime;
     private final SfxBlockDataRepository repository;
     private final Map<SfxBlockAnchorKey, SfxAnchorRecord> anchors = new ConcurrentHashMap<>();
     private final Map<UUID, SfxBlockInstanceRecord> instances = new ConcurrentHashMap<>();
@@ -34,6 +35,7 @@ public final class SfxBlockDataService {
 
     public SfxBlockDataService(JavaPlugin plugin, SfxRuntime runtime, SfxBlockDataRepository repository) {
         this.plugin = plugin;
+        this.runtime = runtime;
         this.repository = repository;
     }
 
@@ -275,10 +277,8 @@ public final class SfxBlockDataService {
             if (!key.worldId().equals(world.getUID())) {
                 continue;
             }
-            if (!world.isChunkLoaded(key.x() >> 4, key.z() >> 4)) {
-                continue;
-            }
-            reconcileAnchor(world, anchor);
+            Location location = new Location(world, key.x(), key.y(), key.z());
+            runtime.executeAt(location, () -> reconcileAnchor(world, anchor));
         }
     }
 
@@ -291,7 +291,8 @@ public final class SfxBlockDataService {
             if (!key.worldId().equals(world.getUID()) || (key.x() >> 4) != chunkX || (key.z() >> 4) != chunkZ) {
                 continue;
             }
-            reconcileAnchor(world, anchor);
+            Location location = new Location(world, key.x(), key.y(), key.z());
+            runtime.executeAt(location, () -> reconcileAnchor(world, anchor));
         }
     }
 

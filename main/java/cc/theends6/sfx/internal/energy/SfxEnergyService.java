@@ -166,8 +166,9 @@ public final class SfxEnergyService implements Listener {
         if (definition == null) {
             return;
         }
-        if ((definition.componentType() == SfxEnergyComponentType.CONNECTOR || definition.componentType() == SfxEnergyComponentType.CAPACITOR)
-                && SfxInteractionRules.isPlaceableHeldItem(items, event.getItem())) {
+        if (definition.componentType() == SfxEnergyComponentType.CONNECTOR || definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
+            
+            
             return;
         }
         if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
@@ -178,16 +179,10 @@ public final class SfxEnergyService implements Listener {
             runtime.executeForPlayer(event.getPlayer(), () -> openGenerator(event.getPlayer(), instance, definition));
             return;
         }
-        if (definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
-            return;
-        } else if (definition.componentType() == SfxEnergyComponentType.REGULATOR) {
+        if (definition.componentType() == SfxEnergyComponentType.REGULATOR) {
             event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text(
                     "energy.messages.regulator-status",
                     "<yellow>Energy regulator active.</yellow>")));
-        } else {
-            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text(
-                    "energy.messages.connector-status",
-                    "<yellow>Energy connector linked to nearby networks.</yellow>")));
         }
     }
 
@@ -409,14 +404,15 @@ public final class SfxEnergyService implements Listener {
             if (regulator == null) {
                 continue;
             }
-            if (!isInstanceChunkLoaded(regulator)) {
+            Location regulatorLocation = toLocation(regulator.anchorKey());
+            if (regulatorLocation == null) {
                 for (UUID memberId : component.members()) {
                     nodeGridStatuses.put(memberId, SfxEnergyGridStatus.NO_NETWORK);
                 }
                 continue;
             }
             SfxEnergyGridResult result = new SfxEnergyGridResult(regulatorId, regulator.anchorKey(), component.members(), SfxEnergyGridStatus.ONLINE);
-            processGrid(result);
+            runtime.executeAt(regulatorLocation, () -> processGrid(result));
         }
 
         for (UUID conflictedTerminal : topology.conflictedTerminals()) {
@@ -428,6 +424,13 @@ public final class SfxEnergyService implements Listener {
     }
 
     private void processGrid(SfxEnergyGridResult result) {
+        SfxBlockInstanceRecord regulator = blockData.findInstance(result.regulatorId()).orElse(null);
+        if (regulator == null || !isInstanceChunkLoaded(regulator)) {
+            for (UUID memberId : result.members()) {
+                nodeGridStatuses.put(memberId, SfxEnergyGridStatus.NO_NETWORK);
+            }
+            return;
+        }
         int available = 0;
         int supply = 0;
         List<SfxEnergyNodeRef> capacitorRefs = new ArrayList<>();
@@ -1343,7 +1346,11 @@ public final class SfxEnergyService implements Listener {
         if (instance == null) {
             return false;
         }
-        World world = plugin.getServer().getWorld(instance.anchorKey().worldId());
+        Location location = toLocation(instance.anchorKey());
+        if (location == null || !runtime.isOwnedByCurrentRegion(location)) {
+            return false;
+        }
+        World world = location.getWorld();
         return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);
     }
 

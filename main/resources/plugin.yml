@@ -1,10 +1,10 @@
 name: SlimeFunX
 main: cc.theends6.sfx.SlimeFunXPlugin
-version: '18h'
+version: '18m'
 api-version: '1.21'
 folia-supported: true
 authors: [THEENDS6]
-description: Restored Slimefun-style content and guide runtime for Paper/Folia 1.21.8.
+description: Restored Slimefun-style content and guide runtime for Paper 1.21.8.
 load: POSTWORLD
 softdepend: [ProtocolLib, ProtocolSupport, ViaVersion, ViaBackwards, ViaRewind, Geyser-Spigot]
 
