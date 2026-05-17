@@ -114,11 +114,11 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.basicMachineBlockListener = new SfxBasicMachineBlockListener(this, api.runtime(), api.items(), localization, blockDataService);
         ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization, basicMachineBlockListener);
         this.floatingTextDisplayService = new SfxFloatingTextDisplayService(this, api.runtime());
-        this.electricMachineService = new SfxElectricMachineService(this, api.runtime(), api.items(), localization, blockDataService, playerDataService, api.internalManualMachines());
+        this.virtualContainerService = new SfxVirtualContainerService(this, api.runtime());
+        this.electricMachineService = new SfxElectricMachineService(this, api.runtime(), api.items(), localization, blockDataService, playerDataService, api.internalManualMachines(), virtualContainerService);
         this.configurableMachineService = new SfxConfigurableMachineService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService);
         this.technicalGadgetService = new SfxTechnicalGadgetService(this, api.runtime(), api.items(), localization);
         this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService, technicalGadgetService.rechargeableItems());
-        this.virtualContainerService = new SfxVirtualContainerService(this, api.runtime());
         this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService);
         SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, api.runtime());
         this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService);

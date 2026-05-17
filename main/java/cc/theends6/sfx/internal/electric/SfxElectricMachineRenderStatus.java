@@ -4,7 +4,7 @@ import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 
 enum SfxElectricMachineRenderStatus {
     IDLE(SfxMachineStatusKey.IDLE),
-    NO_INPUT(SfxMachineStatusKey.IDLE),
+    NO_INPUT(SfxMachineStatusKey.NO_INPUT),
     NO_TARGET(SfxMachineStatusKey.NO_TARGET),
     NO_RECIPE(SfxMachineStatusKey.NO_RECIPE),
     NO_BLAZE_FUEL(SfxMachineStatusKey.MISSING_RESOURCE),

@@ -17,6 +17,7 @@ import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxInventorySlots;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,8 @@ public final class SfxElectricMachineService implements Listener {
     private final SfxSimpleIoMachineMenuRenderer simpleIoMenuRenderer;
     private final SfxElectricAssemblerMenuRenderer assemblerMenuRenderer;
     private final SfxAutoBrewerMenuRenderer autoBrewerMenuRenderer;
+    private final SfxAutoCrafterMenuRenderer autoCrafterMenuRenderer;
+    private final SfxVirtualContainerService virtualContainers;
     private final SfxElectricRecipeProcessor recipeProcessor;
     private final Map<UUID, SfxElectricMachineState> stateCache = new ConcurrentHashMap<>();
     private final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
@@ -84,7 +87,8 @@ public final class SfxElectricMachineService implements Listener {
             SfxLocalization localization,
             SfxBlockDataService blockData,
             SfxPlayerDataService profiles,
-            DefaultManualMachineRegistry manualMachines
+            DefaultManualMachineRegistry manualMachines,
+            SfxVirtualContainerService virtualContainers
     ) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
@@ -93,11 +97,13 @@ public final class SfxElectricMachineService implements Listener {
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.tickSettings = SfxMachineTickSettings.from(plugin.getConfig());
         this.profiles = Objects.requireNonNull(profiles, "profiles");
-        this.registry = SfxElectricMachineDefinitions.create(plugin, items, manualMachines, blockData);
+        this.virtualContainers = Objects.requireNonNull(virtualContainers, "virtualContainers");
+        this.registry = SfxElectricMachineDefinitions.create(plugin, items, manualMachines, blockData, virtualContainers);
         this.menuRenderer = new SfxElectricMachineMenuRenderer(items, localization, profiles);
         this.simpleIoMenuRenderer = new SfxSimpleIoMachineMenuRenderer(items, localization, profiles);
         this.assemblerMenuRenderer = new SfxElectricAssemblerMenuRenderer(items, localization, profiles);
         this.autoBrewerMenuRenderer = new SfxAutoBrewerMenuRenderer(items, localization, profiles);
+        this.autoCrafterMenuRenderer = new SfxAutoCrafterMenuRenderer(items, localization, profiles);
         this.recipeProcessor = new SfxElectricRecipeProcessor(items);
         bootstrapLoadedStates();
         running = true;
@@ -202,16 +208,36 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         SfxBlockInstanceRecord instance = interaction.instance();
-        if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
+        SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
+        boolean autoCrafter = definition != null && definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER;
+        boolean autoCrafterSelection = autoCrafter
+                && event.getPlayer().isSneaking()
+                && event.getItem() != null
+                && !event.getItem().getType().isAir();
+        if (!autoCrafterSelection && SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
         SfxEventGuards.denyBlockAndItemUse(event);
-        runtime.executeForPlayer(event.getPlayer(), () -> openMachine(event.getPlayer(), instance));
+        if (autoCrafterSelection) {
+            runtime.executeForPlayer(event.getPlayer(), () -> openAutoCrafterSelection(event.getPlayer(), instance, definition, event.getItem(), 0));
+        } else if (autoCrafter && (currentState(instance.instanceId(), instance).activeRecipeKey() == null || currentState(instance.instanceId(), instance).activeRecipeKey().isBlank())) {
+            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("electric-ui.auto-crafter.select-a-recipe", "<yellow>Sneak-right-click while holding a target item to select a recipe.</yellow>")));
+        } else {
+            runtime.executeForPlayer(event.getPlayer(), () -> openMachine(event.getPlayer(), instance));
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxElectricMachineHolder holder)) {
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+        if (event.getView().getTopInventory().getHolder() instanceof SfxAutoCrafterSelectionHolder selectionHolder) {
+            event.setCancelled(true);
+            handleAutoCrafterSelectionClick(player, selectionHolder, event.getRawSlot());
+            return;
+        }
+        if (!(event.getView().getTopInventory().getHolder() instanceof SfxElectricMachineHolder holder)) {
             return;
         }
         if (event.getClick() == ClickType.DOUBLE_CLICK || event.getClick() == ClickType.NUMBER_KEY || event.getClick() == ClickType.SWAP_OFFHAND) {
@@ -224,6 +250,14 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         boolean topSlot = event.getRawSlot() < event.getView().getTopInventory().getSize();
+        if (clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+            event.setCancelled(true);
+            if (topSlot) {
+                handleAutoCrafterButton(holder.instanceId(), event.getRawSlot(), event.getClick());
+                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+            }
+            return;
+        }
         if (event.isShiftClick() && !topSlot) {
             if (moveShiftClickedStackToInputs(event.getView().getTopInventory(), event.getCurrentItem(), clickDefinition)) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getAmount() <= 0) {
@@ -273,6 +307,10 @@ public final class SfxElectricMachineService implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onInventoryDrag(InventoryDragEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof SfxAutoCrafterSelectionHolder) {
+            event.setCancelled(true);
+            return;
+        }
         if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxElectricMachineHolder holder)) {
             return;
         }
@@ -283,6 +321,10 @@ public final class SfxElectricMachineService implements Listener {
         }
         SfxElectricMachineDefinition dragDefinition = definitionFor(holder.instanceId());
         if (dragDefinition == null) {
+            event.setCancelled(true);
+            return;
+        }
+        if (dragDefinition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
             event.setCancelled(true);
             return;
         }
@@ -351,7 +393,8 @@ public final class SfxElectricMachineService implements Listener {
             if (instance == null || !registry.contains(instance.typeId())) {
                 continue;
             }
-            stateCache.put(instance.instanceId(), SfxElectricMachineState.decode(instance.stateBlob()));
+            SfxElectricMachineState state = SfxElectricMachineState.decode(instance.stateBlob());
+            stateCache.put(instance.instanceId(), state);
             activeInstances.add(instance.instanceId());
         }
     }
@@ -574,7 +617,7 @@ public final class SfxElectricMachineService implements Listener {
         } else if (location != null && definition.recipeProvider().hasSpecialTick()) {
             int interval = Math.max(1, definition.recipeProvider().specialTickIntervalTicks());
             if (state.hasProgress() || interval <= 1 || tickCounter % interval == 0L) {
-                customResult = definition.recipeProvider().tickSpecial(plugin, items, definition, state, location);
+                customResult = definition.recipeProvider().tickSpecial(plugin, items, definition, state, location, context);
             } else {
                 SfxElectricMachineRenderStatus status = retainedSpecialStatus(definition, state, session);
                 customResult = new SfxElectricMachineTickResult(status, 0, false, true);
@@ -594,6 +637,7 @@ public final class SfxElectricMachineService implements Listener {
                 SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO
                         || definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER
                         || definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER
+                        || definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER
                         ? null
                         : recipeProcessor.activeRecipe(definition, state);
                 render(session, definition, session.inventory(), state, renderRecipe, customResult.status());
@@ -796,6 +840,15 @@ public final class SfxElectricMachineService implements Listener {
         if (!state.enabled()) {
             return SfxElectricMachineRenderStatus.PAUSED;
         }
+        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+            if (state.progressWork() > 0) {
+                return SfxElectricMachineRenderStatus.WORKING;
+            }
+            if (state.activeRecipeKey() == null || state.activeRecipeKey().isBlank()) {
+                return SfxElectricMachineRenderStatus.NO_RECIPE;
+            }
+            return session != null && session.lastRenderedStatus() != null ? session.lastRenderedStatus() : SfxElectricMachineRenderStatus.IDLE;
+        }
         if (state.hasProgress()) {
             if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
                 int remainingWork = Math.max(0, state.activeBaseTicks() - state.progressWork());
@@ -840,6 +893,9 @@ public final class SfxElectricMachineService implements Listener {
         if (definition == null) {
             return;
         }
+        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+            return;
+        }
         int[] inputSlots = definition.inputSlots();
         for (int slot = 0; slot < inputSlots.length; slot++) {
             ItemStack stack = inventory.getItem(inputSlots[slot]);
@@ -866,6 +922,11 @@ public final class SfxElectricMachineService implements Listener {
                 assemblerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
             } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
                 autoBrewerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
+            } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+                SfxAutoCrafterRecipeChoice choice = definition.recipeProvider() instanceof SfxAutoCrafterRecipeProvider provider
+                        ? provider.choiceForKey(plugin, state.activeRecipeKey())
+                        : null;
+                autoCrafterMenuRenderer.render(session.viewerId(), definition, inventory, state, status, choice);
             } else {
                 menuRenderer.render(session.viewerId(), definition, inventory, state, recipe, status);
             }
@@ -955,6 +1016,9 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private boolean moveShiftClickedStackToInputs(Inventory topInventory, ItemStack current, SfxElectricMachineDefinition definition) {
+        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+            return false;
+        }
         return SfxInventorySlots.moveStackToSlots(topInventory, definition.inputSlots(), current, (slot, stack) -> {
             if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) {
                 return isValidAssemblerInput(definition, slot, stack);
@@ -964,6 +1028,80 @@ public final class SfxElectricMachineService implements Listener {
             }
             return true;
         });
+    }
+
+    private void handleAutoCrafterButton(UUID instanceId, int slot, ClickType click) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        if (slot == SfxAutoCrafterMenuRenderer.ENABLE_SLOT) {
+            if (click.isRightClick()) {
+                state.activeRecipeKey(null);
+                state.progressWork(0);
+            } else {
+                state.enabled(!state.enabled());
+            }
+            dirtyInstances.add(instanceId);
+            activeInstances.add(instanceId);
+        }
+    }
+
+    private void openAutoCrafterSelection(Player player, SfxBlockInstanceRecord instance, SfxElectricMachineDefinition definition, ItemStack hand, int index) {
+        if (!(definition.recipeProvider() instanceof SfxAutoCrafterRecipeProvider provider)) {
+            return;
+        }
+        List<SfxAutoCrafterRecipeChoice> choices = provider.selectionChoices(plugin, hand);
+        if (choices.isEmpty()) {
+            player.sendMessage(Text.prefixed(plugin, localization.text("electric-ui.auto-crafter.recipe-not-found", "<red>No matching auto-crafter recipe was found for this item.</red>")));
+            return;
+        }
+        openAutoCrafterSelection(player, instance, definition, choices, Math.max(0, Math.min(index, choices.size() - 1)));
+    }
+
+    private void openAutoCrafterSelection(Player player, SfxBlockInstanceRecord instance, SfxElectricMachineDefinition definition, List<SfxAutoCrafterRecipeChoice> choices, int index) {
+        Component title = localization.itemName(definition.id(), Component.text(definition.title()));
+        Inventory inventory = plugin.getServer().createInventory(new SfxAutoCrafterSelectionHolder(instance.instanceId(), choices, index), 54, title);
+        autoCrafterMenuRenderer.renderSelection(definition, inventory, choices, index);
+        player.openInventory(inventory);
+    }
+
+    private void handleAutoCrafterSelectionClick(Player player, SfxAutoCrafterSelectionHolder holder, int rawSlot) {
+        if (holder.choices().isEmpty()) {
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (instance == null) {
+            player.closeInventory();
+            return;
+        }
+        SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
+        if (definition == null) {
+            player.closeInventory();
+            return;
+        }
+        if (rawSlot == SfxAutoCrafterMenuRenderer.PREVIOUS_SLOT && holder.index() > 0) {
+            openAutoCrafterSelection(player, instance, definition, holder.choices(), holder.index() - 1);
+            return;
+        }
+        if (rawSlot == SfxAutoCrafterMenuRenderer.NEXT_SLOT && holder.index() < holder.choices().size() - 1) {
+            openAutoCrafterSelection(player, instance, definition, holder.choices(), holder.index() + 1);
+            return;
+        }
+        if (rawSlot != SfxAutoCrafterMenuRenderer.SELECT_SLOT) {
+            return;
+        }
+        SfxAutoCrafterRecipeChoice choice = holder.choices().get(holder.index());
+        SfxElectricMachineState state = currentState(instance.instanceId(), instance);
+        state.activeRecipeKey(choice.key());
+        state.progressWork(0);
+        state.activeBaseTicks(SfxAutoCrafterRecipeProvider.WORK_TICKS);
+        dirtyInstances.add(instance.instanceId());
+        activeInstances.add(instance.instanceId());
+        player.sendMessage(Text.prefixed(plugin, localization.text("electric-ui.auto-crafter.recipe-selected", "<green>Selected recipe: </green><white>{recipe}</white>", Map.of("recipe", choice.key()))));
+        player.closeInventory();
+        openMachine(player, instance);
     }
 
     private boolean isAssemblerButton(int slot) {

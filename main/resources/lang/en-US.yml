@@ -3058,7 +3058,9 @@ items:
     - '&fnormal &eCrafting Table'
     - ''
     - '&6Advanced Machine'
-    - '&8⇨ &e⚡&716 J/Item'
+    - '&8⇨ &e⚡&75120 J Buffer'
+    - '&8⇨ &e⚡&732 J/t'
+    - '&8⇨ &e⚡&7Work Time: &b10 ticks'
   sf.enhanced_auto_crafter:
     name: '&2Auto-Crafter &8(Enhanced)'
     lore:
@@ -3069,7 +3071,9 @@ items:
     - '&eEnhanced Crafting Table'
     - ''
     - '&6Advanced Machine'
-    - '&8⇨ &e⚡&716 J/Item'
+    - '&8⇨ &e⚡&75120 J Buffer'
+    - '&8⇨ &e⚡&732 J/t'
+    - '&8⇨ &e⚡&7Work Time: &b10 ticks'
   sf.armor_auto_crafter:
     name: '&2Auto-Crafter &8(Armor Forge)'
     lore:
@@ -3080,7 +3084,9 @@ items:
     - '&eArmor Forge'
     - ''
     - '&6Advanced Machine'
-    - '&8⇨ &e⚡&732 J/Item'
+    - '&8⇨ &e⚡&75120 J Buffer'
+    - '&8⇨ &e⚡&764 J/t'
+    - '&8⇨ &e⚡&7Work Time: &b10 ticks'
   sf.iron_golem_assembler:
     name: '&6Iron Golem Assembler'
     lore:
@@ -3447,6 +3453,32 @@ electric-ui:
       working: <gray>Accelerating nearby saplings.</gray>
     fluid-pump:
       working: <gray>Pumping fluid from below.</gray>
+  auto-crafter:
+    enabled:
+      name: <green>Recipe Enabled</green>
+      lore: <yellow>Left-click: toggle recipe.</yellow>
+    disabled:
+      name: <red>Recipe Disabled</red>
+    recipe:
+      current: '<gray>Recipe: </gray><white>{recipe}</white>'
+      configure: <gray>Sneak-right-click this machine while holding the target item to configure.</gray>
+      clear: '<yellow>Right-click: clear recipe</yellow>'
+      none: None
+      none-title: <yellow>No Recipe Selected</yellow>
+    container:
+      name: <gold>Attached Container</gold>
+      lore: <gray>This machine uses the container directly below it.</gray>
+    select:
+      name: <green>Select Recipe</green>
+      lore: <yellow>Click to select this recipe.</yellow>
+    previous:
+      name: <yellow>Previous Recipe</yellow>
+    next:
+      name: <yellow>Next Recipe</yellow>
+    page: '<gray>Recipe {page} / {total}</gray>'
+    select-a-recipe: <yellow>Sneak-right-click while holding a target item to select a recipe.</yellow>
+    recipe-selected: '<green>Selected recipe: </green><white>{recipe}</white>'
+    recipe-not-found: <red>No matching auto-crafter recipe was found for this item.</red>
   auto-brewer:
     blaze:
       frame: <gold>Blaze Powder</gold>
@@ -3710,6 +3742,24 @@ technical:
     mode:
       thrust: '<yellow>Jet Boots: Thrust Mode</yellow>'
       assist: '<aqua>Jet Boots: Assist Mode</aqua>'
+
+  auto-crafter:
+    enabled:
+      name: <green>Enabled</green>
+      lore: <yellow>Click to toggle.</yellow>
+    disabled:
+      name: <red>Disabled</red>
+    recipe:
+      name: <yellow>Selected Recipe</yellow>
+      current: '<gray>Recipe: </gray><white>{recipe}</white>'
+      configure: <gray>Sneak-right-click this machine while holding the target item to configure.</gray>
+      clear: '<yellow>Right-click: clear recipe</yellow>'
+      none: None
+    container:
+      name: <gold>Attached Container</gold>
+      lore: <gray>This machine uses the container directly below it.</gray>
+    recipe-selected: '<green>Selected recipe: </green><white>{recipe}</white>'
+    recipe-not-found: <red>No matching auto-crafter recipe was found for this item.</red>
 
 cargo:
   status:
