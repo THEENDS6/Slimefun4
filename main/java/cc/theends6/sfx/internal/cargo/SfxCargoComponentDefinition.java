@@ -26,9 +26,6 @@ public record SfxCargoComponentDefinition(String id, SfxCargoComponentType type)
 
     public boolean isCargoMachine() {
         return type == SfxCargoComponentType.TRASH_CAN
-                || type == SfxCargoComponentType.REACTOR_ACCESS_PORT
-                || type == SfxCargoComponentType.VANILLA_AUTO_CRAFTER
-                || type == SfxCargoComponentType.ENHANCED_AUTO_CRAFTER
-                || type == SfxCargoComponentType.ARMOR_AUTO_CRAFTER;
+                || type == SfxCargoComponentType.REACTOR_ACCESS_PORT;
     }
 }

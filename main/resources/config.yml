@@ -1,10 +1,10 @@
 language: 'zh-CN'
 
 content:
-  sync-bundled-languages-on-startup: true
-  sync-bundled-items-on-startup: true
-  sync-bundled-recipes-on-startup: true
-  sync-bundled-researches-on-startup: true
+  sync-bundled-languages-on-startup: false
+  sync-bundled-items-on-startup: false
+  sync-bundled-recipes-on-startup: false
+  sync-bundled-researches-on-startup: false
 
 storage:
   sqlite-file: 'data/player-data.db'
@@ -53,7 +53,7 @@ guide:
 
 # 开发期调试文本。enabled 为 true 时，玩家进服会收到 TESTING.md 内容。
 debug-text:
-  enabled: true
+  enabled: false
 
 options:
   # Allows selected SFX diamond equipment to be upgraded in the vanilla Smithing Table
@@ -234,3 +234,12 @@ radiation:
     # Each armor piece with the armor-hazmat flag reduces new exposure by 25%.
     # Four pieces prevent new exposure from radioactive inventory items.
     reduction-per-piece: 0.25
+
+
+folia:
+  # SFX now uses region/player schedulers for world and player access. Cross-region
+  # cargo/energy networks are guarded conservatively; networks spanning regions may
+  # skip members until a full two-phase cross-region transaction layer is added.
+  strict-region-checks: true
+  disable-cross-region-cargo: true
+  disable-cross-region-energy: true

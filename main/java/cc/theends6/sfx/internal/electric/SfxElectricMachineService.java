@@ -535,7 +535,7 @@ public final class SfxElectricMachineService implements Listener {
                     continue;
                 }
                 Location location = locationFor(instance);
-                if (location == null || !isInstanceChunkLoaded(instance)) {
+                if (location == null) {
                     continue;
                 }
                 boolean hasViewers = sessionsByInstance.containsKey(instanceId);
@@ -938,7 +938,11 @@ public final class SfxElectricMachineService implements Listener {
         if (instance == null) {
             return false;
         }
-        org.bukkit.World world = plugin.getServer().getWorld(instance.anchorKey().worldId());
+        Location location = locationFor(instance);
+        if (location == null || !runtime.isOwnedByCurrentRegion(location)) {
+            return false;
+        }
+        org.bukkit.World world = location.getWorld();
         return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);
     }
 

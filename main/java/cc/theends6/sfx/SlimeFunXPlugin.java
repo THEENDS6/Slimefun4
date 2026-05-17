@@ -282,7 +282,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         researchYamlLoader.ensureDefaultFiles(syncBundledResearchFiles());
         researchYamlLoader.loadInto(researchRegistry);
 
-        if (getConfig().getBoolean("debug-text.enabled", true)) {
+        if (getConfig().getBoolean("debug-text.enabled", false)) {
             getLogger().info(recipeAudit.summary());
             recipeAudit.warnings().stream().limit(80).forEach(warning -> getLogger().warning(warning));
             if (recipeAudit.warnings().size() > 80) {
@@ -292,20 +292,20 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     }
 
     private boolean syncBundledRecipeFiles() {
-        return getConfig().getBoolean("content.sync-bundled-recipes-on-startup", true);
+        return getConfig().getBoolean("content.sync-bundled-recipes-on-startup", false);
     }
 
     private boolean syncBundledItemFiles() {
-        return getConfig().getBoolean("content.sync-bundled-items-on-startup", true);
+        return getConfig().getBoolean("content.sync-bundled-items-on-startup", false);
     }
 
     private boolean syncBundledResearchFiles() {
-        return getConfig().getBoolean("content.sync-bundled-researches-on-startup", true);
+        return getConfig().getBoolean("content.sync-bundled-researches-on-startup", false);
     }
 
     private void saveBundledLanguage(String language) {
         File target = new File(new File(getDataFolder(), "lang"), language + ".yml");
-        boolean overwrite = getConfig().getBoolean("content.sync-bundled-languages-on-startup", true);
+        boolean overwrite = getConfig().getBoolean("content.sync-bundled-languages-on-startup", false);
         if (!target.exists() || overwrite) {
             saveResource("lang/" + language + ".yml", overwrite);
         }

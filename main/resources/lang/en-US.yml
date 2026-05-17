@@ -3456,7 +3456,7 @@ electric-ui:
   auto-crafter:
     enabled:
       name: <green>Recipe Enabled</green>
-      lore: <yellow>Left-click: toggle recipe.</yellow>
+      lore: '<yellow>Left-click: toggle recipe.</yellow>'
     disabled:
       name: <red>Recipe Disabled</red>
     recipe:

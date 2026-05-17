@@ -79,19 +79,8 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
         if (!state.enabled() || state.activeRecipeKey() == null || state.activeRecipeKey().isBlank()) {
             return 0;
         }
-        if (state.progressWork() > 0) {
-            return definition.energyConsumptionPerTick();
-        }
-        Location below = location == null ? null : location.clone().subtract(0, 1, 0);
-        if (below == null) {
-            return 0;
-        }
         CraftRequest request = craftRequest(plugin, state.activeRecipeKey());
-        if (request.status != SfxElectricMachineRenderStatus.WORKING) {
-            return 0;
-        }
-        CraftingTransactionResult check = virtualContainers.checkCraftingTransaction(below, request.ingredients, request.outputs);
-        return mapCraftingStatus(check.status()) == SfxElectricMachineRenderStatus.WORKING ? definition.energyConsumptionPerTick() : 0;
+        return request.status == SfxElectricMachineRenderStatus.WORKING ? definition.energyConsumptionPerTick() : 0;
     }
 
     @Override
@@ -287,7 +276,10 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
             }
             ingredients.add(new IngredientRequest(choice::test, 1));
         }
-        return new CraftRequest(SfxElectricMachineRenderStatus.WORKING, ingredients, List.of(recipe.getResult().clone()));
+        List<ItemStack> outputs = new ArrayList<>();
+        outputs.add(recipe.getResult().clone());
+        outputs.addAll(craftingRemainders(choices));
+        return new CraftRequest(SfxElectricMachineRenderStatus.WORKING, ingredients, outputs);
     }
 
     private CraftRequest manualCraftRequest(String selected) {
@@ -415,6 +407,52 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
             choices.addAll(shapeless.getChoiceList());
         }
         return choices;
+    }
+
+    private List<ItemStack> craftingRemainders(List<RecipeChoice> choices) {
+        if (choices == null || choices.isEmpty()) {
+            return List.of();
+        }
+        List<ItemStack> outputs = new ArrayList<>();
+        for (RecipeChoice choice : choices) {
+            Material remaining = remainingMaterial(choice);
+            if (remaining != null && remaining != Material.AIR) {
+                outputs.add(new ItemStack(remaining));
+            }
+        }
+        return outputs;
+    }
+
+    private Material remainingMaterial(RecipeChoice choice) {
+        if (choice instanceof ExactChoice exact) {
+            for (ItemStack stack : exact.getChoices()) {
+                Material remaining = remainingMaterial(stack == null ? null : stack.getType());
+                if (remaining != null) {
+                    return remaining;
+                }
+            }
+            return null;
+        }
+        if (choice instanceof MaterialChoice materialChoice) {
+            for (Material material : materialChoice.getChoices()) {
+                Material remaining = remainingMaterial(material);
+                if (remaining != null) {
+                    return remaining;
+                }
+            }
+        }
+        return null;
+    }
+
+    private Material remainingMaterial(Material material) {
+        if (material == null || material == Material.AIR) {
+            return null;
+        }
+        return switch (material) {
+            case WATER_BUCKET, LAVA_BUCKET, MILK_BUCKET, POWDER_SNOW_BUCKET, TROPICAL_FISH_BUCKET, PUFFERFISH_BUCKET, COD_BUCKET, SALMON_BUCKET, AXOLOTL_BUCKET, TADPOLE_BUCKET -> Material.BUCKET;
+            case POTION, SPLASH_POTION, LINGERING_POTION, HONEY_BOTTLE, DRAGON_BREATH -> Material.GLASS_BOTTLE;
+            default -> null;
+        };
     }
 
     private boolean matchesSlot(ItemStack stack, SfxRecipeSlot slot) {

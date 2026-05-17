@@ -64,11 +64,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.Keyed;
-import org.bukkit.inventory.Recipe;
-import org.bukkit.inventory.RecipeChoice;
-import org.bukkit.inventory.ShapedRecipe;
-import org.bukkit.inventory.ShapelessRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxCargoService implements Listener {
@@ -264,9 +259,6 @@ public final class SfxCargoService implements Listener {
         } else if (slot == 16 && holder.type() == SfxCargoComponentType.ADVANCED_OUTPUT_NODE) {
             adjustPriority(state, click.isRightClick() ? -1 : 1, click.isShiftClick());
             changed = true;
-        } else if (slot == 31 && isAutoCrafter(holder.type())) {
-            state.enabled = !state.enabled;
-            changed = true;
         }
         if (!changed) {
             return;
@@ -286,7 +278,11 @@ public final class SfxCargoService implements Listener {
                     return;
                 }
             }
-            runtime.executeGlobalLater(1L, () -> clearTrash(top));
+            if (event.getWhoClicked() instanceof Player player) {
+                runtime.executeForPlayerLater(player, 1L, () -> clearTrash(top));
+            } else {
+                clearTrash(top);
+            }
             return;
         }
         if (!(top.getHolder() instanceof SfxCargoSessionHolder holder)) {
@@ -302,7 +298,11 @@ public final class SfxCargoService implements Listener {
                 return;
             }
         }
-        runtime.executeGlobalLater(1L, () -> saveFilterFromOpenMenu(holder.instanceId(), top));
+        if (event.getWhoClicked() instanceof Player player) {
+            runtime.executeForPlayerLater(player, 1L, () -> saveFilterFromOpenMenu(holder.instanceId(), top));
+        } else {
+            saveFilterFromOpenMenu(holder.instanceId(), top);
+        }
     }
 
     @EventHandler
@@ -429,38 +429,50 @@ public final class SfxCargoService implements Listener {
             if (component.status() != SfxTopologyStatus.ONLINE || component.controllers().size() != 1 || component.terminals().isEmpty()) {
                 continue;
             }
-            List<NodeRef> inputs = new ArrayList<>();
-            List<NodeRef> outputs = new ArrayList<>();
-            for (UUID terminalId : component.terminals()) {
-                SfxBlockInstanceRecord instance = blockData.findInstance(terminalId).orElse(null);
-                if (instance == null) {
-                    continue;
-                }
-                SfxCargoComponentDefinition definition = definitions.get(instance.typeId());
-                if (definition == null) {
-                    continue;
-                }
-                SfxCargoNodeState state = currentState(terminalId);
-                if (definition.isInput()) {
-                    inputs.add(new NodeRef(instance, definition, state));
-                } else if (definition.isOutput()) {
-                    outputs.add(new NodeRef(instance, definition, state));
-                }
-            }
             UUID managerId = component.controllers().iterator().next();
-            inputs.sort(Comparator.comparing(ref -> ref.instance.anchorKey(), this::compareAnchorKeys));
-            outputs.sort(Comparator.comparing((NodeRef ref) -> ref.state.priority).reversed().thenComparing(ref -> ref.instance.anchorKey(), this::compareAnchorKeys));
-            for (NodeRef input : inputs) {
-                int moved = input.definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE
-                        ? processAdvancedInput(input, outputs)
-                        : processBasicInput(input, outputs);
-                if (moved > 0) {
-                    recordManagerTransfer(managerId, moved);
-                }
+            SfxBlockInstanceRecord manager = blockData.findInstance(managerId).orElse(null);
+            Location managerLocation = manager == null ? null : toLocation(manager.anchorKey());
+            if (managerLocation == null) {
+                continue;
+            }
+            runtime.executeAt(managerLocation, () -> processCargoComponent(component, managerId));
+        }
+        renderVisualizers();
+    }
+
+    private void processCargoComponent(SfxTopologyComponent component, UUID managerId) {
+        if (!running || component == null || managerId == null) {
+            return;
+        }
+        List<NodeRef> inputs = new ArrayList<>();
+        List<NodeRef> outputs = new ArrayList<>();
+        for (UUID terminalId : component.terminals()) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(terminalId).orElse(null);
+            if (instance == null) {
+                continue;
+            }
+            SfxCargoComponentDefinition definition = definitions.get(instance.typeId());
+            if (definition == null) {
+                continue;
+            }
+            SfxCargoNodeState state = currentState(terminalId);
+            if (definition.isInput()) {
+                inputs.add(new NodeRef(instance, definition, state));
+            } else if (definition.isOutput()) {
+                outputs.add(new NodeRef(instance, definition, state));
+            }
+        }
+        inputs.sort(Comparator.comparing(ref -> ref.instance.anchorKey(), this::compareAnchorKeys));
+        outputs.sort(Comparator.comparing((NodeRef ref) -> ref.state.priority).reversed().thenComparing(ref -> ref.instance.anchorKey(), this::compareAnchorKeys));
+        for (NodeRef input : inputs) {
+            int moved = input.definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE
+                    ? processAdvancedInput(input, outputs)
+                    : processBasicInput(input, outputs);
+            if (moved > 0) {
+                recordManagerTransfer(managerId, moved);
             }
         }
         virtualContainers.pushDirtyAfterLogic();
-        renderVisualizers();
     }
 
     private void recordManagerTransfer(UUID managerId, int amount) {
@@ -886,6 +898,14 @@ public final class SfxCargoService implements Listener {
         return virtualContainers.ensureRegistered(target).map(this::containerEndpoint).orElse(null);
     }
 
+    private Location toLocation(SfxBlockAnchorKey key) {
+        World world = Bukkit.getWorld(key.worldId());
+        if (world == null) {
+            return null;
+        }
+        return new Location(world, key.x(), key.y(), key.z());
+    }
+
     private Location targetLocation(SfxBlockAnchorKey key, BlockFace face) {
         World world = Bukkit.getWorld(key.worldId());
         if (world == null || face == null) {
@@ -938,125 +958,6 @@ public final class SfxCargoService implements Listener {
         return filter.getType() == stack.getType() && items.readMarker(filter).map(marker -> marker.itemId()).equals(items.readMarker(stack).map(marker -> marker.itemId()));
     }
 
-    private void tickAutoCrafters() {
-        for (Map.Entry<UUID, SfxCargoNodeState> entry : states.entrySet()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(entry.getKey()).orElse(null);
-            if (instance == null) {
-                continue;
-            }
-            SfxCargoComponentDefinition definition = definitions.get(instance.typeId());
-            if (definition == null || !isAutoCrafter(definition.type())) {
-                continue;
-            }
-            SfxCargoNodeState state = entry.getValue();
-            if (!state.enabled || state.selectedRecipeKey == null || state.selectedRecipeKey.isBlank()) {
-                continue;
-            }
-            if (definition.type() == SfxCargoComponentType.VANILLA_AUTO_CRAFTER) {
-                tickVanillaAutoCrafter(instance, state);
-            }
-        }
-    }
-
-    private void tickVanillaAutoCrafter(SfxBlockInstanceRecord instance, SfxCargoNodeState state) {
-        Recipe recipe = findRecipe(state.selectedRecipeKey);
-        if (recipe == null) {
-            return;
-        }
-        Location below = below(instance.anchorKey());
-        if (below == null) {
-            return;
-        }
-        SfxVirtualContainer container = virtualContainers.ensureRegistered(below).orElse(null);
-        if (container == null) {
-            return;
-        }
-        List<RecipeChoice> choices = recipeChoices(recipe);
-        if (choices.isEmpty()) {
-            return;
-        }
-        ItemStack result = recipe.getResult();
-        if (isEmpty(result)) {
-            return;
-        }
-        if (!canConsume(container, choices)) {
-            return;
-        }
-        if (virtualContainers.capacityFor(container, result, false) < result.getAmount()) {
-            return;
-        }
-        consumeChoices(container, choices);
-        ItemStack remainder = virtualContainers.insert(container, result.clone(), false);
-        if (!isEmpty(remainder)) {
-            virtualContainers.insert(container, remainder, false);
-        }
-    }
-
-    private List<RecipeChoice> recipeChoices(Recipe recipe) {
-        List<RecipeChoice> choices = new ArrayList<>();
-        if (recipe instanceof ShapedRecipe shaped) {
-            String[] shape = shaped.getShape();
-            Map<Character, RecipeChoice> map = shaped.getChoiceMap();
-            for (String row : shape) {
-                for (int i = 0; i < row.length(); i++) {
-                    RecipeChoice choice = map.get(row.charAt(i));
-                    if (choice != null) {
-                        choices.add(choice);
-                    }
-                }
-            }
-        } else if (recipe instanceof ShapelessRecipe shapeless) {
-            choices.addAll(shapeless.getChoiceList());
-        }
-        return choices;
-    }
-
-    private boolean canConsume(SfxVirtualContainer container, List<RecipeChoice> choices) {
-        ItemStack[] mirror = cloneContents(container.rawMirror());
-        for (RecipeChoice choice : choices) {
-            if (!consumeOne(mirror, choice)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private void consumeChoices(SfxVirtualContainer container, List<RecipeChoice> choices) {
-        ItemStack[] mirror = container.rawMirror();
-        for (RecipeChoice choice : choices) {
-            consumeOne(mirror, choice);
-        }
-        container.mirrorDirty(true);
-    }
-
-    private boolean consumeOne(ItemStack[] mirror, RecipeChoice choice) {
-        for (int i = 0; i < mirror.length; i++) {
-            ItemStack stack = mirror[i];
-            if (isEmpty(stack) || !choice.test(stack)) {
-                continue;
-            }
-            stack.setAmount(stack.getAmount() - 1);
-            if (stack.getAmount() <= 0) {
-                mirror[i] = null;
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private Recipe findRecipe(String key) {
-        java.util.Iterator<Recipe> iterator = plugin.getServer().recipeIterator();
-        while (iterator.hasNext()) {
-            Recipe recipe = iterator.next();
-            if (!(recipe instanceof Keyed keyed)) {
-                continue;
-            }
-            if (keyed.getKey().toString().equals(key)) {
-                return recipe;
-            }
-        }
-        return null;
-    }
 
     private void handleInteract(Player player, Block block, SfxBlockInstanceRecord instance, SfxCargoComponentDefinition definition) {
         if (definition.type() == SfxCargoComponentType.MANAGER) {
@@ -1072,10 +973,6 @@ public final class SfxCargoService implements Listener {
             topology.rebuildIfStale();
             boolean linked = topology.componentForMember(instance.instanceId()).isPresent();
             player.sendMessage(Text.prefixed(plugin, linked ? lt("cargo.message.connector-linked", "&aCargo connector linked.", Map.of()) : lt("cargo.message.connector-detached", "&cCargo connector is detached.", Map.of())));
-            return;
-        }
-        if (isAutoCrafter(definition.type()) && player.isSneaking() && player.getInventory().getItemInMainHand() != null && !player.getInventory().getItemInMainHand().getType().isAir()) {
-            configureAutoCrafter(player, instance, definition, player.getInventory().getItemInMainHand());
             return;
         }
         if (definition.type() == SfxCargoComponentType.TRASH_CAN) {
@@ -1115,50 +1012,6 @@ public final class SfxCargoService implements Listener {
         renderVisualizerFor(player, instance.instanceId());
     }
 
-    private void configureAutoCrafter(Player player, SfxBlockInstanceRecord instance, SfxCargoComponentDefinition definition, ItemStack hand) {
-        SfxCargoNodeState state = currentState(instance.instanceId());
-        if (definition.type() == SfxCargoComponentType.VANILLA_AUTO_CRAFTER) {
-            Recipe recipe = findRecipeByResult(hand);
-            if (recipe instanceof Keyed keyed) {
-                state.selectedRecipeKey = keyed.getKey().toString();
-                persistState(instance.instanceId(), state);
-                player.sendMessage(Text.prefixed(plugin, lt("cargo.message.recipe-selected", "&aSelected recipe: &f{recipe}", Map.of("recipe", state.selectedRecipeKey))));
-                return;
-            }
-            player.sendMessage(Text.prefixed(plugin, lt("cargo.message.recipe-not-found", "&cNo keyed vanilla recipe was found for this item.", Map.of())));
-            return;
-        }
-        String itemId = items.readMarker(hand).map(marker -> marker.itemId()).orElse("");
-        if (itemId.isBlank()) {
-            player.sendMessage(Text.prefixed(plugin, lt("cargo.message.hold-sfx-item", "&cHold a SFX item to select an enhanced/armor recipe target.", Map.of())));
-            return;
-        }
-        state.selectedRecipeKey = itemId;
-        persistState(instance.instanceId(), state);
-        player.sendMessage(Text.prefixed(plugin, lt("cargo.message.recipe-selected", "&aSelected recipe: &f{recipe}", Map.of("recipe", itemId))));
-    }
-
-    private Recipe findRecipeByResult(ItemStack hand) {
-        ItemStack probe = hand.clone();
-        probe.setAmount(1);
-        java.util.Iterator<Recipe> iterator = plugin.getServer().recipeIterator();
-        while (iterator.hasNext()) {
-            Recipe recipe = iterator.next();
-            if (!(recipe instanceof ShapedRecipe || recipe instanceof ShapelessRecipe)) {
-                continue;
-            }
-            ItemStack result = recipe.getResult();
-            if (isEmpty(result)) {
-                continue;
-            }
-            ItemStack normalized = result.clone();
-            normalized.setAmount(1);
-            if (normalized.isSimilar(probe)) {
-                return recipe;
-            }
-        }
-        return null;
-    }
 
     private void openMenu(Player player, SfxBlockInstanceRecord instance, SfxCargoComponentType type) {
         SfxCargoNodeState state = currentState(instance.instanceId());
@@ -1217,10 +1070,6 @@ public final class SfxCargoService implements Listener {
         if (type == SfxCargoComponentType.ADVANCED_OUTPUT_NODE) {
             inventory.setItem(16, priorityItem(state.priority));
         }
-        if (isAutoCrafter(type)) {
-            inventory.setItem(31, enabledItem(state.enabled));
-            inventory.setItem(22, selectedRecipeItem(state.selectedRecipeKey));
-        }
     }
 
     private void renderChannelSelector(Inventory inventory, SfxCargoNodeState state, int prevSlot, int currentSlot, int nextSlot) {
@@ -1249,9 +1098,6 @@ public final class SfxCargoService implements Listener {
             case ADVANCED_INPUT_NODE -> lc("cargo.ui.title.advanced-input", "&6Advanced Cargo Input");
             case OUTPUT_NODE -> lc("cargo.ui.title.output", "&cCargo Output");
             case ADVANCED_OUTPUT_NODE -> lc("cargo.ui.title.advanced-output", "&6Advanced Cargo Output");
-            case VANILLA_AUTO_CRAFTER -> lc("cargo.ui.title.vanilla-auto-crafter", "&aAuto-Crafter (Vanilla)");
-            case ENHANCED_AUTO_CRAFTER -> lc("cargo.ui.title.enhanced-auto-crafter", "&aAuto-Crafter (Enhanced)");
-            case ARMOR_AUTO_CRAFTER -> lc("cargo.ui.title.armor-auto-crafter", "&aAuto-Crafter (Armor Forge)");
             default -> lc("cargo.ui.title.generic", "&eCargo");
         };
     }
@@ -1337,17 +1183,6 @@ public final class SfxCargoService implements Listener {
                 Map.of());
     }
 
-    private ItemStack enabledItem(boolean enabled) {
-        return uiItem(enabled ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE,
-                enabled ? "cargo.ui.auto-crafter.enabled.name" : "cargo.ui.auto-crafter.disabled.name",
-                enabled ? "&7Enabled: &2✔" : "&7Enabled: &4✘",
-                "cargo.ui.auto-crafter.enabled.lore", List.of("", "&e> Click to toggle"), Map.of());
-    }
-
-    private ItemStack selectedRecipeItem(String key) {
-        String recipe = key == null || key.isBlank() ? lt("cargo.ui.auto-crafter.none", "None", Map.of()) : key;
-        return uiItem(Material.CRAFTING_TABLE, "cargo.ui.auto-crafter.recipe.name", "&eSelected recipe", "cargo.ui.auto-crafter.recipe.lore", List.of("&7{recipe}", "&eSneak-right-click with target item to configure."), Map.of("recipe", recipe));
-    }
 
     private ItemStack priorityItem(int priority) {
         return uiItem(priorityMaterial(priority), "cargo.ui.priority.name", "&ePriority: &f{priority} / 16", "cargo.ui.priority.lore", List.of("&7Higher priority outputs receive items first.", "&eLeft-click: &7+1", "&eRight-click: &7-1", "&eShift: &7±4"), Map.of("priority", priority));
@@ -1577,11 +1412,6 @@ public final class SfxCargoService implements Listener {
                 || type == SfxCargoComponentType.ADVANCED_OUTPUT_NODE;
     }
 
-    private boolean isAutoCrafter(SfxCargoComponentType type) {
-        return type == SfxCargoComponentType.VANILLA_AUTO_CRAFTER
-                || type == SfxCargoComponentType.ENHANCED_AUTO_CRAFTER
-                || type == SfxCargoComponentType.ARMOR_AUTO_CRAFTER;
-    }
 
     private SfxCargoComponentDefinition typeDefinition(SfxCargoComponentType type) {
         for (SfxCargoComponentDefinition definition : definitions.values()) {
