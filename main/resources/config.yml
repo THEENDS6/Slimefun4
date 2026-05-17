@@ -41,6 +41,13 @@ guide:
     always-show: true
   recipe:
     machine-link-enabled: true
+  sounds:
+    enabled: true
+    open: minecraft:item.book.page_turn
+    category: minecraft:item.book.page_turn
+    page: minecraft:item.book.page_turn
+    volume: 0.7
+    pitch: 1.0
   survival-title: '<dark_green>SFX 科技书</dark_green>'
   cheat-title: '<dark_red>SFX 作弊科技书</dark_red>'
 
@@ -135,9 +142,17 @@ cargo:
       size: 1.0
 
 floating-text:
-  # PacketEvents virtual text displays are resent periodically so players entering range, teleporting,
+  # PacketEvents virtual floating text is resent periodically so players entering range, teleporting,
   # respawning or missing a previous packet can still see regulator status text.
+  # armor_stand uses virtual invisible armor stands, one per line, to match classic name-tag rendering.
+  # text_display keeps the richer modern text display renderer available.
+  mode: armor_stand
   resync-interval-ticks: 20
+  armor-stand:
+    y-offset: -0.25
+    line-spacing: 0.25
+  text-display:
+    y-offset: 0.0
 
 electric-machines:
   # SFX balance switches for world-interacting electric machines.

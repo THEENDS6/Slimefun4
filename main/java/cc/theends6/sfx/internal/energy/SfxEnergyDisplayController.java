@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.energy;
 
 import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
+import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -126,7 +127,8 @@ final class SfxEnergyDisplayController {
                 anchorKey.z() + 0.5D,
                 text,
                 VIEW_DISTANCE_SQUARED,
-                seeThrough));
+                seeThrough,
+                SfxFloatingTextDisplayMode.TEXT_DISPLAY));
     }
 
     private SfxFloatingTextKey key(SfxBlockAnchorKey anchorKey) {
