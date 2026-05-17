@@ -2690,6 +2690,11 @@ items:
     lore:
     - ''
     - '&fCargo Input Pipe'
+  sf.cargo_node_input_advanced:
+    name: '&6Advanced Cargo Node &c(Input)'
+    lore:
+    - ''
+    - '&fAdvanced Cargo Input Pipe'
   sf.cargo_node_output:
     name: '&7Cargo Node &c(Output)'
     lore:
@@ -3705,3 +3710,168 @@ technical:
     mode:
       thrust: '<yellow>Jet Boots: Thrust Mode</yellow>'
       assist: '<aqua>Jet Boots: Assist Mode</aqua>'
+
+cargo:
+  status:
+    no-nodes: '&cNo Cargo Nodes found'
+    multiple-regulators: '&cMultiple Cargo Regulators connected'
+    online: '&aStatus: ONLINE'
+  message:
+    manager-status: '&eCargo Network: &f{status}'
+    manager-size: '&7Backbone: &f{backbone} &7Terminals: &f{terminals}'
+    manager-stats: '&7Transfer: &f{minute}&7/min &8| &7Total: &f{total}'
+    visualizer-state: '&7Particles: &f{state}'
+    visualizer-on: '&aON'
+    visualizer-off: '&cOFF'
+    visualizer-disabled: '&cCargo particles are disabled in the config.'
+    visualizer-toggled-on: '&7Cargo particles: &aON'
+    visualizer-toggled-off: '&7Cargo particles: &cOFF'
+    connector-linked: '&aCargo connector linked.'
+    connector-detached: '&cCargo connector is detached.'
+    recipe-selected: '&aSelected recipe: &f{recipe}'
+    recipe-not-found: '&cNo keyed vanilla recipe was found for this item.'
+    hold-sfx-item: '&cHold a SFX item to select an enhanced/armor recipe target.'
+  ui:
+    title:
+      input: '&cCargo Input'
+      advanced-input: '&6Advanced Cargo Input'
+      output: '&cCargo Output'
+      advanced-output: '&6Advanced Cargo Output'
+      vanilla-auto-crafter: '&aAuto-Crafter (Vanilla)'
+      enhanced-auto-crafter: '&aAuto-Crafter (Enhanced)'
+      armor-auto-crafter: '&aAuto-Crafter (Armor Forge)'
+      trash-can: '&3Trash Can'
+      generic: '&eCargo'
+    items:
+      name: '&3Items'
+      lore:
+      - ''
+      - '&bPut in all Items you want to'
+      - '&bblacklist/whitelist'
+    channel:
+      previous:
+        name: '&bPrevious Channel'
+        lore:
+        - ''
+        - '&e> Click to decrease the Channel ID by 1'
+      current:
+        name: '&bChannel ID: &3{channel_display}'
+        lore: []
+      next:
+        name: '&bNext Channel'
+        lore:
+        - ''
+        - '&e> Click to increase the Channel ID by 1'
+    filter:
+      whitelist:
+        name: '&7Type: &rWhitelist'
+        lore:
+        - ''
+        - '&e> Click to change it to Blacklist'
+      blacklist:
+        name: '&7Type: &8Blacklist'
+        lore:
+        - ''
+        - '&e> Click to change it to Whitelist'
+    lore:
+      enabled:
+        name: '&7Include Lore: &2✔'
+      disabled:
+        name: '&7Include Lore: &4✘'
+      toggle-lore:
+      - ''
+      - '&e> Click to toggle whether the Lore has to match'
+    smart-fill:
+      enabled:
+        name: '&7"Smart-Filling" Mode: &2✔'
+      disabled:
+        name: '&7"Smart-Filling" Mode: &4✘'
+      lore:
+      - ''
+      - '&e> Click to toggle Smart-Filling Mode'
+      - ''
+      - '&fIn this mode, the Cargo node will attempt'
+      - '&fto keep a constant amount of items'
+      - '&fin the inventory.'
+    round-robin:
+      enabled:
+        name: '&7Round-Robin Mode: &2✔'
+      disabled:
+        name: '&7Round-Robin Mode: &4✘'
+      lore:
+      - ''
+      - '&e> Click to toggle Round-Robin Mode'
+      - ''
+      - '&fThis mode makes the input node rotate'
+      - '&fbetween matching output nodes.'
+    multi-slot:
+      enabled:
+        name: '&7Multi-slot Extraction: &2✔'
+      disabled:
+        name: '&7Multi-slot Extraction: &4✘'
+      lore:
+      - ''
+      - '&e> Click to toggle'
+      - ''
+      - '&fWhen enabled, this node may pull'
+      - '&ffrom multiple source slots per cycle.'
+    batch-limit:
+      name: '&7Transfer Limit: &b{limit} items'
+      lore:
+      - ''
+      - '&e> Left-click: next lower limit'
+      - '&e> Right-click: next higher limit'
+      - ''
+      - '&fAvailable: &b128&7/&b64&7/&b16&7/&b4&7/&b1'
+    distribution:
+      sequential:
+        name: '&7Distribution: &fSequential'
+        lore:
+        - ''
+        - '&e> Left-click: next mode'
+        - '&e> Right-click: previous mode'
+        - ''
+        - '&fSequential fills outputs in order.'
+        - '&fRound-Robin rotates targets.'
+        - '&fAverage uses quota/debt balancing.'
+      round-robin:
+        name: '&7Distribution: &bRound-Robin'
+        lore:
+        - ''
+        - '&e> Left-click: next mode'
+        - '&e> Right-click: previous mode'
+        - ''
+        - '&fSequential fills outputs in order.'
+        - '&fRound-Robin rotates targets.'
+        - '&fAverage uses quota/debt balancing.'
+      even:
+        name: '&7Distribution: &aAverage'
+        lore:
+        - ''
+        - '&e> Left-click: next mode'
+        - '&e> Right-click: previous mode'
+        - ''
+        - '&fSequential fills outputs in order.'
+        - '&fRound-Robin rotates targets.'
+        - '&fAverage uses quota/debt balancing.'
+    priority:
+      name: '&ePriority: &f{priority} / 16'
+      lore:
+      - '&7Higher priority outputs receive items first.'
+      - '&eLeft-click: &7+1'
+      - '&eRight-click: &7-1'
+      - '&eShift: &7±4'
+    auto-crafter:
+      enabled:
+        name: '&7Enabled: &2✔'
+        lore:
+        - ''
+        - '&e> Click to toggle'
+      disabled:
+        name: '&7Enabled: &4✘'
+      recipe:
+        name: '&eSelected recipe'
+        lore:
+        - '&7{recipe}'
+        - '&eSneak-right-click with target item to configure.'
+      none: 'None'

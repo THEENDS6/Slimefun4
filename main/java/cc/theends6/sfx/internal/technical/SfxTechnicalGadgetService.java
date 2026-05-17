@@ -4,8 +4,11 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.lang.reflect.Field;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.UUID;
@@ -13,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
@@ -503,18 +507,110 @@ public final class SfxTechnicalGadgetService implements Listener {
             if (instance == null) {
                 return;
             }
-            Method getBaseValue = instance.getClass().getMethod("getBaseValue");
-            Method setBaseValue = instance.getClass().getMethod("setBaseValue", double.class);
-            UUID id = player.getUniqueId();
-            AttributeSnapshot snapshot = attributeSnapshots.computeIfAbsent(id, ignored -> new AttributeSnapshot());
-            Double base = snapshot.base(kind);
-            if (base == null) {
-                base = ((Number) getBaseValue.invoke(instance)).doubleValue();
-                snapshot.setBase(kind, base);
+            removeSfxAttributeModifier(instance, kind);
+            cleanupLegacyDirtyBase(instance, kind);
+            if (bonus <= 0.0D) {
+                return;
             }
-            setBaseValue.invoke(instance, base + bonus);
+            Object modifier = createAttributeModifier(kind, bonus);
+            if (modifier == null) {
+                return;
+            }
+            Method addModifier = instance.getClass().getMethod("addModifier", modifier.getClass());
+            addModifier.invoke(instance, modifier);
         } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
             // Older server APIs do not expose these attributes. Active movement and fall-damage reduction still apply.
+        }
+    }
+
+    private Object createAttributeModifier(AttributeKind kind, double bonus) {
+        try {
+            Class<?> modifierClass = Class.forName("org.bukkit.attribute.AttributeModifier");
+            Class<?> operationClass = Class.forName("org.bukkit.attribute.AttributeModifier$Operation");
+            @SuppressWarnings({"rawtypes", "unchecked"})
+            Object operation = Enum.valueOf((Class<? extends Enum>) operationClass.asSubclass(Enum.class), "ADD_NUMBER");
+            NamespacedKey key = attributeModifierKey(kind);
+            try {
+                Constructor<?> constructor = modifierClass.getConstructor(NamespacedKey.class, double.class, operationClass);
+                return constructor.newInstance(key, bonus, operation);
+            } catch (NoSuchMethodException ignored) {
+                // Paper 1.21+ commonly requires an EquipmentSlotGroup argument.
+            }
+            try {
+                Class<?> slotGroupClass = Class.forName("org.bukkit.inventory.EquipmentSlotGroup");
+                Object any = slotGroupClass.getField("ANY").get(null);
+                Constructor<?> constructor = modifierClass.getConstructor(NamespacedKey.class, double.class, operationClass, slotGroupClass);
+                return constructor.newInstance(key, bonus, operation, any);
+            } catch (ReflectiveOperationException | LinkageError ignored) {
+                // Fall through to the legacy UUID/name constructor.
+            }
+            try {
+                Constructor<?> constructor = modifierClass.getConstructor(UUID.class, String.class, double.class, operationClass);
+                return constructor.newInstance(UUID.nameUUIDFromBytes((plugin.getName() + ":" + key.getKey()).getBytes(java.nio.charset.StandardCharsets.UTF_8)), key.toString(), bonus, operation);
+            } catch (NoSuchMethodException ignored) {
+                return null;
+            }
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
+            return null;
+        }
+    }
+
+    private NamespacedKey attributeModifierKey(AttributeKind kind) {
+        return new NamespacedKey(plugin, switch (kind) {
+            case JUMP_STRENGTH -> "jetboots_jump_strength";
+            case SAFE_FALL_DISTANCE -> "jetboots_safe_fall_distance";
+        });
+    }
+
+    private void removeSfxAttributeModifier(Object attributeInstance, AttributeKind kind) throws ReflectiveOperationException {
+        Method getModifiers = attributeInstance.getClass().getMethod("getModifiers");
+        Object raw = getModifiers.invoke(attributeInstance);
+        if (!(raw instanceof Collection<?> modifiers)) {
+            return;
+        }
+        Method removeModifier = attributeInstance.getClass().getMethod("removeModifier", Class.forName("org.bukkit.attribute.AttributeModifier"));
+        for (Object modifier : List.copyOf(modifiers)) {
+            if (isSfxAttributeModifier(modifier, kind)) {
+                removeModifier.invoke(attributeInstance, modifier);
+            }
+        }
+    }
+
+    private boolean isSfxAttributeModifier(Object modifier, AttributeKind kind) {
+        NamespacedKey expected = attributeModifierKey(kind);
+        try {
+            Method getKey = modifier.getClass().getMethod("getKey");
+            Object key = getKey.invoke(modifier);
+            if (expected.equals(key)) {
+                return true;
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // Try legacy name/UUID based modifiers below.
+        }
+        try {
+            Method getName = modifier.getClass().getMethod("getName");
+            Object name = getName.invoke(modifier);
+            return expected.toString().equals(String.valueOf(name));
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            return false;
+        }
+    }
+
+    private void cleanupLegacyDirtyBase(Object attributeInstance, AttributeKind kind) {
+        if (!plugin.getConfig().getBoolean("technical-gadgets.cleanup-legacy-attribute-base-values", true)) {
+            return;
+        }
+        try {
+            Method getBaseValue = attributeInstance.getClass().getMethod("getBaseValue");
+            Method setBaseValue = attributeInstance.getClass().getMethod("setBaseValue", double.class);
+            double base = ((Number) getBaseValue.invoke(attributeInstance)).doubleValue();
+            if (kind == AttributeKind.SAFE_FALL_DISTANCE && base > 3.0001D) {
+                setBaseValue.invoke(attributeInstance, 3.0D);
+            } else if (kind == AttributeKind.JUMP_STRENGTH && base > 0.4200001D && base <= 1.5D) {
+                setBaseValue.invoke(attributeInstance, 0.42D);
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // Best-effort cleanup for legacy builds that used base values.
         }
     }
 
@@ -551,18 +647,12 @@ public final class SfxTechnicalGadgetService implements Listener {
     }
 
     private void restoreAttributes(Player player) {
-        AttributeSnapshot snapshot = attributeSnapshots.remove(player.getUniqueId());
-        if (snapshot == null) {
-            return;
-        }
-        restoreAttribute(player, "GENERIC_JUMP_STRENGTH", "JUMP_STRENGTH", snapshot.jumpStrengthBase());
-        restoreAttribute(player, "GENERIC_SAFE_FALL_DISTANCE", "SAFE_FALL_DISTANCE", snapshot.safeFallDistanceBase());
+        attributeSnapshots.remove(player.getUniqueId());
+        removeAttribute(player, "GENERIC_JUMP_STRENGTH", "JUMP_STRENGTH", AttributeKind.JUMP_STRENGTH);
+        removeAttribute(player, "GENERIC_SAFE_FALL_DISTANCE", "SAFE_FALL_DISTANCE", AttributeKind.SAFE_FALL_DISTANCE);
     }
 
-    private void restoreAttribute(Player player, String legacyName, String modernName, Double base) {
-        if (base == null) {
-            return;
-        }
+    private void removeAttribute(Player player, String legacyName, String modernName, AttributeKind kind) {
         try {
             Class<?> attributeClass = Class.forName("org.bukkit.attribute.Attribute");
             Object attribute = resolveAttribute(attributeClass, legacyName, modernName);
@@ -572,7 +662,8 @@ public final class SfxTechnicalGadgetService implements Listener {
             Method getAttribute = player.getClass().getMethod("getAttribute", attributeClass);
             Object instance = getAttribute.invoke(player, attribute);
             if (instance != null) {
-                instance.getClass().getMethod("setBaseValue", double.class).invoke(instance, base);
+                removeSfxAttributeModifier(instance, kind);
+                cleanupLegacyDirtyBase(instance, kind);
             }
         } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
             // Attribute not present on this API.
