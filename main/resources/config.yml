@@ -236,10 +236,3 @@ radiation:
     reduction-per-piece: 0.25
 
 
-folia:
-  
-  
-  
-  strict-region-checks: true
-  disable-cross-region-cargo: true
-  disable-cross-region-energy: true

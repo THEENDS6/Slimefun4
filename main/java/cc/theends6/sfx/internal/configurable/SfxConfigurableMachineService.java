@@ -774,6 +774,13 @@ public final class SfxConfigurableMachineService implements Listener {
         if (definition == null || definition.kind() != SfxConfigurableMachineKind.REACTOR || state.mode() != 0) {
             return 0;
         }
+        Location location = locationFor(instance);
+        if (location == null) {
+            return 0;
+        }
+        if (!runtime.isOwnedByCurrentRegion(location)) {
+            return runtime.supplyAt(location, () -> generateProducerEnergy(instanceId));
+        }
         SfxConfigurableMachineSession session = sessionsByHost.get(instanceId);
         boolean hasViewers = session != null;
         long lastTick = lastLogicTicks.getOrDefault(instanceId, 0L);
@@ -785,10 +792,6 @@ public final class SfxConfigurableMachineService implements Listener {
         lastLogicTicks.put(instanceId, tickCounter);
         if (session != null) {
             syncInventoryToState(session.inventory(), state, definition, session.panelType());
-        }
-        Location location = locationFor(instance);
-        if (location == null || !runtime.isOwnedByCurrentRegion(location)) {
-            return 0;
         }
         if (autoPausedProducers.contains(instanceId) && canAutoPauseProducer(instanceId)) {
             return 0;
@@ -1546,8 +1549,11 @@ public final class SfxConfigurableMachineService implements Listener {
             return false;
         }
         Location location = locationFor(instance);
-        if (location == null || !runtime.isOwnedByCurrentRegion(location)) {
+        if (location == null) {
             return false;
+        }
+        if (!runtime.isOwnedByCurrentRegion(location)) {
+            return runtime.supplyAt(location, () -> isInstanceChunkLoaded(instance));
         }
         org.bukkit.World world = location.getWorld();
         return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);

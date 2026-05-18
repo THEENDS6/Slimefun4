@@ -1903,20 +1903,34 @@ public final class DefaultSfxGuide implements SfxGuide {
             return sound == null ? fallback : sound;
         }
 
-        Sound matched = Registry.SOUNDS.match(candidate);
-        if (matched != null) {
-            return matched;
+        Sound direct = resolveSoundCandidate(candidate);
+        return direct == null ? fallback : direct;
+    }
+
+
+    private Sound resolveSoundCandidate(String candidate) {
+        if (candidate == null || candidate.isBlank()) {
+            return null;
         }
 
-        if (candidate.indexOf(':') < 0 && candidate.indexOf('.') >= 0) {
-            Sound namespaced = resolveSoundKey("minecraft:" + candidate);
+        if (candidate.indexOf(':') >= 0) {
+            return resolveSoundKey(candidate);
+        }
+
+        Sound namespaced = resolveSoundKey("minecraft:" + candidate);
+        if (namespaced != null) {
+            return namespaced;
+        }
+
+        String dotted = candidate.replace('_', '.');
+        if (!dotted.equals(candidate)) {
+            namespaced = resolveSoundKey("minecraft:" + dotted);
             if (namespaced != null) {
                 return namespaced;
             }
         }
 
-        Sound direct = resolveSoundKey(candidate);
-        return direct == null ? fallback : direct;
+        return null;
     }
 
     private Sound resolveSoundKey(String rawKey) {

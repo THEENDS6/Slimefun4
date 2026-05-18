@@ -3,6 +3,7 @@ package cc.theends6.sfx.api.runtime;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import java.util.function.Supplier;
 
 public interface SfxRuntime {
     JavaPlugin plugin();
@@ -22,4 +23,6 @@ public interface SfxRuntime {
     void executeAsync(Runnable task);
 
     boolean isOwnedByCurrentRegion(Location location);
+
+    <T> T supplyAt(Location location, Supplier<T> supplier);
 }

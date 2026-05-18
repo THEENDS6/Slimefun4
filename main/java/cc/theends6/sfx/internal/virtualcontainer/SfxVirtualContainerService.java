@@ -68,6 +68,7 @@ public final class SfxVirtualContainerService implements Listener {
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final Map<SfxVirtualContainerKey, SfxVirtualContainer> containers = new ConcurrentHashMap<>();
+    private final Map<SfxBlockAnchorKey, SfxVirtualContainerKey> locationIndex = new ConcurrentHashMap<>();
     private volatile boolean running = true;
 
     public SfxVirtualContainerService(JavaPlugin plugin, SfxRuntime runtime) {
@@ -77,8 +78,17 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public Optional<SfxVirtualContainer> ensureRegistered(Location location) {
-        if (!owns(location)) {
+        if (location == null || location.getWorld() == null) {
             return Optional.empty();
+        }
+        if (!owns(location)) {
+            return runtime.supplyAt(location, () -> ensureRegistered(location));
+        }
+        Optional<SfxVirtualContainer> registered = findRegistered(location);
+        if (registered.isPresent()) {
+            SfxVirtualContainer container = registered.get();
+            container.cargoAttached(true);
+            return registered;
         }
         Inventory inventory = inventoryAt(location).orElse(null);
         if (inventory == null) {
@@ -86,6 +96,7 @@ public final class SfxVirtualContainerService implements Listener {
         }
         SfxVirtualContainerKey key = keyForInventory(inventory, location).orElseGet(() -> SfxVirtualContainerKey.single(location));
         SfxVirtualContainer container = containers.computeIfAbsent(key, ignored -> new SfxVirtualContainer(key, inventory.getSize()));
+        registerIndex(container.key());
         container.cargoAttached(true);
         reconcileBeforeAccess(container, inventory);
         return Optional.of(container);
@@ -95,12 +106,17 @@ public final class SfxVirtualContainerService implements Listener {
         if (location == null || location.getWorld() == null) {
             return Optional.empty();
         }
-        for (SfxVirtualContainer container : containers.values()) {
-            if (container.key().contains(location)) {
-                return Optional.of(container);
-            }
+        SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(location);
+        SfxVirtualContainerKey indexed = locationIndex.get(key);
+        if (indexed == null) {
+            return Optional.empty();
         }
-        return Optional.empty();
+        SfxVirtualContainer container = containers.get(indexed);
+        if (container == null) {
+            locationIndex.remove(key, indexed);
+            return Optional.empty();
+        }
+        return Optional.of(container);
     }
 
     public Collection<SfxVirtualContainer> containers() {
@@ -136,6 +152,9 @@ public final class SfxVirtualContainerService implements Listener {
 
 
     public CraftingTransactionResult checkCraftingTransaction(Location location, List<IngredientRequest> ingredients, List<ItemStack> outputs) {
+        if (location != null && location.getWorld() != null && !owns(location)) {
+            return runtime.supplyAt(location, () -> checkCraftingTransaction(location, ingredients, outputs));
+        }
         SfxVirtualContainer container = ensureRegistered(location).orElse(null);
         if (container == null) {
             return new CraftingTransactionResult(CraftingTransactionStatus.NO_CONTAINER);
@@ -153,6 +172,9 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public CraftingTransactionResult commitCraftingTransaction(Location location, List<IngredientRequest> ingredients, List<ItemStack> outputs) {
+        if (location != null && location.getWorld() != null && !owns(location)) {
+            return runtime.supplyAt(location, () -> commitCraftingTransaction(location, ingredients, outputs));
+        }
         SfxVirtualContainer container = ensureRegistered(location).orElse(null);
         if (container == null) {
             return new CraftingTransactionResult(CraftingTransactionStatus.NO_CONTAINER);
@@ -314,7 +336,52 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
 
-    public PlannedStack planFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
+    private void reconcileForMemoryAccess(SfxVirtualContainer container) {
+        if (container == null) {
+            return;
+        }
+        if (!container.externalDirty()
+                && !container.mirrorDirty()
+                && !container.externalActive()
+                && !container.viewerActive()
+                && container.revision() != 0L) {
+            return;
+        }
+        Location location = primaryLocation(container);
+        if (location == null) {
+            return;
+        }
+        if (!owns(location)) {
+            runtime.supplyAt(location, () -> {
+                reconcileForMemoryAccess(container);
+                return null;
+            });
+            return;
+        }
+        inventoryFor(container).ifPresent(inventory -> reconcileBeforeAccess(container, inventory));
+    }
+
+    private void pushIfDirty(SfxVirtualContainer container) {
+        if (container == null || !container.mirrorDirty()) {
+            return;
+        }
+        Location location = primaryLocation(container);
+        if (location == null) {
+            return;
+        }
+        if (!owns(location)) {
+            runtime.supplyAt(location, () -> {
+                pushIfDirty(container);
+                return null;
+            });
+            return;
+        }
+        inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory));
+    }
+
+
+    public synchronized PlannedStack planFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
+        reconcileForMemoryAccess(container);
         if (container == null) {
             return new PlannedStack(null, List.of());
         }
@@ -334,7 +401,8 @@ public final class SfxVirtualContainerService implements Listener {
         return new PlannedStack(null, List.of());
     }
 
-    public List<PlannedStack> planBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
+    public synchronized List<PlannedStack> planBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
+        reconcileForMemoryAccess(container);
         List<PlannedStack> result = new ArrayList<>();
         if (container == null || maxItems <= 0) {
             return result;
@@ -373,7 +441,7 @@ public final class SfxVirtualContainerService implements Listener {
         return result;
     }
 
-    public boolean canRemovePlanned(SfxVirtualContainer container, List<SlotTake> takes) {
+    public synchronized boolean canRemovePlanned(SfxVirtualContainer container, List<SlotTake> takes) {
         if (container == null || takes == null || takes.isEmpty()) {
             return false;
         }
@@ -390,7 +458,7 @@ public final class SfxVirtualContainerService implements Listener {
         return true;
     }
 
-    public boolean removePlanned(SfxVirtualContainer container, List<SlotTake> takes) {
+    public synchronized boolean removePlanned(SfxVirtualContainer container, List<SlotTake> takes) {
         if (!canRemovePlanned(container, takes)) {
             return false;
         }
@@ -406,7 +474,8 @@ public final class SfxVirtualContainerService implements Listener {
         return true;
     }
 
-    public ItemStack peekFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
+    public synchronized ItemStack peekFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
+        reconcileForMemoryAccess(container);
         if (container == null) {
             return null;
         }
@@ -423,7 +492,8 @@ public final class SfxVirtualContainerService implements Listener {
         return null;
     }
 
-    public List<ItemStack> peekBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
+    public synchronized List<ItemStack> peekBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
+        reconcileForMemoryAccess(container);
         List<ItemStack> result = new ArrayList<>();
         if (container == null || maxItems <= 0) {
             return result;
@@ -458,7 +528,7 @@ public final class SfxVirtualContainerService implements Listener {
         return result;
     }
 
-    public int removeSimilar(SfxVirtualContainer container, ItemStack template, int amount) {
+    public synchronized int removeSimilar(SfxVirtualContainer container, ItemStack template, int amount) {
         if (container == null || isEmpty(template) || amount <= 0) {
             return 0;
         }
@@ -483,7 +553,8 @@ public final class SfxVirtualContainerService implements Listener {
         return removed;
     }
 
-    public ItemStack withdrawFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
+    public synchronized ItemStack withdrawFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
+        reconcileForMemoryAccess(container);
         if (container == null) {
             return null;
         }
@@ -506,7 +577,8 @@ public final class SfxVirtualContainerService implements Listener {
         return null;
     }
 
-    public List<ItemStack> withdrawBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes) {
+    public synchronized List<ItemStack> withdrawBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes) {
+        reconcileForMemoryAccess(container);
         List<ItemStack> result = new ArrayList<>();
         if (container == null || maxItems <= 0) {
             return result;
@@ -543,7 +615,8 @@ public final class SfxVirtualContainerService implements Listener {
         return result;
     }
 
-    public ItemStack insert(SfxVirtualContainer container, ItemStack input, boolean smartFill) {
+    public synchronized ItemStack insert(SfxVirtualContainer container, ItemStack input, boolean smartFill) {
+        reconcileForMemoryAccess(container);
         if (container == null) {
             return input;
         }
@@ -574,7 +647,8 @@ public final class SfxVirtualContainerService implements Listener {
 
 
 
-    public ItemStack insertSingleSlot(SfxVirtualContainer container, ItemStack input, boolean smartFill) {
+    public synchronized ItemStack insertSingleSlot(SfxVirtualContainer container, ItemStack input, boolean smartFill) {
+        reconcileForMemoryAccess(container);
         if (container == null) {
             return input;
         }
@@ -597,7 +671,8 @@ public final class SfxVirtualContainerService implements Listener {
         return isEmpty(remaining) ? null : remaining;
     }
 
-    public int capacityFor(SfxVirtualContainer container, ItemStack probe, boolean smartFill) {
+    public synchronized int capacityFor(SfxVirtualContainer container, ItemStack probe, boolean smartFill) {
+        reconcileForMemoryAccess(container);
         if (container == null || isEmpty(probe)) {
             return 0;
         }
@@ -625,7 +700,8 @@ public final class SfxVirtualContainerService implements Listener {
     
 
 
-    public int capacityForSingleSlot(SfxVirtualContainer container, ItemStack probe, boolean smartFill) {
+    public synchronized int capacityForSingleSlot(SfxVirtualContainer container, ItemStack probe, boolean smartFill) {
+        reconcileForMemoryAccess(container);
         if (container == null || isEmpty(probe)) {
             return 0;
         }
@@ -887,12 +963,14 @@ public final class SfxVirtualContainerService implements Listener {
         SfxVirtualContainer container = optional.get();
         inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory));
         containers.remove(container.key());
+        unregisterIndex(container.key());
     }
 
     public void shutdown() {
         running = false;
         flushAllToWorld();
         containers.clear();
+        locationIndex.clear();
     }
 
     private void scheduleExternalSync() {
@@ -1008,6 +1086,9 @@ public final class SfxVirtualContainerService implements Listener {
             return Optional.empty();
         }
         Block block = location.getBlock();
+        if (!isLikelyInventoryBlock(block.getType())) {
+            return Optional.empty();
+        }
         if (!(block.getState() instanceof InventoryHolder holder)) {
             return Optional.empty();
         }
@@ -1020,10 +1101,55 @@ public final class SfxVirtualContainerService implements Listener {
             return Optional.empty();
         }
         Block block = location.getBlock();
+        if (!isLikelyInventoryBlock(block.getType())) {
+            return Optional.empty();
+        }
         if (!(block.getState() instanceof InventoryHolder holder)) {
             return Optional.empty();
         }
         return Optional.of(holder.getInventory());
+    }
+
+
+    private void registerIndex(SfxVirtualContainerKey key) {
+        if (key == null) {
+            return;
+        }
+        locationIndex.put(new SfxBlockAnchorKey(key.worldId(), key.x1(), key.y1(), key.z1()), key);
+        locationIndex.put(new SfxBlockAnchorKey(key.worldId(), key.x2(), key.y2(), key.z2()), key);
+    }
+
+    private void unregisterIndex(SfxVirtualContainerKey key) {
+        if (key == null) {
+            return;
+        }
+        locationIndex.remove(new SfxBlockAnchorKey(key.worldId(), key.x1(), key.y1(), key.z1()), key);
+        locationIndex.remove(new SfxBlockAnchorKey(key.worldId(), key.x2(), key.y2(), key.z2()), key);
+    }
+
+    private boolean isLikelyInventoryBlock(Material material) {
+        if (material == null) {
+            return false;
+        }
+        String name = material.name();
+        if (name.endsWith("SHULKER_BOX")) {
+            return true;
+        }
+        return switch (material) {
+            case CHEST,
+                    TRAPPED_CHEST,
+                    BARREL,
+                    HOPPER,
+                    DROPPER,
+                    DISPENSER,
+                    FURNACE,
+                    BLAST_FURNACE,
+                    SMOKER,
+                    BREWING_STAND,
+                    CHISELED_BOOKSHELF,
+                    DECORATED_POT -> true;
+            default -> false;
+        };
     }
 
     private Optional<SfxVirtualContainerKey> keyForInventory(Inventory inventory, Location fallback) {

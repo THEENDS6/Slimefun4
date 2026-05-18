@@ -2,6 +2,11 @@ package cc.theends6.sfx.internal.runtime;
 
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -64,6 +69,41 @@ public final class PaperSfxRuntime implements SfxRuntime {
     public void executeAsync(Runnable task) {
         Objects.requireNonNull(task, "task");
         plugin.getServer().getAsyncScheduler().runNow(plugin, scheduledTask -> task.run());
+    }
+
+    @Override
+    public <T> T supplyAt(Location location, Supplier<T> supplier) {
+        Objects.requireNonNull(location, "location");
+        Objects.requireNonNull(location.getWorld(), "location.world");
+        Objects.requireNonNull(supplier, "supplier");
+        if (isOwnedByCurrentRegion(location)) {
+            return supplier.get();
+        }
+        CompletableFuture<T> future = new CompletableFuture<>();
+        plugin.getServer().getRegionScheduler().run(plugin, location, scheduledTask -> {
+            try {
+                future.complete(supplier.get());
+            } catch (Throwable throwable) {
+                future.completeExceptionally(throwable);
+            }
+        });
+        try {
+            return future.get(10L, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for region task at " + location, e);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new IllegalStateException("Region task failed at " + location, cause);
+        } catch (TimeoutException e) {
+            throw new IllegalStateException("Timed out waiting for region task at " + location, e);
+        }
     }
 
     @Override

@@ -464,10 +464,11 @@ public final class SfxCargoService implements Listener {
         }
         inputs.sort(Comparator.comparing(ref -> ref.instance.anchorKey(), this::compareAnchorKeys));
         outputs.sort(Comparator.comparing((NodeRef ref) -> ref.state.priority).reversed().thenComparing(ref -> ref.instance.anchorKey(), this::compareAnchorKeys));
+        Map<EndpointCacheKey, Optional<Endpoint>> endpointCache = new HashMap<>();
         for (NodeRef input : inputs) {
             int moved = input.definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE
-                    ? processAdvancedInput(input, outputs)
-                    : processBasicInput(input, outputs);
+                    ? processAdvancedInput(input, outputs, endpointCache)
+                    : processBasicInput(input, outputs, endpointCache);
             if (moved > 0) {
                 recordManagerTransfer(managerId, moved);
             }
@@ -600,8 +601,8 @@ public final class SfxCargoService implements Listener {
         return new SfxFloatingTextKey("cargo-manager", key.worldId(), key.x(), key.y(), key.z());
     }
 
-    private int processBasicInput(NodeRef input, List<NodeRef> outputs) {
-        Endpoint source = resolveEndpoint(input.instance, input.state, false);
+    private int processBasicInput(NodeRef input, List<NodeRef> outputs, Map<EndpointCacheKey, Optional<Endpoint>> endpointCache) {
+        Endpoint source = resolveEndpoint(input.instance, input.state, false, endpointCache);
         if (source == null || source.container == null) {
             return 0;
         }
@@ -610,11 +611,11 @@ public final class SfxCargoService implements Listener {
         if (plan == null || plan.isEmpty()) {
             return 0;
         }
-        return commitPlannedTransfer(input, source.container, plan, outputs, input.state.roundRobin ? SfxCargoDistributionMode.ROUND_ROBIN : SfxCargoDistributionMode.SEQUENTIAL);
+        return commitPlannedTransfer(input, source.container, plan, outputs, input.state.roundRobin ? SfxCargoDistributionMode.ROUND_ROBIN : SfxCargoDistributionMode.SEQUENTIAL, endpointCache);
     }
 
-    private int processAdvancedInput(NodeRef input, List<NodeRef> outputs) {
-        Endpoint source = resolveEndpoint(input.instance, input.state, false);
+    private int processAdvancedInput(NodeRef input, List<NodeRef> outputs, Map<EndpointCacheKey, Optional<Endpoint>> endpointCache) {
+        Endpoint source = resolveEndpoint(input.instance, input.state, false, endpointCache);
         if (source == null || source.container == null) {
             return 0;
         }
@@ -626,16 +627,16 @@ public final class SfxCargoService implements Listener {
         }
         int moved = 0;
         for (PlannedStack plan : batch) {
-            moved += commitPlannedTransfer(input, source.container, plan, outputs, input.state.distributionMode);
+            moved += commitPlannedTransfer(input, source.container, plan, outputs, input.state.distributionMode, endpointCache);
         }
         return moved;
     }
 
-    private int commitPlannedTransfer(NodeRef input, SfxVirtualContainer sourceContainer, PlannedStack plan, List<NodeRef> outputs, SfxCargoDistributionMode mode) {
+    private int commitPlannedTransfer(NodeRef input, SfxVirtualContainer sourceContainer, PlannedStack plan, List<NodeRef> outputs, SfxCargoDistributionMode mode, Map<EndpointCacheKey, Optional<Endpoint>> endpointCache) {
         if (plan == null || plan.isEmpty() || !virtualContainers.canRemovePlanned(sourceContainer, plan.takes())) {
             return 0;
         }
-        List<OutputMove> moves = planOutputMoves(input, plan.stack(), outputs, mode, sourceContainer);
+        List<OutputMove> moves = planOutputMoves(input, plan.stack(), outputs, mode, sourceContainer, endpointCache);
         int planned = moves.stream().mapToInt(OutputMove::amount).sum();
         if (planned <= 0) {
             return 0;
@@ -686,7 +687,7 @@ public final class SfxCargoService implements Listener {
         return limited;
     }
 
-    private List<OutputMove> planOutputMoves(NodeRef input, ItemStack stack, List<NodeRef> outputs, SfxCargoDistributionMode mode, SfxVirtualContainer sourceContainer) {
+    private List<OutputMove> planOutputMoves(NodeRef input, ItemStack stack, List<NodeRef> outputs, SfxCargoDistributionMode mode, SfxVirtualContainer sourceContainer, Map<EndpointCacheKey, Optional<Endpoint>> endpointCache) {
         if (isEmpty(stack)) {
             return List.of();
         }
@@ -698,7 +699,7 @@ public final class SfxCargoService implements Listener {
             if (!acceptsOutputFilter(output.state, output.definition, stack)) {
                 continue;
             }
-            Endpoint endpoint = resolveOutputEndpoint(output.instance, output.state, sourceContainer);
+            Endpoint endpoint = resolveOutputEndpoint(output.instance, output.state, sourceContainer, endpointCache);
             if (endpoint == null || (!endpoint.trash && endpoint.container == sourceContainer)) {
                 continue;
             }
@@ -842,8 +843,8 @@ public final class SfxCargoService implements Listener {
     }
 
 
-    private Endpoint resolveOutputEndpoint(SfxBlockInstanceRecord node, SfxCargoNodeState state, SfxVirtualContainer sourceContainer) {
-        Endpoint endpoint = resolveEndpointAt(node, state.attachedFace, true);
+    private Endpoint resolveOutputEndpoint(SfxBlockInstanceRecord node, SfxCargoNodeState state, SfxVirtualContainer sourceContainer, Map<EndpointCacheKey, Optional<Endpoint>> endpointCache) {
+        Endpoint endpoint = resolveEndpointAt(node, state.attachedFace, true, endpointCache);
         if (endpoint != null && (endpoint.trash || endpoint.container != sourceContainer)) {
             return endpoint;
         }
@@ -851,7 +852,7 @@ public final class SfxCargoService implements Listener {
             if (face == state.attachedFace) {
                 continue;
             }
-            endpoint = resolveEndpointAt(node, face, true);
+            endpoint = resolveEndpointAt(node, face, true, endpointCache);
             if (endpoint != null && (endpoint.trash || endpoint.container != sourceContainer)) {
                 state.attachedFace = face;
                 persistState(node.instanceId(), state);
@@ -861,8 +862,8 @@ public final class SfxCargoService implements Listener {
         return endpoint;
     }
 
-    private Endpoint resolveEndpoint(SfxBlockInstanceRecord node, SfxCargoNodeState state, boolean outputSide) {
-        Endpoint endpoint = resolveEndpointAt(node, state.attachedFace, outputSide);
+    private Endpoint resolveEndpoint(SfxBlockInstanceRecord node, SfxCargoNodeState state, boolean outputSide, Map<EndpointCacheKey, Optional<Endpoint>> endpointCache) {
+        Endpoint endpoint = resolveEndpointAt(node, state.attachedFace, outputSide, endpointCache);
         if (endpoint != null) {
             return endpoint;
         }
@@ -870,7 +871,7 @@ public final class SfxCargoService implements Listener {
             if (face == state.attachedFace) {
                 continue;
             }
-            endpoint = resolveEndpointAt(node, face, outputSide);
+            endpoint = resolveEndpointAt(node, face, outputSide, endpointCache);
             if (endpoint != null) {
                 state.attachedFace = face;
                 persistState(node.instanceId(), state);
@@ -880,22 +881,34 @@ public final class SfxCargoService implements Listener {
         return null;
     }
 
-    private Endpoint resolveEndpointAt(SfxBlockInstanceRecord node, BlockFace face, boolean outputSide) {
+    private Endpoint resolveEndpointAt(SfxBlockInstanceRecord node, BlockFace face, boolean outputSide, Map<EndpointCacheKey, Optional<Endpoint>> endpointCache) {
         Location target = targetLocation(node.anchorKey(), face);
         if (target == null) {
             return null;
         }
+        EndpointCacheKey key = new EndpointCacheKey(node.instanceId(), face, outputSide);
+        Optional<Endpoint> cached = endpointCache.get(key);
+        if (cached != null) {
+            return cached.orElse(null);
+        }
+        Endpoint endpoint = null;
         SfxAnchorRecord anchor = blockData.findAnchor(target).orElse(null);
         if (anchor != null) {
             SfxBlockInstanceRecord targetInstance = blockData.findInstance(anchor.instanceId()).orElse(null);
             if (targetInstance != null) {
                 SfxCargoComponentDefinition targetDefinition = definitions.get(targetInstance.typeId());
                 if (targetDefinition != null && targetDefinition.type() == SfxCargoComponentType.TRASH_CAN && outputSide) {
-                    return trashEndpoint();
+                    endpoint = trashEndpoint();
                 }
             }
         }
-        return virtualContainers.ensureRegistered(target).map(this::containerEndpoint).orElse(null);
+        if (endpoint == null) {
+            endpoint = virtualContainers.findRegistered(target)
+                    .map(this::containerEndpoint)
+                    .orElseGet(() -> virtualContainers.ensureRegistered(target).map(this::containerEndpoint).orElse(null));
+        }
+        endpointCache.put(key, Optional.ofNullable(endpoint));
+        return endpoint;
     }
 
     private Location toLocation(SfxBlockAnchorKey key) {
@@ -1471,6 +1484,9 @@ public final class SfxCargoService implements Listener {
     }
 
     private record OutputMove(Endpoint endpoint, int amount) {
+    }
+
+    private record EndpointCacheKey(UUID nodeId, BlockFace face, boolean outputSide) {
     }
 
     private static final class CargoTransferStats {
