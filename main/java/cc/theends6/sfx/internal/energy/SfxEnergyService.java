@@ -84,6 +84,7 @@ public final class SfxEnergyService implements Listener {
     private final Set<UUID> autoPausedGenerators = ConcurrentHashMap.newKeySet();
     private final Map<UUID, SfxEnergyGeneratorSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, SfxEnergyGeneratorSession> sessionsByInstance = new ConcurrentHashMap<>();
+    private final Map<UUID, EnergyRuntimeGrid> runtimeGrids = new ConcurrentHashMap<>();
     private volatile SfxFuelBurnTimeBridge fuelBurnTimeBridge;
     private volatile boolean running;
 
@@ -305,6 +306,7 @@ public final class SfxEnergyService implements Listener {
         dirtyNodes.remove(instanceId);
         activeNodes.remove(instanceId);
         autoPausedGenerators.remove(instanceId);
+        capacitorProjector.remove(instanceId);
         if (instance != null) {
             displayController.remove(instance.anchorKey());
         }
@@ -324,6 +326,7 @@ public final class SfxEnergyService implements Listener {
         displayController.shutdown();
         sessionsByViewer.clear();
         sessionsByInstance.clear();
+        runtimeGrids.clear();
         nodeStates.clear();
         nodeGridStatuses.clear();
         dirtyNodes.clear();
@@ -394,14 +397,17 @@ public final class SfxEnergyService implements Listener {
                         displayStatus(regulator.anchorKey(), status, 0, 0, 0, 0, 0);
                     }
                 }
+                runtimeGrids.remove(component.componentId());
                 continue;
             }
             UUID regulatorId = component.controllers().stream().findFirst().orElse(null);
             if (regulatorId == null) {
+                runtimeGrids.remove(component.componentId());
                 continue;
             }
             SfxBlockInstanceRecord regulator = blockData.findInstance(regulatorId).orElse(null);
             if (regulator == null) {
+                runtimeGrids.remove(component.componentId());
                 continue;
             }
             Location regulatorLocation = toLocation(regulator.anchorKey());
@@ -409,10 +415,11 @@ public final class SfxEnergyService implements Listener {
                 for (UUID memberId : component.members()) {
                     nodeGridStatuses.put(memberId, SfxEnergyGridStatus.NO_NETWORK);
                 }
+                runtimeGrids.remove(component.componentId());
                 continue;
             }
-            SfxEnergyGridResult result = new SfxEnergyGridResult(regulatorId, regulator.anchorKey(), component.members(), SfxEnergyGridStatus.ONLINE);
-            runtime.executeAt(regulatorLocation, () -> processGrid(result));
+            EnergyRuntimeGrid grid = runtimeGridFor(component, regulator);
+            runtime.executeAt(regulatorLocation, () -> processGrid(grid));
         }
 
         for (UUID conflictedTerminal : topology.conflictedTerminals()) {
@@ -423,80 +430,155 @@ public final class SfxEnergyService implements Listener {
         }
     }
 
-    private void processGrid(SfxEnergyGridResult result) {
-        SfxBlockInstanceRecord regulator = blockData.findInstance(result.regulatorId()).orElse(null);
+    private EnergyRuntimeGrid runtimeGridFor(SfxTopologyComponent component, SfxBlockInstanceRecord regulator) {
+        Set<UUID> members = new LinkedHashSet<>(component.members());
+        Set<UUID> controllers = new LinkedHashSet<>(component.controllers());
+        EnergyRuntimeGrid cached = runtimeGrids.get(component.componentId());
+        if (cached != null
+                && cached.regulatorId().equals(regulator.instanceId())
+                && cached.members().equals(members)
+                && cached.controllers().equals(controllers)) {
+            return cached;
+        }
+        List<SfxBlockInstanceRecord> capacitors = new ArrayList<>();
+        List<SfxBlockInstanceRecord> generators = new ArrayList<>();
+        List<SfxBlockInstanceRecord> chargers = new ArrayList<>();
+        List<SfxBlockInstanceRecord> electricConsumers = new ArrayList<>();
+        List<SfxBlockInstanceRecord> configurableConsumers = new ArrayList<>();
+        List<SfxBlockInstanceRecord> configurableProducers = new ArrayList<>();
+        for (UUID memberId : members) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(memberId).orElse(null);
+            if (instance == null) {
+                continue;
+            }
+            SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
+            if (definition != null) {
+                switch (definition.componentType()) {
+                    case CAPACITOR -> capacitors.add(instance);
+                    case GENERATOR -> generators.add(instance);
+                    case CHARGER -> chargers.add(instance);
+                    case REGULATOR, CONNECTOR -> {
+                    }
+                }
+            } else if (electricMachines.supportsType(instance.typeId())) {
+                electricConsumers.add(instance);
+            } else if (configurableMachines.isConsumer(instance.typeId())) {
+                configurableConsumers.add(instance);
+            } else if (configurableMachines.isProducer(instance.typeId())) {
+                configurableProducers.add(instance);
+            }
+        }
+        capacitors.sort((left, right) -> {
+            int byDistance = Integer.compare(left.energyPriorityDistance(), right.energyPriorityDistance());
+            if (byDistance != 0) {
+                return byDistance;
+            }
+            return compareAnchorKeys(left.anchorKey(), right.anchorKey());
+        });
+        EnergyRuntimeGrid grid = new EnergyRuntimeGrid(
+                component.componentId(),
+                regulator.instanceId(),
+                regulator.anchorKey(),
+                Set.copyOf(members),
+                Set.copyOf(controllers),
+                List.copyOf(capacitors),
+                List.copyOf(generators),
+                List.copyOf(chargers),
+                List.copyOf(electricConsumers),
+                List.copyOf(configurableConsumers),
+                List.copyOf(configurableProducers));
+        runtimeGrids.put(component.componentId(), grid);
+        return grid;
+    }
+
+    private void processGrid(EnergyRuntimeGrid grid) {
+        if (grid == null) {
+            return;
+        }
+        SfxBlockInstanceRecord regulator = blockData.findInstance(grid.regulatorId()).orElse(null);
         if (regulator == null || !isInstanceChunkLoaded(regulator)) {
-            for (UUID memberId : result.members()) {
+            for (UUID memberId : grid.members()) {
                 nodeGridStatuses.put(memberId, SfxEnergyGridStatus.NO_NETWORK);
             }
             return;
         }
         int available = 0;
         int supply = 0;
-        List<SfxEnergyNodeRef> capacitorRefs = new ArrayList<>();
-        List<SfxEnergyNodeRef> generatorRefs = new ArrayList<>();
-        List<SfxEnergyNodeRef> chargerRefs = new ArrayList<>();
-        List<SfxBlockInstanceRecord> electricConsumers = new ArrayList<>();
-        List<SfxBlockInstanceRecord> configurableConsumers = new ArrayList<>();
-        List<SfxBlockInstanceRecord> configurableProducers = new ArrayList<>();
-        List<UUID> electricConsumerIds = new ArrayList<>();
-        List<UUID> configurableConsumerIds = new ArrayList<>();
+        List<SfxEnergyNodeRef> capacitorRefs = new ArrayList<>(grid.capacitors().size());
+        List<SfxEnergyNodeRef> generatorRefs = new ArrayList<>(grid.generators().size());
+        List<SfxEnergyNodeRef> chargerRefs = new ArrayList<>(grid.chargers().size());
+        List<SfxBlockInstanceRecord> electricConsumers = new ArrayList<>(grid.electricConsumers().size());
+        List<SfxBlockInstanceRecord> configurableConsumers = new ArrayList<>(grid.configurableConsumers().size());
+        List<SfxBlockInstanceRecord> configurableProducers = new ArrayList<>(grid.configurableProducers().size());
+        List<UUID> electricConsumerIds = new ArrayList<>(grid.electricConsumers().size());
+        List<UUID> configurableConsumerIds = new ArrayList<>(grid.configurableConsumers().size());
         Set<UUID> loadedRuntimeMembers = new LinkedHashSet<>();
 
-        for (UUID memberId : result.members()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(memberId).orElse(null);
-            if (instance == null) {
+        for (SfxBlockInstanceRecord instance : grid.capacitors()) {
+            if (!isInstanceChunkLoaded(instance)) {
                 continue;
             }
-            boolean loaded = isInstanceChunkLoaded(instance);
             SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
-            if (definition != null) {
-                if (definition.componentType() == SfxEnergyComponentType.CAPACITOR || definition.componentType() == SfxEnergyComponentType.GENERATOR || definition.componentType() == SfxEnergyComponentType.CHARGER) {
-                    if (!loaded) {
-                        continue;
-                    }
-                    loadedRuntimeMembers.add(memberId);
-                    SfxEnergyNodeState state = currentState(memberId, instance);
-                    switch (definition.componentType()) {
-                        case CAPACITOR -> capacitorRefs.add(new SfxEnergyNodeRef(instance, definition, state));
-                        case GENERATOR -> generatorRefs.add(new SfxEnergyNodeRef(instance, definition, state));
-                        case CHARGER -> chargerRefs.add(new SfxEnergyNodeRef(instance, definition, state));
-                        case REGULATOR, CONNECTOR -> {
-                        }
-                    }
-                }
-            } else if (electricMachines.supportsType(instance.typeId())) {
-                if (!loaded) {
-                    continue;
-                }
-                loadedRuntimeMembers.add(memberId);
-                electricConsumers.add(instance);
-                electricConsumerIds.add(instance.instanceId());
-            } else if (configurableMachines.isConsumer(instance.typeId())) {
-                if (!loaded) {
-                    continue;
-                }
-                loadedRuntimeMembers.add(memberId);
-                configurableConsumers.add(instance);
-                configurableConsumerIds.add(instance.instanceId());
-            } else if (configurableMachines.isProducer(instance.typeId())) {
-                if (!loaded) {
-                    continue;
-                }
-                loadedRuntimeMembers.add(memberId);
-                configurableProducers.add(instance);
+            if (definition == null) {
+                continue;
             }
+            loadedRuntimeMembers.add(instance.instanceId());
+            capacitorRefs.add(new SfxEnergyNodeRef(instance, definition, currentState(instance.instanceId(), instance)));
+        }
+        for (SfxBlockInstanceRecord instance : grid.generators()) {
+            if (!isInstanceChunkLoaded(instance)) {
+                continue;
+            }
+            SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
+            if (definition == null) {
+                continue;
+            }
+            loadedRuntimeMembers.add(instance.instanceId());
+            generatorRefs.add(new SfxEnergyNodeRef(instance, definition, currentState(instance.instanceId(), instance)));
+        }
+        for (SfxBlockInstanceRecord instance : grid.chargers()) {
+            if (!isInstanceChunkLoaded(instance)) {
+                continue;
+            }
+            SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
+            if (definition == null) {
+                continue;
+            }
+            loadedRuntimeMembers.add(instance.instanceId());
+            chargerRefs.add(new SfxEnergyNodeRef(instance, definition, currentState(instance.instanceId(), instance)));
+        }
+        for (SfxBlockInstanceRecord instance : grid.electricConsumers()) {
+            if (!isInstanceChunkLoaded(instance)) {
+                continue;
+            }
+            loadedRuntimeMembers.add(instance.instanceId());
+            electricConsumers.add(instance);
+            electricConsumerIds.add(instance.instanceId());
+        }
+        for (SfxBlockInstanceRecord instance : grid.configurableConsumers()) {
+            if (!isInstanceChunkLoaded(instance)) {
+                continue;
+            }
+            loadedRuntimeMembers.add(instance.instanceId());
+            configurableConsumers.add(instance);
+            configurableConsumerIds.add(instance.instanceId());
+        }
+        for (SfxBlockInstanceRecord instance : grid.configurableProducers()) {
+            if (!isInstanceChunkLoaded(instance)) {
+                continue;
+            }
+            loadedRuntimeMembers.add(instance.instanceId());
+            configurableProducers.add(instance);
         }
 
-        sortCapacitors(capacitorRefs);
-
+        List<SfxBlockInstanceRecord> configurableRuntimeMachines = join(configurableConsumers, configurableProducers);
         int requestedConsumption = electricMachines.requestedEnergyConsumption(electricConsumerIds)
                 + configurableMachines.requestedEnergyConsumption(configurableConsumerIds)
                 + requestedChargerEnergy(chargerRefs);
         int totalStoredBefore = totalStoredEnergy(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
-                + configurableMachines.totalStoredEnergy(join(configurableConsumers, configurableProducers));
+                + configurableMachines.totalStoredEnergy(configurableRuntimeMachines);
         int totalCapacityBefore = totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
-                + configurableMachines.totalCapacity(join(configurableConsumers, configurableProducers));
+                + configurableMachines.totalCapacity(configurableRuntimeMachines);
         boolean autoPauseEnabled = plugin.getConfig().getBoolean("energy.generator-balance.pause-generators-when-grid-full", true);
         int potentialSupply = potentialGeneration(generatorRefs, configurableProducers);
         if (autoPauseEnabled) {
@@ -680,14 +762,14 @@ public final class SfxEnergyService implements Listener {
         electricMachines.drainRecentEnergyConsumption(loadedRuntimeMembers);
         configurableMachines.drainRecentEnergyConsumption(new ArrayList<>(loadedRuntimeMembers));
         int totalStored = totalStoredEnergy(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
-                + configurableMachines.totalStoredEnergy(join(configurableConsumers, configurableProducers));
+                + configurableMachines.totalStoredEnergy(configurableRuntimeMachines);
         int totalCapacity = totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
-                + configurableMachines.totalCapacity(join(configurableConsumers, configurableProducers));
+                + configurableMachines.totalCapacity(configurableRuntimeMachines);
         boolean hasAutoPaused = generatorRefs.stream().anyMatch(generator -> autoPausedGenerators.contains(generator.instance().instanceId())) || configurableProducers.stream().anyMatch(producer -> configurableMachines.isProducerAutoPaused(producer.instanceId()));
         int displayStored = hasAutoPaused && totalCapacity > 0 && totalStored >= Math.floor(totalCapacity * 0.99D) ? totalCapacity : totalStored;
         int displaySupply = autoPauseEnabled ? potentialSupply : supply;
         int net = displaySupply - requestedConsumption;
-        displayStatus(result.regulatorKey(), SfxEnergyGridStatus.ONLINE, displaySupply, requestedConsumption, net, displayStored, totalCapacity);
+        displayStatus(grid.regulatorKey(), SfxEnergyGridStatus.ONLINE, displaySupply, requestedConsumption, net, displayStored, totalCapacity);
         refreshOpenSfxEnergyGeneratorSessions();
     }
 
@@ -777,6 +859,10 @@ public final class SfxEnergyService implements Listener {
     }
 
     private int generatorPotentialGeneration(SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+        Location generationLocation = instance == null ? null : toLocation(instance.anchorKey());
+        if (generationLocation != null && !runtime.isOwnedByCurrentRegion(generationLocation)) {
+            return runtime.supplyAt(generationLocation, () -> generatorPotentialGeneration(instance, definition, state));
+        }
         if (definition.componentType() != SfxEnergyComponentType.GENERATOR) {
             return 0;
         }
@@ -807,6 +893,21 @@ public final class SfxEnergyService implements Listener {
             return 0;
         }
         return definition.energyPerTick();
+    }
+
+    private record EnergyRuntimeGrid(
+            UUID componentId,
+            UUID regulatorId,
+            SfxBlockAnchorKey regulatorKey,
+            Set<UUID> members,
+            Set<UUID> controllers,
+            List<SfxBlockInstanceRecord> capacitors,
+            List<SfxBlockInstanceRecord> generators,
+            List<SfxBlockInstanceRecord> chargers,
+            List<SfxBlockInstanceRecord> electricConsumers,
+            List<SfxBlockInstanceRecord> configurableConsumers,
+            List<SfxBlockInstanceRecord> configurableProducers
+    ) {
     }
 
     private record AutoPauseCandidate(UUID instanceId, int generation, boolean configurable) {
@@ -997,6 +1098,10 @@ public final class SfxEnergyService implements Listener {
     }
 
     private int generate(SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+        Location generationLocation = instance == null ? null : toLocation(instance.anchorKey());
+        if (generationLocation != null && !runtime.isOwnedByCurrentRegion(generationLocation)) {
+            return runtime.supplyAt(generationLocation, () -> generate(instance, definition, state));
+        }
         if (definition.isSolarGenerator()) {
             Location location = toLocation(instance.anchorKey());
             if (location == null) {
@@ -1164,6 +1269,7 @@ public final class SfxEnergyService implements Listener {
 
     private void scheduleCapacitorAppearanceUpdate(SfxEnergyNodeRef capacitor) {
         capacitorProjector.scheduleUpdate(
+                capacitor.instance().instanceId(),
                 toLocation(capacitor.instance().anchorKey()),
                 capacitor.state().storedEnergy(),
                 capacitor.definition().capacity());
@@ -1347,8 +1453,11 @@ public final class SfxEnergyService implements Listener {
             return false;
         }
         Location location = toLocation(instance.anchorKey());
-        if (location == null || !runtime.isOwnedByCurrentRegion(location)) {
+        if (location == null) {
             return false;
+        }
+        if (!runtime.isOwnedByCurrentRegion(location)) {
+            return runtime.supplyAt(location, () -> isInstanceChunkLoaded(instance));
         }
         World world = location.getWorld();
         return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);

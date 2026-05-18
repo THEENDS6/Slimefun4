@@ -53,6 +53,7 @@ public final class SfxTechnicalGadgetService implements Listener {
     private static final int JETBOOTS_AIR_JUMP_TRAIL_TICKS = 7;
     private static final int ASSIST_JUMP_GRACE_TICKS = 3;
     private static final int PASSIVE_EFFECT_INTERVAL_TICKS = 3;
+    private static final int PASSIVE_GADGET_CHECK_INTERVAL_TICKS = 10;
     private static final float AIR_JUMP_SOUND_VOLUME = 0.38F;
     private static final float AIR_JUMP_SOUND_PITCH = 1.55F;
     private static final double FUEL_AUTO_REFILL_THRESHOLD = 7500.0D;
@@ -157,11 +158,19 @@ public final class SfxTechnicalGadgetService implements Listener {
         UUID id = player.getUniqueId();
         GameMode gameMode = player.getGameMode();
         if (player.isDead()) {
-            clearRuntimeState(player);
+            if (hasRuntimeState(id) || isPassiveGadgetCheckTick(id)) {
+                clearRuntimeState(player);
+            }
             return;
         }
         if (gameMode == GameMode.CREATIVE || gameMode == GameMode.SPECTATOR) {
-            clearRuntimeState(player, false);
+            if (hasRuntimeState(id) || isPassiveGadgetCheckTick(id)) {
+                clearRuntimeState(player, false);
+            }
+            return;
+        }
+
+        if (!hasRuntimeState(id) && !isPassiveGadgetCheckTick(id)) {
             return;
         }
 
@@ -171,6 +180,12 @@ public final class SfxTechnicalGadgetService implements Listener {
         SfxRechargeableItemService.Definition jetBoots = jetBootsDefinition(boots);
         boolean hasJetpack = jetpack != null;
         boolean hasJetBoots = jetBoots != null;
+        if (!hasJetpack && !hasJetBoots) {
+            if (hasRuntimeState(id) || isPassiveGadgetCheckTick(id)) {
+                clearRuntimeState(player);
+            }
+            return;
+        }
         PlayerInput input = readInput(player);
         boolean jumpDown = input.jump() || fallbackJumpPulseUntil.getOrDefault(id, 0L) >= tickCounter;
         boolean shiftDown = input.shift();
@@ -487,8 +502,14 @@ public final class SfxTechnicalGadgetService implements Listener {
     }
 
     private void tickPassiveJetBoots(Player player, SfxRechargeableItemService.Definition definition) {
+        UUID id = player.getUniqueId();
         if (definition == null || definition.kind() != SfxRechargeableItemService.RechargeableKind.JETBOOTS) {
-            restoreAttributes(player);
+            if (attributeSnapshots.containsKey(id)) {
+                restoreAttributes(player);
+            }
+            return;
+        }
+        if (!isPassiveGadgetCheckTick(id) && attributeSnapshots.containsKey(id)) {
             return;
         }
         applyAttribute(player, "GENERIC_JUMP_STRENGTH", "JUMP_STRENGTH", definition.movementValue(), AttributeKind.JUMP_STRENGTH);
@@ -512,6 +533,7 @@ public final class SfxTechnicalGadgetService implements Listener {
             if (bonus <= 0.0D) {
                 return;
             }
+            attributeSnapshots.computeIfAbsent(player.getUniqueId(), ignored -> new AttributeSnapshot());
             Object modifier = createAttributeModifier(kind, bonus);
             if (modifier == null) {
                 return;
@@ -647,7 +669,9 @@ public final class SfxTechnicalGadgetService implements Listener {
     }
 
     private void restoreAttributes(Player player) {
-        attributeSnapshots.remove(player.getUniqueId());
+        if (attributeSnapshots.remove(player.getUniqueId()) == null) {
+            return;
+        }
         removeAttribute(player, "GENERIC_JUMP_STRENGTH", "JUMP_STRENGTH", AttributeKind.JUMP_STRENGTH);
         removeAttribute(player, "GENERIC_SAFE_FALL_DISTANCE", "SAFE_FALL_DISTANCE", AttributeKind.SAFE_FALL_DISTANCE);
     }
@@ -668,6 +692,26 @@ public final class SfxTechnicalGadgetService implements Listener {
         } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
             // Attribute not present on this API.
         }
+    }
+
+
+    private boolean isPassiveGadgetCheckTick(UUID id) {
+        return Math.floorMod(tickCounter + id.hashCode(), PASSIVE_GADGET_CHECK_INTERVAL_TICKS) == 0;
+    }
+
+    private boolean hasRuntimeState(UUID id) {
+        return hoverEnabled.containsKey(id)
+                || previousJumpDown.containsKey(id)
+                || previousShiftDown.containsKey(id)
+                || lastJumpPressTick.containsKey(id)
+                || lastShiftPressTick.containsKey(id)
+                || jetBootsDriveModes.containsKey(id)
+                || usedAirJumps.containsKey(id)
+                || airborneTicks.containsKey(id)
+                || jetBootsTrailTicks.containsKey(id)
+                || fallbackJumpPulseUntil.containsKey(id)
+                || flightSnapshots.containsKey(id)
+                || attributeSnapshots.containsKey(id);
     }
 
     private boolean isManagedFlightGameMode(GameMode gameMode) {

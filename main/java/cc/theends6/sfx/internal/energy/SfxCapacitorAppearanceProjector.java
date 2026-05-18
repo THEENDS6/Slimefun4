@@ -19,6 +19,7 @@ final class SfxCapacitorAppearanceProjector {
     private final SfxBlockDataService blockData;
     private final Map<String, SfxEnergyComponentDefinition> definitions;
     private final Map<UUID, String> lastTextures = new ConcurrentHashMap<>();
+    private final Map<UUID, String> requestedTextures = new ConcurrentHashMap<>();
 
     SfxCapacitorAppearanceProjector(SfxRuntime runtime, SfxBlockDataService blockData, Map<String, SfxEnergyComponentDefinition> definitions) {
         this.runtime = runtime;
@@ -26,12 +27,23 @@ final class SfxCapacitorAppearanceProjector {
         this.definitions = definitions;
     }
 
-    void scheduleUpdate(Location location, int stored, int capacity) {
-        if (location == null || location.getWorld() == null || capacity <= 0) {
+    void scheduleUpdate(UUID instanceId, Location location, int stored, int capacity) {
+        if (instanceId == null || location == null || location.getWorld() == null || capacity <= 0) {
             return;
         }
         String texture = capacitorTexture(stored, capacity);
+        String previous = requestedTextures.put(instanceId, texture);
+        if (texture.equals(previous) || texture.equals(lastTextures.get(instanceId))) {
+            return;
+        }
         runtime.executeAt(location, () -> updateCapacitorAppearance(location, texture));
+    }
+
+    void remove(UUID instanceId) {
+        if (instanceId != null) {
+            requestedTextures.remove(instanceId);
+            lastTextures.remove(instanceId);
+        }
     }
 
     private void updateCapacitorAppearance(Location location, String texture) {
@@ -62,6 +74,7 @@ final class SfxCapacitorAppearanceProjector {
         if (state instanceof Skull skull) {
             HeadTextures.apply(skull, texture);
             lastTextures.put(anchor.instanceId(), texture);
+            requestedTextures.put(anchor.instanceId(), texture);
         }
     }
 

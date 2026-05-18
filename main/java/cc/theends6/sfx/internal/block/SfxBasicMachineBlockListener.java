@@ -694,7 +694,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 return;
             }
             long currentTick = ++furnaceTickCounter;
-            for (SfxBlockAnchorKey key : Set.copyOf(enhancedFurnaces)) {
+            for (SfxBlockAnchorKey key : enhancedFurnaces) {
                 SfxAnchorRecord anchor = blockData.findAnchorFast(key).orElse(null);
                 if (anchor == null) {
                     enhancedFurnaces.remove(key);

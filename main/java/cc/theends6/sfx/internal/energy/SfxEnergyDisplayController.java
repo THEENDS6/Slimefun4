@@ -29,20 +29,21 @@ final class SfxEnergyDisplayController {
 
     void displayStatus(SfxBlockAnchorKey regulatorKey, SfxEnergyGridStatus status, int supply, int consumption, int net, int totalStored, int totalCapacity) {
         SfxFloatingTextKey cacheKey = key(regulatorKey);
-        DisplayText displayText = renderDisplayText(status, supply, consumption, net, totalStored, totalCapacity);
         CachedDisplay previous = lastDisplays.get(cacheKey);
         long now = System.currentTimeMillis() / 50L;
         int interval = Math.max(1, plugin.getConfig().getInt("energy.display-update-interval-ticks",
                 plugin.getConfig().getInt("energy.regulator-display.update-interval-ticks", 1)));
         boolean updateOnlyOnChange = plugin.getConfig().getBoolean("energy.update-only-on-change",
                 plugin.getConfig().getBoolean("energy.regulator-display.update-only-on-change", true));
+        boolean classic = "classic".equalsIgnoreCase(plugin.getConfig().getString("energy.regulator-display.mode", "sfx"));
+        DisplayValues values = new DisplayValues(status, supply, consumption, net, totalStored, totalCapacity, classic);
         if (previous != null) {
-            if (updateOnlyOnChange && previous.displayText().equals(displayText)) {
+            if (updateOnlyOnChange && previous.values().equals(values)) {
                 long resendInterval = Math.max(1L, plugin.getConfig().getLong("floating-text.resync-interval-ticks", 20L));
                 if (previous.updatedTick() + resendInterval > now) {
                     return;
                 }
-                lastDisplays.put(cacheKey, new CachedDisplay(previous.displayText(), previous.renderedText(), now));
+                lastDisplays.put(cacheKey, new CachedDisplay(previous.values(), previous.displayText(), previous.renderedText(), now));
                 update(regulatorKey, previous.renderedText());
                 return;
             }
@@ -50,12 +51,19 @@ final class SfxEnergyDisplayController {
                 return;
             }
         }
+        DisplayText displayText = renderDisplayText(values);
         Component renderedText = localization.component(displayText.key(), displayText.fallback(), displayText.placeholders());
-        lastDisplays.put(cacheKey, new CachedDisplay(displayText, renderedText, now));
+        lastDisplays.put(cacheKey, new CachedDisplay(values, displayText, renderedText, now));
         update(regulatorKey, renderedText);
     }
 
-    private DisplayText renderDisplayText(SfxEnergyGridStatus status, int supply, int consumption, int net, int totalStored, int totalCapacity) {
+    private DisplayText renderDisplayText(DisplayValues values) {
+        SfxEnergyGridStatus status = values.status();
+        int supply = values.supply();
+        int consumption = values.consumption();
+        int net = values.net();
+        int totalStored = values.totalStored();
+        int totalCapacity = values.totalCapacity();
         return switch (status) {
             case NO_NETWORK -> new DisplayText(
                     "energy.regulator.no-network",
@@ -70,8 +78,7 @@ final class SfxEnergyDisplayController {
                     Map.of(),
                     "<red>Energy network conflict</red>");
             case ONLINE -> {
-                boolean classic = "classic".equalsIgnoreCase(plugin.getConfig().getString("energy.regulator-display.mode", "sfx"));
-                if (classic) {
+                if (values.classic()) {
                     String key = net >= 0 ? "energy.regulator.classic-positive" : "energy.regulator.classic-negative";
                     String fallback = net >= 0
                             ? "<green>+{net} J ⚡</green>"
@@ -179,7 +186,10 @@ final class SfxEnergyDisplayController {
         return (value < 0 ? "-" : "") + number + units[unitIndex];
     }
 
-    private record CachedDisplay(DisplayText displayText, Component renderedText, long updatedTick) {
+    private record CachedDisplay(DisplayValues values, DisplayText displayText, Component renderedText, long updatedTick) {
+    }
+
+    private record DisplayValues(SfxEnergyGridStatus status, int supply, int consumption, int net, int totalStored, int totalCapacity, boolean classic) {
     }
 
     private record DisplayText(String key, Map<String, ?> placeholders, String fallback) {

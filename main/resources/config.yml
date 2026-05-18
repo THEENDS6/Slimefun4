@@ -236,10 +236,3 @@ radiation:
     reduction-per-piece: 0.25
 
 
-folia:
-  # SFX now uses region/player schedulers for world and player access. Cross-region
-  # cargo/energy networks are guarded conservatively; networks spanning regions may
-  # skip members until a full two-phase cross-region transaction layer is added.
-  strict-region-checks: true
-  disable-cross-region-cargo: true
-  disable-cross-region-energy: true
