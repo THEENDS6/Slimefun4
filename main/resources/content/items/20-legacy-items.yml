@@ -5149,6 +5149,10 @@ items:
   - ''
   - '&7Pumps up Oil and fills it into Buckets'
   - ''
+  - '&6Advanced Machine'
+  - '&8⇨ &b⚡&7Speed: &b1x'
+  - '&8⇨ &e⚡&724 J/t'
+  - ''
   - '&c&l! &cMake sure to Geo-Scan the Chunk first'
   flags:
   - legacy-sf

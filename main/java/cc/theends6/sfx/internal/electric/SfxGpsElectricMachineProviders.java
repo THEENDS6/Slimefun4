@@ -57,7 +57,7 @@ final class SfxGpsElectricMachineProviders {
     static SfxElectricRecipeProvider geoExtractor(boolean oilOnly) {
         return new SfxElectricRecipeProvider() {
             private static final int GEO_WORK_TICKS = 40;
-            private static final int OIL_WORK_TICKS = 60;
+            private static final int OIL_WORK_TICKS = 520;
 
             @Override
             public List<SfxElectricRecipe> recipes() {

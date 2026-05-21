@@ -2457,6 +2457,10 @@ items:
     - ''
     - '&7Pumps up Oil and fills it into Buckets'
     - ''
+    - '&6Advanced Machine'
+    - '&8⇨ &b⚡&7Speed: &b1x'
+    - '&8⇨ &e⚡&724 J/t'
+    - ''
     - '&c&l! &cMake sure to Geo-Scan the Chunk first'
   sf.bucket_of_oil:
     name: '&fBucket of Oil'
@@ -3942,15 +3946,65 @@ gps:
   ui:
     control-panel:
       title: '&3GPS Control Panel'
+      transmitters:
+        name: '&bGPS Transmitters'
+        lore: '&7Online transmitters: &e{count}'
+        view: '&eClick to view transmitters'
+      network-info:
+        name: '&bNetwork Info'
+        status-online: '&7Status: &aONLINE'
+        status-offline: '&7Status: &cOFFLINE'
+        complexity: '&7Complexity: &e{complexity}'
+        transmitters: '&7Transmitters: &e{count}'
+        waypoints: '&7Waypoints: &e{count}'
+      waypoints:
+        name: '&bWaypoints'
+        stored: '&7Stored: &e{count}'
+        view: '&eClick to manage'
+        delete-hint: '&7Click a waypoint to delete it.'
+      transmitter-entry:
+        name: '&aGPS Transmitter'
+        world: '&7World: &f{world}'
+        coords: '&7X/Y/Z: &f{x} / {y} / {z}'
+        strength: '&7Signal Strength: &e{strength}'
+        ping: '&7Ping: &e{ping}ms'
+      waypoint-entry:
+        name: '&b{name}'
+        world: '&7World: &f{world}'
+        coords: '&7X/Y/Z: &f{coords}'
+        delete: '&eClick to delete'
+      no-transmitters:
+        name: '&cNo online transmitters'
+        lore: '&7Place and power GPS transmitters to build the network.'
+      no-waypoints:
+        name: '&cNo waypoints'
     waypoints:
       title: '&3GPS Waypoints'
     geo-scan:
       title: '&3GEO Scan'
+      chunk:
+        name: '&eChunk'
+        world: '&7World: &f{world}'
+        coords: '&7X: &f{x} &7Z: &f{z}'
+      resource:
+        name: '&f{resource}'
+        amount-singular: '&8⇨ &e{amount} Unit'
+        amount-plural: '&8⇨ &e{amount} Units'
+      previous: '&ePrevious Page'
+      next: '&eNext Page'
+      page: '&7Page &f{page}&7/&f{pages}'
     geo-miner-hologram:
       idling: '&7Idling...'
       scan-required: '&4GEO-Scan required!'
       mining: '&7Mining: &r{resource}'
       finished: '&7Finished'
+      resource-fallback: 'GEO Resource'
+  resources:
+    oil: 'Oil'
+    salt: 'Salt'
+    uranium: 'Small Chunks of Uranium'
+    nether_ice: 'Nether Ice'
+    unknown: 'GEO Resource'
   messages:
     emergency-waypoint-created: '&cGPS emergency waypoint created: &f{name}'
     component-registered: '&7This GPS component is registered.'

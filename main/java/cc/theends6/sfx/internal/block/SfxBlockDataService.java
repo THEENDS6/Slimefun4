@@ -335,7 +335,16 @@ public final class SfxBlockDataService {
         if (actual.isAir()) {
             return false;
         }
-        return actual.key().toString().equals(anchor.materialKey());
+        if (actual.key().toString().equals(anchor.materialKey())) {
+            return true;
+        }
+        SfxBlockInstanceRecord instance = instances.get(anchor.instanceId());
+        if (instance != null && "sf:gps_teleporter_pylon".equals(instance.typeId())) {
+            return actual == Material.CYAN_STAINED_GLASS
+                    || actual == Material.PURPLE_STAINED_GLASS
+                    || actual == Material.RED_STAINED_GLASS;
+        }
+        return false;
     }
 
     private synchronized void markAnchorIntegritySync(SfxBlockAnchorKey key, SfxAnchorRecord existing, SfxBlockIntegrityState integrityState) {
