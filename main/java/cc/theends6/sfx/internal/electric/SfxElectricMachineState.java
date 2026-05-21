@@ -12,8 +12,8 @@ import java.util.logging.Logger;
 
 public final class SfxElectricMachineState {
     static final int MAX_INPUTS = 7;
-    static final int MAX_OUTPUTS = 7;
-    private static final int SCHEMA = 11;
+    static final int MAX_OUTPUTS = 10;
+    private static final int SCHEMA = 12;
     private static final Logger LOGGER = Logger.getLogger(SfxElectricMachineState.class.getName());
 
     private final SfxElectricStack[] inputs = new SfxElectricStack[MAX_INPUTS];
@@ -140,20 +140,21 @@ public final class SfxElectricMachineState {
                 state.specialData = Math.max(0, input.readInt());
                 return state;
             }
-            if (schema != SCHEMA && schema != 9 && schema != 10) {
+            if (schema != SCHEMA && schema != 9 && schema != 10 && schema != 11) {
                 LOGGER.warning("Unsupported electric machine state schema " + schema + "; returning empty state to keep the machine usable");
                 return empty();
             }
             SfxElectricMachineState state = new SfxElectricMachineState();
-            readStacksV2(input, state.inputs);
-            readStacksV2(input, state.outputs);
+            int encodedOutputSlots = schema >= SCHEMA ? state.outputs.length : 7;
+            readStacksV2(input, state.inputs, 7);
+            readStacksV2(input, state.outputs, encodedOutputSlots);
             state.progressWork = Math.max(0, input.readInt());
             String recipeKey = input.readUTF();
             state.activeRecipeKey = recipeKey.isBlank() ? null : recipeKey;
             state.activeInputSlot = Math.max(-1, Math.min(MAX_INPUTS - 1, input.readInt()));
             state.activeBaseTicks = Math.max(0, input.readInt());
-            readStacksV2(input, state.reservedInputs);
-            readStacksV2(input, state.activeOutputs);
+            readStacksV2(input, state.reservedInputs, 7);
+            readStacksV2(input, state.activeOutputs, encodedOutputSlots);
             if (input.readBoolean()) {
                 state.pendingOutput = SfxElectricStack.readV2(input);
             }
@@ -164,8 +165,8 @@ public final class SfxElectricMachineState {
             }
             if (schema >= 11) {
                 state.specialData2 = Math.max(0, input.readInt());
-                readStacksV2(input, state.specialInputs);
-                readStacksV2(input, state.specialOutputs);
+                readStacksV2(input, state.specialInputs, 7);
+                readStacksV2(input, state.specialOutputs, encodedOutputSlots);
             }
             return state;
         } catch (IOException | IllegalArgumentException exception) {

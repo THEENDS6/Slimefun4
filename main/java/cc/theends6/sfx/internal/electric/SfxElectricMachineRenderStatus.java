@@ -6,6 +6,8 @@ enum SfxElectricMachineRenderStatus {
     IDLE(SfxMachineStatusKey.IDLE),
     NO_INPUT(SfxMachineStatusKey.NO_INPUT),
     NO_TARGET(SfxMachineStatusKey.NO_TARGET),
+    CHUNK_NOT_SCANNED(SfxMachineStatusKey.CHUNK_NOT_SCANNED),
+    NO_GEO_RESOURCE(SfxMachineStatusKey.NO_GEO_RESOURCE),
     NO_RECIPE(SfxMachineStatusKey.NO_RECIPE),
     NO_BLAZE_FUEL(SfxMachineStatusKey.MISSING_RESOURCE),
     NO_BREWING_INGREDIENT(SfxMachineStatusKey.MISSING_RESOURCE),

@@ -1,8 +1,10 @@
 package cc.theends6.sfx.internal.electric;
 
 public enum SfxElectricMachineMenuStyle {
+    NONE(0),
     STANDARD(45),
     SIMPLE_IO(27),
+    GEO_MINER(54),
     ASSEMBLER(54),
     AUTO_BREWER(54),
     AUTO_CRAFTER(54);

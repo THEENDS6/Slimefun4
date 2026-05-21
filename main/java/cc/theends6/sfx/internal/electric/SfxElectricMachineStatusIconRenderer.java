@@ -187,6 +187,8 @@ final class SfxElectricMachineStatusIconRenderer {
             case "sf:tree_growth_accelerator" -> localization.component("electric-ui.action.tree-growth.working", "<gray>Accelerating nearby saplings.</gray>");
             case "sf:xp_collector" -> localization.component("electric-ui.simple-io.xp-working.lore", "<gray>Collecting nearby experience orbs.</gray>");
             case "sf:fluid_pump" -> localization.component("electric-ui.action.fluid-pump.working", "<gray>Pumping fluid from below.</gray>");
+            case "sf:geo_miner" -> localization.component("electric-ui.action.geo-miner.working", "<gray>Mining GEO resources.</gray>");
+            case "sf:oil_pump" -> localization.component("electric-ui.action.oil-pump.working", "<gray>Pumping oil.</gray>");
             case "sf:auto_brewer", "sf:auto_brewer_2" -> localization.component("electric-ui.auto-brewer.progress.brewing", "<gray>Brewing potions.</gray>");
             case "sf:iron_golem_assembler", "sf:wither_assembler" -> localization.component("configurable-ui.assembler.working.lore", "<gray>Assembling entity structure.</gray>");
             default -> SfxMachineStatusDefaults.lore(localization, SfxMachineStatusKey.WORKING);

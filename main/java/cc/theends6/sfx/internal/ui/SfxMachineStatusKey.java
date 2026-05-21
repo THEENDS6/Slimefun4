@@ -9,6 +9,8 @@ public enum SfxMachineStatusKey {
     NO_INPUT,
     NO_RECIPE,
     NO_TARGET,
+    CHUNK_NOT_SCANNED,
+    NO_GEO_RESOURCE,
     OUTPUT_FULL,
     BLOCKED_OUTPUT,
     INVALID_INPUT,

@@ -7,6 +7,12 @@ import cc.theends6.sfx.internal.block.SfxAnchoredInteraction;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
+import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
+import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
+import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
+import cc.theends6.sfx.internal.gps.SfxGpsElectricBridge;
+import cc.theends6.sfx.internal.gps.SfxGpsExtractionResult;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
@@ -27,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -62,9 +69,11 @@ public final class SfxElectricMachineService implements Listener {
     private final SfxElectricMachineMenuRenderer menuRenderer;
     private final SfxSimpleIoMachineMenuRenderer simpleIoMenuRenderer;
     private final SfxElectricAssemblerMenuRenderer assemblerMenuRenderer;
+    private final SfxGeoMinerMachineMenuRenderer geoMinerMenuRenderer;
     private final SfxAutoBrewerMenuRenderer autoBrewerMenuRenderer;
     private final SfxAutoCrafterMenuRenderer autoCrafterMenuRenderer;
     private final SfxVirtualContainerService virtualContainers;
+    private final SfxFloatingTextDisplayService floatingTextDisplays;
     private final SfxElectricRecipeProcessor recipeProcessor;
     private final Map<UUID, SfxElectricMachineState> stateCache = new ConcurrentHashMap<>();
     private final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
@@ -88,7 +97,8 @@ public final class SfxElectricMachineService implements Listener {
             SfxBlockDataService blockData,
             SfxPlayerDataService profiles,
             DefaultManualMachineRegistry manualMachines,
-            SfxVirtualContainerService virtualContainers
+            SfxVirtualContainerService virtualContainers,
+            SfxFloatingTextDisplayService floatingTextDisplays
     ) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
@@ -98,10 +108,12 @@ public final class SfxElectricMachineService implements Listener {
         this.tickSettings = SfxMachineTickSettings.from(plugin.getConfig());
         this.profiles = Objects.requireNonNull(profiles, "profiles");
         this.virtualContainers = Objects.requireNonNull(virtualContainers, "virtualContainers");
+        this.floatingTextDisplays = Objects.requireNonNull(floatingTextDisplays, "floatingTextDisplays");
         this.registry = SfxElectricMachineDefinitions.create(plugin, items, manualMachines, blockData, virtualContainers);
         this.menuRenderer = new SfxElectricMachineMenuRenderer(items, localization, profiles);
         this.simpleIoMenuRenderer = new SfxSimpleIoMachineMenuRenderer(items, localization, profiles);
         this.assemblerMenuRenderer = new SfxElectricAssemblerMenuRenderer(items, localization, profiles);
+        this.geoMinerMenuRenderer = new SfxGeoMinerMachineMenuRenderer(items, localization, profiles);
         this.autoBrewerMenuRenderer = new SfxAutoBrewerMenuRenderer(items, localization, profiles);
         this.autoCrafterMenuRenderer = new SfxAutoCrafterMenuRenderer(items, localization, profiles);
         this.recipeProcessor = new SfxElectricRecipeProcessor(items);
@@ -165,6 +177,9 @@ public final class SfxElectricMachineService implements Listener {
             }
         }
 
+        if ("sf:geo_miner".equals(typeId)) {
+            removeGeoMinerFloatingText(block.getLocation());
+        }
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         SfxElectricMachineState state = stateCache.get(instanceId);
         if (state == null && instance != null) {
@@ -218,6 +233,9 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         SfxEventGuards.denyBlockAndItemUse(event);
+        if (definition != null && definition.menuStyle() == SfxElectricMachineMenuStyle.NONE) {
+            return;
+        }
         if (autoCrafterSelection) {
             runtime.executeForPlayer(event.getPlayer(), () -> openAutoCrafterSelection(event.getPlayer(), instance, definition, event.getItem(), 0));
         } else if (autoCrafter && (currentState(instance.instanceId(), instance).activeRecipeKey() == null || currentState(instance.instanceId(), instance).activeRecipeKey().isBlank())) {
@@ -633,8 +651,12 @@ public final class SfxElectricMachineService implements Listener {
             if (customResult.changed()) {
                 dirtyInstances.add(instanceId);
             }
+            if ("sf:geo_miner".equals(definition.id())) {
+                updateGeoMinerFloatingText(location, state, customResult.status());
+            }
             if (session != null && shouldRenderSession(session, customResult.status())) {
                 SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO
+                        || definition.menuStyle() == SfxElectricMachineMenuStyle.GEO_MINER
                         || definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER
                         || definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER
                         || definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER
@@ -776,7 +798,7 @@ public final class SfxElectricMachineService implements Listener {
 
     private void openMachine(Player player, SfxBlockInstanceRecord instance) {
         SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
-        if (definition == null) {
+        if (definition == null || definition.menuStyle() == SfxElectricMachineMenuStyle.NONE) {
             return;
         }
         SfxElectricMachineSession existing = sessionsByInstance.get(instance.instanceId());
@@ -918,6 +940,8 @@ public final class SfxElectricMachineService implements Listener {
             session.markRendered(tickCounter, status);
             if (definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO) {
                 simpleIoMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
+            } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.GEO_MINER) {
+                geoMinerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
             } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) {
                 assemblerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
             } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
@@ -933,6 +957,62 @@ public final class SfxElectricMachineService implements Listener {
         }
     }
 
+
+    private void updateGeoMinerFloatingText(Location location, SfxElectricMachineState state, SfxElectricMachineRenderStatus status) {
+        if (location == null || location.getWorld() == null) {
+            return;
+        }
+        Component text = switch (status) {
+            case CHUNK_NOT_SCANNED -> localization.component("gps.ui.geo-miner-hologram.scan-required", "&4GEO-Scan required!");
+            case NO_GEO_RESOURCE -> localization.component("gps.ui.geo-miner-hologram.finished", "&7Finished");
+            case WORKING -> localization.component(
+                    "gps.ui.geo-miner-hologram.mining",
+                    "&7Mining: &r{resource}",
+                    Map.of("resource", geoMinerResourceName(location)));
+            default -> state.hasProgress()
+                    ? localization.component(
+                    "gps.ui.geo-miner-hologram.mining",
+                    "&7Mining: &r{resource}",
+                    Map.of("resource", geoMinerResourceName(location)))
+                    : localization.component("gps.ui.geo-miner-hologram.idling", "&7Idling...");
+        };
+        floatingTextDisplays.update(new SfxFloatingTextProjection(
+                geoMinerFloatingTextKey(location),
+                location.getBlockX() + 0.5D,
+                location.getBlockY() + 1.2D,
+                location.getBlockZ() + 0.5D,
+                text,
+                32 * 32,
+                true,
+                SfxFloatingTextDisplayMode.TEXT_DISPLAY));
+    }
+
+    private void removeGeoMinerFloatingText(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return;
+        }
+        floatingTextDisplays.remove(geoMinerFloatingTextKey(location));
+    }
+
+    private SfxFloatingTextKey geoMinerFloatingTextKey(Location location) {
+        return new SfxFloatingTextKey("geo_miner", location.getWorld().getUID(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+    }
+
+    private String geoMinerResourceName(Location location) {
+        SfxGpsExtractionResult result = SfxGpsElectricBridge.peekExtraction(location, false);
+        SfxElectricStack output = result.output();
+        if (output == null) {
+            return localization.text("gps.ui.geo-miner-hologram.resource-fallback", "GEO Resource");
+        }
+        if (output.isSfxItem()) {
+            Component fallback = Component.text(output.itemId());
+            return PlainTextComponentSerializer.plainText().serialize(localization.itemName(output.itemId(), fallback));
+        }
+        if (output.material() != null) {
+            return output.material().name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
+        }
+        return localization.text("gps.ui.geo-miner-hologram.resource-fallback", "GEO Resource");
+    }
 
     private boolean isInstanceChunkLoaded(SfxBlockInstanceRecord instance) {
         if (instance == null) {

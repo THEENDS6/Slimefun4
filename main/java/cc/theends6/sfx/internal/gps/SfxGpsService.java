@@ -12,8 +12,11 @@ import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationState;
+import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
+import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
+import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -81,36 +84,66 @@ public final class SfxGpsService implements Listener {
             "sf:gps_transmitter_3", 16,
             "sf:gps_transmitter_4", 64
     );
+    private static final Map<String, Integer> TRANSMITTER_BONUSES = Map.of(
+            "sf:gps_transmitter", 0,
+            "sf:gps_transmitter_2", 100,
+            "sf:gps_transmitter_3", 500,
+            "sf:gps_transmitter_4", 600
+    );
+    private static final Map<String, Integer> TRANSMITTER_CONSUMPTION = Map.of(
+            "sf:gps_transmitter", 2,
+            "sf:gps_transmitter_2", 6,
+            "sf:gps_transmitter_3", 22,
+            "sf:gps_transmitter_4", 92
+    );
     private static final int GEO_SCAN_REQUIRED_COMPLEXITY = 600;
     private static final int TELEPORT_REQUIRED_COMPLEXITY = 400;
     private static final int GEO_MINE_REQUIRED_COMPLEXITY = 800;
     private static final int MAX_WAYPOINTS_PER_PLAYER = 64;
     private static final int TELEPORTER_RADIUS = 1;
+    private static final int[] CONTROL_PANEL_FRAME = {
+            0, 1, 3, 5, 7, 8,
+            9, 10, 11, 12, 13, 14, 15, 16, 17,
+            18, 26, 27, 35, 36, 44,
+            45, 46, 47, 48, 49, 50, 51, 52, 53
+    };
+    private static final int[] CONTROL_PANEL_CONTENT = {
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+    };
 
 
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxMenus menus;
+    private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
     private final SfxDecorationService decorations;
+    private final SfxElectricMachineService electricMachines;
     private final SfxGpsDataStore dataStore;
     private final Set<UUID> activeTeleports = ConcurrentHashMap.newKeySet();
 
     public SfxGpsService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxMenus menus,
-                         SfxBlockDataService blockData, SfxDecorationService decorations) {
+                         SfxLocalization localization, SfxBlockDataService blockData, SfxDecorationService decorations,
+                         SfxElectricMachineService electricMachines) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.menus = Objects.requireNonNull(menus, "menus");
+        this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.decorations = Objects.requireNonNull(decorations, "decorations");
+        this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
         this.dataStore = new SfxGpsDataStore(plugin);
         this.dataStore.load();
+        SfxGpsElectricBridge.bind(this);
     }
 
     public void shutdown() {
         dataStore.save();
+        SfxGpsElectricBridge.unbind(this);
         activeTeleports.clear();
     }
 
@@ -185,7 +218,7 @@ public final class SfxGpsService implements Listener {
         }
         String name = uniqueWaypointName(player.getUniqueId(), "Deathpoint");
         dataStore.addWaypoint(SfxGpsDataStore.waypoint(player.getUniqueId(), name, player.getLocation()));
-        player.sendMessage(Text.prefixed(plugin, "<red>GPS emergency waypoint created: <white>" + escape(name)));
+        send(player, "gps.messages.emergency-waypoint-created", "<red>GPS emergency waypoint created: <white>{name}</white>", Map.of("name", escape(name)));
     }
 
     private boolean handleGpsItemUse(Player player, SfxItemMarker marker, Block clickedBlock) {
@@ -210,38 +243,117 @@ public final class SfxGpsService implements Listener {
         switch (instance.typeId()) {
             case "sf:gps_control_panel" -> openControlPanel(player);
             case "sf:gps_geo_scanner" -> scanChunk(player, block.getLocation());
-            case "sf:geo_miner" -> mineGeoResource(player, block.getLocation(), false);
-            case "sf:oil_pump" -> mineGeoResource(player, block.getLocation(), true);
             case "sf:gps_teleportation_matrix" -> activateTeleporter(player, block.getLocation(), false);
             case "sf:gps_activation_device_shared", "sf:gps_activation_device_personal" -> activateFromPlate(player, block.getLocation(), instance.typeId());
             case "sf:elevator_plate" -> useElevator(player, block.getLocation(), player.isSneaking());
-            default -> player.sendMessage(Text.prefixed(plugin, "<gray>This GPS component is registered.</gray>"));
+            default -> send(player, "gps.messages.component-registered", "<gray>This GPS component is registered.</gray>");
         }
     }
 
     private void openControlPanel(Player player) {
-        int complexity = networkComplexity(player.getUniqueId());
-        List<SfxGpsWaypoint> waypoints = dataStore.waypoints(player.getUniqueId());
-        int transmitters = countTransmitters(player.getUniqueId());
-        SfxMenu.Builder builder = SfxMenu.builder(Text.mm("<dark_aqua>GPS Control Panel")).rows(3);
-        builder.button(11, new SfxMenuButton(ItemBuilder.of(Material.COMPASS)
-                .name("<aqua>Network Status")
-                .lore("<gray>Complexity: <yellow>" + complexity, "<gray>Transmitters: <yellow>" + transmitters)
-                .build(), click -> openControlPanel(click.player())));
-        builder.button(13, new SfxMenuButton(ItemBuilder.of(Material.REDSTONE_TORCH)
+        openTransmitterControlPanel(player);
+    }
+
+    private void openTransmitterControlPanel(Player player) {
+        UUID owner = player.getUniqueId();
+        int complexity = networkComplexity(owner);
+        List<SfxAnchorRecord> transmitters = onlineTransmitters(owner);
+        SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.control-panel.title", "<dark_aqua>GPS Control Panel")).rows(6);
+        addControlPanelFrame(builder);
+        builder.button(2, new SfxMenuButton(ItemBuilder.of(Material.COMPASS)
+                .name("<aqua>GPS Transmitters")
+                .lore("<gray>Online transmitters: <yellow>" + transmitters.size())
+                .build(), click -> openTransmitterControlPanel(click.player())));
+        builder.button(4, new SfxMenuButton(ItemBuilder.of(Material.MAP)
+                .name("<aqua>Network Info")
+                .lore("<gray>Status: " + (complexity > 0 ? "<green>ONLINE" : "<red>OFFLINE"),
+                        "<gray>Complexity: <yellow>" + complexity,
+                        "<gray>Transmitters: <yellow>" + transmitters.size())
+                .build(), click -> openTransmitterControlPanel(click.player())));
+        builder.button(6, new SfxMenuButton(ItemBuilder.of(Material.REDSTONE_TORCH)
                 .name("<aqua>Waypoints")
-                .lore("<gray>Stored: <yellow>" + waypoints.size(), "<yellow>Click to browse")
-                .build(), click -> openWaypointMenu(click.player(), click.player().getUniqueId(), null, false)));
-        builder.button(15, new SfxMenuButton(ItemBuilder.of(Material.PLAYER_HEAD)
-                .name("<aqua>Geo Scanner")
-                .lore("<gray>Required complexity: <yellow>" + GEO_SCAN_REQUIRED_COMPLEXITY, "<gray>Use Geo-Scanner items/blocks in a chunk")
-                .build(), click -> click.player().sendMessage(Text.prefixed(plugin, "<gray>Use a GPS Geo-Scanner or Portable Geo-Scanner in the target chunk.</gray>"))));
+                .lore("<gray>Stored: <yellow>" + dataStore.waypoints(owner).size(), "<yellow>Click to manage")
+                .build(), click -> openControlWaypointPanel(click.player())));
+
+        int index = 0;
+        for (SfxAnchorRecord anchor : transmitters.stream().limit(CONTROL_PANEL_CONTENT.length).toList()) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (instance == null) {
+                continue;
+            }
+            int strength = transmitterStrength(instance, anchor);
+            int ping = Math.max(1, 1000 / Math.max(1, strength));
+            builder.button(CONTROL_PANEL_CONTENT[index++], new SfxMenuButton(ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+                    .name("<green>GPS Transmitter")
+                    .lore("<gray>World: <white>" + escape(worldName(anchor)),
+                            "<gray>X/Y/Z: <white>" + anchor.key().x() + " / " + anchor.key().y() + " / " + anchor.key().z(),
+                            "<gray>Signal Strength: <yellow>" + strength,
+                            "<gray>Ping: <yellow>" + ping + " ms")
+                    .build(), click -> openTransmitterControlPanel(click.player())));
+        }
+        if (transmitters.isEmpty()) {
+            builder.button(31, new SfxMenuButton(ItemBuilder.of(Material.BARRIER)
+                    .name("<red>No online transmitters")
+                    .lore("<gray>Place and power GPS transmitters to build the network.")
+                    .build(), click -> openTransmitterControlPanel(click.player())));
+        }
         menus.openRoot(player, builder.build());
+    }
+
+    private void openControlWaypointPanel(Player player) {
+        UUID owner = player.getUniqueId();
+        int complexity = networkComplexity(owner);
+        List<SfxGpsWaypoint> waypoints = dataStore.waypoints(owner).stream()
+                .sorted(Comparator.comparing(SfxGpsWaypoint::createdAt).reversed())
+                .limit(CONTROL_PANEL_CONTENT.length)
+                .toList();
+        SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.control-panel.title", "<dark_aqua>GPS Control Panel")).rows(6);
+        addControlPanelFrame(builder);
+        builder.button(2, new SfxMenuButton(ItemBuilder.of(Material.COMPASS)
+                .name("<aqua>GPS Transmitters")
+                .lore("<yellow>Click to view transmitters")
+                .build(), click -> openTransmitterControlPanel(click.player())));
+        builder.button(4, new SfxMenuButton(ItemBuilder.of(Material.MAP)
+                .name("<aqua>Network Info")
+                .lore("<gray>Status: " + (complexity > 0 ? "<green>ONLINE" : "<red>OFFLINE"),
+                        "<gray>Complexity: <yellow>" + complexity,
+                        "<gray>Waypoints: <yellow>" + dataStore.waypoints(owner).size())
+                .build(), click -> openControlWaypointPanel(click.player())));
+        builder.button(6, new SfxMenuButton(ItemBuilder.of(Material.REDSTONE_TORCH)
+                .name("<aqua>Waypoints")
+                .lore("<gray>Click a waypoint to delete it.")
+                .build(), click -> openControlWaypointPanel(click.player())));
+
+        int index = 0;
+        for (SfxGpsWaypoint waypoint : waypoints) {
+            Material icon = waypoint.toLocation() == null ? Material.BARRIER : Material.ENDER_PEARL;
+            builder.button(CONTROL_PANEL_CONTENT[index++], new SfxMenuButton(ItemBuilder.of(icon)
+                    .name("<aqua>" + escape(waypoint.name()))
+                    .lore("<gray>World: <white>" + escape(waypoint.worldName()),
+                            "<gray>X/Y/Z: <white>" + blockCoords(waypoint),
+                            "<yellow>Click to delete")
+                    .build(), click -> {
+                        dataStore.removeWaypoint(click.player().getUniqueId(), waypoint.name());
+                        send(click.player(), "gps.messages.waypoint-deleted", "<red>Waypoint deleted: <white>{name}</white>", Map.of("name", escape(waypoint.name())));
+                        openControlWaypointPanel(click.player());
+                    }));
+        }
+        if (waypoints.isEmpty()) {
+            builder.button(31, new SfxMenuButton(ItemBuilder.of(Material.BARRIER).name("<red>No waypoints").build(), click -> openControlWaypointPanel(click.player())));
+        }
+        menus.openRoot(player, builder.build());
+    }
+
+    private void addControlPanelFrame(SfxMenu.Builder builder) {
+        ItemStack filler = ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+        for (int slot : CONTROL_PANEL_FRAME) {
+            builder.button(slot, new SfxMenuButton(filler, click -> {}));
+        }
     }
 
     private void openWaypointMenu(Player player, UUID owner, Location matrixLocation, boolean portable) {
         List<SfxGpsWaypoint> waypoints = dataStore.waypoints(owner);
-        SfxMenu.Builder builder = SfxMenu.builder(Text.mm("<dark_aqua>GPS Waypoints")).rows(6);
+        SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.waypoints.title", "<dark_aqua>GPS Waypoints")).rows(6);
         int slot = 0;
         for (SfxGpsWaypoint waypoint : waypoints.stream().sorted(Comparator.comparing(SfxGpsWaypoint::createdAt).reversed()).limit(45).toList()) {
             Location target = waypoint.toLocation();
@@ -262,13 +374,13 @@ public final class SfxGpsService implements Listener {
     private void scanChunk(Player player, Location location) {
         int complexity = networkComplexity(player.getUniqueId());
         if (complexity < GEO_SCAN_REQUIRED_COMPLEXITY) {
-            player.sendMessage(Text.prefixed(plugin, "<red>Your GPS network complexity is too low. Required: <white>" + GEO_SCAN_REQUIRED_COMPLEXITY));
+            send(player, "gps.messages.complexity-too-low", "<red>Your GPS network complexity is too low. Required: <white>{required}</white>", Map.of("required", GEO_SCAN_REQUIRED_COMPLEXITY));
             return;
         }
         SfxGeoChunkKey key = SfxGeoChunkKey.from(location);
         dataStore.markScanned(key);
         Map<SfxGeoResourceType, Integer> resources = dataStore.resources(key);
-        SfxMenu.Builder builder = SfxMenu.builder(Text.mm("<dark_aqua>GEO Scan")).rows(3);
+        SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.geo-scan.title", "<dark_aqua>GEO Scan")).rows(6);
         int slot = 10;
         for (SfxGeoResourceType type : SfxGeoResourceType.values()) {
             int amount = resources.getOrDefault(type, 0);
@@ -283,26 +395,26 @@ public final class SfxGpsService implements Listener {
     private void mineGeoResource(Player player, Location location, boolean oilOnly) {
         int complexity = networkComplexity(player.getUniqueId());
         if (complexity < GEO_MINE_REQUIRED_COMPLEXITY) {
-            player.sendMessage(Text.prefixed(plugin, "<red>Your GPS network complexity is too low. Required: <white>" + GEO_MINE_REQUIRED_COMPLEXITY));
+            send(player, "gps.messages.complexity-too-low", "<red>Your GPS network complexity is too low. Required: <white>{required}</white>", Map.of("required", GEO_MINE_REQUIRED_COMPLEXITY));
             return;
         }
         SfxGeoChunkKey key = SfxGeoChunkKey.from(location);
         if (!dataStore.isScanned(key)) {
-            player.sendMessage(Text.prefixed(plugin, "<red>This chunk has not been GEO-scanned yet.</red>"));
+            send(player, "gps.messages.chunk-not-scanned", "<red>This chunk has not been GEO-scanned yet.</red>");
             return;
         }
         SfxGeoResourceType selected = oilOnly ? SfxGeoResourceType.OIL : selectBestResource(key);
         if (selected == null || dataStore.resources(key).getOrDefault(selected, 0) <= 0) {
-            player.sendMessage(Text.prefixed(plugin, "<red>No usable GEO resource remains in this chunk.</red>"));
+            send(player, "gps.messages.no-geo-resource", "<red>No usable GEO resource remains in this chunk.</red>");
             return;
         }
         if (!dataStore.consume(key, selected, 1)) {
-            player.sendMessage(Text.prefixed(plugin, "<red>No usable GEO resource remains in this chunk.</red>"));
+            send(player, "gps.messages.no-geo-resource", "<red>No usable GEO resource remains in this chunk.</red>");
             return;
         }
         ItemStack output = createResourceItem(selected, oilOnly);
         player.getInventory().addItem(output).values().forEach(left -> player.getWorld().dropItemNaturally(player.getLocation(), left));
-        player.sendMessage(Text.prefixed(plugin, "<green>Extracted <white>" + escape(selected.displayName()) + "</white>.</green>"));
+        send(player, "gps.messages.extracted", "<green>Extracted <white>{resource}</white>.</green>", Map.of("resource", escape(selected.displayName())));
     }
 
     private SfxGeoResourceType selectBestResource(SfxGeoChunkKey key) {
@@ -331,15 +443,51 @@ public final class SfxGpsService implements Listener {
         }
     }
 
+
+    public SfxGpsExtractionResult peekExtraction(Location location, boolean oilOnly) {
+        if (location == null || location.getWorld() == null) {
+            return SfxGpsExtractionResult.notScanned();
+        }
+        SfxGeoChunkKey key = SfxGeoChunkKey.from(location);
+        if (!dataStore.isScanned(key)) {
+            return SfxGpsExtractionResult.notScanned();
+        }
+        SfxGeoResourceType selected = oilOnly ? SfxGeoResourceType.OIL : selectBestResource(key);
+        if (selected == null || dataStore.resources(key).getOrDefault(selected, 0) <= 0) {
+            return SfxGpsExtractionResult.empty();
+        }
+        return SfxGpsExtractionResult.output(createResourceStack(selected, oilOnly));
+    }
+
+    public SfxGpsExtractionResult consumeExtraction(Location location, boolean oilOnly) {
+        SfxGpsExtractionResult peek = peekExtraction(location, oilOnly);
+        if (!peek.scanned() || !peek.hasResource() || peek.output() == null) {
+            return peek;
+        }
+        SfxGeoChunkKey key = SfxGeoChunkKey.from(location);
+        SfxGeoResourceType selected = oilOnly ? SfxGeoResourceType.OIL : selectBestResource(key);
+        if (selected == null || !dataStore.consume(key, selected, 1)) {
+            return SfxGpsExtractionResult.empty();
+        }
+        return SfxGpsExtractionResult.output(createResourceStack(selected, oilOnly));
+    }
+
+    private SfxElectricStack createResourceStack(SfxGeoResourceType type, boolean oilPump) {
+        if (oilPump || type == SfxGeoResourceType.OIL) {
+            return SfxElectricStack.sfx("sf:bucket_of_oil", 1);
+        }
+        return SfxElectricStack.sfx(type.itemId(), 1);
+    }
+
     private void activateFromPlate(Player player, Location plateLocation, String plateType) {
         Location matrix = plateLocation.clone().subtract(0, 1, 0);
         SfxBlockInstanceRecord instance = instanceAt(matrix).orElse(null);
         if (instance == null || !instance.typeId().equals("sf:gps_teleportation_matrix")) {
-            player.sendMessage(Text.prefixed(plugin, "<red>This activation device is not placed on a GPS Teleporter Matrix.</red>"));
+            send(player, "gps.messages.activation-not-on-matrix", "<red>This activation device is not placed on a GPS Teleporter Matrix.</red>");
             return;
         }
         if (plateType.endsWith("_personal") && instance.ownerId() != null && !instance.ownerId().equals(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed(plugin, "<red>This personal activation device belongs to another player.</red>"));
+            send(player, "gps.messages.personal-device-owner", "<red>This personal activation device belongs to another player.</red>");
             return;
         }
         activateTeleporter(player, matrix, true);
@@ -352,13 +500,13 @@ public final class SfxGpsService implements Listener {
         }
         if (networkComplexity(matrix.ownerId()) < TELEPORT_REQUIRED_COMPLEXITY) {
             updateTeleporterDecorations(matrixLocation, false, true);
-            player.sendMessage(Text.prefixed(plugin, "<red>The matrix owner's GPS network complexity is too low.</red>"));
+            send(player, "gps.messages.matrix-complexity-too-low", "<red>The matrix owner's GPS network complexity is too low.</red>");
             return;
         }
         List<Location> pylons = teleporterPylons(matrixLocation);
         if (pylons.size() < 8) {
             updateTeleporterDecorations(matrixLocation, false, true);
-            player.sendMessage(Text.prefixed(plugin, "<red>The GPS Teleporter structure is incomplete.</red>"));
+            send(player, "gps.messages.teleporter-incomplete", "<red>The GPS Teleporter structure is incomplete.</red>");
             return;
         }
         updateTeleporterDecorations(matrixLocation, true, false);
@@ -368,7 +516,7 @@ public final class SfxGpsService implements Listener {
     private void startTeleport(Player player, SfxGpsWaypoint waypoint, Location matrixLocation, boolean portable) {
         Location target = waypoint.toLocation();
         if (target == null || target.getWorld() == null) {
-            player.sendMessage(Text.prefixed(plugin, "<red>The target world is not loaded.</red>"));
+            send(player, "gps.messages.target-world-not-loaded", "<red>The target world is not loaded.</red>");
             return;
         }
         if (activeTeleports.contains(player.getUniqueId())) {
@@ -381,12 +529,12 @@ public final class SfxGpsService implements Listener {
             updateTeleporterDecorations(matrixLocation, false, false);
             updateTeleporterDecorations(matrixLocation, true, false);
         }
-        player.sendMessage(Text.prefixed(plugin, "<aqua>Teleporting to <white>" + escape(waypoint.name()) + "</white> in 3 seconds...</aqua>"));
+        send(player, "gps.messages.teleporting", "<aqua>Teleporting to <white>{waypoint}</white> in 3 seconds...</aqua>", Map.of("waypoint", escape(waypoint.name())));
         runtime.executeForPlayerLater(player, 60L, () -> {
             activeTeleports.remove(player.getUniqueId());
             if (!portable && matrixLocation != null && player.getLocation().distanceSquared(origin) > 4.0D) {
                 updateTeleporterDecorations(matrixLocation, true, true);
-                player.sendMessage(Text.prefixed(plugin, "<red>Teleport cancelled because you moved.</red>"));
+                send(player, "gps.messages.teleport-cancelled-moved", "<red>Teleport cancelled because you moved.</red>");
                 return;
             }
             Location safe = safeDestination(target);
@@ -417,7 +565,7 @@ public final class SfxGpsService implements Listener {
     private void useElevator(Player player, Location plateLocation, boolean down) {
         Location target = findElevatorTarget(plateLocation, down);
         if (target == null) {
-            player.sendMessage(Text.prefixed(plugin, "<red>No elevator plate found " + (down ? "below" : "above") + ".</red>"));
+            send(player, "gps.messages.no-elevator-target", "<red>No elevator plate found {direction}.</red>", Map.of("direction", down ? "below" : "above"));
             return;
         }
         player.teleportAsync(target.clone().add(0.5, 1.0, 0.5).setDirection(player.getLocation().getDirection()));
@@ -442,11 +590,11 @@ public final class SfxGpsService implements Listener {
     private void createWaypoint(Player player, Location location, String name) {
         List<SfxGpsWaypoint> existing = dataStore.waypoints(player.getUniqueId());
         if (existing.size() >= MAX_WAYPOINTS_PER_PLAYER) {
-            player.sendMessage(Text.prefixed(plugin, "<red>You have reached the GPS waypoint limit.</red>"));
+            send(player, "gps.messages.waypoint-limit", "<red>You have reached the GPS waypoint limit.</red>");
             return;
         }
         dataStore.addWaypoint(SfxGpsDataStore.waypoint(player.getUniqueId(), name, location));
-        player.sendMessage(Text.prefixed(plugin, "<green>Waypoint created: <white>" + escape(name)));
+        send(player, "gps.messages.waypoint-created", "<green>Waypoint created: <white>{name}</white>", Map.of("name", escape(name)));
     }
 
     private int networkComplexity(UUID owner) {
@@ -459,10 +607,53 @@ public final class SfxGpsService implements Listener {
             if (instance == null || !TRANSMITTER_TYPES.contains(instance.typeId()) || !owner.equals(instance.ownerId())) {
                 continue;
             }
+            int requiredEnergy = Math.max(1, TRANSMITTER_CONSUMPTION.getOrDefault(instance.typeId(), 1));
+            if (electricMachines.consumerStoredEnergy(instance.instanceId()) < requiredEnergy) {
+                continue;
+            }
             int y = Math.max(1, anchor.key().y());
-            complexity += y * TRANSMITTER_MULTIPLIERS.getOrDefault(instance.typeId(), 1);
+            complexity += y * TRANSMITTER_MULTIPLIERS.getOrDefault(instance.typeId(), 1)
+                    + TRANSMITTER_BONUSES.getOrDefault(instance.typeId(), 0);
         }
         return complexity;
+    }
+
+
+    private List<SfxAnchorRecord> onlineTransmitters(UUID owner) {
+        List<SfxAnchorRecord> result = new ArrayList<>();
+        if (owner == null) {
+            return result;
+        }
+        for (SfxAnchorRecord anchor : blockData.anchors()) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (instance == null || !TRANSMITTER_TYPES.contains(instance.typeId()) || !owner.equals(instance.ownerId())) {
+                continue;
+            }
+            int requiredEnergy = Math.max(1, TRANSMITTER_CONSUMPTION.getOrDefault(instance.typeId(), 1));
+            if (electricMachines.consumerStoredEnergy(instance.instanceId()) < requiredEnergy) {
+                continue;
+            }
+            result.add(anchor);
+        }
+        result.sort(Comparator.comparingInt(anchor -> -transmitterStrength(blockData.findInstance(anchor.instanceId()).orElse(null), anchor)));
+        return result;
+    }
+
+    private int transmitterStrength(SfxBlockInstanceRecord instance, SfxAnchorRecord anchor) {
+        if (instance == null || anchor == null) {
+            return 0;
+        }
+        int y = Math.max(1, anchor.key().y());
+        return y * TRANSMITTER_MULTIPLIERS.getOrDefault(instance.typeId(), 1)
+                + TRANSMITTER_BONUSES.getOrDefault(instance.typeId(), 0);
+    }
+
+    private String worldName(SfxAnchorRecord anchor) {
+        if (anchor == null || anchor.key() == null) {
+            return "world";
+        }
+        World world = Bukkit.getWorld(anchor.key().worldId());
+        return world == null ? anchor.key().worldId().toString() : world.getName();
     }
 
     private int countTransmitters(UUID owner) {
@@ -562,6 +753,23 @@ public final class SfxGpsService implements Listener {
 
     private String blockCoords(SfxGpsWaypoint waypoint) {
         return (int) Math.floor(waypoint.x()) + ", " + (int) Math.floor(waypoint.y()) + ", " + (int) Math.floor(waypoint.z());
+    }
+
+
+    private void send(Player player, String key, String fallback) {
+        player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback)));
+    }
+
+    private void send(Player player, String key, String fallback, Map<String, ?> placeholders) {
+        player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback, placeholders)));
+    }
+
+    private Component component(String key, String fallback) {
+        return localization.component(key, fallback);
+    }
+
+    private Component component(String key, String fallback, Map<String, ?> placeholders) {
+        return localization.component(key, fallback, placeholders);
     }
 
     private String escape(String value) {
