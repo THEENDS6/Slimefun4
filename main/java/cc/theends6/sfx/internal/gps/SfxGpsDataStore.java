@@ -11,7 +11,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.block.Biome;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -158,17 +161,32 @@ final class SfxGpsDataStore {
     }
 
     synchronized void markScanned(SfxGeoChunkKey key) {
+        markScanned(key, null);
+    }
+
+    synchronized void markScanned(SfxGeoChunkKey key, Location scanLocation) {
         scannedChunks.put(key.pathKey(), Instant.now().toEpochMilli());
-        geoResources.computeIfAbsent(key.pathKey(), ignored -> generateResources(key));
+        geoResources.computeIfAbsent(key.pathKey(), ignored -> generateResources(key, scanLocation));
         save();
     }
 
     synchronized Map<SfxGeoResourceType, Integer> resources(SfxGeoChunkKey key) {
-        return new HashMap<>(geoResources.computeIfAbsent(key.pathKey(), ignored -> generateResources(key)));
+        return resources(key, null);
+    }
+
+    synchronized Map<SfxGeoResourceType, Integer> resources(SfxGeoChunkKey key, Location location) {
+        EnumMap<SfxGeoResourceType, Integer> values = geoResources.computeIfAbsent(key.pathKey(), ignored -> generateResources(key, location));
+        normalizeResources(values, location);
+        return new HashMap<>(values);
     }
 
     synchronized boolean consume(SfxGeoChunkKey key, SfxGeoResourceType type, int amount) {
-        EnumMap<SfxGeoResourceType, Integer> values = geoResources.computeIfAbsent(key.pathKey(), ignored -> generateResources(key));
+        return consume(key, type, amount, null);
+    }
+
+    synchronized boolean consume(SfxGeoChunkKey key, SfxGeoResourceType type, int amount, Location location) {
+        EnumMap<SfxGeoResourceType, Integer> values = geoResources.computeIfAbsent(key.pathKey(), ignored -> generateResources(key, location));
+        normalizeResources(values, location);
         int current = values.getOrDefault(type, 0);
         if (current < amount) {
             return false;
@@ -178,20 +196,116 @@ final class SfxGpsDataStore {
         return true;
     }
 
+    private void normalizeResources(EnumMap<SfxGeoResourceType, Integer> values, Location location) {
+        World world = location == null ? null : location.getWorld();
+        if (world == null) {
+            return;
+        }
+        World.Environment environment = world.getEnvironment();
+        if (environment != World.Environment.NORMAL) {
+            values.put(SfxGeoResourceType.OIL, 0);
+            values.put(SfxGeoResourceType.URANIUM, 0);
+        }
+        if (environment != World.Environment.NETHER) {
+            values.put(SfxGeoResourceType.NETHER_ICE, 0);
+        }
+        if (environment != World.Environment.NORMAL && environment != World.Environment.NETHER) {
+            values.put(SfxGeoResourceType.SALT, 0);
+        }
+    }
+
     private EnumMap<SfxGeoResourceType, Integer> generateResources(SfxGeoChunkKey key) {
+        return generateResources(key, null);
+    }
+
+    private EnumMap<SfxGeoResourceType, Integer> generateResources(SfxGeoChunkKey key, Location location) {
         EnumMap<SfxGeoResourceType, Integer> values = new EnumMap<>(SfxGeoResourceType.class);
+        World world = location == null ? null : location.getWorld();
+        if (world == null) {
+            for (SfxGeoResourceType type : SfxGeoResourceType.values()) {
+                values.put(type, 0);
+            }
+            return values;
+        }
+        int sampleY = Math.max(world.getMinHeight(), Math.min(world.getMaxHeight() - 1, location.getBlockY()));
+        Biome biome = world.getBlockAt(key.chunkX() << 4, sampleY, key.chunkZ() << 4).getBiome();
         for (SfxGeoResourceType type : SfxGeoResourceType.values()) {
-            int hash = Objects.hash(key.worldId(), key.chunkX(), key.chunkZ(), type.salt());
-            int normalized = Math.floorMod(hash, 1000);
-            int amount = switch (type) {
-                case OIL -> 40 + normalized % 180;
-                case SALT -> normalized % 96;
-                case URANIUM -> normalized % 24;
-                case NETHER_ICE -> normalized % 36;
-            };
-            values.put(type, amount);
+            int base = defaultSupply(type, world.getEnvironment(), biome);
+            int amount = base <= 0 ? 0 : base + ThreadLocalRandom.current().nextInt(maxDeviation(type));
+            values.put(type, Math.max(0, amount));
         }
         return values;
+    }
+
+    private int defaultSupply(SfxGeoResourceType type, World.Environment environment, Biome biome) {
+        return switch (type) {
+            case OIL -> environment == World.Environment.NORMAL ? oilSupply(biome) : 0;
+            case SALT -> {
+                if (environment == World.Environment.NORMAL) {
+                    yield saltSupply(biome, 6);
+                }
+                if (environment == World.Environment.NETHER) {
+                    yield saltSupply(biome, 8);
+                }
+                yield 0;
+            }
+            case URANIUM -> environment == World.Environment.NORMAL ? uraniumSupply(biome) : 0;
+            case NETHER_ICE -> environment == World.Environment.NETHER ? netherIceSupply(biome) : 0;
+        };
+    }
+
+    private int maxDeviation(SfxGeoResourceType type) {
+        return switch (type) {
+            case OIL -> 8;
+            case SALT -> 18;
+            case URANIUM -> 2;
+            case NETHER_ICE -> 6;
+        };
+    }
+
+    private int oilSupply(Biome biome) {
+        return switch (biome) {
+            case BEACH, STONY_SHORE -> 6;
+            case RIVER -> 16;
+            case SWAMP -> 20;
+            case ICE_SPIKES, FROZEN_OCEAN, FROZEN_RIVER, FROZEN_PEAKS, SNOWY_SLOPES -> 24;
+            case BADLANDS, WOODED_BADLANDS, ERODED_BADLANDS -> 40;
+            case DESERT -> 45;
+            case OCEAN, COLD_OCEAN, WARM_OCEAN, LUKEWARM_OCEAN -> 64;
+            case DEEP_OCEAN, DEEP_COLD_OCEAN, DEEP_LUKEWARM_OCEAN -> 72;
+            case WINDSWEPT_HILLS, WINDSWEPT_GRAVELLY_HILLS, JAGGED_PEAKS -> 20;
+            case SNOWY_PLAINS, SNOWY_TAIGA -> 16;
+            case MUSHROOM_FIELDS -> 20;
+            default -> 10;
+        };
+    }
+
+    private int saltSupply(Biome biome, int fallback) {
+        return switch (biome) {
+            case SWAMP -> 20;
+            case BEACH, WINDSWEPT_GRAVELLY_HILLS, STONY_SHORE, STONY_PEAKS, DRIPSTONE_CAVES -> 40;
+            case OCEAN, COLD_OCEAN, WARM_OCEAN, LUKEWARM_OCEAN, DEEP_OCEAN, DEEP_COLD_OCEAN, DEEP_LUKEWARM_OCEAN -> 60;
+            default -> fallback;
+        };
+    }
+
+    private int uraniumSupply(Biome biome) {
+        return switch (biome) {
+            case DESERT, BEACH, STONY_SHORE -> 5;
+            case JAGGED_PEAKS, STONY_PEAKS, WINDSWEPT_HILLS, WINDSWEPT_GRAVELLY_HILLS -> 8;
+            case BADLANDS, ERODED_BADLANDS, WOODED_BADLANDS, DRIPSTONE_CAVES -> 12;
+            case BASALT_DELTAS -> 16;
+            default -> 4;
+        };
+    }
+
+    private int netherIceSupply(Biome biome) {
+        return switch (biome) {
+            case NETHER_WASTES, SOUL_SAND_VALLEY -> 32;
+            case CRIMSON_FOREST, WARPED_FOREST -> 48;
+            case BASALT_DELTAS -> 64;
+            default -> 32;
+        };
     }
 
     static SfxGpsWaypoint waypoint(UUID owner, String name, Location location) {

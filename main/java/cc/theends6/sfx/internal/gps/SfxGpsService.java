@@ -14,6 +14,7 @@ import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationState;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -46,6 +47,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -112,6 +114,17 @@ public final class SfxGpsService implements Listener {
             28, 29, 30, 31, 32, 33, 34,
             37, 38, 39, 40, 41, 42, 43
     };
+    private static final int[] GEO_SCAN_FRAME = {
+            0, 1, 2, 3, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 45, 46, 48, 49, 50, 52, 53
+    };
+    private static final int[] GEO_SCAN_CONTENT = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+    };
+    private static final String HEAD_GLOBE_OVERWORLD = "c9c8881e42915a9d29bb61a16fb26d059913204d265df5b439b3d792acd56";
+    private static final String HEAD_MINECRAFT_CHUNK = "8449b9318e33158e64a46ab0de121c3d40000e3332c1574932b3c849d8fa0dc2";
 
 
     private final JavaPlugin plugin;
@@ -260,20 +273,26 @@ public final class SfxGpsService implements Listener {
         List<SfxAnchorRecord> transmitters = onlineTransmitters(owner);
         SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.control-panel.title", "<dark_aqua>GPS Control Panel")).rows(6);
         addControlPanelFrame(builder);
-        builder.button(2, new SfxMenuButton(ItemBuilder.of(Material.COMPASS)
-                .name("<aqua>GPS Transmitters")
-                .lore("<gray>Online transmitters: <yellow>" + transmitters.size())
-                .build(), click -> openTransmitterControlPanel(click.player())));
-        builder.button(4, new SfxMenuButton(ItemBuilder.of(Material.MAP)
-                .name("<aqua>Network Info")
-                .lore("<gray>Status: " + (complexity > 0 ? "<green>ONLINE" : "<red>OFFLINE"),
-                        "<gray>Complexity: <yellow>" + complexity,
-                        "<gray>Transmitters: <yellow>" + transmitters.size())
-                .build(), click -> openTransmitterControlPanel(click.player())));
-        builder.button(6, new SfxMenuButton(ItemBuilder.of(Material.REDSTONE_TORCH)
-                .name("<aqua>Waypoints")
-                .lore("<gray>Stored: <yellow>" + dataStore.waypoints(owner).size(), "<yellow>Click to manage")
-                .build(), click -> openControlWaypointPanel(click.player())));
+        builder.button(2, new SfxMenuButton(namedItem(
+                itemIcon("sf:gps_transmitter", Material.COMPASS),
+                component("gps.ui.control-panel.transmitters.name", "<aqua>GPS Transmitters"),
+                List.of(component("gps.ui.control-panel.transmitters.lore", "<gray>Online transmitters: <yellow>{count}", Map.of("count", transmitters.size())))),
+                click -> openTransmitterControlPanel(click.player())));
+        builder.button(4, new SfxMenuButton(namedItem(
+                ItemBuilder.of(Material.MAP).build(),
+                component("gps.ui.control-panel.network-info.name", "<aqua>Network Info"),
+                List.of(
+                        component(complexity > 0 ? "gps.ui.control-panel.network-info.status-online" : "gps.ui.control-panel.network-info.status-offline", complexity > 0 ? "<gray>Status: <green>ONLINE" : "<gray>Status: <red>OFFLINE"),
+                        component("gps.ui.control-panel.network-info.complexity", "<gray>Complexity: <yellow>{complexity}", Map.of("complexity", complexity)),
+                        component("gps.ui.control-panel.network-info.transmitters", "<gray>Transmitters: <yellow>{count}", Map.of("count", transmitters.size())))),
+                click -> openTransmitterControlPanel(click.player())));
+        builder.button(6, new SfxMenuButton(namedItem(
+                headIcon(HEAD_GLOBE_OVERWORLD, Material.REDSTONE_TORCH),
+                component("gps.ui.control-panel.waypoints.name", "<aqua>Waypoints"),
+                List.of(
+                        component("gps.ui.control-panel.waypoints.stored", "<gray>Stored: <yellow>{count}", Map.of("count", dataStore.waypoints(owner).size())),
+                        component("gps.ui.control-panel.waypoints.view", "<yellow>Click to manage"))),
+                click -> openControlWaypointPanel(click.player())));
 
         int index = 0;
         for (SfxAnchorRecord anchor : transmitters.stream().limit(CONTROL_PANEL_CONTENT.length).toList()) {
@@ -282,20 +301,24 @@ public final class SfxGpsService implements Listener {
                 continue;
             }
             int strength = transmitterStrength(instance, anchor);
-            int ping = Math.max(1, 1000 / Math.max(1, strength));
-            builder.button(CONTROL_PANEL_CONTENT[index++], new SfxMenuButton(ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
-                    .name("<green>GPS Transmitter")
-                    .lore("<gray>World: <white>" + escape(worldName(anchor)),
-                            "<gray>X/Y/Z: <white>" + anchor.key().x() + " / " + anchor.key().y() + " / " + anchor.key().z(),
-                            "<gray>Signal Strength: <yellow>" + strength,
-                            "<gray>Ping: <yellow>" + ping + " ms")
-                    .build(), click -> openTransmitterControlPanel(click.player())));
+            double ping = 1000D / Math.max(1, anchor.key().y());
+            String pingText = String.format(java.util.Locale.ROOT, "%.2f", ping);
+            builder.button(CONTROL_PANEL_CONTENT[index++], new SfxMenuButton(namedItem(
+                    itemIcon(instance.typeId(), Material.PLAYER_HEAD),
+                    localization.itemName(instance.typeId(), component("gps.ui.control-panel.transmitter-entry.name", "<green>GPS Transmitter")),
+                    List.of(
+                            component("gps.ui.control-panel.transmitter-entry.world", "<gray>World: <white>{world}", Map.of("world", escape(worldName(anchor)))),
+                            component("gps.ui.control-panel.transmitter-entry.coords", "<gray>X/Y/Z: <white>{x} / {y} / {z}", Map.of("x", anchor.key().x(), "y", anchor.key().y(), "z", anchor.key().z())),
+                            component("gps.ui.control-panel.transmitter-entry.strength", "<gray>Signal Strength: <yellow>{strength}", Map.of("strength", strength)),
+                            component("gps.ui.control-panel.transmitter-entry.ping", "<gray>Ping: <yellow>{ping}ms", Map.of("ping", pingText)))),
+                    click -> openTransmitterControlPanel(click.player())));
         }
         if (transmitters.isEmpty()) {
-            builder.button(31, new SfxMenuButton(ItemBuilder.of(Material.BARRIER)
-                    .name("<red>No online transmitters")
-                    .lore("<gray>Place and power GPS transmitters to build the network.")
-                    .build(), click -> openTransmitterControlPanel(click.player())));
+            builder.button(31, new SfxMenuButton(namedItem(
+                    ItemBuilder.of(Material.BARRIER).build(),
+                    component("gps.ui.control-panel.no-transmitters.name", "<red>No online transmitters"),
+                    List.of(component("gps.ui.control-panel.no-transmitters.lore", "<gray>Place and power GPS transmitters to build the network."))),
+                    click -> openTransmitterControlPanel(click.player())));
         }
         menus.openRoot(player, builder.build());
     }
@@ -309,37 +332,43 @@ public final class SfxGpsService implements Listener {
                 .toList();
         SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.control-panel.title", "<dark_aqua>GPS Control Panel")).rows(6);
         addControlPanelFrame(builder);
-        builder.button(2, new SfxMenuButton(ItemBuilder.of(Material.COMPASS)
-                .name("<aqua>GPS Transmitters")
-                .lore("<yellow>Click to view transmitters")
-                .build(), click -> openTransmitterControlPanel(click.player())));
-        builder.button(4, new SfxMenuButton(ItemBuilder.of(Material.MAP)
-                .name("<aqua>Network Info")
-                .lore("<gray>Status: " + (complexity > 0 ? "<green>ONLINE" : "<red>OFFLINE"),
-                        "<gray>Complexity: <yellow>" + complexity,
-                        "<gray>Waypoints: <yellow>" + dataStore.waypoints(owner).size())
-                .build(), click -> openControlWaypointPanel(click.player())));
-        builder.button(6, new SfxMenuButton(ItemBuilder.of(Material.REDSTONE_TORCH)
-                .name("<aqua>Waypoints")
-                .lore("<gray>Click a waypoint to delete it.")
-                .build(), click -> openControlWaypointPanel(click.player())));
+        builder.button(2, new SfxMenuButton(namedItem(
+                itemIcon("sf:gps_transmitter", Material.COMPASS),
+                component("gps.ui.control-panel.transmitters.name", "<aqua>GPS Transmitters"),
+                List.of(component("gps.ui.control-panel.transmitters.view", "<yellow>Click to view transmitters"))),
+                click -> openTransmitterControlPanel(click.player())));
+        builder.button(4, new SfxMenuButton(namedItem(
+                ItemBuilder.of(Material.MAP).build(),
+                component("gps.ui.control-panel.network-info.name", "<aqua>Network Info"),
+                List.of(
+                        component(complexity > 0 ? "gps.ui.control-panel.network-info.status-online" : "gps.ui.control-panel.network-info.status-offline", complexity > 0 ? "<gray>Status: <green>ONLINE" : "<gray>Status: <red>OFFLINE"),
+                        component("gps.ui.control-panel.network-info.complexity", "<gray>Complexity: <yellow>{complexity}", Map.of("complexity", complexity)),
+                        component("gps.ui.control-panel.network-info.waypoints", "<gray>Waypoints: <yellow>{count}", Map.of("count", dataStore.waypoints(owner).size())))),
+                click -> openControlWaypointPanel(click.player())));
+        builder.button(6, new SfxMenuButton(namedItem(
+                headIcon(HEAD_GLOBE_OVERWORLD, Material.REDSTONE_TORCH),
+                component("gps.ui.control-panel.waypoints.name", "<aqua>Waypoints"),
+                List.of(component("gps.ui.control-panel.waypoints.delete-hint", "<gray>Click a waypoint to delete it."))),
+                click -> openControlWaypointPanel(click.player())));
 
         int index = 0;
         for (SfxGpsWaypoint waypoint : waypoints) {
-            Material icon = waypoint.toLocation() == null ? Material.BARRIER : Material.ENDER_PEARL;
-            builder.button(CONTROL_PANEL_CONTENT[index++], new SfxMenuButton(ItemBuilder.of(icon)
-                    .name("<aqua>" + escape(waypoint.name()))
-                    .lore("<gray>World: <white>" + escape(waypoint.worldName()),
-                            "<gray>X/Y/Z: <white>" + blockCoords(waypoint),
-                            "<yellow>Click to delete")
-                    .build(), click -> {
+            ItemStack icon = waypoint.toLocation() == null ? ItemBuilder.of(Material.BARRIER).build() : headIcon(HEAD_GLOBE_OVERWORLD, Material.ENDER_PEARL);
+            builder.button(CONTROL_PANEL_CONTENT[index++], new SfxMenuButton(namedItem(
+                    icon,
+                    component("gps.ui.control-panel.waypoint-entry.name", "<aqua>{name}", Map.of("name", escape(waypoint.name()))),
+                    List.of(
+                            component("gps.ui.control-panel.waypoint-entry.world", "<gray>World: <white>{world}", Map.of("world", escape(waypoint.worldName()))),
+                            component("gps.ui.control-panel.waypoint-entry.coords", "<gray>X/Y/Z: <white>{coords}", Map.of("coords", blockCoords(waypoint))),
+                            component("gps.ui.control-panel.waypoint-entry.delete", "<yellow>Click to delete"))),
+                    click -> {
                         dataStore.removeWaypoint(click.player().getUniqueId(), waypoint.name());
                         send(click.player(), "gps.messages.waypoint-deleted", "<red>Waypoint deleted: <white>{name}</white>", Map.of("name", escape(waypoint.name())));
                         openControlWaypointPanel(click.player());
                     }));
         }
         if (waypoints.isEmpty()) {
-            builder.button(31, new SfxMenuButton(ItemBuilder.of(Material.BARRIER).name("<red>No waypoints").build(), click -> openControlWaypointPanel(click.player())));
+            builder.button(31, new SfxMenuButton(namedItem(ItemBuilder.of(Material.BARRIER).build(), component("gps.ui.control-panel.no-waypoints.name", "<red>No waypoints"), List.of()), click -> openControlWaypointPanel(click.player())));
         }
         menus.openRoot(player, builder.build());
     }
@@ -378,17 +407,61 @@ public final class SfxGpsService implements Listener {
             return;
         }
         SfxGeoChunkKey key = SfxGeoChunkKey.from(location);
-        dataStore.markScanned(key);
-        Map<SfxGeoResourceType, Integer> resources = dataStore.resources(key);
+        dataStore.markScanned(key, location);
+        electricMachines.wakeGeoExtractorsInChunk(key);
+        openGeoScanResults(player, location, 0);
+    }
+
+    private void openGeoScanResults(Player player, Location location, int page) {
+        SfxGeoChunkKey key = SfxGeoChunkKey.from(location);
+        Map<SfxGeoResourceType, Integer> resources = dataStore.resources(key, location);
+        List<SfxGeoResourceType> resourceTypes = new ArrayList<>(List.of(SfxGeoResourceType.values()));
+        resourceTypes.sort(Comparator.comparing(type -> resourceNameText(type).toLowerCase(java.util.Locale.ROOT)));
+        int pages = Math.max(1, (resourceTypes.size() - 1) / GEO_SCAN_CONTENT.length + 1);
+        int safePage = Math.max(0, Math.min(page, pages - 1));
+
         SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.geo-scan.title", "<dark_aqua>GEO Scan")).rows(6);
-        int slot = 10;
-        for (SfxGeoResourceType type : SfxGeoResourceType.values()) {
-            int amount = resources.getOrDefault(type, 0);
-            builder.button(slot++, new SfxMenuButton(ItemBuilder.of(amount > 0 ? Material.EMERALD : Material.REDSTONE)
-                    .name((amount > 0 ? "<green>" : "<red>") + type.displayName())
-                    .lore("<gray>Remaining: <yellow>" + amount, "<gray>Chunk: <white>" + key.chunkX() + ", " + key.chunkZ())
-                    .build(), click -> {}));
+        ItemStack filler = ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+        for (int slot : GEO_SCAN_FRAME) {
+            builder.button(slot, new SfxMenuButton(filler, click -> {}));
         }
+        builder.button(4, new SfxMenuButton(namedItem(
+                headIcon(HEAD_MINECRAFT_CHUNK, Material.FILLED_MAP),
+                component("gps.ui.geo-scan.chunk.name", "<yellow>Chunk"),
+                List.of(
+                        component("gps.ui.geo-scan.chunk.world", "<gray>World: <white>{world}", Map.of("world", escape(key.worldName()))),
+                        component("gps.ui.geo-scan.chunk.coords", "<gray>X: <white>{x}</white> Z: <white>{z}", Map.of("x", key.chunkX(), "z", key.chunkZ())))),
+                click -> {}));
+
+        int start = safePage * GEO_SCAN_CONTENT.length;
+        int end = Math.min(resourceTypes.size(), start + GEO_SCAN_CONTENT.length);
+        for (int i = start; i < end; i++) {
+            SfxGeoResourceType type = resourceTypes.get(i);
+            int amount = resources.getOrDefault(type, 0);
+            ItemStack icon = createResourceItem(type, type == SfxGeoResourceType.OIL);
+            if (amount > 1) {
+                icon.setAmount(Math.max(1, Math.min(icon.getMaxStackSize(), amount)));
+            }
+            int slot = GEO_SCAN_CONTENT[i - start];
+            builder.button(slot, new SfxMenuButton(namedItem(
+                    icon,
+                    component("gps.ui.geo-scan.resource.name", "<white>{resource}", Map.of("resource", resourceNameText(type))),
+                    List.of(component(
+                            amount == 1 ? "gps.ui.geo-scan.resource.amount-singular" : "gps.ui.geo-scan.resource.amount-plural",
+                            "<dark_gray>⇨ <yellow>{amount} Units",
+                            Map.of("amount", amount)))),
+                    click -> {}));
+        }
+        builder.button(47, new SfxMenuButton(namedItem(ItemBuilder.of(Material.ARROW).build(), component("gps.ui.geo-scan.previous", "<yellow>Previous Page"), List.of(component("gps.ui.geo-scan.page", "<gray>Page <white>{page}</white>/<white>{pages}", Map.of("page", safePage + 1, "pages", pages)))), click -> {
+            if (safePage > 0) {
+                openGeoScanResults(click.player(), location, safePage - 1);
+            }
+        }));
+        builder.button(51, new SfxMenuButton(namedItem(ItemBuilder.of(Material.ARROW).build(), component("gps.ui.geo-scan.next", "<yellow>Next Page"), List.of(component("gps.ui.geo-scan.page", "<gray>Page <white>{page}</white>/<white>{pages}", Map.of("page", safePage + 1, "pages", pages)))), click -> {
+            if (safePage + 1 < pages) {
+                openGeoScanResults(click.player(), location, safePage + 1);
+            }
+        }));
         menus.openRoot(player, builder.build());
     }
 
@@ -403,27 +476,28 @@ public final class SfxGpsService implements Listener {
             send(player, "gps.messages.chunk-not-scanned", "<red>This chunk has not been GEO-scanned yet.</red>");
             return;
         }
-        SfxGeoResourceType selected = oilOnly ? SfxGeoResourceType.OIL : selectBestResource(key);
-        if (selected == null || dataStore.resources(key).getOrDefault(selected, 0) <= 0) {
+        SfxGeoResourceType selected = oilOnly ? SfxGeoResourceType.OIL : selectBestResource(key, location);
+        if (selected == null || dataStore.resources(key, location).getOrDefault(selected, 0) <= 0) {
             send(player, "gps.messages.no-geo-resource", "<red>No usable GEO resource remains in this chunk.</red>");
             return;
         }
-        if (!dataStore.consume(key, selected, 1)) {
+        if (!dataStore.consume(key, selected, 1, location)) {
             send(player, "gps.messages.no-geo-resource", "<red>No usable GEO resource remains in this chunk.</red>");
             return;
         }
         ItemStack output = createResourceItem(selected, oilOnly);
         player.getInventory().addItem(output).values().forEach(left -> player.getWorld().dropItemNaturally(player.getLocation(), left));
-        send(player, "gps.messages.extracted", "<green>Extracted <white>{resource}</white>.</green>", Map.of("resource", escape(selected.displayName())));
+        send(player, "gps.messages.extracted", "<green>Extracted <white>{resource}</white>.</green>", Map.of("resource", escape(resourceNameText(selected))));
     }
 
-    private SfxGeoResourceType selectBestResource(SfxGeoChunkKey key) {
-        Map<SfxGeoResourceType, Integer> resources = dataStore.resources(key);
-        return resources.entrySet().stream()
-                .filter(entry -> entry.getValue() > 0 && entry.getKey() != SfxGeoResourceType.OIL)
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse(null);
+    private SfxGeoResourceType selectBestResource(SfxGeoChunkKey key, Location location) {
+        Map<SfxGeoResourceType, Integer> resources = dataStore.resources(key, location);
+        for (SfxGeoResourceType type : SfxGeoResourceType.values()) {
+            if (type != SfxGeoResourceType.OIL && resources.getOrDefault(type, 0) > 0) {
+                return type;
+            }
+        }
+        return null;
     }
 
     private ItemStack createResourceItem(SfxGeoResourceType type, boolean oilPump) {
@@ -452,8 +526,8 @@ public final class SfxGpsService implements Listener {
         if (!dataStore.isScanned(key)) {
             return SfxGpsExtractionResult.notScanned();
         }
-        SfxGeoResourceType selected = oilOnly ? SfxGeoResourceType.OIL : selectBestResource(key);
-        if (selected == null || dataStore.resources(key).getOrDefault(selected, 0) <= 0) {
+        SfxGeoResourceType selected = oilOnly ? SfxGeoResourceType.OIL : selectBestResource(key, location);
+        if (selected == null || dataStore.resources(key, location).getOrDefault(selected, 0) <= 0) {
             return SfxGpsExtractionResult.empty();
         }
         return SfxGpsExtractionResult.output(createResourceStack(selected, oilOnly));
@@ -465,8 +539,8 @@ public final class SfxGpsService implements Listener {
             return peek;
         }
         SfxGeoChunkKey key = SfxGeoChunkKey.from(location);
-        SfxGeoResourceType selected = oilOnly ? SfxGeoResourceType.OIL : selectBestResource(key);
-        if (selected == null || !dataStore.consume(key, selected, 1)) {
+        SfxGeoResourceType selected = oilOnly ? SfxGeoResourceType.OIL : selectBestResource(key, location);
+        if (selected == null || !dataStore.consume(key, selected, 1, location)) {
             return SfxGpsExtractionResult.empty();
         }
         return SfxGpsExtractionResult.output(createResourceStack(selected, oilOnly));
@@ -753,6 +827,56 @@ public final class SfxGpsService implements Listener {
 
     private String blockCoords(SfxGpsWaypoint waypoint) {
         return (int) Math.floor(waypoint.x()) + ", " + (int) Math.floor(waypoint.y()) + ", " + (int) Math.floor(waypoint.z());
+    }
+
+    private ItemStack itemIcon(String itemId, Material fallback) {
+        if (itemId != null) {
+            try {
+                return items.create(itemId);
+            } catch (RuntimeException ignored) {
+                // Fall back to a vanilla icon below.
+            }
+        }
+        return ItemBuilder.of(fallback == null ? Material.STONE : fallback).build();
+    }
+
+    private ItemStack headIcon(String textureHash, Material fallback) {
+        ItemStack stack = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta meta = stack.getItemMeta();
+        if (meta != null) {
+            HeadTextures.apply(meta, textureHash);
+            stack.setItemMeta(meta);
+        }
+        if (stack.getType() == Material.PLAYER_HEAD) {
+            return stack;
+        }
+        return ItemBuilder.of(fallback == null ? Material.PLAYER_HEAD : fallback).build();
+    }
+
+    private ItemStack namedItem(ItemStack base, Component name, List<Component> lore) {
+        ItemStack stack = base == null ? new ItemStack(Material.STONE) : base.clone();
+        ItemMeta meta = stack.getItemMeta();
+        if (meta != null) {
+            if (name != null) {
+                meta.displayName(Text.noItalic(name));
+            }
+            if (lore != null && !lore.isEmpty()) {
+                List<Component> cleanLore = new ArrayList<>(lore.size());
+                for (Component line : lore) {
+                    cleanLore.add(Text.noItalic(line));
+                }
+                meta.lore(cleanLore);
+            }
+            stack.setItemMeta(meta);
+        }
+        return stack;
+    }
+
+    private String resourceNameText(SfxGeoResourceType type) {
+        if (type == null) {
+            return localization.text("gps.resources.unknown", "GEO Resource");
+        }
+        return localization.text("gps.resources." + type.name().toLowerCase(java.util.Locale.ROOT), type.displayName());
     }
 
 

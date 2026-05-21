@@ -2390,6 +2390,10 @@ items:
     - ''
     - '&7抽取石油并装入桶中'
     - ''
+    - '&6高级机器'
+    - '&8⇨ &b⚡&7速度: &b1x'
+    - '&8⇨ &e⚡&724 J/t'
+    - ''
     - '&c&l! &c请先对该区块进行地质扫描'
   sf.bucket_of_oil:
     name: '&f石油桶'
@@ -4037,15 +4041,65 @@ gps:
   ui:
     control-panel:
       title: '&3GPS 控制面板'
+      transmitters:
+        name: '&bGPS 信号发生器'
+        lore: '&7在线信号发生器：&e{count}'
+        view: '&e点击查看信号发生器'
+      network-info:
+        name: '&b网络信息'
+        status-online: '&7状态：&aONLINE'
+        status-offline: '&7状态：&cOFFLINE'
+        complexity: '&7复杂度：&e{complexity}'
+        transmitters: '&7信号发生器：&e{count}'
+        waypoints: '&7路径点：&e{count}'
+      waypoints:
+        name: '&b路径点'
+        stored: '&7已保存：&e{count}'
+        view: '&e点击管理'
+        delete-hint: '&7点击路径点将其删除。'
+      transmitter-entry:
+        name: '&aGPS 信号发生器'
+        world: '&7世界：&f{world}'
+        coords: '&7X/Y/Z：&f{x} / {y} / {z}'
+        strength: '&7信号强度：&e{strength}'
+        ping: '&7Ping：&e{ping}ms'
+      waypoint-entry:
+        name: '&b{name}'
+        world: '&7世界：&f{world}'
+        coords: '&7X/Y/Z：&f{coords}'
+        delete: '&e点击删除'
+      no-transmitters:
+        name: '&c没有在线信号发生器'
+        lore: '&7放置并供电 GPS 信号发生器来建立网络。'
+      no-waypoints:
+        name: '&c没有路径点'
     waypoints:
       title: '&3GPS 路径点'
     geo-scan:
       title: '&3GEO 扫描'
+      chunk:
+        name: '&e区块'
+        world: '&7世界：&f{world}'
+        coords: '&7X：&f{x} &7Z：&f{z}'
+      resource:
+        name: '&f{resource}'
+        amount-singular: '&8⇨ &e{amount} 单位'
+        amount-plural: '&8⇨ &e{amount} 单位'
+      previous: '&e上一页'
+      next: '&e下一页'
+      page: '&7第 &f{page}&7/&f{pages} &7页'
     geo-miner-hologram:
-      idling: '&7Idling...'
-      scan-required: '&4GEO-Scan required!'
-      mining: '&7Mining: &r{resource}'
-      finished: '&7Finished'
+      idling: '&7闲置中...'
+      scan-required: '&4需要 GEO 扫描!'
+      mining: '&7正在开采: &r{resource}'
+      finished: '&7已完成'
+      resource-fallback: 'GEO 资源'
+  resources:
+    oil: '石油'
+    salt: '盐'
+    uranium: '小块铀'
+    nether_ice: '下界玄冰'
+    unknown: 'GEO 资源'
   messages:
     emergency-waypoint-created: '&c已创建死亡点路径点：&f{name}'
     component-registered: '&7该 GPS 组件已注册。'

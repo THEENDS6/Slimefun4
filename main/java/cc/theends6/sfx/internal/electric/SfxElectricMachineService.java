@@ -13,6 +13,7 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.gps.SfxGpsElectricBridge;
 import cc.theends6.sfx.internal.gps.SfxGpsExtractionResult;
+import cc.theends6.sfx.internal.gps.SfxGeoChunkKey;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
@@ -539,6 +540,34 @@ public final class SfxElectricMachineService implements Listener {
         return accepted;
     }
 
+    public void wakeGeoExtractorsInChunk(SfxGeoChunkKey key) {
+        if (key == null) {
+            return;
+        }
+        for (SfxAnchorRecord anchor : blockData.anchors()) {
+            if (anchor == null || anchor.key() == null) {
+                continue;
+            }
+            if (!key.worldId().equals(anchor.key().worldId())
+                    || key.chunkX() != (anchor.key().x() >> 4)
+                    || key.chunkZ() != (anchor.key().z() >> 4)) {
+                continue;
+            }
+            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (instance == null || (!"sf:geo_miner".equals(instance.typeId()) && !"sf:oil_pump".equals(instance.typeId()))) {
+                continue;
+            }
+            UUID instanceId = instance.instanceId();
+            activeInstances.add(instanceId);
+            lastLogicTicks.remove(instanceId);
+            Location location = locationFor(instance);
+            if (location != null) {
+                boolean hasViewers = sessionsByInstance.containsKey(instanceId);
+                runtime.executeAt(location, () -> tickMachine(instanceId, new SfxMachineTickContext(tickCounter, 1L, hasViewers)));
+            }
+        }
+    }
+
     private void scheduleTick() {
         runtime.executeGlobalLater(1L, () -> {
             if (!running) {
@@ -984,7 +1013,7 @@ public final class SfxElectricMachineService implements Listener {
                 text,
                 32 * 32,
                 true,
-                SfxFloatingTextDisplayMode.TEXT_DISPLAY));
+                SfxFloatingTextDisplayMode.ARMOR_STAND));
     }
 
     private void removeGeoMinerFloatingText(Location location) {
