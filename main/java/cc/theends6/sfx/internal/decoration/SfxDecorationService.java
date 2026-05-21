@@ -212,11 +212,33 @@ public final class SfxDecorationService implements Listener {
     }
 
     private void applyState(Location location, SfxBlockInstanceRecord instance, long phase) {
-        SfxDecorationDefinition definition = definitions.get(instance.typeId());
-        if (definition == null || location == null || location.getWorld() == null) {
+        if (instance == null || location == null || location.getWorld() == null) {
+            return;
+        }
+        SfxAnchorRecord liveAnchor = blockData.findAnchorFast(location).orElse(null);
+        if (liveAnchor == null || !instance.instanceId().equals(liveAnchor.instanceId())) {
+            animatedInstances.remove(instance.instanceId());
+            states.remove(instance.instanceId());
+            return;
+        }
+        SfxBlockInstanceRecord liveInstance = blockData.findInstance(instance.instanceId()).orElse(null);
+        if (liveInstance == null || !Objects.equals(liveInstance.typeId(), instance.typeId())) {
+            animatedInstances.remove(instance.instanceId());
+            states.remove(instance.instanceId());
+            return;
+        }
+        SfxDecorationDefinition definition = definitions.get(liveInstance.typeId());
+        if (definition == null) {
+            animatedInstances.remove(instance.instanceId());
+            states.remove(instance.instanceId());
             return;
         }
         Block block = location.getBlock();
+        if (block.getType().isAir()) {
+            animatedInstances.remove(instance.instanceId());
+            states.remove(instance.instanceId());
+            return;
+        }
         Material next = definition.materialFor(states.getOrDefault(instance.instanceId(), SfxDecorationState.DEFAULT), phase);
         if (block.getType() != next) {
             block.setType(next, false);
@@ -224,8 +246,9 @@ public final class SfxDecorationService implements Listener {
     }
 
     private void registerDefaults() {
-        register(new SfxDecorationDefinition("sf:gps_teleporter_pylon", false, true,
-                List.of(Material.PURPLE_STAINED_GLASS), Material.LIGHT_BLUE_STAINED_GLASS, Material.MAGENTA_STAINED_GLASS, Material.RED_STAINED_GLASS));
+        register(new SfxDecorationDefinition("sf:gps_teleporter_pylon", true, true,
+                List.of(Material.CYAN_STAINED_GLASS, Material.PURPLE_STAINED_GLASS),
+                Material.CYAN_STAINED_GLASS, Material.PURPLE_STAINED_GLASS, Material.RED_STAINED_GLASS));
         register(new SfxDecorationDefinition("sf:hardened_glass", false, false, List.of(Material.LIGHT_GRAY_STAINED_GLASS), null, null, null));
         register(new SfxDecorationDefinition("sf:wither_proof_obsidian", false, false, List.of(Material.OBSIDIAN), null, null, null));
         register(new SfxDecorationDefinition("sf:wither_proof_glass", false, false, List.of(Material.PURPLE_STAINED_GLASS), null, null, null));

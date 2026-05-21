@@ -17,8 +17,8 @@ public final class SfxMachineStatusDefaults {
             case PAUSED -> Material.YELLOW_STAINED_GLASS_PANE;
             case FULL -> Material.GREEN_STAINED_GLASS_PANE;
             case OUTPUT_FULL -> Material.ORANGE_STAINED_GLASS_PANE;
-            case NO_POWER, BLOCKED_OUTPUT, INVALID_INPUT, NO_NETWORK, NETWORK_CONFLICT, AREA_CONFLICT, MISSING_RESOURCE -> Material.RED_STAINED_GLASS_PANE;
-            case IDLE, DISABLED, NO_INPUT, NO_RECIPE, NO_TARGET, CUSTOM -> Material.BLACK_STAINED_GLASS_PANE;
+            case NO_POWER, BLOCKED_OUTPUT, INVALID_INPUT, NO_NETWORK, NETWORK_CONFLICT, AREA_CONFLICT, MISSING_RESOURCE, CHUNK_NOT_SCANNED -> Material.RED_STAINED_GLASS_PANE;
+            case IDLE, DISABLED, NO_INPUT, NO_RECIPE, NO_TARGET, NO_GEO_RESOURCE, CUSTOM -> Material.BLACK_STAINED_GLASS_PANE;
         };
     }
 
@@ -35,6 +35,8 @@ public final class SfxMachineStatusDefaults {
             case NO_INPUT -> localization.component("machine-status.no-input.name", "<gray>No Input</gray>");
             case NO_RECIPE -> localization.component("machine-status.no-recipe.name", "<gray>No Recipe</gray>");
             case NO_TARGET -> localization.component("machine-status.no-target.name", "<red>No Target</red>");
+            case CHUNK_NOT_SCANNED -> localization.component("machine-status.chunk-not-scanned.name", "<red>Unscanned Area</red>");
+            case NO_GEO_RESOURCE -> localization.component("machine-status.no-geo-resource.name", "<gray>No Mineable Resource</gray>");
             case OUTPUT_FULL -> localization.component("machine-status.output-full.name", "<red>Output Full</red>");
             case BLOCKED_OUTPUT -> localization.component("machine-status.blocked-output.name", "<red>Blocked</red>");
             case INVALID_INPUT -> localization.component("machine-status.invalid-input.name", "<red>Invalid Input</red>");
@@ -60,6 +62,8 @@ public final class SfxMachineStatusDefaults {
             case NO_INPUT -> localization.component("machine-status.no-input.lore", "<gray>Waiting for input.</gray>");
             case NO_RECIPE -> localization.component("machine-status.no-recipe.lore", "<gray>The current input has no matching recipe.</gray>");
             case NO_TARGET -> localization.component("machine-status.no-target.lore", "<gray>No valid target was found.</gray>");
+            case CHUNK_NOT_SCANNED -> localization.component("machine-status.chunk-not-scanned.lore", "<gray>This chunk has not been GEO-scanned yet.</gray>");
+            case NO_GEO_RESOURCE -> localization.component("machine-status.no-geo-resource.lore", "<gray>No usable GEO resource remains in this chunk.</gray>");
             case OUTPUT_FULL -> localization.component("machine-status.output-full.lore", "<gray>Free an output slot to continue.</gray>");
             case BLOCKED_OUTPUT -> localization.component("machine-status.blocked-output.lore", "<gray>The output is full. Free a slot to commit the finished item.</gray>");
             case INVALID_INPUT -> localization.component("machine-status.invalid-input.lore", "<gray>The inserted item cannot be processed here.</gray>");

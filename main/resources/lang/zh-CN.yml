@@ -3524,6 +3524,8 @@ electric-ui:
     crop-growth: 范围内没有可生长作物。
     tree-growth: 范围内没有树苗。
     fluid-pump: 下方没有可抽取的水源、岩浆源或可溯源流体。
+    geo-not-scanned: 这个区块还没有进行 GEO 扫描。
+    geo-resource: 这个区块没有可用的 GEO 资源。
     generic: 范围内没有可作用目标。
   action:
     produce:
@@ -3538,6 +3540,10 @@ electric-ui:
       working: <gray>正在催生附近树苗。</gray>
     fluid-pump:
       working: <gray>正在从下方抽取流体。</gray>
+    geo-miner:
+      working: <gray>正在开采 GEO 资源。</gray>
+    oil-pump:
+      working: <gray>正在抽取石油。</gray>
   auto-crafter:
     enabled:
       name: <green>配方已启用</green>
@@ -3804,6 +3810,12 @@ machine-status:
   no-target:
     name: '<red>无目标</red>'
     lore: '<gray>没有找到有效目标。</gray>'
+  chunk-not-scanned:
+    name: '<red>未扫描的区域</red>'
+    lore: '<gray>这个区块还没有进行 GEO 扫描。</gray>'
+  no-geo-resource:
+    name: '<gray>无可挖掘资源</gray>'
+    lore: '<gray>这个区块没有可用的 GEO 资源。</gray>'
   output-full:
     name: '<red>输出已满</red>'
     lore: '<gray>清理输出槽后才能继续。</gray>'
@@ -4020,3 +4032,36 @@ cargo:
         - '&7{recipe}'
         - '&e潜行右键并手持目标物品来配置。'
       none: '无'
+
+gps:
+  ui:
+    control-panel:
+      title: '&3GPS 控制面板'
+    waypoints:
+      title: '&3GPS 路径点'
+    geo-scan:
+      title: '&3GEO 扫描'
+    geo-miner-hologram:
+      idling: '&7Idling...'
+      scan-required: '&4GEO-Scan required!'
+      mining: '&7Mining: &r{resource}'
+      finished: '&7Finished'
+  messages:
+    emergency-waypoint-created: '&c已创建死亡点路径点：&f{name}'
+    component-registered: '&7该 GPS 组件已注册。'
+    waypoint-deleted: '&c已删除路径点：&f{name}'
+    complexity-too-low: '&cGPS 网络复杂度不足。需要：&f{required}'
+    chunk-not-scanned: '&c这个区块还没有进行 GEO 扫描。'
+    no-geo-resource: '&c这个区块没有可用的 GEO 资源。'
+    extracted: '&a已开采：&f{resource}'
+    activation-not-on-matrix: '&c这个激活装置没有放在 GPS 传送矩阵上。'
+    personal-device-owner: '&c这个个人激活装置属于其他玩家。'
+    matrix-complexity-too-low: '&c矩阵拥有者的 GPS 网络复杂度不足。'
+    teleporter-incomplete: '&cGPS 传送器结构不完整。'
+    target-world-not-loaded: '&c目标世界未加载。'
+    teleporting: '&b将在 3 秒后传送到 &f{waypoint}&b...'
+    teleport-cancelled-moved: '&c你移动了，传送已取消。'
+    no-elevator-target: '&c没有在{direction}找到电梯板。'
+    waypoint-limit: '&c你已达到 GPS 路径点数量上限。'
+    waypoint-created: '&a已创建路径点：&f{name}'
+    scanner-hint: '&7在目标区块使用 GPS 地址扫描仪或便携地址扫描仪。'

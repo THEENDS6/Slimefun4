@@ -21,6 +21,7 @@ public record SfxElectricMachineDefinition(
     private static final int[] DEFAULT_OUTPUT_SLOTS = {24, 25};
     public static final int[] SIX_INPUT_SLOTS = {10, 11, 19, 20, 28, 29};
     public static final int[] SIMPLE_IO_SLOTS = {10, 11, 12, 13, 14, 15, 16};
+    public static final int[] GEO_MINER_OUTPUT_SLOTS = {29, 30, 31, 32, 33, 38, 39, 40, 41, 42};
     public static final int[] SEVEN_INPUT_SLOTS = SIMPLE_IO_SLOTS;
     public static final int[] THREE_OUTPUT_SLOTS = {12, 13, 14};
     public static final int[] ASSEMBLER_INPUT_SLOTS = {19, 28, 25, 34};
@@ -81,7 +82,7 @@ public record SfxElectricMachineDefinition(
             throw new IllegalArgumentException("Electric machines support up to seven input slots.");
         }
         if (outputSlots.length > SfxElectricMachineState.MAX_OUTPUTS) {
-            throw new IllegalArgumentException("Electric machines support up to seven output slots.");
+            throw new IllegalArgumentException("Electric machines support up to ten output slots.");
         }
         speed = Math.max(1, speed);
         energyCapacity = Math.max(0, energyCapacity);

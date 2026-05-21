@@ -3439,6 +3439,8 @@ electric-ui:
     crop-growth: No growable crops in range.
     tree-growth: No saplings in range.
     fluid-pump: No pumpable water source, lava source or traceable flowing fluid below.
+    geo-not-scanned: This chunk has not been GEO-scanned yet.
+    geo-resource: No usable GEO resource remains in this chunk.
     generic: No valid target in range.
   action:
     produce:
@@ -3453,6 +3455,10 @@ electric-ui:
       working: <gray>Accelerating nearby saplings.</gray>
     fluid-pump:
       working: <gray>Pumping fluid from below.</gray>
+    geo-miner:
+      working: <gray>Mining GEO resources.</gray>
+    oil-pump:
+      working: <gray>Pumping oil.</gray>
   auto-crafter:
     enabled:
       name: <green>Recipe Enabled</green>
@@ -3708,6 +3714,12 @@ machine-status:
   no-target:
     name: '<red>No Target</red>'
     lore: '<gray>No valid target was found.</gray>'
+  chunk-not-scanned:
+    name: '<red>Unscanned Area</red>'
+    lore: '<gray>This chunk has not been GEO-scanned yet.</gray>'
+  no-geo-resource:
+    name: '<gray>No Mineable Resource</gray>'
+    lore: '<gray>No usable GEO resource remains in this chunk.</gray>'
   output-full:
     name: '<red>Output Full</red>'
     lore: '<gray>Free an output slot to continue.</gray>'
@@ -3925,3 +3937,36 @@ cargo:
         - '&7{recipe}'
         - '&eSneak-right-click with target item to configure.'
       none: 'None'
+
+gps:
+  ui:
+    control-panel:
+      title: '&3GPS Control Panel'
+    waypoints:
+      title: '&3GPS Waypoints'
+    geo-scan:
+      title: '&3GEO Scan'
+    geo-miner-hologram:
+      idling: '&7Idling...'
+      scan-required: '&4GEO-Scan required!'
+      mining: '&7Mining: &r{resource}'
+      finished: '&7Finished'
+  messages:
+    emergency-waypoint-created: '&cGPS emergency waypoint created: &f{name}'
+    component-registered: '&7This GPS component is registered.'
+    waypoint-deleted: '&cWaypoint deleted: &f{name}'
+    complexity-too-low: '&cYour GPS network complexity is too low. Required: &f{required}'
+    chunk-not-scanned: '&cThis chunk has not been GEO-scanned yet.'
+    no-geo-resource: '&cNo usable GEO resource remains in this chunk.'
+    extracted: '&aExtracted &f{resource}&a.'
+    activation-not-on-matrix: '&cThis activation device is not placed on a GPS Teleporter Matrix.'
+    personal-device-owner: '&cThis personal activation device belongs to another player.'
+    matrix-complexity-too-low: '&cThe matrix owner''s GPS network complexity is too low.'
+    teleporter-incomplete: '&cThe GPS Teleporter structure is incomplete.'
+    target-world-not-loaded: '&cThe target world is not loaded.'
+    teleporting: '&bTeleporting to &f{waypoint}&b in 3 seconds...'
+    teleport-cancelled-moved: '&cTeleport cancelled because you moved.'
+    no-elevator-target: '&cNo elevator plate found {direction}.'
+    waypoint-limit: '&cYou have reached the GPS waypoint limit.'
+    waypoint-created: '&aWaypoint created: &f{name}'
+    scanner-hint: '&7Use a GPS Geo-Scanner or Portable Geo-Scanner in the target chunk.'

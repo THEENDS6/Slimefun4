@@ -119,13 +119,13 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization, basicMachineBlockListener);
         this.floatingTextDisplayService = new SfxFloatingTextDisplayService(this, api.runtime());
         this.virtualContainerService = new SfxVirtualContainerService(this, api.runtime());
-        this.electricMachineService = new SfxElectricMachineService(this, api.runtime(), api.items(), localization, blockDataService, playerDataService, api.internalManualMachines(), virtualContainerService);
+        this.electricMachineService = new SfxElectricMachineService(this, api.runtime(), api.items(), localization, blockDataService, playerDataService, api.internalManualMachines(), virtualContainerService, floatingTextDisplayService);
         this.configurableMachineService = new SfxConfigurableMachineService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService);
         this.technicalGadgetService = new SfxTechnicalGadgetService(this, api.runtime(), api.items(), localization);
         this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService, technicalGadgetService.rechargeableItems());
         this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService);
         this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService);
-        this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), blockDataService, decorationService);
+        this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), localization, blockDataService, decorationService, electricMachineService);
         SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, api.runtime());
         this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService);
         this.radiationService = new SfxRadiationService(this, api.runtime(), api.items(), api.itemRegistry(), playerDataService);
