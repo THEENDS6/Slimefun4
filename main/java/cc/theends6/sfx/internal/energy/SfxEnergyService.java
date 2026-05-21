@@ -85,6 +85,7 @@ public final class SfxEnergyService implements Listener {
     private final Map<UUID, SfxEnergyGeneratorSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, SfxEnergyGeneratorSession> sessionsByInstance = new ConcurrentHashMap<>();
     private final Map<UUID, EnergyRuntimeGrid> runtimeGrids = new ConcurrentHashMap<>();
+    private volatile long nodeGridStatusTopologyRevision = Long.MIN_VALUE;
     private volatile SfxFuelBurnTimeBridge fuelBurnTimeBridge;
     private volatile boolean running;
 
@@ -376,28 +377,29 @@ public final class SfxEnergyService implements Listener {
     private void tickAllRegulators() {
         syncOpenSfxEnergyGeneratorSessionsToState();
         topology.rebuildIfStale();
-        nodeGridStatuses.clear();
+        long topologyRevision = topology.revision();
+        boolean topologyChanged = topologyRevision != nodeGridStatusTopologyRevision;
+        Set<UUID> liveComponents = topologyChanged ? new LinkedHashSet<>() : Set.of();
+        if (topologyChanged) {
+            nodeGridStatuses.clear();
+        }
 
         for (SfxTopologyComponent component : topology.components()) {
-            SfxEnergyGridStatus status = switch (component.status()) {
-                case ONLINE -> SfxEnergyGridStatus.ONLINE;
-                case MULTIPLE_CONTROLLERS -> SfxEnergyGridStatus.MULTIPLE_REGULATORS;
-                case INACTIVE -> SfxEnergyGridStatus.NO_NETWORK;
-            };
-            if (status == SfxEnergyGridStatus.ONLINE && component.members().size() <= 1) {
-                status = SfxEnergyGridStatus.NO_NETWORK;
+            if (topologyChanged) {
+                liveComponents.add(component.componentId());
+                cacheGridStatus(component);
             }
-            for (UUID memberId : component.members()) {
-                nodeGridStatuses.put(memberId, status);
-            }
+            SfxEnergyGridStatus status = gridStatusFor(component);
             if (status != SfxEnergyGridStatus.ONLINE) {
-                for (UUID controllerId : component.controllers()) {
-                    SfxBlockInstanceRecord regulator = blockData.findInstance(controllerId).orElse(null);
-                    if (regulator != null) {
-                        displayStatus(regulator.anchorKey(), status, 0, 0, 0, 0, 0);
+                if (topologyChanged) {
+                    for (UUID controllerId : component.controllers()) {
+                        SfxBlockInstanceRecord regulator = blockData.findInstance(controllerId).orElse(null);
+                        if (regulator != null) {
+                            displayStatus(regulator.anchorKey(), status, 0, 0, 0, 0, 0);
+                        }
                     }
+                    runtimeGrids.remove(component.componentId());
                 }
-                runtimeGrids.remove(component.componentId());
                 continue;
             }
             UUID regulatorId = component.controllers().stream().findFirst().orElse(null);
@@ -412,9 +414,6 @@ public final class SfxEnergyService implements Listener {
             }
             Location regulatorLocation = toLocation(regulator.anchorKey());
             if (regulatorLocation == null) {
-                for (UUID memberId : component.members()) {
-                    nodeGridStatuses.put(memberId, SfxEnergyGridStatus.NO_NETWORK);
-                }
                 runtimeGrids.remove(component.componentId());
                 continue;
             }
@@ -422,24 +421,46 @@ public final class SfxEnergyService implements Listener {
             runtime.executeAt(regulatorLocation, () -> processGrid(grid));
         }
 
-        for (UUID conflictedTerminal : topology.conflictedTerminals()) {
-            nodeGridStatuses.put(conflictedTerminal, SfxEnergyGridStatus.SHARED_NODE_CONFLICT);
-        }
-        for (UUID detachedTerminal : topology.detachedTerminals()) {
-            nodeGridStatuses.put(detachedTerminal, SfxEnergyGridStatus.NO_NETWORK);
+        if (topologyChanged) {
+            for (UUID conflictedTerminal : topology.conflictedTerminals()) {
+                nodeGridStatuses.put(conflictedTerminal, SfxEnergyGridStatus.SHARED_NODE_CONFLICT);
+            }
+            for (UUID detachedTerminal : topology.detachedTerminals()) {
+                nodeGridStatuses.put(detachedTerminal, SfxEnergyGridStatus.NO_NETWORK);
+            }
+            runtimeGrids.keySet().removeIf(componentId -> !liveComponents.contains(componentId));
+            nodeGridStatusTopologyRevision = topologyRevision;
         }
     }
 
+    private void cacheGridStatus(SfxTopologyComponent component) {
+        SfxEnergyGridStatus status = gridStatusFor(component);
+        for (UUID memberId : component.members()) {
+            nodeGridStatuses.put(memberId, status);
+        }
+    }
+
+    private SfxEnergyGridStatus gridStatusFor(SfxTopologyComponent component) {
+        SfxEnergyGridStatus status = switch (component.status()) {
+            case ONLINE -> SfxEnergyGridStatus.ONLINE;
+            case MULTIPLE_CONTROLLERS -> SfxEnergyGridStatus.MULTIPLE_REGULATORS;
+            case INACTIVE -> SfxEnergyGridStatus.NO_NETWORK;
+        };
+        if (status == SfxEnergyGridStatus.ONLINE && component.backboneNodes().size() + component.terminals().size() <= 1) {
+            return SfxEnergyGridStatus.NO_NETWORK;
+        }
+        return status;
+    }
+
     private EnergyRuntimeGrid runtimeGridFor(SfxTopologyComponent component, SfxBlockInstanceRecord regulator) {
-        Set<UUID> members = new LinkedHashSet<>(component.members());
-        Set<UUID> controllers = new LinkedHashSet<>(component.controllers());
         EnergyRuntimeGrid cached = runtimeGrids.get(component.componentId());
         if (cached != null
-                && cached.regulatorId().equals(regulator.instanceId())
-                && cached.members().equals(members)
-                && cached.controllers().equals(controllers)) {
+                && cached.topologyRevision() == component.topologyRevision()
+                && cached.regulatorId().equals(regulator.instanceId())) {
             return cached;
         }
+        Set<UUID> members = new LinkedHashSet<>(component.members());
+        Set<UUID> controllers = new LinkedHashSet<>(component.controllers());
         List<SfxBlockInstanceRecord> capacitors = new ArrayList<>();
         List<SfxBlockInstanceRecord> generators = new ArrayList<>();
         List<SfxBlockInstanceRecord> chargers = new ArrayList<>();
@@ -477,6 +498,7 @@ public final class SfxEnergyService implements Listener {
         });
         EnergyRuntimeGrid grid = new EnergyRuntimeGrid(
                 component.componentId(),
+                component.topologyRevision(),
                 regulator.instanceId(),
                 regulator.anchorKey(),
                 Set.copyOf(members),
@@ -897,6 +919,7 @@ public final class SfxEnergyService implements Listener {
 
     private record EnergyRuntimeGrid(
             UUID componentId,
+            long topologyRevision,
             UUID regulatorId,
             SfxBlockAnchorKey regulatorKey,
             Set<UUID> members,

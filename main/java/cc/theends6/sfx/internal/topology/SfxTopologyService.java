@@ -45,6 +45,7 @@ public final class SfxTopologyService {
     }
 
     public synchronized void rebuild() {
+        long revision = blockData.revision();
         components.clear();
         memberToComponent.clear();
         detachedTerminals.clear();
@@ -74,7 +75,7 @@ public final class SfxTopologyService {
                 continue;
             }
             UUID componentId = instance.instanceId();
-            SfxTopologyComponent component = new SfxTopologyComponent(componentId, domainPolicy.domain());
+            SfxTopologyComponent component = new SfxTopologyComponent(componentId, domainPolicy.domain(), revision);
             ArrayDeque<UUID> queue = new ArrayDeque<>();
             queue.add(instance.instanceId());
             visitedBackbone.add(instance.instanceId());
@@ -140,7 +141,11 @@ public final class SfxTopologyService {
                 }
             }
         }
-        rebuiltAtRevision = blockData.revision();
+        rebuiltAtRevision = revision;
+    }
+
+    public synchronized long revision() {
+        return rebuiltAtRevision;
     }
 
     public synchronized Collection<SfxTopologyComponent> components() {
