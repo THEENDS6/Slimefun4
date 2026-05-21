@@ -69,6 +69,7 @@ public final class SfxVirtualContainerService implements Listener {
     private final SfxRuntime runtime;
     private final Map<SfxVirtualContainerKey, SfxVirtualContainer> containers = new ConcurrentHashMap<>();
     private final Map<SfxBlockAnchorKey, SfxVirtualContainerKey> locationIndex = new ConcurrentHashMap<>();
+    private volatile long registryRevision;
     private volatile boolean running = true;
 
     public SfxVirtualContainerService(JavaPlugin plugin, SfxRuntime runtime) {
@@ -97,6 +98,7 @@ public final class SfxVirtualContainerService implements Listener {
         SfxVirtualContainerKey key = keyForInventory(inventory, location).orElseGet(() -> SfxVirtualContainerKey.single(location));
         SfxVirtualContainer container = containers.computeIfAbsent(key, ignored -> new SfxVirtualContainer(key, inventory.getSize()));
         registerIndex(container.key());
+        registryRevision++;
         container.cargoAttached(true);
         reconcileBeforeAccess(container, inventory);
         return Optional.of(container);
@@ -121,6 +123,10 @@ public final class SfxVirtualContainerService implements Listener {
 
     public Collection<SfxVirtualContainer> containers() {
         return List.copyOf(containers.values());
+    }
+
+    public long registryRevision() {
+        return registryRevision;
     }
 
     public void hydrateExternalBeforeLogic() {
@@ -964,6 +970,7 @@ public final class SfxVirtualContainerService implements Listener {
         inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory));
         containers.remove(container.key());
         unregisterIndex(container.key());
+        registryRevision++;
     }
 
     public void shutdown() {
@@ -971,6 +978,7 @@ public final class SfxVirtualContainerService implements Listener {
         flushAllToWorld();
         containers.clear();
         locationIndex.clear();
+        registryRevision++;
     }
 
     private void scheduleExternalSync() {

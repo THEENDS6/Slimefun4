@@ -49,7 +49,9 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -127,7 +129,9 @@ public final class SfxBasicMachineBlockListener implements Listener {
             }
             blockData.registerSingleBlock(marker.itemId(), event.getBlockPlaced().getLocation(), event.getBlockPlaced().getType(), event.getPlayer().getUniqueId());
             if (furnaceStats(marker.itemId()) != null) {
-                enhancedFurnaces.add(SfxBlockAnchorKey.fromLocation(event.getBlockPlaced().getLocation()));
+                SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(event.getBlockPlaced().getLocation());
+                enhancedFurnaces.add(key);
+                markFurnaceExternalDirty(key);
             }
         });
     }
@@ -181,7 +185,9 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (furnaceStats(typeId) != null) {
             SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(clicked.getLocation());
             enhancedFurnaces.add(key);
-            virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState()).sleeping(false);
+            VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
+            state.sleeping(false);
+            state.externalDirty(true);
             return;
         }
         if ("sf:composter".equals(typeId)) {
@@ -217,7 +223,9 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        enhancedFurnaces.add(SfxBlockAnchorKey.fromLocation(event.getBlock().getLocation()));
+        SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(event.getBlock().getLocation());
+        enhancedFurnaces.add(key);
+        markFurnaceExternalDirty(key);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -230,7 +238,9 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        enhancedFurnaces.add(SfxBlockAnchorKey.fromLocation(event.getBlock().getLocation()));
+        SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(event.getBlock().getLocation());
+        enhancedFurnaces.add(key);
+        markFurnaceExternalDirty(key);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -244,7 +254,13 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
         enhancedFurnaces.add(key);
         viewedFurnaces.add(key);
-        virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState()).sleeping(false);
+        VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
+        if (!state.initialized() || state.externalDirty()) {
+            hydrateVirtualFurnaceState(state, event.getInventory());
+        } else {
+            applyVirtualFurnaceStateToInventory(state, event.getInventory());
+        }
+        state.sleeping(false);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -253,11 +269,26 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
+        VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
+        hydrateVirtualFurnaceState(state, event.getInventory());
         runtime.executeAtLater(furnace.getLocation(), 1L, () -> {
             if (event.getInventory().getViewers().isEmpty()) {
                 viewedFurnaces.remove(key);
             }
         });
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onFurnaceInventoryClick(InventoryClickEvent event) {
+        markFurnaceInventoryExternalLater(event.getInventory());
+        if (event.getClickedInventory() != null && event.getClickedInventory() != event.getInventory()) {
+            markFurnaceInventoryExternalLater(event.getClickedInventory());
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onFurnaceInventoryDrag(InventoryDragEvent event) {
+        markFurnaceInventoryExternalLater(event.getInventory());
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -275,7 +306,37 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
         enhancedFurnaces.add(key);
+        markFurnaceInventoryExternalLater(inventory);
         virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState()).sleeping(false);
+    }
+
+    private void markFurnaceInventoryExternalLater(Inventory inventory) {
+        if (!(inventory.getHolder() instanceof Furnace furnace)) {
+            return;
+        }
+        if (furnaceStats(furnace.getLocation()) == null) {
+            return;
+        }
+        SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
+        enhancedFurnaces.add(key);
+        VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
+        state.externalDirty(true);
+        state.sleeping(false);
+        runtime.executeAtLater(furnace.getLocation(), 1L, () -> {
+            VirtualFurnaceState latest = virtualFurnaces.get(key);
+            if (latest != null && latest.externalDirty()) {
+                hydrateVirtualFurnaceState(latest, inventory);
+            }
+        });
+    }
+
+    private void markFurnaceExternalDirty(SfxBlockAnchorKey key) {
+        if (key == null) {
+            return;
+        }
+        VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
+        state.externalDirty(true);
+        state.sleeping(false);
     }
 
     public Optional<Inventory> findOutputChestFor(Block machineBlock, ItemStack output) {
@@ -739,20 +800,21 @@ public final class SfxBasicMachineBlockListener implements Listener {
             viewedFurnaces.remove(key);
             return;
         }
-        BlockState blockState = block.getState();
-        if (!(blockState instanceof Furnace furnace)) {
+        VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
+        if (!state.initialized() || state.externalDirty()) {
+            hydrateVirtualFurnaceFromWorld(block, state);
+        }
+        if (!state.initialized()) {
             return;
         }
-        FurnaceInventory inventory = furnace.getInventory();
-        VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
         state.sleeping(false);
 
         int elapsed = Math.max(1, context.elapsedTicksInt());
-        int cookTime = currentCookTime(inventory, state);
+        int cookTime = currentCookTime(state);
         boolean forceVisual = false;
 
         for (int tick = 0; tick < elapsed; tick++) {
-            ItemStack input = inventory.getSmelting();
+            ItemStack input = state.smelting();
             VirtualFurnaceRecipe recipe = resolveFurnaceRecipe(input).orElse(null);
             if (recipe == null || input == null || input.getType().isAir()) {
                 if (state.cookProgress() != 0 || state.inputKey() != null) {
@@ -760,7 +822,6 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 }
                 state.cookProgress(0);
                 state.inputKey(null);
-                
                 burnOneVirtualFuelTick(state);
                 continue;
             }
@@ -774,19 +835,18 @@ public final class SfxBasicMachineBlockListener implements Listener {
             }
 
             ItemStack result = applyEnhancedFurnaceFortune(recipe.result(), input.getType(), stats);
-            boolean canSmelt = canFitResult(inventory, result);
+            boolean canSmelt = canFitResult(state, result);
             if (!canSmelt) {
                 if (state.cookProgress() != 0) {
                     state.cookProgress(0);
                     forceVisual = true;
                 }
-                
                 burnOneVirtualFuelTick(state);
                 continue;
             }
 
             if (state.burnTimeRemaining() <= 0) {
-                ItemStack fuel = inventory.getFuel();
+                ItemStack fuel = state.fuel();
                 int burnTicks = enhancedFuelTicks(fuel, stats);
                 if (burnTicks <= 0) {
                     if (state.cookProgress() != 0) {
@@ -795,7 +855,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
                     }
                     break;
                 }
-                consumeFuel(inventory, fuel);
+                consumeFuel(state, fuel);
                 state.burnTimeRemaining(burnTicks);
                 state.burnTimeTotal(burnTicks);
                 forceVisual = true;
@@ -805,20 +865,20 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 burnOneVirtualFuelTick(state);
                 state.cookProgress(state.cookProgress() + Math.max(1, stats.processingSpeed()));
                 if (state.cookProgress() >= cookTime) {
-                    consumeSmeltingInput(inventory, input);
-                    pushFurnaceResult(inventory, result);
+                    consumeSmeltingInput(state, input);
+                    pushFurnaceResult(state, result);
                     state.cookProgress(0);
-                    ItemStack next = inventory.getSmelting();
+                    ItemStack next = state.smelting();
                     state.inputKey(next == null || next.getType().isAir() ? null : inputKey(next));
                     forceVisual = true;
                 }
             }
         }
 
-        if (!context.hasViewers() && state.burnTimeRemaining() <= 0 && !canStartOrContinueVirtualSmelting(inventory, stats)) {
+        if (!context.hasViewers() && state.burnTimeRemaining() <= 0 && !canStartOrContinueVirtualSmelting(state, stats)) {
             state.sleeping(true);
         }
-        syncVirtualFurnaceVisualAndRestoreInventory(furnace, inventory, state, cookTime, forceVisual, context.hasViewers());
+        syncVirtualFurnaceWorld(block, state, cookTime, forceVisual, context.hasViewers());
     }
 
     private void burnOneVirtualFuelTick(VirtualFurnaceState state) {
@@ -827,8 +887,8 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
     }
 
-    private int currentCookTime(FurnaceInventory inventory, VirtualFurnaceState state) {
-        ItemStack input = inventory.getSmelting();
+    private int currentCookTime(VirtualFurnaceState state) {
+        ItemStack input = state.smelting();
         VirtualFurnaceRecipe recipe = resolveFurnaceRecipe(input).orElse(null);
         if (recipe != null) {
             return Math.max(1, recipe.cookingTime());
@@ -836,17 +896,17 @@ public final class SfxBasicMachineBlockListener implements Listener {
         return Math.max(1, state.cookTimeTotal());
     }
 
-    private boolean canStartOrContinueVirtualSmelting(FurnaceInventory inventory, FurnaceStats stats) {
-        ItemStack input = inventory.getSmelting();
+    private boolean canStartOrContinueVirtualSmelting(VirtualFurnaceState state, FurnaceStats stats) {
+        ItemStack input = state.smelting();
         VirtualFurnaceRecipe recipe = resolveFurnaceRecipe(input).orElse(null);
         if (recipe == null || input == null || input.getType().isAir()) {
             return false;
         }
         ItemStack result = recipe.result();
-        if (!canFitResult(inventory, result)) {
+        if (!canFitResult(state, result)) {
             return false;
         }
-        return enhancedFuelTicks(inventory.getFuel(), stats) > 0;
+        return state.burnTimeRemaining() > 0 || enhancedFuelTicks(state.fuel(), stats) > 0;
     }
 
     private Optional<VirtualFurnaceRecipe> resolveFurnaceRecipe(ItemStack input) {
@@ -988,6 +1048,62 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 || name.contains("PALE_OAK");
     }
 
+    private void consumeFuel(VirtualFurnaceState state, ItemStack fuel) {
+        if (fuel == null || fuel.getType().isAir()) {
+            return;
+        }
+        if (fuel.getType() == Material.LAVA_BUCKET) {
+            state.fuel(new ItemStack(Material.BUCKET, 1));
+            state.mirrorDirty(true);
+            return;
+        }
+        int next = fuel.getAmount() - 1;
+        if (next <= 0) {
+            state.fuel(null);
+        } else {
+            ItemStack updated = fuel.clone();
+            updated.setAmount(next);
+            state.fuel(updated);
+        }
+        state.mirrorDirty(true);
+    }
+
+    private void consumeSmeltingInput(VirtualFurnaceState state, ItemStack input) {
+        if (input == null || input.getType().isAir()) {
+            return;
+        }
+        int next = input.getAmount() - 1;
+        if (next <= 0) {
+            state.smelting(null);
+        } else {
+            ItemStack updated = input.clone();
+            updated.setAmount(next);
+            state.smelting(updated);
+        }
+        state.mirrorDirty(true);
+    }
+
+    private boolean canFitResult(VirtualFurnaceState state, ItemStack result) {
+        ItemStack existing = state.result();
+        return existing == null || existing.getType().isAir()
+                || (existing.isSimilar(result) && existing.getAmount() + result.getAmount() <= existing.getMaxStackSize());
+    }
+
+    private void pushFurnaceResult(VirtualFurnaceState state, ItemStack result) {
+        ItemStack existing = state.result();
+        if (existing == null || existing.getType().isAir()) {
+            state.result(result.clone());
+            state.mirrorDirty(true);
+            return;
+        }
+        if (existing.isSimilar(result)) {
+            ItemStack updated = existing.clone();
+            updated.setAmount(Math.min(updated.getMaxStackSize(), updated.getAmount() + result.getAmount()));
+            state.result(updated);
+            state.mirrorDirty(true);
+        }
+    }
+
     private void consumeFuel(FurnaceInventory inventory, ItemStack fuel) {
         if (fuel == null || fuel.getType().isAir()) {
             return;
@@ -1031,6 +1147,91 @@ public final class SfxBasicMachineBlockListener implements Listener {
             existing.setAmount(Math.min(existing.getMaxStackSize(), existing.getAmount() + result.getAmount()));
             inventory.setResult(existing);
         }
+    }
+
+    private void hydrateVirtualFurnaceFromWorld(Block block, VirtualFurnaceState state) {
+        if (block == null || state == null || block.getType() != Material.FURNACE) {
+            return;
+        }
+        BlockState blockState = block.getState();
+        if (!(blockState instanceof Furnace furnace)) {
+            return;
+        }
+        hydrateVirtualFurnaceState(state, furnace.getInventory());
+    }
+
+    private void hydrateVirtualFurnaceState(VirtualFurnaceState state, Inventory inventory) {
+        if (state == null || inventory == null) {
+            return;
+        }
+        ItemStack smelting = null;
+        ItemStack fuel = null;
+        ItemStack result = null;
+        if (inventory instanceof FurnaceInventory furnaceInventory) {
+            smelting = furnaceInventory.getSmelting();
+            fuel = furnaceInventory.getFuel();
+            result = furnaceInventory.getResult();
+        } else {
+            if (inventory.getSize() > 0) {
+                smelting = inventory.getItem(0);
+            }
+            if (inventory.getSize() > 1) {
+                fuel = inventory.getItem(1);
+            }
+            if (inventory.getSize() > 2) {
+                result = inventory.getItem(2);
+            }
+        }
+        state.smelting(smelting);
+        state.fuel(fuel);
+        state.result(result);
+        state.initialized(true);
+        state.externalDirty(false);
+        state.mirrorDirty(false);
+    }
+
+    private void applyVirtualFurnaceStateToInventory(VirtualFurnaceState state, Inventory inventory) {
+        if (state == null || inventory == null || !state.initialized()) {
+            return;
+        }
+        if (inventory instanceof FurnaceInventory furnaceInventory) {
+            furnaceInventory.setSmelting(cloneSlot(state.smelting()));
+            furnaceInventory.setFuel(cloneSlot(state.fuel()));
+            furnaceInventory.setResult(cloneSlot(state.result()));
+            state.mirrorDirty(false);
+            return;
+        }
+        if (inventory.getSize() > 0) {
+            inventory.setItem(0, cloneSlot(state.smelting()));
+        }
+        if (inventory.getSize() > 1) {
+            inventory.setItem(1, cloneSlot(state.fuel()));
+        }
+        if (inventory.getSize() > 2) {
+            inventory.setItem(2, cloneSlot(state.result()));
+        }
+        state.mirrorDirty(false);
+    }
+
+    private void syncVirtualFurnaceWorld(Block block, VirtualFurnaceState state, int cookTimeTotal, boolean force, boolean hasViewers) {
+        if (block == null || state == null || block.getType() != Material.FURNACE) {
+            return;
+        }
+        boolean burning = state.burnTimeRemaining() > 0;
+        if (!hasViewers && !state.mirrorDirty() && !force) {
+            syncFurnaceLitAppearance(block, state, burning);
+            return;
+        }
+        BlockState blockState = block.getState();
+        if (!(blockState instanceof Furnace furnace)) {
+            return;
+        }
+        FurnaceInventory inventory = furnace.getInventory();
+        if (state.mirrorDirty() || hasViewers) {
+            applyVirtualFurnaceStateToInventory(state, inventory);
+        }
+        syncVirtualFurnaceVisual(furnace, inventory, state, cookTimeTotal, force, hasViewers);
+        restoreFurnaceInventory(inventory, state.smelting(), state.fuel(), state.result());
     }
 
     private void syncVirtualFurnaceVisualAndRestoreInventory(Furnace furnace, FurnaceInventory inventory, VirtualFurnaceState state, int cookTimeTotal, boolean force, boolean hasViewers) {
@@ -1086,13 +1287,28 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private void syncFurnaceLitAppearance(Furnace furnace, boolean lit) {
-        Block block = furnace.getBlock();
+        syncFurnaceLitAppearance(furnace.getBlock(), null, lit);
+    }
+
+    private void syncFurnaceLitAppearance(Block block, VirtualFurnaceState state, boolean lit) {
+        if (block == null) {
+            return;
+        }
+        if (state != null && state.lastLit() != null && state.lastLit() == lit) {
+            return;
+        }
         BlockData data = block.getBlockData();
         if (!(data instanceof Lightable lightable) || lightable.isLit() == lit) {
+            if (state != null) {
+                state.lastLit(lit);
+            }
             return;
         }
         lightable.setLit(lit);
         block.setBlockData(lightable, false);
+        if (state != null) {
+            state.lastLit(lit);
+        }
     }
 
     private String inputKey(ItemStack input) {
@@ -1139,17 +1355,29 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private void dropStoredContents(Block block) {
+        SfxBlockAnchorKey key = block == null ? null : SfxBlockAnchorKey.fromLocation(block.getLocation());
+        VirtualFurnaceState state = key == null ? null : virtualFurnaces.get(key);
+        if (state != null && state.initialized()) {
+            dropStoredSlot(block, state.smelting());
+            dropStoredSlot(block, state.fuel());
+            dropStoredSlot(block, state.result());
+            return;
+        }
         if (!(block.getState() instanceof InventoryHolder holder)) {
             return;
         }
         Inventory inventory = holder.getInventory();
         for (ItemStack content : inventory.getContents()) {
-            if (content == null || content.getType().isAir()) {
-                continue;
-            }
-            SfxBlockDrops.dropItem(block, content.clone());
+            dropStoredSlot(block, content);
         }
         inventory.clear();
+    }
+
+    private void dropStoredSlot(Block block, ItemStack content) {
+        if (content == null || content.getType().isAir()) {
+            return;
+        }
+        SfxBlockDrops.dropItem(block, content.clone());
     }
 
     private FurnaceStats furnaceStatsAt(SfxAnchorRecord anchor) {
@@ -1200,6 +1428,9 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private static final class VirtualFurnaceState {
+        private ItemStack smelting;
+        private ItemStack fuel;
+        private ItemStack result;
         private int burnTimeRemaining;
         private int burnTimeTotal;
         private int cookProgress;
@@ -1207,18 +1438,46 @@ public final class SfxBasicMachineBlockListener implements Listener {
         private int cookTimeTotal = 200;
         private long lastLogicTick;
         private boolean sleeping;
+        private boolean initialized;
+        private boolean externalDirty = true;
+        private boolean mirrorDirty;
+        private Boolean lastLit;
         private String inputKey;
+
+        ItemStack smelting() {
+            return cloneSlotInternal(smelting);
+        }
+
+        void smelting(ItemStack smelting) {
+            this.smelting = cloneSlotInternal(smelting);
+        }
+
+        ItemStack fuel() {
+            return cloneSlotInternal(fuel);
+        }
+
+        void fuel(ItemStack fuel) {
+            this.fuel = cloneSlotInternal(fuel);
+        }
+
+        ItemStack result() {
+            return cloneSlotInternal(result);
+        }
+
+        void result(ItemStack result) {
+            this.result = cloneSlotInternal(result);
+        }
 
         int burnTimeRemaining() {
             return burnTimeRemaining;
         }
 
         void burnTimeRemaining(int burnTimeRemaining) {
-            this.burnTimeRemaining = burnTimeRemaining;
+            this.burnTimeRemaining = Math.max(0, burnTimeRemaining);
         }
 
         void burnTimeTotal(int burnTimeTotal) {
-            this.burnTimeTotal = burnTimeTotal;
+            this.burnTimeTotal = Math.max(0, burnTimeTotal);
         }
 
         int cookTimeTotal() {
@@ -1234,7 +1493,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
 
         void cookProgress(int cookProgress) {
-            this.cookProgress = cookProgress;
+            this.cookProgress = Math.max(0, cookProgress);
         }
 
         int visualTick() {
@@ -1244,7 +1503,6 @@ public final class SfxBasicMachineBlockListener implements Listener {
         void visualTick(int visualTick) {
             this.visualTick = visualTick;
         }
-
 
         long lastLogicTick() {
             return lastLogicTick;
@@ -1262,12 +1520,51 @@ public final class SfxBasicMachineBlockListener implements Listener {
             this.sleeping = sleeping;
         }
 
+        boolean initialized() {
+            return initialized;
+        }
+
+        void initialized(boolean initialized) {
+            this.initialized = initialized;
+        }
+
+        boolean externalDirty() {
+            return externalDirty;
+        }
+
+        void externalDirty(boolean externalDirty) {
+            this.externalDirty = externalDirty;
+        }
+
+        boolean mirrorDirty() {
+            return mirrorDirty;
+        }
+
+        void mirrorDirty(boolean mirrorDirty) {
+            this.mirrorDirty = mirrorDirty;
+        }
+
+        Boolean lastLit() {
+            return lastLit;
+        }
+
+        void lastLit(boolean lastLit) {
+            this.lastLit = lastLit;
+        }
+
         String inputKey() {
             return inputKey;
         }
 
         void inputKey(String inputKey) {
             this.inputKey = inputKey;
+        }
+
+        private static ItemStack cloneSlotInternal(ItemStack stack) {
+            if (stack == null || stack.getType().isAir()) {
+                return null;
+            }
+            return stack.clone();
         }
     }
 

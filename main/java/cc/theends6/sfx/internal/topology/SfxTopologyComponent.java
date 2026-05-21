@@ -8,14 +8,16 @@ import java.util.UUID;
 public final class SfxTopologyComponent {
     private final UUID componentId;
     private final SfxTopologyDomainKey domain;
+    private final long topologyRevision;
     private final Set<UUID> backboneNodes = new LinkedHashSet<>();
     private final Set<UUID> controllers = new LinkedHashSet<>();
     private final Set<UUID> terminals = new LinkedHashSet<>();
     private SfxTopologyStatus status = SfxTopologyStatus.INACTIVE;
 
-    SfxTopologyComponent(UUID componentId, SfxTopologyDomainKey domain) {
+    SfxTopologyComponent(UUID componentId, SfxTopologyDomainKey domain, long topologyRevision) {
         this.componentId = componentId;
         this.domain = domain;
+        this.topologyRevision = topologyRevision;
     }
 
     public UUID componentId() {
@@ -24,6 +26,10 @@ public final class SfxTopologyComponent {
 
     public SfxTopologyDomainKey domain() {
         return domain;
+    }
+
+    public long topologyRevision() {
+        return topologyRevision;
     }
 
     public Set<UUID> backboneNodes() {
