@@ -36,7 +36,8 @@ public final class SfxYamlContentLoader {
             "sf:electricity",
             "sf:cargo",
             "sf:machines",
-            "sf:technical_components"
+            "sf:technical_components",
+            "sf:gps"
     );
     private static final String ITEMS_PATH = "content/items.yml";
     private static final String ITEMS_DIRECTORY = "content/items";

@@ -13,6 +13,8 @@ import cc.theends6.sfx.internal.command.SfxCommand;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
+import cc.theends6.sfx.internal.decoration.SfxDecorationService;
+import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayListener;
@@ -70,6 +72,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxEnergyService energyService;
     private SfxVirtualContainerService virtualContainerService;
     private SfxCargoService cargoService;
+    private SfxDecorationService decorationService;
+    private SfxGpsService gpsService;
     private SfxRadiationService radiationService;
     private SfxTechnicalGadgetService technicalGadgetService;
     private SfxFloatingTextDisplayService floatingTextDisplayService;
@@ -120,7 +124,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.technicalGadgetService = new SfxTechnicalGadgetService(this, api.runtime(), api.items(), localization);
         this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService, technicalGadgetService.rechargeableItems());
         this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService);
-        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, api.runtime());
+        this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService);
+        this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), blockDataService, decorationService);
+        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, api.runtime());
         this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService);
         this.radiationService = new SfxRadiationService(this, api.runtime(), api.items(), api.itemRegistry(), playerDataService);
 
@@ -147,6 +153,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(energyService, this);
         getServer().getPluginManager().registerEvents(virtualContainerService, this);
         getServer().getPluginManager().registerEvents(cargoService, this);
+        getServer().getPluginManager().registerEvents(decorationService, this);
+        getServer().getPluginManager().registerEvents(gpsService, this);
         getServer().getPluginManager().registerEvents(technicalGadgetService, this);
         getServer().getPluginManager().registerEvents(backpackListener, this);
         getServer().getPluginManager().registerEvents(utilityListener, this);
@@ -158,6 +166,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SfxVanillaGuardListener(this, api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxArmorEffectListener(api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxDebugJoinListener(this, api.runtime(), localization), this);
+        decorationService.start();
         radiationService.start();
 
         SfxCommand command = new SfxCommand(this, api);
@@ -190,6 +199,12 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         if (cargoService != null) {
             cargoService.shutdown();
+        }
+        if (gpsService != null) {
+            gpsService.shutdown();
+        }
+        if (decorationService != null) {
+            decorationService.shutdown();
         }
         if (virtualContainerService != null) {
             virtualContainerService.shutdown();

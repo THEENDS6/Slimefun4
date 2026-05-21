@@ -5,6 +5,8 @@ import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
+import cc.theends6.sfx.internal.decoration.SfxDecorationService;
+import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.Objects;
@@ -58,6 +60,8 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxConfigurableMachineService configurableMachines;
     private final SfxEnergyService energyService;
     private final SfxCargoService cargoService;
+    private final SfxDecorationService decorationService;
+    private final SfxGpsService gpsService;
     private final SfxRuntime runtime;
 
     public SfxPlaceableBlockListener(
@@ -68,6 +72,8 @@ public final class SfxPlaceableBlockListener implements Listener {
             SfxConfigurableMachineService configurableMachines,
             SfxEnergyService energyService,
             SfxCargoService cargoService,
+            SfxDecorationService decorationService,
+            SfxGpsService gpsService,
             SfxRuntime runtime
     ) {
         this.items = Objects.requireNonNull(items, "items");
@@ -77,6 +83,8 @@ public final class SfxPlaceableBlockListener implements Listener {
         this.configurableMachines = Objects.requireNonNull(configurableMachines, "configurableMachines");
         this.energyService = Objects.requireNonNull(energyService, "energyService");
         this.cargoService = Objects.requireNonNull(cargoService, "cargoService");
+        this.decorationService = Objects.requireNonNull(decorationService, "decorationService");
+        this.gpsService = Objects.requireNonNull(gpsService, "gpsService");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
     }
 
@@ -97,11 +105,17 @@ public final class SfxPlaceableBlockListener implements Listener {
                 return;
             }
             try {
-                blockData.registerSingleBlock(
+                java.util.UUID instanceId = blockData.registerSingleBlock(
                         marker.itemId(),
                         event.getBlockPlaced().getLocation(),
                         event.getBlockPlaced().getType(),
                         event.getPlayer().getUniqueId());
+                if (decorationService.supportsType(marker.itemId())) {
+                    decorationService.handlePlaced(instanceId, marker.itemId());
+                }
+                if (gpsService.supportsType(marker.itemId())) {
+                    gpsService.handlePlaced(instanceId, marker.itemId());
+                }
             } catch (RuntimeException exception) {
                 event.setCancelled(true);
             }
@@ -466,6 +480,14 @@ public final class SfxPlaceableBlockListener implements Listener {
             cargoService.destroyAnchoredBlock(block, instanceId, typeId);
             return;
         }
+        if (gpsService.supportsType(typeId)) {
+            gpsService.destroyAnchoredBlock(block, instanceId, typeId);
+            return;
+        }
+        if (decorationService.supportsType(typeId)) {
+            decorationService.destroyAnchoredBlock(block, instanceId, typeId);
+            return;
+        }
         dropStoredContents(block);
         dropPluginBlock(block, typeId);
         blockData.unregisterAt(block.getLocation());
@@ -476,7 +498,9 @@ public final class SfxPlaceableBlockListener implements Listener {
                 || electricMachines.supportsType(itemId)
                 || configurableMachines.supportsType(itemId)
                 || energyService.supportsType(itemId)
-                || cargoService.supportsType(itemId)) {
+                || cargoService.supportsType(itemId)
+                || gpsService.supportsType(itemId)
+                || decorationService.supportsType(itemId)) {
             return true;
         }
         

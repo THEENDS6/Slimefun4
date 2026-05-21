@@ -184,7 +184,36 @@ final class LegacySfBootstrapSupport {
                 || id.equals("sf:enhanced_furnace")
                 || id.startsWith("sf:enhanced_furnace_")
                 || id.equals("sf:reinforced_furnace")
-                || id.equals("sf:carbonado_edged_furnace");
+                || id.equals("sf:carbonado_edged_furnace")
+                || isGpsPlaceableBlockId(id)
+                || isDecorativeBlockId(id);
+    }
+
+    private static boolean isGpsPlaceableBlockId(String id) {
+        return id.equals("sf:gps_transmitter")
+                || id.equals("sf:gps_transmitter_2")
+                || id.equals("sf:gps_transmitter_3")
+                || id.equals("sf:gps_transmitter_4")
+                || id.equals("sf:gps_control_panel")
+                || id.equals("sf:gps_geo_scanner")
+                || id.equals("sf:geo_miner")
+                || id.equals("sf:oil_pump")
+                || id.equals("sf:gps_teleporter_pylon")
+                || id.equals("sf:gps_teleportation_matrix")
+                || id.equals("sf:gps_activation_device_shared")
+                || id.equals("sf:gps_activation_device_personal")
+                || id.equals("sf:elevator_plate");
+    }
+
+    private static boolean isDecorativeBlockId(String id) {
+        return id.equals("sf:hardened_glass")
+                || id.equals("sf:wither_proof_obsidian")
+                || id.equals("sf:wither_proof_glass")
+                || id.startsWith("sf:rainbow_wool")
+                || id.startsWith("sf:rainbow_glass")
+                || id.startsWith("sf:rainbow_clay")
+                || id.startsWith("sf:rainbow_concrete")
+                || id.startsWith("sf:rainbow_glazed_terracotta");
     }
 
     private static Map<String, Map<String, Integer>> createLegacyEnchantments() {
