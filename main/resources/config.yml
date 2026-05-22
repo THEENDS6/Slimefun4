@@ -191,6 +191,10 @@ configurable-machines:
     allow-soul-soil: true
 
 energy:
+  storage:
+    
+    
+    hidden-buffer-percent: 5
   regulator-display:
     mode: 'sfx'
     

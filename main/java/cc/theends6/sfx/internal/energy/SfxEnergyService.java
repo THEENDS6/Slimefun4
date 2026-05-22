@@ -631,10 +631,11 @@ public final class SfxEnergyService implements Listener {
                 + configurableMachines.totalStoredEnergy(configurableRuntimeMachines);
         int totalCapacityBefore = totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
                 + configurableMachines.totalCapacity(configurableRuntimeMachines);
+        int totalEffectiveCapacityBefore = totalCapacityBefore + hiddenBufferCapacity(hiddenStorageBaseCapacity(capacitorRefs, generatorRefs));
         boolean autoPauseEnabled = plugin.getConfig().getBoolean("energy.generator-balance.pause-generators-when-grid-full", true);
         int potentialSupply = potentialGeneration(generatorRefs, configurableProducers);
         if (autoPauseEnabled) {
-            applyGeneratorAutoPause(generatorRefs, configurableProducers, totalStoredBefore, totalCapacityBefore, potentialSupply, requestedConsumption);
+            applyGeneratorAutoPause(generatorRefs, configurableProducers, totalStoredBefore, totalEffectiveCapacityBefore, potentialSupply, requestedConsumption);
         } else {
             autoPausedGenerators.clear();
             for (SfxBlockInstanceRecord producer : configurableProducers) {
@@ -776,7 +777,7 @@ public final class SfxEnergyService implements Listener {
                 break;
             }
             int stored = capacitor.state().storedEnergy();
-            int accepted = Math.max(0, Math.min(available, capacitor.definition().capacity() - stored));
+            int accepted = Math.max(0, Math.min(available, effectiveStorageCapacity(capacitor.definition()) - stored));
             if (accepted > 0) {
                 capacitor.state().storedEnergy(stored + accepted);
                 dirtyNodes.add(capacitor.instance().instanceId());
@@ -789,7 +790,7 @@ public final class SfxEnergyService implements Listener {
                 continue;
             }
             int stored = generator.state().storedEnergy();
-            int accepted = Math.max(0, Math.min(available, generator.definition().capacity() - stored));
+            int accepted = Math.max(0, Math.min(available, effectiveStorageCapacity(generator.definition()) - stored));
             if (accepted > 0) {
                 generator.state().storedEnergy(stored + accepted);
                 dirtyNodes.add(generator.instance().instanceId());
@@ -817,8 +818,7 @@ public final class SfxEnergyService implements Listener {
                 + configurableMachines.totalStoredEnergy(configurableRuntimeMachines);
         int totalCapacity = totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
                 + configurableMachines.totalCapacity(configurableRuntimeMachines);
-        boolean hasAutoPaused = generatorRefs.stream().anyMatch(generator -> autoPausedGenerators.contains(generator.instance().instanceId())) || configurableProducers.stream().anyMatch(producer -> configurableMachines.isProducerAutoPaused(producer.instanceId()));
-        int displayStored = hasAutoPaused && totalCapacity > 0 && totalStored >= Math.floor(totalCapacity * 0.99D) ? totalCapacity : totalStored;
+        int displayStored = displayedEnergy(totalStored, totalCapacity);
         int displaySupply = autoPauseEnabled ? potentialSupply : supply;
         int net = displaySupply - requestedConsumption;
         displayStatus(grid.regulatorKey(), SfxEnergyGridStatus.ONLINE, displaySupply, requestedConsumption, net, displayStored, totalCapacity);
@@ -864,14 +864,11 @@ public final class SfxEnergyService implements Listener {
             }
             return;
         }
-        if (totalStored < Math.floor(totalCapacity * 0.99D)) {
+        if (totalStored < totalCapacity) {
             autoPausedGenerators.clear();
             for (SfxBlockInstanceRecord producer : configurableProducers) {
                 configurableMachines.setProducerAutoPaused(producer.instanceId(), false);
             }
-            return;
-        }
-        if (totalStored < totalCapacity) {
             return;
         }
         int surplus = potentialSupply - requestedConsumption;
@@ -1026,6 +1023,42 @@ public final class SfxEnergyService implements Listener {
                 + Math.abs((long) first.y() - second.y())
                 + Math.abs((long) first.z() - second.z());
         return distance > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) distance;
+    }
+
+    private int storageBufferPercent() {
+        return Math.max(0, Math.min(100, plugin.getConfig().getInt("energy.storage.hidden-buffer-percent", 5)));
+    }
+
+    private int hiddenBufferCapacity(int visibleCapacity) {
+        if (visibleCapacity <= 0) {
+            return 0;
+        }
+        return (int) Math.ceil(visibleCapacity * storageBufferPercent() / 100.0D);
+    }
+
+    private int effectiveStorageCapacity(SfxEnergyComponentDefinition definition) {
+        if (definition == null || definition.capacity() <= 0) {
+            return 0;
+        }
+        if (definition.componentType() == SfxEnergyComponentType.CAPACITOR || definition.componentType() == SfxEnergyComponentType.GENERATOR) {
+            return definition.capacity() + hiddenBufferCapacity(definition.capacity());
+        }
+        return definition.capacity();
+    }
+
+    private int hiddenStorageBaseCapacity(List<SfxEnergyNodeRef> capacitorRefs, List<SfxEnergyNodeRef> generatorRefs) {
+        int total = 0;
+        for (SfxEnergyNodeRef capacitor : capacitorRefs) {
+            total += Math.max(0, capacitor.definition().capacity());
+        }
+        for (SfxEnergyNodeRef generator : generatorRefs) {
+            total += Math.max(0, generator.definition().capacity());
+        }
+        return total;
+    }
+
+    private int displayedEnergy(int stored, int capacity) {
+        return Math.max(0, Math.min(stored, Math.max(0, capacity)));
     }
 
     private int totalStoredEnergy(List<SfxEnergyNodeRef> capacitorRefs, List<SfxEnergyNodeRef> generatorRefs, List<SfxEnergyNodeRef> chargerRefs, List<SfxBlockInstanceRecord> consumers) {
@@ -1201,7 +1234,7 @@ public final class SfxEnergyService implements Listener {
             dirtyNodes.add(instance.instanceId());
         }
 
-        if (definition.capacity() > 0 && state.storedEnergy() + definition.energyPerTick() > definition.capacity()) {
+        if (definition.capacity() > 0 && state.storedEnergy() + definition.energyPerTick() > effectiveStorageCapacity(definition)) {
             return 0;
         }
 
@@ -1324,7 +1357,7 @@ public final class SfxEnergyService implements Listener {
         capacitorProjector.scheduleUpdate(
                 capacitor.instance().instanceId(),
                 toLocation(capacitor.instance().anchorKey()),
-                capacitor.state().storedEnergy(),
+                displayedEnergy(capacitor.state().storedEnergy(), capacitor.definition().capacity()),
                 capacitor.definition().capacity());
     }
 
@@ -1577,7 +1610,7 @@ public final class SfxEnergyService implements Listener {
         return new SfxEnergyInspection(
                 instance.typeId(),
                 definition.componentType(),
-                state.storedEnergy(),
+                displayedEnergy(state.storedEnergy(), definition.capacity()),
                 definition.capacity(),
                 generation,
                 isConnectedToOnlineGrid(instanceId),
@@ -1692,7 +1725,7 @@ public final class SfxEnergyService implements Listener {
                 autoPaused++;
             }
         }
-        return new SfxEnergyGridInspection(grid.regulatorKey(), grid.status(), grid.members().size(), generators, reactors, capacitors, connectors, consumers, stored, capacity, generation, consumption, autoPaused);
+        return new SfxEnergyGridInspection(grid.regulatorKey(), grid.status(), grid.members().size(), generators, reactors, capacitors, connectors, consumers, displayedEnergy(stored, capacity), capacity, generation, consumption, autoPaused);
     }
 
     public record SfxEnergyInspection(
