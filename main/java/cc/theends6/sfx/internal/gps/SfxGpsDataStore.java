@@ -8,6 +8,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +26,7 @@ final class SfxGpsDataStore {
     private final Map<UUID, List<SfxGpsWaypoint>> waypoints = new ConcurrentHashMap<>();
     private final Map<String, EnumMap<SfxGeoResourceType, Integer>> geoResources = new ConcurrentHashMap<>();
     private final Map<String, Long> scannedChunks = new ConcurrentHashMap<>();
+    private final Map<String, String> elevatorNames = new ConcurrentHashMap<>();
 
     SfxGpsDataStore(JavaPlugin plugin) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -35,6 +37,7 @@ final class SfxGpsDataStore {
         waypoints.clear();
         geoResources.clear();
         scannedChunks.clear();
+        elevatorNames.clear();
         if (!file.isFile()) {
             return;
         }
@@ -85,6 +88,15 @@ final class SfxGpsDataStore {
                 scannedChunks.put(key, scanned.getLong(key));
             }
         }
+        ConfigurationSection elevators = yaml.getConfigurationSection("elevators");
+        if (elevators != null) {
+            for (String key : elevators.getKeys(false)) {
+                String name = elevators.getString(key, "");
+                if (name != null && !name.isBlank()) {
+                    elevatorNames.put(key, name);
+                }
+            }
+        }
         ConfigurationSection resources = yaml.getConfigurationSection("geoResources");
         if (resources != null) {
             for (String key : resources.getKeys(false)) {
@@ -122,6 +134,9 @@ final class SfxGpsDataStore {
         for (Map.Entry<String, Long> entry : scannedChunks.entrySet()) {
             yaml.set("scannedChunks." + entry.getKey(), entry.getValue());
         }
+        for (Map.Entry<String, String> entry : elevatorNames.entrySet()) {
+            yaml.set("elevators." + entry.getKey(), entry.getValue());
+        }
         for (Map.Entry<String, EnumMap<SfxGeoResourceType, Integer>> entry : geoResources.entrySet()) {
             for (Map.Entry<SfxGeoResourceType, Integer> value : entry.getValue().entrySet()) {
                 yaml.set("geoResources." + entry.getKey() + "." + value.getKey().name().toLowerCase(), value.getValue());
@@ -154,6 +169,30 @@ final class SfxGpsDataStore {
         }
         list.removeIf(waypoint -> waypoint.name().equalsIgnoreCase(name));
         save();
+    }
+
+    synchronized String elevatorName(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return null;
+        }
+        return elevatorNames.get(elevatorKey(location));
+    }
+
+    synchronized void setElevatorName(Location location, String name) {
+        if (location == null || location.getWorld() == null) {
+            return;
+        }
+        String key = elevatorKey(location);
+        if (name == null || name.isBlank()) {
+            elevatorNames.remove(key);
+        } else {
+            elevatorNames.put(key, name);
+        }
+        save();
+    }
+
+    private String elevatorKey(Location location) {
+        return location.getWorld().getUID() + ":" + location.getBlockX() + ":" + location.getBlockY() + ":" + location.getBlockZ();
     }
 
     synchronized boolean isScanned(SfxGeoChunkKey key) {
@@ -264,48 +303,55 @@ final class SfxGpsDataStore {
     }
 
     private int oilSupply(Biome biome) {
-        return switch (biome) {
-            case BEACH, STONY_SHORE -> 6;
-            case RIVER -> 16;
-            case SWAMP -> 20;
-            case ICE_SPIKES, FROZEN_OCEAN, FROZEN_RIVER, FROZEN_PEAKS, SNOWY_SLOPES -> 24;
-            case BADLANDS, WOODED_BADLANDS, ERODED_BADLANDS -> 40;
-            case DESERT -> 45;
-            case OCEAN, COLD_OCEAN, WARM_OCEAN, LUKEWARM_OCEAN -> 64;
-            case DEEP_OCEAN, DEEP_COLD_OCEAN, DEEP_LUKEWARM_OCEAN -> 72;
-            case WINDSWEPT_HILLS, WINDSWEPT_GRAVELLY_HILLS, JAGGED_PEAKS -> 20;
-            case SNOWY_PLAINS, SNOWY_TAIGA -> 16;
-            case MUSHROOM_FIELDS -> 20;
+        String key = biomeKey(biome);
+        return switch (key) {
+            case "BEACH", "BEACHES", "STONY_SHORE", "STONE_BEACH", "COLD_BEACH" -> 6;
+            case "RIVER" -> 16;
+            case "SWAMP", "SWAMPLAND", "MANGROVE_SWAMP" -> 20;
+            case "ICE_SPIKES", "FROZEN_OCEAN", "FROZEN_RIVER", "FROZEN_PEAKS", "SNOWY_SLOPES", "ICE_FLATS", "MUTATED_ICE_FLATS" -> 24;
+            case "BADLANDS", "WOODED_BADLANDS", "ERODED_BADLANDS", "MESA", "MESA_ROCK", "MESA_CLEAR_ROCK", "MUTATED_MESA", "MUTATED_MESA_ROCK", "MUTATED_MESA_CLEAR_ROCK" -> 40;
+            case "DESERT", "DESERT_HILLS", "MUTATED_DESERT" -> 45;
+            case "OCEAN", "COLD_OCEAN", "WARM_OCEAN", "LUKEWARM_OCEAN" -> 64;
+            case "DEEP_OCEAN", "DEEP_COLD_OCEAN", "DEEP_LUKEWARM_OCEAN", "DEEP_WARM_OCEAN", "DEEP_FROZEN_OCEAN" -> 72;
+            case "WINDSWEPT_HILLS", "WINDSWEPT_GRAVELLY_HILLS", "JAGGED_PEAKS", "EXTREME_HILLS", "SMALLER_EXTREME_HILLS", "MUTATED_EXTREME_HILLS", "EXTREME_HILLS_WITH_TREES", "MUTATED_EXTREME_HILLS_WITH_TREES" -> 20;
+            case "SNOWY_PLAINS", "SNOWY_TAIGA", "ICE_PLAINS", "TAIGA_COLD", "TAIGA_COLD_HILLS" -> 16;
+            case "MUSHROOM_FIELDS", "MUSHROOM_ISLAND", "MUSHROOM_ISLAND_SHORE" -> 20;
             default -> 10;
         };
     }
 
     private int saltSupply(Biome biome, int fallback) {
-        return switch (biome) {
-            case SWAMP -> 20;
-            case BEACH, WINDSWEPT_GRAVELLY_HILLS, STONY_SHORE, STONY_PEAKS, DRIPSTONE_CAVES -> 40;
-            case OCEAN, COLD_OCEAN, WARM_OCEAN, LUKEWARM_OCEAN, DEEP_OCEAN, DEEP_COLD_OCEAN, DEEP_LUKEWARM_OCEAN -> 60;
+        String key = biomeKey(biome);
+        return switch (key) {
+            case "SWAMP", "SWAMPLAND", "MANGROVE_SWAMP" -> 20;
+            case "BEACH", "BEACHES", "COLD_BEACH", "WINDSWEPT_GRAVELLY_HILLS", "STONY_SHORE", "STONE_BEACH", "STONY_PEAKS", "DRIPSTONE_CAVES", "EXTREME_HILLS", "SMALLER_EXTREME_HILLS", "MUTATED_EXTREME_HILLS" -> 40;
+            case "OCEAN", "COLD_OCEAN", "WARM_OCEAN", "LUKEWARM_OCEAN", "FROZEN_OCEAN", "DEEP_OCEAN", "DEEP_COLD_OCEAN", "DEEP_LUKEWARM_OCEAN", "DEEP_WARM_OCEAN", "DEEP_FROZEN_OCEAN" -> 60;
             default -> fallback;
         };
     }
 
     private int uraniumSupply(Biome biome) {
-        return switch (biome) {
-            case DESERT, BEACH, STONY_SHORE -> 5;
-            case JAGGED_PEAKS, STONY_PEAKS, WINDSWEPT_HILLS, WINDSWEPT_GRAVELLY_HILLS -> 8;
-            case BADLANDS, ERODED_BADLANDS, WOODED_BADLANDS, DRIPSTONE_CAVES -> 12;
-            case BASALT_DELTAS -> 16;
+        String key = biomeKey(biome);
+        return switch (key) {
+            case "DESERT", "DESERT_HILLS", "MUTATED_DESERT", "BEACH", "BEACHES", "STONY_SHORE", "STONE_BEACH", "COLD_BEACH" -> 5;
+            case "JAGGED_PEAKS", "STONY_PEAKS", "WINDSWEPT_HILLS", "WINDSWEPT_GRAVELLY_HILLS", "EXTREME_HILLS", "SMALLER_EXTREME_HILLS", "MUTATED_EXTREME_HILLS", "EXTREME_HILLS_WITH_TREES", "MUTATED_EXTREME_HILLS_WITH_TREES" -> 8;
+            case "BADLANDS", "ERODED_BADLANDS", "WOODED_BADLANDS", "DRIPSTONE_CAVES", "MESA", "MESA_ROCK", "MESA_CLEAR_ROCK", "MUTATED_MESA", "MUTATED_MESA_ROCK", "MUTATED_MESA_CLEAR_ROCK" -> 12;
             default -> 4;
         };
     }
 
     private int netherIceSupply(Biome biome) {
-        return switch (biome) {
-            case NETHER_WASTES, SOUL_SAND_VALLEY -> 32;
-            case CRIMSON_FOREST, WARPED_FOREST -> 48;
-            case BASALT_DELTAS -> 64;
+        String key = biomeKey(biome);
+        return switch (key) {
+            case "NETHER_WASTES", "SOUL_SAND_VALLEY", "HELL" -> 32;
+            case "CRIMSON_FOREST", "WARPED_FOREST" -> 48;
+            case "BASALT_DELTAS" -> 64;
             default -> 32;
         };
+    }
+
+    private String biomeKey(Biome biome) {
+        return biome == null ? "" : biome.toString().toUpperCase(Locale.ROOT);
     }
 
     static SfxGpsWaypoint waypoint(UUID owner, String name, Location location) {
