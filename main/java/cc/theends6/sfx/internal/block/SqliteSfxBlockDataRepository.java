@@ -63,6 +63,8 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
         try (Connection connection = openTransientConnection(); Statement statement = connection.createStatement()) {
             statement.execute("PRAGMA journal_mode=WAL");
             statement.execute("PRAGMA foreign_keys=ON");
+            statement.execute("PRAGMA busy_timeout=5000");
+            statement.execute("PRAGMA synchronous=NORMAL");
             statement.execute("""
                     CREATE TABLE IF NOT EXISTS sfx_block_instances (
                       instance_id TEXT PRIMARY KEY,
@@ -462,6 +464,7 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
         try (Statement statement = connection.createStatement()) {
             statement.execute("PRAGMA foreign_keys=ON");
             statement.execute("PRAGMA busy_timeout=5000");
+            statement.execute("PRAGMA synchronous=NORMAL");
         }
         return connection;
     }

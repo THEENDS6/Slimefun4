@@ -1051,9 +1051,6 @@ public final class SfxElectricMachineService implements Listener {
         if (location == null) {
             return false;
         }
-        if (!runtime.isOwnedByCurrentRegion(location)) {
-            return runtime.supplyAt(location, () -> isInstanceChunkLoaded(instance));
-        }
         org.bukkit.World world = location.getWorld();
         return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);
     }

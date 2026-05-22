@@ -30,6 +30,14 @@ repositories {
         name = 'papermc'
         url = 'https://repo.papermc.io/repository/maven-public/'
     }
+    maven {
+        name = 'codemc-releases'
+        url = 'https://repo.codemc.io/repository/maven-releases/'
+    }
+    maven {
+        name = 'codemc-snapshots'
+        url = 'https://repo.codemc.io/repository/maven-snapshots/'
+    }
 }
 
 configurations {
@@ -52,6 +60,9 @@ sourceSets {
 
 dependencies {
     compileOnly "io.papermc.paper:paper-api:${rootProject.ext.paperApiVersion}"
+    compileOnly "com.github.retrooper:packetevents-spigot:2.11.2"
+    shade "com.github.retrooper:packetevents-spigot:2.11.2"
+    compileOnly "org.xerial:sqlite-jdbc:3.50.3.0"
     shade "org.xerial:sqlite-jdbc:3.50.3.0"
 }
 

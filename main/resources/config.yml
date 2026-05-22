@@ -12,6 +12,8 @@ storage:
     sqlite-file: 'data/block-data.db'
     # -1 follows Bukkit/Paper ticks-per.autosave when possible.
     autosave-interval-ticks: -1
+  gps-data:
+    sqlite-file: 'data/gps-data.db'
 
 backpacks:
   allow-foreign-open: true

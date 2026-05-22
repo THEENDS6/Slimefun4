@@ -22,6 +22,7 @@ import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
+import cc.theends6.sfx.internal.gps.SqliteSfxGpsDataRepository;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayListener;
@@ -57,8 +58,7 @@ import cc.theends6.sfx.internal.research.SfxResearchYamlLoader;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.io.File;
 import java.util.Objects;
-import com.github.retrooper.packetevents.PacketEvents;
-import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
+import java.lang.reflect.Method;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -90,19 +90,44 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxInfusedHopperService infusedHopperService;
     private SfxHologramProjectorService hologramProjectorService;
     private SfxIndustrialMinerService industrialMinerService;
+    private Object packetEventsApi;
     private boolean packetEventsLoaded;
+    private boolean packetEventsUnavailable;
 
     @Override
     public void onLoad() {
-        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
-        PacketEvents.getAPI().load();
-        packetEventsLoaded = true;
+        try {
+            Class<?> packetEventsClass = Class.forName("com.github.retrooper.packetevents.PacketEvents", true, getClassLoader());
+            Class<?> builderClass = Class.forName("io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder", true, getClassLoader());
+            Object api = invokeSingleArgStaticReturning(builderClass, "build", this);
+            invokeSingleArgStatic(packetEventsClass, "setAPI", api);
+            packetEventsApi = packetEventsClass.getMethod("getAPI").invoke(null);
+            invokePacketEventsApi("load");
+            packetEventsLoaded = true;
+        } catch (Throwable throwable) {
+            packetEventsUnavailable = true;
+            logPacketEventsStartupFailure(throwable);
+        }
     }
 
     @Override
     public void onEnable() {
+        if (packetEventsUnavailable || !packetEventsLoaded) {
+            if (!packetEventsUnavailable) {
+                logPacketEventsStartupFailure(new IllegalStateException("PacketEvents was not initialized during onLoad"));
+            }
+            getLogger().severe("SlimeFunX is disabling because PacketEvents is not available or failed to initialize.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         if (packetEventsLoaded) {
-            PacketEvents.getAPI().init();
+            try {
+                invokePacketEventsApi("init");
+            } catch (Throwable throwable) {
+                logPacketEventsStartupFailure(throwable);
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
         }
         saveDefaultConfig();
         syncBundledLanguages();
@@ -138,7 +163,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService, technicalGadgetService.rechargeableItems());
         this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService);
         this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService);
-        this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), localization, blockDataService, decorationService, electricMachineService);
+        this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), localization, blockDataService, decorationService, electricMachineService, new SqliteSfxGpsDataRepository(this, gpsDataFile()));
         this.ancientAltarService = new SfxAncientAltarService(this, api.runtime(), api.items(), api.itemRegistry(), localization, blockDataService);
         this.spawnerService = new SfxSpawnerService(this, api.items(), localization, blockDataService);
         this.infusedHopperService = new SfxInfusedHopperService(this, api.runtime(), api.items(), blockDataService);
@@ -146,7 +171,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.blockPlacerService = new SfxBlockPlacerService(api.runtime(), api.items(), blockDataService, spawnerService, hologramProjectorService, infusedHopperService);
         this.industrialMinerService = new SfxIndustrialMinerService(this, api.runtime(), api.items(), localization, blockDataService);
         SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, ancientAltarService, spawnerService, blockPlacerService, infusedHopperService, hologramProjectorService, api.runtime());
-        this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService);
+        this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService, gpsService);
         this.radiationService = new SfxRadiationService(this, api.runtime(), api.items(), api.itemRegistry(), playerDataService);
 
         this.backpackListener = new SfxBackpackListener(this, api.runtime(), api.items(), localization, playerDataService, researchService);
@@ -213,6 +238,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         if (api != null) {
             api.menus().closeAll();
         }
+        if (blockPersistenceListener != null) {
+            blockPersistenceListener.shutdown();
+        }
         if (backpackListener != null) {
             backpackListener.shutdown();
         }
@@ -261,15 +289,17 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         if (playerDataService != null) {
             playerDataService.shutdown();
         }
-        if (blockPersistenceListener != null) {
-            blockPersistenceListener.shutdown();
-        }
         if (blockDataService != null) {
             blockDataService.shutdown();
         }
         if (packetEventsLoaded) {
-            PacketEvents.getAPI().terminate();
+            try {
+                invokePacketEventsApi("terminate");
+            } catch (Throwable throwable) {
+                getLogger().warning("Failed to terminate PacketEvents cleanly: " + throwable.getMessage());
+            }
             packetEventsLoaded = false;
+            packetEventsApi = null;
         }
     }
 
@@ -388,4 +418,62 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         String configured = getConfig().getString("storage.block-data.sqlite-file", "data/block-data.db");
         return new File(getDataFolder(), configured);
     }
+
+    private File gpsDataFile() {
+        String configured = getConfig().getString("storage.gps-data.sqlite-file", "data/gps-data.db");
+        return new File(getDataFolder(), configured);
+    }
+
+    private void invokePacketEventsApi(String methodName) throws Exception {
+        if (packetEventsApi == null) {
+            throw new IllegalStateException("PacketEvents API is not initialized");
+        }
+        Method method = packetEventsApi.getClass().getMethod(methodName);
+        forceAccessible(method);
+        method.invoke(packetEventsApi);
+    }
+
+    private Object invokeSingleArgStaticReturning(Class<?> target, String methodName, Object argument) throws Exception {
+        for (Method method : target.getMethods()) {
+            if (method.getName().equals(methodName) && method.getParameterCount() == 1 && method.getParameterTypes()[0].isInstance(argument)) {
+                forceAccessible(method);
+                return method.invoke(null, argument);
+            }
+        }
+        throw new NoSuchMethodException(target.getName() + "." + methodName + "(<arg>)");
+    }
+
+    private void invokeSingleArgStatic(Class<?> target, String methodName, Object argument) throws Exception {
+        for (Method method : target.getMethods()) {
+            if (method.getName().equals(methodName) && method.getParameterCount() == 1 && method.getParameterTypes()[0].isInstance(argument)) {
+                forceAccessible(method);
+                method.invoke(null, argument);
+                return;
+            }
+        }
+        throw new NoSuchMethodException(target.getName() + "." + methodName + "(<api>)");
+    }
+
+    private void forceAccessible(Method method) {
+        try {
+            method.setAccessible(true);
+        } catch (RuntimeException ignored) {
+            // Some runtime/module configurations may reject setAccessible. Invocation can still succeed
+            // for public members on public classes, so do not fail startup solely on this best-effort step.
+        }
+    }
+
+    private void logPacketEventsStartupFailure(Throwable throwable) {
+        Throwable cause = throwable;
+        if (throwable instanceof java.lang.reflect.InvocationTargetException invocationTargetException && invocationTargetException.getTargetException() != null) {
+            cause = invocationTargetException.getTargetException();
+        }
+        getLogger().severe("==================================================");
+        getLogger().severe("SlimeFunX failed to start: PacketEvents is missing or incompatible.");
+        getLogger().severe("Install a PacketEvents build compatible with this Paper/Folia server.");
+        getLogger().severe("SFX uses PacketEvents for virtual floating text, packet displays and altar visuals.");
+        getLogger().severe("Cause: " + cause.getClass().getSimpleName() + ": " + String.valueOf(cause.getMessage()));
+        getLogger().severe("==================================================");
+    }
 }
+

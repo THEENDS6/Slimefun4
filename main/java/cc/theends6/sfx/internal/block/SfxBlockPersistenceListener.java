@@ -1,10 +1,12 @@
 package cc.theends6.sfx.internal.block;
 
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.persistence.SfxDirtyPersistenceService;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import org.bukkit.Chunk;
-import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -18,20 +20,22 @@ public final class SfxBlockPersistenceListener implements Listener {
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final SfxBlockDataService blockData;
+    private final List<SfxDirtyPersistenceService> dirtyServices;
     private final long autosaveIntervalTicks;
     private volatile boolean running = true;
 
-    public SfxBlockPersistenceListener(JavaPlugin plugin, SfxRuntime runtime, SfxBlockDataService blockData) {
+    public SfxBlockPersistenceListener(JavaPlugin plugin, SfxRuntime runtime, SfxBlockDataService blockData, SfxDirtyPersistenceService... dirtyServices) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
+        this.dirtyServices = normalizeServices(blockData, dirtyServices);
         this.autosaveIntervalTicks = resolveAutosaveInterval(plugin);
         scheduleAutosaveFlush();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldSave(WorldSaveEvent event) {
-        blockData.requestDirtyFlushAsync();
+        requestAllDirtyFlushes();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -44,7 +48,9 @@ public final class SfxBlockPersistenceListener implements Listener {
     public void onChunkUnload(ChunkUnloadEvent event) {
         Chunk chunk = event.getChunk();
         blockData.reconcileChunk(chunk.getWorld(), chunk.getX(), chunk.getZ());
-        blockData.requestChunkFlushAsync(chunk.getWorld(), chunk.getX(), chunk.getZ());
+        for (SfxDirtyPersistenceService service : dirtyServices) {
+            service.requestChunkFlushAsync(chunk.getWorld(), chunk.getX(), chunk.getZ());
+        }
     }
 
     public void shutdown() {
@@ -59,9 +65,28 @@ public final class SfxBlockPersistenceListener implements Listener {
             if (!running) {
                 return;
             }
-            blockData.requestDirtyFlushAsync();
+            requestAllDirtyFlushes();
             scheduleAutosaveFlush();
         });
+    }
+
+    private void requestAllDirtyFlushes() {
+        for (SfxDirtyPersistenceService service : dirtyServices) {
+            service.requestDirtyFlushAsync();
+        }
+    }
+
+    private List<SfxDirtyPersistenceService> normalizeServices(SfxBlockDataService blockData, SfxDirtyPersistenceService[] services) {
+        List<SfxDirtyPersistenceService> normalized = new ArrayList<>();
+        normalized.add(blockData);
+        if (services != null) {
+            for (SfxDirtyPersistenceService service : services) {
+                if (service != null && !normalized.contains(service)) {
+                    normalized.add(service);
+                }
+            }
+        }
+        return List.copyOf(normalized);
     }
 
     private long resolveAutosaveInterval(JavaPlugin plugin) {
