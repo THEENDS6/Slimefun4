@@ -704,22 +704,9 @@ public final class SfxEnergyService implements Listener {
             if (remainingDemand <= 0) {
                 continue;
             }
-            for (SfxEnergyNodeRef capacitor : capacitorRefs) {
-                if (remainingDemand <= 0) {
-                    break;
-                }
-                int stored = capacitor.state().storedEnergy();
-                if (stored <= 0) {
-                    continue;
-                }
-                int offered = Math.min(stored, remainingDemand);
-                int accepted = electricMachines.chargeConsumer(consumer.instanceId(), offered);
-                if (accepted <= 0) {
-                    break;
-                }
-                capacitor.state().storedEnergy(stored - accepted);
-                dirtyNodes.add(capacitor.instance().instanceId());
-                remainingDemand -= accepted;
+            remainingDemand = drainCapacitorsToElectricConsumer(capacitorRefs, dirtyNodes, consumer, remainingDemand, true);
+            if (remainingDemand > 0) {
+                drainCapacitorsToElectricConsumer(capacitorRefs, dirtyNodes, consumer, remainingDemand, false);
             }
         }
         for (SfxBlockInstanceRecord consumer : configurableConsumers) {
@@ -727,22 +714,9 @@ public final class SfxEnergyService implements Listener {
             if (remainingDemand <= 0) {
                 continue;
             }
-            for (SfxEnergyNodeRef capacitor : capacitorRefs) {
-                if (remainingDemand <= 0) {
-                    break;
-                }
-                int stored = capacitor.state().storedEnergy();
-                if (stored <= 0) {
-                    continue;
-                }
-                int offered = Math.min(stored, remainingDemand);
-                int accepted = configurableMachines.chargeConsumer(consumer.instanceId(), offered);
-                if (accepted <= 0) {
-                    break;
-                }
-                capacitor.state().storedEnergy(stored - accepted);
-                dirtyNodes.add(capacitor.instance().instanceId());
-                remainingDemand -= accepted;
+            remainingDemand = drainCapacitorsToConfigurableConsumer(capacitorRefs, dirtyNodes, consumer, remainingDemand, true);
+            if (remainingDemand > 0) {
+                drainCapacitorsToConfigurableConsumer(capacitorRefs, dirtyNodes, consumer, remainingDemand, false);
             }
         }
 
@@ -751,20 +725,9 @@ public final class SfxEnergyService implements Listener {
             if (remainingDemand <= 0 || !canChargeAnyInput(charger.state())) {
                 continue;
             }
-            for (SfxEnergyNodeRef capacitor : capacitorRefs) {
-                if (remainingDemand <= 0) {
-                    break;
-                }
-                int stored = capacitor.state().storedEnergy();
-                if (stored <= 0) {
-                    continue;
-                }
-                int accepted = Math.min(stored, remainingDemand);
-                charger.state().storedEnergy(charger.state().storedEnergy() + accepted);
-                capacitor.state().storedEnergy(stored - accepted);
-                dirtyNodes.add(charger.instance().instanceId());
-                dirtyNodes.add(capacitor.instance().instanceId());
-                remainingDemand -= accepted;
+            remainingDemand = drainCapacitorsToCharger(capacitorRefs, dirtyNodes, charger, remainingDemand, true);
+            if (remainingDemand > 0) {
+                drainCapacitorsToCharger(capacitorRefs, dirtyNodes, charger, remainingDemand, false);
             }
         }
 
@@ -1045,6 +1008,80 @@ public final class SfxEnergyService implements Listener {
         }
         return definition.capacity();
     }
+
+    private int drainCapacitorsToElectricConsumer(List<SfxEnergyNodeRef> capacitorRefs, Set<UUID> dirtyNodes, SfxBlockInstanceRecord consumer, int remainingDemand, boolean hiddenOnly) {
+        int remaining = Math.max(0, remainingDemand);
+        for (SfxEnergyNodeRef capacitor : capacitorRefs) {
+            if (remaining <= 0) {
+                break;
+            }
+            int available = capacitorDrainableEnergy(capacitor, hiddenOnly);
+            if (available <= 0) {
+                continue;
+            }
+            int offered = Math.min(available, remaining);
+            int accepted = electricMachines.chargeConsumer(consumer.instanceId(), offered);
+            if (accepted <= 0) {
+                break;
+            }
+            capacitor.state().storedEnergy(capacitor.state().storedEnergy() - accepted);
+            dirtyNodes.add(capacitor.instance().instanceId());
+            remaining -= accepted;
+        }
+        return remaining;
+    }
+
+    private int drainCapacitorsToConfigurableConsumer(List<SfxEnergyNodeRef> capacitorRefs, Set<UUID> dirtyNodes, SfxBlockInstanceRecord consumer, int remainingDemand, boolean hiddenOnly) {
+        int remaining = Math.max(0, remainingDemand);
+        for (SfxEnergyNodeRef capacitor : capacitorRefs) {
+            if (remaining <= 0) {
+                break;
+            }
+            int available = capacitorDrainableEnergy(capacitor, hiddenOnly);
+            if (available <= 0) {
+                continue;
+            }
+            int offered = Math.min(available, remaining);
+            int accepted = configurableMachines.chargeConsumer(consumer.instanceId(), offered);
+            if (accepted <= 0) {
+                break;
+            }
+            capacitor.state().storedEnergy(capacitor.state().storedEnergy() - accepted);
+            dirtyNodes.add(capacitor.instance().instanceId());
+            remaining -= accepted;
+        }
+        return remaining;
+    }
+
+    private int drainCapacitorsToCharger(List<SfxEnergyNodeRef> capacitorRefs, Set<UUID> dirtyNodes, SfxEnergyNodeRef charger, int remainingDemand, boolean hiddenOnly) {
+        int remaining = Math.max(0, remainingDemand);
+        for (SfxEnergyNodeRef capacitor : capacitorRefs) {
+            if (remaining <= 0) {
+                break;
+            }
+            int available = capacitorDrainableEnergy(capacitor, hiddenOnly);
+            if (available <= 0) {
+                continue;
+            }
+            int accepted = Math.min(available, remaining);
+            charger.state().storedEnergy(charger.state().storedEnergy() + accepted);
+            capacitor.state().storedEnergy(capacitor.state().storedEnergy() - accepted);
+            dirtyNodes.add(charger.instance().instanceId());
+            dirtyNodes.add(capacitor.instance().instanceId());
+            remaining -= accepted;
+        }
+        return remaining;
+    }
+
+    private int capacitorDrainableEnergy(SfxEnergyNodeRef capacitor, boolean hiddenOnly) {
+        int stored = Math.max(0, capacitor.state().storedEnergy());
+        int visibleCapacity = Math.max(0, capacitor.definition().capacity());
+        if (hiddenOnly) {
+            return Math.max(0, stored - visibleCapacity);
+        }
+        return Math.min(stored, visibleCapacity);
+    }
+
 
     private int hiddenStorageBaseCapacity(List<SfxEnergyNodeRef> capacitorRefs, List<SfxEnergyNodeRef> generatorRefs) {
         int total = 0;
