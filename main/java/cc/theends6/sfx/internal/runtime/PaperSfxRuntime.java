@@ -12,6 +12,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class PaperSfxRuntime implements SfxRuntime {
+    private static final long CROSS_REGION_WAIT_TIMEOUT_MILLIS = 1000L;
+    private volatile long lastCrossRegionWarningMillis;
+
     private final JavaPlugin plugin;
 
     public PaperSfxRuntime(JavaPlugin plugin) {
@@ -79,16 +82,9 @@ public final class PaperSfxRuntime implements SfxRuntime {
         if (isOwnedByCurrentRegion(location)) {
             return supplier.get();
         }
-        CompletableFuture<T> future = new CompletableFuture<>();
-        plugin.getServer().getRegionScheduler().run(plugin, location, scheduledTask -> {
-            try {
-                future.complete(supplier.get());
-            } catch (Throwable throwable) {
-                future.completeExceptionally(throwable);
-            }
-        });
+        logCrossRegionBlockingWarning(location);
         try {
-            return future.get(10L, TimeUnit.SECONDS);
+            return supplyAtAsync(location, supplier).get(CROSS_REGION_WAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while waiting for region task at " + location, e);
@@ -102,8 +98,43 @@ public final class PaperSfxRuntime implements SfxRuntime {
             }
             throw new IllegalStateException("Region task failed at " + location, cause);
         } catch (TimeoutException e) {
-            throw new IllegalStateException("Timed out waiting for region task at " + location, e);
+            throw new IllegalStateException("Timed out waiting for region task at " + location + " after " + CROSS_REGION_WAIT_TIMEOUT_MILLIS + "ms", e);
         }
+    }
+
+    @Override
+    public <T> CompletableFuture<T> supplyAtAsync(Location location, Supplier<T> supplier) {
+        Objects.requireNonNull(location, "location");
+        Objects.requireNonNull(location.getWorld(), "location.world");
+        Objects.requireNonNull(supplier, "supplier");
+        if (isOwnedByCurrentRegion(location)) {
+            try {
+                return CompletableFuture.completedFuture(supplier.get());
+            } catch (Throwable throwable) {
+                CompletableFuture<T> failed = new CompletableFuture<>();
+                failed.completeExceptionally(throwable);
+                return failed;
+            }
+        }
+        CompletableFuture<T> future = new CompletableFuture<>();
+        plugin.getServer().getRegionScheduler().run(plugin, location, scheduledTask -> {
+            try {
+                future.complete(supplier.get());
+            } catch (Throwable throwable) {
+                future.completeExceptionally(throwable);
+            }
+        });
+        return future;
+    }
+
+    private void logCrossRegionBlockingWarning(Location location) {
+        long now = System.currentTimeMillis();
+        long previous = lastCrossRegionWarningMillis;
+        if (now - previous < 30_000L) {
+            return;
+        }
+        lastCrossRegionWarningMillis = now;
+        plugin.getLogger().warning("Blocking cross-region supplyAt call at " + location + ". This path should be migrated to supplyAtAsync on Folia.");
     }
 
     @Override

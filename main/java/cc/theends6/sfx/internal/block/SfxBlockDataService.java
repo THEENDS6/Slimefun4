@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.internal.persistence.SfxDirtyPersistenceService;
+
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -20,7 +22,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class SfxBlockDataService {
+public final class SfxBlockDataService implements SfxDirtyPersistenceService {
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final SfxBlockDataRepository repository;
@@ -220,10 +222,12 @@ public final class SfxBlockDataService {
         revision.incrementAndGet();
     }
 
+    @Override
     public void requestDirtyFlushAsync() {
         persistBatchAsync(snapshotAllDirty());
     }
 
+    @Override
     public void requestChunkFlushAsync(World world, int chunkX, int chunkZ) {
         if (world == null) {
             return;
@@ -235,6 +239,7 @@ public final class SfxBlockDataService {
         requestDirtyFlushAsync();
     }
 
+    @Override
     public void flushAllBlocking() {
         PersistenceBatch batch;
         synchronized (this) {
@@ -303,6 +308,7 @@ public final class SfxBlockDataService {
         }
     }
 
+    @Override
     public synchronized void shutdown() {
         shuttingDown = true;
         flushAllBlocking();

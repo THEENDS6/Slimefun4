@@ -12,6 +12,8 @@ storage:
     sqlite-file: 'data/block-data.db'
     
     autosave-interval-ticks: -1
+  gps-data:
+    sqlite-file: 'data/gps-data.db'
 
 backpacks:
   allow-foreign-open: true

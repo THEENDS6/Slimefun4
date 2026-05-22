@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -104,6 +105,17 @@ public final class SfxVirtualContainerService implements Listener {
         return Optional.of(container);
     }
 
+
+    public CompletableFuture<Optional<SfxVirtualContainer>> ensureRegisteredAsync(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return CompletableFuture.completedFuture(Optional.empty());
+        }
+        if (owns(location)) {
+            return CompletableFuture.completedFuture(ensureRegistered(location));
+        }
+        return runtime.supplyAtAsync(location, () -> ensureRegistered(location));
+    }
+
     public Optional<SfxVirtualContainer> findRegistered(Location location) {
         if (location == null || location.getWorld() == null) {
             return Optional.empty();
@@ -175,6 +187,21 @@ public final class SfxVirtualContainerService implements Listener {
         ItemStack[] simulated = container.snapshot();
         CraftingTransactionStatus status = simulateCrafting(simulated, ingredients, outputs);
         return new CraftingTransactionResult(status);
+    }
+
+
+    public CompletableFuture<CraftingTransactionResult> checkCraftingTransactionAsync(Location location, List<IngredientRequest> ingredients, List<ItemStack> outputs) {
+        if (location != null && location.getWorld() != null && !owns(location)) {
+            return runtime.supplyAtAsync(location, () -> checkCraftingTransaction(location, ingredients, outputs));
+        }
+        return CompletableFuture.completedFuture(checkCraftingTransaction(location, ingredients, outputs));
+    }
+
+    public CompletableFuture<CraftingTransactionResult> commitCraftingTransactionAsync(Location location, List<IngredientRequest> ingredients, List<ItemStack> outputs) {
+        if (location != null && location.getWorld() != null && !owns(location)) {
+            return runtime.supplyAtAsync(location, () -> commitCraftingTransaction(location, ingredients, outputs));
+        }
+        return CompletableFuture.completedFuture(commitCraftingTransaction(location, ingredients, outputs));
     }
 
     public CraftingTransactionResult commitCraftingTransaction(Location location, List<IngredientRequest> ingredients, List<ItemStack> outputs) {
@@ -358,10 +385,7 @@ public final class SfxVirtualContainerService implements Listener {
             return;
         }
         if (!owns(location)) {
-            runtime.supplyAt(location, () -> {
-                reconcileForMemoryAccess(container);
-                return null;
-            });
+            runtime.executeAt(location, () -> reconcileForMemoryAccess(container));
             return;
         }
         inventoryFor(container).ifPresent(inventory -> reconcileBeforeAccess(container, inventory));
@@ -376,10 +400,7 @@ public final class SfxVirtualContainerService implements Listener {
             return;
         }
         if (!owns(location)) {
-            runtime.supplyAt(location, () -> {
-                pushIfDirty(container);
-                return null;
-            });
+            runtime.executeAt(location, () -> pushIfDirty(container));
             return;
         }
         inventoryFor(container).ifPresent(inventory -> syncToWorld(container, inventory));

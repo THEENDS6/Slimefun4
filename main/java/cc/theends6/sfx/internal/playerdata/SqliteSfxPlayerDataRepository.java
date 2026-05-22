@@ -24,7 +24,10 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
 
     @Override
     public void initialize() throws SQLException {
-        databaseFile.getParentFile().mkdirs();
+        File parent = databaseFile.getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) {
+            throw new SQLException("Failed to create player data directory: " + parent.getAbsolutePath());
+        }
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException exception) {
@@ -33,6 +36,8 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
         try (Connection connection = openConnection(); Statement statement = connection.createStatement()) {
             statement.execute("PRAGMA journal_mode=WAL");
             statement.execute("PRAGMA foreign_keys=ON");
+            statement.execute("PRAGMA busy_timeout=5000");
+            statement.execute("PRAGMA synchronous=NORMAL");
             statement.execute("""
                     CREATE TABLE IF NOT EXISTS sfx_player_profiles (
                       uuid TEXT PRIMARY KEY,
@@ -148,13 +153,14 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
             }
         }
         profile.markSaved();
-        profile.setLastKnownName(lastKnownName);
-        profile.markSaved();
+        if (lastKnownName != null && !lastKnownName.isBlank() && !lastKnownName.equals(profile.lastKnownName())) {
+            profile.setLastKnownName(lastKnownName);
+        }
         return profile;
     }
 
     @Override
-    public void save(SfxPlayerProfile profile) throws Exception {
+    public synchronized void save(SfxPlayerProfile profile) throws Exception {
         long now = Instant.now().toEpochMilli();
         try (Connection connection = openConnection()) {
             connection.setAutoCommit(false);
@@ -258,7 +264,13 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
     }
 
     private Connection openConnection() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl);
+        Connection connection = DriverManager.getConnection(jdbcUrl);
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("PRAGMA foreign_keys=ON");
+            statement.execute("PRAGMA busy_timeout=5000");
+            statement.execute("PRAGMA synchronous=NORMAL");
+        }
+        return connection;
     }
 
     private void ensureProfileColumn(Connection connection, String columnName, String definition) throws SQLException {

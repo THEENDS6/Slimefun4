@@ -70,7 +70,11 @@ public final class SfxPlayerDataService {
             if (throwable != null || profile == null) {
                 return;
             }
-            enqueueWrite(() -> saveNow(profile));
+            enqueueWrite(() -> {
+                if (!saveNow(profile)) {
+                    profiles.putIfAbsent(uuid, CompletableFuture.completedFuture(profile));
+                }
+            });
         });
     }
 
@@ -142,11 +146,13 @@ public final class SfxPlayerDataService {
         }
     }
 
-    private void saveNow(SfxPlayerProfile profile) {
+    private boolean saveNow(SfxPlayerProfile profile) {
         try {
             repository.save(profile);
+            return true;
         } catch (Exception exception) {
             plugin.getLogger().warning("Failed to save SFX profile for " + profile.ownerId() + ": " + exception.getMessage());
+            return false;
         }
     }
 

@@ -6,6 +6,7 @@ import cc.theends6.sfx.api.menu.SfxMenu;
 import cc.theends6.sfx.api.menu.SfxMenuButton;
 import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.persistence.SfxDirtyPersistenceService;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
@@ -65,7 +66,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 
 
-public final class SfxGpsService implements Listener {
+public final class SfxGpsService implements Listener, SfxDirtyPersistenceService {
     private static final Set<String> PLACEABLE_GPS_TYPES = Set.of(
             "sf:gps_transmitter",
             "sf:gps_transmitter_2",
@@ -155,7 +156,7 @@ public final class SfxGpsService implements Listener {
 
     public SfxGpsService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxMenus menus,
                          SfxLocalization localization, SfxBlockDataService blockData, SfxDecorationService decorations,
-                         SfxElectricMachineService electricMachines) {
+                         SfxElectricMachineService electricMachines, SfxGpsDataRepository dataRepository) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
@@ -164,13 +165,18 @@ public final class SfxGpsService implements Listener {
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.decorations = Objects.requireNonNull(decorations, "decorations");
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
-        this.dataStore = new SfxGpsDataStore(plugin);
-        this.dataStore.load();
+        this.dataStore = new SfxGpsDataStore(plugin, Objects.requireNonNull(dataRepository, "dataRepository"));
+        try {
+            this.dataStore.load();
+        } catch (Exception exception) {
+            throw new IllegalStateException("Failed to initialize SFX GPS data storage", exception);
+        }
         SfxGpsElectricBridge.bind(this);
     }
 
+    @Override
     public void shutdown() {
-        dataStore.save();
+        dataStore.shutdown();
         SfxGpsElectricBridge.unbind(this);
         activeTeleports.clear();
         activeTeleporterMenus.clear();
@@ -180,6 +186,22 @@ public final class SfxGpsService implements Listener {
         elevatorCooldowns.clear();
         pressedPhysicalUses.clear();
         scheduledPhysicalChecks.clear();
+    }
+
+
+    @Override
+    public void requestDirtyFlushAsync() {
+        dataStore.requestDirtyFlushAsync();
+    }
+
+    @Override
+    public void requestChunkFlushAsync(org.bukkit.World world, int chunkX, int chunkZ) {
+        dataStore.requestChunkFlushAsync(world, chunkX, chunkZ);
+    }
+
+    @Override
+    public void flushAllBlocking() {
+        dataStore.flushAllBlocking();
     }
 
     public boolean supportsType(String typeId) {
