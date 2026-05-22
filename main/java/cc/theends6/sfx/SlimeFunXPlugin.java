@@ -8,6 +8,12 @@ import cc.theends6.sfx.internal.bootstrap.SfxYamlContentLoader;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBasicMachineBlockListener;
 import cc.theends6.sfx.internal.block.SfxPlaceableBlockListener;
+import cc.theends6.sfx.internal.machine.SfxIndustrialMinerService;
+import cc.theends6.sfx.internal.listener.SfxAncientRuneEffectListener;
+import cc.theends6.sfx.internal.block.SfxHologramProjectorService;
+import cc.theends6.sfx.internal.block.SfxInfusedHopperService;
+import cc.theends6.sfx.internal.block.SfxBlockPlacerService;
+import cc.theends6.sfx.internal.block.SfxSpawnerService;
 import cc.theends6.sfx.internal.block.SfxBlockPersistenceListener;
 import cc.theends6.sfx.internal.block.SqliteSfxBlockDataRepository;
 import cc.theends6.sfx.internal.command.SfxCommand;
@@ -79,6 +85,11 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxTechnicalGadgetService technicalGadgetService;
     private SfxFloatingTextDisplayService floatingTextDisplayService;
     private SfxAncientAltarService ancientAltarService;
+    private SfxSpawnerService spawnerService;
+    private SfxBlockPlacerService blockPlacerService;
+    private SfxInfusedHopperService infusedHopperService;
+    private SfxHologramProjectorService hologramProjectorService;
+    private SfxIndustrialMinerService industrialMinerService;
     private boolean packetEventsLoaded;
 
     @Override
@@ -129,15 +140,20 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService);
         this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), localization, blockDataService, decorationService, electricMachineService);
         this.ancientAltarService = new SfxAncientAltarService(this, api.runtime(), api.items(), api.itemRegistry(), localization, blockDataService);
-        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, ancientAltarService, api.runtime());
+        this.spawnerService = new SfxSpawnerService(this, api.items(), localization, blockDataService);
+        this.infusedHopperService = new SfxInfusedHopperService(this, api.runtime(), api.items(), blockDataService);
+        this.hologramProjectorService = new SfxHologramProjectorService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService);
+        this.blockPlacerService = new SfxBlockPlacerService(api.runtime(), api.items(), blockDataService, spawnerService, hologramProjectorService, infusedHopperService);
+        this.industrialMinerService = new SfxIndustrialMinerService(this, api.runtime(), api.items(), localization, blockDataService);
+        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, ancientAltarService, spawnerService, blockPlacerService, infusedHopperService, hologramProjectorService, api.runtime());
         this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService);
         this.radiationService = new SfxRadiationService(this, api.runtime(), api.items(), api.itemRegistry(), playerDataService);
 
         this.backpackListener = new SfxBackpackListener(this, api.runtime(), api.items(), localization, playerDataService, researchService);
-        SfxLegacyUtilityListener utilityListener = new SfxLegacyUtilityListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig, blockDataService, radiationService);
+        SfxLegacyUtilityListener utilityListener = new SfxLegacyUtilityListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig, blockDataService, radiationService, playerDataService, researchService);
         SfxLegacyCombatToolListener combatToolListener = new SfxLegacyCombatToolListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig, blockDataService);
         SfxLegacyFoodListener foodListener = new SfxLegacyFoodListener(this, api.runtime(), api.items(), localization);
-        SfxTalismanListener talismanListener = new SfxTalismanListener(this, api.runtime(), api.items(), researchService);
+        SfxTalismanListener talismanListener = new SfxTalismanListener(this, api.runtime(), api.items(), researchService, legacyItemBehaviorConfig.talismans());
 
         getServer().getPluginManager().registerEvents(api.menus(), this);
         getServer().getPluginManager().registerEvents(new SfxFloatingTextDisplayListener(floatingTextDisplayService), this);
@@ -159,19 +175,26 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(decorationService, this);
         getServer().getPluginManager().registerEvents(gpsService, this);
         getServer().getPluginManager().registerEvents(ancientAltarService, this);
+        getServer().getPluginManager().registerEvents(blockPlacerService, this);
+        getServer().getPluginManager().registerEvents(infusedHopperService, this);
+        getServer().getPluginManager().registerEvents(hologramProjectorService, this);
+        getServer().getPluginManager().registerEvents(industrialMinerService, this);
         getServer().getPluginManager().registerEvents(technicalGadgetService, this);
         getServer().getPluginManager().registerEvents(backpackListener, this);
         getServer().getPluginManager().registerEvents(utilityListener, this);
         getServer().getPluginManager().registerEvents(combatToolListener, this);
         getServer().getPluginManager().registerEvents(foodListener, this);
         getServer().getPluginManager().registerEvents(talismanListener, this);
-        getServer().getPluginManager().registerEvents(new SfxSoulboundListener(api.items(), researchService), this);
+        getServer().getPluginManager().registerEvents(new SfxAncientRuneEffectListener(this, api.runtime(), api.items()), this);
+        getServer().getPluginManager().registerEvents(new SfxSoulboundListener(this, api.items(), researchService), this);
         getServer().getPluginManager().registerEvents(new SfxResearchFireworksListener(), this);
         getServer().getPluginManager().registerEvents(new SfxVanillaGuardListener(this, api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxArmorEffectListener(api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxDebugJoinListener(this, api.runtime(), localization), this);
         decorationService.start();
         ancientAltarService.start();
+        infusedHopperService.start();
+        hologramProjectorService.rebuildIndex();
         radiationService.start();
 
         SfxCommand command = new SfxCommand(this, api);
@@ -213,6 +236,12 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         if (ancientAltarService != null) {
             ancientAltarService.shutdown();
+        }
+        if (infusedHopperService != null) {
+            infusedHopperService.shutdown();
+        }
+        if (industrialMinerService != null) {
+            industrialMinerService.shutdown();
         }
         if (virtualContainerService != null) {
             virtualContainerService.shutdown();
@@ -286,6 +315,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         if (ancientAltarService != null) {
             ancientAltarService.reloadRecipes();
             ancientAltarService.rebuildIndex();
+        }
+        if (hologramProjectorService != null) {
+            hologramProjectorService.rebuildIndex();
         }
     }
 

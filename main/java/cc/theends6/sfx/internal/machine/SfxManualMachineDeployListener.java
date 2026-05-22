@@ -156,7 +156,7 @@ public final class SfxManualMachineDeployListener implements Listener {
 
     private int anchorRow(ManualMachineDefinition definition, Material[] pattern) {
         if (usesVirtualFireBase(definition)) {
-            return 3;
+            return 2;
         }
         if (hasMaterial(pattern[6], pattern[7], pattern[8])) {
             return 2;
@@ -238,7 +238,7 @@ public final class SfxManualMachineDeployListener implements Listener {
 
     private boolean shouldOrient(Material material) {
         return switch (material) {
-            case DISPENSER, DROPPER, PISTON, STICKY_PISTON, FURNACE, BLAST_FURNACE, SMOKER -> true;
+            case DISPENSER, DROPPER, PISTON, STICKY_PISTON, FURNACE, BLAST_FURNACE, SMOKER, CHEST -> true;
             default -> false;
         };
     }
@@ -249,6 +249,9 @@ public final class SfxManualMachineDeployListener implements Listener {
                 return BlockFace.UP;
             }
             if ((material == Material.BLAST_FURNACE || material == Material.FURNACE) && dx == 0 && dz == 0 && dy < 0) {
+                return playerFacing.getOppositeFace();
+            }
+            if (material == Material.CHEST && dx == 0 && dz == 0 && dy == 0) {
                 return playerFacing.getOppositeFace();
             }
         }

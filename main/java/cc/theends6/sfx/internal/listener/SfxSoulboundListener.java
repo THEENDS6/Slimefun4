@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,15 +15,20 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxSoulboundListener implements Listener {
     private final SfxItems items;
     private final SfxResearchService researches;
+    private final NamespacedKey soulboundKey;
     private final Map<UUID, Map<Integer, ItemStack>> pending = new HashMap<>();
 
-    public SfxSoulboundListener(SfxItems items, SfxResearchService researches) {
+    public SfxSoulboundListener(JavaPlugin plugin, SfxItems items, SfxResearchService researches) {
         this.items = Objects.requireNonNull(items, "items");
         this.researches = Objects.requireNonNull(researches, "researches");
+        this.soulboundKey = new NamespacedKey(Objects.requireNonNull(plugin, "plugin"), "soulbound");
     }
 
     @EventHandler
@@ -62,6 +68,10 @@ public final class SfxSoulboundListener implements Listener {
     private boolean isSoulbound(Player player, ItemStack item) {
         if (item == null || item.getType().isAir()) {
             return false;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null && meta.getPersistentDataContainer().has(soulboundKey, PersistentDataType.BYTE)) {
+            return true;
         }
         String itemId = items.readMarker(item).map(SfxItemMarker::itemId).orElse(null);
         if (itemId == null) {

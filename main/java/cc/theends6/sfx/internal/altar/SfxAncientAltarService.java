@@ -46,6 +46,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
@@ -309,7 +310,7 @@ public final class SfxAncientAltarService implements Listener {
             removeVirtualItem(key);
             persistPedestalState(instance.instanceId(), PedestalState.empty(), SfxBlockLifecycleState.IDLE);
             giveOrDrop(player, existing.item());
-            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0F, 1.0F);
+            block.getWorld().playSound(block.getLocation(), Sound.ENTITY_ITEM_PICKUP, SoundCategory.BLOCKS, 1.0F, 1.0F);
             return;
         }
 
@@ -325,7 +326,7 @@ public final class SfxAncientAltarService implements Listener {
         updateVirtualItem(key, pedestalDisplayLocation(key), stored);
         hand.setAmount(hand.getAmount() - 1);
         player.getInventory().setItemInMainHand(hand.getAmount() <= 0 ? null : hand);
-        block.getWorld().playSound(block.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5F, 0.5F);
+        block.getWorld().playSound(block.getLocation(), Sound.ENTITY_ITEM_PICKUP, SoundCategory.BLOCKS, 0.5F, 0.5F);
     }
 
     private void handleAltarUse(Player player, Block altarBlock, SfxBlockInstanceRecord altarInstance) {
@@ -359,7 +360,7 @@ public final class SfxAncientAltarService implements Listener {
         MatchedRecipe match = findMatchingRecipe(catalyst, inputs);
         if (match == null) {
             sendMessage(player, "machines.ancient-altar.unknown-recipe", "<red>Unknown recipe! Check the items on the Ancient Pedestals.</red>");
-            altarBlock.getWorld().playSound(altarBlock.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 1.0F, 1.0F);
+            altarBlock.getWorld().playSound(altarBlock.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, SoundCategory.BLOCKS, 1.0F, 1.0F);
             return;
         }
 
@@ -383,7 +384,7 @@ public final class SfxAncientAltarService implements Listener {
         for (SfxBlockInstanceRecord pedestal : pedestals) {
             blockData.updateInstanceState(pedestal.instanceId(), pedestal.stateBlob(), SfxBlockLifecycleState.ACTIVE);
         }
-        altarBlock.getWorld().playSound(altarBlock.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_MIRROR, 1.0F, 1.0F);
+        altarBlock.getWorld().playSound(altarBlock.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_MIRROR, SoundCategory.BLOCKS, 1.0F, 1.0F);
         scheduleFirstTick(session.id());
     }
 
@@ -462,7 +463,7 @@ public final class SfxAncientAltarService implements Listener {
             if (consumedLocation != null) {
                 world.spawnParticle(Particle.ENCHANT, consumedLocation, 16, 0.3D, 0.2D, 0.3D, 0.0D);
                 world.spawnParticle(Particle.ENCHANTED_HIT, consumedLocation, 8, 0.3D, 0.2D, 0.3D, 0.0D);
-                world.playSound(consumedLocation, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 2.0F);
+                world.playSound(consumedLocation, Sound.ENTITY_ENDERMAN_TELEPORT, SoundCategory.BLOCKS, 1.0F, 2.0F);
             }
         }
 
@@ -495,7 +496,7 @@ public final class SfxAncientAltarService implements Listener {
         dropItem(outputLocation, session.output());
         World world = session.altarLocation().getWorld();
         if (world != null) {
-            world.playSound(outputLocation, Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 1.0F, 1.0F);
+            world.playSound(outputLocation, Sound.ENTITY_ZOMBIE_VILLAGER_CURE, SoundCategory.BLOCKS, 1.0F, 1.0F);
             world.playEffect(outputLocation, org.bukkit.Effect.STEP_SOUND, Material.EMERALD_BLOCK);
         }
     }
@@ -514,7 +515,7 @@ public final class SfxAncientAltarService implements Listener {
             }
             World world = session.altarLocation().getWorld();
             if (world != null) {
-                world.playSound(dropLocation, Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 1.0F, 1.0F);
+                world.playSound(dropLocation, Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, SoundCategory.BLOCKS, 1.0F, 1.0F);
             }
         }
     }
@@ -611,7 +612,7 @@ public final class SfxAncientAltarService implements Listener {
             return stack;
         }
         meta.getPersistentDataContainer().set(spawnerTypeKey, PersistentDataType.STRING, entityType.name());
-        meta.lore(List.of(Text.legacy("&7Type: &b" + prettyEnumName(entityType.name()))));
+        meta.lore(List.of(Text.renderFlexible(localization.text("items.sf.reinforced_spawner.type-line", "&7Type: &b{type}", Map.of("type", prettyEnumName(entityType.name()))))));
         if (meta instanceof BlockStateMeta blockStateMeta && blockStateMeta.getBlockState() instanceof CreatureSpawner spawner) {
             spawner.setSpawnedType(entityType);
             blockStateMeta.setBlockState(spawner);

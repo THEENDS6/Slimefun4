@@ -14,6 +14,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -633,9 +634,9 @@ public final class SfxLegacyCombatToolListener implements Listener {
         }
 
         meta.lore(List.of(
-                Text.legacy("&7Type: &b" + entityName),
+                Text.renderFlexible(localization.text("items.sf.broken_spawner.type-line", "&7Type: &b{type}", Map.of("type", entityName))),
                 Component.empty(),
-                Text.legacy("&cFractured, must be repaired in an Ancient Altar")
+                Text.renderFlexible(localization.text("items.sf.broken_spawner.fractured-line", "&cFractured, must be repaired in an Ancient Altar"))
         ));
         stack.setItemMeta(meta);
         return stack;

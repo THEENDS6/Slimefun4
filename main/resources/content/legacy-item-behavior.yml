@@ -40,3 +40,73 @@ gadgets:
 
   scroll-of-dimensional-teleposition:
     radius: 10
+
+talismans:
+  
+  anvil:
+    chance: 100
+    consume: true
+  miner:
+    chance: 20
+    consume: false
+    duplicate-block-drops: false
+  farmer:
+    chance: 20
+    consume: false
+    duplicate-block-drops: false
+  hunter:
+    chance: 20
+    consume: false
+    copy-equipment-drops: false
+  lava:
+    chance: 100
+    consume: true
+    duration-ticks: 3600
+    amplifier: 4
+  water:
+    chance: 100
+    consume: true
+    duration-ticks: 3600
+    amplifier: 4
+  angel:
+    chance: 75
+    consume: false
+  fire:
+    chance: 100
+    consume: true
+    duration-ticks: 3600
+    amplifier: 4
+  magician:
+    chance: 80
+    consume: false
+  traveller:
+    chance: 60
+    consume: false
+    duration-ticks: 3600
+    amplifier: 2
+  warrior:
+    chance: 100
+    consume: true
+    duration-ticks: 3600
+    amplifier: 2
+  knight:
+    chance: 30
+    consume: true
+    duration-ticks: 100
+    amplifier: 3
+  whirlwind:
+    chance: 60
+    consume: false
+  wizard:
+    chance: 60
+    consume: false
+    fortune-min: 3
+    fortune-max: 5
+  caveman:
+    chance: 50
+    consume: false
+    duration-ticks: 800
+    amplifier: 2
+  wise:
+    chance: 20
+    consume: false

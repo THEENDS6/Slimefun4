@@ -64,6 +64,10 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxDecorationService decorationService;
     private final SfxGpsService gpsService;
     private final SfxAncientAltarService ancientAltarService;
+    private final SfxSpawnerService spawnerService;
+    private final SfxBlockPlacerService blockPlacerService;
+    private final SfxInfusedHopperService infusedHopperService;
+    private final SfxHologramProjectorService hologramProjectorService;
     private final SfxRuntime runtime;
 
     public SfxPlaceableBlockListener(
@@ -77,6 +81,10 @@ public final class SfxPlaceableBlockListener implements Listener {
             SfxDecorationService decorationService,
             SfxGpsService gpsService,
             SfxAncientAltarService ancientAltarService,
+            SfxSpawnerService spawnerService,
+            SfxBlockPlacerService blockPlacerService,
+            SfxInfusedHopperService infusedHopperService,
+            SfxHologramProjectorService hologramProjectorService,
             SfxRuntime runtime
     ) {
         this.items = Objects.requireNonNull(items, "items");
@@ -89,6 +97,10 @@ public final class SfxPlaceableBlockListener implements Listener {
         this.decorationService = Objects.requireNonNull(decorationService, "decorationService");
         this.gpsService = Objects.requireNonNull(gpsService, "gpsService");
         this.ancientAltarService = Objects.requireNonNull(ancientAltarService, "ancientAltarService");
+        this.spawnerService = Objects.requireNonNull(spawnerService, "spawnerService");
+        this.blockPlacerService = Objects.requireNonNull(blockPlacerService, "blockPlacerService");
+        this.infusedHopperService = Objects.requireNonNull(infusedHopperService, "infusedHopperService");
+        this.hologramProjectorService = Objects.requireNonNull(hologramProjectorService, "hologramProjectorService");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
     }
 
@@ -123,6 +135,18 @@ public final class SfxPlaceableBlockListener implements Listener {
                 if (ancientAltarService.supportsType(marker.itemId())) {
                     ancientAltarService.handlePlaced(instanceId, marker.itemId());
                 }
+                if (spawnerService.supportsType(marker.itemId())) {
+                    spawnerService.handlePlaced(instanceId, marker.itemId(), event.getItemInHand());
+                }
+                if (blockPlacerService.supportsType(marker.itemId())) {
+                    blockPlacerService.handlePlaced(instanceId, marker.itemId());
+                }
+                if (infusedHopperService.supportsType(marker.itemId())) {
+                    infusedHopperService.handlePlaced(instanceId, marker.itemId());
+                }
+                if (hologramProjectorService.supportsType(marker.itemId())) {
+                    hologramProjectorService.handlePlaced(instanceId, marker.itemId());
+                }
             } catch (RuntimeException exception) {
                 event.setCancelled(true);
             }
@@ -142,6 +166,13 @@ public final class SfxPlaceableBlockListener implements Listener {
         }
         String typeId = instance.typeId();
         event.setDropItems(false);
+        if (spawnerService.supportsType(typeId)) {
+            boolean containment = items.readMarker(event.getPlayer().getInventory().getItemInMainHand())
+                    .map(marker -> "sf:pickaxe_of_containment".equals(marker.itemId()))
+                    .orElse(false);
+            spawnerService.destroyAnchoredBlock(event.getBlock(), instance.instanceId(), typeId, containment);
+            return;
+        }
         destroyAnchoredBlock(event.getBlock(), instance.instanceId(), typeId);
     }
 
@@ -499,6 +530,22 @@ public final class SfxPlaceableBlockListener implements Listener {
             ancientAltarService.destroyAnchoredBlock(block, instanceId, typeId);
             return;
         }
+        if (spawnerService.supportsType(typeId)) {
+            spawnerService.destroyAnchoredBlock(block, instanceId, typeId, false);
+            return;
+        }
+        if (blockPlacerService.supportsType(typeId)) {
+            blockPlacerService.destroyAnchoredBlock(block, instanceId, typeId);
+            return;
+        }
+        if (infusedHopperService.supportsType(typeId)) {
+            infusedHopperService.destroyAnchoredBlock(block, instanceId, typeId);
+            return;
+        }
+        if (hologramProjectorService.supportsType(typeId)) {
+            hologramProjectorService.destroyAnchoredBlock(block, instanceId, typeId);
+            return;
+        }
         dropStoredContents(block);
         dropPluginBlock(block, typeId);
         blockData.unregisterAt(block.getLocation());
@@ -512,7 +559,11 @@ public final class SfxPlaceableBlockListener implements Listener {
                 || cargoService.supportsType(itemId)
                 || gpsService.supportsType(itemId)
                 || decorationService.supportsType(itemId)
-                || ancientAltarService.supportsType(itemId)) {
+                || ancientAltarService.supportsType(itemId)
+                || spawnerService.supportsType(itemId)
+                || blockPlacerService.supportsType(itemId)
+                || infusedHopperService.supportsType(itemId)
+                || hologramProjectorService.supportsType(itemId)) {
             return true;
         }
         

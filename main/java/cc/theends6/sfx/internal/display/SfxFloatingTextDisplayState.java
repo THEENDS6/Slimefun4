@@ -12,6 +12,7 @@ final class SfxFloatingTextDisplayState {
     private final List<Integer> entityIds = new ArrayList<>();
     private final Map<UUID, Boolean> viewers = new ConcurrentHashMap<>();
     private final Map<UUID, Component> viewerText = new ConcurrentHashMap<>();
+    private final Map<UUID, String> viewerPositions = new ConcurrentHashMap<>();
     private volatile SfxFloatingTextProjection projection;
     private volatile SfxFloatingTextDisplayMode displayMode;
 
@@ -43,6 +44,10 @@ final class SfxFloatingTextDisplayState {
 
     Map<UUID, Component> viewerText() {
         return viewerText;
+    }
+
+    Map<UUID, String> viewerPositions() {
+        return viewerPositions;
     }
 
     SfxFloatingTextProjection projection() {

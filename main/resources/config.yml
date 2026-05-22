@@ -121,7 +121,7 @@ technical-gadgets:
   classic:
     
     jetpack-interval-ticks: 3
-    jetboots-interval-ticks: 2
+    jetboots-interval-ticks: 10
     
     interval-ticks: 10
     charging-bench:
@@ -147,7 +147,7 @@ floating-text:
   
   
   mode: armor_stand
-  resync-interval-ticks: 20
+  resync-interval-ticks: 100
   armor-stand:
     y-offset: -0.25
     line-spacing: 0.25
@@ -171,7 +171,7 @@ electric-machines:
       enabled: true
       water-source-threshold: 4
       lava-source-threshold: 300
-      check-interval-ticks: 200
+      check-interval-ticks: 1000
     auto-brewer:
       enabled: true
 
@@ -240,3 +240,29 @@ radiation:
     reduction-per-piece: 0.25
 
 
+
+legacy:
+  infused-hopper:
+    radius: 3.5
+    
+    base-interval-ticks: 10
+    
+    interval-ticks: 10
+    
+    idle-backoff-after-seconds: 30
+    
+    max-idle-multiplier: 10
+    
+    respect-pickup-delay: false
+    redstone-disables: false
+    silent: false
+    particle-count: 12
+  hologram-projector:
+    view-distance-squared: 2304
+  industrial-miner:
+    step-delay-ticks: 4
+  reinforced-spawner:
+    
+    
+    
+    break-drop-mode: reinforced
