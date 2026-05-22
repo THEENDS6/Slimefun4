@@ -1,160 +1,163 @@
 # SlimeFunX
 
-SlimeFunX 是一个从 Slimefun4 分出来、但已经走成自己路线的项目。
+SlimeFunX is a fork of Slimefun4 that has grown into its own direction.
 
-它不是在旧代码上零碎修补，而是尽量保留经典 Slimefun 玩法体验的前提下，把很多核心实现重新整理了一遍。对玩家来说，很多机器、科技线和使用习惯还是熟悉的；对服主和开发者来说，内部逻辑会更清楚，也更容易处理那些老问题。
+It is not a small patch set on top of old code. The goal is to keep the classic Slimefun feel that people are familiar with, while rebuilding large parts of the internals so the project is easier to maintain and less dependent on old fragile behavior.
 
-这个项目最直接的目标，不是“做一个完全不同的 Slimefun”，而是把原来那套体验里值得保留的部分留下来，把那些长期反复出现的问题尽量处理掉。
+For players, many of the machines, progression lines, and workflows should still feel familiar. For server owners and developers, the important difference is that the internal logic is clearer and many long-standing problems are handled more directly.
 
-## SFX 和别的分支最大的区别
+This project is not trying to turn Slimefun into something unrecognizable. It is trying to keep what was worth keeping, and replace the parts that kept causing trouble.
 
-SFX 真正不一样的地方，不是多了几件物品，也不是改了几组数值，而是底层思路不一样。
+## What makes SFX different
 
-### 机器逻辑不是东一块西一块挂在世界事件上
+The biggest difference is not a few extra items or some balance tweaks. The real difference is how the project is built internally.
 
-很多机器现在跑在自己明确的 tick / state / session 逻辑上，而不是过度依赖零散的方块事件、容器事件或者临时状态推断。
+### Machines run on explicit tick / state / session logic
 
-这样做的结果很直接：
+Many machines now run on their own clear tick, state, and session flow instead of leaning too much on scattered world events, container snapshots, or temporary state guesses.
 
-- 机器状态更稳定
-- 逻辑更容易追踪
-- 出问题时更容易定位
+That leads to a few practical benefits:
 
-### 方块和机器数据有单独的数据层
+- machine state is more stable
+- behavior is easier to follow
+- problems are easier to debug
 
-SFX 里专门做了 block data、player data、gps data 这些持久化结构，不再把原版 BlockState 当成唯一事实来源。
+### Block and machine data have their own data layer
 
-这也是它和很多传统 Slimefun 分支差别最大的地方之一。像经典的 block state 问题、机器状态不同步、世界状态和内部状态不一致，很多都和这个有关。
+SFX has dedicated block data, player data, and GPS data storage instead of treating vanilla `BlockState` as the only source of truth.
 
-### 很多机器内部库存是虚拟容器驱动的
+This is one of the biggest differences between SFX and many more traditional Slimefun branches. A lot of old block state problems, machine desync, and cases where visible state and internal state drift apart are tied to exactly this area.
 
-一部分机器不会在每一步都直接去操作原版方块库存，而是通过虚拟容器和内部状态来处理。
+### Many machine inventories are backed by virtual containers
 
-这能减少一些不必要的世界交互，也能少掉一部分库存同步、边界行为和奇怪状态问题。
+Some machines do not write every step directly into a live block inventory. Instead, they work through virtual containers and internal state first.
 
-### 电力和货运网络是按拓扑来处理的
+That reduces unnecessary world interaction and helps avoid a number of inventory sync issues and strange edge cases.
 
-energy 和 cargo 不是简单扫周围一圈再临时猜连接关系，而是按更明确的 topology / connectivity 逻辑处理。
+### Energy and cargo are handled as topology-driven networks
 
-这样做的好处是：
+Energy and cargo do not just scan nearby blocks and guess connections on the fly. They use more explicit topology and connectivity logic.
 
-- 网络关系更明确
-- 冲突和断链更容易判断
-- 状态更可预测
+That makes the network state easier to reason about:
 
-### 物品身份处理更严格
+- connections are clearer
+- conflicts and disconnects are easier to detect
+- network behavior is more predictable
 
-SFX 尽量减少对显示名和 lore 的依赖，更强调明确的物品定义和注册身份。
+### Item identity is handled more strictly
 
-这意味着文本变化、多语言调整、GUI 改动，不会那么容易影响物品本身的逻辑判断。
+SFX tries to rely less on display names and lore, and more on explicit item definitions and registry identity.
 
-### Guide 和 GUI 不只是重画了一遍
+That means language changes, text cleanup, and GUI changes are much less likely to break item logic.
 
-很多 guide 页面、机器界面和状态显示都重新整理过，重点不是“更花”，而是“更清楚”。
+### The guide and machine GUIs were rebuilt with clarity in mind
 
-SFX 想尽量做到：
+A lot of guide pages, machine UIs, and status displays were rebuilt. The point was not just to make them look different, but to make them easier to understand.
 
-- 玩家能看懂机器现在在干什么
-- 卡在哪一步能看出来
-- Guide 更像工具，而不是只负责展示
+The idea is simple:
 
-### 尽量少做没必要的世界交互
+- players should be able to tell what a machine is doing
+- if something is blocked, that should be visible
+- the guide should feel like a tool, not just a display page
 
-这件事不太适合写成一句宣传口号，但它确实是 SFX 的一个重要方向。
+### The project tries to avoid unnecessary world interaction
 
-项目里很多系统都在尽量避免：
+This is an important part of SFX even if it is not something that fits well into a slogan.
 
-- 没必要的方块状态更新
-- 过多依赖世界事件来维持机器逻辑
-- 能不碰真实世界就不碰真实世界的内部操作
+Many systems try to avoid:
 
-目标不是喊“绝对不 lag”，而是尽量减少那些本来就不该有的额外负担和莫名其妙的边界问题。
+- unnecessary block state updates
+- relying too much on world events to keep machine logic alive
+- touching the real world state when an internal state model is enough
 
-## 目前比较明显的改动方向
+The goal is not to claim that everything is magically lag-free. The goal is to reduce the kind of overhead and edge cases that should not have existed in the first place.
 
-到现在为止，SFX 里比较大的变化包括：
+## Major areas of change so far
 
-- 机器有更明确的 tick / update 系统
-- 许多 GUI 和 guide 页面重新做过
-- 物品身份处理更严格，不再过度依赖显示名和 lore
-- 很多机器库存改成虚拟容器驱动
-- energy 和 cargo 改成更明确的连接 / 拓扑处理
-- block data、player data、gps data 都有各自的数据层
-- 项目尽量减少不必要的世界交互
-- 一些平衡数值重新调过
-- 保留并扩展了一部分经典内容，比如 Bio Generator II、重写后的 jetpack 系统
-- Ancient Altar、GPS、Industrial Miner、Hologram Projector、Infused Hopper 等系统也都接进了新的整体结构里
+Some of the bigger changes in SFX so far include:
 
-## 这个项目想保留什么
+- a more explicit machine tick / update system
+- rebuilt and cleaned-up guide and GUI pages
+- stricter item identity handling with less dependence on display names and lore
+- virtual-container-backed machine internals
+- explicit energy and cargo topology handling
+- dedicated block data, player data, and GPS data layers
+- fewer unnecessary world interactions
+- a number of balance adjustments where old behavior felt too rough or too weak
+- classic-style additions and rewrites such as Bio Generator II and a rewritten jetpack system
+- newer systems such as Ancient Altar, GPS, Industrial Miner, Hologram Projector, and Infused Hopper integrated into the same runtime structure
 
-SFX 不想把 Slimefun 做成一个完全陌生的东西。
+## What this project wants to keep
 
-它想保留的，是原来那种熟悉的感觉：
+SFX is not trying to throw away the classic Slimefun experience.
 
-- 熟悉的科技线推进
-- 熟悉的机器玩法
-- 熟悉的自动化节奏
-- 熟悉的老派 Slimefun 味道
+It wants to keep the parts people actually came for:
 
-如果只是为了“看起来不一样”而把体验改得面目全非，这不是这个项目要走的方向。
+- familiar progression
+- familiar machines
+- familiar automation loops
+- the classic Slimefun feel
 
-## 这个项目想解决什么
+If the only goal was to be different for the sake of being different, this project would not be worth doing.
 
-SFX 更在意的是那些老玩家和服主都很熟悉的问题，比如：
+## What this project is trying to fix
 
-- block state 相关问题
-- 机器状态不同步
-- 库存和容器边界行为奇怪
-- 物品识别过度依赖显示名和 lore
-- energy / cargo 网络状态不够清楚
-- 机器逻辑太容易被世界状态牵着走
+SFX is much more interested in dealing with the old problems that players and server owners have seen for years, such as:
 
-简单说，它想做的不是“推翻 Slimefun 的体验”，而是尽量保留原来好玩的部分，把那些年久失修的地方一点点换掉。
+- block state issues
+- machine desync
+- strange inventory and container edge cases
+- item logic depending too much on display names and lore
+- unclear energy and cargo network behavior
+- machine logic that depends too heavily on the surrounding world state
 
-## 当前状态
+In short, this project is not trying to replace the Slimefun experience with something else. It is trying to keep the fun parts and gradually replace the parts that kept breaking down.
 
-SlimeFunX 现在已经不是一个只改几行的小分支了。
+## Current status
 
-它更接近一条独立的实现线：
+SlimeFunX is no longer a tiny side branch with a few edits.
 
-- 形式上，它仍然是 Slimefun4 的 fork
-- 实际上，它已经和上游明显分叉
-- 它不追求维持上游的代码结构
-- 它也不打算伪装成官方版本
+At this point it is better described as its own implementation line:
 
-如果你想找的是完全贴近官方上游的 Slimefun4，这个仓库不是那个方向。  
-如果你想看的是“保留经典体验，但把底层重新整理过的 Slimefun 会变成什么样”，那这里就是这个方向。
+- formally, it is still a fork of Slimefun4
+- practically, it has already diverged a long way from upstream
+- it does not try to preserve upstream code structure
+- it is not pretending to be the official project
 
-## 构建
+If you want something that stays as close as possible to official upstream Slimefun4, this repository is not that.
 
-当前项目使用：
+If you want to see what a Slimefun project looks like when the classic gameplay is kept but the runtime underneath it is heavily rebuilt, that is what this repository is for.
+
+## Build
+
+Current environment:
 
 - Java 21
 - Gradle
 - Paper 1.21.x
 
-编译：
+Compile:
 
 ```bash
 ./gradlew compileJava
 ```
 
-构建：
+Build:
 
 ```bash
 ./gradlew build
 ```
 
-## 安装
+## Installation
 
-构建完成后，把生成的插件 jar 放进服务器的 `plugins` 目录即可。
+Build the plugin jar and place it in your server's `plugins` directory.
 
-可下载版本请看 Releases 页面。
+Released builds can be found on the Releases page.
 
-## 和 Slimefun4 的关系
+## Relation to Slimefun4
 
-SlimeFunX 来源于 Slimefun4，但它不是一个轻量补丁分支。
+SlimeFunX comes from Slimefun4, but it is not a lightweight compatibility branch.
 
-更准确地说，它是一个以保留经典玩法体验为前提、对核心运行时重新整理过的重度分叉版本。
+The more accurate description is that it is a heavily diverged fork that tries to keep the classic gameplay experience while rebuilding the core runtime underneath it.
 
-对玩家来说，它尽量保持熟悉；对内部实现来说，它已经不再按上游那套思路继续堆补丁。
+For players, it tries to stay familiar. For the internals, it no longer follows the old upstream model of stacking more patches on top of old assumptions.
