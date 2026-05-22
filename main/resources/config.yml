@@ -129,7 +129,7 @@ technical-gadgets:
 
 cargo:
   visualizer:
-    enabled: true
+    enabled: false
     particle: dust
     include-manager: false
     view-distance-squared: 1024
