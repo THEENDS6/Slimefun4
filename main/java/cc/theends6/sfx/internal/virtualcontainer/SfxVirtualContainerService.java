@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -70,6 +71,7 @@ public final class SfxVirtualContainerService implements Listener {
     private final SfxRuntime runtime;
     private final Map<SfxVirtualContainerKey, SfxVirtualContainer> containers = new ConcurrentHashMap<>();
     private final Map<SfxBlockAnchorKey, SfxVirtualContainerKey> locationIndex = new ConcurrentHashMap<>();
+    private final AtomicLong localTickClock = new AtomicLong();
     private volatile long registryRevision;
     private volatile boolean running = true;
 
@@ -236,10 +238,9 @@ public final class SfxVirtualContainerService implements Listener {
         if (container == null || inventory == null) {
             return false;
         }
-        long now = Bukkit.getCurrentTick();
-        if (container.externalDirty() && container.lastExternalEventTick() == now) {
-            // Bukkit finalizes some inventory click/drag changes after the event. Defer this
-            // machine transaction by one tick so the mirror can hydrate from the final vanilla inventory.
+        if (container.externalDirty() && container.externalFinalizationPending()) {
+            // Vanilla inventory mutations may be finalized after the event callback.
+            // Defer this machine transaction by one tick so the mirror can hydrate from the final state.
             return false;
         }
         if (container.externalDirty()) {
@@ -1002,12 +1003,20 @@ public final class SfxVirtualContainerService implements Listener {
         registryRevision++;
     }
 
+    private long advanceLocalTick(long delta) {
+        return localTickClock.addAndGet(Math.max(1L, delta));
+    }
+
+    private long currentLocalTick() {
+        return localTickClock.get();
+    }
+
     private void scheduleExternalSync() {
         runtime.executeGlobalLater(EXTERNAL_SYNC_INTERVAL, () -> {
             if (!running) {
                 return;
             }
-            long now = Bukkit.getCurrentTick();
+            long now = advanceLocalTick(EXTERNAL_SYNC_INTERVAL);
             for (SfxVirtualContainer container : containers.values()) {
                 if (!container.externalActive() && !container.viewerActive()) {
                     continue;
@@ -1035,11 +1044,12 @@ public final class SfxVirtualContainerService implements Listener {
                 : findRegistered(location);
         optional.ifPresent(container -> {
             container.externalActive(true);
-            container.lastExternalEventTick(Bukkit.getCurrentTick());
             // The vanilla inventory mutation may be finalized after the event callback.
             // Mark dirty immediately and hydrate on the next tick to import the final player/hopper state.
             container.externalDirty(true);
+            container.externalFinalizationPending(true);
             runAtContainerLater(container, 1L, () -> inventoryFor(container).ifPresent(target -> {
+                container.externalFinalizationPending(false);
                 if (container.externalDirty()) {
                     hydrate(container, target);
                 }
@@ -1091,7 +1101,7 @@ public final class SfxVirtualContainerService implements Listener {
         container.setContents(inventory.getContents());
         container.externalDirty(false);
         container.mirrorDirty(false);
-        container.lastWorldSyncTick(Bukkit.getCurrentTick());
+        container.lastWorldSyncTick(currentLocalTick());
     }
 
     private void syncToWorld(SfxVirtualContainer container, Inventory inventory) {
@@ -1107,7 +1117,7 @@ public final class SfxVirtualContainerService implements Listener {
         inventory.setContents(snapshot);
         container.mirrorDirty(false);
         container.externalDirty(false);
-        container.lastWorldSyncTick(Bukkit.getCurrentTick());
+        container.lastWorldSyncTick(currentLocalTick());
     }
 
     private Optional<Inventory> inventoryAt(Location location) {

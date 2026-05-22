@@ -11,6 +11,8 @@ ext {
     paperApiVersion = '1.21.8-R0.1-SNAPSHOT'
     pluginJarName = 'SlimeFunX.jar'
     paperRuntimeJarName = 'paper-1.21.8-60.jar'
+    paper261RuntimeDirName = 'run-paper-26.1'
+    paper261RuntimeJarName = 'paper-26.1.jar'
     foliaRuntimeJarName = 'folia-1.21.8-6.jar'
     legacyRuntimeDirName = 'run-legacy-slimefun-1.21.8'
     legacySlimefunDownloadUrl = 'https://github.com/rutwok-labs/SlimefunCore-V.4.0/releases/download/2647/SlimefunCore4-2647.jar'
@@ -60,8 +62,8 @@ sourceSets {
 
 dependencies {
     compileOnly "io.papermc.paper:paper-api:${rootProject.ext.paperApiVersion}"
-    compileOnly "com.github.retrooper:packetevents-spigot:2.11.2"
-    shade "com.github.retrooper:packetevents-spigot:2.11.2"
+    compileOnly "com.github.retrooper:packetevents-spigot:2.12.1"
+    shade "com.github.retrooper:packetevents-spigot:2.12.1"
     compileOnly "org.xerial:sqlite-jdbc:3.50.3.0"
     shade "org.xerial:sqlite-jdbc:3.50.3.0"
 }
@@ -93,6 +95,7 @@ tasks.register('prepareRuntimeDirs') {
     description = 'Creates runtime plugin directories for Paper, Folia, and legacy Slimefun.'
     doLast {
         file('run-paper-1.21.8/plugins').mkdirs()
+        file("${rootProject.ext.paper261RuntimeDirName}/plugins").mkdirs()
         file('run-folia-1.21.8/plugins').mkdirs()
         file("${rootProject.ext.legacyRuntimeDirName}/plugins").mkdirs()
     }
@@ -104,6 +107,103 @@ tasks.register('deployToPaperRuntime', Copy) {
     dependsOn 'prepareRuntimeDirs', 'jar'
     from(tasks.named('jar').flatMap { it.archiveFile })
     into(layout.projectDirectory.dir('run-paper-1.21.8/plugins'))
+    rename { rootProject.ext.pluginJarName }
+}
+
+tasks.register('preparePaper261Runtime') {
+    group = 'deployment'
+    description = 'Prepares a dedicated Paper 26.1 runtime directory for SFX testing.'
+    dependsOn 'prepareRuntimeDirs'
+    doLast {
+        def sourceDir = layout.projectDirectory.dir('run-paper-1.21.8').asFile
+        def targetDir = layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName).asFile
+
+        targetDir.mkdirs()
+        ['plugins', 'logs'].each { child ->
+            new File(targetDir, child).mkdirs()
+        }
+
+        [
+                'eula.txt',
+                'server.properties',
+                'ops.json',
+                'bukkit.yml',
+                'spigot.yml',
+                'commands.yml',
+                'help.yml',
+                'permissions.yml'
+        ].each { fileName ->
+            def sourceFile = new File(sourceDir, fileName)
+            def targetFile = new File(targetDir, fileName)
+            if (sourceFile.exists() && !targetFile.exists()) {
+                copy {
+                    from sourceFile
+                    into targetDir
+                }
+            }
+        }
+
+        def sourceConfigDir = new File(sourceDir, 'config')
+        def targetConfigDir = new File(targetDir, 'config')
+        if (sourceConfigDir.exists()) {
+            sourceConfigDir.mkdirs()
+            copy {
+                from sourceConfigDir
+                into targetConfigDir
+                include 'paper-global.yml', 'paper-world-defaults.yml'
+            }
+        }
+
+        def sourcePacketEvents = new File(sourceDir, 'plugins/packetevents-spigot-2.12.1.jar')
+        if (sourcePacketEvents.exists()) {
+            copy {
+                from sourcePacketEvents
+                into new File(targetDir, 'plugins')
+            }
+        }
+
+        def sourceReadme = new File(sourceDir, 'README.md')
+        def targetReadme = new File(targetDir, 'README.md')
+        if (!targetReadme.exists()) {
+            targetReadme.text = """Place a Paper 26.1 server jar here as ${rootProject.ext.paper261RuntimeJarName}.
+Paper 26.1+ requires Java 25 according to PaperMC documentation.
+
+${sourceReadme.exists() ? sourceReadme.text : ''}
+""".stripIndent()
+        }
+
+        new File(targetDir, 'start-paper.ps1').text = """\$ErrorActionPreference = 'Stop'
+Set-Location \$PSScriptRoot
+chcp 65001 > \$null
+[Console]::InputEncoding = [System.Text.UTF8Encoding]::new()
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+
+\$javaCmd = 'java'
+\$preferredJava = 'D:\\MyApp\\java\\jdk-25\\bin\\java.exe'
+if (-not (Test-Path \$preferredJava)) {
+    \$preferredJava = 'C:\\Program Files\\Java\\jdk-25\\bin\\java.exe'
+}
+if (-not (Test-Path \$preferredJava)) {
+    \$preferredJava = 'C:\\Program Files\\Java\\jdk-25.0.1\\bin\\java.exe'
+}
+if (-not (Test-Path \$preferredJava)) {
+    \$preferredJava = 'C:\\Program Files\\Java\\jdk-25.0.2\\bin\\java.exe'
+}
+if (Test-Path \$preferredJava) {
+    \$javaCmd = \$preferredJava
+}
+
+& \$javaCmd -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -Xms1G -Xmx2G -jar .\\${rootProject.ext.paper261RuntimeJarName} nogui
+""".stripIndent()
+    }
+}
+
+tasks.register('deployToPaper261Runtime', Copy) {
+    group = 'deployment'
+    description = 'Builds the plugin and copies it to run-paper-26.1/plugins.'
+    dependsOn 'preparePaper261Runtime', 'jar'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName + '/plugins'))
     rename { rootProject.ext.pluginJarName }
 }
 
@@ -208,6 +308,17 @@ def preferredJavaExecutable = {
     java21.exists() ? java21.absolutePath : 'java'
 }
 
+def preferredJava25Executable = {
+    def java25Candidates = [
+            file('D:/MyApp/java/jdk-25/bin/java.exe'),
+            file('C:/Program Files/Java/jdk-25/bin/java.exe'),
+            file('C:/Program Files/Java/jdk-25.0.1/bin/java.exe'),
+            file('C:/Program Files/Java/jdk-25.0.2/bin/java.exe')
+    ]
+    def java25 = java25Candidates.find { it.exists() }
+    java25 != null ? java25.absolutePath : 'java'
+}
+
 tasks.register('runPaper', Exec) {
     group = 'application'
     description = 'Builds the plugin, deploys it to the Paper runtime, and starts Paper 1.21.8.'
@@ -216,6 +327,16 @@ tasks.register('runPaper', Exec) {
     executable preferredJavaExecutable()
     standardInput = System.in
     args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui']
+}
+
+tasks.register('runPaper261', Exec) {
+    group = 'application'
+    description = 'Builds the plugin, deploys it to the Paper 26.1 runtime, and starts Paper 26.1 using Java 25 when available.'
+    dependsOn 'deployToPaper261Runtime'
+    workingDir layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName).asFile
+    executable preferredJava25Executable()
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paper261RuntimeJarName, 'nogui']
 }
 
 tasks.register('runFolia', Exec) {
