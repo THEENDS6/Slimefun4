@@ -20,6 +20,14 @@ machines:
     - <gray>Places the full manual machine structure automatically.</gray>
     - <gray>Checks for enough free space before deploying.</gray>
     - <dark_gray>This is an SFX cheat helper item.</dark_gray>
+  ancient-altar:
+    in-use: <red>This Ancient Altar is currently performing a ritual.</red>
+    not-enough-pedestals: '<red>Not enough Ancient Pedestals! Placed: ({pedestals} / 8)</red>'
+    unknown-catalyst: <red>Unknown catalyst! Hold the correct catalyst and right-click the Ancient Altar.</red>
+    unknown-recipe: <red>Unknown recipe! Check the items on the Ancient Pedestals.</red>
+  ancient-pedestal:
+    obstructed: <red>The Ancient Pedestal is obstructed.</red>
+    hold-item: <red>Hold an item to place it on the Ancient Pedestal.</red>
   deploy-pack-unsupported: <yellow>This machine does not support deploy packs yet, a full structure kit was given instead:"</yellow><gray>{item}</gray>"
 guide:
   errors:

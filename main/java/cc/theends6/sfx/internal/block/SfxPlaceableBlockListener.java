@@ -7,6 +7,7 @@ import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
+import cc.theends6.sfx.internal.altar.SfxAncientAltarService;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.Objects;
@@ -62,6 +63,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxCargoService cargoService;
     private final SfxDecorationService decorationService;
     private final SfxGpsService gpsService;
+    private final SfxAncientAltarService ancientAltarService;
     private final SfxRuntime runtime;
 
     public SfxPlaceableBlockListener(
@@ -74,6 +76,7 @@ public final class SfxPlaceableBlockListener implements Listener {
             SfxCargoService cargoService,
             SfxDecorationService decorationService,
             SfxGpsService gpsService,
+            SfxAncientAltarService ancientAltarService,
             SfxRuntime runtime
     ) {
         this.items = Objects.requireNonNull(items, "items");
@@ -85,6 +88,7 @@ public final class SfxPlaceableBlockListener implements Listener {
         this.cargoService = Objects.requireNonNull(cargoService, "cargoService");
         this.decorationService = Objects.requireNonNull(decorationService, "decorationService");
         this.gpsService = Objects.requireNonNull(gpsService, "gpsService");
+        this.ancientAltarService = Objects.requireNonNull(ancientAltarService, "ancientAltarService");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
     }
 
@@ -115,6 +119,9 @@ public final class SfxPlaceableBlockListener implements Listener {
                 }
                 if (gpsService.supportsType(marker.itemId())) {
                     gpsService.handlePlaced(instanceId, marker.itemId());
+                }
+                if (ancientAltarService.supportsType(marker.itemId())) {
+                    ancientAltarService.handlePlaced(instanceId, marker.itemId());
                 }
             } catch (RuntimeException exception) {
                 event.setCancelled(true);
@@ -488,6 +495,10 @@ public final class SfxPlaceableBlockListener implements Listener {
             decorationService.destroyAnchoredBlock(block, instanceId, typeId);
             return;
         }
+        if (ancientAltarService.supportsType(typeId)) {
+            ancientAltarService.destroyAnchoredBlock(block, instanceId, typeId);
+            return;
+        }
         dropStoredContents(block);
         dropPluginBlock(block, typeId);
         blockData.unregisterAt(block.getLocation());
@@ -500,7 +511,8 @@ public final class SfxPlaceableBlockListener implements Listener {
                 || energyService.supportsType(itemId)
                 || cargoService.supportsType(itemId)
                 || gpsService.supportsType(itemId)
-                || decorationService.supportsType(itemId)) {
+                || decorationService.supportsType(itemId)
+                || ancientAltarService.supportsType(itemId)) {
             return true;
         }
         

@@ -31,7 +31,9 @@ public final class SfxInteractionRules {
             "sf:lava_generator_2",
             "sf:bio_reactor",
             "sf:combustion_reactor",
-            "sf:magnesium_generator"
+            "sf:magnesium_generator",
+            "sf:ancient_altar",
+            "sf:ancient_pedestal"
     );
 
     private SfxInteractionRules() {

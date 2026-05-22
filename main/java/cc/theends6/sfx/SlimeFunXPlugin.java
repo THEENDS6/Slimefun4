@@ -3,6 +3,7 @@ package cc.theends6.sfx;
 import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.internal.SfxApiImpl;
 import cc.theends6.sfx.internal.bootstrap.BaseContentBootstrap;
+import cc.theends6.sfx.internal.altar.SfxAncientAltarService;
 import cc.theends6.sfx.internal.bootstrap.SfxYamlContentLoader;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBasicMachineBlockListener;
@@ -77,6 +78,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxRadiationService radiationService;
     private SfxTechnicalGadgetService technicalGadgetService;
     private SfxFloatingTextDisplayService floatingTextDisplayService;
+    private SfxAncientAltarService ancientAltarService;
     private boolean packetEventsLoaded;
 
     @Override
@@ -126,7 +128,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService);
         this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService);
         this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), localization, blockDataService, decorationService, electricMachineService);
-        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, api.runtime());
+        this.ancientAltarService = new SfxAncientAltarService(this, api.runtime(), api.items(), api.itemRegistry(), localization, blockDataService);
+        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, ancientAltarService, api.runtime());
         this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService);
         this.radiationService = new SfxRadiationService(this, api.runtime(), api.items(), api.itemRegistry(), playerDataService);
 
@@ -155,6 +158,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(cargoService, this);
         getServer().getPluginManager().registerEvents(decorationService, this);
         getServer().getPluginManager().registerEvents(gpsService, this);
+        getServer().getPluginManager().registerEvents(ancientAltarService, this);
         getServer().getPluginManager().registerEvents(technicalGadgetService, this);
         getServer().getPluginManager().registerEvents(backpackListener, this);
         getServer().getPluginManager().registerEvents(utilityListener, this);
@@ -167,6 +171,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SfxArmorEffectListener(api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxDebugJoinListener(this, api.runtime(), localization), this);
         decorationService.start();
+        ancientAltarService.start();
         radiationService.start();
 
         SfxCommand command = new SfxCommand(this, api);
@@ -205,6 +210,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         if (decorationService != null) {
             decorationService.shutdown();
+        }
+        if (ancientAltarService != null) {
+            ancientAltarService.shutdown();
         }
         if (virtualContainerService != null) {
             virtualContainerService.shutdown();
@@ -275,6 +283,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
             backpackListener.shutdown();
         }
         bootstrapContent();
+        if (ancientAltarService != null) {
+            ancientAltarService.reloadRecipes();
+            ancientAltarService.rebuildIndex();
+        }
     }
 
     private void bootstrapContent() {
