@@ -53,10 +53,6 @@ guide:
   survival-title: '<dark_green>SFX 科技书</dark_green>'
   cheat-title: '<dark_red>SFX 作弊科技书</dark_red>'
 
-# 开发期调试文本。enabled 为 true 时，玩家进服会收到 TESTING.md 内容。
-debug-text:
-  enabled: false
-
 options:
   # Allows selected SFX diamond equipment to be upgraded in the vanilla Smithing Table
   # with a Netherite Upgrade Smithing Template and a Netherite Ingot.

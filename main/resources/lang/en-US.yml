@@ -3171,11 +3171,6 @@ items:
     - '&8⇨ &e⚡ &736 J/t'
   sf.birthday_cake:
     name: '&bBirthday Cake'
-debug:
-  header: <dark_gray>====================</dark_gray> <green>SFX DEBUG TEXT</green> <dark_gray>====================</dark_gray>
-  footer: <dark_gray>====================</dark_gray> <green>END</green> <dark_gray>====================</dark_gray>
-  missing-testing: TESTING.md was not packaged into the plugin.
-  failed-testing: 'Failed to read TESTING.md: {error}'
 command:
   errors:
     players-only-guide: Only players can open the SFX guide.

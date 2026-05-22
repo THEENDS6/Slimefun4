@@ -32,7 +32,6 @@ import cc.theends6.sfx.internal.energy.SfxMultimeterListener;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.listener.SfxArmorEffectListener;
 import cc.theends6.sfx.internal.listener.SfxBackpackListener;
-import cc.theends6.sfx.internal.listener.SfxDebugJoinListener;
 import cc.theends6.sfx.internal.listener.SfxGuideListener;
 import cc.theends6.sfx.internal.listener.SfxItemUseDispatcher;
 import cc.theends6.sfx.internal.listener.SfxLegacyCombatToolListener;
@@ -131,8 +130,6 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         saveDefaultConfig();
         syncBundledLanguages();
-        saveBundledTestingFile();
-
         var runtime = new cc.theends6.sfx.internal.runtime.PaperSfxRuntime(this);
         try {
             this.playerDataService = new SfxPlayerDataService(this, runtime, new SqliteSfxPlayerDataRepository(this, playerDataFile()));
@@ -215,7 +212,6 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SfxResearchFireworksListener(), this);
         getServer().getPluginManager().registerEvents(new SfxVanillaGuardListener(this, api.items()), this);
         getServer().getPluginManager().registerEvents(new SfxArmorEffectListener(api.items()), this);
-        getServer().getPluginManager().registerEvents(new SfxDebugJoinListener(this, api.runtime(), localization), this);
         decorationService.start();
         ancientAltarService.start();
         infusedHopperService.start();
@@ -336,7 +332,6 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         syncBundledLanguages();
         localization.reload();
         legacyItemBehaviorConfig.reload();
-        saveBundledTestingFile();
         api.menus().closeAll();
         if (backpackListener != null) {
             backpackListener.shutdown();
@@ -371,13 +366,6 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         researchYamlLoader.ensureDefaultFiles(syncBundledResearchFiles());
         researchYamlLoader.loadInto(researchRegistry);
 
-        if (getConfig().getBoolean("debug-text.enabled", false)) {
-            getLogger().info(recipeAudit.summary());
-            recipeAudit.warnings().stream().limit(80).forEach(warning -> getLogger().warning(warning));
-            if (recipeAudit.warnings().size() > 80) {
-                getLogger().warning("[SFX Recipe Import] ... and " + (recipeAudit.warnings().size() - 80) + " more warnings.");
-            }
-        }
     }
 
     private boolean syncBundledRecipeFiles() {
@@ -403,10 +391,6 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private void syncBundledLanguages() {
         saveBundledLanguage("zh-CN");
         saveBundledLanguage("en-US");
-    }
-
-    private void saveBundledTestingFile() {
-        saveResource("TESTING.md", true);
     }
 
     private File playerDataFile() {
@@ -476,4 +460,3 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getLogger().severe("==================================================");
     }
 }
-
