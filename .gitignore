@@ -3,6 +3,7 @@
 build/
 out/
 run-paper-1.21.8/
+run-paper-26.1/
 run-folia-1.21.8/
 run-legacy-slimefun-1.21.8/
 *.zip

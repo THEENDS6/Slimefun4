@@ -13,7 +13,7 @@ public final class SfxVirtualContainer {
     private boolean mirrorDirty;
     private long revision;
     private long lastWorldSyncTick;
-    private long lastExternalEventTick;
+    private boolean externalFinalizationPending;
 
     SfxVirtualContainer(SfxVirtualContainerKey key, int size) {
         this.key = key;
@@ -109,12 +109,12 @@ public final class SfxVirtualContainer {
         this.lastWorldSyncTick = lastWorldSyncTick;
     }
 
-    public long lastExternalEventTick() {
-        return lastExternalEventTick;
+    public boolean externalFinalizationPending() {
+        return externalFinalizationPending;
     }
 
-    public void lastExternalEventTick(long lastExternalEventTick) {
-        this.lastExternalEventTick = lastExternalEventTick;
+    public void externalFinalizationPending(boolean externalFinalizationPending) {
+        this.externalFinalizationPending = externalFinalizationPending;
     }
 
     private static ItemStack[] cloneContents(ItemStack[] contents) {
