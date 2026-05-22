@@ -53,10 +53,6 @@ guide:
   survival-title: '<dark_green>SFX 科技书</dark_green>'
   cheat-title: '<dark_red>SFX 作弊科技书</dark_red>'
 
-
-debug-text:
-  enabled: false
-
 options:
   
   

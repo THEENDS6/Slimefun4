@@ -3104,11 +3104,6 @@ items:
     - '&8⇨ &e⚡ &736 J/t'
   sf.birthday_cake:
     name: '&b生日蛋糕'
-debug:
-  header: <dark_gray>====================</dark_gray> <green>SFX 调试信息</green> <dark_gray>====================</dark_gray>
-  footer: <dark_gray>====================</dark_gray> <green>结束</green> <dark_gray>====================</dark_gray>
-  missing-testing: TESTING.md 未被打包进插件。
-  failed-testing: 读取 TESTING.md 失败：{error}
 command:
   errors:
     players-only-guide: 只有玩家可以打开科技书。
