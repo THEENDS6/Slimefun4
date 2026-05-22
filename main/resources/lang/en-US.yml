@@ -29,6 +29,26 @@ machines:
     obstructed: <red>The Ancient Pedestal is obstructed.</red>
     hold-item: <red>Hold an item to place it on the Ancient Pedestal.</red>
   deploy-pack-unsupported: <yellow>This machine does not support deploy packs yet, a full structure kit was given instead:"</yellow><gray>{item}</gray>"
+  industrial-miner:
+    started: <green>Industrial Miner started.</green>
+    started-advanced: <green>Advanced Industrial Miner started.</green>
+    already-running: <yellow>This Industrial Miner is already running.</yellow>
+    no-fuel: '<red>Industrial Miner stopped: no fuel.</red>'
+    chest-full: '<red>Industrial Miner stopped: chest is full.</red>'
+    finished: '<green>Industrial Miner finished. Mined {ores} ores.</green>'
+    structure-changed: '<red>Industrial Miner stopped: structure changed.</red>'
+    piston-no-space: '<red>Industrial Miner stopped: piston has no space above.</red>'
+    piston-wrong-direction: '<red>Industrial Miner stopped: pistons must face upwards.</red>'
+  hologram-projector:
+    inventory-title: Hologram Projector
+    text-item-name: '&7Text &e(Click to edit)'
+    offset-item-name: '&7Offset: &e{offset}'
+    offset-left: '&fLeft Click: &7+0.1'
+    offset-right: '&fRight Click: &7-0.1'
+    enter-text: <yellow>Please enter your desired hologram text in chat.</yellow>
+    updated: <green>Hologram updated.</green>
+    edit-cancelled: <gray>Hologram edit cancelled.</gray>
+    not-owner: <red>Only the owner can edit this Hologram Projector.</red>
 guide:
   errors:
     no-open: <red>You do not have permission to open this guide.</red>
@@ -182,6 +202,13 @@ guide:
       name: <gold>Flint and Steel</gold>
       lore: <gray>Used to ignite this multiblock machine.</gray>
 items:
+  tome-of-knowledge-sharing:
+    owner-line: '&7Owner: &b{name}'
+    bound-line-1: '&eRight Click&7 to obtain all Researches by'
+    bound-line-2: '&7the previously assigned Owner'
+  staff:
+    storm:
+      uses-left: '&7Uses left: &e{uses}'
   sfx.guide:
     name: <green>Slimefun Guide</green>
     lore:
@@ -218,12 +245,15 @@ items:
     - '&7&eRight Click&7 to shoot an Ender Pearl'
   sf.broken_spawner:
     name: '&cBroken Spawner'
+    type-line: '&7Type: &b{type}'
+    fractured-line: '&cFractured, must be repaired in an Ancient Altar'
     lore:
     - '&7Type: &b<Type>'
     - ''
     - '&cFractured, must be repaired in an Ancient Altar'
   sf.reinforced_spawner:
     name: '&bReinforced Spawner'
+    type-line: '&7Type: &b{type}'
     lore:
     - '&7Type: &b<Type>'
   sf.infernal_bonemeal:
@@ -3358,6 +3388,13 @@ materials:
   iron_bars: Iron Bars
   cauldron: Cauldron
 messages:
+  no-tome-yourself: '&cYou cannot learn from your own Tome of Knowledge.'
+  tome-of-knowledge-sharing:
+    bound: '&aThis Tome of Knowledge has been bound to you.'
+    shared: '&aYou learned &e{count}&a researches from &e{owner}&a.'
+  hungry: '&cYou are too hungry to use this.'
+  fire-extinguish: '&bYou have been extinguished.'
+  no-pvp: '&cPVP is disabled in this world.'
   profile:
     loading: <yellow>Your SFX player data is still loading. Try again in a moment.</yellow>
   not-researched-item: <red>You have not unlocked this item yet.</red>

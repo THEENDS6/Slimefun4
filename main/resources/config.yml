@@ -121,7 +121,7 @@ technical-gadgets:
   classic:
     # Classic Slimefun-style pulse intervals. SF4 schedules Jetpack every 3 ticks and JetBoots every 2 ticks.
     jetpack-interval-ticks: 3
-    jetboots-interval-ticks: 2
+    jetboots-interval-ticks: 10
     # Backwards-compatible fallback if the specific values above are removed.
     interval-ticks: 10
     charging-bench:
@@ -147,7 +147,7 @@ floating-text:
   # armor_stand uses virtual invisible armor stands, one per line, to match classic name-tag rendering.
   # text_display keeps the richer modern text display renderer available.
   mode: armor_stand
-  resync-interval-ticks: 20
+  resync-interval-ticks: 100
   armor-stand:
     y-offset: -0.25
     line-spacing: 0.25
@@ -171,7 +171,7 @@ electric-machines:
       enabled: true
       water-source-threshold: 4
       lava-source-threshold: 300
-      check-interval-ticks: 200
+      check-interval-ticks: 1000
     auto-brewer:
       enabled: true
 
@@ -240,3 +240,29 @@ radiation:
     reduction-per-piece: 0.25
 
 
+
+legacy:
+  infused-hopper:
+    radius: 3.5
+    # Classic visible cadence: active hoppers scan every 10 ticks.
+    base-interval-ticks: 10
+    # Backwards-compatible alias; ignored when base-interval-ticks is present.
+    interval-ticks: 10
+    # If a hopper has not moved items for this long, SFX gradually skips actual scans.
+    idle-backoff-after-seconds: 30
+    # Idle scan interval cap = base-interval-ticks * max-idle-multiplier.
+    max-idle-multiplier: 10
+    # Classic player-facing suction should teleport new drops even while pickupDelay is active.
+    respect-pickup-delay: false
+    redstone-disables: false
+    silent: false
+    particle-count: 12
+  hologram-projector:
+    view-distance-squared: 2304
+  industrial-miner:
+    step-delay-ticks: 4
+  reinforced-spawner:
+    # reinforced = always drop Reinforced Spawner and preserve type
+    # broken = always drop Broken Spawner and preserve type
+    # vanilla = normal spawner semantics: only Pickaxe of Containment drops Broken Spawner
+    break-drop-mode: reinforced

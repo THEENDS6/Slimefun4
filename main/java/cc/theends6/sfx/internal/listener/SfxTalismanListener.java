@@ -3,15 +3,24 @@ package cc.theends6.sfx.internal.listener;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.config.SfxTalismanBehaviorConfig;
 import cc.theends6.sfx.internal.research.SfxResearchService;
+import cc.theends6.sfx.internal.util.SfxEnchantmentRules;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.data.Ageable;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.AbstractHorse;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -25,6 +34,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerItemBreakEvent;
 import org.bukkit.event.player.PlayerToggleSprintEvent;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -35,7 +45,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 public final class SfxTalismanListener implements Listener {
-    private static final Set<String> CONSUMABLE = Set.of("anvil", "lava", "water", "fire", "warrior", "knight");
     private static final Set<Material> FARMER_BLOCKS = Set.of(
             Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.BEETROOTS, Material.NETHER_WART,
             Material.COCOA, Material.MELON, Material.PUMPKIN
@@ -45,12 +54,14 @@ public final class SfxTalismanListener implements Listener {
     private final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxResearchService researches;
+    private final SfxTalismanBehaviorConfig config;
 
-    public SfxTalismanListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxResearchService researches) {
+    public SfxTalismanListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxResearchService researches, SfxTalismanBehaviorConfig config) {
         this.plugin = plugin;
         this.runtime = runtime;
         this.items = items;
         this.researches = researches;
+        this.config = config;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -61,19 +72,19 @@ public final class SfxTalismanListener implements Listener {
         switch (event.getCause()) {
             case LAVA -> {
                 if (activate(player, "lava", event)) {
-                    addPotion(player, "FIRE_RESISTANCE", 20 * 30, 0);
+                    addPotion(player, "FIRE_RESISTANCE", config.durationTicks("lava", 3600), config.amplifier("lava", 4));
                     event.setCancelled(true);
                 }
             }
             case FIRE, FIRE_TICK -> {
                 if (activate(player, "fire", event)) {
-                    addPotion(player, "FIRE_RESISTANCE", 20 * 30, 0);
+                    addPotion(player, "FIRE_RESISTANCE", config.durationTicks("fire", 3600), config.amplifier("fire", 4));
                     event.setCancelled(true);
                 }
             }
             case DROWNING -> {
                 if (activate(player, "water", event)) {
-                    addPotion(player, "WATER_BREATHING", 20 * 30, 0);
+                    addPotion(player, "WATER_BREATHING", config.durationTicks("water", 3600), config.amplifier("water", 4));
                     event.setCancelled(true);
                 }
             }
@@ -82,17 +93,17 @@ public final class SfxTalismanListener implements Listener {
                     event.setCancelled(true);
                 }
             }
-            case ENTITY_ATTACK -> {
+            case ENTITY_ATTACK, ENTITY_SWEEP_ATTACK -> {
                 if (activate(player, "warrior", event)) {
-                    addPotion(player, "INCREASE_DAMAGE", 20 * 15, 2);
+                    addPotion(player, "INCREASE_DAMAGE", config.durationTicks("warrior", 3600), config.amplifier("warrior", 2));
                 }
                 if (activate(player, "knight", event)) {
-                    addPotion(player, "REGENERATION", 20 * 5, 0);
+                    addPotion(player, "REGENERATION", config.durationTicks("knight", 100), config.amplifier("knight", 3));
                 }
             }
             case PROJECTILE -> {
-                if (event instanceof EntityDamageByEntityEvent projectileDamage && activate(player, "whirlwind", event)) {
-                    projectileDamage.getDamager().remove();
+                if (event instanceof EntityDamageByEntityEvent projectileDamage && projectileDamage.getDamager() instanceof Projectile projectile && activate(player, "whirlwind", event)) {
+                    reflectProjectile(player, projectile);
                     event.setCancelled(true);
                 }
             }
@@ -126,7 +137,7 @@ public final class SfxTalismanListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onSprint(PlayerToggleSprintEvent event) {
         if (event.isSprinting() && activate(event.getPlayer(), "traveller", event)) {
-            addPotion(event.getPlayer(), "SPEED", 20 * 10, 1);
+            addPotion(event.getPlayer(), "SPEED", config.durationTicks("traveller", 3600), config.amplifier("traveller", 2));
         }
     }
 
@@ -141,57 +152,70 @@ public final class SfxTalismanListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Material type = event.getBlock().getType();
         if (isOre(type) && activate(event.getPlayer(), "caveman", event)) {
-            addPotion(event.getPlayer(), "FAST_DIGGING", 20 * 8, 1);
+            addPotion(event.getPlayer(), "FAST_DIGGING", config.durationTicks("caveman", 800), config.amplifier("caveman", 2));
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockDrops(BlockDropItemEvent event) {
         Material type = event.getBlockState().getType();
-        String talismanType = isOre(type) ? "miner" : (FARMER_BLOCKS.contains(type) ? "farmer" : null);
+        String talismanType = isOre(type) ? "miner" : (isFarmerTarget(type, event) ? "farmer" : null);
         if (talismanType == null || !activate(event.getPlayer(), talismanType, event)) {
             return;
         }
+        boolean allowBlockDrops = "miner".equals(talismanType) ? config.minerDuplicateBlockDrops() : config.farmerDuplicateBlockDrops();
         event.getItems().forEach(item -> {
             ItemStack stack = item.getItemStack();
-            if (!stack.getType().isBlock()) {
-                item.getWorld().dropItemNaturally(item.getLocation(), stack.clone());
+            if (stack == null || stack.getType().isAir()) {
+                return;
             }
+            if (!allowBlockDrops && stack.getType().isBlock()) {
+                return;
+            }
+            item.getWorld().dropItemNaturally(item.getLocation(), stack.clone());
         });
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityDeath(EntityDeathEvent event) {
         Player killer = event.getEntity().getKiller();
-        if (killer == null || event.getEntity() instanceof Player || !activate(killer, "hunter", event)) {
+        if (killer == null || event.getEntity() instanceof Player || event.getEntity() instanceof ArmorStand || !activate(killer, "hunter", event)) {
             return;
         }
-        for (ItemStack drop : event.getDrops().toArray(ItemStack[]::new)) {
-            if (drop != null && !drop.getType().isAir()) {
-                event.getDrops().add(drop.clone());
+        List<ItemStack> copies = new ArrayList<>();
+        for (ItemStack drop : event.getDrops()) {
+            if (drop == null || drop.getType().isAir()) {
+                continue;
             }
+            if (!config.hunterCopyEquipmentDrops() && isEquipmentDrop(event.getEntity(), drop)) {
+                continue;
+            }
+            copies.add(drop.clone());
         }
+        event.getDrops().addAll(copies);
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onEnchant(EnchantItemEvent event) {
         Map<Enchantment, Integer> additions = event.getEnchantsToAdd();
+        ItemStack item = event.getItem();
         if (activate(event.getEnchanter(), "magician", event)) {
-            Enchantment unbreaking = Enchantment.getByKey(NamespacedKey.minecraft("unbreaking"));
-            if (unbreaking != null) {
-                additions.put(unbreaking, Math.max(additions.getOrDefault(unbreaking, 0), 1));
-            }
+            randomLegalEnchant(item, additions).ifPresent(enchantment -> additions.put(enchantment, randomLevel(enchantment)));
         }
         if (activate(event.getEnchanter(), "wizard", event)) {
-            Enchantment fortune = Enchantment.getByKey(NamespacedKey.minecraft("fortune"));
-            if (fortune != null && fortune.canEnchantItem(event.getItem())) {
-                additions.put(fortune, ThreadLocalRandom.current().nextInt(3, 6));
+            Enchantment silkTouch = enchantment("silk_touch");
+            Enchantment fortune = enchantment("fortune");
+            if (fortune != null && fortune.canEnchantItem(item)
+                    && (silkTouch == null || (!item.containsEnchantment(silkTouch) && !additions.containsKey(silkTouch)))) {
+                int min = config.wizardFortuneMin();
+                int max = config.wizardFortuneMax();
+                additions.put(fortune, ThreadLocalRandom.current().nextInt(min, max + 1));
             }
         }
     }
 
     private boolean activate(Player player, String type, Event event) {
-        if (ThreadLocalRandom.current().nextInt(100) >= chance(type)) {
+        if (ThreadLocalRandom.current().nextInt(100) >= config.chance(type)) {
             return false;
         }
         InventoryMatch match = findTalisman(player, player.getInventory(), type, false);
@@ -201,7 +225,7 @@ public final class SfxTalismanListener implements Listener {
         if (match == null) {
             return false;
         }
-        if (CONSUMABLE.contains(type)) {
+        if (config.consume(type)) {
             ItemStack stack = match.inventory().getItem(match.slot());
             if (stack != null) {
                 int amount = stack.getAmount() - 1;
@@ -256,21 +280,80 @@ public final class SfxTalismanListener implements Listener {
         return PotionEffectType.getByKey(NamespacedKey.minecraft(key));
     }
 
-    private int chance(String type) {
-        return switch (type) {
-            case "miner", "farmer", "hunter", "wise" -> 20;
-            case "knight" -> 30;
-            case "caveman" -> 50;
-            case "traveller", "whirlwind" -> 60;
-            case "angel" -> 75;
-            case "magician" -> 80;
-            default -> 100;
-        };
-    }
-
     private boolean isOre(Material material) {
         String name = material.name();
         return name.endsWith("_ORE") || name.equals("ANCIENT_DEBRIS");
+    }
+
+    private boolean isFarmerTarget(Material material, BlockDropItemEvent event) {
+        if (!FARMER_BLOCKS.contains(material)) {
+            return false;
+        }
+        if (event.getBlockState().getBlockData() instanceof Ageable ageable) {
+            return ageable.getAge() >= ageable.getMaximumAge();
+        }
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void reflectProjectile(Player player, Projectile projectile) {
+        try {
+            Class<? extends Projectile> projectileClass = (Class<? extends Projectile>) projectile.getClass();
+            Projectile reflected = player.launchProjectile(projectileClass, projectile.getVelocity().multiply(-1.0D));
+            reflected.setShooter(player);
+        } catch (IllegalArgumentException ignored) {
+            // Some plugin-specific projectile classes cannot be launched. Cancellation still protects the player.
+        }
+        projectile.remove();
+    }
+
+    private boolean isEquipmentDrop(LivingEntity entity, ItemStack drop) {
+        if (entity instanceof AbstractHorse) {
+            return true;
+        }
+        EntityEquipment equipment = entity.getEquipment();
+        if (equipment == null || drop == null) {
+            return false;
+        }
+        ItemStack[] equipmentItems = {
+                equipment.getItemInMainHand(), equipment.getItemInOffHand(),
+                equipment.getHelmet(), equipment.getChestplate(), equipment.getLeggings(), equipment.getBoots()
+        };
+        for (ItemStack equipmentItem : equipmentItems) {
+            if (equipmentItem != null && !equipmentItem.getType().isAir() && equipmentItem.isSimilar(drop)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Optional<Enchantment> randomLegalEnchant(ItemStack item, Map<Enchantment, Integer> additions) {
+        Map<Enchantment, Integer> existing = new java.util.HashMap<>(item.getEnchantments());
+        existing.putAll(additions);
+        List<Enchantment> candidates = new ArrayList<>();
+        for (Enchantment enchantment : Enchantment.values()) {
+            if (enchantment == null || !enchantment.canEnchantItem(item)) {
+                continue;
+            }
+            if (existing.containsKey(enchantment) || SfxEnchantmentRules.conflictsWithExisting(existing, enchantment)) {
+                continue;
+            }
+            candidates.add(enchantment);
+        }
+        if (candidates.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())));
+    }
+
+    private int randomLevel(Enchantment enchantment) {
+        int max = Math.max(1, enchantment.getMaxLevel());
+        int start = Math.max(1, enchantment.getStartLevel());
+        return ThreadLocalRandom.current().nextInt(start, max + 1);
+    }
+
+    private Enchantment enchantment(String key) {
+        return Enchantment.getByKey(NamespacedKey.minecraft(key));
     }
 
     private record InventoryMatch(Inventory inventory, int slot) {

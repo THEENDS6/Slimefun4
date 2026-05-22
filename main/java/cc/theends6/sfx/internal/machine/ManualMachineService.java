@@ -247,22 +247,13 @@ public final class ManualMachineService {
     }
 
     private Inventory adjacentInventory(Block center, Block inventoryBlock, Block inputBlock) {
-        if (inputBlock != null) {
-            Optional<Inventory> outputChest = basicBlockMachines.findAnyOutputChestFor(inputBlock);
+        for (Block origin : List.of(inputBlock, inventoryBlock, center)) {
+            if (origin == null) {
+                continue;
+            }
+            Optional<Inventory> outputChest = basicBlockMachines.findAnyOutputChestFor(origin);
             if (outputChest.isPresent()) {
                 return outputChest.get();
-            }
-        }
-        for (Block origin : List.of(center, inventoryBlock)) {
-            for (BlockFace face : OUTPUT_SEARCH_ORDER) {
-                Block target = origin.getRelative(face);
-                if (inputBlock != null && target.equals(inputBlock)) {
-                    continue;
-                }
-                BlockState state = target.getState();
-                if (state instanceof InventoryHolder holder) {
-                    return holder.getInventory();
-                }
             }
         }
         return null;

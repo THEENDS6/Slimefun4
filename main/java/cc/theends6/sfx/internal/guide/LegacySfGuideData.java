@@ -215,7 +215,7 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:plastic_sheet", "guide:sf:technical_components");
     map.put("sf:magnet", "guide:sf:technical_components");
     map.put("sf:necrotic_skull", "guide:sf:magical_items");
-    map.put("sf:essence_of_afterlife", "guide:sf:magical_gadgets");
+    map.put("sf:essence_of_afterlife", "guide:sf:magical_items");
     map.put("sf:strange_nether_goo", "guide:sf:magical_items");
     map.put("sf:electro_magnet", "guide:sf:technical_components");
     map.put("sf:heating_coil", "guide:sf:technical_components");
@@ -234,8 +234,8 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:crafting_motor", "guide:sf:cargo");
     map.put("sf:rainbow_wool", "guide:sf:magical_gadgets");
     map.put("sf:rainbow_glass", "guide:sf:magical_gadgets");
-    map.put("sf:rainbow_clay", "guide:sf:magical_gadgets");
     map.put("sf:rainbow_glass_pane", "guide:sf:magical_gadgets");
+    map.put("sf:rainbow_clay", "guide:sf:magical_gadgets");
     map.put("sf:rainbow_concrete", "guide:sf:magical_gadgets");
     map.put("sf:rainbow_glazed_terracotta", "guide:sf:magical_gadgets");
     map.put("sf:rainbow_wool_xmas", "guide:sf:christmas");
@@ -486,7 +486,7 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:soulbound_elytra", "guide:sf:magical_gadgets");
     map.put("sf:magnesium_salt", "guide:sf:resources");
     map.put("sf:magnesium_generator", "guide:sf:electricity");
-    map.put("sf:reinforced_spawner", "guide:sf:magical_items");
+    map.put("sf:reinforced_spawner", "guide:sf:magical_gadgets");
     map.put("sf:can", "guide:sf:misc");
     map.put("sf:restored_backpack", "guide:sf:useful_items");
     map.put("sf:carrot_pie", "guide:sf:easter");
@@ -653,6 +653,41 @@ static Map<String, Integer> createClassicItemOrder(Map<String, String> exactCate
         byItem.put(entry.getKey(), next);
     }
     return Collections.unmodifiableMap(byItem);
+}
+
+static Map<String, Integer> createClassicMagicalGadgetsOrder() {
+    Map<String, Integer> map = new LinkedHashMap<>();
+    int order = 10;
+    order = putRange(map, order,
+            "sf:ender_backpack",
+            "sf:magic_eye_of_ender",
+            "sf:staff_elemental",
+            "sf:staff_elemental_wind",
+            "sf:staff_elemental_water",
+            "sf:staff_elemental_fire",
+            "sf:staff_elemental_storm",
+            "sf:magical_zombie_pills",
+            "sf:infused_magnet",
+            "sf:bound_backpack",
+            "sf:reinforced_spawner",
+            "sf:scroll_of_dimensional_teleposition",
+            "sf:tome_of_knowledge_sharing",
+            "sf:flask_of_knowledge",
+            "sf:filled_flask_of_knowledge",
+            "sf:ancient_pedestal",
+            "sf:ancient_altar",
+            "sf:infernal_bonemeal",
+            "sf:elytra_scale",
+            "sf:infused_elytra",
+            "sf:soulbound_elytra",
+            "sf:rainbow_wool",
+            "sf:rainbow_glass",
+            "sf:rainbow_glass_pane",
+            "sf:rainbow_clay",
+            "sf:rainbow_concrete",
+            "sf:rainbow_glazed_terracotta",
+            "sf:infused_hopper");
+    return Collections.unmodifiableMap(map);
 }
 
 static Map<String, Integer> createClassicBasicMachineOrder() {

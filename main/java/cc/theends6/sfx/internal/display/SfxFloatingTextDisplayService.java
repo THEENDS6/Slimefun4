@@ -95,6 +95,7 @@ public final class SfxFloatingTextDisplayService {
         for (SfxFloatingTextDisplayState state : states.values()) {
             if (state.viewers().remove(viewerId) != null) {
                 state.viewerText().remove(viewerId);
+                state.viewerPositions().remove(viewerId);
                 if (player.isOnline()) {
                     runtime.executeForPlayer(player, () -> destroyForPlayer(player, state));
                 }
@@ -160,6 +161,7 @@ public final class SfxFloatingTextDisplayService {
         if (!player.isOnline()) {
             state.viewers().remove(player.getUniqueId());
             state.viewerText().remove(player.getUniqueId());
+            state.viewerPositions().remove(player.getUniqueId());
             return;
         }
         World world = player.getWorld();
@@ -168,6 +170,7 @@ public final class SfxFloatingTextDisplayService {
         if (!sameWorld || player.getLocation().distanceSquared(location) > projection.viewDistanceSquared()) {
             if (state.viewers().remove(player.getUniqueId()) != null) {
                 state.viewerText().remove(player.getUniqueId());
+                state.viewerPositions().remove(player.getUniqueId());
                 destroyForPlayer(player, state);
             }
             return;
@@ -187,21 +190,44 @@ public final class SfxFloatingTextDisplayService {
             }
             state.viewers().clear();
             state.viewerText().clear();
+            state.viewerPositions().clear();
             state.ensureEntityCount(desiredEntities, entityIds);
         }
         state.displayMode(mode);
 
-        Component previousText = state.viewerText().put(player.getUniqueId(), projection.text());
-        if (state.viewers().put(player.getUniqueId(), Boolean.TRUE) == null) {
+        UUID viewerId = player.getUniqueId();
+        String currentPosition = positionKey(location, mode, lines.size());
+        boolean knownViewer = state.viewers().containsKey(viewerId);
+        Component previousText = state.viewerText().get(viewerId);
+        String previousPosition = state.viewerPositions().get(viewerId);
+        if (!knownViewer) {
+            state.viewers().put(viewerId, Boolean.TRUE);
+            state.viewerText().put(viewerId, projection.text());
+            state.viewerPositions().put(viewerId, currentPosition);
+            spawn(player, state, location, projection, mode, lines);
+        } else if (previousPosition == null || !previousPosition.equals(currentPosition)) {
+            destroyForPlayer(player, state);
+            state.viewers().put(viewerId, Boolean.TRUE);
+            state.viewerText().put(viewerId, projection.text());
+            state.viewerPositions().put(viewerId, currentPosition);
             spawn(player, state, location, projection, mode, lines);
         } else if (!projection.text().equals(previousText)) {
+            state.viewerText().put(viewerId, projection.text());
             updateMetadata(player, state, projection, mode, lines);
         }
+    }
+
+    private String positionKey(Location location, SfxFloatingTextDisplayMode mode, int lines) {
+        double y = location.getY() + (mode == SfxFloatingTextDisplayMode.TEXT_DISPLAY
+                ? plugin.getConfig().getDouble("floating-text.text-display.y-offset", 0.0D)
+                : plugin.getConfig().getDouble("floating-text.armor-stand.y-offset", -0.25D));
+        return String.format(Locale.ROOT, "%s:%d:%.4f:%.4f:%.4f", mode.name(), Math.max(1, lines), location.getX(), y, location.getZ());
     }
 
     private void destroyForPlayer(Player player, SfxFloatingTextDisplayState state) {
         state.viewers().remove(player.getUniqueId());
         state.viewerText().remove(player.getUniqueId());
+        state.viewerPositions().remove(player.getUniqueId());
         if (player.isOnline()) {
             PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerDestroyEntities(state.entityIds().stream().mapToInt(Integer::intValue).toArray()));
         }

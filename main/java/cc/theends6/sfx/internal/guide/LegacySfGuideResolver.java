@@ -27,6 +27,7 @@ public final class LegacySfGuideResolver {
     private static final Map<String, String> SOURCE_CATEGORY_FALLBACKS = LegacySfGuideData.createSourceCategoryFallbacks();
     private static final Map<String, Integer> CLASSIC_ITEM_ORDER = LegacySfGuideData.createClassicItemOrder(EXACT_CATEGORY_BY_ITEM);
     private static final Map<String, Integer> CLASSIC_BASIC_MACHINE_ORDER = LegacySfGuideData.createClassicBasicMachineOrder();
+    private static final Map<String, Integer> CLASSIC_MAGICAL_GADGETS_ORDER = LegacySfGuideData.createClassicMagicalGadgetsOrder();
     private static final Map<String, Integer> CLASSIC_CARGO_ORDER = LegacySfGuideData.createClassicCargoOrder();
     private static final Map<String, Integer> CLASSIC_ARMOR_ORDER = LegacySfGuideData.createClassicArmorOrder();
     private static final Map<String, Integer> CLASSIC_ELECTRICITY_ORDER = LegacySfGuideData.createClassicElectricityOrder();
@@ -101,6 +102,12 @@ public final class LegacySfGuideResolver {
         String guideCategory = resolveLegacyGuideCategory(item);
         if ("guide:sf:basic_machines".equals(guideCategory)) {
             Integer order = CLASSIC_BASIC_MACHINE_ORDER.get(item.id());
+            if (order != null) {
+                return order;
+            }
+        }
+        if ("guide:sf:magical_gadgets".equals(guideCategory)) {
+            Integer order = CLASSIC_MAGICAL_GADGETS_ORDER.get(item.id());
             if (order != null) {
                 return order;
             }

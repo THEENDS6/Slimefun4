@@ -69,6 +69,9 @@ items:
   - '&7Type: &b<Type>'
   flags:
   - legacy-sf
+  - plugin-block
+  - placeable-block
+  - creative-clone
 - id: sf:infernal_bonemeal
   category: sf:items
   material: BONE_MEAL
@@ -330,6 +333,7 @@ items:
   material: EXPERIENCE_BOTTLE
   name: '&aFlask of Knowledge'
   priority: 26
+  hidden: true
   flags:
   - legacy-sf
 - id: sf:small_backpack
@@ -4028,6 +4032,9 @@ items:
   - '&fProjects an Editable Hologram'
   flags:
   - legacy-sf
+  - plugin-block
+  - placeable-block
+  - creative-clone
 - id: sf:block_placer
   category: sf:machines
   material: DISPENSER
@@ -5297,6 +5304,9 @@ items:
   flags:
   - legacy-sf
   - visual-glint
+  - plugin-block
+  - placeable-block
+  - creative-clone
 - id: sf:heated_pressure_chamber
   category: sf:electricity
   material: LIGHT_GRAY_STAINED_GLASS

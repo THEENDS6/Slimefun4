@@ -17,6 +17,7 @@ public final class SfxLegacyItemBehaviorConfig {
     private final JavaPlugin plugin;
     private final Logger logger;
     private YamlConfiguration yaml = new YamlConfiguration();
+    private SfxTalismanBehaviorConfig talismans = new SfxTalismanBehaviorConfig(yaml);
 
     public SfxLegacyItemBehaviorConfig(JavaPlugin plugin) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -51,6 +52,12 @@ public final class SfxLegacyItemBehaviorConfig {
     public void reload() {
         File file = file();
         this.yaml = file.isFile() ? YamlConfiguration.loadConfiguration(file) : new YamlConfiguration();
+        this.talismans = new SfxTalismanBehaviorConfig(yaml);
+    }
+
+
+    public SfxTalismanBehaviorConfig talismans() {
+        return talismans;
     }
 
     public int beheadingChance(EntityType type) {

@@ -29,7 +29,34 @@ machines:
     obstructed: <red>远古基座上方被阻挡。</red>
     hold-item: <red>请手持一个物品放到远古基座上。</red>
   deploy-pack-unsupported: <yellow>这台基础机器当前不支持部署包，已发放整套结构材料：</yellow><gray>{item}</gray>
+  industrial-miner:
+    started: <green>工业采矿机已启动。</green>
+    started-advanced: <green>高级工业采矿机已启动。</green>
+    already-running: <yellow>这台工业采矿机已经在运行。</yellow>
+    no-fuel: <red>工业采矿机已停止：燃料不足。</red>
+    chest-full: <red>工业采矿机已停止：箱子已满。</red>
+    finished: <green>工业采矿机已完成。本次挖掘 {ores} 个矿物。</green>
+    structure-changed: <red>工业采矿机已停止：结构发生变化。</red>
+    piston-no-space: <red>工业采矿机已停止：活塞上方空间不足。</red>
+    piston-wrong-direction: <red>工业采矿机已停止：活塞必须朝上。</red>
+  hologram-projector:
+    inventory-title: 全息投影仪
+    text-item-name: '&7文本 &e（点击编辑）'
+    offset-item-name: '&7高度偏移：&e{offset}'
+    offset-left: '&f左键：&7+0.1'
+    offset-right: '&f右键：&7-0.1'
+    enter-text: <yellow>请在聊天栏输入新的全息文本。</yellow>
+    updated: <green>全息文本已更新。</green>
+    edit-cancelled: <gray>已取消全息编辑。</gray>
+    not-owner: <red>只有所有者可以编辑这个全息投影仪。</red>
 items:
+  tome-of-knowledge-sharing:
+    owner-line: '&7拥有者：&b{name}'
+    bound-line-1: '&e右键&7获得这位玩家的全部研究'
+    bound-line-2: '&7来自先前指定的拥有者'
+  staff:
+    storm:
+      uses-left: '&7剩余使用次数：&e{uses}'
   sfx.guide:
     name: <green>粘液科技书</green>
     lore:
@@ -66,12 +93,15 @@ items:
     - '&e右键&7发射一颗末影珍珠'
   sf.broken_spawner:
     name: '&c损坏的刷怪笼'
+    type-line: '&7类型：&b{type}'
+    fractured-line: '&c已破损，必须在远古祭坛中修复'
     lore:
     - '&7类型：&b<Type>'
     - ''
     - '&c已破损，必须在远古祭坛中修复'
   sf.reinforced_spawner:
     name: '&b强化刷怪笼'
+    type-line: '&7类型：&b{type}'
     lore:
     - '&7类型：&b<Type>'
   sf.infernal_bonemeal:
@@ -3443,6 +3473,13 @@ materials:
   iron_bars: 铁栏杆
   cauldron: 炼药锅
 messages:
+  no-tome-yourself: '&c你不能从自己的学识之书中学习。'
+  tome-of-knowledge-sharing:
+    bound: '&a这本学识之书已经绑定给你。'
+    shared: '&a你从 &e{owner}&a 处学习了 &e{count}&a 个研究。'
+  hungry: '&c你太饿了，无法使用这个物品。'
+  fire-extinguish: '&b你身上的火焰已被熄灭。'
+  no-pvp: '&c这个世界禁用了 PVP。'
   profile:
     loading: <yellow>SFX 玩家数据仍在加载，请稍后再试。</yellow>
   not-researched-item: <red>你还没有解锁这个物品。</red>

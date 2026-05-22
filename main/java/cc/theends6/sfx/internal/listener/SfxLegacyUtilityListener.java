@@ -6,10 +6,14 @@ import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
 import cc.theends6.sfx.internal.radiation.SfxRadiationService;
+import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
+import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
+import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.util.SfxEventGuards;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +28,9 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Ageable;
@@ -45,6 +51,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -76,13 +83,18 @@ public final class SfxLegacyUtilityListener implements Listener {
     private final SfxLegacyItemBehaviorConfig behaviorConfig;
     private final SfxBlockDataService blockData;
     private final SfxRadiationService radiationService;
+    private final SfxPlayerDataService playerData;
+    private final SfxResearchService researches;
     private final NamespacedKey tapeAnchorKey;
+    private final NamespacedKey stormStaffUsageKey;
+    private final NamespacedKey knowledgeTomeOwnerKey;
+    private final NamespacedKey knowledgeTomeOwnerNameKey;
     private final DecimalFormat distanceFormat = new DecimalFormat("##.###");
     private final Map<UUID, Long> magnetTick = new HashMap<>();
     private final Map<UUID, GrappleState> grapples = new HashMap<>();
     private final Map<UUID, Long> grapplingNoFallUntil = new HashMap<>();
 
-    public SfxLegacyUtilityListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig, SfxBlockDataService blockData, SfxRadiationService radiationService) {
+    public SfxLegacyUtilityListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxLegacyItemBehaviorConfig behaviorConfig, SfxBlockDataService blockData, SfxRadiationService radiationService, SfxPlayerDataService playerData, SfxResearchService researches) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
@@ -90,7 +102,12 @@ public final class SfxLegacyUtilityListener implements Listener {
         this.behaviorConfig = Objects.requireNonNull(behaviorConfig, "behaviorConfig");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.radiationService = Objects.requireNonNull(radiationService, "radiationService");
+        this.playerData = Objects.requireNonNull(playerData, "playerData");
+        this.researches = Objects.requireNonNull(researches, "researches");
         this.tapeAnchorKey = new NamespacedKey(plugin, "tape_anchor");
+        this.stormStaffUsageKey = new NamespacedKey(plugin, "stormstaff_usage");
+        this.knowledgeTomeOwnerKey = new NamespacedKey(plugin, "knowledge_tome_owner");
+        this.knowledgeTomeOwnerNameKey = new NamespacedKey(plugin, "knowledge_tome_owner_name");
     }
 
     boolean handleItemUse(PlayerInteractEvent event, String itemId) {
@@ -123,7 +140,11 @@ public final class SfxLegacyUtilityListener implements Listener {
             case "sf:medicine" -> useMedicalSupply(event, 8.0);
             case "sf:flask_of_knowledge" -> useKnowledgeFlask(event);
             case "sf:filled_flask_of_knowledge" -> useFilledKnowledgeFlask(event);
+            case "sf:tome_of_knowledge_sharing" -> useKnowledgeTome(event);
             case "sf:scroll_of_dimensional_teleposition" -> useTelepositionScroll(event);
+            case "sf:staff_elemental_wind" -> useWindStaff(event);
+            case "sf:staff_elemental_water" -> useWaterStaff(event);
+            case "sf:staff_elemental_storm" -> useStormStaff(event);
             default -> {
                 return false;
             }
@@ -561,6 +582,174 @@ public final class SfxLegacyUtilityListener implements Listener {
                 dropped.setPickupDelay(16);
             });
         }
+    }
+
+
+    private void useKnowledgeTome(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        denyItemUse(event);
+        Player player = event.getPlayer();
+        ItemStack tome = itemInHand(event);
+        if (tome == null || tome.getType().isAir()) {
+            return;
+        }
+        ItemMeta meta = tome.getItemMeta();
+        if (meta == null) {
+            return;
+        }
+        String ownerRaw = meta.getPersistentDataContainer().get(knowledgeTomeOwnerKey, PersistentDataType.STRING);
+        String ownerName = meta.getPersistentDataContainer().get(knowledgeTomeOwnerNameKey, PersistentDataType.STRING);
+        if (ownerRaw == null || ownerRaw.isBlank()) {
+            bindKnowledgeTome(player, tome, meta);
+            return;
+        }
+        UUID ownerId;
+        try {
+            ownerId = UUID.fromString(ownerRaw);
+        } catch (IllegalArgumentException exception) {
+            bindKnowledgeTome(player, tome, meta);
+            return;
+        }
+        if (ownerId.equals(player.getUniqueId())) {
+            send(player, "messages.no-tome-yourself", "<red>You cannot learn from your own Tome of Knowledge.</red>");
+            return;
+        }
+        String safeOwnerName = ownerName == null || ownerName.isBlank() ? ownerId.toString() : ownerName;
+        playerData.request(ownerId, safeOwnerName, ownerProfile -> playerData.request(player, targetProfile -> shareKnowledgeTome(player, ownerProfile, targetProfile, safeOwnerName)));
+    }
+
+    private void bindKnowledgeTome(Player player, ItemStack tome, ItemMeta meta) {
+        meta.getPersistentDataContainer().set(knowledgeTomeOwnerKey, PersistentDataType.STRING, player.getUniqueId().toString());
+        meta.getPersistentDataContainer().set(knowledgeTomeOwnerNameKey, PersistentDataType.STRING, player.getName());
+        List<Component> lore = new ArrayList<>();
+        lore.add(Text.renderFlexible(localization.text("items.tome-of-knowledge-sharing.owner-line", "&7Owner: &b{name}", Map.of("name", player.getName()))));
+        lore.add(Component.empty());
+        lore.add(Text.renderFlexible(localization.text("items.tome-of-knowledge-sharing.bound-line-1", "&eRight Click&7 to obtain all Researches by")));
+        lore.add(Text.renderFlexible(localization.text("items.tome-of-knowledge-sharing.bound-line-2", "&7the previously assigned Owner")));
+        meta.lore(lore);
+        tome.setItemMeta(meta);
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 0.7F, 1.6F);
+        send(player, "messages.tome-of-knowledge-sharing.bound", "<green>This Tome of Knowledge has been bound to you.</green>");
+    }
+
+    private void shareKnowledgeTome(Player player, SfxPlayerProfile ownerProfile, SfxPlayerProfile targetProfile, String ownerName) {
+        if (ownerProfile == null || targetProfile == null || !player.isOnline()) {
+            return;
+        }
+        int unlocked = 0;
+        for (String researchId : ownerProfile.unlockedResearchesCopy()) {
+            if (researchId == null || targetProfile.hasUnlocked(researchId)) {
+                continue;
+            }
+            researches.researchById(researchId).ifPresent(research -> {
+                targetProfile.unlock(research.id());
+            });
+            if (targetProfile.hasUnlocked(researchId)) {
+                unlocked++;
+            }
+        }
+        if (unlocked > 0) {
+            playerData.saveAsync(targetProfile);
+        }
+        ItemStack hand = player.getInventory().getItemInMainHand();
+        if ("sf:tome_of_knowledge_sharing".equals(itemId(hand))) {
+            consumeOne(hand, player);
+        }
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 0.8F, 1.0F);
+        send(player, "messages.tome-of-knowledge-sharing.shared", "<green>You learned {count} researches from {owner}.</green>", Map.of("count", unlocked, "owner", ownerName));
+    }
+
+
+    private void useWindStaff(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        denyItemUse(event);
+        Player player = event.getPlayer();
+        if (!consumeFood(player, 2)) {
+            send(player, "messages.hungry", "<red>You are too hungry to use this.</red>");
+            return;
+        }
+        Vector velocity = player.getEyeLocation().getDirection().normalize().multiply(4.0D);
+        player.setVelocity(velocity);
+        player.setFallDistance(0.0F);
+        player.playSound(player.getLocation(), Sound.ENTITY_TNT_PRIMED, 1.0F, 1.0F);
+        player.getWorld().playEffect(player.getLocation(), Effect.SMOKE, 1);
+    }
+
+    private void useWaterStaff(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        denyItemUse(event);
+        Player player = event.getPlayer();
+        player.setFireTicks(0);
+        send(player, "messages.fire-extinguish", "<aqua>You have been extinguished.</aqua>");
+    }
+
+    private void useStormStaff(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        denyItemUse(event);
+        Player player = event.getPlayer();
+        Block target = player.getTargetBlockExact(30);
+        if (target == null || target.getWorld() == null) {
+            return;
+        }
+        if (!target.getWorld().getPVP()) {
+            send(player, "messages.no-pvp", "<red>PVP is disabled in this world.</red>");
+            return;
+        }
+        if (!consumeFood(player, 4)) {
+            send(player, "messages.hungry", "<red>You are too hungry to use this.</red>");
+            return;
+        }
+        Location strike = target.getLocation();
+        target.getWorld().strikeLightning(strike);
+        damageStormStaff(player, itemInHand(event));
+    }
+
+    private void damageStormStaff(Player player, ItemStack item) {
+        if (item == null || item.getType().isAir() || item.getType() == Material.SHEARS || player.getGameMode() == GameMode.CREATIVE) {
+            return;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return;
+        }
+        int uses = meta.getPersistentDataContainer().getOrDefault(stormStaffUsageKey, PersistentDataType.INTEGER, 0) + 1;
+        if (uses >= 8) {
+            int next = item.getAmount() - 1;
+            item.setAmount(Math.max(0, next));
+            return;
+        }
+        meta.getPersistentDataContainer().set(stormStaffUsageKey, PersistentDataType.INTEGER, uses);
+        List<Component> lore = meta.lore() == null ? new java.util.ArrayList<>() : new java.util.ArrayList<>(meta.lore());
+        lore.removeIf(line -> {
+            String legacy = Text.toLegacy(line);
+            return legacy.contains("Uses left") || legacy.contains("剩余使用次数");
+        });
+        lore.add(Text.renderFlexible(localization.text("items.staff.storm.uses-left", "&7Uses left: &e{uses}", Map.of("uses", 8 - uses))));
+        meta.lore(lore);
+        item.setItemMeta(meta);
+    }
+
+    private boolean consumeFood(Player player, int amount) {
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            return true;
+        }
+        if (player.getFoodLevel() < amount) {
+            return false;
+        }
+        FoodLevelChangeEvent event = new FoodLevelChangeEvent(player, Math.max(0, player.getFoodLevel() - amount), null);
+        plugin.getServer().getPluginManager().callEvent(event);
+        if (!event.isCancelled()) {
+            player.setFoodLevel(event.getFoodLevel());
+        }
+        return true;
     }
 
     private WeightedDrop drop(int weight, ItemStack item) {
