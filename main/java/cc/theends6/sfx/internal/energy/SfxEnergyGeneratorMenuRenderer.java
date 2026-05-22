@@ -67,28 +67,32 @@ final class SfxEnergyGeneratorMenuRenderer {
         SfxInventoryPainter.setSlots(inventory, outputBorder, BORDER_OUT);
     }
 
+    private int displayedEnergy(SfxEnergyNodeState state, SfxEnergyComponentDefinition definition) {
+        return Math.max(0, Math.min(state.storedEnergy(), Math.max(0, definition.capacity())));
+    }
+
     private ItemStack progressIcon(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, SfxMachineStatusKey status) {
         if (definition.isCharger()) {
             return chargingBenchIcon(definition, state);
         }
         if (status == SfxMachineStatusKey.NO_NETWORK) {
             return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.NO_NETWORK)
-                    .energy(state.storedEnergy(), definition.capacity())
+                    .energy(displayedEnergy(state, definition), definition.capacity())
                     .build());
         }
         if (status == SfxMachineStatusKey.NETWORK_CONFLICT) {
             return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.NETWORK_CONFLICT)
-                    .energy(state.storedEnergy(), definition.capacity())
+                    .energy(displayedEnergy(state, definition), definition.capacity())
                     .build());
         }
         if (status == SfxMachineStatusKey.OUTPUT_FULL) {
             return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.OUTPUT_FULL)
-                    .energy(state.storedEnergy(), definition.capacity())
+                    .energy(displayedEnergy(state, definition), definition.capacity())
                     .build());
         }
         if (status == SfxMachineStatusKey.IDLE && !definition.isSolarGenerator()) {
             return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.IDLE)
-                    .energy(state.storedEnergy(), definition.capacity())
+                    .energy(displayedEnergy(state, definition), definition.capacity())
                     .generation(definition.energyPerTick())
                     .includeDefaultStatusLore(false)
                 .statusLore(localization.component("energy.generator.idle.lore", "<gray>Insert fuel to start generating power.</gray>"))
@@ -98,7 +102,7 @@ final class SfxEnergyGeneratorMenuRenderer {
             return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.WORKING)
                     .material(definition.progressMaterial())
                     .name(localization.component("energy.generator.solar.name", "<yellow>Solar Generator</yellow>"))
-                    .energy(state.storedEnergy(), definition.capacity())
+                    .energy(displayedEnergy(state, definition), definition.capacity())
                     .generation(definition.energyPerTick())
                     .includeDefaultStatusLore(false)
                     .build());
@@ -111,7 +115,7 @@ final class SfxEnergyGeneratorMenuRenderer {
                 .material(definition.progressMaterial())
                 .name(localization.component("energy.generator.active.name", "<green>Generating</green>"))
                 .progress(progress, total, remainingTicks, true)
-                .energy(state.storedEnergy(), definition.capacity())
+                .energy(displayedEnergy(state, definition), definition.capacity())
                 .generation(definition.energyPerTick())
                 .includeDefaultStatusLore(false)
                 .statusLore(localization.component("energy.generator.active.lore", "<gray>Fuel is currently being converted into energy.</gray>"))
@@ -125,7 +129,7 @@ final class SfxEnergyGeneratorMenuRenderer {
         if (display.charging()) {
             builder.icon(capacitorHead(display.current(), display.total()));
         }
-        builder.energy(state.storedEnergy(), definition.capacity())
+        builder.energy(displayedEnergy(state, definition), definition.capacity())
                 .consumption(chargingBenchEnergyPerTick(definition))
                 .includeDefaultStatusLore(false)
                 .statusLore(localization.component("energy.charging-bench.description", "<gray>Charges one rechargeable item at a time.</gray>"))

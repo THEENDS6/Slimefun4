@@ -191,6 +191,10 @@ configurable-machines:
     allow-soul-soil: true
 
 energy:
+  storage:
+    # Hidden grid storage buffer. The grid can internally store this percentage above the visible capacity.
+    # UI, multimeter and capacitor appearances still display the public capacity only.
+    hidden-buffer-percent: 5
   regulator-display:
     mode: 'sfx'
     # TextDisplay see-through can cause visual artifacts behind skulls/water; keep disabled by default.
