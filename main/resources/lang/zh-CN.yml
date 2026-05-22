@@ -20,6 +20,14 @@ machines:
     - <gray>放置后会自动部署完整基础机器。</gray>
     - <gray>部署前会检查空间是否足够。</gray>
     - <dark_gray>这是 SFX 的作弊辅助物品。</dark_gray>
+  ancient-altar:
+    in-use: <red>这个远古祭坛正在进行仪式。</red>
+    not-enough-pedestals: <red>古代基座不足，目前已摆放的基座数：({pedestals} / 8)</red>
+    unknown-catalyst: <red>未知的催化剂！请手持正确的催化剂右键远古祭坛。</red>
+    unknown-recipe: <red>未知的配方！请检查远古基座上的物品。</red>
+  ancient-pedestal:
+    obstructed: <red>远古基座上方被阻挡。</red>
+    hold-item: <red>请手持一个物品放到远古基座上。</red>
   deploy-pack-unsupported: <yellow>这台基础机器当前不支持部署包，已发放整套结构材料：</yellow><gray>{item}</gray>
 items:
   sfx.guide:

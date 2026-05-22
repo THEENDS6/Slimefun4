@@ -68,7 +68,14 @@ public final class SfxBlockDataService {
             return Optional.empty();
         }
         if (anchor.integrityState() != SfxBlockIntegrityState.VALID) {
-            return Optional.empty();
+            if (!isAnchorMaterialValid(location, anchor)) {
+                return Optional.empty();
+            }
+            markAnchorIntegritySync(key, anchor, SfxBlockIntegrityState.VALID);
+            anchor = anchors.get(key);
+            if (anchor == null || anchor.integrityState() != SfxBlockIntegrityState.VALID) {
+                return Optional.empty();
+            }
         }
         if (!isAnchorMaterialValid(location, anchor)) {
             markAnchorIntegritySync(key, anchor, SfxBlockIntegrityState.INVALID);
@@ -320,6 +327,9 @@ public final class SfxBlockDataService {
         SfxBlockAnchorKey key = anchor.key();
         Block block = world.getBlockAt(key.x(), key.y(), key.z());
         if (anchor.integrityState() != SfxBlockIntegrityState.VALID) {
+            if (isAnchorMaterialValid(block.getLocation(), anchor)) {
+                markAnchorIntegritySync(key, anchor, SfxBlockIntegrityState.VALID);
+            }
             return;
         }
         if (!isAnchorMaterialValid(block.getLocation(), anchor)) {
@@ -343,6 +353,36 @@ public final class SfxBlockDataService {
             return actual == Material.CYAN_STAINED_GLASS
                     || actual == Material.PURPLE_STAINED_GLASS
                     || actual == Material.RED_STAINED_GLASS;
+        }
+        if (instance != null && isDynamicDecorationMaterialValid(instance.typeId(), actual)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isDynamicDecorationMaterialValid(String typeId, Material actual) {
+        if (typeId == null || actual == null || actual.isAir()) {
+            return false;
+        }
+        String id = typeId.toLowerCase(java.util.Locale.ROOT);
+        String material = actual.name();
+        if (id.startsWith("sf:rainbow_glass_pane")) {
+            return material.endsWith("_STAINED_GLASS_PANE");
+        }
+        if (id.startsWith("sf:rainbow_glass")) {
+            return material.endsWith("_STAINED_GLASS") && !material.endsWith("_PANE");
+        }
+        if (id.startsWith("sf:rainbow_wool")) {
+            return material.endsWith("_WOOL");
+        }
+        if (id.startsWith("sf:rainbow_clay")) {
+            return material.endsWith("_TERRACOTTA") && !material.endsWith("_GLAZED_TERRACOTTA");
+        }
+        if (id.startsWith("sf:rainbow_concrete")) {
+            return material.endsWith("_CONCRETE");
+        }
+        if (id.startsWith("sf:rainbow_glazed_terracotta")) {
+            return material.endsWith("_GLAZED_TERRACOTTA");
         }
         return false;
     }

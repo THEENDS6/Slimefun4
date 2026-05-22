@@ -92,6 +92,7 @@ public final class SfxDecorationService implements Listener {
     }
 
     public void start() {
+        shutdown = false;
         rebuildIndex();
         scheduleAnimationTick();
     }
