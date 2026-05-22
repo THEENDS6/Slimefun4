@@ -33,10 +33,16 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.AnaloguePowerable;
+import org.bukkit.block.data.Powerable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -44,6 +50,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -103,6 +110,7 @@ public final class SfxGpsService implements Listener {
     private static final int GEO_MINE_REQUIRED_COMPLEXITY = 800;
     private static final int MAX_WAYPOINTS_PER_PLAYER = 64;
     private static final int TELEPORTER_RADIUS = 1;
+    private static final long GPS_PHYSICAL_RELEASE_CHECK_TICKS = 5L;
     private static final int[] CONTROL_PANEL_FRAME = {
             0, 1, 3, 5, 7, 8,
             9, 10, 11, 12, 13, 14, 15, 16, 17,
@@ -137,6 +145,13 @@ public final class SfxGpsService implements Listener {
     private final SfxElectricMachineService electricMachines;
     private final SfxGpsDataStore dataStore;
     private final Set<UUID> activeTeleports = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> activeTeleporterMenus = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> activeElevatorMenus = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, PendingWaypointInput> pendingWaypointInputs = new ConcurrentHashMap<>();
+    private final Map<UUID, PendingElevatorNameInput> pendingElevatorNameInputs = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> elevatorCooldowns = new ConcurrentHashMap<>();
+    private final Set<String> pressedPhysicalUses = ConcurrentHashMap.newKeySet();
+    private final Set<String> scheduledPhysicalChecks = ConcurrentHashMap.newKeySet();
 
     public SfxGpsService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxMenus menus,
                          SfxLocalization localization, SfxBlockDataService blockData, SfxDecorationService decorations,
@@ -158,6 +173,13 @@ public final class SfxGpsService implements Listener {
         dataStore.save();
         SfxGpsElectricBridge.unbind(this);
         activeTeleports.clear();
+        activeTeleporterMenus.clear();
+        activeElevatorMenus.clear();
+        pendingWaypointInputs.clear();
+        pendingElevatorNameInputs.clear();
+        elevatorCooldowns.clear();
+        pressedPhysicalUses.clear();
+        scheduledPhysicalChecks.clear();
     }
 
     public boolean supportsType(String typeId) {
@@ -183,32 +205,69 @@ public final class SfxGpsService implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onUse(PlayerInteractEvent event) {
+        Action action = event.getAction();
+        Player player = event.getPlayer();
+
+        if (action == Action.PHYSICAL) {
+            Block block = event.getClickedBlock();
+            if (block == null) {
+                return;
+            }
+            SfxBlockInstanceRecord instance = instanceAt(block.getLocation()).orElse(null);
+            if (instance == null || !supportsType(instance.typeId())) {
+                return;
+            }
+            scheduleGpsPhysicalUse(player, block, instance);
+            return;
+        }
+
         if (event.getHand() != EquipmentSlot.HAND) {
             return;
         }
-        Action action = event.getAction();
-        Player player = event.getPlayer();
+
         if (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK) {
             Optional<SfxItemMarker> marker = items.readMarker(player.getInventory().getItemInMainHand());
-            if (marker.isPresent() && handleGpsItemUse(player, marker.get(), event.getClickedBlock())) {
+            if (marker.isPresent() && handleGpsItemUse(player, marker.get(), event.getClickedBlock(), event.getBlockFace())) {
                 event.setCancelled(true);
                 return;
             }
         }
-        if ((action != Action.RIGHT_CLICK_BLOCK && action != Action.PHYSICAL) || event.getClickedBlock() == null) {
+
+        if (action != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) {
             return;
         }
         Block block = event.getClickedBlock();
-        SfxAnchorRecord anchor = blockData.findAnchor(block.getLocation()).orElse(null);
-        if (anchor == null) {
-            return;
-        }
-        SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+        SfxBlockInstanceRecord instance = instanceAt(block.getLocation()).orElse(null);
         if (instance == null || !supportsType(instance.typeId())) {
             return;
         }
+        if (handleGpsBlockRightClick(player, block, instance)) {
+            event.setCancelled(true);
+        }
+    }
+
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onChatInput(AsyncPlayerChatEvent event) {
+        Player player = event.getPlayer();
+        PendingWaypointInput waypointInput = pendingWaypointInputs.remove(player.getUniqueId());
+        PendingElevatorNameInput elevatorInput = waypointInput == null ? pendingElevatorNameInputs.remove(player.getUniqueId()) : null;
+        if (waypointInput == null && elevatorInput == null) {
+            return;
+        }
         event.setCancelled(true);
-        handleGpsBlockUse(player, block, instance);
+        String message = event.getMessage() == null ? "" : event.getMessage().trim();
+        runtime.executeForPlayer(player, () -> {
+            if (message.equalsIgnoreCase("cancel") || message.equalsIgnoreCase("取消")) {
+                send(player, "gps.messages.chat-input-cancelled", "<red>Input cancelled.</red>");
+                return;
+            }
+            if (waypointInput != null) {
+                completeWaypointInput(player, waypointInput, message);
+            } else if (elevatorInput != null) {
+                completeElevatorNameInput(player, elevatorInput, message);
+            }
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -234,10 +293,12 @@ public final class SfxGpsService implements Listener {
         send(player, "gps.messages.emergency-waypoint-created", "<red>GPS emergency waypoint created: <white>{name}</white>", Map.of("name", escape(name)));
     }
 
-    private boolean handleGpsItemUse(Player player, SfxItemMarker marker, Block clickedBlock) {
+    private boolean handleGpsItemUse(Player player, SfxItemMarker marker, Block clickedBlock, BlockFace clickedFace) {
         return switch (marker.itemId()) {
             case "sf:gps_marker_tool" -> {
-                createWaypoint(player, player.getLocation(), uniqueWaypointName(player.getUniqueId(), "Waypoint"));
+                Location waypointLocation = markerTargetLocation(player, clickedBlock, clickedFace);
+                pendingWaypointInputs.put(player.getUniqueId(), new PendingWaypointInput(waypointLocation));
+                send(player, "gps.messages.marker-enter-name", "<yellow>Please type the waypoint name in chat. Type <white>cancel</white> to cancel.</yellow>");
                 yield true;
             }
             case "sf:portable_geo_scanner" -> {
@@ -245,22 +306,146 @@ public final class SfxGpsService implements Listener {
                 yield true;
             }
             case "sf:portable_teleporter" -> {
-                openWaypointMenu(player, player.getUniqueId(), null, true);
+                Location source = player.getLocation().clone();
+                int complexity = networkComplexity(player.getUniqueId());
+                openWaypointMenu(player, player.getUniqueId(), null, true, source, complexity, false);
                 yield true;
             }
             default -> false;
         };
     }
 
-    private void handleGpsBlockUse(Player player, Block block, SfxBlockInstanceRecord instance) {
-        switch (instance.typeId()) {
-            case "sf:gps_control_panel" -> openControlPanel(player);
-            case "sf:gps_geo_scanner" -> scanChunk(player, block.getLocation());
-            case "sf:gps_teleportation_matrix" -> activateTeleporter(player, block.getLocation(), false);
-            case "sf:gps_activation_device_shared", "sf:gps_activation_device_personal" -> activateFromPlate(player, block.getLocation(), instance.typeId());
-            case "sf:elevator_plate" -> useElevator(player, block.getLocation(), player.isSneaking());
-            default -> send(player, "gps.messages.component-registered", "<gray>This GPS component is registered.</gray>");
+    private boolean handleGpsBlockRightClick(Player player, Block block, SfxBlockInstanceRecord instance) {
+        return switch (instance.typeId()) {
+            case "sf:gps_control_panel" -> {
+                openControlPanel(player);
+                yield true;
+            }
+            case "sf:gps_geo_scanner" -> {
+                scanChunk(player, block.getLocation());
+                yield true;
+            }
+            case "sf:elevator_plate" -> {
+                openElevatorEditor(player, block.getLocation(), instance);
+                yield true;
+            }
+            default -> false;
+        };
+    }
+
+    private void scheduleGpsPhysicalUse(Player player, Block block, SfxBlockInstanceRecord instance) {
+        String typeId = instance.typeId();
+        if (!isGpsPhysicalTrigger(typeId)) {
+            return;
         }
+        String key = physicalUseKey(player, block);
+        if (pressedPhysicalUses.contains(key) || !scheduledPhysicalChecks.add(key)) {
+            return;
+        }
+        Location location = block.getLocation().clone();
+        UUID instanceId = instance.instanceId();
+        runtime.executeForPlayerLater(player, 1L, () -> {
+            scheduledPhysicalChecks.remove(key);
+            Block liveBlock = location.getBlock();
+            SfxBlockInstanceRecord liveInstance = instanceAt(location).orElse(null);
+            if (liveInstance == null || !liveInstance.instanceId().equals(instanceId) || !typeId.equals(liveInstance.typeId())) {
+                pressedPhysicalUses.remove(key);
+                return;
+            }
+            if (!isPhysicalPlatePressed(player, liveBlock)) {
+                pressedPhysicalUses.remove(key);
+                return;
+            }
+            if (!pressedPhysicalUses.add(key)) {
+                schedulePhysicalReleaseWatch(player, location, key, instanceId, typeId);
+                return;
+            }
+            handleGpsPhysicalActivation(player, liveBlock, liveInstance);
+            schedulePhysicalReleaseWatch(player, location, key, instanceId, typeId);
+        });
+    }
+
+    private boolean isGpsPhysicalTrigger(String typeId) {
+        return "sf:gps_activation_device_shared".equals(typeId)
+                || "sf:gps_activation_device_personal".equals(typeId)
+                || "sf:elevator_plate".equals(typeId);
+    }
+
+    private void handleGpsPhysicalActivation(Player player, Block block, SfxBlockInstanceRecord instance) {
+        long now = System.currentTimeMillis();
+        UUID playerId = player.getUniqueId();
+        String typeId = instance.typeId();
+        if (activeTeleports.contains(playerId)) {
+            return;
+        }
+        if (("sf:gps_activation_device_shared".equals(typeId) || "sf:gps_activation_device_personal".equals(typeId))
+                && activeTeleporterMenus.contains(playerId)) {
+            return;
+        }
+        if ("sf:elevator_plate".equals(typeId) && activeElevatorMenus.contains(playerId)) {
+            return;
+        }
+        Long cooldownUntil = elevatorCooldowns.get(playerId);
+        if (cooldownUntil != null && cooldownUntil > now) {
+            return;
+        }
+        switch (typeId) {
+            case "sf:gps_activation_device_shared", "sf:gps_activation_device_personal" -> activateFromPlate(player, block.getLocation(), instance);
+            case "sf:elevator_plate" -> openElevatorFloorSelector(player, block.getLocation());
+            default -> {
+            }
+        }
+    }
+
+    private void schedulePhysicalReleaseWatch(Player player, Location location, String key, UUID instanceId, String typeId) {
+        runtime.executeForPlayerLater(player, GPS_PHYSICAL_RELEASE_CHECK_TICKS, () -> {
+            Block liveBlock = location.getBlock();
+            SfxBlockInstanceRecord liveInstance = instanceAt(location).orElse(null);
+            if (liveInstance == null || !liveInstance.instanceId().equals(instanceId) || !typeId.equals(liveInstance.typeId())
+                    || !isPhysicalPlatePressed(player, liveBlock)) {
+                pressedPhysicalUses.remove(key);
+                scheduledPhysicalChecks.remove(key);
+                return;
+            }
+            schedulePhysicalReleaseWatch(player, location, key, instanceId, typeId);
+        });
+    }
+
+
+    private boolean isPhysicalPlatePressed(Player player, Block block) {
+        if (block == null) {
+            return false;
+        }
+        Object data = block.getBlockData();
+        if (data instanceof Powerable powerable && powerable.isPowered()) {
+            return true;
+        }
+        if (data instanceof AnaloguePowerable analoguePowerable && analoguePowerable.getPower() > 0) {
+            return true;
+        }
+        return playerIsStandingOnPlate(player, block);
+    }
+
+    private boolean playerIsStandingOnPlate(Player player, Block block) {
+        if (player == null || block == null || player.getWorld() == null || block.getWorld() == null) {
+            return false;
+        }
+        if (!player.getWorld().getUID().equals(block.getWorld().getUID())) {
+            return false;
+        }
+        Location location = player.getLocation();
+        if (location.getBlockX() != block.getX() || location.getBlockZ() != block.getZ()) {
+            return false;
+        }
+        double minY = block.getY();
+        double maxY = block.getY() + 2.05D;
+        return location.getY() >= minY && location.getY() <= maxY;
+    }
+
+    private String physicalUseKey(Player player, Block block) {
+        Location location = block.getLocation();
+        UUID worldId = location.getWorld() == null ? new UUID(0L, 0L) : location.getWorld().getUID();
+        return player.getUniqueId() + ":" + worldId + ":" + location.getBlockX() + ":" + location.getBlockY() + ":" + location.getBlockZ();
     }
 
     private void openControlPanel(Player player) {
@@ -380,22 +565,32 @@ public final class SfxGpsService implements Listener {
         }
     }
 
-    private void openWaypointMenu(Player player, UUID owner, Location matrixLocation, boolean portable) {
+    private void openWaypointMenu(Player player, UUID owner, Location matrixLocation, boolean portable, Location source, int complexity, boolean trackTeleporterMenu) {
+        if (trackTeleporterMenu && !activeTeleporterMenus.add(player.getUniqueId())) {
+            return;
+        }
         List<SfxGpsWaypoint> waypoints = dataStore.waypoints(owner);
         SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.waypoints.title", "<dark_aqua>GPS Waypoints")).rows(6);
         int slot = 0;
         for (SfxGpsWaypoint waypoint : waypoints.stream().sorted(Comparator.comparing(SfxGpsWaypoint::createdAt).reversed()).limit(45).toList()) {
             Location target = waypoint.toLocation();
-            Material icon = target == null ? Material.BARRIER : Material.ENDER_PEARL;
-            builder.button(slot++, new SfxMenuButton(ItemBuilder.of(icon)
-                    .name("<aqua>" + escape(waypoint.name()))
-                    .lore("<gray>World: <white>" + escape(waypoint.worldName()),
-                            "<gray>X/Y/Z: <white>" + blockCoords(waypoint),
-                            "<yellow>Click to teleport")
-                    .build(), click -> startTeleport(click.player(), waypoint, matrixLocation, portable)));
+            int intervals = target == null ? 0 : teleportationTime(complexity, source, target);
+            String seconds = teleportTimeText(intervals);
+            ItemStack icon = target == null ? ItemBuilder.of(Material.BARRIER).build() : headIcon(HEAD_GLOBE_OVERWORLD, Material.ENDER_PEARL);
+            builder.button(slot++, new SfxMenuButton(namedItem(icon,
+                    component("gps.ui.waypoints.entry.name", "<aqua>{name}", Map.of("name", escape(waypoint.name()))),
+                    List.of(
+                            component("gps.ui.waypoints.entry.world", "<gray>World: <white>{world}", Map.of("world", escape(waypoint.worldName()))),
+                            component("gps.ui.waypoints.entry.coords", "<gray>X/Y/Z: <white>{coords}", Map.of("coords", blockCoords(waypoint))),
+                            component("gps.ui.waypoints.entry.time", "<gray>Estimated Time: <yellow>{time}s", Map.of("time", seconds)),
+                            component("gps.ui.waypoints.entry.teleport", "<yellow>Click to teleport"))),
+                    click -> startTeleport(click.player(), waypoint, matrixLocation, portable, source, complexity)));
         }
         if (waypoints.isEmpty()) {
-            builder.button(22, new SfxMenuButton(ItemBuilder.of(Material.BARRIER).name("<red>No waypoints").build(), click -> {}));
+            builder.button(22, new SfxMenuButton(namedItem(ItemBuilder.of(Material.BARRIER).build(), component("gps.ui.waypoints.no-waypoints", "<red>No waypoints"), List.of()), click -> {}));
+        }
+        if (trackTeleporterMenu) {
+            builder.onClose(closed -> activeTeleporterMenus.remove(closed.getUniqueId()));
         }
         menus.openRoot(player, builder.build());
     }
@@ -553,26 +748,27 @@ public final class SfxGpsService implements Listener {
         return SfxElectricStack.sfx(type.itemId(), 1);
     }
 
-    private void activateFromPlate(Player player, Location plateLocation, String plateType) {
+    private void activateFromPlate(Player player, Location plateLocation, SfxBlockInstanceRecord plate) {
         Location matrix = plateLocation.clone().subtract(0, 1, 0);
-        SfxBlockInstanceRecord instance = instanceAt(matrix).orElse(null);
-        if (instance == null || !instance.typeId().equals("sf:gps_teleportation_matrix")) {
+        SfxBlockInstanceRecord matrixInstance = instanceAt(matrix).orElse(null);
+        if (matrixInstance == null || !matrixInstance.typeId().equals("sf:gps_teleportation_matrix")) {
             send(player, "gps.messages.activation-not-on-matrix", "<red>This activation device is not placed on a GPS Teleporter Matrix.</red>");
             return;
         }
-        if (plateType.endsWith("_personal") && instance.ownerId() != null && !instance.ownerId().equals(player.getUniqueId())) {
+        if (plate.typeId().endsWith("_personal") && plate.ownerId() != null && !plate.ownerId().equals(player.getUniqueId())) {
             send(player, "gps.messages.personal-device-owner", "<red>This personal activation device belongs to another player.</red>");
             return;
         }
-        activateTeleporter(player, matrix, true);
+        activateTeleporter(player, matrix);
     }
 
-    private void activateTeleporter(Player player, Location matrixLocation, boolean fromPlate) {
+    private void activateTeleporter(Player player, Location matrixLocation) {
         SfxBlockInstanceRecord matrix = instanceAt(matrixLocation).orElse(null);
         if (matrix == null || !matrix.typeId().equals("sf:gps_teleportation_matrix")) {
             return;
         }
-        if (networkComplexity(matrix.ownerId()) < TELEPORT_REQUIRED_COMPLEXITY) {
+        int complexity = networkComplexity(matrix.ownerId());
+        if (complexity < TELEPORT_REQUIRED_COMPLEXITY) {
             updateTeleporterDecorations(matrixLocation, false, true);
             send(player, "gps.messages.matrix-complexity-too-low", "<red>The matrix owner's GPS network complexity is too low.</red>");
             return;
@@ -584,81 +780,236 @@ public final class SfxGpsService implements Listener {
             return;
         }
         updateTeleporterDecorations(matrixLocation, true, false);
-        openWaypointMenu(player, matrix.ownerId(), matrixLocation, false);
+        Location source = teleporterSource(matrixLocation);
+        openWaypointMenu(player, matrix.ownerId(), matrixLocation, false, source, complexity, true);
     }
 
-    private void startTeleport(Player player, SfxGpsWaypoint waypoint, Location matrixLocation, boolean portable) {
+    private void startTeleport(Player player, SfxGpsWaypoint waypoint, Location matrixLocation, boolean portable, Location source, int complexity) {
         Location target = waypoint.toLocation();
         if (target == null || target.getWorld() == null) {
             send(player, "gps.messages.target-world-not-loaded", "<red>The target world is not loaded.</red>");
             return;
         }
+        if (source == null || source.getWorld() == null) {
+            source = player.getLocation().clone();
+        }
         if (activeTeleports.contains(player.getUniqueId())) {
             return;
         }
+        if (!portable) {
+            activeTeleporterMenus.remove(player.getUniqueId());
+        }
         menus.close(player);
         activeTeleports.add(player.getUniqueId());
-        Location origin = player.getLocation().clone();
         if (matrixLocation != null) {
-            updateTeleporterDecorations(matrixLocation, false, false);
             updateTeleporterDecorations(matrixLocation, true, false);
         }
-        send(player, "gps.messages.teleporting", "<aqua>Teleporting to <white>{waypoint}</white> in 3 seconds...</aqua>", Map.of("waypoint", escape(waypoint.name())));
-        runtime.executeForPlayerLater(player, 60L, () -> {
-            activeTeleports.remove(player.getUniqueId());
-            if (!portable && matrixLocation != null && player.getLocation().distanceSquared(origin) > 4.0D) {
-                updateTeleporterDecorations(matrixLocation, true, true);
-                send(player, "gps.messages.teleport-cancelled-moved", "<red>Teleport cancelled because you moved.</red>");
-                return;
-            }
-            Location safe = safeDestination(target);
-            player.teleportAsync(safe);
-            if (matrixLocation != null) {
-                updateTeleporterDecorations(matrixLocation, true, false);
-            }
-        });
+        int intervals = teleportationTime(complexity, source, target);
+        send(player, "gps.messages.teleporting", "<aqua>Teleporting to <white>{waypoint}</white>...</aqua>", Map.of("waypoint", escape(waypoint.name())));
+        int totalTicks = Math.max(1, intervals * 10);
+        updateTeleportProgress(player, source.clone(), target.clone(), matrixLocation == null ? null : matrixLocation.clone(), portable, totalTicks, 0);
     }
 
-    private Location safeDestination(Location target) {
-        World world = target.getWorld();
-        if (world == null) {
-            return target;
-        }
-        int x = target.getBlockX();
-        int z = target.getBlockZ();
-        int y = Math.max(world.getMinHeight() + 1, Math.min(world.getMaxHeight() - 2, target.getBlockY()));
-        for (int dy = 0; dy < 12; dy++) {
-            Location candidate = new Location(world, x + 0.5, y + dy, z + 0.5, target.getYaw(), target.getPitch());
-            if (candidate.getBlock().getType().isAir() && candidate.clone().add(0, 1, 0).getBlock().getType().isAir()) {
-                return candidate;
-            }
-        }
-        return target;
-    }
-
-    private void useElevator(Player player, Location plateLocation, boolean down) {
-        Location target = findElevatorTarget(plateLocation, down);
-        if (target == null) {
-            send(player, "gps.messages.no-elevator-target", "<red>No elevator plate found {direction}.</red>", Map.of("direction", down ? "below" : "above"));
+    private void updateTeleportProgress(Player player, Location source, Location target, Location matrixLocation, boolean portable, int totalTicks, int elapsedTicks) {
+        if (!activeTeleports.contains(player.getUniqueId())) {
             return;
         }
-        player.teleportAsync(target.clone().add(0.5, 1.0, 0.5).setDirection(player.getLocation().getDirection()));
+        if (!portable && !playerRemainedAtSource(player, source)) {
+            activeTeleports.remove(player.getUniqueId());
+            if (matrixLocation != null) {
+                updateTeleporterDecorations(matrixLocation, true, true);
+            }
+            showTeleportEndTitle(player, "gps.ui.teleport.cancelled.title", "&cTeleportation Cancelled", "gps.ui.teleport.cancelled.subtitle", "&7You moved away from the teleporter.", 0);
+            send(player, "gps.messages.teleport-cancelled-moved", "<red>Teleport cancelled because you moved.</red>");
+            return;
+        }
+        if (elapsedTicks >= totalTicks) {
+            activeTeleports.remove(player.getUniqueId());
+            player.teleportAsync(target).thenRun(() -> runtime.executeForPlayer(player, () -> {
+                if (target.getWorld() != null) {
+                    target.getWorld().spawnParticle(Particle.PORTAL, target.clone().add(0, 1, 0), 80, 0.3D, 0.8D, 0.3D, 0.1D);
+                    target.getWorld().playSound(target, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 1.0F);
+                }
+                showTeleportEndTitle(player, "gps.ui.teleport.complete.title", "&aTeleported", "gps.ui.teleport.complete.subtitle", "&7Destination reached.", 100);
+                if (matrixLocation != null) {
+                    updateTeleporterDecorations(matrixLocation, true, false);
+                }
+            }));
+            return;
+        }
+        int progress = Math.max(0, Math.min(99, (int) Math.floor((elapsedTicks * 100.0D) / Math.max(1, totalTicks))));
+        showTeleportProgressTitle(player, "gps.ui.teleport.progress.title", "&bTeleporting", "gps.ui.teleport.progress.subtitle", "&e{progress}%", progress);
+        if (source.getWorld() != null && elapsedTicks % 10 == 0) {
+            int particles = Math.max(1, progress * 2);
+            source.getWorld().spawnParticle(Particle.PORTAL, source, particles, 0.5D, 0.75D, 0.5D, 0.02D);
+            source.getWorld().playSound(source, Sound.BLOCK_PORTAL_AMBIENT, 0.25F, 1.8F);
+        }
+        runtime.executeForPlayerLater(player, 1L, () -> updateTeleportProgress(player, source, target, matrixLocation, portable, totalTicks, elapsedTicks + 1));
     }
 
-    private Location findElevatorTarget(Location source, boolean down) {
-        if (source == null || source.getWorld() == null) {
-            return null;
+    private boolean playerRemainedAtSource(Player player, Location source) {
+        if (player == null || !player.isValid() || source == null || source.getWorld() == null || player.getWorld() == null) {
+            return false;
         }
+        if (!player.getWorld().getUID().equals(source.getWorld().getUID())) {
+            return false;
+        }
+        return player.getLocation().distanceSquared(source) < 2.0D;
+    }
+
+    private int teleportationTime(int complexity, Location source, Location destination) {
+        if (complexity < 100) {
+            return 100;
+        }
+        long speed = 50_000L + (long) complexity * (long) complexity;
+        int unsafeTime = (int) Math.min(4L * teleportDistanceSquared(source, destination) / Math.max(1L, speed), 40L);
+        return Math.max(1, unsafeTime);
+    }
+
+    private int teleportDistanceSquared(Location source, Location destination) {
+        if (source == null || destination == null || source.getWorld() == null || destination.getWorld() == null) {
+            return 150_000_000;
+        }
+        if (source.getWorld().getUID().equals(destination.getWorld().getUID())) {
+            return Math.min((int) source.distanceSquared(destination), 100_000_000);
+        }
+        return 150_000_000;
+    }
+
+    private String teleportTimeText(int intervals) {
+        double seconds = Math.max(1, intervals) * 0.5D;
+        if (Math.abs(seconds - Math.rint(seconds)) < 0.0001D) {
+            return String.valueOf((int) Math.rint(seconds));
+        }
+        return String.format(java.util.Locale.ROOT, "%.1f", seconds);
+    }
+
+    private Location teleporterSource(Location matrixLocation) {
+        return matrixLocation.clone().add(0.5D, 2.0D, 0.5D);
+    }
+
+    private void showTeleportProgressTitle(Player player, String titleKey, String titleFallback, String subtitleKey, String subtitleFallback, int progress) {
+        showTeleportTitle(player, titleKey, titleFallback, subtitleKey, subtitleFallback, progress, 0, 60, 0);
+    }
+
+    private void showTeleportEndTitle(Player player, String titleKey, String titleFallback, String subtitleKey, String subtitleFallback, int progress) {
+        showTeleportTitle(player, titleKey, titleFallback, subtitleKey, subtitleFallback, progress, 20, 60, 20);
+    }
+
+    private void showTeleportTitle(Player player, String titleKey, String titleFallback, String subtitleKey, String subtitleFallback,
+                                   int progress, int fadeIn, int stay, int fadeOut) {
+        String title = localization.text(titleKey, titleFallback, Map.of("progress", progress));
+        String subtitle = localization.text(subtitleKey, subtitleFallback, Map.of("progress", progress));
+        player.sendTitle(colorize(title), colorize(subtitle), fadeIn, stay, fadeOut);
+    }
+
+    private String colorize(String text) {
+        return ChatColor.translateAlternateColorCodes('&', Text.toLegacy(Text.renderFlexible(text)));
+    }
+
+    private void openElevatorFloorSelector(Player player, Location plateLocation) {
+        List<Location> floors = elevatorFloors(plateLocation);
+        if (floors.size() <= 1) {
+            send(player, "gps.messages.no-elevator-target", "<red>No elevator plate found {direction}.</red>",
+                    Map.of("direction", localization.text("gps.ui.elevator.direction.vertical", "above or below")));
+            return;
+        }
+        if (!activeElevatorMenus.add(player.getUniqueId())) {
+            return;
+        }
+        SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.elevator.title", "<dark_aqua>Elevator")).rows(6);
+        int slot = 0;
+        for (Location floor : floors.stream().limit(54).toList()) {
+            boolean current = floor.getBlockY() == plateLocation.getBlockY();
+            ItemStack icon = ItemBuilder.of(current ? Material.LIME_STAINED_GLASS_PANE : Material.ENDER_PEARL).build();
+            builder.button(slot++, new SfxMenuButton(namedItem(icon,
+                    component(current ? "gps.ui.elevator.current-floor.name" : "gps.ui.elevator.floor.name", current ? "<green>{name}" : "<aqua>{name}", Map.of("name", escape(elevatorName(floor)))),
+                    List.of(
+                            component("gps.ui.elevator.floor.y", "<gray>Y: <white>{y}", Map.of("y", floor.getBlockY())),
+                            component(current ? "gps.ui.elevator.current-floor.lore" : "gps.ui.elevator.floor.teleport", current ? "<gray>This is your current floor." : "<yellow>Click to teleport"))),
+                    click -> {
+                        if (!current) {
+                            teleportElevator(click.player(), floor);
+                        }
+                    }));
+        }
+        builder.onClose(closed -> activeElevatorMenus.remove(closed.getUniqueId()));
+        menus.openRoot(player, builder.build());
+    }
+
+    private void openElevatorEditor(Player player, Location plateLocation, SfxBlockInstanceRecord instance) {
+        if (instance.ownerId() != null && !instance.ownerId().equals(player.getUniqueId())) {
+            send(player, "gps.messages.elevator-owner-only", "<red>Only the owner can rename this elevator floor.</red>");
+            return;
+        }
+        pendingElevatorNameInputs.put(player.getUniqueId(), new PendingElevatorNameInput(plateLocation.clone()));
+        send(player, "gps.messages.elevator-enter-name", "<yellow>Please type the elevator floor name in chat. Type <white>cancel</white> to cancel.</yellow>");
+    }
+
+    private void teleportElevator(Player player, Location floor) {
+        activeElevatorMenus.remove(player.getUniqueId());
+        menus.close(player);
+        elevatorCooldowns.put(player.getUniqueId(), System.currentTimeMillis() + 1500L);
+        Location target = floor.clone().add(0.5D, 0.0D, 0.5D);
+        target.setYaw(player.getLocation().getYaw());
+        target.setPitch(player.getLocation().getPitch());
+        player.teleportAsync(target);
+        if (target.getWorld() != null) {
+            target.getWorld().playSound(target, Sound.ENTITY_ENDERMAN_TELEPORT, 0.7F, 1.2F);
+        }
+    }
+
+    private List<Location> elevatorFloors(Location source) {
+        if (source == null || source.getWorld() == null) {
+            return List.of();
+        }
+        List<Location> floors = new ArrayList<>();
         World world = source.getWorld();
-        int step = down ? -1 : 1;
-        for (int y = source.getBlockY() + step; y > world.getMinHeight() && y < world.getMaxHeight(); y += step) {
+        for (int y = world.getMinHeight(); y < world.getMaxHeight(); y++) {
             Location check = new Location(world, source.getBlockX(), y, source.getBlockZ());
             SfxBlockInstanceRecord instance = instanceAt(check).orElse(null);
             if (instance != null && instance.typeId().equals("sf:elevator_plate")) {
-                return check;
+                floors.add(check);
             }
         }
-        return null;
+        floors.sort(Comparator.comparingInt(Location::getBlockY));
+        return floors;
+    }
+
+    private String elevatorName(Location location) {
+        String custom = dataStore.elevatorName(location);
+        return custom == null || custom.isBlank()
+                ? localization.text("gps.ui.elevator.default-floor", "Floor {y}", Map.of("y", location.getBlockY()))
+                : custom;
+    }
+
+    private Location markerTargetLocation(Player player, Block clickedBlock, BlockFace clickedFace) {
+        Location location;
+        if (clickedBlock != null && clickedFace != null) {
+            location = clickedBlock.getRelative(clickedFace).getLocation();
+        } else {
+            location = player.getLocation().clone();
+        }
+        location.setYaw(player.getLocation().getYaw());
+        location.setPitch(player.getLocation().getPitch());
+        return location;
+    }
+
+    private void completeWaypointInput(Player player, PendingWaypointInput input, String name) {
+        if (name == null || name.isBlank()) {
+            send(player, "gps.messages.chat-input-empty", "<red>The name cannot be empty.</red>");
+            return;
+        }
+        createWaypoint(player, input.location(), uniqueWaypointName(player.getUniqueId(), name.trim()));
+    }
+
+    private void completeElevatorNameInput(Player player, PendingElevatorNameInput input, String name) {
+        if (name == null || name.isBlank()) {
+            send(player, "gps.messages.chat-input-empty", "<red>The name cannot be empty.</red>");
+            return;
+        }
+        dataStore.setElevatorName(input.location(), name.trim());
+        send(player, "gps.messages.elevator-name-set", "<green>Elevator floor renamed to <white>{name}</white>.</green>", Map.of("name", escape(name.trim())));
     }
 
     private void createWaypoint(Player player, Location location, String name) {
@@ -899,4 +1250,9 @@ public final class SfxGpsService implements Listener {
     private String escape(String value) {
         return value == null ? "" : value.replace("<", "").replace(">", "");
     }
+
+    private record PendingWaypointInput(Location location) { }
+
+    private record PendingElevatorNameInput(Location location) { }
 }
+

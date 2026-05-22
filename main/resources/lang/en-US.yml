@@ -3980,6 +3980,35 @@ gps:
         name: '&cNo waypoints'
     waypoints:
       title: '&3GPS Waypoints'
+      no-waypoints: '&cNo waypoints'
+      entry:
+        name: '&b{name}'
+        world: '&7World: &f{world}'
+        coords: '&7X/Y/Z: &f{coords}'
+        time: '&7Estimated Time: &e{time}s'
+        teleport: '&eClick to teleport'
+    teleport:
+      progress:
+        title: '&bTeleporting'
+        subtitle: '&e{progress}%'
+      complete:
+        title: '&aTeleported'
+        subtitle: '&7Destination reached.'
+      cancelled:
+        title: '&cTeleportation Cancelled'
+        subtitle: '&7You moved away from the teleporter.'
+    elevator:
+      title: '&3Elevator'
+      default-floor: 'Floor {y}'
+      direction:
+        vertical: 'above or below'
+      floor:
+        name: '&b{name}'
+        y: '&7Y: &f{y}'
+        teleport: '&eClick to teleport'
+      current-floor:
+        name: '&a{name}'
+        lore: '&7This is your current floor.'
     geo-scan:
       title: '&3GEO Scan'
       chunk:
@@ -4006,6 +4035,12 @@ gps:
     nether_ice: 'Nether Ice'
     unknown: 'GEO Resource'
   messages:
+    marker-enter-name: '&ePlease type the waypoint name in chat. Type &fcancel&e to cancel.'
+    chat-input-cancelled: '&cInput cancelled.'
+    chat-input-empty: '&cThe name cannot be empty.'
+    elevator-enter-name: '&ePlease type the elevator floor name in chat. Type &fcancel&e to cancel.'
+    elevator-name-set: '&aElevator floor renamed to &f{name}&a.'
+    elevator-owner-only: '&cOnly the owner can rename this elevator floor.'
     emergency-waypoint-created: '&cGPS emergency waypoint created: &f{name}'
     component-registered: '&7This GPS component is registered.'
     waypoint-deleted: '&cWaypoint deleted: &f{name}'
@@ -4018,7 +4053,7 @@ gps:
     matrix-complexity-too-low: '&cThe matrix owner''s GPS network complexity is too low.'
     teleporter-incomplete: '&cThe GPS Teleporter structure is incomplete.'
     target-world-not-loaded: '&cThe target world is not loaded.'
-    teleporting: '&bTeleporting to &f{waypoint}&b in 3 seconds...'
+    teleporting: '&bTeleporting to &f{waypoint}&b...'
     teleport-cancelled-moved: '&cTeleport cancelled because you moved.'
     no-elevator-target: '&cNo elevator plate found {direction}.'
     waypoint-limit: '&cYou have reached the GPS waypoint limit.'

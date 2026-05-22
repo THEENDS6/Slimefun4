@@ -4075,6 +4075,35 @@ gps:
         name: '&c没有路径点'
     waypoints:
       title: '&3GPS 路径点'
+      no-waypoints: '&c没有路径点'
+      entry:
+        name: '&b{name}'
+        world: '&7世界：&f{world}'
+        coords: '&7X/Y/Z：&f{coords}'
+        time: '&7预计时间：&e{time}秒'
+        teleport: '&e点击传送'
+    teleport:
+      progress:
+        title: '&b正在传送'
+        subtitle: '&e{progress}%'
+      complete:
+        title: '&a已传送'
+        subtitle: '&7已到达目的地。'
+      cancelled:
+        title: '&c传送已取消'
+        subtitle: '&7你离开了传送器。'
+    elevator:
+      title: '&3电梯'
+      default-floor: '{y} 层'
+      direction:
+        vertical: '上方或下方'
+      floor:
+        name: '&b{name}'
+        y: '&7高度：&f{y}'
+        teleport: '&e点击传送'
+      current-floor:
+        name: '&a{name}'
+        lore: '&7这是你当前所在的楼层。'
     geo-scan:
       title: '&3GEO 扫描'
       chunk:
@@ -4101,6 +4130,12 @@ gps:
     nether_ice: '下界玄冰'
     unknown: 'GEO 资源'
   messages:
+    marker-enter-name: '&e请在聊天框中输入路径点名称。输入 &f取消&e 来取消。'
+    chat-input-cancelled: '&c输入已取消。'
+    chat-input-empty: '&c名称不能为空。'
+    elevator-enter-name: '&e请在聊天框中输入电梯楼层名称。输入 &f取消&e 来取消。'
+    elevator-name-set: '&a电梯楼层已重命名为 &f{name}&a。'
+    elevator-owner-only: '&c只有拥有者可以重命名该电梯楼层。'
     emergency-waypoint-created: '&c已创建死亡点路径点：&f{name}'
     component-registered: '&7该 GPS 组件已注册。'
     waypoint-deleted: '&c已删除路径点：&f{name}'
@@ -4113,7 +4148,7 @@ gps:
     matrix-complexity-too-low: '&c矩阵拥有者的 GPS 网络复杂度不足。'
     teleporter-incomplete: '&cGPS 传送器结构不完整。'
     target-world-not-loaded: '&c目标世界未加载。'
-    teleporting: '&b将在 3 秒后传送到 &f{waypoint}&b...'
+    teleporting: '&b正在传送到 &f{waypoint}&b...'
     teleport-cancelled-moved: '&c你移动了，传送已取消。'
     no-elevator-target: '&c没有在{direction}找到电梯板。'
     waypoint-limit: '&c你已达到 GPS 路径点数量上限。'
