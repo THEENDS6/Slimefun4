@@ -85,6 +85,7 @@ public final class SqliteSfxAndroidScriptRepository implements AutoCloseable {
                         + " FROM sfx_android_scripts s"
                         + " LEFT JOIN sfx_android_script_votes v ON v.script_id = s.id"
                         + " WHERE s.deleted_at IS NULL AND s.android_type = ?"
+                        + " AND s.visibility IN ('PUBLIC', 'PRIVATE')"
                         + " AND (s.visibility = 'PUBLIC' OR s.author_uuid = ?)"
                         + " GROUP BY s.id"
                         + " ORDER BY s.downloads DESC, positive_votes DESC, s.updated_at DESC"
@@ -110,6 +111,7 @@ public final class SqliteSfxAndroidScriptRepository implements AutoCloseable {
                         + " FROM sfx_android_scripts s"
                         + " LEFT JOIN sfx_android_script_votes v ON v.script_id = s.id"
                         + " WHERE s.deleted_at IS NULL AND s.id = ?"
+                        + " AND s.visibility IN ('PUBLIC', 'PRIVATE')"
                         + " GROUP BY s.id")) {
             statement.setLong(1, id);
             try (ResultSet rs = statement.executeQuery()) {
