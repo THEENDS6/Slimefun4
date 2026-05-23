@@ -12,6 +12,7 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
+import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
 import cc.theends6.sfx.internal.topology.SfxTopologyStatus;
@@ -92,6 +93,7 @@ public final class SfxCargoService implements Listener {
     private final SfxBlockDataService blockData;
     private final SfxVirtualContainerService virtualContainers;
     private final SfxFloatingTextDisplayService floatingText;
+    private final SfxElectricMachineService electricMachines;
     private final Set<SfxFloatingTextKey> displayKeys = ConcurrentHashMap.newKeySet();
     private final Map<String, SfxCargoComponentDefinition> definitions = SfxCargoDefinitions.create();
     private final SfxTopologyService topology;
@@ -105,7 +107,7 @@ public final class SfxCargoService implements Listener {
     private final Map<UUID, CargoTransferStats> managerStats = new ConcurrentHashMap<>();
     private volatile boolean running = true;
 
-    public SfxCargoService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxVirtualContainerService virtualContainers, SfxFloatingTextDisplayService floatingText) {
+    public SfxCargoService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxVirtualContainerService virtualContainers, SfxFloatingTextDisplayService floatingText, SfxElectricMachineService electricMachines) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
@@ -113,6 +115,7 @@ public final class SfxCargoService implements Listener {
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.virtualContainers = Objects.requireNonNull(virtualContainers, "virtualContainers");
         this.floatingText = Objects.requireNonNull(floatingText, "floatingText");
+        this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
         this.topology = new SfxTopologyService(blockData, new SfxCargoTopologyPolicy(definitions), new SfxCargoConnectivityPolicy(RANGE));
         bootstrapLoadedStates();
         topology.rebuild();
@@ -482,7 +485,7 @@ public final class SfxCargoService implements Listener {
             SfxCargoNodeState state = currentState(terminalId);
             if (definition.isInput()) {
                 Endpoint endpoint = resolveEndpoint(instance, state, false, endpointCache);
-                if (endpoint != null && endpoint.container != null) {
+                if (endpoint != null && endpoint.canExtract()) {
                     inputs.add(new NodeRef(instance, definition, state, endpoint));
                 }
             } else if (definition.isOutput()) {
@@ -648,45 +651,45 @@ public final class SfxCargoService implements Listener {
 
     private int processBasicInput(NodeRef input, List<NodeRef> outputs) {
         Endpoint source = input.endpoint;
-        if (source == null || source.container == null) {
+        if (source == null || !source.canExtract()) {
             return 0;
         }
         Predicate<ItemStack> filter = stack -> acceptsInputFilter(input.state, stack);
-        PlannedStack plan = virtualContainers.planFirst(source.container, filter, 64);
+        PlannedStack plan = source.planFirst(filter, 64);
         if (plan == null || plan.isEmpty()) {
             return 0;
         }
-        return commitPlannedTransfer(input, source.container, plan, outputs, input.state.roundRobin ? SfxCargoDistributionMode.ROUND_ROBIN : SfxCargoDistributionMode.SEQUENTIAL);
+        return commitPlannedTransfer(input, source, plan, outputs, input.state.roundRobin ? SfxCargoDistributionMode.ROUND_ROBIN : SfxCargoDistributionMode.SEQUENTIAL);
     }
 
     private int processAdvancedInput(NodeRef input, List<NodeRef> outputs) {
         Endpoint source = input.endpoint;
-        if (source == null || source.container == null) {
+        if (source == null || !source.canExtract()) {
             return 0;
         }
         Predicate<ItemStack> filter = stack -> acceptsInputFilter(input.state, stack);
         int limit = SfxCargoNodeState.normalizeBatchLimit(input.state.batchLimit);
-        List<PlannedStack> batch = virtualContainers.planBatch(source.container, filter, limit, input.state.maxDistinctTypes, input.state.allowMultipleSlots);
+        List<PlannedStack> batch = source.planBatch(filter, limit, input.state.maxDistinctTypes, input.state.allowMultipleSlots);
         if (batch.isEmpty()) {
             return 0;
         }
         int moved = 0;
         for (PlannedStack plan : batch) {
-            moved += commitPlannedTransfer(input, source.container, plan, outputs, input.state.distributionMode);
+            moved += commitPlannedTransfer(input, source, plan, outputs, input.state.distributionMode);
         }
         return moved;
     }
 
-    private int commitPlannedTransfer(NodeRef input, SfxVirtualContainer sourceContainer, PlannedStack plan, List<NodeRef> outputs, SfxCargoDistributionMode mode) {
-        if (plan == null || plan.isEmpty() || !virtualContainers.canRemovePlanned(sourceContainer, plan.takes())) {
+    private int commitPlannedTransfer(NodeRef input, Endpoint source, PlannedStack plan, List<NodeRef> outputs, SfxCargoDistributionMode mode) {
+        if (source == null || plan == null || plan.isEmpty() || !source.canRemovePlanned(plan.takes())) {
             return 0;
         }
-        List<OutputMove> moves = planOutputMoves(input, plan.stack(), outputs, mode, sourceContainer);
+        List<OutputMove> moves = planOutputMoves(input, plan.stack(), outputs, mode, source);
         int planned = moves.stream().mapToInt(OutputMove::amount).sum();
         if (planned <= 0) {
             return 0;
         }
-        if (!virtualContainers.removePlanned(sourceContainer, limitTakes(plan, planned))) {
+        if (!source.removePlanned(limitTakes(plan, planned))) {
             return 0;
         }
         ItemStack template = plan.stack().clone();
@@ -707,13 +710,13 @@ public final class SfxCargoService implements Listener {
                     : move.endpoint().insert(part, input.state.smartFill);
             inserted += move.amount() - (isEmpty(remainder) ? 0 : remainder.getAmount());
             if (!isEmpty(remainder)) {
-                virtualContainers.insert(sourceContainer, remainder, false);
+                source.insert(remainder, false);
             }
         }
         if (inserted < planned) {
             ItemStack refund = template.clone();
             refund.setAmount(planned - inserted);
-            virtualContainers.insert(sourceContainer, refund, false);
+            source.insert(refund, false);
         }
         return inserted;
     }
@@ -732,7 +735,7 @@ public final class SfxCargoService implements Listener {
         return limited;
     }
 
-    private List<OutputMove> planOutputMoves(NodeRef input, ItemStack stack, List<NodeRef> outputs, SfxCargoDistributionMode mode, SfxVirtualContainer sourceContainer) {
+    private List<OutputMove> planOutputMoves(NodeRef input, ItemStack stack, List<NodeRef> outputs, SfxCargoDistributionMode mode, Endpoint source) {
         if (isEmpty(stack)) {
             return List.of();
         }
@@ -745,7 +748,7 @@ public final class SfxCargoService implements Listener {
                 continue;
             }
             Endpoint endpoint = output.endpoint;
-            if (endpoint == null || (!endpoint.trash && endpoint.container == sourceContainer)) {
+            if (endpoint == null || endpoint.sameStorage(source)) {
                 continue;
             }
             int capacity = input.definition.type() == SfxCargoComponentType.INPUT_NODE
@@ -944,6 +947,8 @@ public final class SfxCargoService implements Listener {
                 SfxCargoComponentDefinition targetDefinition = definitions.get(targetInstance.typeId());
                 if (targetDefinition != null && targetDefinition.type() == SfxCargoComponentType.TRASH_CAN && outputSide) {
                     endpoint = trashEndpoint();
+                } else if (electricMachines.supportsType(targetInstance.typeId())) {
+                    endpoint = electricMachineEndpoint(targetInstance.instanceId(), outputSide);
                 }
             }
         }
@@ -1613,49 +1618,142 @@ public final class SfxCargoService implements Listener {
 
 
     private Endpoint containerEndpoint(SfxVirtualContainer container) {
-        return new Endpoint(container, false);
+        return new Endpoint(container, null, false, false);
     }
 
     private Endpoint trashEndpoint() {
-        return new Endpoint(null, true);
+        return new Endpoint(null, null, false, true);
+    }
+
+    private Endpoint electricMachineEndpoint(UUID instanceId, boolean insertIntoInputs) {
+        return new Endpoint(null, instanceId, insertIntoInputs, false);
     }
 
     private final class Endpoint {
         private final SfxVirtualContainer container;
+        private final UUID electricMachineId;
+        private final boolean electricInputTarget;
         private final boolean trash;
 
-        private Endpoint(SfxVirtualContainer container, boolean trash) {
+        private Endpoint(SfxVirtualContainer container, UUID electricMachineId, boolean electricInputTarget, boolean trash) {
             this.container = container;
+            this.electricMachineId = electricMachineId;
+            this.electricInputTarget = electricInputTarget;
             this.trash = trash;
         }
 
+        boolean canExtract() {
+            return container != null || (electricMachineId != null && !electricInputTarget);
+        }
+
+        boolean sameStorage(Endpoint other) {
+            if (other == null) {
+                return false;
+            }
+            if (container != null && other.container != null) {
+                return container == other.container;
+            }
+            return electricMachineId != null && electricMachineId.equals(other.electricMachineId);
+        }
+
+        PlannedStack planFirst(Predicate<ItemStack> filter, int maxAmount) {
+            if (container != null) {
+                return virtualContainers.planFirst(container, filter, maxAmount);
+            }
+            if (electricMachineId != null && !electricInputTarget) {
+                return electricMachines.planFirstCargoOutput(electricMachineId, filter, maxAmount);
+            }
+            return new PlannedStack(null, List.of());
+        }
+
+        List<PlannedStack> planBatch(Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
+            if (container != null) {
+                return virtualContainers.planBatch(container, filter, maxItems, maxDistinctTypes, allowMultipleSlots);
+            }
+            if (electricMachineId != null && !electricInputTarget) {
+                return electricMachines.planCargoOutputBatch(electricMachineId, filter, maxItems, maxDistinctTypes, allowMultipleSlots);
+            }
+            return List.of();
+        }
+
+        boolean canRemovePlanned(List<SfxVirtualContainerService.SlotTake> takes) {
+            if (container != null) {
+                return virtualContainers.canRemovePlanned(container, takes);
+            }
+            if (electricMachineId != null && !electricInputTarget) {
+                return electricMachines.canRemoveCargoOutput(electricMachineId, takes);
+            }
+            return false;
+        }
+
+        boolean removePlanned(List<SfxVirtualContainerService.SlotTake> takes) {
+            if (container != null) {
+                return virtualContainers.removePlanned(container, takes);
+            }
+            if (electricMachineId != null && !electricInputTarget) {
+                return electricMachines.removeCargoOutput(electricMachineId, takes);
+            }
+            return false;
+        }
 
         int capacityFor(ItemStack stack, boolean smartFill) {
             if (trash) {
                 return stack == null ? 0 : stack.getAmount();
             }
-            return virtualContainers.capacityFor(container, stack, smartFill);
+            if (container != null) {
+                return virtualContainers.capacityFor(container, stack, smartFill);
+            }
+            if (electricMachineId != null) {
+                return electricInputTarget
+                        ? electricMachines.cargoInputCapacity(electricMachineId, stack, smartFill)
+                        : electricMachines.cargoOutputCapacity(electricMachineId, stack, smartFill);
+            }
+            return 0;
         }
 
         int capacityForSingleSlot(ItemStack stack, boolean smartFill) {
             if (trash) {
                 return stack == null ? 0 : stack.getAmount();
             }
-            return virtualContainers.capacityForSingleSlot(container, stack, smartFill);
+            if (container != null) {
+                return virtualContainers.capacityForSingleSlot(container, stack, smartFill);
+            }
+            if (electricMachineId != null) {
+                return electricInputTarget
+                        ? electricMachines.cargoInputCapacitySingleSlot(electricMachineId, stack, smartFill)
+                        : electricMachines.cargoOutputCapacitySingleSlot(electricMachineId, stack, smartFill);
+            }
+            return 0;
         }
 
         ItemStack insert(ItemStack stack, boolean smartFill) {
             if (trash || isEmpty(stack)) {
                 return null;
             }
-            return virtualContainers.insert(container, stack, smartFill);
+            if (container != null) {
+                return virtualContainers.insert(container, stack, smartFill);
+            }
+            if (electricMachineId != null) {
+                return electricInputTarget
+                        ? electricMachines.insertCargoInput(electricMachineId, stack, smartFill)
+                        : electricMachines.insertCargoOutput(electricMachineId, stack, smartFill);
+            }
+            return stack;
         }
 
         ItemStack insertSingleSlot(ItemStack stack, boolean smartFill) {
             if (trash || isEmpty(stack)) {
                 return null;
             }
-            return virtualContainers.insertSingleSlot(container, stack, smartFill);
+            if (container != null) {
+                return virtualContainers.insertSingleSlot(container, stack, smartFill);
+            }
+            if (electricMachineId != null) {
+                return electricInputTarget
+                        ? electricMachines.insertCargoInputSingleSlot(electricMachineId, stack, smartFill)
+                        : electricMachines.insertCargoOutputSingleSlot(electricMachineId, stack, smartFill);
+            }
+            return stack;
         }
     }
 }
