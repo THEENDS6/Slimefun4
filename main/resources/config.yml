@@ -279,6 +279,10 @@ androids:
   sleep:
     enabled: true
     blocked-backoff-ticks: 40
+  woodcutter:
+    
+    
+    batch-replant-bottom-layer: true
   scripts:
     allow-upload: true
     allow-private: true

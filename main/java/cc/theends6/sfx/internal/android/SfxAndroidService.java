@@ -294,7 +294,7 @@ public final class SfxAndroidService implements Listener {
                 continue;
             }
             SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
-            refreshOpenMainInventory(instanceId, state, false);
+            refreshOpenMainInventory(instanceId, state, true);
         }
     }
 
@@ -757,14 +757,15 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
-        TreeFootprint footprint = detectLargeTreeFootprint(target, logs);
-        Block log = nextLogToChop(target, logs, footprint);
+        List<Block> bottomLogs = bottomLayerLogs(target, logs, actionFacing(state));
+        boolean batchBottomLayer = plugin.getConfig().getBoolean("androids.woodcutter.batch-replant-bottom-layer", true);
+        if (batchBottomLayer && onlyBottomLayerLogsRemain(logs, bottomLogs)) {
+            return chopAndReplantBottomLayer(state, bottomLogs);
+        }
+        Block log = nextLogToChop(target, logs, bottomLogs, actionFacing(state));
         if (log == null) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
-        }
-        if (footprint != null && footprint.contains(log) && onlyFootprintLogsRemain(logs, footprint)) {
-            return chopAndReplantFootprint(state, footprint);
         }
         Material logType = log.getType();
         ItemStack drop = new ItemStack(logType);
@@ -773,7 +774,7 @@ public final class SfxAndroidService implements Listener {
             return false;
         }
         playBlockBreakEffect(log);
-        if (sameBlock(log, target)) {
+        if (isBottomLayerLog(log, bottomLogs)) {
             replantAfterChop(log, logType);
         } else {
             log.setType(Material.AIR, true);
@@ -782,42 +783,93 @@ public final class SfxAndroidService implements Listener {
         return true;
     }
 
-    private Block nextLogToChop(Block root, List<Block> logs, TreeFootprint footprint) {
+    private Block nextLogToChop(Block root, List<Block> logs, List<Block> bottomLogs, BlockFace face) {
         if (logs.isEmpty()) {
             return null;
         }
-        return logs.stream()
-                .max(Comparator
-                        .comparingInt((Block block) -> isProtectedStumpBlock(block, root, footprint) ? 0 : 1)
-                        .thenComparingInt(Block::getY)
-                        .thenComparingInt(block -> manhattan(block, root))
-                        .thenComparingInt(Block::getX)
-                        .thenComparingInt(Block::getZ))
-                .orElse(root);
-    }
-
-    private boolean isProtectedStumpBlock(Block block, Block root, TreeFootprint footprint) {
-        if (sameBlock(block, root)) {
-            return true;
+        List<Block> upperLogs = new ArrayList<>();
+        for (Block log : logs) {
+            if (!isBottomLayerLog(log, bottomLogs)) {
+                upperLogs.add(log);
+            }
         }
-        return footprint != null && footprint.contains(block);
+        if (!upperLogs.isEmpty()) {
+            return upperLogs.stream()
+                    .max(Comparator
+                            .comparingInt(Block::getY)
+                            .thenComparingInt(block -> manhattan(block, root))
+                            .thenComparingInt(block -> stableForwardCoordinate(block, root, face))
+                            .thenComparingInt(block -> stableSideCoordinate(block, root, face)))
+                    .orElse(upperLogs.get(0));
+        }
+        List<Block> sortedBottom = new ArrayList<>(bottomLogs);
+        sortedBottom.sort(bottomLayerComparator(root, face));
+        return sortedBottom.isEmpty() ? root : sortedBottom.get(0);
     }
 
-    private boolean onlyFootprintLogsRemain(List<Block> logs, TreeFootprint footprint) {
-        if (footprint == null) {
+    private List<Block> bottomLayerLogs(Block root, List<Block> logs, BlockFace face) {
+        List<Block> result = new ArrayList<>();
+        int bottomY = root.getY();
+        for (Block log : logs) {
+            if (log.getY() == bottomY && Tag.LOGS.isTagged(log.getType()) && saplingForLog(log.getType()) != null) {
+                result.add(log);
+            }
+        }
+        result.sort(bottomLayerComparator(root, face));
+        return result;
+    }
+
+    private Comparator<Block> bottomLayerComparator(Block root, BlockFace face) {
+        return Comparator
+                .comparingInt((Block block) -> sameBlock(block, root) ? 1 : 0)
+                .thenComparingInt(block -> stableForwardCoordinate(block, root, face))
+                .thenComparingInt(block -> stableSideCoordinate(block, root, face))
+                .thenComparingInt(Block::getX)
+                .thenComparingInt(Block::getZ);
+    }
+
+    private int stableForwardCoordinate(Block block, Block root, BlockFace face) {
+        int dx = block.getX() - root.getX();
+        int dz = block.getZ() - root.getZ();
+        BlockFace normalized = normalizeHorizontal(face);
+        return dx * normalized.getModX() + dz * normalized.getModZ();
+    }
+
+    private int stableSideCoordinate(Block block, Block root, BlockFace face) {
+        int dx = block.getX() - root.getX();
+        int dz = block.getZ() - root.getZ();
+        BlockFace right = turnRight(normalizeHorizontal(face));
+        return dx * right.getModX() + dz * right.getModZ();
+    }
+
+    private BlockFace normalizeHorizontal(BlockFace face) {
+        return face == BlockFace.NORTH || face == BlockFace.EAST || face == BlockFace.SOUTH || face == BlockFace.WEST ? face : BlockFace.NORTH;
+    }
+
+    private boolean isBottomLayerLog(Block block, List<Block> bottomLogs) {
+        for (Block candidate : bottomLogs) {
+            if (sameBlock(block, candidate)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean onlyBottomLayerLogsRemain(List<Block> logs, List<Block> bottomLogs) {
+        if (bottomLogs.isEmpty()) {
             return false;
         }
         for (Block log : logs) {
-            if (!footprint.contains(log)) {
+            if (!isBottomLayerLog(log, bottomLogs)) {
                 return false;
             }
         }
         return true;
     }
 
-    private boolean chopAndReplantFootprint(SfxAndroidState state, TreeFootprint footprint) {
+    private boolean chopAndReplantBottomLayer(SfxAndroidState state, List<Block> bottomLogs) {
         List<ItemStack> drops = new ArrayList<>();
-        for (Block block : footprint.blocks()) {
+        for (Block block : bottomLogs) {
             if (Tag.LOGS.isTagged(block.getType())) {
                 drops.add(new ItemStack(block.getType()));
             }
@@ -830,51 +882,15 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
             return false;
         }
-        for (Block block : footprint.blocks()) {
-            if (Tag.LOGS.isTagged(block.getType())) {
+        for (Block block : bottomLogs) {
+            Material logType = block.getType();
+            if (Tag.LOGS.isTagged(logType)) {
                 playBlockBreakEffect(block);
+                replantAfterChop(block, logType);
             }
-            replantSaplingAt(block, footprint.sapling());
         }
         state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         return true;
-    }
-
-    private TreeFootprint detectLargeTreeFootprint(Block root, List<Block> logs) {
-        Material sapling = saplingForLog(root.getType());
-        if (!supportsLargeTreeFootprint(sapling)) {
-            return null;
-        }
-        Set<LocationKey> logKeys = new HashSet<>();
-        for (Block log : logs) {
-            logKeys.add(LocationKey.of(log.getLocation()));
-        }
-        for (int ox = -1; ox <= 0; ox++) {
-            for (int oz = -1; oz <= 0; oz++) {
-                Block corner = root.getRelative(ox, 0, oz);
-                List<Block> candidate = List.of(
-                        corner,
-                        corner.getRelative(BlockFace.EAST),
-                        corner.getRelative(BlockFace.SOUTH),
-                        corner.getRelative(BlockFace.EAST).getRelative(BlockFace.SOUTH)
-                );
-                boolean valid = true;
-                for (Block block : candidate) {
-                    if (!logKeys.contains(LocationKey.of(block.getLocation())) || saplingForLog(block.getType()) != sapling) {
-                        valid = false;
-                        break;
-                    }
-                }
-                if (valid) {
-                    return new TreeFootprint(sapling, candidate);
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean supportsLargeTreeFootprint(Material sapling) {
-        return sapling == Material.DARK_OAK_SAPLING || sapling == Material.JUNGLE_SAPLING || sapling == Material.SPRUCE_SAPLING;
     }
 
     private List<Block> connectedLogs(Block root, int maxReach) {
@@ -1256,17 +1272,8 @@ public final class SfxAndroidService implements Listener {
             return;
         }
         if (isOutputSlot(raw)) {
-            if (event.getClick() == ClickType.NUMBER_KEY || event.getClick() == ClickType.SWAP_OFFHAND) {
-                event.setCancelled(true);
-                return;
-            }
-            if (event.getClick().isShiftClick()) {
-                return;
-            }
-            ItemStack cursor = event.getCursor();
-            if (cursor != null && !cursor.getType().isAir()) {
-                event.setCancelled(true);
-            }
+            event.setCancelled(true);
+            handleOutputSlotClick(event, player, holder, top, raw);
             return;
         }
         event.setCancelled(true);
@@ -1346,13 +1353,15 @@ public final class SfxAndroidService implements Listener {
         if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
             return;
         }
-        boolean syncFuelSlot = consumeFuelSlotDirty(holder.instanceId(), player.getUniqueId());
-        SfxAndroidState state = syncMainInventoryToState(instance, inventory, syncFuelSlot);
-        if (!state.paused() && (state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL || state.runtimeState() == SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL)) {
+        if (!consumeFuelSlotDirty(holder.instanceId(), player.getUniqueId())) {
+            return;
+        }
+        SfxAndroidState state = syncFuelSlotToState(instance, inventory);
+        if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL && fuelValue(state.fuelSlot(), SfxAndroidType.fromItemId(instance.typeId())) > 0) {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             activeAndroids.add(instance.instanceId());
         }
-        persist(instance.instanceId(), state);
+        persist(instance.instanceId(), state, false);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -1445,15 +1454,84 @@ public final class SfxAndroidService implements Listener {
         return new SfxAndroidMenuHolder(player.getUniqueId(), instanceId, type, page, editIndex, adding);
     }
 
-    private SfxAndroidState syncMainInventoryToState(SfxBlockInstanceRecord instance, Inventory inventory, boolean syncFuelSlot) {
+    private SfxAndroidState syncFuelSlotToState(SfxBlockInstanceRecord instance, Inventory inventory) {
         SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
-        for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
-            state.output(i, inventory.getItem(OUTPUT_SLOTS[i]));
-        }
-        if (syncFuelSlot) {
-            state.fuelSlot(inventory.getItem(FUEL_SLOT));
-        }
+        state.fuelSlot(inventory.getItem(FUEL_SLOT));
         return state;
+    }
+
+    private void handleOutputSlotClick(InventoryClickEvent event, Player player, SfxAndroidMenuHolder holder, Inventory top, int raw) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+            return;
+        }
+        int outputIndex = indexOf(OUTPUT_SLOTS, raw);
+        if (outputIndex < 0) {
+            return;
+        }
+        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+        ItemStack stored = state.outputs()[outputIndex];
+        if (stored == null || stored.getType().isAir() || stored.getAmount() <= 0) {
+            refreshMainStatus(top, state, !isFuelSlotDirty(holder.instanceId(), player.getUniqueId()));
+            return;
+        }
+        int moved;
+        if (event.getClick().isShiftClick()) {
+            moved = moveStackToPlayerInventory(player, stored);
+        } else if (event.getClick() == ClickType.NUMBER_KEY || event.getClick() == ClickType.SWAP_OFFHAND) {
+            moved = 0;
+        } else {
+            moved = moveStackToCursor(event, stored);
+        }
+        if (moved <= 0) {
+            return;
+        }
+        ItemStack remaining = stored.clone();
+        remaining.setAmount(stored.getAmount() - moved);
+        state.output(outputIndex, remaining.getAmount() <= 0 ? null : remaining);
+        if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL && state.hasFreeOutputSpace()) {
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+            activeAndroids.add(instance.instanceId());
+        }
+        persist(instance.instanceId(), state, true);
+        refreshMainStatus(top, state, !isFuelSlotDirty(holder.instanceId(), player.getUniqueId()));
+        player.updateInventory();
+    }
+
+    private int moveStackToPlayerInventory(Player player, ItemStack stored) {
+        ItemStack moving = stored.clone();
+        Map<Integer, ItemStack> leftovers = player.getInventory().addItem(moving);
+        int leftoverAmount = 0;
+        for (ItemStack leftover : leftovers.values()) {
+            if (leftover != null) {
+                leftoverAmount += leftover.getAmount();
+            }
+        }
+        return stored.getAmount() - leftoverAmount;
+    }
+
+    private int moveStackToCursor(InventoryClickEvent event, ItemStack stored) {
+        ItemStack cursor = event.getCursor();
+        boolean cursorEmpty = cursor == null || cursor.getType().isAir() || cursor.getAmount() <= 0;
+        if (cursorEmpty) {
+            int amount = event.getClick() == ClickType.RIGHT ? Math.max(1, (stored.getAmount() + 1) / 2) : stored.getAmount();
+            ItemStack moved = stored.clone();
+            moved.setAmount(amount);
+            event.setCursor(moved);
+            return amount;
+        }
+        if (!cursor.isSimilar(stored) || cursor.getAmount() >= cursor.getMaxStackSize()) {
+            return 0;
+        }
+        int amount = event.getClick() == ClickType.RIGHT ? 1 : Math.min(stored.getAmount(), cursor.getMaxStackSize() - cursor.getAmount());
+        amount = Math.min(amount, stored.getAmount());
+        if (amount <= 0) {
+            return 0;
+        }
+        ItemStack updated = cursor.clone();
+        updated.setAmount(cursor.getAmount() + amount);
+        event.setCursor(updated);
+        return amount;
     }
 
     private void syncMainInventoryLater(Player player, UUID instanceId, Inventory inventory) {
@@ -1467,7 +1545,7 @@ public final class SfxAndroidService implements Listener {
                 clearFuelSlotDirty(instanceId, player.getUniqueId());
                 return;
             }
-            SfxAndroidState state = syncMainInventoryToState(instance, inventory, true);
+            SfxAndroidState state = syncFuelSlotToState(instance, inventory);
             clearFuelSlotDirty(instanceId, player.getUniqueId());
             if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL && fuelValue(state.fuelSlot(), SfxAndroidType.fromItemId(instance.typeId())) > 0) {
                 state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
@@ -1538,8 +1616,9 @@ public final class SfxAndroidService implements Listener {
         if (instance == null) {
             return;
         }
-        boolean syncFuelSlot = consumeFuelSlotDirty(holder.instanceId(), player.getUniqueId());
-        SfxAndroidState state = syncMainInventoryToState(instance, top, syncFuelSlot);
+        SfxAndroidState state = consumeFuelSlotDirty(holder.instanceId(), player.getUniqueId())
+                ? syncFuelSlotToState(instance, top)
+                : stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
         if (slot == 15) {
             state.paused(false);
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
