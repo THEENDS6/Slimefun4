@@ -105,6 +105,7 @@ public final class SfxAndroidService implements Listener {
     private final Map<UUID, UploadSession> pendingUploads = new ConcurrentHashMap<>();
     private final Map<UUID, EditScriptSession> pendingScriptEdits = new ConcurrentHashMap<>();
     private final Map<UUID, Set<UUID>> mainViewers = new ConcurrentHashMap<>();
+    private final Map<UUID, Set<UUID>> fuelSlotDirtyViewers = new ConcurrentHashMap<>();
     private final AtomicLong androidTick = new AtomicLong();
     private volatile boolean running;
     private long tickInterval;
@@ -131,6 +132,7 @@ public final class SfxAndroidService implements Listener {
         running = true;
         rebuildIndex();
         scheduleTick();
+        scheduleFuelTick();
         scheduleOpenMainInventoryRefresh();
     }
 
@@ -140,6 +142,7 @@ public final class SfxAndroidService implements Listener {
         pendingUploads.clear();
         pendingScriptEdits.clear();
         mainViewers.clear();
+        fuelSlotDirtyViewers.clear();
         flushAllStates();
         states.clear();
         activeAndroids.clear();
@@ -231,6 +234,56 @@ public final class SfxAndroidService implements Listener {
                 scheduleOpenMainInventoryRefresh();
             }
         });
+    }
+
+    private void scheduleFuelTick() {
+        runtime.executeGlobalLater(20L, () -> {
+            if (!running) {
+                return;
+            }
+            try {
+                burnActiveFuelSeconds();
+            } catch (Throwable throwable) {
+                plugin.getLogger().warning("Android fuel scheduler failed: " + throwable.getMessage());
+            } finally {
+                scheduleFuelTick();
+            }
+        });
+    }
+
+    private void burnActiveFuelSeconds() {
+        for (UUID instanceId : List.copyOf(activeAndroids)) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+            if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+                activeAndroids.remove(instanceId);
+                states.remove(instanceId);
+                continue;
+            }
+            Location location = toLocation(instance.anchorKey());
+            SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), location);
+            if (state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED) {
+                activeAndroids.remove(instanceId);
+                continue;
+            }
+            SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
+            if (type == null) {
+                continue;
+            }
+            boolean changed = false;
+            if (state.fuelTicks() <= 0) {
+                changed = consumeFuelItem(state, type);
+            }
+            if (state.fuelTicks() > 0) {
+                state.consumeFuelTick();
+                changed = true;
+                if (state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL) {
+                    state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+                }
+            }
+            if (changed) {
+                persist(instance.instanceId(), state, false);
+            }
+        }
     }
 
     private void refreshOpenMainInventories() {
@@ -355,7 +408,6 @@ public final class SfxAndroidService implements Listener {
                 continue;
             }
             SfxAndroidInstruction instruction = state.currentInstruction();
-            boolean consumedFuelForInstruction = state.fuelTicks() > 0;
             boolean success = executeInstruction(instance, type, state, instruction, location.getBlock(), acceptedMoves.contains(instance.instanceId()), tickId);
             if (success) {
                 state.advance();
@@ -364,9 +416,6 @@ public final class SfxAndroidService implements Listener {
                 state.resetNoEffectTicks();
             } else if (!state.paused() && state.runtimeState() != SfxAndroidRuntimeState.PAUSED && state.runtimeState() != SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID) {
                 state.incrementNoEffectTicks();
-            }
-            if (consumedFuelForInstruction) {
-                state.consumeFuelTick();
             }
             persist(currentInstanceId(instance, location), state);
         }
@@ -420,19 +469,26 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             return true;
         }
+        if (!consumeFuelItem(state, type)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_NO_FUEL);
+            state.incrementNoEffectTicks();
+            persist(instance.instanceId(), state, false);
+            return false;
+        }
+        state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+        persist(instance.instanceId(), state, false);
+        return true;
+    }
+
+    private boolean consumeFuelItem(SfxAndroidState state, SfxAndroidType type) {
         ItemStack fuel = state.fuelSlot();
         int fuelTicks = fuelValue(fuel, type);
         if (fuelTicks <= 0) {
-            state.runtimeState(SfxAndroidRuntimeState.DORMANT_NO_FUEL);
-            state.incrementNoEffectTicks();
-            persist(instance.instanceId(), state);
             return false;
         }
         fuel.setAmount(fuel.getAmount() - 1);
         state.fuelSlot(fuel.getAmount() <= 0 ? null : fuel);
         state.fuelTicks(fuelTicks);
-        state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
-        persist(instance.instanceId(), state);
         return true;
     }
 
@@ -696,10 +752,19 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
-        Block log = nextLogToChop(target);
+        List<Block> logs = connectedLogs(target, 160);
+        if (logs.isEmpty()) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            return false;
+        }
+        TreeFootprint footprint = detectLargeTreeFootprint(target, logs);
+        Block log = nextLogToChop(target, logs, footprint);
         if (log == null) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
+        }
+        if (footprint != null && footprint.contains(log) && onlyFootprintLogsRemain(logs, footprint)) {
+            return chopAndReplantFootprint(state, footprint);
         }
         Material logType = log.getType();
         ItemStack drop = new ItemStack(logType);
@@ -717,19 +782,99 @@ public final class SfxAndroidService implements Listener {
         return true;
     }
 
-    private Block nextLogToChop(Block root) {
-        List<Block> logs = connectedLogs(root, 160);
+    private Block nextLogToChop(Block root, List<Block> logs, TreeFootprint footprint) {
         if (logs.isEmpty()) {
             return null;
         }
         return logs.stream()
                 .max(Comparator
-                        .comparingInt((Block block) -> sameBlock(block, root) ? 0 : 1)
+                        .comparingInt((Block block) -> isProtectedStumpBlock(block, root, footprint) ? 0 : 1)
                         .thenComparingInt(Block::getY)
                         .thenComparingInt(block -> manhattan(block, root))
                         .thenComparingInt(Block::getX)
                         .thenComparingInt(Block::getZ))
                 .orElse(root);
+    }
+
+    private boolean isProtectedStumpBlock(Block block, Block root, TreeFootprint footprint) {
+        if (sameBlock(block, root)) {
+            return true;
+        }
+        return footprint != null && footprint.contains(block);
+    }
+
+    private boolean onlyFootprintLogsRemain(List<Block> logs, TreeFootprint footprint) {
+        if (footprint == null) {
+            return false;
+        }
+        for (Block log : logs) {
+            if (!footprint.contains(log)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean chopAndReplantFootprint(SfxAndroidState state, TreeFootprint footprint) {
+        List<ItemStack> drops = new ArrayList<>();
+        for (Block block : footprint.blocks()) {
+            if (Tag.LOGS.isTagged(block.getType())) {
+                drops.add(new ItemStack(block.getType()));
+            }
+        }
+        if (drops.isEmpty()) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            return false;
+        }
+        if (!pushAllOutputsAtomically(state, drops)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
+            return false;
+        }
+        for (Block block : footprint.blocks()) {
+            if (Tag.LOGS.isTagged(block.getType())) {
+                playBlockBreakEffect(block);
+            }
+            replantSaplingAt(block, footprint.sapling());
+        }
+        state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+        return true;
+    }
+
+    private TreeFootprint detectLargeTreeFootprint(Block root, List<Block> logs) {
+        Material sapling = saplingForLog(root.getType());
+        if (!supportsLargeTreeFootprint(sapling)) {
+            return null;
+        }
+        Set<LocationKey> logKeys = new HashSet<>();
+        for (Block log : logs) {
+            logKeys.add(LocationKey.of(log.getLocation()));
+        }
+        for (int ox = -1; ox <= 0; ox++) {
+            for (int oz = -1; oz <= 0; oz++) {
+                Block corner = root.getRelative(ox, 0, oz);
+                List<Block> candidate = List.of(
+                        corner,
+                        corner.getRelative(BlockFace.EAST),
+                        corner.getRelative(BlockFace.SOUTH),
+                        corner.getRelative(BlockFace.EAST).getRelative(BlockFace.SOUTH)
+                );
+                boolean valid = true;
+                for (Block block : candidate) {
+                    if (!logKeys.contains(LocationKey.of(block.getLocation())) || saplingForLog(block.getType()) != sapling) {
+                        valid = false;
+                        break;
+                    }
+                }
+                if (valid) {
+                    return new TreeFootprint(sapling, candidate);
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean supportsLargeTreeFootprint(Material sapling) {
+        return sapling == Material.DARK_OAK_SAPLING || sapling == Material.JUNGLE_SAPLING || sapling == Material.SPRUCE_SAPLING;
     }
 
     private List<Block> connectedLogs(Block root, int maxReach) {
@@ -776,6 +921,10 @@ public final class SfxAndroidService implements Listener {
             block.setType(Material.AIR, true);
             return;
         }
+        replantSaplingAt(block, sapling);
+    }
+
+    private void replantSaplingAt(Block block, Material sapling) {
         Material soil = block.getRelative(BlockFace.DOWN).getType();
         if (canPlantSaplingOn(sapling, soil)) {
             block.setType(sapling, true);
@@ -1197,7 +1346,8 @@ public final class SfxAndroidService implements Listener {
         if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
             return;
         }
-        SfxAndroidState state = syncMainInventoryToState(instance, inventory);
+        boolean syncFuelSlot = consumeFuelSlotDirty(holder.instanceId(), player.getUniqueId());
+        SfxAndroidState state = syncMainInventoryToState(instance, inventory, syncFuelSlot);
         if (!state.paused() && (state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL || state.runtimeState() == SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL)) {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             activeAndroids.add(instance.instanceId());
@@ -1286,6 +1436,7 @@ public final class SfxAndroidService implements Listener {
             inventory.setItem(OUTPUT_SLOTS[i], outputs[i]);
         }
         inventory.setItem(FUEL_SLOT, state.fuelSlot());
+        clearFuelSlotDirty(instanceId, player.getUniqueId());
         mainViewers.computeIfAbsent(instanceId, ignored -> ConcurrentHashMap.newKeySet()).add(player.getUniqueId());
         player.openInventory(inventory);
     }
@@ -1294,47 +1445,92 @@ public final class SfxAndroidService implements Listener {
         return new SfxAndroidMenuHolder(player.getUniqueId(), instanceId, type, page, editIndex, adding);
     }
 
-    private SfxAndroidState syncMainInventoryToState(SfxBlockInstanceRecord instance, Inventory inventory) {
+    private SfxAndroidState syncMainInventoryToState(SfxBlockInstanceRecord instance, Inventory inventory, boolean syncFuelSlot) {
         SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
         for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
             state.output(i, inventory.getItem(OUTPUT_SLOTS[i]));
         }
-        state.fuelSlot(inventory.getItem(FUEL_SLOT));
+        if (syncFuelSlot) {
+            state.fuelSlot(inventory.getItem(FUEL_SLOT));
+        }
         return state;
     }
 
     private void syncMainInventoryLater(Player player, UUID instanceId, Inventory inventory) {
+        markFuelSlotDirty(instanceId, player.getUniqueId());
         runtime.executeForPlayerLater(player, 1L, () -> {
-            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
-            if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+            if (!isFuelSlotDirty(instanceId, player.getUniqueId())) {
                 return;
             }
-            SfxAndroidState state = syncMainInventoryToState(instance, inventory);
+            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+            if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+                clearFuelSlotDirty(instanceId, player.getUniqueId());
+                return;
+            }
+            SfxAndroidState state = syncMainInventoryToState(instance, inventory, true);
+            clearFuelSlotDirty(instanceId, player.getUniqueId());
             if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL && fuelValue(state.fuelSlot(), SfxAndroidType.fromItemId(instance.typeId())) > 0) {
                 state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
                 activeAndroids.add(instance.instanceId());
             }
-            persist(instance.instanceId(), state);
+            persist(instance.instanceId(), state, false);
         });
     }
 
-    private void refreshMainFuelInfo(Inventory inventory, SfxAndroidState state) {
+    private void refreshMainFuelInfo(Inventory inventory, SfxAndroidState state, UUID instanceId, UUID viewerId) {
         if (inventory == null || state == null || inventory.getHolder() == null) {
             return;
         }
         inventory.setItem(34, fuelInfoIcon(state));
+        if (!isFuelSlotDirty(instanceId, viewerId)) {
+            inventory.setItem(FUEL_SLOT, state.fuelSlot());
+        }
     }
 
-    private void refreshMainStatus(Inventory inventory, SfxAndroidState state) {
+    private void refreshMainStatus(Inventory inventory, SfxAndroidState state, boolean refreshFuelSlot) {
         if (inventory == null || state == null || inventory.getHolder() == null) {
             return;
         }
         inventory.setItem(34, fuelInfoIcon(state));
-        inventory.setItem(FUEL_SLOT, state.fuelSlot());
+        if (refreshFuelSlot) {
+            inventory.setItem(FUEL_SLOT, state.fuelSlot());
+        }
         ItemStack[] outputs = state.outputs();
         for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
             inventory.setItem(OUTPUT_SLOTS[i], outputs[i]);
         }
+    }
+
+    private void refreshMainStatus(Inventory inventory, SfxAndroidState state) {
+        refreshMainStatus(inventory, state, true);
+    }
+
+    private void markFuelSlotDirty(UUID instanceId, UUID viewerId) {
+        if (instanceId == null || viewerId == null) {
+            return;
+        }
+        fuelSlotDirtyViewers.computeIfAbsent(instanceId, ignored -> ConcurrentHashMap.newKeySet()).add(viewerId);
+    }
+
+    private boolean isFuelSlotDirty(UUID instanceId, UUID viewerId) {
+        Set<UUID> viewers = fuelSlotDirtyViewers.get(instanceId);
+        return viewers != null && viewers.contains(viewerId);
+    }
+
+    private boolean consumeFuelSlotDirty(UUID instanceId, UUID viewerId) {
+        Set<UUID> viewers = fuelSlotDirtyViewers.get(instanceId);
+        if (viewers == null) {
+            return false;
+        }
+        boolean removed = viewers.remove(viewerId);
+        if (viewers.isEmpty()) {
+            fuelSlotDirtyViewers.remove(instanceId);
+        }
+        return removed;
+    }
+
+    private void clearFuelSlotDirty(UUID instanceId, UUID viewerId) {
+        consumeFuelSlotDirty(instanceId, viewerId);
     }
 
     private void handleMainButton(Player player, SfxAndroidMenuHolder holder, Inventory top, int slot) {
@@ -1342,7 +1538,8 @@ public final class SfxAndroidService implements Listener {
         if (instance == null) {
             return;
         }
-        SfxAndroidState state = syncMainInventoryToState(instance, top);
+        boolean syncFuelSlot = consumeFuelSlotDirty(holder.instanceId(), player.getUniqueId());
+        SfxAndroidState state = syncMainInventoryToState(instance, top, syncFuelSlot);
         if (slot == 15) {
             state.paused(false);
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
@@ -1893,11 +2090,15 @@ public final class SfxAndroidService implements Listener {
     }
 
     private void persist(UUID instanceId, SfxAndroidState state) {
+        persist(instanceId, state, true);
+    }
+
+    private void persist(UUID instanceId, SfxAndroidState state, boolean fullRefresh) {
         if (instanceId == null || state == null) {
             return;
         }
         blockData.updateInstanceState(instanceId, state.encode(), state.runtimeState() == SfxAndroidRuntimeState.ACTIVE ? SfxBlockLifecycleState.ACTIVE : SfxBlockLifecycleState.IDLE);
-        refreshOpenMainInventory(instanceId, state, true);
+        refreshOpenMainInventory(instanceId, state, fullRefresh);
     }
 
     private void refreshOpenMainInventory(UUID instanceId, SfxAndroidState state, boolean fullRefresh) {
@@ -1925,10 +2126,11 @@ public final class SfxAndroidService implements Listener {
                     }
                     return;
                 }
+                boolean fuelDirty = isFuelSlotDirty(instanceId, viewerId);
                 if (fullRefresh) {
-                    refreshMainStatus(top, state);
+                    refreshMainStatus(top, state, !fuelDirty);
                 } else {
-                    refreshMainFuelInfo(top, state);
+                    refreshMainFuelInfo(top, state, instanceId, viewerId);
                 }
             });
         }
@@ -2019,6 +2221,27 @@ public final class SfxAndroidService implements Listener {
     private record LocationKey(UUID worldId, int x, int y, int z) {
         static LocationKey of(Location location) {
             return new LocationKey(location.getWorld().getUID(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        }
+    }
+
+    private record TreeFootprint(Material sapling, List<Block> blocks) {
+        private TreeFootprint {
+            blocks = List.copyOf(blocks);
+        }
+
+        private boolean contains(Block block) {
+            if (block == null) {
+                return false;
+            }
+            for (Block candidate : blocks) {
+                if (candidate.getWorld().equals(block.getWorld())
+                        && candidate.getX() == block.getX()
+                        && candidate.getY() == block.getY()
+                        && candidate.getZ() == block.getZ()) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
