@@ -37,6 +37,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.Particle;
+import org.bukkit.SoundGroup;
 import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -44,6 +46,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.Dispenser;
 import org.bukkit.block.Skull;
 import org.bukkit.block.data.Ageable;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.Entity;
@@ -157,6 +160,7 @@ public final class SfxAndroidService implements Listener {
         states.put(instanceId, state);
         persist(instanceId, state);
         applyAndroidBlockAppearance(block, typeId, rotation);
+        runtime.executeAtLater(block.getLocation(), 1L, () -> applyAndroidBlockAppearance(block, typeId, rotation));
     }
 
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {
@@ -225,7 +229,7 @@ public final class SfxAndroidService implements Listener {
                 activeAndroids.remove(instanceId);
                 continue;
             }
-            if (state.sleepingUntilTick() > tickId) {
+            if (shouldSkipForBackoff(state, tickId)) {
                 continue;
             }
             active.add(instance);
@@ -273,10 +277,11 @@ public final class SfxAndroidService implements Listener {
                 persist(instance.instanceId(), state);
                 continue;
             }
-            BlockFace face = state.rotation();
+            BlockFace face = actionFacing(state);
             Block target = targetBlock(from.getBlock(), face, instruction);
             if (isMoveInstruction(instruction)) {
-                moveIntents.put(instance.instanceId(), new MoveIntent(instance, from, target.getLocation(), instruction));
+                boolean clearsTarget = isMoveAndDigInstruction(instruction) && canClearTargetForMoveAndDig(state, target);
+                moveIntents.put(instance.instanceId(), new MoveIntent(instance, from, target.getLocation(), instruction, clearsTarget));
             }
         }
         Map<LocationKey, List<MoveIntent>> byTarget = new HashMap<>();
@@ -291,7 +296,9 @@ public final class SfxAndroidService implements Listener {
             MoveIntent winner = contenders.get(0);
             Block target = winner.to.getBlock();
             LocationKey targetKey = LocationKey.of(winner.to);
-            boolean targetFree = target.getType().isAir() || (occupiedBefore.contains(targetKey) && leaving.contains(targetKey));
+            boolean targetFree = target.getType().isAir()
+                    || (occupiedBefore.contains(targetKey) && leaving.contains(targetKey))
+                    || winner.clearsTargetBeforeMove();
             if (targetFree) {
                 acceptedMoves.add(winner.instance.instanceId());
             }
@@ -311,40 +318,51 @@ public final class SfxAndroidService implements Listener {
             if (success) {
                 state.advance();
             }
+            if (state.runtimeState() == SfxAndroidRuntimeState.ACTIVE) {
+                state.resetNoEffectTicks();
+            } else if (!state.paused() && state.runtimeState() != SfxAndroidRuntimeState.PAUSED && state.runtimeState() != SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID) {
+                state.incrementNoEffectTicks();
+            }
             state.consumeFuelTick();
             persist(currentInstanceId(instance, location), state);
         }
     }
 
     private boolean executeInstruction(SfxBlockInstanceRecord instance, SfxAndroidType type, SfxAndroidState state, SfxAndroidInstruction instruction, Block block, boolean moveAccepted, long tickId) {
+        BlockFace face = actionFacing(state);
         return switch (instruction) {
-            case WAIT -> true;
+            case WAIT -> {
+                state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+                yield true;
+            }
             case TURN_LEFT -> {
                 state.rotation(turnLeft(state.rotation()));
                 applyRotation(block, state.rotation());
+                state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
                 yield true;
             }
             case TURN_RIGHT -> {
                 state.rotation(turnRight(state.rotation()));
                 applyRotation(block, state.rotation());
+                state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
                 yield true;
             }
-            case GO_FORWARD, GO_UP, GO_DOWN -> moveAccepted && moveAndroid(instance, state, block, targetBlock(block, state.rotation(), instruction));
-            case DIG_FORWARD, DIG_UP, DIG_DOWN -> dig(state, block, targetBlock(block, state.rotation(), instruction), false, instance.typeId());
+            case GO_FORWARD, GO_UP, GO_DOWN -> moveAccepted && moveAndroid(instance, state, block, targetBlock(block, face, instruction));
+            case DIG_FORWARD, DIG_UP, DIG_DOWN -> dig(state, block, targetBlock(block, face, instruction), false, instance.typeId());
             case MOVE_AND_DIG_FORWARD, MOVE_AND_DIG_UP, MOVE_AND_DIG_DOWN -> {
-                Block target = targetBlock(block, state.rotation(), instruction);
+                Block target = targetBlock(block, face, instruction);
                 boolean dug = dig(state, block, target, false, instance.typeId());
                 yield dug && moveAccepted && moveAndroid(instance, state, block, target);
             }
-            case FARM_FORWARD, FARM_DOWN, FARM_EXOTIC_FORWARD, FARM_EXOTIC_DOWN -> farm(state, targetBlock(block, state.rotation(), instruction), type);
-            case CHOP_TREE -> chopTree(state, targetBlock(block, state.rotation(), instruction));
+            case FARM_FORWARD, FARM_DOWN, FARM_EXOTIC_FORWARD, FARM_EXOTIC_DOWN -> farm(state, targetBlock(block, face, instruction), type);
+            case CHOP_TREE -> chopTree(state, targetBlock(block, face, instruction));
             case CATCH_FISH -> catchFish(state, block, type);
             case ATTACK_MOBS_ANIMALS -> attack(block, state, type, living -> living instanceof Monster || living instanceof Animals);
             case ATTACK_MOBS -> attack(block, state, type, living -> living instanceof Monster);
             case ATTACK_ANIMALS -> attack(block, state, type, living -> living instanceof Animals);
             case ATTACK_ANIMALS_ADULT -> attack(block, state, type, living -> living instanceof Animals animal && animal.isAdult());
-            case INTERFACE_ITEMS -> depositItems(state, block.getRelative(state.rotation()));
-            case INTERFACE_FUEL -> pullFuel(state, block.getRelative(state.rotation()), type);
+            case INTERFACE_ITEMS -> depositItems(state, block.getRelative(face));
+            case INTERFACE_FUEL -> pullFuel(state, block.getRelative(face), type);
         };
     }
 
@@ -362,7 +380,7 @@ public final class SfxAndroidService implements Listener {
         int fuelTicks = fuelValue(fuel, type);
         if (fuelTicks <= 0) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_NO_FUEL);
-            activeAndroids.remove(instance.instanceId());
+            state.incrementNoEffectTicks();
             persist(instance.instanceId(), state);
             return false;
         }
@@ -418,6 +436,49 @@ public final class SfxAndroidService implements Listener {
                 || instruction == SfxAndroidInstruction.MOVE_AND_DIG_DOWN;
     }
 
+    private boolean isMoveAndDigInstruction(SfxAndroidInstruction instruction) {
+        return instruction == SfxAndroidInstruction.MOVE_AND_DIG_FORWARD
+                || instruction == SfxAndroidInstruction.MOVE_AND_DIG_UP
+                || instruction == SfxAndroidInstruction.MOVE_AND_DIG_DOWN;
+    }
+
+    private boolean canClearTargetForMoveAndDig(SfxAndroidState state, Block target) {
+        return target != null
+                && !target.getType().isAir()
+                && !isUnbreakable(target.getType())
+                && blockData.findAnchor(target.getLocation()).isEmpty()
+                && state.hasFreeOutputSpace()
+                && !target.getDrops(new ItemStack(Material.DIAMOND_PICKAXE)).isEmpty();
+    }
+
+
+    private boolean shouldSkipForBackoff(SfxAndroidState state, long tickId) {
+        if (state == null || state.noEffectTicks() <= 0) {
+            return false;
+        }
+        long threshold = Math.max(1L, Math.round(200.0D / Math.max(1L, tickInterval)));
+        int stage = (int) Math.min(4L, state.noEffectTicks() / threshold);
+        int divisor = switch (stage) {
+            case 0 -> 1;
+            case 1 -> 2;
+            case 2 -> 4;
+            case 3 -> 8;
+            default -> 16;
+        };
+        return divisor > 1 && Math.floorMod(tickId, divisor) != 0;
+    }
+
+    private BlockFace actionFacing(SfxAndroidState state) {
+        BlockFace visual = state == null ? BlockFace.NORTH : state.rotation();
+        return switch (visual) {
+            case NORTH -> BlockFace.SOUTH;
+            case SOUTH -> BlockFace.NORTH;
+            case EAST -> BlockFace.WEST;
+            case WEST -> BlockFace.EAST;
+            default -> BlockFace.NORTH;
+        };
+    }
+
     private Block targetBlock(Block block, BlockFace face, SfxAndroidInstruction instruction) {
         return switch (instruction) {
             case GO_UP, DIG_UP, MOVE_AND_DIG_UP -> block.getRelative(BlockFace.UP);
@@ -430,7 +491,6 @@ public final class SfxAndroidService implements Listener {
     private boolean moveAndroid(SfxBlockInstanceRecord instance, SfxAndroidState state, Block from, Block to) {
         if (to == null || !to.getType().isAir() || from.getWorld() == null || to.getWorld() == null || !from.getWorld().equals(to.getWorld())) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            state.sleepingUntilTick(androidTick.get() + 4);
             return false;
         }
         SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
@@ -453,29 +513,35 @@ public final class SfxAndroidService implements Listener {
     private boolean dig(SfxAndroidState state, Block androidBlock, Block target, boolean moveAfter, String typeId) {
         if (target == null || target.getType().isAir() || isUnbreakable(target.getType()) || blockData.findAnchor(target.getLocation()).isPresent()) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            state.sleepingUntilTick(androidTick.get() + 4);
             return false;
         }
         List<ItemStack> drops = new ArrayList<>(target.getDrops(new ItemStack(Material.DIAMOND_PICKAXE)));
         if (drops.isEmpty()) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            state.sleepingUntilTick(androidTick.get() + 4);
             return false;
         }
         for (ItemStack drop : drops) {
             if (!state.pushOutput(drop)) {
                 state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
-                UUID currentId = currentInstanceIdByBlock(androidBlock);
-                if (currentId != null) {
-                    activeAndroids.remove(currentId);
-                }
                 return false;
             }
         }
-        target.getWorld().playSound(target.getLocation(), Sound.BLOCK_STONE_BREAK, 0.7f, 1.0f);
+        playBlockBreakEffect(target);
         target.setType(Material.AIR, true);
         state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         return true;
+    }
+
+
+    private void playBlockBreakEffect(Block block) {
+        if (block == null || block.getType().isAir()) {
+            return;
+        }
+        BlockData data = block.getBlockData();
+        SoundGroup soundGroup = data.getSoundGroup();
+        Location center = block.getLocation().add(0.5, 0.5, 0.5);
+        block.getWorld().playSound(center, soundGroup.getBreakSound(), soundGroup.getVolume(), soundGroup.getPitch());
+        block.getWorld().spawnParticle(Particle.BLOCK, center, 24, 0.25, 0.25, 0.25, data);
     }
 
     private UUID currentInstanceIdByBlock(Block block) {
@@ -491,7 +557,6 @@ public final class SfxAndroidService implements Listener {
     private boolean farm(SfxAndroidState state, Block target, SfxAndroidType type) {
         if (target == null || !(target.getBlockData() instanceof Ageable ageable) || ageable.getAge() < ageable.getMaximumAge()) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            state.sleepingUntilTick(androidTick.get() + 4);
             return false;
         }
         ItemStack drop = cropDrop(target.getType());
@@ -522,7 +587,6 @@ public final class SfxAndroidService implements Listener {
     private boolean chopTree(SfxAndroidState state, Block target) {
         if (target == null || !Tag.LOGS.isTagged(target.getType())) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            state.sleepingUntilTick(androidTick.get() + 6);
             return false;
         }
         ItemStack drop = new ItemStack(target.getType());
@@ -530,8 +594,8 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
             return false;
         }
+        playBlockBreakEffect(target);
         target.setType(Material.AIR, true);
-        target.getWorld().playSound(target.getLocation(), Sound.BLOCK_WOOD_BREAK, 0.7f, 1.0f);
         state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         return true;
     }
@@ -539,7 +603,6 @@ public final class SfxAndroidService implements Listener {
     private boolean catchFish(SfxAndroidState state, Block block, SfxAndroidType type) {
         if (block.getRelative(BlockFace.DOWN).getType() != Material.WATER) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            state.sleepingUntilTick(androidTick.get() + 8);
             return false;
         }
         int chance = 10 * type.tier();
@@ -561,7 +624,7 @@ public final class SfxAndroidService implements Listener {
         double damage = type.tier() >= 3 ? 20D : 4D * type.tier();
         double radius = 4D + type.tier();
         Location origin = block.getLocation().add(0.5, 0.5, 0.5);
-        BlockFace face = state.rotation();
+        BlockFace face = actionFacing(state);
         boolean attacked = false;
         for (Entity entity : block.getWorld().getNearbyEntities(origin, radius, radius, radius)) {
             if (!(entity instanceof LivingEntity living) || living instanceof Player || !filter.test(living) || !isInFront(origin, living.getLocation(), face)) {
@@ -575,7 +638,6 @@ public final class SfxAndroidService implements Listener {
         }
         if (!attacked) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            state.sleepingUntilTick(androidTick.get() + 6);
         } else {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         }
@@ -610,39 +672,47 @@ public final class SfxAndroidService implements Listener {
         SfxBlockInstanceRecord instance = blockData.findAnchor(target.getLocation()).flatMap(anchor -> blockData.findInstance(anchor.instanceId())).orElse(null);
         if (instance == null || !INTERFACE_ITEMS.equals(instance.typeId()) || !(target.getState() instanceof Dispenser dispenser)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            state.sleepingUntilTick(androidTick.get() + 6);
             return false;
         }
         Inventory inventory = dispenser.getInventory();
         boolean moved = false;
+        boolean hadOutput = false;
         ItemStack[] outputs = state.outputs();
         for (int i = 0; i < outputs.length; i++) {
             ItemStack stack = outputs[i];
             if (stack == null || stack.getType().isAir()) {
                 continue;
             }
+            hadOutput = true;
             Map<Integer, ItemStack> left = inventory.addItem(stack.clone());
             if (left.isEmpty()) {
                 state.output(i, null);
                 moved = true;
             } else {
                 ItemStack remaining = left.values().iterator().next();
+                if (remaining.getAmount() != stack.getAmount()) {
+                    moved = true;
+                }
                 state.output(i, remaining);
-                moved = true;
             }
         }
-        state.runtimeState(moved ? SfxAndroidRuntimeState.ACTIVE : SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
-        return moved;
+        dispenser.update(true, false);
+        if (moved) {
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+        } else {
+            state.runtimeState(hadOutput ? SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL : SfxAndroidRuntimeState.DORMANT_WAITING_EXTERNAL_CHANGE);
+        }
+        return true;
     }
 
     private boolean pullFuel(SfxAndroidState state, Block target, SfxAndroidType type) {
         SfxBlockInstanceRecord instance = blockData.findAnchor(target.getLocation()).flatMap(anchor -> blockData.findInstance(anchor.instanceId())).orElse(null);
         if (instance == null || !INTERFACE_FUEL.equals(instance.typeId()) || !(target.getState() instanceof Dispenser dispenser)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            state.sleepingUntilTick(androidTick.get() + 6);
             return false;
         }
         if (state.fuelSlot() != null && fuelValue(state.fuelSlot(), type) > 0) {
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             return true;
         }
         Inventory inventory = dispenser.getInventory();
@@ -655,12 +725,13 @@ public final class SfxAndroidService implements Listener {
             one.setAmount(1);
             stack.setAmount(stack.getAmount() - 1);
             inventory.setItem(i, stack.getAmount() <= 0 ? null : stack);
+            dispenser.update(true, false);
             state.fuelSlot(one);
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             return true;
         }
         state.runtimeState(SfxAndroidRuntimeState.DORMANT_NO_FUEL);
-        return false;
+        return true;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -1525,19 +1596,9 @@ public final class SfxAndroidService implements Listener {
 
     private void applyRotation(Block block, BlockFace rotation) {
         if (block.getBlockData() instanceof Rotatable rotatable) {
-            rotatable.setRotation(toSkullVisualRotation(rotation));
+            rotatable.setRotation(rotation);
             block.setBlockData(rotatable, false);
         }
-    }
-
-    private BlockFace toSkullVisualRotation(BlockFace logicalFacing) {
-        return switch (logicalFacing) {
-            case NORTH -> BlockFace.SOUTH;
-            case SOUTH -> BlockFace.NORTH;
-            case EAST -> BlockFace.WEST;
-            case WEST -> BlockFace.EAST;
-            default -> logicalFacing;
-        };
     }
 
     private BlockFace facingFromPlayer(Player player) {
@@ -1578,7 +1639,7 @@ public final class SfxAndroidService implements Listener {
         inventory.clear();
     }
 
-    private record MoveIntent(SfxBlockInstanceRecord instance, Location from, Location to, SfxAndroidInstruction instruction) {
+    private record MoveIntent(SfxBlockInstanceRecord instance, Location from, Location to, SfxAndroidInstruction instruction, boolean clearsTargetBeforeMove) {
     }
 
     private record LocationKey(UUID worldId, int x, int y, int z) {
