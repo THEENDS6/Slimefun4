@@ -4207,11 +4207,18 @@ android:
     invalid_script: '<red>无效的 Android 脚本: {reason}</red>'
     copy_script: '<aqua>[点击复制 Android 脚本]</aqua>'
     export: '<green>Android 脚本导出:</green> '
-    uploaded: '<green>已上传 Android 脚本 #{id}，可见性: {visibility}。</green>'
+    uploaded: '<green>已上传 Android 脚本 #{id}。</green>'
     upload_failed: '<red>上传脚本失败: {reason}</red>'
     deleted: '<yellow>已删除 Android 脚本 #{id}。</yellow>'
     downloaded: '<green>已下载 Android 脚本 #{id}。</green>'
     script_library_error: '<red>脚本库错误: {reason}</red>'
+    upload_name_prompt: '<yellow>请在聊天栏输入脚本名称。输入 <white>cancel</white> 取消。</yellow>'
+    upload_cancelled: '<yellow>已取消上传 Android 脚本。</yellow>'
+    invalid_script_name: '<red>无效的脚本名称，请使用 1-32 个可见字符。</red>'
+    edit_script_prompt: '<yellow>请输入新的脚本名称，或输入 <white>delete</white> 删除脚本，输入 <white>cancel</white> 取消。</yellow>'
+    edit_cancelled: '<yellow>已取消修改 Android 脚本。</yellow>'
+    renamed: '<green>已重命名 Android 脚本 #{id}。</green>'
+    edit_denied: '<red>你不能修改这个脚本。</red>'
   menu:
     common:
       back:
@@ -4262,7 +4269,7 @@ android:
       upload:
         name: '<blue>上传脚本</blue>'
         lore:
-          - '<gray>把当前脚本上传到 SQL 脚本库。</gray>'
+          - '<gray>将当前脚本分享到服务器脚本库。</gray>'
       back:
         name: '<red>返回</red>'
         lore:
@@ -4277,10 +4284,6 @@ android:
         name: '<yellow>私有</yellow>'
         lore:
           - '<gray>只有你自己可以看到。</gray>'
-      unlisted:
-        name: '<aqua>不公开</aqua>'
-        lore:
-          - '<gray>不会出现在公共浏览中。</gray>'
     script:
       title: '<dark_gray>编辑 Android 脚本</dark_gray>'
       start:
@@ -4294,6 +4297,13 @@ android:
       title: '<dark_gray>选择指令</dark_gray>'
     downloader:
       title: '<dark_gray>下载 Android 脚本</dark_gray>'
+      entry:
+        author: '<gray>作者: <white>{author}</white></gray>'
+        length: '<gray>脚本长度: <white>{length}/54</white></gray>'
+        visibility: '<gray>可见性: <white>{visibility}</white></gray>'
+        downloads: '<gray>下载数: <white>{downloads}</white> | +{positive} / -{negative}</gray>'
+        actions: '<gray>左键: 下载 | Shift+左键: 点赞 | Shift+右键: 点踩</gray>'
+        modify: '<yellow>右键: 改名，或输入 delete 删除</yellow>'
   instructions:
     wait:
       name: '<yellow>等待</yellow>'

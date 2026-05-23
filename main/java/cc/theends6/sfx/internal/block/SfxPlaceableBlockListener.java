@@ -8,11 +8,13 @@ import cc.theends6.sfx.internal.cargo.SfxCargoService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.android.SfxAndroidService;
+import cc.theends6.sfx.internal.android.SfxAndroidType;
 import cc.theends6.sfx.internal.altar.SfxAncientAltarService;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.Objects;
 import java.util.Set;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -43,6 +45,7 @@ import org.bukkit.event.block.EntityBlockFormEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
@@ -117,6 +120,10 @@ public final class SfxPlaceableBlockListener implements Listener {
                 }
                 return;
             }
+            if (SfxAndroidType.isAndroidItem(marker.itemId()) && shouldRedirectAndroidPlacement(event)) {
+                redirectAndroidPlacement(event, marker.itemId());
+                return;
+            }
             if (cargoService.supportsType(marker.itemId()) && !cargoService.canPlace(marker.itemId(), event)) {
                 event.setCancelled(true);
                 return;
@@ -158,6 +165,60 @@ public final class SfxPlaceableBlockListener implements Listener {
                 event.setCancelled(true);
             }
         });
+    }
+
+    private boolean shouldRedirectAndroidPlacement(BlockPlaceEvent event) {
+        Block target = event.getBlockAgainst().getRelative(BlockFace.UP);
+        return !sameBlock(event.getBlockPlaced(), target);
+    }
+
+    private boolean sameBlock(Block first, Block second) {
+        return first != null && second != null
+                && first.getWorld().equals(second.getWorld())
+                && first.getX() == second.getX()
+                && first.getY() == second.getY()
+                && first.getZ() == second.getZ();
+    }
+
+    private void redirectAndroidPlacement(BlockPlaceEvent event, String itemId) {
+        Block target = event.getBlockAgainst().getRelative(BlockFace.UP);
+        event.setCancelled(true);
+        if (!target.getType().isAir() || blockData.findAnchor(target.getLocation()).isPresent()) {
+            return;
+        }
+        consumeManualPlacementItem(event);
+        runtime.executeAtLater(target.getLocation(), 1L, () -> {
+            if (!target.getType().isAir() || blockData.findAnchor(target.getLocation()).isPresent()) {
+                return;
+            }
+            target.setType(Material.PLAYER_HEAD, false);
+            java.util.UUID instanceId = blockData.registerSingleBlock(itemId, target.getLocation(), target.getType(), event.getPlayer().getUniqueId());
+            androidService.handlePlaced(instanceId, itemId, event.getPlayer(), target);
+        });
+    }
+
+    private void consumeManualPlacementItem(BlockPlaceEvent event) {
+        if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
+            return;
+        }
+        ItemStack stack = event.getItemInHand();
+        if (stack == null || stack.getType().isAir()) {
+            return;
+        }
+        ItemStack remaining = stack.clone();
+        remaining.setAmount(remaining.getAmount() - 1);
+        if (remaining.getAmount() <= 0) {
+            remaining = null;
+        }
+        if (event.getHand() == EquipmentSlot.OFF_HAND) {
+            event.getPlayer().getInventory().setItemInOffHand(remaining);
+        } else {
+            event.getPlayer().getInventory().setItemInMainHand(remaining);
+        }
+    }
+
+    private boolean isSkullBlock(Material material) {
+        return material == Material.PLAYER_HEAD || material == Material.PLAYER_WALL_HEAD;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -258,6 +319,9 @@ public final class SfxPlaceableBlockListener implements Listener {
         if (blockData.findAnchor(block.getRelative(BlockFace.DOWN).getLocation()).isPresent()) {
             scheduleWaterSourceCheck(block);
         } else if (blockData.findAnchor(block.getLocation()).isPresent()) {
+            if (isSkullBlock(block.getType())) {
+                event.setCancelled(true);
+            }
             scheduleWaterSourceCheckAbove(block);
         }
     }

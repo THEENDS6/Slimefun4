@@ -4112,11 +4112,18 @@ android:
     invalid_script: '<red>Invalid Android script: {reason}</red>'
     copy_script: '<aqua>[Click to copy Android script]</aqua>'
     export: '<green>Android script export:</green> '
-    uploaded: '<green>Uploaded Android script #{id} as {visibility}.</green>'
+    uploaded: '<green>Uploaded Android script #{id}.</green>'
     upload_failed: '<red>Failed to upload script: {reason}</red>'
     deleted: '<yellow>Deleted Android script #{id}.</yellow>'
     downloaded: '<green>Downloaded Android script #{id}.</green>'
     script_library_error: '<red>Script library error: {reason}</red>'
+    upload_name_prompt: '<yellow>Type a script name in chat. Type <white>cancel</white> to abort.</yellow>'
+    upload_cancelled: '<yellow>Android script upload cancelled.</yellow>'
+    invalid_script_name: '<red>Invalid script name. Use 1-32 visible characters.</red>'
+    edit_script_prompt: '<yellow>Type a new script name, or type <white>delete</white> to delete it. Type <white>cancel</white> to abort.</yellow>'
+    edit_cancelled: '<yellow>Android script edit cancelled.</yellow>'
+    renamed: '<green>Renamed Android script #{id}.</green>'
+    edit_denied: '<red>You cannot modify that script.</red>'
   menu:
     common:
       back:
@@ -4167,7 +4174,7 @@ android:
       upload:
         name: '<blue>Upload Script</blue>'
         lore:
-          - '<gray>Upload this script to the SQL script library.</gray>'
+          - '<gray>Share this script with this server.</gray>'
       back:
         name: '<red>Back</red>'
         lore:
@@ -4182,10 +4189,6 @@ android:
         name: '<yellow>Private</yellow>'
         lore:
           - '<gray>Only you can see it.</gray>'
-      unlisted:
-        name: '<aqua>Unlisted</aqua>'
-        lore:
-          - '<gray>Hidden from public browsing.</gray>'
     script:
       title: '<dark_gray>Edit Android Script</dark_gray>'
       start:
@@ -4199,6 +4202,13 @@ android:
       title: '<dark_gray>Select Instruction</dark_gray>'
     downloader:
       title: '<dark_gray>Download Android Scripts</dark_gray>'
+      entry:
+        author: '<gray>Author: <white>{author}</white></gray>'
+        length: '<gray>Length: <white>{length}/54</white></gray>'
+        visibility: '<gray>Visibility: <white>{visibility}</white></gray>'
+        downloads: '<gray>Downloads: <white>{downloads}</white> | +{positive} / -{negative}</gray>'
+        actions: '<gray>Left: download | Shift-left: upvote | Shift-right: downvote</gray>'
+        modify: '<yellow>Right-click: rename, or type delete to remove</yellow>'
   instructions:
     wait:
       name: '<yellow>Wait</yellow>'

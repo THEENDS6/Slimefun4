@@ -16,7 +16,6 @@ import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.Text;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -75,10 +74,12 @@ public final class SfxAndroidService implements Listener {
     private static final int[] OUTPUT_SLOTS = {20, 21, 22, 29, 30, 31};
     private static final int FUEL_SLOT = 43;
     private static final int[] SCRIPT_SLOTS = {
-            9, 10, 11, 12, 13, 14, 15, 16, 17,
-            18, 19, 20, 21, 22, 23, 24, 25, 26,
-            27, 28, 29, 30, 31, 32, 33, 34, 35,
-            36, 37, 38, 39, 40, 41, 42, 43, 44
+            1, 2, 3, 4, 5, 6, 7, 8, 9,
+            10, 11, 12, 13, 14, 15, 16, 17, 18,
+            19, 20, 21, 22, 23, 24, 25, 26, 27,
+            28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45,
+            46, 47, 48, 49, 50, 51, 52
     };
     private static final String HEAD_SCRIPT_START = "4ae29422db4047efdb9bac2cdae5a0719eb772fccc88a66d912320b343c341";
     private static final String HEAD_SCRIPT_REPEAT = "bc8def67a12622ead1decd3d89364257b531896d87e469813131ca235b5c7";
@@ -96,6 +97,8 @@ public final class SfxAndroidService implements Listener {
     private final Map<UUID, SfxAndroidState> states = new ConcurrentHashMap<>();
     private final Set<UUID> activeAndroids = ConcurrentHashMap.newKeySet();
     private final Map<UUID, ImportSession> pendingImports = new ConcurrentHashMap<>();
+    private final Map<UUID, UploadSession> pendingUploads = new ConcurrentHashMap<>();
+    private final Map<UUID, EditScriptSession> pendingScriptEdits = new ConcurrentHashMap<>();
     private final AtomicLong androidTick = new AtomicLong();
     private volatile boolean running;
     private long tickInterval;
@@ -127,6 +130,8 @@ public final class SfxAndroidService implements Listener {
     public void shutdown() {
         running = false;
         pendingImports.clear();
+        pendingUploads.clear();
+        pendingScriptEdits.clear();
         flushAllStates();
         states.clear();
         activeAndroids.clear();
@@ -391,6 +396,9 @@ public final class SfxAndroidService implements Listener {
             base = 1200;
         } else if ("sf:boosted_uranium".equals(sfxItemId(item))) {
             base = 3000;
+        }
+        if (base <= 0) {
+            return 0;
         }
         return (int) Math.max(1, Math.round(base * type.fuelEfficiency()));
     }
@@ -810,13 +818,24 @@ public final class SfxAndroidService implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onAsyncChat(AsyncChatEvent event) {
-        ImportSession session = pendingImports.remove(event.getPlayer().getUniqueId());
-        if (session == null) {
+        UUID playerId = event.getPlayer().getUniqueId();
+        ImportSession importSession = pendingImports.remove(playerId);
+        UploadSession uploadSession = pendingUploads.remove(playerId);
+        EditScriptSession editSession = pendingScriptEdits.remove(playerId);
+        if (importSession == null && uploadSession == null && editSession == null) {
             return;
         }
         event.setCancelled(true);
         String message = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
-        runtime.executeForPlayer(event.getPlayer(), () -> handleImportChat(event.getPlayer(), session, message));
+        runtime.executeForPlayer(event.getPlayer(), () -> {
+            if (importSession != null) {
+                handleImportChat(event.getPlayer(), importSession, message);
+            } else if (uploadSession != null) {
+                handleUploadNameChat(event.getPlayer(), uploadSession, message);
+            } else if (editSession != null) {
+                handleEditScriptChat(event.getPlayer(), editSession, message);
+            }
+        });
     }
 
     private void handleImportChat(Player player, ImportSession session, String message) {
@@ -917,7 +936,7 @@ public final class SfxAndroidService implements Listener {
         inventory.setItem(11, icon(Material.MAP, "android.menu.editor.export", "<aqua>Export Script</aqua>", "<gray>Send a click-to-copy short code.</gray>"));
         inventory.setItem(12, icon(Material.PAPER, "android.menu.editor.import", "<yellow>Import Script</yellow>", "<gray>Paste a short code or readable script in chat.</gray>"));
         inventory.setItem(14, icon(Material.ENDER_CHEST, "android.menu.editor.download", "<gold>Download Scripts</gold>", "<gray>Browse public/private uploaded scripts.</gray>"));
-        inventory.setItem(15, icon(Material.HOPPER, "android.menu.editor.upload", "<blue>Upload Script</blue>", "<gray>Upload this script to the SQL script library.</gray>"));
+        inventory.setItem(15, icon(Material.HOPPER, "android.menu.editor.upload", "<blue>Upload Script</blue>", "<gray>Share this script with this server.</gray>"));
         inventory.setItem(16, icon(Material.BARRIER, "android.menu.editor.back", "<red>Back</red>", "<gray>Return to the Android.</gray>"));
         player.openInventory(inventory);
     }
@@ -970,8 +989,7 @@ public final class SfxAndroidService implements Listener {
         ((SfxAndroidMenuHolder) inventory.getHolder()).bind(inventory);
         fill(inventory, Material.BLACK_STAINED_GLASS_PANE);
         inventory.setItem(11, icon(Material.LIME_DYE, "android.menu.upload.public", "<green>Public</green>", "<gray>Visible to everyone.</gray>"));
-        inventory.setItem(13, icon(Material.IRON_DOOR, "android.menu.upload.private", "<yellow>Private</yellow>", "<gray>Only you can see it.</gray>"));
-        inventory.setItem(15, icon(Material.NAME_TAG, "android.menu.upload.unlisted", "<aqua>Unlisted</aqua>", "<gray>Hidden from public browsing.</gray>"));
+        inventory.setItem(15, icon(Material.IRON_DOOR, "android.menu.upload.private", "<yellow>Private</yellow>", "<gray>Only you can see it.</gray>"));
         inventory.setItem(22, icon(Material.BARRIER, "android.menu.common.back", "<red>Back</red>"));
         player.openInventory(inventory);
     }
@@ -979,8 +997,7 @@ public final class SfxAndroidService implements Listener {
     private void handleUploadVisibility(Player player, SfxAndroidMenuHolder holder, int slot) {
         SfxAndroidScriptVisibility visibility = switch (slot) {
             case 11 -> SfxAndroidScriptVisibility.PUBLIC;
-            case 13 -> SfxAndroidScriptVisibility.PRIVATE;
-            case 15 -> SfxAndroidScriptVisibility.UNLISTED;
+            case 15 -> SfxAndroidScriptVisibility.PRIVATE;
             default -> null;
         };
         if (visibility == null) {
@@ -995,13 +1012,9 @@ public final class SfxAndroidService implements Listener {
         }
         SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
         SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
-        try {
-            long id = scripts.upload(type, player.getUniqueId(), player.getName(), "Script " + Instant.now().getEpochSecond(), state.body(), visibility);
-            player.sendMessage(msg("android.messages.uploaded", "<green>Uploaded Android script #{id} as {visibility}.</green>", Map.of("id", id, "visibility", visibility.name().toLowerCase(Locale.ROOT))));
-        } catch (SQLException exception) {
-            player.sendMessage(msg("android.messages.upload_failed", "<red>Failed to upload script: {reason}</red>", Map.of("reason", exception.getMessage())));
-        }
-        openEditor(player, instance.instanceId());
+        pendingUploads.put(player.getUniqueId(), new UploadSession(instance.instanceId(), type, List.copyOf(state.body()), visibility));
+        player.closeInventory();
+        player.sendMessage(msg("android.messages.upload_name_prompt", "<yellow>Type a script name in chat. Type <white>cancel</white> to abort.</yellow>"));
     }
 
     private void openScript(Player player, UUID instanceId, int page) {
@@ -1011,24 +1024,18 @@ public final class SfxAndroidService implements Listener {
         }
         SfxAndroidState state = stateFor(instanceId, instance.typeId(), toLocation(instance.anchorKey()));
         List<SfxAndroidInstruction> body = state.body();
-        Inventory inventory = Bukkit.createInventory(newHolder(player, instanceId, SfxAndroidMenuHolder.MenuType.SCRIPT, page, -1, false), 54, tr("android.menu.script.title", "<dark_gray>Edit Android Script</dark_gray>"));
+        Inventory inventory = Bukkit.createInventory(newHolder(player, instanceId, SfxAndroidMenuHolder.MenuType.SCRIPT, 0, -1, false), 54, tr("android.menu.script.title", "<dark_gray>Edit Android Script</dark_gray>"));
         ((SfxAndroidMenuHolder) inventory.getHolder()).bind(inventory);
         fill(inventory, Material.GRAY_STAINED_GLASS_PANE);
         inventory.setItem(0, headIcon(HEAD_SCRIPT_START, "android.menu.script.start", "<green>START</green>"));
-        int start = page * SCRIPT_SLOTS.length;
-        for (int i = 0; i < SCRIPT_SLOTS.length; i++) {
-            int bodyIndex = start + i;
-            if (bodyIndex >= body.size()) {
-                inventory.setItem(SCRIPT_SLOTS[i], headIcon(HEAD_SCRIPT_NEW, "android.menu.script.add", "<green>Add new Command</green>"));
-                break;
-            }
-            SfxAndroidInstruction instruction = body.get(bodyIndex);
-            inventory.setItem(SCRIPT_SLOTS[i], instructionIcon(instruction, bodyIndex + 1, true));
+        for (int i = 0; i < Math.min(body.size(), SCRIPT_SLOTS.length); i++) {
+            SfxAndroidInstruction instruction = body.get(i);
+            inventory.setItem(SCRIPT_SLOTS[i], instructionIcon(instruction, i + 1, true));
         }
-        inventory.setItem(8, headIcon(HEAD_SCRIPT_REPEAT, "android.menu.script.repeat", "<red>REPEAT</red>"));
-        inventory.setItem(45, icon(Material.ARROW, "android.menu.common.previous", "<yellow>Previous Page</yellow>"));
-        inventory.setItem(49, icon(Material.BARRIER, "android.menu.common.back", "<red>Back</red>"));
-        inventory.setItem(53, icon(Material.ARROW, "android.menu.common.next", "<yellow>Next Page</yellow>"));
+        if (body.size() < SCRIPT_SLOTS.length) {
+            inventory.setItem(SCRIPT_SLOTS[body.size()], headIcon(HEAD_SCRIPT_NEW, "android.menu.script.add", "<green>Add new Command</green>"));
+        }
+        inventory.setItem(53, headIcon(HEAD_SCRIPT_REPEAT, "android.menu.script.repeat", "<red>REPEAT</red>"));
         player.openInventory(inventory);
     }
 
@@ -1037,43 +1044,30 @@ public final class SfxAndroidService implements Listener {
         if (instance == null) {
             return;
         }
-        if (slot == 49) {
-            openEditor(player, instance.instanceId());
-            return;
-        }
-        if (slot == 45 && holder.page() > 0) {
-            openScript(player, instance.instanceId(), holder.page() - 1);
-            return;
-        }
-        if (slot == 53) {
-            openScript(player, instance.instanceId(), holder.page() + 1);
-            return;
-        }
         int slotIndex = indexOf(SCRIPT_SLOTS, slot);
         if (slotIndex < 0) {
             return;
         }
-        int bodyIndex = holder.page() * SCRIPT_SLOTS.length + slotIndex;
         SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
         List<SfxAndroidInstruction> body = new ArrayList<>(state.body());
-        if (bodyIndex >= body.size()) {
+        if (slotIndex >= body.size()) {
             openInstructions(player, instance.instanceId(), body.size(), true);
             return;
         }
         if (click.isRightClick()) {
             if (click.isShiftClick()) {
                 if (body.size() < SfxAndroidState.MAX_BODY_LENGTH) {
-                    body.add(bodyIndex + 1, body.get(bodyIndex));
+                    body.add(slotIndex + 1, body.get(slotIndex));
                 }
             } else if (body.size() > 1) {
-                body.remove(bodyIndex);
+                body.remove(slotIndex);
             }
             state.setBody(body);
             state.index(0);
             persist(instance.instanceId(), state);
-            openScript(player, instance.instanceId(), holder.page());
+            openScript(player, instance.instanceId(), 0);
         } else {
-            openInstructions(player, instance.instanceId(), bodyIndex, false);
+            openInstructions(player, instance.instanceId(), slotIndex, false);
         }
     }
 
@@ -1121,7 +1115,7 @@ public final class SfxAndroidService implements Listener {
         state.setBody(body);
         state.index(0);
         persist(instance.instanceId(), state);
-        openScript(player, instance.instanceId(), holder.editIndex() / SCRIPT_SLOTS.length);
+        openScript(player, instance.instanceId(), 0);
     }
 
     private void openDownloader(Player player, UUID instanceId, int page) {
@@ -1137,12 +1131,7 @@ public final class SfxAndroidService implements Listener {
             List<SfxAndroidScriptRecord> records = scripts.listVisible(type, player.getUniqueId(), page * 45, 45);
             for (int i = 0; i < records.size(); i++) {
                 SfxAndroidScriptRecord record = records.get(i);
-                inventory.setItem(i, icon(Material.BOOK, "<green>#" + record.id() + " " + record.name() + "</green>",
-                        "<gray>Author: <white>" + record.authorName() + "</white></gray>",
-                        "<gray>Visibility: <white>" + record.visibility().name() + "</white></gray>",
-                        "<gray>Downloads: <white>" + record.downloads() + "</white> | +" + record.positiveVotes() + " / -" + record.negativeVotes() + "</gray>",
-                        "<gray>Left: download | Shift-left: upvote | Shift-right: downvote</gray>",
-                        record.authorId().equals(player.getUniqueId()) ? "<red>Right-click: delete</red>" : ""));
+                inventory.setItem(i, downloaderEntryIcon(record, player));
             }
         } catch (SQLException exception) {
             inventory.setItem(22, icon(Material.BARRIER, "<red>Failed to read scripts</red>", "<gray>" + exception.getMessage() + "</gray>"));
@@ -1191,11 +1180,11 @@ public final class SfxAndroidService implements Listener {
                 return;
             }
             if (click.isRightClick()) {
-                boolean force = player.hasPermission("sfx.android.script.delete.any");
+                boolean force = player.hasPermission("sfx.android.script.edit.any") || player.hasPermission("sfx.android.script.delete.any");
                 if (record.authorId().equals(player.getUniqueId()) || force) {
-                    scripts.softDelete(record.id(), player.getUniqueId(), force);
-                    player.sendMessage(msg("android.messages.deleted", "<yellow>Deleted Android script #{id}.</yellow>", Map.of("id", record.id())));
-                    openDownloader(player, instance.instanceId(), holder.page());
+                    pendingScriptEdits.put(player.getUniqueId(), new EditScriptSession(instance.instanceId(), holder.page(), record.id(), force));
+                    player.closeInventory();
+                    player.sendMessage(msg("android.messages.edit_script_prompt", "<yellow>Type a new script name, or type <white>delete</white> to delete it. Type <white>cancel</white> to abort.</yellow>"));
                 }
                 return;
             }
@@ -1209,6 +1198,93 @@ public final class SfxAndroidService implements Listener {
         } catch (SQLException exception) {
             player.sendMessage(msg("android.messages.script_library_error", "<red>Script library error: {reason}</red>", Map.of("reason", exception.getMessage())));
         }
+    }
+
+
+    private void handleUploadNameChat(Player player, UploadSession session, String message) {
+        if (message.equalsIgnoreCase("cancel")) {
+            player.sendMessage(msg("android.messages.upload_cancelled", "<yellow>Android script upload cancelled.</yellow>"));
+            openEditor(player, session.instanceId());
+            return;
+        }
+        String name = sanitizeScriptName(message);
+        if (name == null) {
+            pendingUploads.put(player.getUniqueId(), session);
+            player.sendMessage(msg("android.messages.invalid_script_name", "<red>Invalid script name. Use 1-32 visible characters.</red>"));
+            return;
+        }
+        try {
+            long id = scripts.upload(session.type(), player.getUniqueId(), player.getName(), name, session.body(), session.visibility());
+            player.sendMessage(msg("android.messages.uploaded", "<green>Uploaded Android script #{id}.</green>", Map.of("id", id)));
+        } catch (SQLException exception) {
+            player.sendMessage(msg("android.messages.upload_failed", "<red>Failed to upload script: {reason}</red>", Map.of("reason", exception.getMessage())));
+        }
+        openEditor(player, session.instanceId());
+    }
+
+    private void handleEditScriptChat(Player player, EditScriptSession session, String message) {
+        if (message.equalsIgnoreCase("cancel")) {
+            player.sendMessage(msg("android.messages.edit_cancelled", "<yellow>Android script edit cancelled.</yellow>"));
+            openDownloader(player, session.instanceId(), session.page());
+            return;
+        }
+        try {
+            if (message.equalsIgnoreCase("delete")) {
+                boolean deleted = scripts.softDelete(session.scriptId(), player.getUniqueId(), session.force());
+                if (deleted) {
+                    player.sendMessage(msg("android.messages.deleted", "<yellow>Deleted Android script #{id}.</yellow>", Map.of("id", session.scriptId())));
+                } else {
+                    player.sendMessage(msg("android.messages.edit_denied", "<red>You cannot modify that script.</red>"));
+                }
+                openDownloader(player, session.instanceId(), session.page());
+                return;
+            }
+            String name = sanitizeScriptName(message);
+            if (name == null) {
+                pendingScriptEdits.put(player.getUniqueId(), session);
+                player.sendMessage(msg("android.messages.invalid_script_name", "<red>Invalid script name. Use 1-32 visible characters.</red>"));
+                return;
+            }
+            boolean renamed = scripts.rename(session.scriptId(), player.getUniqueId(), session.force(), name);
+            if (renamed) {
+                player.sendMessage(msg("android.messages.renamed", "<green>Renamed Android script #{id}.</green>", Map.of("id", session.scriptId())));
+            } else {
+                player.sendMessage(msg("android.messages.edit_denied", "<red>You cannot modify that script.</red>"));
+            }
+        } catch (SQLException exception) {
+            player.sendMessage(msg("android.messages.script_library_error", "<red>Script library error: {reason}</red>", Map.of("reason", exception.getMessage())));
+        }
+        openDownloader(player, session.instanceId(), session.page());
+    }
+
+    private String sanitizeScriptName(String input) {
+        if (input == null) {
+            return null;
+        }
+        String name = input.strip().replace('\n', ' ').replace('\r', ' ');
+        if (name.isBlank() || name.length() > 32) {
+            return null;
+        }
+        return name;
+    }
+
+    private ItemStack downloaderEntryIcon(SfxAndroidScriptRecord record, Player viewer) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(Text.renderFlexible(localization.text("android.menu.downloader.entry.author", "<gray>Author: <white>{author}</white></gray>", Map.of("author", record.authorName()))));
+        lore.add(Text.renderFlexible(localization.text("android.menu.downloader.entry.length", "<gray>Length: <white>{length}/54</white></gray>", Map.of("length", record.body().size() + 2))));
+        lore.add(Text.renderFlexible(localization.text("android.menu.downloader.entry.visibility", "<gray>Visibility: <white>{visibility}</white></gray>", Map.of("visibility", record.visibility().name()))));
+        lore.add(Text.renderFlexible(localization.text("android.menu.downloader.entry.downloads", "<gray>Downloads: <white>{downloads}</white> | +{positive} / -{negative}</gray>", Map.of("downloads", record.downloads(), "positive", record.positiveVotes(), "negative", record.negativeVotes()))));
+        lore.add(tr("android.menu.downloader.entry.actions", "<gray>Left: download | Shift-left: upvote | Shift-right: downvote</gray>"));
+        if (record.authorId().equals(viewer.getUniqueId()) || viewer.hasPermission("sfx.android.script.edit.any") || viewer.hasPermission("sfx.android.script.delete.any")) {
+            lore.add(tr("android.menu.downloader.entry.modify", "<yellow>Right-click: rename, or type delete to remove</yellow>"));
+        }
+        ItemStack item = ItemBuilder.of(Material.BOOK).name("<green>#" + record.id() + " " + record.name() + "</green>").build();
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.lore(lore);
+            item.setItemMeta(meta);
+        }
+        return item;
     }
 
     private void fillClassicFrame(Inventory inventory) {
@@ -1442,5 +1518,14 @@ public final class SfxAndroidService implements Listener {
     }
 
     private record ImportSession(UUID instanceId) {
+    }
+
+    private record UploadSession(UUID instanceId, SfxAndroidType type, List<SfxAndroidInstruction> body, SfxAndroidScriptVisibility visibility) {
+        private UploadSession {
+            body = List.copyOf(body);
+        }
+    }
+
+    private record EditScriptSession(UUID instanceId, int page, long scriptId, boolean force) {
     }
 }

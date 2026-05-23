@@ -146,6 +146,24 @@ public final class SqliteSfxAndroidScriptRepository implements AutoCloseable {
         }
     }
 
+
+    public synchronized boolean rename(long id, UUID actorId, boolean force, String name) throws SQLException {
+        String normalized = name == null || name.isBlank() ? "Android Script" : name.trim();
+        try (Connection connection = openConnection(); PreparedStatement statement = connection.prepareStatement(
+                force
+                        ? "UPDATE sfx_android_scripts SET name = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL"
+                        : "UPDATE sfx_android_scripts SET name = ?, updated_at = ? WHERE id = ? AND author_uuid = ? AND deleted_at IS NULL")) {
+            long now = Instant.now().toEpochMilli();
+            statement.setString(1, normalized);
+            statement.setLong(2, now);
+            statement.setLong(3, id);
+            if (!force) {
+                statement.setString(4, actorId.toString());
+            }
+            return statement.executeUpdate() > 0;
+        }
+    }
+
     public synchronized void vote(long scriptId, UUID voterId, int vote) throws SQLException {
         if (vote != -1 && vote != 1) {
             throw new IllegalArgumentException("Vote must be -1 or 1");

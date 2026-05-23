@@ -272,12 +272,15 @@ androids:
   tick-interval-ticks: 10
   max-active-per-region-per-tick: 64
   max-script-length: 54
+  # Experimental SFX extension. Disabled by default to preserve classic Slimefun Android behavior.
+  # long-scripts:
+  #   enabled: false
+  #   max-script-length: 72
   sleep:
     enabled: true
     blocked-backoff-ticks: 40
   scripts:
     allow-upload: true
     allow-private: true
-    allow-unlisted: true
     allow-export: true
     allow-import: true
