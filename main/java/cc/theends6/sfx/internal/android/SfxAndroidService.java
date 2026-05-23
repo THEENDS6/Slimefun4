@@ -1668,7 +1668,8 @@ public final class SfxAndroidService implements Listener {
 
     private void applyRotation(Block block, BlockFace rotation) {
         if (block.getBlockData() instanceof Rotatable rotatable) {
-            rotatable.setRotation(rotation);
+            BlockFace visualRotation = rotation == null ? BlockFace.NORTH : rotation.getOppositeFace();
+            rotatable.setRotation(visualRotation);
             block.setBlockData(rotatable, false);
         }
     }
