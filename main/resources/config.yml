@@ -279,6 +279,10 @@ androids:
   sleep:
     enabled: true
     blocked-backoff-ticks: 40
+  woodcutter:
+    # SFX extension: when only bottom-layer logs remain, chop/replant the whole connected bottom layer at once.
+    # Set false for stricter classic one-log-at-a-time woodcutter behavior.
+    batch-replant-bottom-layer: true
   scripts:
     allow-upload: true
     allow-private: true
