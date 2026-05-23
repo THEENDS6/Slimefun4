@@ -1342,13 +1342,7 @@ public final class SfxAndroidService implements Listener {
         if (!(inventory.getHolder() instanceof SfxAndroidMenuHolder holder) || holder.menuType() != SfxAndroidMenuHolder.MenuType.MAIN) {
             return;
         }
-        Set<UUID> viewers = mainViewers.get(holder.instanceId());
-        if (viewers != null) {
-            viewers.remove(player.getUniqueId());
-            if (viewers.isEmpty()) {
-                mainViewers.remove(holder.instanceId());
-            }
-        }
+        removeMainViewer(holder.instanceId(), player.getUniqueId());
         SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
         if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
             return;
@@ -1446,8 +1440,51 @@ public final class SfxAndroidService implements Listener {
         }
         inventory.setItem(FUEL_SLOT, state.fuelSlot());
         clearFuelSlotDirty(instanceId, player.getUniqueId());
-        mainViewers.computeIfAbsent(instanceId, ignored -> ConcurrentHashMap.newKeySet()).add(player.getUniqueId());
         player.openInventory(inventory);
+        mainViewers.computeIfAbsent(instanceId, ignored -> ConcurrentHashMap.newKeySet()).add(player.getUniqueId());
+        scheduleMainViewerRefresh(player, instanceId);
+    }
+
+    private void scheduleMainViewerRefresh(Player player, UUID instanceId) {
+        if (player == null || instanceId == null) {
+            return;
+        }
+        runtime.executeForPlayerLater(player, 1L, () -> {
+            if (!running || !player.isOnline()) {
+                return;
+            }
+            Inventory top = player.getOpenInventory().getTopInventory();
+            if (!(top.getHolder() instanceof SfxAndroidMenuHolder holder)
+                    || holder.menuType() != SfxAndroidMenuHolder.MenuType.MAIN
+                    || !holder.instanceId().equals(instanceId)
+                    || !holder.viewerId().equals(player.getUniqueId())) {
+                removeMainViewer(instanceId, player.getUniqueId());
+                clearFuelSlotDirty(instanceId, player.getUniqueId());
+                return;
+            }
+            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+            if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+                removeMainViewer(instanceId, player.getUniqueId());
+                clearFuelSlotDirty(instanceId, player.getUniqueId());
+                player.closeInventory();
+                return;
+            }
+            SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+            refreshMainStatus(top, state, !isFuelSlotDirty(instanceId, player.getUniqueId()));
+            player.updateInventory();
+            scheduleMainViewerRefresh(player, instanceId);
+        });
+    }
+
+    private void removeMainViewer(UUID instanceId, UUID viewerId) {
+        Set<UUID> viewers = mainViewers.get(instanceId);
+        if (viewers == null) {
+            return;
+        }
+        viewers.remove(viewerId);
+        if (viewers.isEmpty()) {
+            mainViewers.remove(instanceId);
+        }
     }
 
     private SfxAndroidMenuHolder newHolder(Player player, UUID instanceId, SfxAndroidMenuHolder.MenuType type, int page, int editIndex, boolean adding) {
@@ -2195,14 +2232,10 @@ public final class SfxAndroidService implements Listener {
                 Inventory top = viewer.getOpenInventory().getTopInventory();
                 if (!(top.getHolder() instanceof SfxAndroidMenuHolder holder)
                         || holder.menuType() != SfxAndroidMenuHolder.MenuType.MAIN
-                        || !holder.instanceId().equals(instanceId)) {
-                    Set<UUID> current = mainViewers.get(instanceId);
-                    if (current != null) {
-                        current.remove(viewerId);
-                        if (current.isEmpty()) {
-                            mainViewers.remove(instanceId);
-                        }
-                    }
+                        || !holder.instanceId().equals(instanceId)
+                        || !holder.viewerId().equals(viewerId)) {
+                    removeMainViewer(instanceId, viewerId);
+                    clearFuelSlotDirty(instanceId, viewerId);
                     return;
                 }
                 boolean fuelDirty = isFuelSlotDirty(instanceId, viewerId);
@@ -2211,6 +2244,7 @@ public final class SfxAndroidService implements Listener {
                 } else {
                     refreshMainFuelInfo(top, state, instanceId, viewerId);
                 }
+                viewer.updateInventory();
             });
         }
     }
