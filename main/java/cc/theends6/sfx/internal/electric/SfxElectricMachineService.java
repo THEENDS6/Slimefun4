@@ -25,7 +25,9 @@ import cc.theends6.sfx.internal.util.SfxInventorySlots;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,6 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
@@ -926,6 +929,514 @@ public final class SfxElectricMachineService implements Listener {
             return session.lastRenderedStatus();
         }
         return SfxElectricMachineRenderStatus.IDLE;
+    }
+
+
+    public SfxVirtualContainerService.PlannedStack planFirstCargoOutput(UUID instanceId, Predicate<ItemStack> filter, int maxAmount) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        SfxElectricMachineDefinition definition = definitionForInstance(instance);
+        if (definition == null || definition.outputSlots().length <= 0) {
+            return new SfxVirtualContainerService.PlannedStack(null, List.of());
+        }
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        int limit = Math.max(1, maxAmount);
+        for (int slot = 0; slot < definition.outputSlots().length; slot++) {
+            SfxElectricStack electricStack = state.output(slot);
+            ItemStack stack = electricStack == null ? null : electricStack.toItemStack(items);
+            if (isEmpty(stack) || (filter != null && !filter.test(stack))) {
+                continue;
+            }
+            int amount = Math.max(1, Math.min(Math.min(limit, stack.getMaxStackSize()), stack.getAmount()));
+            ItemStack planned = stack.clone();
+            planned.setAmount(amount);
+            ItemStack template = stack.clone();
+            template.setAmount(1);
+            return new SfxVirtualContainerService.PlannedStack(planned, List.of(new SfxVirtualContainerService.SlotTake(slot, template, amount)));
+        }
+        return new SfxVirtualContainerService.PlannedStack(null, List.of());
+    }
+
+    public List<SfxVirtualContainerService.PlannedStack> planCargoOutputBatch(UUID instanceId, Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
+        List<SfxVirtualContainerService.PlannedStack> result = new ArrayList<>();
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        SfxElectricMachineDefinition definition = definitionForInstance(instance);
+        if (definition == null || definition.outputSlots().length <= 0 || maxItems <= 0) {
+            return result;
+        }
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        int remaining = Math.min(128, maxItems);
+        Map<String, ItemStack> grouped = new LinkedHashMap<>();
+        Map<String, List<SfxVirtualContainerService.SlotTake>> takes = new LinkedHashMap<>();
+        for (int slot = 0; slot < definition.outputSlots().length && remaining > 0; slot++) {
+            SfxElectricStack electricStack = state.output(slot);
+            ItemStack stack = electricStack == null ? null : electricStack.toItemStack(items);
+            if (isEmpty(stack) || (filter != null && !filter.test(stack))) {
+                continue;
+            }
+            String key = cargoItemKey(stack);
+            if (!grouped.containsKey(key) && grouped.size() >= Math.max(1, maxDistinctTypes)) {
+                continue;
+            }
+            int amount = Math.min(stack.getAmount(), remaining);
+            ItemStack batchStack = grouped.computeIfAbsent(key, ignored -> {
+                ItemStack clone = stack.clone();
+                clone.setAmount(0);
+                return clone;
+            });
+            batchStack.setAmount(batchStack.getAmount() + amount);
+            ItemStack template = stack.clone();
+            template.setAmount(1);
+            takes.computeIfAbsent(key, ignored -> new ArrayList<>()).add(new SfxVirtualContainerService.SlotTake(slot, template, amount));
+            remaining -= amount;
+            if (!allowMultipleSlots) {
+                break;
+            }
+        }
+        for (Map.Entry<String, ItemStack> entry : grouped.entrySet()) {
+            result.add(new SfxVirtualContainerService.PlannedStack(entry.getValue(), List.copyOf(takes.getOrDefault(entry.getKey(), List.of()))));
+        }
+        return result;
+    }
+
+    public boolean canRemoveCargoOutput(UUID instanceId, List<SfxVirtualContainerService.SlotTake> takes) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        SfxElectricMachineDefinition definition = definitionForInstance(instance);
+        if (definition == null || takes == null || takes.isEmpty()) {
+            return false;
+        }
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        for (SfxVirtualContainerService.SlotTake take : takes) {
+            if (take == null || take.amount() <= 0 || take.slot() < 0 || take.slot() >= definition.outputSlots().length) {
+                return false;
+            }
+            SfxElectricStack electricStack = state.output(take.slot());
+            ItemStack stack = electricStack == null ? null : electricStack.toItemStack(items);
+            if (isEmpty(stack) || !stack.isSimilar(take.template()) || stack.getAmount() < take.amount()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean removeCargoOutput(UUID instanceId, List<SfxVirtualContainerService.SlotTake> takes) {
+        if (!canRemoveCargoOutput(instanceId, takes)) {
+            return false;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        SfxElectricMachineDefinition definition = definitionForInstance(instance);
+        if (definition == null) {
+            return false;
+        }
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        for (SfxVirtualContainerService.SlotTake take : takes) {
+            SfxElectricStack electricStack = state.output(take.slot());
+            ItemStack stack = electricStack == null ? null : electricStack.toItemStack(items);
+            int remaining = stack.getAmount() - take.amount();
+            if (remaining <= 0) {
+                state.output(take.slot(), null);
+            } else {
+                stack.setAmount(remaining);
+                state.output(take.slot(), SfxElectricStack.fromItemStack(items, stack));
+            }
+        }
+        markCargoMutated(instanceId);
+        return true;
+    }
+
+    public int cargoInputCapacity(UUID instanceId, ItemStack stack, boolean smartFill) {
+        return cargoCapacity(instanceId, stack, smartFill, true, false);
+    }
+
+    public int cargoInputCapacitySingleSlot(UUID instanceId, ItemStack stack, boolean smartFill) {
+        return cargoCapacity(instanceId, stack, smartFill, true, true);
+    }
+
+    public int cargoOutputCapacity(UUID instanceId, ItemStack stack, boolean smartFill) {
+        return cargoCapacity(instanceId, stack, smartFill, false, false);
+    }
+
+    public int cargoOutputCapacitySingleSlot(UUID instanceId, ItemStack stack, boolean smartFill) {
+        return cargoCapacity(instanceId, stack, smartFill, false, true);
+    }
+
+    public ItemStack insertCargoInput(UUID instanceId, ItemStack stack, boolean smartFill) {
+        return insertCargoStack(instanceId, stack, smartFill, true, false);
+    }
+
+    public ItemStack insertCargoInputSingleSlot(UUID instanceId, ItemStack stack, boolean smartFill) {
+        return insertCargoStack(instanceId, stack, smartFill, true, true);
+    }
+
+    public ItemStack insertCargoOutput(UUID instanceId, ItemStack stack, boolean smartFill) {
+        return insertCargoStack(instanceId, stack, smartFill, false, false);
+    }
+
+    public ItemStack insertCargoOutputSingleSlot(UUID instanceId, ItemStack stack, boolean smartFill) {
+        return insertCargoStack(instanceId, stack, smartFill, false, true);
+    }
+
+    private int cargoCapacity(UUID instanceId, ItemStack probe, boolean smartFill, boolean inputInventory, boolean singleSlot) {
+        if (isEmpty(probe)) {
+            return 0;
+        }
+        CargoInventorySnapshot snapshot = cargoInventorySnapshot(instanceId, inputInventory);
+        if (snapshot == null || snapshot.contents.length == 0) {
+            return 0;
+        }
+        if (singleSlot) {
+            return cargoCapacityForSingleSlot(snapshot.contents, probe, smartFill);
+        }
+        return cargoCapacityFor(snapshot.contents, probe, smartFill);
+    }
+
+    private ItemStack insertCargoStack(UUID instanceId, ItemStack input, boolean smartFill, boolean inputInventory, boolean singleSlot) {
+        if (isEmpty(input)) {
+            return null;
+        }
+        CargoInventorySnapshot snapshot = cargoInventorySnapshot(instanceId, inputInventory);
+        if (snapshot == null || snapshot.contents.length == 0) {
+            return input;
+        }
+        ItemStack[] before = cloneContents(snapshot.contents);
+        ItemStack remainder = singleSlot
+                ? cargoInsertSingleSlot(snapshot.contents, input, smartFill)
+                : cargoInsert(snapshot.contents, input, smartFill);
+        if (!sameContents(before, snapshot.contents)) {
+            writeCargoInventory(snapshot);
+            markCargoMutated(instanceId);
+        }
+        return isEmpty(remainder) ? null : remainder;
+    }
+
+    private CargoInventorySnapshot cargoInventorySnapshot(UUID instanceId, boolean inputInventory) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        SfxElectricMachineDefinition definition = definitionForInstance(instance);
+        if (definition == null) {
+            return null;
+        }
+        int slotCount = inputInventory ? definition.inputSlots().length : definition.outputSlots().length;
+        if (slotCount <= 0) {
+            return null;
+        }
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        ItemStack[] contents = new ItemStack[slotCount];
+        for (int slot = 0; slot < slotCount; slot++) {
+            SfxElectricStack electricStack = inputInventory ? state.input(slot) : state.output(slot);
+            contents[slot] = electricStack == null ? null : electricStack.toItemStack(items);
+        }
+        return new CargoInventorySnapshot(instanceId, state, inputInventory, contents);
+    }
+
+    private void writeCargoInventory(CargoInventorySnapshot snapshot) {
+        for (int slot = 0; slot < snapshot.contents.length; slot++) {
+            SfxElectricStack stack = SfxElectricStack.fromItemStack(items, snapshot.contents[slot]);
+            if (snapshot.inputInventory) {
+                snapshot.state.input(slot, stack);
+            } else {
+                snapshot.state.output(slot, stack);
+            }
+        }
+    }
+
+    private void markCargoMutated(UUID instanceId) {
+        dirtyInstances.add(instanceId);
+        activeInstances.add(instanceId);
+        refreshOpenSessionFromState(instanceId);
+    }
+
+    private void refreshOpenSessionFromState(UUID instanceId) {
+        SfxElectricMachineSession session = sessionsByInstance.get(instanceId);
+        if (session == null) {
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
+        if (definition == null) {
+            return;
+        }
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), sessionRenderStatus(definition, state, session));
+    }
+
+    private SfxElectricMachineDefinition definitionForInstance(SfxBlockInstanceRecord instance) {
+        return instance == null ? null : registry.definition(instance.typeId()).orElse(null);
+    }
+
+    private int cargoCapacityFor(ItemStack[] contents, ItemStack probe, boolean smartFill) {
+        if (smartFill) {
+            int existingCapacity = cargoExistingCapacity(contents, probe);
+            if (cargoHasSimilar(contents, probe)) {
+                return existingCapacity;
+            }
+            return cargoEmptyCapacity(contents, probe);
+        }
+        int capacity = 0;
+        for (ItemStack stack : contents) {
+            if (isEmpty(stack)) {
+                capacity += probe.getMaxStackSize();
+                continue;
+            }
+            if (stack.isSimilar(probe)) {
+                capacity += Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
+            }
+        }
+        return capacity;
+    }
+
+    private int cargoCapacityForSingleSlot(ItemStack[] contents, ItemStack probe, boolean smartFill) {
+        if (smartFill) {
+            boolean hasSimilar = cargoHasSimilar(contents, probe);
+            if (hasSimilar) {
+                for (ItemStack stack : contents) {
+                    if (!isEmpty(stack) && stack.isSimilar(probe)) {
+                        int capacity = Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
+                        if (capacity > 0) {
+                            return capacity;
+                        }
+                    }
+                }
+                return 0;
+            }
+            return cargoFirstEmptyCapacity(contents, probe);
+        }
+        for (ItemStack stack : contents) {
+            if (isEmpty(stack)) {
+                return probe.getMaxStackSize();
+            }
+            if (stack.isSimilar(probe)) {
+                int capacity = Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
+                if (capacity > 0) {
+                    return capacity;
+                }
+            }
+        }
+        return 0;
+    }
+
+    private ItemStack cargoInsert(ItemStack[] contents, ItemStack input, boolean smartFill) {
+        ItemStack remaining = input.clone();
+        if (smartFill) {
+            remaining = cargoHasSimilar(contents, remaining) ? cargoFillExisting(contents, remaining) : cargoFillEmptyOnly(contents, remaining);
+        } else {
+            remaining = cargoFillEmptyOrExisting(contents, remaining, true);
+        }
+        return isEmpty(remaining) ? null : remaining;
+    }
+
+    private ItemStack cargoInsertSingleSlot(ItemStack[] contents, ItemStack input, boolean smartFill) {
+        ItemStack remaining = input.clone();
+        if (smartFill) {
+            remaining = cargoHasSimilar(contents, remaining) ? cargoFillOneExistingSlot(contents, remaining) : cargoFillOneEmptySlot(contents, remaining);
+        } else {
+            remaining = cargoFillOneEmptyOrExistingSlot(contents, remaining);
+        }
+        return isEmpty(remaining) ? null : remaining;
+    }
+
+    private boolean cargoHasSimilar(ItemStack[] contents, ItemStack probe) {
+        for (ItemStack stack : contents) {
+            if (!isEmpty(stack) && stack.isSimilar(probe)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int cargoExistingCapacity(ItemStack[] contents, ItemStack probe) {
+        int capacity = 0;
+        for (ItemStack stack : contents) {
+            if (!isEmpty(stack) && stack.isSimilar(probe)) {
+                capacity += Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
+            }
+        }
+        return capacity;
+    }
+
+    private int cargoEmptyCapacity(ItemStack[] contents, ItemStack probe) {
+        int capacity = 0;
+        for (ItemStack stack : contents) {
+            if (isEmpty(stack)) {
+                capacity += probe.getMaxStackSize();
+            }
+        }
+        return capacity;
+    }
+
+    private int cargoFirstEmptyCapacity(ItemStack[] contents, ItemStack probe) {
+        for (ItemStack stack : contents) {
+            if (isEmpty(stack)) {
+                return probe.getMaxStackSize();
+            }
+        }
+        return 0;
+    }
+
+    private ItemStack cargoFillExisting(ItemStack[] contents, ItemStack input) {
+        ItemStack remaining = input.clone();
+        for (ItemStack stack : contents) {
+            if (isEmpty(stack) || !stack.isSimilar(remaining)) {
+                continue;
+            }
+            int limit = Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize());
+            int moved = Math.min(remaining.getAmount(), Math.max(0, limit - stack.getAmount()));
+            if (moved <= 0) {
+                continue;
+            }
+            stack.setAmount(stack.getAmount() + moved);
+            remaining.setAmount(remaining.getAmount() - moved);
+            if (remaining.getAmount() <= 0) {
+                return null;
+            }
+        }
+        return remaining;
+    }
+
+    private ItemStack cargoFillEmptyOnly(ItemStack[] contents, ItemStack input) {
+        ItemStack remaining = input.clone();
+        for (int i = 0; i < contents.length; i++) {
+            if (!isEmpty(contents[i])) {
+                continue;
+            }
+            int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
+            ItemStack placed = remaining.clone();
+            placed.setAmount(moved);
+            contents[i] = placed;
+            remaining.setAmount(remaining.getAmount() - moved);
+            if (remaining.getAmount() <= 0) {
+                return null;
+            }
+        }
+        return remaining;
+    }
+
+    private ItemStack cargoFillOneExistingSlot(ItemStack[] contents, ItemStack input) {
+        ItemStack remaining = input.clone();
+        for (ItemStack stack : contents) {
+            if (isEmpty(stack) || !stack.isSimilar(remaining)) {
+                continue;
+            }
+            int limit = Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize());
+            int moved = Math.min(remaining.getAmount(), Math.max(0, limit - stack.getAmount()));
+            if (moved <= 0) {
+                continue;
+            }
+            stack.setAmount(stack.getAmount() + moved);
+            remaining.setAmount(remaining.getAmount() - moved);
+            return remaining.getAmount() <= 0 ? null : remaining;
+        }
+        return remaining;
+    }
+
+    private ItemStack cargoFillOneEmptySlot(ItemStack[] contents, ItemStack input) {
+        ItemStack remaining = input.clone();
+        for (int i = 0; i < contents.length; i++) {
+            if (!isEmpty(contents[i])) {
+                continue;
+            }
+            int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
+            ItemStack placed = remaining.clone();
+            placed.setAmount(moved);
+            contents[i] = placed;
+            remaining.setAmount(remaining.getAmount() - moved);
+            return remaining.getAmount() <= 0 ? null : remaining;
+        }
+        return remaining;
+    }
+
+    private ItemStack cargoFillOneEmptyOrExistingSlot(ItemStack[] contents, ItemStack input) {
+        ItemStack remaining = input.clone();
+        for (int i = 0; i < contents.length; i++) {
+            ItemStack stack = contents[i];
+            if (isEmpty(stack)) {
+                int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
+                ItemStack placed = remaining.clone();
+                placed.setAmount(moved);
+                contents[i] = placed;
+                remaining.setAmount(remaining.getAmount() - moved);
+                return remaining.getAmount() <= 0 ? null : remaining;
+            }
+            if (stack.isSimilar(remaining)) {
+                int limit = Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize());
+                int moved = Math.min(remaining.getAmount(), Math.max(0, limit - stack.getAmount()));
+                if (moved <= 0) {
+                    continue;
+                }
+                stack.setAmount(stack.getAmount() + moved);
+                remaining.setAmount(remaining.getAmount() - moved);
+                return remaining.getAmount() <= 0 ? null : remaining;
+            }
+        }
+        return remaining;
+    }
+
+    private ItemStack cargoFillEmptyOrExisting(ItemStack[] contents, ItemStack input, boolean existingAllowed) {
+        ItemStack remaining = input.clone();
+        for (int i = 0; i < contents.length; i++) {
+            ItemStack stack = contents[i];
+            if (isEmpty(stack)) {
+                int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
+                ItemStack placed = remaining.clone();
+                placed.setAmount(moved);
+                contents[i] = placed;
+                remaining.setAmount(remaining.getAmount() - moved);
+            } else if (existingAllowed && stack.isSimilar(remaining)) {
+                int limit = Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize());
+                int moved = Math.min(remaining.getAmount(), Math.max(0, limit - stack.getAmount()));
+                stack.setAmount(stack.getAmount() + moved);
+                remaining.setAmount(remaining.getAmount() - moved);
+            }
+            if (remaining.getAmount() <= 0) {
+                return null;
+            }
+        }
+        return remaining;
+    }
+
+    private boolean isEmpty(ItemStack stack) {
+        return stack == null || stack.getType().isAir() || stack.getAmount() <= 0;
+    }
+
+    private boolean sameContents(ItemStack[] left, ItemStack[] right) {
+        if (left == null || right == null || left.length != right.length) {
+            return false;
+        }
+        for (int i = 0; i < left.length; i++) {
+            if (!sameStack(left[i], right[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean sameStack(ItemStack left, ItemStack right) {
+        if (isEmpty(left) || isEmpty(right)) {
+            return isEmpty(left) && isEmpty(right);
+        }
+        return left.getAmount() == right.getAmount() && left.isSimilar(right);
+    }
+
+    private ItemStack[] cloneContents(ItemStack[] contents) {
+        ItemStack[] copy = new ItemStack[contents == null ? 0 : contents.length];
+        for (int i = 0; i < copy.length; i++) {
+            copy[i] = contents[i] == null ? null : contents[i].clone();
+        }
+        return copy;
+    }
+
+    private String cargoItemKey(ItemStack stack) {
+        if (isEmpty(stack)) {
+            return "air";
+        }
+        String marker = items.readMarker(stack).map(cc.theends6.sfx.api.item.SfxItemMarker::itemId).orElse(null);
+        ItemStack probe = stack.clone();
+        probe.setAmount(1);
+        return (marker == null ? "vanilla:" + stack.getType().key() : "sfx:" + marker) + ":" + probe.hashCode();
+    }
+
+    private record CargoInventorySnapshot(UUID instanceId, SfxElectricMachineState state, boolean inputInventory, ItemStack[] contents) {
     }
 
     private void syncSessionState(SfxElectricMachineSession session) {

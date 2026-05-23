@@ -161,7 +161,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.configurableMachineService = new SfxConfigurableMachineService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService);
         this.technicalGadgetService = new SfxTechnicalGadgetService(this, api.runtime(), api.items(), localization);
         this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService, technicalGadgetService.rechargeableItems());
-        this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService);
+        this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService, electricMachineService);
         this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService);
         this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), localization, blockDataService, decorationService, electricMachineService, new SqliteSfxGpsDataRepository(this, gpsDataFile()));
         this.androidService = new SfxAndroidService(this, api.runtime(), api.items(), api.itemRegistry(), localization, blockDataService, new SqliteSfxAndroidScriptRepository(this, androidScriptsFile()));

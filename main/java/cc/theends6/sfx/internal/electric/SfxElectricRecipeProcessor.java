@@ -103,7 +103,18 @@ final class SfxElectricRecipeProcessor {
     }
 
     boolean canFitOutputForRecipe(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe) {
-        return findOutputSlots(definition, state, recipe.outputs()) != null;
+        if (recipe == null) {
+            return false;
+        }
+        if (!recipe.hasRandomOutput()) {
+            return findOutputSlots(definition, state, recipe.outputs()) != null;
+        }
+        for (List<SfxElectricStack> outputGroup : recipe.outputGroups()) {
+            if (findOutputSlots(definition, state, outputGroup) == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     boolean canFitCompletionOutputForRecipe(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe) {
