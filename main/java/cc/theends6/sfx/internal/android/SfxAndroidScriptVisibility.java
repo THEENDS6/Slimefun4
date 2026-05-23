@@ -1,21 +1,15 @@
 package cc.theends6.sfx.internal.android;
 
+import java.util.Locale;
+
 public enum SfxAndroidScriptVisibility {
     PUBLIC,
     PRIVATE;
 
     public static SfxAndroidScriptVisibility parse(String input) {
         if (input == null || input.isBlank()) {
-            return PUBLIC;
+            throw new IllegalArgumentException("Missing Android script visibility");
         }
-        String normalized = input.trim().toUpperCase(java.util.Locale.ROOT);
-        if ("UNLISTED".equals(normalized)) {
-            return PRIVATE;
-        }
-        try {
-            return valueOf(normalized);
-        } catch (IllegalArgumentException ignored) {
-            return PUBLIC;
-        }
+        return valueOf(input.trim().toUpperCase(Locale.ROOT));
     }
 }
