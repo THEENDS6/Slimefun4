@@ -50,6 +50,7 @@ import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.entity.Animals;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Item;
@@ -130,6 +131,7 @@ public final class SfxAndroidService implements Listener {
         running = true;
         rebuildIndex();
         scheduleTick();
+        scheduleOpenMainInventoryRefresh();
     }
 
     public void shutdown() {
@@ -214,6 +216,33 @@ public final class SfxAndroidService implements Listener {
                 scheduleTick();
             }
         });
+    }
+
+    private void scheduleOpenMainInventoryRefresh() {
+        runtime.executeGlobalLater(1L, () -> {
+            if (!running) {
+                return;
+            }
+            try {
+                refreshOpenMainInventories();
+            } catch (Throwable throwable) {
+                plugin.getLogger().warning("Android inventory refresh failed: " + throwable.getMessage());
+            } finally {
+                scheduleOpenMainInventoryRefresh();
+            }
+        });
+    }
+
+    private void refreshOpenMainInventories() {
+        for (UUID instanceId : List.copyOf(mainViewers.keySet())) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+            if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+                mainViewers.remove(instanceId);
+                continue;
+            }
+            SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+            refreshOpenMainInventory(instanceId, state, false);
+        }
     }
 
     private void tickAndroids(long tickId) {
@@ -372,7 +401,7 @@ public final class SfxAndroidService implements Listener {
             case FARM_FORWARD, FARM_DOWN, FARM_EXOTIC_FORWARD, FARM_EXOTIC_DOWN -> farm(state, targetBlock(block, face, instruction), type);
             case CHOP_TREE -> chopTree(state, targetBlock(block, face, instruction));
             case CATCH_FISH -> catchFish(state, block, type);
-            case ATTACK_MOBS_ANIMALS -> attack(block, state, type, living -> living instanceof Monster || living instanceof Animals);
+            case ATTACK_MOBS_ANIMALS -> attack(block, state, type, living -> true);
             case ATTACK_MOBS -> attack(block, state, type, living -> living instanceof Monster);
             case ATTACK_ANIMALS -> attack(block, state, type, living -> living instanceof Animals);
             case ATTACK_ANIMALS_ADULT -> attack(block, state, type, living -> living instanceof Animals animal && animal.isAdult());
@@ -667,15 +696,130 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
-        ItemStack drop = new ItemStack(target.getType());
+        Block log = nextLogToChop(target);
+        if (log == null) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            return false;
+        }
+        Material logType = log.getType();
+        ItemStack drop = new ItemStack(logType);
         if (!state.pushOutput(drop)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
             return false;
         }
-        playBlockBreakEffect(target);
-        target.setType(Material.AIR, true);
+        playBlockBreakEffect(log);
+        if (sameBlock(log, target)) {
+            replantAfterChop(log, logType);
+        } else {
+            log.setType(Material.AIR, true);
+        }
         state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         return true;
+    }
+
+    private Block nextLogToChop(Block root) {
+        List<Block> logs = connectedLogs(root, 160);
+        if (logs.isEmpty()) {
+            return null;
+        }
+        return logs.stream()
+                .max(Comparator
+                        .comparingInt((Block block) -> sameBlock(block, root) ? 0 : 1)
+                        .thenComparingInt(Block::getY)
+                        .thenComparingInt(block -> manhattan(block, root))
+                        .thenComparingInt(Block::getX)
+                        .thenComparingInt(Block::getZ))
+                .orElse(root);
+    }
+
+    private List<Block> connectedLogs(Block root, int maxReach) {
+        List<Block> result = new ArrayList<>();
+        Set<LocationKey> visited = new HashSet<>();
+        List<Block> queue = new ArrayList<>();
+        queue.add(root);
+        visited.add(LocationKey.of(root.getLocation()));
+        for (int index = 0; index < queue.size() && result.size() < maxReach; index++) {
+            Block current = queue.get(index);
+            if (!Tag.LOGS.isTagged(current.getType())) {
+                continue;
+            }
+            result.add(current);
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        if (dx == 0 && dy == 0 && dz == 0) {
+                            continue;
+                        }
+                        Block relative = current.getRelative(dx, dy, dz);
+                        LocationKey key = LocationKey.of(relative.getLocation());
+                        if (visited.add(key) && Tag.LOGS.isTagged(relative.getType())) {
+                            queue.add(relative);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private int manhattan(Block a, Block b) {
+        return Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY()) + Math.abs(a.getZ() - b.getZ());
+    }
+
+    private boolean sameBlock(Block a, Block b) {
+        return a != null && b != null && a.getWorld().equals(b.getWorld()) && a.getX() == b.getX() && a.getY() == b.getY() && a.getZ() == b.getZ();
+    }
+
+    private void replantAfterChop(Block block, Material logType) {
+        Material sapling = saplingForLog(logType);
+        if (sapling == null) {
+            block.setType(Material.AIR, true);
+            return;
+        }
+        Material soil = block.getRelative(BlockFace.DOWN).getType();
+        if (canPlantSaplingOn(sapling, soil)) {
+            block.setType(sapling, true);
+        } else {
+            block.setType(Material.AIR, true);
+            block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.25, 0.5), new ItemStack(sapling));
+        }
+    }
+
+    private Material saplingForLog(Material logType) {
+        return switch (logType) {
+            case OAK_LOG, OAK_WOOD, STRIPPED_OAK_LOG, STRIPPED_OAK_WOOD -> Material.OAK_SAPLING;
+            case SPRUCE_LOG, SPRUCE_WOOD, STRIPPED_SPRUCE_LOG, STRIPPED_SPRUCE_WOOD -> Material.SPRUCE_SAPLING;
+            case BIRCH_LOG, BIRCH_WOOD, STRIPPED_BIRCH_LOG, STRIPPED_BIRCH_WOOD -> Material.BIRCH_SAPLING;
+            case JUNGLE_LOG, JUNGLE_WOOD, STRIPPED_JUNGLE_LOG, STRIPPED_JUNGLE_WOOD -> Material.JUNGLE_SAPLING;
+            case ACACIA_LOG, ACACIA_WOOD, STRIPPED_ACACIA_LOG, STRIPPED_ACACIA_WOOD -> Material.ACACIA_SAPLING;
+            case DARK_OAK_LOG, DARK_OAK_WOOD, STRIPPED_DARK_OAK_LOG, STRIPPED_DARK_OAK_WOOD -> Material.DARK_OAK_SAPLING;
+            case MANGROVE_LOG, MANGROVE_WOOD, STRIPPED_MANGROVE_LOG, STRIPPED_MANGROVE_WOOD -> Material.MANGROVE_PROPAGULE;
+            case CHERRY_LOG, CHERRY_WOOD, STRIPPED_CHERRY_LOG, STRIPPED_CHERRY_WOOD -> Material.CHERRY_SAPLING;
+            case PALE_OAK_LOG, PALE_OAK_WOOD, STRIPPED_PALE_OAK_LOG, STRIPPED_PALE_OAK_WOOD -> Material.PALE_OAK_SAPLING;
+            case CRIMSON_STEM, CRIMSON_HYPHAE, STRIPPED_CRIMSON_STEM, STRIPPED_CRIMSON_HYPHAE -> Material.CRIMSON_FUNGUS;
+            case WARPED_STEM, WARPED_HYPHAE, STRIPPED_WARPED_STEM, STRIPPED_WARPED_HYPHAE -> Material.WARPED_FUNGUS;
+            default -> null;
+        };
+    }
+
+    private boolean canPlantSaplingOn(Material sapling, Material soil) {
+        return switch (sapling) {
+            case CRIMSON_FUNGUS -> soil == Material.CRIMSON_NYLIUM;
+            case WARPED_FUNGUS -> soil == Material.WARPED_NYLIUM;
+            case MANGROVE_PROPAGULE -> isMangroveSoil(soil);
+            default -> isDirtLike(soil);
+        };
+    }
+
+    private boolean isDirtLike(Material material) {
+        return switch (material) {
+            case DIRT, GRASS_BLOCK, PODZOL, COARSE_DIRT, ROOTED_DIRT, FARMLAND, MYCELIUM, MOSS_BLOCK -> true;
+            default -> false;
+        };
+    }
+
+    private boolean isMangroveSoil(Material material) {
+        return isDirtLike(material) || material == Material.MUD || material == Material.MUDDY_MANGROVE_ROOTS;
     }
 
     private boolean catchFish(SfxAndroidState state, Block block, SfxAndroidType type) {
@@ -684,12 +828,12 @@ public final class SfxAndroidService implements Listener {
             return false;
         }
         int chance = 10 * type.tier();
+        block.getWorld().playSound(block.getLocation(), Sound.ENTITY_FISHING_BOBBER_SPLASH, 0.6f, 1.0f);
         if (java.util.concurrent.ThreadLocalRandom.current().nextInt(100) >= chance) {
-            block.getWorld().playSound(block.getLocation(), Sound.ENTITY_FISHING_BOBBER_SPLASH, 0.6f, 1.0f);
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             return true;
         }
-        Material[] loot = {Material.COD, Material.SALMON, Material.PUFFERFISH, Material.TROPICAL_FISH, Material.BONE, Material.STRING, Material.INK_SAC, Material.KELP, Material.STICK, Material.ROTTEN_FLESH, Material.LEATHER, Material.BAMBOO, Material.NAUTILUS_SHELL};
-        ItemStack drop = new ItemStack(loot[java.util.concurrent.ThreadLocalRandom.current().nextInt(loot.length)]);
+        ItemStack drop = classicFishingLoot();
         if (!state.pushOutput(drop)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
             return false;
@@ -698,27 +842,64 @@ public final class SfxAndroidService implements Listener {
         return true;
     }
 
+    private ItemStack classicFishingLoot() {
+        int totalWeight = 0;
+        List<WeightedMaterial> loot = new ArrayList<>();
+        for (Material fish : Tag.ITEMS_FISHES.getValues()) {
+            loot.add(new WeightedMaterial(fish, 25));
+            totalWeight += 25;
+        }
+        totalWeight += addLoot(loot, Material.BONE, 10);
+        totalWeight += addLoot(loot, Material.STRING, 10);
+        totalWeight += addLoot(loot, Material.INK_SAC, 8);
+        totalWeight += addLoot(loot, Material.KELP, 6);
+        totalWeight += addLoot(loot, Material.STICK, 5);
+        totalWeight += addLoot(loot, Material.ROTTEN_FLESH, 3);
+        totalWeight += addLoot(loot, Material.LEATHER, 2);
+        totalWeight += addLoot(loot, Material.BAMBOO, 3);
+        totalWeight += addLoot(loot, Material.SADDLE, 1);
+        totalWeight += addLoot(loot, Material.NAME_TAG, 1);
+        totalWeight += addLoot(loot, Material.NAUTILUS_SHELL, 1);
+        int roll = java.util.concurrent.ThreadLocalRandom.current().nextInt(Math.max(1, totalWeight));
+        int cursor = 0;
+        for (WeightedMaterial entry : loot) {
+            cursor += entry.weight();
+            if (roll < cursor) {
+                return new ItemStack(entry.material());
+            }
+        }
+        return new ItemStack(Material.COD);
+    }
+
+    private int addLoot(List<WeightedMaterial> loot, Material material, int weight) {
+        loot.add(new WeightedMaterial(material, weight));
+        return weight;
+    }
+
     private boolean attack(Block block, SfxAndroidState state, SfxAndroidType type, java.util.function.Predicate<LivingEntity> filter) {
         double damage = type.tier() >= 3 ? 20D : 4D * type.tier();
         double radius = 4D + type.tier();
         Location origin = block.getLocation().add(0.5, 0.5, 0.5);
         BlockFace face = actionFacing(state);
-        boolean attacked = false;
-        for (Entity entity : block.getWorld().getNearbyEntities(origin, radius, radius, radius)) {
-            if (!(entity instanceof LivingEntity living) || living instanceof Player || !filter.test(living) || !isInFront(origin, living.getLocation(), face)) {
-                continue;
-            }
-            living.damage(damage);
-            attacked = true;
-            if (living.isDead()) {
-                collectNearbyDrops(state, living.getLocation());
-            }
-        }
-        if (!attacked) {
+        List<Entity> targets = block.getWorld().getNearbyEntities(origin, radius, radius, radius).stream()
+                .filter(entity -> entity instanceof LivingEntity living
+                        && !(entity instanceof ArmorStand)
+                        && !(entity instanceof Player)
+                        && entity.isValid()
+                        && filter.test(living)
+                        && isInFront(origin, living.getLocation(), face))
+                .sorted(Comparator.comparingDouble(entity -> entity.getLocation().distanceSquared(origin)))
+                .toList();
+        if (targets.isEmpty()) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-        } else {
-            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+            return true;
         }
+        LivingEntity target = (LivingEntity) targets.get(0);
+        target.damage(damage);
+        if (target.isDead()) {
+            collectNearbyDrops(state, target.getLocation());
+        }
+        state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         return true;
     }
 
@@ -732,6 +913,9 @@ public final class SfxAndroidService implements Listener {
             case WEST -> dx <= 0 && Math.abs(dx) >= Math.abs(dz) * 0.35;
             default -> true;
         };
+    }
+
+    private record WeightedMaterial(Material material, int weight) {
     }
 
     private void collectNearbyDrops(SfxAndroidState state, Location location) {
@@ -919,6 +1103,7 @@ public final class SfxAndroidService implements Listener {
             return;
         }
         if (raw == FUEL_SLOT) {
+            syncMainInventoryLater(player, holder.instanceId(), top);
             return;
         }
         if (isOutputSlot(raw)) {
@@ -969,6 +1154,7 @@ public final class SfxAndroidService implements Listener {
         }
         source.setAmount(source.getAmount() - movable);
         event.setCurrentItem(source.getAmount() <= 0 ? null : source);
+        syncMainInventoryLater((Player) event.getWhoClicked(), holder.instanceId(), top);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -983,6 +1169,10 @@ public final class SfxAndroidService implements Listener {
             boolean illegal = event.getRawSlots().stream().anyMatch(slot -> slot < topSize && slot != FUEL_SLOT);
             if (illegal) {
                 event.setCancelled(true);
+                return;
+            }
+            if (event.getRawSlots().contains(FUEL_SLOT) && event.getWhoClicked() instanceof Player player) {
+                syncMainInventoryLater(player, holder.instanceId(), top);
             }
         }
     }
@@ -1111,6 +1301,28 @@ public final class SfxAndroidService implements Listener {
         }
         state.fuelSlot(inventory.getItem(FUEL_SLOT));
         return state;
+    }
+
+    private void syncMainInventoryLater(Player player, UUID instanceId, Inventory inventory) {
+        runtime.executeForPlayerLater(player, 1L, () -> {
+            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+            if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+                return;
+            }
+            SfxAndroidState state = syncMainInventoryToState(instance, inventory);
+            if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL && fuelValue(state.fuelSlot(), SfxAndroidType.fromItemId(instance.typeId())) > 0) {
+                state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+                activeAndroids.add(instance.instanceId());
+            }
+            persist(instance.instanceId(), state);
+        });
+    }
+
+    private void refreshMainFuelInfo(Inventory inventory, SfxAndroidState state) {
+        if (inventory == null || state == null || inventory.getHolder() == null) {
+            return;
+        }
+        inventory.setItem(34, fuelInfoIcon(state));
     }
 
     private void refreshMainStatus(Inventory inventory, SfxAndroidState state) {
@@ -1603,25 +1815,39 @@ public final class SfxAndroidService implements Listener {
     }
 
     private ItemStack fuelInfoIcon(SfxAndroidState state) {
+        String fuelTime = formatFuelTime(state.fuelTicks());
         ItemStack item = localizedItem(Material.COAL, null, "android.menu.main.fuel_info", "<yellow>Fuel Input</yellow>",
                 "<gray>Put compatible fuel in slot 43.</gray>",
-                "<gray>Current fuel ticks: <white>{fuel}</white></gray>",
+                "<gray>Remaining fuel: <white>{fuel}</white></gray>",
                 "<gray>State: <white>{state}</white></gray>");
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             List<Component> lore = localizedLore("android.menu.main.fuel_info.lore",
                     "<gray>Put compatible fuel in slot 43.</gray>",
-                    "<gray>Current fuel ticks: <white>{fuel}</white></gray>",
+                    "<gray>Remaining fuel: <white>{fuel}</white></gray>",
                     "<gray>State: <white>{state}</white></gray>");
             List<Component> rendered = new ArrayList<>();
             for (Component component : lore) {
-                String legacy = Text.toLegacy(component).replace("{fuel}", Long.toString(state.fuelTicks())).replace("{state}", state.runtimeState().name());
+                String legacy = Text.toLegacy(component).replace("{fuel}", fuelTime).replace("{state}", state.runtimeState().name());
                 rendered.add(Text.legacy(legacy));
             }
             meta.lore(rendered);
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private String formatFuelTime(int fuelTicks) {
+        if (fuelTicks <= 0) {
+            return "0s";
+        }
+        int seconds = fuelTicks;
+        int minutes = seconds / 60;
+        int remainingSeconds = seconds % 60;
+        if (minutes > 0) {
+            return minutes + "m " + remainingSeconds + "s";
+        }
+        return remainingSeconds + "s";
     }
 
     private ItemStack localizedItem(Material material, String texture, String key, String fallbackName, String... fallbackLore) {
@@ -1671,10 +1897,10 @@ public final class SfxAndroidService implements Listener {
             return;
         }
         blockData.updateInstanceState(instanceId, state.encode(), state.runtimeState() == SfxAndroidRuntimeState.ACTIVE ? SfxBlockLifecycleState.ACTIVE : SfxBlockLifecycleState.IDLE);
-        refreshOpenMainInventory(instanceId, state);
+        refreshOpenMainInventory(instanceId, state, true);
     }
 
-    private void refreshOpenMainInventory(UUID instanceId, SfxAndroidState state) {
+    private void refreshOpenMainInventory(UUID instanceId, SfxAndroidState state, boolean fullRefresh) {
         Set<UUID> viewers = mainViewers.get(instanceId);
         if (viewers == null || viewers.isEmpty()) {
             return;
@@ -1699,7 +1925,11 @@ public final class SfxAndroidService implements Listener {
                     }
                     return;
                 }
-                refreshMainStatus(top, state);
+                if (fullRefresh) {
+                    refreshMainStatus(top, state);
+                } else {
+                    refreshMainFuelInfo(top, state);
+                }
             });
         }
     }
