@@ -4200,24 +4200,24 @@ android:
     no_access: '<red>这个机器人属于其他玩家。</red>'
     started: '<green>机器人已启动。</green>'
     paused: '<yellow>机器人已暂停。</yellow>'
-    import_prompt: '<yellow>请在聊天栏粘贴 Android 脚本码。输入 <white>cancel</white> 取消。</yellow>'
-    import_cancelled: '<yellow>已取消导入 Android 脚本。</yellow>'
+    import_prompt: '<yellow>请在聊天栏粘贴机器人脚本码。输入 <white>cancel</white> 取消。</yellow>'
+    import_cancelled: '<yellow>已取消导入机器人脚本。</yellow>'
     missing_android: '<red>这个机器人已经不存在。</red>'
-    imported: '<green>已导入 Android 脚本。</green>'
-    invalid_script: '<red>无效的 Android 脚本: {reason}</red>'
-    copy_script: '<aqua>[点击复制 Android 脚本]</aqua>'
-    export: '<green>Android 脚本导出:</green> '
-    uploaded: '<green>已上传 Android 脚本 #{id}。</green>'
+    imported: '<green>已导入机器人脚本。</green>'
+    invalid_script: '<red>无效的机器人脚本: {reason}</red>'
+    copy_script: '<aqua>[点击复制机器人脚本]</aqua>'
+    export: '<green>机器人脚本导出:</green> '
+    uploaded: '<green>已上传机器人脚本 #{id}。</green>'
     upload_failed: '<red>上传脚本失败: {reason}</red>'
-    deleted: '<yellow>已删除 Android 脚本 #{id}。</yellow>'
-    downloaded: '<green>已下载 Android 脚本 #{id}。</green>'
+    deleted: '<yellow>已删除机器人脚本 #{id}。</yellow>'
+    downloaded: '<green>已下载机器人脚本 #{id}。</green>'
     script_library_error: '<red>脚本库错误: {reason}</red>'
     upload_name_prompt: '<yellow>请在聊天栏输入脚本名称。输入 <white>cancel</white> 取消。</yellow>'
-    upload_cancelled: '<yellow>已取消上传 Android 脚本。</yellow>'
+    upload_cancelled: '<yellow>已取消上传机器人脚本。</yellow>'
     invalid_script_name: '<red>无效的脚本名称，请使用 1-32 个可见字符。</red>'
     edit_script_prompt: '<yellow>请输入新的脚本名称，或输入 <white>delete</white> 删除脚本，输入 <white>cancel</white> 取消。</yellow>'
-    edit_cancelled: '<yellow>已取消修改 Android 脚本。</yellow>'
-    renamed: '<green>已重命名 Android 脚本 #{id}。</green>'
+    edit_cancelled: '<yellow>已取消修改机器人脚本。</yellow>'
+    renamed: '<green>已重命名机器人脚本 #{id}。</green>'
     edit_denied: '<red>你不能修改这个脚本。</red>'
   menu:
     common:
@@ -4249,7 +4249,7 @@ android:
           - '<gray>当前燃料 ticks: <white>{fuel}</white></gray>'
           - '<gray>状态: <white>{state}</white></gray>'
     editor:
-      title: '<dark_gray>Android 记忆核心</dark_gray>'
+      title: '<dark_gray>机器人记忆核心</dark_gray>'
       edit:
         name: '<green>编辑脚本</green>'
         lore:
@@ -4275,7 +4275,7 @@ android:
         lore:
           - '<gray>返回机器人界面。</gray>'
     upload:
-      title: '<dark_gray>上传 Android 脚本</dark_gray>'
+      title: '<dark_gray>上传机器人脚本</dark_gray>'
       public:
         name: '<green>公开</green>'
         lore:
@@ -4285,7 +4285,7 @@ android:
         lore:
           - '<gray>只有你自己可以看到。</gray>'
     script:
-      title: '<dark_gray>编辑 Android 脚本</dark_gray>'
+      title: '<dark_gray>编辑机器人脚本</dark_gray>'
       start:
         name: '<green>START</green>'
       repeat:
@@ -4296,7 +4296,7 @@ android:
     instructions:
       title: '<dark_gray>选择指令</dark_gray>'
     downloader:
-      title: '<dark_gray>下载 Android 脚本</dark_gray>'
+      title: '<dark_gray>下载机器人脚本</dark_gray>'
       entry:
         author: '<gray>作者: <white>{author}</white></gray>'
         length: '<gray>脚本长度: <white>{length}/54</white></gray>'
@@ -4307,7 +4307,7 @@ android:
   instructions:
     wait:
       name: '<yellow>等待</yellow>'
-      lore: ['<gray>等待一个 Android tick。</gray>']
+      lore: ['<gray>等待一个机器人 tick。</gray>']
     turn_left:
       name: '<yellow>左转</yellow>'
       lore: ['<gray>向左旋转。</gray>']
