@@ -12,7 +12,7 @@ import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
 
 public final class SfxAndroidState {
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
     public static final int OUTPUT_SIZE = 6;
     public static final int MAX_BODY_LENGTH = 52;
 
@@ -23,10 +23,11 @@ public final class SfxAndroidState {
     private boolean paused;
     private SfxAndroidRuntimeState runtimeState;
     private long sleepingUntilTick;
+    private int noEffectTicks;
     private ItemStack fuelSlot;
     private final ItemStack[] outputs;
 
-    public SfxAndroidState(List<SfxAndroidInstruction> body, int index, int fuelTicks, BlockFace rotation, boolean paused, SfxAndroidRuntimeState runtimeState, long sleepingUntilTick, ItemStack fuelSlot, ItemStack[] outputs) {
+    public SfxAndroidState(List<SfxAndroidInstruction> body, int index, int fuelTicks, BlockFace rotation, boolean paused, SfxAndroidRuntimeState runtimeState, long sleepingUntilTick, int noEffectTicks, ItemStack fuelSlot, ItemStack[] outputs) {
         setBody(body == null || body.isEmpty() ? List.of(SfxAndroidInstruction.TURN_LEFT) : body);
         this.index = Math.max(0, Math.min(this.body.size() - 1, index));
         this.fuelTicks = Math.max(0, fuelTicks);
@@ -34,12 +35,13 @@ public final class SfxAndroidState {
         this.paused = paused;
         this.runtimeState = runtimeState == null ? (paused ? SfxAndroidRuntimeState.PAUSED : SfxAndroidRuntimeState.ACTIVE) : runtimeState;
         this.sleepingUntilTick = Math.max(0L, sleepingUntilTick);
+        this.noEffectTicks = Math.max(0, noEffectTicks);
         this.fuelSlot = cloneOrNull(fuelSlot);
         this.outputs = normalizeOutputs(outputs);
     }
 
     public static SfxAndroidState createDefault(BlockFace rotation) {
-        return new SfxAndroidState(List.of(SfxAndroidInstruction.TURN_LEFT), 0, 0, rotation, true, SfxAndroidRuntimeState.PAUSED, 0L, null, new ItemStack[OUTPUT_SIZE]);
+        return new SfxAndroidState(List.of(SfxAndroidInstruction.TURN_LEFT), 0, 0, rotation, true, SfxAndroidRuntimeState.PAUSED, 0L, 0, null, new ItemStack[OUTPUT_SIZE]);
     }
 
     public static SfxAndroidState decode(byte[] blob, BlockFace fallbackRotation) {
@@ -48,7 +50,7 @@ public final class SfxAndroidState {
         }
         try (BukkitObjectInputStream input = new BukkitObjectInputStream(new ByteArrayInputStream(blob))) {
             int version = input.readInt();
-            if (version != VERSION) {
+            if (version < 1 || version > VERSION) {
                 return createDefault(fallbackRotation);
             }
             int count = input.readInt();
@@ -67,6 +69,7 @@ public final class SfxAndroidState {
             boolean paused = input.readBoolean();
             SfxAndroidRuntimeState runtimeState = SfxAndroidRuntimeState.valueOf(input.readUTF());
             long sleepingUntilTick = input.readLong();
+            int noEffectTicks = version >= 2 ? input.readInt() : 0;
             Object fuel = input.readObject();
             ItemStack[] outputs = new ItemStack[OUTPUT_SIZE];
             int outputCount = input.readInt();
@@ -74,7 +77,7 @@ public final class SfxAndroidState {
                 Object raw = input.readObject();
                 outputs[i] = raw instanceof ItemStack stack ? stack : null;
             }
-            return new SfxAndroidState(body, index, fuelTicks, rotation, paused, runtimeState, sleepingUntilTick, fuel instanceof ItemStack stack ? stack : null, outputs);
+            return new SfxAndroidState(body, index, fuelTicks, rotation, paused, runtimeState, sleepingUntilTick, noEffectTicks, fuel instanceof ItemStack stack ? stack : null, outputs);
         } catch (IOException | ClassNotFoundException | IllegalArgumentException exception) {
             return createDefault(fallbackRotation);
         }
@@ -95,6 +98,7 @@ public final class SfxAndroidState {
                 output.writeBoolean(paused);
                 output.writeUTF(runtimeState.name());
                 output.writeLong(sleepingUntilTick);
+                output.writeInt(noEffectTicks);
                 output.writeObject(fuelSlot == null ? null : fuelSlot.clone());
                 output.writeInt(outputs.length);
                 for (ItemStack outputStack : outputs) {
@@ -192,6 +196,22 @@ public final class SfxAndroidState {
 
     public void sleepingUntilTick(long sleepingUntilTick) {
         this.sleepingUntilTick = Math.max(0L, sleepingUntilTick);
+    }
+
+    public int noEffectTicks() {
+        return noEffectTicks;
+    }
+
+    public void noEffectTicks(int noEffectTicks) {
+        this.noEffectTicks = Math.max(0, noEffectTicks);
+    }
+
+    public void incrementNoEffectTicks() {
+        noEffectTicks(noEffectTicks + 1);
+    }
+
+    public void resetNoEffectTicks() {
+        noEffectTicks = 0;
     }
 
     public ItemStack fuelSlot() {
