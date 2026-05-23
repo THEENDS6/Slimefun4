@@ -1,6 +1,6 @@
 name: SlimeFunX
 main: cc.theends6.sfx.SlimeFunXPlugin
-version: 20260522b1
+version: SFX-20260523c
 api-version: '1.21'
 folia-supported: true
 authors: [THEENDS6]
