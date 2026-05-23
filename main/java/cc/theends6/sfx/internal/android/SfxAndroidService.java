@@ -99,6 +99,7 @@ public final class SfxAndroidService implements Listener {
     private final Map<UUID, ImportSession> pendingImports = new ConcurrentHashMap<>();
     private final Map<UUID, UploadSession> pendingUploads = new ConcurrentHashMap<>();
     private final Map<UUID, EditScriptSession> pendingScriptEdits = new ConcurrentHashMap<>();
+    private final Map<UUID, Set<UUID>> mainViewers = new ConcurrentHashMap<>();
     private final AtomicLong androidTick = new AtomicLong();
     private volatile boolean running;
     private long tickInterval;
@@ -132,6 +133,7 @@ public final class SfxAndroidService implements Listener {
         pendingImports.clear();
         pendingUploads.clear();
         pendingScriptEdits.clear();
+        mainViewers.clear();
         flushAllStates();
         states.clear();
         activeAndroids.clear();
@@ -740,7 +742,7 @@ public final class SfxAndroidService implements Listener {
             return;
         }
         event.setCancelled(true);
-        handleMainButton(player, holder, raw);
+        handleMainButton(player, holder, top, raw);
     }
 
     private void shiftFuelIntoAndroid(InventoryClickEvent event, SfxAndroidMenuHolder holder, Inventory top) {
@@ -800,15 +802,18 @@ public final class SfxAndroidService implements Listener {
         if (!(inventory.getHolder() instanceof SfxAndroidMenuHolder holder) || holder.menuType() != SfxAndroidMenuHolder.MenuType.MAIN) {
             return;
         }
+        Set<UUID> viewers = mainViewers.get(holder.instanceId());
+        if (viewers != null) {
+            viewers.remove(player.getUniqueId());
+            if (viewers.isEmpty()) {
+                mainViewers.remove(holder.instanceId());
+            }
+        }
         SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
         if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
             return;
         }
-        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
-        for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
-            state.output(i, inventory.getItem(OUTPUT_SLOTS[i]));
-        }
-        state.fuelSlot(inventory.getItem(FUEL_SLOT));
+        SfxAndroidState state = syncMainInventoryToState(instance, inventory);
         if (!state.paused() && (state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL || state.runtimeState() == SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL)) {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             activeAndroids.add(instance.instanceId());
@@ -897,6 +902,7 @@ public final class SfxAndroidService implements Listener {
             inventory.setItem(OUTPUT_SLOTS[i], outputs[i]);
         }
         inventory.setItem(FUEL_SLOT, state.fuelSlot());
+        mainViewers.computeIfAbsent(instanceId, ignored -> ConcurrentHashMap.newKeySet()).add(player.getUniqueId());
         player.openInventory(inventory);
     }
 
@@ -904,26 +910,49 @@ public final class SfxAndroidService implements Listener {
         return new SfxAndroidMenuHolder(player.getUniqueId(), instanceId, type, page, editIndex, adding);
     }
 
-    private void handleMainButton(Player player, SfxAndroidMenuHolder holder, int slot) {
+    private SfxAndroidState syncMainInventoryToState(SfxBlockInstanceRecord instance, Inventory inventory) {
+        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+        for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
+            state.output(i, inventory.getItem(OUTPUT_SLOTS[i]));
+        }
+        state.fuelSlot(inventory.getItem(FUEL_SLOT));
+        return state;
+    }
+
+    private void refreshMainStatus(Inventory inventory, SfxAndroidState state) {
+        if (inventory == null || state == null || inventory.getHolder() == null) {
+            return;
+        }
+        inventory.setItem(34, fuelInfoIcon(state));
+        inventory.setItem(FUEL_SLOT, state.fuelSlot());
+        ItemStack[] outputs = state.outputs();
+        for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
+            inventory.setItem(OUTPUT_SLOTS[i], outputs[i]);
+        }
+    }
+
+    private void handleMainButton(Player player, SfxAndroidMenuHolder holder, Inventory top, int slot) {
         SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
         if (instance == null) {
             return;
         }
-        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+        SfxAndroidState state = syncMainInventoryToState(instance, top);
         if (slot == 15) {
             state.paused(false);
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             activeAndroids.add(instance.instanceId());
             persist(instance.instanceId(), state);
+            refreshMainStatus(top, state);
             player.sendMessage(msg("android.messages.started", "<green>Android started.</green>"));
-            openMain(player, instance.instanceId());
         } else if (slot == 17) {
             state.paused(true);
+            state.runtimeState(SfxAndroidRuntimeState.PAUSED);
             activeAndroids.remove(instance.instanceId());
             persist(instance.instanceId(), state);
+            refreshMainStatus(top, state);
             player.sendMessage(msg("android.messages.paused", "<yellow>Android paused.</yellow>"));
-            openMain(player, instance.instanceId());
         } else if (slot == 16) {
+            persist(instance.instanceId(), state);
             openEditor(player, instance.instanceId());
         }
     }
@@ -1428,6 +1457,37 @@ public final class SfxAndroidService implements Listener {
             return;
         }
         blockData.updateInstanceState(instanceId, state.encode(), state.runtimeState() == SfxAndroidRuntimeState.ACTIVE ? SfxBlockLifecycleState.ACTIVE : SfxBlockLifecycleState.IDLE);
+        refreshOpenMainInventory(instanceId, state);
+    }
+
+    private void refreshOpenMainInventory(UUID instanceId, SfxAndroidState state) {
+        Set<UUID> viewers = mainViewers.get(instanceId);
+        if (viewers == null || viewers.isEmpty()) {
+            return;
+        }
+        for (UUID viewerId : List.copyOf(viewers)) {
+            Player viewer = Bukkit.getPlayer(viewerId);
+            if (viewer == null || !viewer.isOnline()) {
+                viewers.remove(viewerId);
+                continue;
+            }
+            runtime.executeForPlayer(viewer, () -> {
+                Inventory top = viewer.getOpenInventory().getTopInventory();
+                if (!(top.getHolder() instanceof SfxAndroidMenuHolder holder)
+                        || holder.menuType() != SfxAndroidMenuHolder.MenuType.MAIN
+                        || !holder.instanceId().equals(instanceId)) {
+                    Set<UUID> current = mainViewers.get(instanceId);
+                    if (current != null) {
+                        current.remove(viewerId);
+                        if (current.isEmpty()) {
+                            mainViewers.remove(instanceId);
+                        }
+                    }
+                    return;
+                }
+                refreshMainStatus(top, state);
+            });
+        }
     }
 
     private void flushAllStates() {
@@ -1465,9 +1525,19 @@ public final class SfxAndroidService implements Listener {
 
     private void applyRotation(Block block, BlockFace rotation) {
         if (block.getBlockData() instanceof Rotatable rotatable) {
-            rotatable.setRotation(rotation);
+            rotatable.setRotation(toSkullVisualRotation(rotation));
             block.setBlockData(rotatable, false);
         }
+    }
+
+    private BlockFace toSkullVisualRotation(BlockFace logicalFacing) {
+        return switch (logicalFacing) {
+            case NORTH -> BlockFace.SOUTH;
+            case SOUTH -> BlockFace.NORTH;
+            case EAST -> BlockFace.WEST;
+            case WEST -> BlockFace.EAST;
+            default -> logicalFacing;
+        };
     }
 
     private BlockFace facingFromPlayer(Player player) {

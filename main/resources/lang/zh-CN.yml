@@ -4228,7 +4228,7 @@ android:
       next:
         name: '<yellow>下一页</yellow>'
     main:
-      title: 'Programmable Android'
+      title: '可编程机器人'
       start:
         name: '<green>启动/继续</green>'
         lore:
