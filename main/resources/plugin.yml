@@ -1,6 +1,6 @@
 name: SlimeFunX
 main: cc.theends6.sfx.SlimeFunXPlugin
-version: a1
+version: 23a
 api-version: '1.21'
 folia-supported: true
 authors: [THEENDS6]
@@ -44,4 +44,14 @@ permissions:
     default: true
   sfx.command.reload:
     description: Allows reloading SFX config and language files
+    default: op
+
+  sfx.android.bypass:
+    description: Allows opening and editing other players Androids
+    default: op
+  sfx.android.script.delete.own:
+    description: Allows deleting own uploaded Android scripts
+    default: true
+  sfx.android.script.delete.any:
+    description: Allows deleting any uploaded Android script
     default: op

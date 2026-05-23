@@ -14,6 +14,8 @@ storage:
     autosave-interval-ticks: -1
   gps-data:
     sqlite-file: 'data/gps-data.db'
+  android-scripts:
+    sqlite-file: 'data/android-scripts.db'
 
 backpacks:
   allow-foreign-open: true
@@ -264,3 +266,18 @@ legacy:
     
     
     break-drop-mode: reinforced
+
+androids:
+  enabled: true
+  tick-interval-ticks: 10
+  max-active-per-region-per-tick: 64
+  max-script-length: 54
+  sleep:
+    enabled: true
+    blocked-backoff-ticks: 40
+  scripts:
+    allow-upload: true
+    allow-private: true
+    allow-unlisted: true
+    allow-export: true
+    allow-import: true
