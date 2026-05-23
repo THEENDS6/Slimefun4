@@ -168,8 +168,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     }
 
     private boolean shouldRedirectAndroidPlacement(BlockPlaceEvent event) {
-        Block target = event.getBlockAgainst().getRelative(BlockFace.UP);
-        return !sameBlock(event.getBlockPlaced(), target);
+        return event.getBlockPlaced() != null && event.getBlockPlaced().getType() == Material.PLAYER_WALL_HEAD;
     }
 
     private boolean sameBlock(Block first, Block second) {
@@ -181,9 +180,9 @@ public final class SfxPlaceableBlockListener implements Listener {
     }
 
     private void redirectAndroidPlacement(BlockPlaceEvent event, String itemId) {
-        Block target = event.getBlockAgainst().getRelative(BlockFace.UP);
+        Block target = event.getBlockPlaced();
         event.setCancelled(true);
-        if (!target.getType().isAir() || blockData.findAnchor(target.getLocation()).isPresent()) {
+        if (target == null || blockData.findAnchor(target.getLocation()).isPresent()) {
             return;
         }
         consumeManualPlacementItem(event);
