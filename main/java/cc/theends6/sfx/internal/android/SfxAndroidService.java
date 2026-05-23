@@ -1513,7 +1513,10 @@ public final class SfxAndroidService implements Listener {
             return;
         }
         int moved;
-        if (event.getClick().isShiftClick()) {
+        if (event.getClick() == ClickType.DROP || event.getClick() == ClickType.CONTROL_DROP) {
+            int amount = event.getClick() == ClickType.DROP ? 1 : stored.getAmount();
+            moved = dropStackFromOutput(player, stored, amount);
+        } else if (event.getClick().isShiftClick()) {
             moved = moveStackToPlayerInventory(player, stored);
         } else if (event.getClick() == ClickType.NUMBER_KEY || event.getClick() == ClickType.SWAP_OFFHAND) {
             moved = 0;
@@ -1545,6 +1548,20 @@ public final class SfxAndroidService implements Listener {
             }
         }
         return stored.getAmount() - leftoverAmount;
+    }
+
+    private int dropStackFromOutput(Player player, ItemStack stored, int requestedAmount) {
+        if (player == null || stored == null || stored.getType().isAir() || requestedAmount <= 0) {
+            return 0;
+        }
+        int amount = Math.min(requestedAmount, stored.getAmount());
+        if (amount <= 0) {
+            return 0;
+        }
+        ItemStack dropped = stored.clone();
+        dropped.setAmount(amount);
+        player.getWorld().dropItemNaturally(player.getLocation(), dropped);
+        return amount;
     }
 
     private int moveStackToCursor(InventoryClickEvent event, ItemStack stored) {
@@ -1657,11 +1674,19 @@ public final class SfxAndroidService implements Listener {
                 ? syncFuelSlotToState(instance, top)
                 : stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
         if (slot == 15) {
+            boolean kickstart = state.paused()
+                    || state.runtimeState() != SfxAndroidRuntimeState.ACTIVE
+                    || shouldSkipForBackoff(state, androidTick.get() + 1L);
             state.paused(false);
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+            state.resetNoEffectTicks();
+            state.sleepingUntilTick(0L);
             activeAndroids.add(instance.instanceId());
             persist(instance.instanceId(), state);
             refreshMainStatus(top, state);
+            if (kickstart) {
+                runAndroidImmediately(instance.instanceId());
+            }
             player.sendMessage(msg("android.messages.started", "<green>Android started.</green>"));
         } else if (slot == 17) {
             state.paused(true);
@@ -1678,6 +1703,36 @@ public final class SfxAndroidService implements Listener {
             refreshMainStatus(top, state);
             openEditor(player, instance.instanceId());
         }
+    }
+
+    private void runAndroidImmediately(UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+            return;
+        }
+        Location location = toLocation(instance.anchorKey());
+        if (location == null) {
+            return;
+        }
+        runtime.executeAt(location, () -> {
+            SfxBlockInstanceRecord current = blockData.findInstance(instanceId).orElse(null);
+            if (current == null || !SfxAndroidType.isAndroidItem(current.typeId())) {
+                activeAndroids.remove(instanceId);
+                states.remove(instanceId);
+                return;
+            }
+            Location currentLocation = toLocation(current.anchorKey());
+            if (currentLocation == null) {
+                return;
+            }
+            SfxAndroidState state = stateFor(current.instanceId(), current.typeId(), currentLocation);
+            if (state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED) {
+                return;
+            }
+            state.resetNoEffectTicks();
+            state.sleepingUntilTick(0L);
+            tickRegionBatch(List.of(current), androidTick.incrementAndGet());
+        });
     }
     private void pauseAndroidForScriptEditing(UUID instanceId) {
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
