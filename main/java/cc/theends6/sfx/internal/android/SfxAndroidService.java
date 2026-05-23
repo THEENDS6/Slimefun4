@@ -1677,7 +1677,7 @@ public final class SfxAndroidService implements Listener {
         if (player == null) {
             return BlockFace.NORTH;
         }
-        return player.getFacing().getOppositeFace();
+        return player.getFacing();
     }
 
     private BlockFace turnLeft(BlockFace face) {
