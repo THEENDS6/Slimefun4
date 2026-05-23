@@ -22,6 +22,8 @@ import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
+import cc.theends6.sfx.internal.android.SfxAndroidService;
+import cc.theends6.sfx.internal.android.SqliteSfxAndroidScriptRepository;
 import cc.theends6.sfx.internal.gps.SqliteSfxGpsDataRepository;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
@@ -80,6 +82,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxCargoService cargoService;
     private SfxDecorationService decorationService;
     private SfxGpsService gpsService;
+    private SfxAndroidService androidService;
     private SfxRadiationService radiationService;
     private SfxTechnicalGadgetService technicalGadgetService;
     private SfxFloatingTextDisplayService floatingTextDisplayService;
@@ -161,13 +164,14 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService);
         this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService);
         this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), localization, blockDataService, decorationService, electricMachineService, new SqliteSfxGpsDataRepository(this, gpsDataFile()));
+        this.androidService = new SfxAndroidService(this, api.runtime(), api.items(), api.itemRegistry(), blockDataService, new SqliteSfxAndroidScriptRepository(this, androidScriptsFile()));
         this.ancientAltarService = new SfxAncientAltarService(this, api.runtime(), api.items(), api.itemRegistry(), localization, blockDataService);
         this.spawnerService = new SfxSpawnerService(this, api.items(), localization, blockDataService);
         this.infusedHopperService = new SfxInfusedHopperService(this, api.runtime(), api.items(), blockDataService);
         this.hologramProjectorService = new SfxHologramProjectorService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService);
         this.blockPlacerService = new SfxBlockPlacerService(api.runtime(), api.items(), blockDataService, spawnerService, hologramProjectorService, infusedHopperService);
         this.industrialMinerService = new SfxIndustrialMinerService(this, api.runtime(), api.items(), localization, blockDataService);
-        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, ancientAltarService, spawnerService, blockPlacerService, infusedHopperService, hologramProjectorService, api.runtime());
+        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, ancientAltarService, androidService, spawnerService, blockPlacerService, infusedHopperService, hologramProjectorService, api.runtime());
         this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService, gpsService);
         this.radiationService = new SfxRadiationService(this, api.runtime(), api.items(), api.itemRegistry(), playerDataService);
 
@@ -196,6 +200,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(cargoService, this);
         getServer().getPluginManager().registerEvents(decorationService, this);
         getServer().getPluginManager().registerEvents(gpsService, this);
+        getServer().getPluginManager().registerEvents(androidService, this);
         getServer().getPluginManager().registerEvents(ancientAltarService, this);
         getServer().getPluginManager().registerEvents(blockPlacerService, this);
         getServer().getPluginManager().registerEvents(infusedHopperService, this);
@@ -217,6 +222,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         infusedHopperService.start();
         hologramProjectorService.rebuildIndex();
         radiationService.start();
+        androidService.start();
 
         SfxCommand command = new SfxCommand(this, api);
         PluginCommand pluginCommand = Objects.requireNonNull(getCommand("slimefunx"), "plugin.yml missing /slimefunx command");
@@ -254,6 +260,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         if (gpsService != null) {
             gpsService.shutdown();
+        }
+        if (androidService != null) {
+            androidService.shutdown();
         }
         if (decorationService != null) {
             decorationService.shutdown();
@@ -405,6 +414,11 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     private File gpsDataFile() {
         String configured = getConfig().getString("storage.gps-data.sqlite-file", "data/gps-data.db");
+        return new File(getDataFolder(), configured);
+    }
+
+    private File androidScriptsFile() {
+        String configured = getConfig().getString("storage.android-scripts.sqlite-file", "data/android-scripts.db");
         return new File(getDataFolder(), configured);
     }
 

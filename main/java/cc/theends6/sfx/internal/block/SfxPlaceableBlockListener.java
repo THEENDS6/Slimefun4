@@ -7,6 +7,7 @@ import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
+import cc.theends6.sfx.internal.android.SfxAndroidService;
 import cc.theends6.sfx.internal.altar.SfxAncientAltarService;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
@@ -64,6 +65,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxDecorationService decorationService;
     private final SfxGpsService gpsService;
     private final SfxAncientAltarService ancientAltarService;
+    private final SfxAndroidService androidService;
     private final SfxSpawnerService spawnerService;
     private final SfxBlockPlacerService blockPlacerService;
     private final SfxInfusedHopperService infusedHopperService;
@@ -81,6 +83,7 @@ public final class SfxPlaceableBlockListener implements Listener {
             SfxDecorationService decorationService,
             SfxGpsService gpsService,
             SfxAncientAltarService ancientAltarService,
+            SfxAndroidService androidService,
             SfxSpawnerService spawnerService,
             SfxBlockPlacerService blockPlacerService,
             SfxInfusedHopperService infusedHopperService,
@@ -97,6 +100,7 @@ public final class SfxPlaceableBlockListener implements Listener {
         this.decorationService = Objects.requireNonNull(decorationService, "decorationService");
         this.gpsService = Objects.requireNonNull(gpsService, "gpsService");
         this.ancientAltarService = Objects.requireNonNull(ancientAltarService, "ancientAltarService");
+        this.androidService = Objects.requireNonNull(androidService, "androidService");
         this.spawnerService = Objects.requireNonNull(spawnerService, "spawnerService");
         this.blockPlacerService = Objects.requireNonNull(blockPlacerService, "blockPlacerService");
         this.infusedHopperService = Objects.requireNonNull(infusedHopperService, "infusedHopperService");
@@ -135,6 +139,9 @@ public final class SfxPlaceableBlockListener implements Listener {
                 if (ancientAltarService.supportsType(marker.itemId())) {
                     ancientAltarService.handlePlaced(instanceId, marker.itemId());
                 }
+                if (androidService.supportsType(marker.itemId())) {
+                    androidService.handlePlaced(instanceId, marker.itemId(), event.getPlayer(), event.getBlockPlaced());
+                }
                 if (spawnerService.supportsType(marker.itemId())) {
                     spawnerService.handlePlaced(instanceId, marker.itemId(), event.getItemInHand());
                 }
@@ -166,6 +173,10 @@ public final class SfxPlaceableBlockListener implements Listener {
         }
         String typeId = instance.typeId();
         event.setDropItems(false);
+        if (androidService.supportsType(typeId)) {
+            androidService.destroyAnchoredBlock(event.getBlock(), instance.instanceId(), typeId);
+            return;
+        }
         if (spawnerService.supportsType(typeId)) {
             boolean containment = items.readMarker(event.getPlayer().getInventory().getItemInMainHand())
                     .map(marker -> "sf:pickaxe_of_containment".equals(marker.itemId()))
@@ -530,6 +541,10 @@ public final class SfxPlaceableBlockListener implements Listener {
             ancientAltarService.destroyAnchoredBlock(block, instanceId, typeId);
             return;
         }
+        if (androidService.supportsType(typeId)) {
+            androidService.destroyAnchoredBlock(block, instanceId, typeId);
+            return;
+        }
         if (spawnerService.supportsType(typeId)) {
             spawnerService.destroyAnchoredBlock(block, instanceId, typeId, false);
             return;
@@ -560,6 +575,7 @@ public final class SfxPlaceableBlockListener implements Listener {
                 || gpsService.supportsType(itemId)
                 || decorationService.supportsType(itemId)
                 || ancientAltarService.supportsType(itemId)
+                || androidService.supportsType(itemId)
                 || spawnerService.supportsType(itemId)
                 || blockPlacerService.supportsType(itemId)
                 || infusedHopperService.supportsType(itemId)

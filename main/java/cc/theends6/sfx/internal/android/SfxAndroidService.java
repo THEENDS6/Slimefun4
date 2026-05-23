@@ -1,0 +1,1292 @@
+package cc.theends6.sfx.internal.android;
+
+import cc.theends6.sfx.api.item.SfxItemDefinition;
+import cc.theends6.sfx.api.item.SfxItemMarker;
+import cc.theends6.sfx.api.item.SfxItemRegistry;
+import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.block.SfxAnchorRecord;
+import cc.theends6.sfx.internal.block.SfxBlockDataService;
+import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.internal.util.HeadTextures;
+import cc.theends6.sfx.internal.util.ItemBuilder;
+import cc.theends6.sfx.internal.util.SfxBlockDrops;
+import cc.theends6.sfx.internal.util.Text;
+import io.papermc.paper.event.player.AsyncChatEvent;
+import java.sql.SQLException;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.Tag;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.Dispenser;
+import org.bukkit.block.Skull;
+import org.bukkit.block.data.Ageable;
+import org.bukkit.block.data.Rotatable;
+import org.bukkit.entity.Animals;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ExperienceOrb;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockDispenseEvent;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public final class SfxAndroidService implements Listener {
+    private static final String INTERFACE_FUEL = "sf:android_interface_fuel";
+    private static final String INTERFACE_ITEMS = "sf:android_interface_items";
+    private static final int[] OUTPUT_SLOTS = {20, 21, 22, 29, 30, 31};
+    private static final int FUEL_SLOT = 43;
+    private static final int[] SCRIPT_SLOTS = {
+            9, 10, 11, 12, 13, 14, 15, 16, 17,
+            18, 19, 20, 21, 22, 23, 24, 25, 26,
+            27, 28, 29, 30, 31, 32, 33, 34, 35,
+            36, 37, 38, 39, 40, 41, 42, 43, 44
+    };
+
+    private final JavaPlugin plugin;
+    private final SfxRuntime runtime;
+    private final SfxItems items;
+    private final SfxItemRegistry itemRegistry;
+    private final SfxBlockDataService blockData;
+    private final SqliteSfxAndroidScriptRepository scripts;
+    private final Map<UUID, SfxAndroidState> states = new ConcurrentHashMap<>();
+    private final Set<UUID> activeAndroids = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, ImportSession> pendingImports = new ConcurrentHashMap<>();
+    private final AtomicLong androidTick = new AtomicLong();
+    private volatile boolean running;
+    private long tickInterval;
+    private int maxActivePerRegion;
+
+    public SfxAndroidService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxItemRegistry itemRegistry, SfxBlockDataService blockData, SqliteSfxAndroidScriptRepository scripts) {
+        this.plugin = Objects.requireNonNull(plugin, "plugin");
+        this.runtime = Objects.requireNonNull(runtime, "runtime");
+        this.items = Objects.requireNonNull(items, "items");
+        this.itemRegistry = Objects.requireNonNull(itemRegistry, "itemRegistry");
+        this.blockData = Objects.requireNonNull(blockData, "blockData");
+        this.scripts = Objects.requireNonNull(scripts, "scripts");
+    }
+
+    public void start() {
+        try {
+            scripts.initialize();
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Failed to initialize Android script database", exception);
+        }
+        tickInterval = Math.max(1L, plugin.getConfig().getLong("androids.tick-interval-ticks", 10L));
+        maxActivePerRegion = Math.max(1, plugin.getConfig().getInt("androids.max-active-per-region-per-tick", 64));
+        running = true;
+        rebuildIndex();
+        scheduleTick();
+    }
+
+    public void shutdown() {
+        running = false;
+        pendingImports.clear();
+        flushAllStates();
+        states.clear();
+        activeAndroids.clear();
+        scripts.close();
+    }
+
+    public boolean supportsType(String typeId) {
+        return SfxAndroidType.isAndroidItem(typeId) || INTERFACE_FUEL.equals(typeId) || INTERFACE_ITEMS.equals(typeId);
+    }
+
+    public void handlePlaced(UUID instanceId, String typeId, Player player, Block block) {
+        if (instanceId == null || typeId == null || block == null) {
+            return;
+        }
+        SfxAndroidType type = SfxAndroidType.fromItemId(typeId);
+        if (type == null) {
+            return;
+        }
+        BlockFace rotation = facingFromPlayer(player);
+        SfxAndroidState state = SfxAndroidState.createDefault(rotation);
+        states.put(instanceId, state);
+        persist(instanceId, state);
+        applyAndroidBlockAppearance(block, typeId, rotation);
+    }
+
+    public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {
+        if (block == null || instanceId == null || typeId == null) {
+            return;
+        }
+        if (SfxAndroidType.isAndroidItem(typeId)) {
+            SfxAndroidState state = stateFor(instanceId, typeId, block.getLocation());
+            for (ItemStack stack : state.outputs()) {
+                SfxBlockDrops.dropItem(block, stack);
+            }
+            SfxBlockDrops.dropItem(block, state.fuelSlot());
+            SfxBlockDrops.dropPluginBlock(block, items, typeId);
+            states.remove(instanceId);
+            activeAndroids.remove(instanceId);
+            blockData.unregisterAt(block.getLocation());
+            return;
+        }
+        if (INTERFACE_FUEL.equals(typeId) || INTERFACE_ITEMS.equals(typeId)) {
+            dropInventory(block);
+            SfxBlockDrops.dropPluginBlock(block, items, typeId);
+            blockData.unregisterAt(block.getLocation());
+        }
+    }
+
+    private void rebuildIndex() {
+        for (SfxAnchorRecord anchor : blockData.anchors()) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+                continue;
+            }
+            SfxAndroidState state = SfxAndroidState.decode(instance.stateBlob(), BlockFace.NORTH);
+            states.put(instance.instanceId(), state);
+            if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.ACTIVE) {
+                activeAndroids.add(instance.instanceId());
+            }
+        }
+    }
+
+    private void scheduleTick() {
+        runtime.executeGlobalLater(tickInterval, () -> {
+            if (!running) {
+                return;
+            }
+            try {
+                tickAndroids(androidTick.incrementAndGet());
+            } catch (Throwable throwable) {
+                plugin.getLogger().warning("Android scheduler failed: " + throwable.getMessage());
+            } finally {
+                scheduleTick();
+            }
+        });
+    }
+
+    private void tickAndroids(long tickId) {
+        List<SfxBlockInstanceRecord> active = new ArrayList<>();
+        for (UUID instanceId : List.copyOf(activeAndroids)) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+            if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+                activeAndroids.remove(instanceId);
+                states.remove(instanceId);
+                continue;
+            }
+            SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+            if (state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED) {
+                activeAndroids.remove(instanceId);
+                continue;
+            }
+            if (state.sleepingUntilTick() > tickId) {
+                continue;
+            }
+            active.add(instance);
+        }
+        Map<String, List<SfxBlockInstanceRecord>> groups = new HashMap<>();
+        for (SfxBlockInstanceRecord instance : active) {
+            String key = instance.anchorKey().worldId() + ":" + (instance.anchorKey().x() >> 4) + ":" + (instance.anchorKey().z() >> 4);
+            groups.computeIfAbsent(key, ignored -> new ArrayList<>()).add(instance);
+        }
+        for (List<SfxBlockInstanceRecord> group : groups.values()) {
+            if (group.isEmpty()) {
+                continue;
+            }
+            group.sort(Comparator.comparing(SfxBlockInstanceRecord::instanceId));
+            SfxBlockInstanceRecord first = group.get(0);
+            Location location = toLocation(first.anchorKey());
+            if (location == null) {
+                continue;
+            }
+            List<SfxBlockInstanceRecord> snapshot = group.size() > maxActivePerRegion ? group.subList(0, maxActivePerRegion) : group;
+            runtime.executeAt(location, () -> tickRegionBatch(List.copyOf(snapshot), tickId));
+        }
+    }
+
+    private void tickRegionBatch(List<SfxBlockInstanceRecord> instances, long tickId) {
+        Map<UUID, MoveIntent> moveIntents = new HashMap<>();
+        Set<LocationKey> occupiedBefore = new HashSet<>();
+        Map<UUID, SfxAndroidState> batchStates = new HashMap<>();
+        for (SfxBlockInstanceRecord instance : instances) {
+            Location from = toLocation(instance.anchorKey());
+            if (from == null) {
+                continue;
+            }
+            occupiedBefore.add(LocationKey.of(from));
+            SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), from);
+            batchStates.put(instance.instanceId(), state);
+            SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
+            if (type == null || !ensureFuel(instance, state, type, from.getBlock())) {
+                continue;
+            }
+            SfxAndroidInstruction instruction = state.currentInstruction();
+            if (!instruction.validFor(type)) {
+                state.runtimeState(SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID);
+                activeAndroids.remove(instance.instanceId());
+                persist(instance.instanceId(), state);
+                continue;
+            }
+            BlockFace face = state.rotation();
+            Block target = targetBlock(from.getBlock(), face, instruction);
+            if (isMoveInstruction(instruction)) {
+                moveIntents.put(instance.instanceId(), new MoveIntent(instance, from, target.getLocation(), instruction));
+            }
+        }
+        Map<LocationKey, List<MoveIntent>> byTarget = new HashMap<>();
+        Set<LocationKey> leaving = new HashSet<>();
+        for (MoveIntent intent : moveIntents.values()) {
+            byTarget.computeIfAbsent(LocationKey.of(intent.to), ignored -> new ArrayList<>()).add(intent);
+            leaving.add(LocationKey.of(intent.from));
+        }
+        Set<UUID> acceptedMoves = new HashSet<>();
+        for (List<MoveIntent> contenders : byTarget.values()) {
+            contenders.sort(Comparator.comparing(intent -> intent.instance.instanceId()));
+            MoveIntent winner = contenders.get(0);
+            Block target = winner.to.getBlock();
+            LocationKey targetKey = LocationKey.of(winner.to);
+            boolean targetFree = target.getType().isAir() || (occupiedBefore.contains(targetKey) && leaving.contains(targetKey));
+            if (targetFree) {
+                acceptedMoves.add(winner.instance.instanceId());
+            }
+        }
+        for (SfxBlockInstanceRecord instance : instances) {
+            Location location = toLocation(instance.anchorKey());
+            if (location == null) {
+                continue;
+            }
+            SfxAndroidState state = batchStates.getOrDefault(instance.instanceId(), stateFor(instance.instanceId(), instance.typeId(), location));
+            SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
+            if (type == null || state.paused() || state.runtimeState() != SfxAndroidRuntimeState.ACTIVE) {
+                continue;
+            }
+            SfxAndroidInstruction instruction = state.currentInstruction();
+            boolean success = executeInstruction(instance, type, state, instruction, location.getBlock(), acceptedMoves.contains(instance.instanceId()), tickId);
+            if (success) {
+                state.advance();
+            }
+            state.consumeFuelTick();
+            persist(currentInstanceId(instance, location), state);
+        }
+    }
+
+    private boolean executeInstruction(SfxBlockInstanceRecord instance, SfxAndroidType type, SfxAndroidState state, SfxAndroidInstruction instruction, Block block, boolean moveAccepted, long tickId) {
+        return switch (instruction) {
+            case WAIT -> true;
+            case TURN_LEFT -> {
+                state.rotation(turnLeft(state.rotation()));
+                applyRotation(block, state.rotation());
+                yield true;
+            }
+            case TURN_RIGHT -> {
+                state.rotation(turnRight(state.rotation()));
+                applyRotation(block, state.rotation());
+                yield true;
+            }
+            case GO_FORWARD, GO_UP, GO_DOWN -> moveAccepted && moveAndroid(instance, state, block, targetBlock(block, state.rotation(), instruction));
+            case DIG_FORWARD, DIG_UP, DIG_DOWN -> dig(state, block, targetBlock(block, state.rotation(), instruction), false, instance.typeId());
+            case MOVE_AND_DIG_FORWARD, MOVE_AND_DIG_UP, MOVE_AND_DIG_DOWN -> {
+                Block target = targetBlock(block, state.rotation(), instruction);
+                boolean dug = dig(state, block, target, false, instance.typeId());
+                yield dug && moveAccepted && moveAndroid(instance, state, block, target);
+            }
+            case FARM_FORWARD, FARM_DOWN, FARM_EXOTIC_FORWARD, FARM_EXOTIC_DOWN -> farm(state, targetBlock(block, state.rotation(), instruction), type);
+            case CHOP_TREE -> chopTree(state, targetBlock(block, state.rotation(), instruction));
+            case CATCH_FISH -> catchFish(state, block, type);
+            case ATTACK_MOBS_ANIMALS -> attack(block, state, type, living -> living instanceof Monster || living instanceof Animals);
+            case ATTACK_MOBS -> attack(block, state, type, living -> living instanceof Monster);
+            case ATTACK_ANIMALS -> attack(block, state, type, living -> living instanceof Animals);
+            case ATTACK_ANIMALS_ADULT -> attack(block, state, type, living -> living instanceof Animals animal && animal.isAdult());
+            case INTERFACE_ITEMS -> depositItems(state, block.getRelative(state.rotation()));
+            case INTERFACE_FUEL -> pullFuel(state, block.getRelative(state.rotation()), type);
+        };
+    }
+
+    private UUID currentInstanceId(SfxBlockInstanceRecord fallback, Location currentLocation) {
+        SfxAnchorRecord anchor = blockData.findAnchor(currentLocation).orElse(null);
+        return anchor == null ? fallback.instanceId() : anchor.instanceId();
+    }
+
+    private boolean ensureFuel(SfxBlockInstanceRecord instance, SfxAndroidState state, SfxAndroidType type, Block block) {
+        if (state.fuelTicks() > 0) {
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+            return true;
+        }
+        ItemStack fuel = state.fuelSlot();
+        int fuelTicks = fuelValue(fuel, type);
+        if (fuelTicks <= 0) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_NO_FUEL);
+            activeAndroids.remove(instance.instanceId());
+            persist(instance.instanceId(), state);
+            return false;
+        }
+        fuel.setAmount(fuel.getAmount() - 1);
+        state.fuelSlot(fuel.getAmount() <= 0 ? null : fuel);
+        state.fuelTicks(fuelTicks);
+        state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+        persist(instance.instanceId(), state);
+        return true;
+    }
+
+    private int fuelValue(ItemStack item, SfxAndroidType type) {
+        if (item == null || item.getType().isAir() || item.getAmount() <= 0) {
+            return 0;
+        }
+        int base = switch (item.getType()) {
+            case COAL_BLOCK -> 80;
+            case BLAZE_ROD -> 45;
+            case DRIED_KELP_BLOCK -> 70;
+            case COAL, CHARCOAL -> 8;
+            case BAMBOO, OAK_PLANKS, SPRUCE_PLANKS, BIRCH_PLANKS, JUNGLE_PLANKS, ACACIA_PLANKS, DARK_OAK_PLANKS, MANGROVE_PLANKS, CHERRY_PLANKS, CRIMSON_PLANKS, WARPED_PLANKS -> 1;
+            case OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, CRIMSON_STEM, WARPED_STEM -> 2;
+            case LAVA_BUCKET -> 100;
+            default -> 0;
+        };
+        if ("sf:oil_bucket".equals(sfxItemId(item))) {
+            base = 200;
+        } else if ("sf:fuel_bucket".equals(sfxItemId(item))) {
+            base = 500;
+        } else if ("sf:uranium".equals(sfxItemId(item))) {
+            base = 2500;
+        } else if ("sf:neptunium".equals(sfxItemId(item))) {
+            base = 1200;
+        } else if ("sf:boosted_uranium".equals(sfxItemId(item))) {
+            base = 3000;
+        }
+        return (int) Math.max(1, Math.round(base * type.fuelEfficiency()));
+    }
+
+    private String sfxItemId(ItemStack item) {
+        return items.readMarker(item).map(SfxItemMarker::itemId).orElse(null);
+    }
+
+    private boolean isMoveInstruction(SfxAndroidInstruction instruction) {
+        return instruction == SfxAndroidInstruction.GO_FORWARD
+                || instruction == SfxAndroidInstruction.GO_UP
+                || instruction == SfxAndroidInstruction.GO_DOWN
+                || instruction == SfxAndroidInstruction.MOVE_AND_DIG_FORWARD
+                || instruction == SfxAndroidInstruction.MOVE_AND_DIG_UP
+                || instruction == SfxAndroidInstruction.MOVE_AND_DIG_DOWN;
+    }
+
+    private Block targetBlock(Block block, BlockFace face, SfxAndroidInstruction instruction) {
+        return switch (instruction) {
+            case GO_UP, DIG_UP, MOVE_AND_DIG_UP -> block.getRelative(BlockFace.UP);
+            case GO_DOWN, DIG_DOWN, MOVE_AND_DIG_DOWN -> block.getRelative(BlockFace.DOWN);
+            case FARM_DOWN, FARM_EXOTIC_DOWN -> block.getRelative(BlockFace.DOWN);
+            default -> block.getRelative(face);
+        };
+    }
+
+    private boolean moveAndroid(SfxBlockInstanceRecord instance, SfxAndroidState state, Block from, Block to) {
+        if (to == null || !to.getType().isAir() || from.getWorld() == null || to.getWorld() == null || !from.getWorld().equals(to.getWorld())) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            state.sleepingUntilTick(androidTick.get() + 4);
+            return false;
+        }
+        SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
+        if (type == null) {
+            return false;
+        }
+        from.setType(Material.AIR, false);
+        to.setType(Material.PLAYER_HEAD, false);
+        applyAndroidBlockAppearance(to, instance.typeId(), state.rotation());
+        blockData.unregisterAt(from.getLocation());
+        UUID newId = blockData.registerSingleBlock(instance.typeId(), to.getLocation(), Material.PLAYER_HEAD, instance.ownerId());
+        states.remove(instance.instanceId());
+        activeAndroids.remove(instance.instanceId());
+        states.put(newId, state);
+        activeAndroids.add(newId);
+        persist(newId, state);
+        return true;
+    }
+
+    private boolean dig(SfxAndroidState state, Block androidBlock, Block target, boolean moveAfter, String typeId) {
+        if (target == null || target.getType().isAir() || isUnbreakable(target.getType()) || blockData.findAnchor(target.getLocation()).isPresent()) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            state.sleepingUntilTick(androidTick.get() + 4);
+            return false;
+        }
+        List<ItemStack> drops = new ArrayList<>(target.getDrops(new ItemStack(Material.DIAMOND_PICKAXE)));
+        if (drops.isEmpty()) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            state.sleepingUntilTick(androidTick.get() + 4);
+            return false;
+        }
+        for (ItemStack drop : drops) {
+            if (!state.pushOutput(drop)) {
+                state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
+                UUID currentId = currentInstanceIdByBlock(androidBlock);
+                if (currentId != null) {
+                    activeAndroids.remove(currentId);
+                }
+                return false;
+            }
+        }
+        target.getWorld().playSound(target.getLocation(), Sound.BLOCK_STONE_BREAK, 0.7f, 1.0f);
+        target.setType(Material.AIR, true);
+        state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+        return true;
+    }
+
+    private UUID currentInstanceIdByBlock(Block block) {
+        SfxAnchorRecord anchor = blockData.findAnchor(block.getLocation()).orElse(null);
+        return anchor == null ? null : anchor.instanceId();
+    }
+
+
+    private boolean isUnbreakable(Material material) {
+        return material == Material.BEDROCK || material == Material.BARRIER || material == Material.COMMAND_BLOCK || material == Material.CHAIN_COMMAND_BLOCK || material == Material.REPEATING_COMMAND_BLOCK || material == Material.STRUCTURE_BLOCK || material == Material.JIGSAW;
+    }
+
+    private boolean farm(SfxAndroidState state, Block target, SfxAndroidType type) {
+        if (target == null || !(target.getBlockData() instanceof Ageable ageable) || ageable.getAge() < ageable.getMaximumAge()) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            state.sleepingUntilTick(androidTick.get() + 4);
+            return false;
+        }
+        ItemStack drop = cropDrop(target.getType());
+        if (drop == null || !state.pushOutput(drop)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
+            return false;
+        }
+        ageable.setAge(0);
+        target.setBlockData(ageable, true);
+        target.getWorld().playSound(target.getLocation(), Sound.BLOCK_GRASS_BREAK, 0.7f, 1.0f);
+        state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+        return true;
+    }
+
+    private ItemStack cropDrop(Material material) {
+        return switch (material) {
+            case WHEAT -> new ItemStack(Material.WHEAT);
+            case CARROTS -> new ItemStack(Material.CARROT);
+            case POTATOES -> new ItemStack(Material.POTATO);
+            case BEETROOTS -> new ItemStack(Material.BEETROOT);
+            case COCOA -> new ItemStack(Material.COCOA_BEANS);
+            case NETHER_WART -> new ItemStack(Material.NETHER_WART);
+            case SWEET_BERRY_BUSH -> new ItemStack(Material.SWEET_BERRIES);
+            default -> null;
+        };
+    }
+
+    private boolean chopTree(SfxAndroidState state, Block target) {
+        if (target == null || !Tag.LOGS.isTagged(target.getType())) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            state.sleepingUntilTick(androidTick.get() + 6);
+            return false;
+        }
+        ItemStack drop = new ItemStack(target.getType());
+        if (!state.pushOutput(drop)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
+            return false;
+        }
+        target.setType(Material.AIR, true);
+        target.getWorld().playSound(target.getLocation(), Sound.BLOCK_WOOD_BREAK, 0.7f, 1.0f);
+        state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+        return true;
+    }
+
+    private boolean catchFish(SfxAndroidState state, Block block, SfxAndroidType type) {
+        if (block.getRelative(BlockFace.DOWN).getType() != Material.WATER) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            state.sleepingUntilTick(androidTick.get() + 8);
+            return false;
+        }
+        int chance = 10 * type.tier();
+        if (java.util.concurrent.ThreadLocalRandom.current().nextInt(100) >= chance) {
+            block.getWorld().playSound(block.getLocation(), Sound.ENTITY_FISHING_BOBBER_SPLASH, 0.6f, 1.0f);
+            return true;
+        }
+        Material[] loot = {Material.COD, Material.SALMON, Material.PUFFERFISH, Material.TROPICAL_FISH, Material.BONE, Material.STRING, Material.INK_SAC, Material.KELP, Material.STICK, Material.ROTTEN_FLESH, Material.LEATHER, Material.BAMBOO, Material.NAUTILUS_SHELL};
+        ItemStack drop = new ItemStack(loot[java.util.concurrent.ThreadLocalRandom.current().nextInt(loot.length)]);
+        if (!state.pushOutput(drop)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
+            return false;
+        }
+        state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+        return true;
+    }
+
+    private boolean attack(Block block, SfxAndroidState state, SfxAndroidType type, java.util.function.Predicate<LivingEntity> filter) {
+        double damage = type.tier() >= 3 ? 20D : 4D * type.tier();
+        double radius = 4D + type.tier();
+        Location origin = block.getLocation().add(0.5, 0.5, 0.5);
+        BlockFace face = state.rotation();
+        boolean attacked = false;
+        for (Entity entity : block.getWorld().getNearbyEntities(origin, radius, radius, radius)) {
+            if (!(entity instanceof LivingEntity living) || living instanceof Player || !filter.test(living) || !isInFront(origin, living.getLocation(), face)) {
+                continue;
+            }
+            living.damage(damage);
+            attacked = true;
+            if (living.isDead()) {
+                collectNearbyDrops(state, living.getLocation());
+            }
+        }
+        if (!attacked) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            state.sleepingUntilTick(androidTick.get() + 6);
+        } else {
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+        }
+        return true;
+    }
+
+    private boolean isInFront(Location origin, Location target, BlockFace face) {
+        double dx = target.getX() - origin.getX();
+        double dz = target.getZ() - origin.getZ();
+        return switch (face) {
+            case NORTH -> dz <= 0 && Math.abs(dz) >= Math.abs(dx) * 0.35;
+            case SOUTH -> dz >= 0 && Math.abs(dz) >= Math.abs(dx) * 0.35;
+            case EAST -> dx >= 0 && Math.abs(dx) >= Math.abs(dz) * 0.35;
+            case WEST -> dx <= 0 && Math.abs(dx) >= Math.abs(dz) * 0.35;
+            default -> true;
+        };
+    }
+
+    private void collectNearbyDrops(SfxAndroidState state, Location location) {
+        for (Entity entity : location.getWorld().getNearbyEntities(location, 0.75, 0.75, 0.75)) {
+            if (entity instanceof Item item) {
+                if (state.pushOutput(item.getItemStack())) {
+                    item.remove();
+                }
+            } else if (entity instanceof ExperienceOrb orb) {
+                orb.remove();
+            }
+        }
+    }
+
+    private boolean depositItems(SfxAndroidState state, Block target) {
+        SfxBlockInstanceRecord instance = blockData.findAnchor(target.getLocation()).flatMap(anchor -> blockData.findInstance(anchor.instanceId())).orElse(null);
+        if (instance == null || !INTERFACE_ITEMS.equals(instance.typeId()) || !(target.getState() instanceof Dispenser dispenser)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            state.sleepingUntilTick(androidTick.get() + 6);
+            return false;
+        }
+        Inventory inventory = dispenser.getInventory();
+        boolean moved = false;
+        ItemStack[] outputs = state.outputs();
+        for (int i = 0; i < outputs.length; i++) {
+            ItemStack stack = outputs[i];
+            if (stack == null || stack.getType().isAir()) {
+                continue;
+            }
+            Map<Integer, ItemStack> left = inventory.addItem(stack.clone());
+            if (left.isEmpty()) {
+                state.output(i, null);
+                moved = true;
+            } else {
+                ItemStack remaining = left.values().iterator().next();
+                state.output(i, remaining);
+                moved = true;
+            }
+        }
+        state.runtimeState(moved ? SfxAndroidRuntimeState.ACTIVE : SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
+        return moved;
+    }
+
+    private boolean pullFuel(SfxAndroidState state, Block target, SfxAndroidType type) {
+        SfxBlockInstanceRecord instance = blockData.findAnchor(target.getLocation()).flatMap(anchor -> blockData.findInstance(anchor.instanceId())).orElse(null);
+        if (instance == null || !INTERFACE_FUEL.equals(instance.typeId()) || !(target.getState() instanceof Dispenser dispenser)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            state.sleepingUntilTick(androidTick.get() + 6);
+            return false;
+        }
+        if (state.fuelSlot() != null && fuelValue(state.fuelSlot(), type) > 0) {
+            return true;
+        }
+        Inventory inventory = dispenser.getInventory();
+        for (int i = 0; i < inventory.getSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (fuelValue(stack, type) <= 0) {
+                continue;
+            }
+            ItemStack one = stack.clone();
+            one.setAmount(1);
+            stack.setAmount(stack.getAmount() - 1);
+            inventory.setItem(i, stack.getAmount() <= 0 ? null : stack);
+            state.fuelSlot(one);
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+            return true;
+        }
+        state.runtimeState(SfxAndroidRuntimeState.DORMANT_NO_FUEL);
+        return false;
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) {
+            return;
+        }
+        Block block = event.getClickedBlock();
+        SfxBlockInstanceRecord instance = blockData.findAnchor(block.getLocation()).flatMap(anchor -> blockData.findInstance(anchor.instanceId())).orElse(null);
+        if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+            return;
+        }
+        event.setCancelled(true);
+        Player player = event.getPlayer();
+        if (!player.getUniqueId().equals(instance.ownerId()) && !player.hasPermission("sfx.android.bypass")) {
+            player.sendMessage(Text.prefixed(plugin, "<red>This Android belongs to another player.</red>"));
+            return;
+        }
+        openMain(player, instance.instanceId());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onDispense(BlockDispenseEvent event) {
+        SfxBlockInstanceRecord instance = blockData.findAnchor(event.getBlock().getLocation()).flatMap(anchor -> blockData.findInstance(anchor.instanceId())).orElse(null);
+        if (instance != null && (INTERFACE_FUEL.equals(instance.typeId()) || INTERFACE_ITEMS.equals(instance.typeId()))) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onMenuClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+        Inventory top = event.getView().getTopInventory();
+        if (!(top.getHolder() instanceof SfxAndroidMenuHolder holder)) {
+            return;
+        }
+        if (!holder.viewerId().equals(player.getUniqueId())) {
+            event.setCancelled(true);
+            return;
+        }
+        int raw = event.getRawSlot();
+        if (holder.menuType() == SfxAndroidMenuHolder.MenuType.MAIN) {
+            boolean topClick = event.getClickedInventory() != null && event.getClickedInventory().equals(top);
+            if (topClick && (raw == FUEL_SLOT || isOutputSlot(raw))) {
+                return;
+            }
+            if (event.getClick().isShiftClick()) {
+                event.setCancelled(true);
+                return;
+            }
+            event.setCancelled(true);
+            handleMainButton(player, holder, raw);
+            return;
+        }
+        event.setCancelled(true);
+        if (event.getClickedInventory() == null || !event.getClickedInventory().equals(top)) {
+            return;
+        }
+        handleMenuButton(player, holder, raw, event.getClick());
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onMenuDrag(InventoryDragEvent event) {
+        Inventory top = event.getView().getTopInventory();
+        if (top.getHolder() instanceof SfxAndroidMenuHolder holder) {
+            if (holder.menuType() != SfxAndroidMenuHolder.MenuType.MAIN) {
+                event.setCancelled(true);
+                return;
+            }
+            int topSize = top.getSize();
+            boolean illegal = event.getRawSlots().stream().anyMatch(slot -> slot < topSize && slot != FUEL_SLOT && !isOutputSlot(slot));
+            if (illegal) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onMenuClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) {
+            return;
+        }
+        Inventory inventory = event.getInventory();
+        if (!(inventory.getHolder() instanceof SfxAndroidMenuHolder holder) || holder.menuType() != SfxAndroidMenuHolder.MenuType.MAIN) {
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+            return;
+        }
+        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+        for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
+            state.output(i, inventory.getItem(OUTPUT_SLOTS[i]));
+        }
+        state.fuelSlot(inventory.getItem(FUEL_SLOT));
+        if (!state.paused() && (state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL || state.runtimeState() == SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL)) {
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+            activeAndroids.add(instance.instanceId());
+        }
+        persist(instance.instanceId(), state);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onAsyncChat(AsyncChatEvent event) {
+        ImportSession session = pendingImports.remove(event.getPlayer().getUniqueId());
+        if (session == null) {
+            return;
+        }
+        event.setCancelled(true);
+        String message = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
+        runtime.executeForPlayer(event.getPlayer(), () -> handleImportChat(event.getPlayer(), session, message));
+    }
+
+    private void handleImportChat(Player player, ImportSession session, String message) {
+        if (message.equalsIgnoreCase("cancel")) {
+            player.sendMessage(Text.prefixed(plugin, "<yellow>Android script import cancelled.</yellow>"));
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(session.instanceId()).orElse(null);
+        if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+            player.sendMessage(Text.prefixed(plugin, "<red>That Android no longer exists.</red>"));
+            return;
+        }
+        SfxAndroidType currentType = SfxAndroidType.fromItemId(instance.typeId());
+        try {
+            List<SfxAndroidInstruction> body;
+            if (message.toUpperCase(Locale.ROOT).startsWith(SfxAndroidScriptCodec.PREFIX) || looksLikeShortCode(message)) {
+                SfxAndroidScriptCodec.DecodedScript decoded = SfxAndroidScriptCodec.importCode(message);
+                if (decoded.type().function() != currentType.function() && decoded.type() != currentType) {
+                    throw new IllegalArgumentException("Script code is for " + decoded.type().key() + ", not " + currentType.key());
+                }
+                body = SfxAndroidScriptCodec.canonicalize(currentType, decoded.body());
+            } else {
+                body = SfxAndroidScriptCodec.parseReadableScript(currentType, message);
+            }
+            SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+            state.setBody(body);
+            state.index(0);
+            state.runtimeState(state.paused() ? SfxAndroidRuntimeState.PAUSED : SfxAndroidRuntimeState.ACTIVE);
+            if (!state.paused()) {
+                activeAndroids.add(instance.instanceId());
+            }
+            persist(instance.instanceId(), state);
+            player.sendMessage(Text.prefixed(plugin, "<green>Imported Android script.</green>"));
+            openScript(player, instance.instanceId(), 0);
+        } catch (RuntimeException exception) {
+            player.sendMessage(Text.prefixed(plugin, "<red>Invalid Android script: " + exception.getMessage() + "</red>"));
+        }
+    }
+
+    private boolean looksLikeShortCode(String input) {
+        return input != null && input.matches("[0-9A-Za-z]{5,64}");
+    }
+
+    private void openMain(Player player, UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxAndroidState state = stateFor(instanceId, instance.typeId(), toLocation(instance.anchorKey()));
+        Inventory inventory = Bukkit.createInventory(newHolder(player, instanceId, SfxAndroidMenuHolder.MenuType.MAIN, 0, -1, false), 54, Text.mm("<dark_gray>Programmable Android</dark_gray>"));
+        ((SfxAndroidMenuHolder) inventory.getHolder()).bind(inventory);
+        fillClassicFrame(inventory);
+        inventory.setItem(15, icon(Material.LIME_STAINED_GLASS_PANE, "<green>Start / Continue</green>", "<gray>Wake this Android and resume its script.</gray>"));
+        inventory.setItem(16, icon(Material.PLAYER_HEAD, "<aqua>Memory Core</aqua>", "<gray>Edit, upload, export or import scripts.</gray>"));
+        inventory.setItem(17, icon(Material.RED_STAINED_GLASS_PANE, "<red>Pause</red>", "<gray>Stop execution without clearing state.</gray>"));
+        inventory.setItem(34, icon(Material.COAL, "<yellow>Fuel Input</yellow>", "<gray>Put compatible fuel in slot 43.</gray>", "<gray>Current fuel ticks: <white>" + state.fuelTicks() + "</white></gray>", "<gray>State: <white>" + state.runtimeState().name() + "</white></gray>"));
+        ItemStack[] outputs = state.outputs();
+        for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
+            inventory.setItem(OUTPUT_SLOTS[i], outputs[i]);
+        }
+        inventory.setItem(FUEL_SLOT, state.fuelSlot());
+        player.openInventory(inventory);
+    }
+
+    private SfxAndroidMenuHolder newHolder(Player player, UUID instanceId, SfxAndroidMenuHolder.MenuType type, int page, int editIndex, boolean adding) {
+        return new SfxAndroidMenuHolder(player.getUniqueId(), instanceId, type, page, editIndex, adding);
+    }
+
+    private void handleMainButton(Player player, SfxAndroidMenuHolder holder, int slot) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+        if (slot == 15) {
+            state.paused(false);
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+            activeAndroids.add(instance.instanceId());
+            persist(instance.instanceId(), state);
+            player.sendMessage(Text.prefixed(plugin, "<green>Android started.</green>"));
+            openMain(player, instance.instanceId());
+        } else if (slot == 17) {
+            state.paused(true);
+            activeAndroids.remove(instance.instanceId());
+            persist(instance.instanceId(), state);
+            player.sendMessage(Text.prefixed(plugin, "<yellow>Android paused.</yellow>"));
+            openMain(player, instance.instanceId());
+        } else if (slot == 16) {
+            openEditor(player, instance.instanceId());
+        }
+    }
+
+    private void openEditor(Player player, UUID instanceId) {
+        Inventory inventory = Bukkit.createInventory(newHolder(player, instanceId, SfxAndroidMenuHolder.MenuType.EDITOR, 0, -1, false), 27, Text.mm("<dark_gray>Android Memory Core</dark_gray>"));
+        ((SfxAndroidMenuHolder) inventory.getHolder()).bind(inventory);
+        fill(inventory, Material.BLACK_STAINED_GLASS_PANE);
+        inventory.setItem(10, icon(Material.WRITABLE_BOOK, "<green>Edit Script</green>", "<gray>Edit the current script graphically.</gray>"));
+        inventory.setItem(11, icon(Material.MAP, "<aqua>Export Script</aqua>", "<gray>Send a click-to-copy short code.</gray>"));
+        inventory.setItem(12, icon(Material.PAPER, "<yellow>Import Script</yellow>", "<gray>Paste a short code or readable script in chat.</gray>"));
+        inventory.setItem(14, icon(Material.ENDER_CHEST, "<gold>Download Scripts</gold>", "<gray>Browse public/private uploaded scripts.</gray>"));
+        inventory.setItem(15, icon(Material.HOPPER, "<blue>Upload Script</blue>", "<gray>Upload this script to the SQL script library.</gray>"));
+        inventory.setItem(16, icon(Material.BARRIER, "<red>Back</red>", "<gray>Return to the Android.</gray>"));
+        player.openInventory(inventory);
+    }
+
+    private void handleMenuButton(Player player, SfxAndroidMenuHolder holder, int slot, ClickType click) {
+        switch (holder.menuType()) {
+            case EDITOR -> handleEditorButton(player, holder, slot);
+            case SCRIPT -> handleScriptButton(player, holder, slot, click);
+            case INSTRUCTIONS -> handleInstructionButton(player, holder, slot);
+            case DOWNLOADER -> handleDownloaderButton(player, holder, slot, click);
+            case UPLOAD_VISIBILITY -> handleUploadVisibility(player, holder, slot);
+            default -> {
+            }
+        }
+    }
+
+    private void handleEditorButton(Player player, SfxAndroidMenuHolder holder, int slot) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        if (slot == 10) {
+            openScript(player, instance.instanceId(), 0);
+        } else if (slot == 11) {
+            exportScript(player, instance);
+        } else if (slot == 12) {
+            pendingImports.put(player.getUniqueId(), new ImportSession(instance.instanceId()));
+            player.closeInventory();
+            player.sendMessage(Text.prefixed(plugin, "<yellow>Paste an Android script code in chat. Type <white>cancel</white> to abort.</yellow>"));
+        } else if (slot == 14) {
+            openDownloader(player, instance.instanceId(), 0);
+        } else if (slot == 15) {
+            openUploadVisibility(player, instance.instanceId());
+        } else if (slot == 16) {
+            openMain(player, instance.instanceId());
+        }
+    }
+
+    private void exportScript(Player player, SfxBlockInstanceRecord instance) {
+        SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
+        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+        String code = SfxAndroidScriptCodec.exportCode(type, state.body(), true);
+        Component clickable = Component.text("[Click to copy Android script]", NamedTextColor.AQUA).clickEvent(ClickEvent.copyToClipboard(code));
+        player.sendMessage(Text.prefixed(plugin, "<green>Android script export:</green> ").append(clickable));
+        player.sendMessage(Component.text(code, NamedTextColor.GRAY));
+    }
+
+    private void openUploadVisibility(Player player, UUID instanceId) {
+        Inventory inventory = Bukkit.createInventory(newHolder(player, instanceId, SfxAndroidMenuHolder.MenuType.UPLOAD_VISIBILITY, 0, -1, false), 27, Text.mm("<dark_gray>Upload Android Script</dark_gray>"));
+        ((SfxAndroidMenuHolder) inventory.getHolder()).bind(inventory);
+        fill(inventory, Material.BLACK_STAINED_GLASS_PANE);
+        inventory.setItem(11, icon(Material.LIME_DYE, "<green>Public</green>", "<gray>Visible to everyone.</gray>"));
+        inventory.setItem(13, icon(Material.IRON_DOOR, "<yellow>Private</yellow>", "<gray>Only you can see it.</gray>"));
+        inventory.setItem(15, icon(Material.NAME_TAG, "<aqua>Unlisted</aqua>", "<gray>Hidden from public browsing.</gray>"));
+        inventory.setItem(22, icon(Material.BARRIER, "<red>Back</red>"));
+        player.openInventory(inventory);
+    }
+
+    private void handleUploadVisibility(Player player, SfxAndroidMenuHolder holder, int slot) {
+        SfxAndroidScriptVisibility visibility = switch (slot) {
+            case 11 -> SfxAndroidScriptVisibility.PUBLIC;
+            case 13 -> SfxAndroidScriptVisibility.PRIVATE;
+            case 15 -> SfxAndroidScriptVisibility.UNLISTED;
+            default -> null;
+        };
+        if (visibility == null) {
+            if (slot == 22) {
+                openEditor(player, holder.instanceId());
+            }
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
+        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+        try {
+            long id = scripts.upload(type, player.getUniqueId(), player.getName(), "Script " + Instant.now().getEpochSecond(), state.body(), visibility);
+            player.sendMessage(Text.prefixed(plugin, "<green>Uploaded Android script #" + id + " as " + visibility.name().toLowerCase(Locale.ROOT) + ".</green>"));
+        } catch (SQLException exception) {
+            player.sendMessage(Text.prefixed(plugin, "<red>Failed to upload script: " + exception.getMessage() + "</red>"));
+        }
+        openEditor(player, instance.instanceId());
+    }
+
+    private void openScript(Player player, UUID instanceId, int page) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxAndroidState state = stateFor(instanceId, instance.typeId(), toLocation(instance.anchorKey()));
+        List<SfxAndroidInstruction> body = state.body();
+        Inventory inventory = Bukkit.createInventory(newHolder(player, instanceId, SfxAndroidMenuHolder.MenuType.SCRIPT, page, -1, false), 54, Text.mm("<dark_gray>Edit Android Script</dark_gray>"));
+        ((SfxAndroidMenuHolder) inventory.getHolder()).bind(inventory);
+        fill(inventory, Material.GRAY_STAINED_GLASS_PANE);
+        inventory.setItem(0, icon(Material.LIME_STAINED_GLASS_PANE, "<green>START</green>"));
+        int start = page * SCRIPT_SLOTS.length;
+        for (int i = 0; i < SCRIPT_SLOTS.length; i++) {
+            int bodyIndex = start + i;
+            if (bodyIndex >= body.size()) {
+                inventory.setItem(SCRIPT_SLOTS[i], icon(Material.EMERALD_BLOCK, "<green>Add new Command</green>"));
+                break;
+            }
+            SfxAndroidInstruction instruction = body.get(bodyIndex);
+            inventory.setItem(SCRIPT_SLOTS[i], icon(instruction.icon(), "<yellow>" + (bodyIndex + 1) + ". " + instruction.displayName() + "</yellow>", instruction.description(), "<gray>Left: edit | Right: delete | Shift-right: duplicate</gray>"));
+        }
+        inventory.setItem(8, icon(Material.RED_STAINED_GLASS_PANE, "<red>REPEAT</red>"));
+        inventory.setItem(45, icon(Material.ARROW, "<yellow>Previous Page</yellow>"));
+        inventory.setItem(49, icon(Material.BARRIER, "<red>Back</red>"));
+        inventory.setItem(53, icon(Material.ARROW, "<yellow>Next Page</yellow>"));
+        player.openInventory(inventory);
+    }
+
+    private void handleScriptButton(Player player, SfxAndroidMenuHolder holder, int slot, ClickType click) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        if (slot == 49) {
+            openEditor(player, instance.instanceId());
+            return;
+        }
+        if (slot == 45 && holder.page() > 0) {
+            openScript(player, instance.instanceId(), holder.page() - 1);
+            return;
+        }
+        if (slot == 53) {
+            openScript(player, instance.instanceId(), holder.page() + 1);
+            return;
+        }
+        int slotIndex = indexOf(SCRIPT_SLOTS, slot);
+        if (slotIndex < 0) {
+            return;
+        }
+        int bodyIndex = holder.page() * SCRIPT_SLOTS.length + slotIndex;
+        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+        List<SfxAndroidInstruction> body = new ArrayList<>(state.body());
+        if (bodyIndex >= body.size()) {
+            openInstructions(player, instance.instanceId(), body.size(), true);
+            return;
+        }
+        if (click.isRightClick()) {
+            if (click.isShiftClick()) {
+                if (body.size() < SfxAndroidState.MAX_BODY_LENGTH) {
+                    body.add(bodyIndex + 1, body.get(bodyIndex));
+                }
+            } else if (body.size() > 1) {
+                body.remove(bodyIndex);
+            }
+            state.setBody(body);
+            state.index(0);
+            persist(instance.instanceId(), state);
+            openScript(player, instance.instanceId(), holder.page());
+        } else {
+            openInstructions(player, instance.instanceId(), bodyIndex, false);
+        }
+    }
+
+    private void openInstructions(Player player, UUID instanceId, int editIndex, boolean adding) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
+        Inventory inventory = Bukkit.createInventory(newHolder(player, instanceId, SfxAndroidMenuHolder.MenuType.INSTRUCTIONS, 0, editIndex, adding), 54, Text.mm("<dark_gray>Select Instruction</dark_gray>"));
+        ((SfxAndroidMenuHolder) inventory.getHolder()).bind(inventory);
+        fill(inventory, Material.BLACK_STAINED_GLASS_PANE);
+        List<SfxAndroidInstruction> instructions = SfxAndroidInstruction.validForType(type);
+        for (int i = 0; i < Math.min(45, instructions.size()); i++) {
+            SfxAndroidInstruction instruction = instructions.get(i);
+            inventory.setItem(i, icon(instruction.icon(), "<yellow>" + instruction.displayName() + "</yellow>", instruction.description()));
+        }
+        inventory.setItem(53, icon(Material.BARRIER, "<red>Back</red>"));
+        player.openInventory(inventory);
+    }
+
+    private void handleInstructionButton(Player player, SfxAndroidMenuHolder holder, int slot) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        if (slot == 53) {
+            openScript(player, instance.instanceId(), 0);
+            return;
+        }
+        SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
+        List<SfxAndroidInstruction> instructions = SfxAndroidInstruction.validForType(type);
+        if (slot < 0 || slot >= instructions.size()) {
+            return;
+        }
+        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+        List<SfxAndroidInstruction> body = new ArrayList<>(state.body());
+        if (holder.adding()) {
+            if (body.size() < SfxAndroidState.MAX_BODY_LENGTH) {
+                body.add(instructions.get(slot));
+            }
+        } else if (holder.editIndex() >= 0 && holder.editIndex() < body.size()) {
+            body.set(holder.editIndex(), instructions.get(slot));
+        }
+        state.setBody(body);
+        state.index(0);
+        persist(instance.instanceId(), state);
+        openScript(player, instance.instanceId(), holder.editIndex() / SCRIPT_SLOTS.length);
+    }
+
+    private void openDownloader(Player player, UUID instanceId, int page) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
+        Inventory inventory = Bukkit.createInventory(newHolder(player, instanceId, SfxAndroidMenuHolder.MenuType.DOWNLOADER, page, -1, false), 54, Text.mm("<dark_gray>Android Scripts</dark_gray>"));
+        ((SfxAndroidMenuHolder) inventory.getHolder()).bind(inventory);
+        fill(inventory, Material.BLACK_STAINED_GLASS_PANE);
+        try {
+            List<SfxAndroidScriptRecord> records = scripts.listVisible(type, player.getUniqueId(), page * 45, 45);
+            for (int i = 0; i < records.size(); i++) {
+                SfxAndroidScriptRecord record = records.get(i);
+                inventory.setItem(i, icon(Material.BOOK, "<green>#" + record.id() + " " + record.name() + "</green>",
+                        "<gray>Author: <white>" + record.authorName() + "</white></gray>",
+                        "<gray>Visibility: <white>" + record.visibility().name() + "</white></gray>",
+                        "<gray>Downloads: <white>" + record.downloads() + "</white> | +" + record.positiveVotes() + " / -" + record.negativeVotes() + "</gray>",
+                        "<gray>Left: download | Shift-left: upvote | Shift-right: downvote</gray>",
+                        record.authorId().equals(player.getUniqueId()) ? "<red>Right-click: delete</red>" : ""));
+            }
+        } catch (SQLException exception) {
+            inventory.setItem(22, icon(Material.BARRIER, "<red>Failed to read scripts</red>", "<gray>" + exception.getMessage() + "</gray>"));
+        }
+        inventory.setItem(45, icon(Material.ARROW, "<yellow>Previous Page</yellow>"));
+        inventory.setItem(49, icon(Material.BARRIER, "<red>Back</red>"));
+        inventory.setItem(53, icon(Material.ARROW, "<yellow>Next Page</yellow>"));
+        player.openInventory(inventory);
+    }
+
+    private void handleDownloaderButton(Player player, SfxAndroidMenuHolder holder, int slot, ClickType click) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        if (slot == 49) {
+            openEditor(player, instance.instanceId());
+            return;
+        }
+        if (slot == 45 && holder.page() > 0) {
+            openDownloader(player, instance.instanceId(), holder.page() - 1);
+            return;
+        }
+        if (slot == 53) {
+            openDownloader(player, instance.instanceId(), holder.page() + 1);
+            return;
+        }
+        if (slot < 0 || slot >= 45) {
+            return;
+        }
+        SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
+        try {
+            List<SfxAndroidScriptRecord> records = scripts.listVisible(type, player.getUniqueId(), holder.page() * 45, 45);
+            if (slot >= records.size()) {
+                return;
+            }
+            SfxAndroidScriptRecord record = records.get(slot);
+            if (click.isShiftClick() && click.isLeftClick()) {
+                scripts.vote(record.id(), player.getUniqueId(), 1);
+                openDownloader(player, instance.instanceId(), holder.page());
+                return;
+            }
+            if (click.isShiftClick() && click.isRightClick()) {
+                scripts.vote(record.id(), player.getUniqueId(), -1);
+                openDownloader(player, instance.instanceId(), holder.page());
+                return;
+            }
+            if (click.isRightClick()) {
+                boolean force = player.hasPermission("sfx.android.script.delete.any");
+                if (record.authorId().equals(player.getUniqueId()) || force) {
+                    scripts.softDelete(record.id(), player.getUniqueId(), force);
+                    player.sendMessage(Text.prefixed(plugin, "<yellow>Deleted Android script #" + record.id() + ".</yellow>"));
+                    openDownloader(player, instance.instanceId(), holder.page());
+                }
+                return;
+            }
+            SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+            state.setBody(SfxAndroidScriptCodec.canonicalize(type, record.body()));
+            state.index(0);
+            persist(instance.instanceId(), state);
+            scripts.incrementDownloads(record.id());
+            player.sendMessage(Text.prefixed(plugin, "<green>Downloaded Android script #" + record.id() + ".</green>"));
+            openScript(player, instance.instanceId(), 0);
+        } catch (SQLException exception) {
+            player.sendMessage(Text.prefixed(plugin, "<red>Script library error: " + exception.getMessage() + "</red>"));
+        }
+    }
+
+    private void fillClassicFrame(Inventory inventory) {
+        fill(inventory, Material.GRAY_STAINED_GLASS_PANE);
+        int[] blue = {0, 1, 2, 6, 7, 8, 9, 18, 27, 36, 45, 46, 47, 51, 52, 53, 17, 26, 35, 44};
+        for (int slot : blue) {
+            inventory.setItem(slot, pane(Material.BLUE_STAINED_GLASS_PANE));
+        }
+        int[] black = {3, 4, 5, 48, 49, 50, 23, 24, 25, 32, 33};
+        for (int slot : black) {
+            inventory.setItem(slot, pane(Material.BLACK_STAINED_GLASS_PANE));
+        }
+        for (int slot : OUTPUT_SLOTS) {
+            inventory.setItem(slot, null);
+        }
+        inventory.setItem(FUEL_SLOT, null);
+    }
+
+    private void fill(Inventory inventory, Material material) {
+        ItemStack pane = pane(material);
+        for (int i = 0; i < inventory.getSize(); i++) {
+            inventory.setItem(i, pane);
+        }
+    }
+
+    private ItemStack pane(Material material) {
+        return ItemBuilder.of(material).name(" ").build();
+    }
+
+    private ItemStack icon(Material material, String name, String... lore) {
+        return ItemBuilder.of(material).name(name).lore(lore).build();
+    }
+
+    private boolean isOutputSlot(int raw) {
+        return indexOf(OUTPUT_SLOTS, raw) >= 0;
+    }
+
+    private int indexOf(int[] slots, int slot) {
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] == slot) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void persist(UUID instanceId, SfxAndroidState state) {
+        if (instanceId == null || state == null) {
+            return;
+        }
+        blockData.updateInstanceState(instanceId, state.encode(), state.runtimeState() == SfxAndroidRuntimeState.ACTIVE ? SfxBlockLifecycleState.ACTIVE : SfxBlockLifecycleState.IDLE);
+    }
+
+    private void flushAllStates() {
+        for (Map.Entry<UUID, SfxAndroidState> entry : states.entrySet()) {
+            persist(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private SfxAndroidState stateFor(UUID instanceId, String typeId, Location location) {
+        return states.computeIfAbsent(instanceId, id -> {
+            SfxBlockInstanceRecord instance = blockData.findInstance(id).orElse(null);
+            return SfxAndroidState.decode(instance == null ? new byte[0] : instance.stateBlob(), BlockFace.NORTH);
+        });
+    }
+
+    private Location toLocation(cc.theends6.sfx.internal.block.SfxBlockAnchorKey key) {
+        if (key == null) {
+            return null;
+        }
+        World world = Bukkit.getWorld(key.worldId());
+        return world == null ? null : new Location(world, key.x(), key.y(), key.z());
+    }
+
+    private void applyAndroidBlockAppearance(Block block, String typeId, BlockFace rotation) {
+        if (block == null || typeId == null) {
+            return;
+        }
+        block.setType(Material.PLAYER_HEAD, false);
+        applyRotation(block, rotation);
+        SfxItemDefinition definition = itemRegistry.item(typeId).orElse(null);
+        if (definition != null && block.getState() instanceof Skull skull) {
+            HeadTextures.apply(skull, definition.headTextureHash());
+        }
+    }
+
+    private void applyRotation(Block block, BlockFace rotation) {
+        if (block.getBlockData() instanceof Rotatable rotatable) {
+            rotatable.setRotation(rotation);
+            block.setBlockData(rotatable, false);
+        }
+    }
+
+    private BlockFace facingFromPlayer(Player player) {
+        if (player == null) {
+            return BlockFace.NORTH;
+        }
+        return player.getFacing().getOppositeFace();
+    }
+
+    private BlockFace turnLeft(BlockFace face) {
+        return switch (face) {
+            case NORTH -> BlockFace.WEST;
+            case WEST -> BlockFace.SOUTH;
+            case SOUTH -> BlockFace.EAST;
+            case EAST -> BlockFace.NORTH;
+            default -> BlockFace.NORTH;
+        };
+    }
+
+    private BlockFace turnRight(BlockFace face) {
+        return switch (face) {
+            case NORTH -> BlockFace.EAST;
+            case EAST -> BlockFace.SOUTH;
+            case SOUTH -> BlockFace.WEST;
+            case WEST -> BlockFace.NORTH;
+            default -> BlockFace.NORTH;
+        };
+    }
+
+    private void dropInventory(Block block) {
+        if (!(block.getState() instanceof InventoryHolder holder)) {
+            return;
+        }
+        Inventory inventory = holder.getInventory();
+        for (ItemStack stack : inventory.getContents()) {
+            SfxBlockDrops.dropItem(block, stack);
+        }
+        inventory.clear();
+    }
+
+    private record MoveIntent(SfxBlockInstanceRecord instance, Location from, Location to, SfxAndroidInstruction instruction) {
+    }
+
+    private record LocationKey(UUID worldId, int x, int y, int z) {
+        static LocationKey of(Location location) {
+            return new LocationKey(location.getWorld().getUID(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        }
+    }
+
+    private record ImportSession(UUID instanceId) {
+    }
+}
