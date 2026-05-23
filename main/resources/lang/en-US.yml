@@ -4099,3 +4099,176 @@ gps:
     waypoint-limit: '&cYou have reached the GPS waypoint limit.'
     waypoint-created: '&aWaypoint created: &f{name}'
     scanner-hint: '&7Use a GPS Geo-Scanner or Portable Geo-Scanner in the target chunk.'
+
+android:
+  messages:
+    no_access: '<red>This Android belongs to another player.</red>'
+    started: '<green>Android started.</green>'
+    paused: '<yellow>Android paused.</yellow>'
+    import_prompt: '<yellow>Paste an Android script code in chat. Type <white>cancel</white> to abort.</yellow>'
+    import_cancelled: '<yellow>Android script import cancelled.</yellow>'
+    missing_android: '<red>That Android no longer exists.</red>'
+    imported: '<green>Imported Android script.</green>'
+    invalid_script: '<red>Invalid Android script: {reason}</red>'
+    copy_script: '<aqua>[Click to copy Android script]</aqua>'
+    export: '<green>Android script export:</green> '
+    uploaded: '<green>Uploaded Android script #{id} as {visibility}.</green>'
+    upload_failed: '<red>Failed to upload script: {reason}</red>'
+    deleted: '<yellow>Deleted Android script #{id}.</yellow>'
+    downloaded: '<green>Downloaded Android script #{id}.</green>'
+    script_library_error: '<red>Script library error: {reason}</red>'
+  menu:
+    common:
+      back:
+        name: '<red>Back</red>'
+      previous:
+        name: '<yellow>Previous Page</yellow>'
+      next:
+        name: '<yellow>Next Page</yellow>'
+    main:
+      title: 'Programmable Android'
+      start:
+        name: '<green>Start/Continue</green>'
+        lore:
+          - '<gray>Start or resume this Android.</gray>'
+      pause:
+        name: '<dark_red>Pause</dark_red>'
+        lore:
+          - '<gray>Stop execution without clearing state.</gray>'
+      memory_core:
+        name: '<aqua>Memory Core</aqua>'
+        lore:
+          - ''
+          - '<dark_gray>⇨ <gray>Click to open the Script Editor</gray>'
+      fuel_info:
+        name: '<yellow>Fuel Input</yellow>'
+        lore:
+          - '<gray>Put compatible fuel in slot 43.</gray>'
+          - '<gray>Current fuel ticks: <white>{fuel}</white></gray>'
+          - '<gray>State: <white>{state}</white></gray>'
+    editor:
+      title: '<dark_gray>Android Memory Core</dark_gray>'
+      edit:
+        name: '<green>Edit Script</green>'
+        lore:
+          - '<gray>Edit the current script graphically.</gray>'
+      export:
+        name: '<aqua>Export Script</aqua>'
+        lore:
+          - '<gray>Send a click-to-copy short code.</gray>'
+      import:
+        name: '<yellow>Import Script</yellow>'
+        lore:
+          - '<gray>Paste a short code or readable script in chat.</gray>'
+      download:
+        name: '<gold>Download Scripts</gold>'
+        lore:
+          - '<gray>Browse public/private uploaded scripts.</gray>'
+      upload:
+        name: '<blue>Upload Script</blue>'
+        lore:
+          - '<gray>Upload this script to the SQL script library.</gray>'
+      back:
+        name: '<red>Back</red>'
+        lore:
+          - '<gray>Return to the Android.</gray>'
+    upload:
+      title: '<dark_gray>Upload Android Script</dark_gray>'
+      public:
+        name: '<green>Public</green>'
+        lore:
+          - '<gray>Visible to everyone.</gray>'
+      private:
+        name: '<yellow>Private</yellow>'
+        lore:
+          - '<gray>Only you can see it.</gray>'
+      unlisted:
+        name: '<aqua>Unlisted</aqua>'
+        lore:
+          - '<gray>Hidden from public browsing.</gray>'
+    script:
+      title: '<dark_gray>Edit Android Script</dark_gray>'
+      start:
+        name: '<green>START</green>'
+      repeat:
+        name: '<red>REPEAT</red>'
+      add:
+        name: '<green>Add new Command</green>'
+      edit_hint: '<gray>Left: edit | Right: delete | Shift-right: duplicate</gray>'
+    instructions:
+      title: '<dark_gray>Select Instruction</dark_gray>'
+    downloader:
+      title: '<dark_gray>Download Android Scripts</dark_gray>'
+  instructions:
+    wait:
+      name: '<yellow>Wait</yellow>'
+      lore: ['<gray>Do nothing for one Android tick.</gray>']
+    turn_left:
+      name: '<yellow>Turn Left</yellow>'
+      lore: ['<gray>Rotate left.</gray>']
+    turn_right:
+      name: '<yellow>Turn Right</yellow>'
+      lore: ['<gray>Rotate right.</gray>']
+    go_forward:
+      name: '<yellow>Go Forward</yellow>'
+      lore: ['<gray>Move one block forward.</gray>']
+    go_up:
+      name: '<yellow>Go Up</yellow>'
+      lore: ['<gray>Move one block up.</gray>']
+    go_down:
+      name: '<yellow>Go Down</yellow>'
+      lore: ['<gray>Move one block down.</gray>']
+    interface_items:
+      name: '<yellow>Interface Items</yellow>'
+      lore: ['<gray>Push output into an item interface ahead.</gray>']
+    interface_fuel:
+      name: '<yellow>Interface Fuel</yellow>'
+      lore: ['<gray>Pull fuel from a fuel interface ahead.</gray>']
+    dig_forward:
+      name: '<yellow>Dig Forward</yellow>'
+      lore: ['<gray>Mine the block ahead.</gray>']
+    dig_up:
+      name: '<yellow>Dig Up</yellow>'
+      lore: ['<gray>Mine the block above.</gray>']
+    dig_down:
+      name: '<yellow>Dig Down</yellow>'
+      lore: ['<gray>Mine the block below.</gray>']
+    move_and_dig_forward:
+      name: '<yellow>Move & Dig Forward</yellow>'
+      lore: ['<gray>Mine ahead and move into the cleared block.</gray>']
+    move_and_dig_up:
+      name: '<yellow>Move & Dig Up</yellow>'
+      lore: ['<gray>Mine above and move up.</gray>']
+    move_and_dig_down:
+      name: '<yellow>Move & Dig Down</yellow>'
+      lore: ['<gray>Mine below and move down.</gray>']
+    farm_forward:
+      name: '<yellow>Farm Forward</yellow>'
+      lore: ['<gray>Harvest the mature crop ahead.</gray>']
+    farm_down:
+      name: '<yellow>Farm Down</yellow>'
+      lore: ['<gray>Harvest the mature crop below.</gray>']
+    farm_exotic_forward:
+      name: '<yellow>Farm Exotic Forward</yellow>'
+      lore: ['<gray>Advanced farmer exotic crop hook.</gray>']
+    farm_exotic_down:
+      name: '<yellow>Farm Exotic Down</yellow>'
+      lore: ['<gray>Advanced farmer exotic crop hook.</gray>']
+    chop_tree:
+      name: '<yellow>Chop Tree</yellow>'
+      lore: ['<gray>Cut one log from the tree ahead.</gray>']
+    catch_fish:
+      name: '<yellow>Catch Fish</yellow>'
+      lore: ['<gray>Fish in water below.</gray>']
+    attack_mobs_animals:
+      name: '<yellow>Attack Mobs & Animals</yellow>'
+      lore: ['<gray>Attack valid creatures ahead.</gray>']
+    attack_mobs:
+      name: '<yellow>Attack Mobs</yellow>'
+      lore: ['<gray>Attack monsters ahead.</gray>']
+    attack_animals:
+      name: '<yellow>Attack Animals</yellow>'
+      lore: ['<gray>Attack animals ahead.</gray>']
+    attack_animals_adult:
+      name: '<yellow>Attack Adult Animals</yellow>'
+      lore: ['<gray>Attack adult animals ahead.</gray>']
