@@ -4845,6 +4845,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_farmer
   category: sf:robots
   material: PLAYER_HEAD
@@ -4857,6 +4858,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_miner
   category: sf:robots
   material: PLAYER_HEAD
@@ -4869,6 +4871,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_woodcutter
   category: sf:robots
   material: PLAYER_HEAD
@@ -4881,6 +4884,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_butcher
   category: sf:robots
   material: PLAYER_HEAD
@@ -4894,6 +4898,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_fisherman
   category: sf:robots
   material: PLAYER_HEAD
@@ -4907,6 +4912,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 1.0x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_2
   category: sf:robots
   material: PLAYER_HEAD
@@ -4919,6 +4925,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 1.5x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_2_fisherman
   category: sf:robots
   material: PLAYER_HEAD
@@ -4932,6 +4939,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 1.5x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_2_farmer
   category: sf:robots
   material: PLAYER_HEAD
@@ -4945,6 +4953,7 @@ items:
   - '&8⇨ &7Can also harvest Plants from ExoticGarden'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_2_butcher
   category: sf:robots
   material: PLAYER_HEAD
@@ -4958,6 +4967,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 1.5x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_3
   category: sf:robots
   material: PLAYER_HEAD
@@ -4970,6 +4980,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 3.0x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_3_fisherman
   category: sf:robots
   material: PLAYER_HEAD
@@ -4983,6 +4994,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 8.0x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:programmable_android_3_butcher
   category: sf:robots
   material: PLAYER_HEAD
@@ -4996,6 +5008,7 @@ items:
   - '&8⇨ &7Fuel Efficiency: 8.0x'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:gps_transmitter
   category: sf:gps
   material: PLAYER_HEAD
@@ -5092,6 +5105,7 @@ items:
   - '&fwhen its Script tells them to do so'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:android_interface_items
   category: sf:robots
   material: DISPENSER
@@ -5104,6 +5118,7 @@ items:
   - '&fwhen its Script tells them to do so'
   flags:
   - legacy-sf
+  - placeable-block
 - id: sf:gps_geo_scanner
   category: sf:gps
   material: PLAYER_HEAD

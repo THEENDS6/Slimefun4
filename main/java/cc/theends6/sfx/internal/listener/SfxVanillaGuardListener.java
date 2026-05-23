@@ -70,7 +70,22 @@ public final class SfxVanillaGuardListener implements Listener {
             "sf:bio_reactor",
             "sf:combustion_reactor",
             "sf:magnesium_generator",
-            "sf:charging_bench"
+            "sf:charging_bench",
+            "sf:programmable_android",
+            "sf:programmable_android_farmer",
+            "sf:programmable_android_miner",
+            "sf:programmable_android_woodcutter",
+            "sf:programmable_android_butcher",
+            "sf:programmable_android_fisherman",
+            "sf:programmable_android_2",
+            "sf:programmable_android_2_fisherman",
+            "sf:programmable_android_2_farmer",
+            "sf:programmable_android_2_butcher",
+            "sf:programmable_android_3",
+            "sf:programmable_android_3_fisherman",
+            "sf:programmable_android_3_butcher",
+            "sf:android_interface_fuel",
+            "sf:android_interface_items"
     );
     private static final Set<String> VANILLA_USE_IDS = Set.of(
             "sf:explosive_bow",
