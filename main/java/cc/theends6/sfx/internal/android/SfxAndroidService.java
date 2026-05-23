@@ -43,6 +43,7 @@ import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.Container;
 import org.bukkit.block.Dispenser;
 import org.bukkit.block.Skull;
 import org.bukkit.block.data.Ageable;
@@ -457,12 +458,14 @@ public final class SfxAndroidService implements Listener {
     }
 
     private boolean canClearTargetForMoveAndDig(SfxAndroidState state, Block target) {
-        return target != null
-                && !target.getType().isAir()
-                && !isUnbreakable(target.getType())
-                && blockData.findAnchor(target.getLocation()).isEmpty()
-                && state.hasFreeOutputSpace()
-                && !target.getDrops(new ItemStack(Material.DIAMOND_PICKAXE)).isEmpty();
+        if (target == null
+                || target.getType().isAir()
+                || isUnbreakable(target.getType())
+                || blockData.findAnchor(target.getLocation()).isPresent()) {
+            return false;
+        }
+        List<ItemStack> drops = collectMineDrops(target);
+        return !drops.isEmpty() && canFitAllOutputs(state, drops);
     }
 
 
@@ -522,21 +525,89 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
-        List<ItemStack> drops = new ArrayList<>(target.getDrops(new ItemStack(Material.DIAMOND_PICKAXE)));
+        List<ItemStack> drops = collectMineDrops(target);
         if (drops.isEmpty()) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
-        for (ItemStack drop : drops) {
-            if (!state.pushOutput(drop)) {
-                state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
-                return false;
-            }
+        if (!pushAllOutputsAtomically(state, drops)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
+            return false;
         }
         playBlockBreakEffect(target);
         target.setType(Material.AIR, true);
         state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         return true;
+    }
+
+    private List<ItemStack> collectMineDrops(Block target) {
+        List<ItemStack> drops = new ArrayList<>(target.getDrops(new ItemStack(Material.DIAMOND_PICKAXE)));
+        if (target.getState() instanceof Container container && !target.getType().name().endsWith("SHULKER_BOX")) {
+            for (ItemStack content : container.getInventory().getContents()) {
+                if (content != null && !content.getType().isAir() && content.getAmount() > 0) {
+                    drops.add(content.clone());
+                }
+            }
+        }
+        return drops;
+    }
+
+    private boolean pushAllOutputsAtomically(SfxAndroidState state, List<ItemStack> drops) {
+        ItemStack[] backup = state.outputs();
+        for (ItemStack drop : drops) {
+            if (!state.pushOutput(drop)) {
+                restoreOutputs(state, backup);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean canFitAllOutputs(SfxAndroidState state, List<ItemStack> drops) {
+        ItemStack[] scratch = state.outputs();
+        for (ItemStack drop : drops) {
+            if (!insertIntoScratch(scratch, drop)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean insertIntoScratch(ItemStack[] scratch, ItemStack stack) {
+        if (stack == null || stack.getType().isAir() || stack.getAmount() <= 0) {
+            return true;
+        }
+        ItemStack remaining = stack.clone();
+        for (int i = 0; i < scratch.length; i++) {
+            ItemStack existing = scratch[i];
+            if (existing == null || existing.getType().isAir() || existing.getAmount() <= 0) {
+                int amount = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
+                ItemStack inserted = remaining.clone();
+                inserted.setAmount(amount);
+                scratch[i] = inserted;
+                remaining.setAmount(remaining.getAmount() - amount);
+                if (remaining.getAmount() <= 0) {
+                    return true;
+                }
+                continue;
+            }
+            if (!existing.isSimilar(remaining) || existing.getAmount() >= existing.getMaxStackSize()) {
+                continue;
+            }
+            int insert = Math.min(remaining.getAmount(), existing.getMaxStackSize() - existing.getAmount());
+            existing.setAmount(existing.getAmount() + insert);
+            remaining.setAmount(remaining.getAmount() - insert);
+            if (remaining.getAmount() <= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void restoreOutputs(SfxAndroidState state, ItemStack[] backup) {
+        for (int i = 0; i < SfxAndroidState.OUTPUT_SIZE; i++) {
+            state.output(i, backup != null && i < backup.length ? backup[i] : null);
+        }
     }
 
 

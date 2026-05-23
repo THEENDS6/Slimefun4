@@ -52,6 +52,7 @@ public final class SqliteSfxAndroidScriptRepository implements AutoCloseable {
                     + ")");
             statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_sfx_android_scripts_type_visibility ON sfx_android_scripts(android_type, visibility, deleted_at)");
             statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_sfx_android_scripts_author ON sfx_android_scripts(author_uuid, deleted_at)");
+            normalizeScriptTypeKeys(connection);
         }
     }
 
@@ -61,7 +62,7 @@ public final class SqliteSfxAndroidScriptRepository implements AutoCloseable {
         try (Connection connection = openConnection(); PreparedStatement statement = connection.prepareStatement(
                 "INSERT INTO sfx_android_scripts(android_type, author_uuid, author_name, name, code, visibility, downloads, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS)) {
-            statement.setString(1, type.key());
+            statement.setString(1, type.scriptLibraryKey());
             statement.setString(2, authorId.toString());
             statement.setString(3, authorName == null || authorName.isBlank() ? authorId.toString() : authorName);
             statement.setString(4, name == null || name.isBlank() ? "Android Script" : name.trim());
@@ -90,13 +91,16 @@ public final class SqliteSfxAndroidScriptRepository implements AutoCloseable {
                         + " GROUP BY s.id"
                         + " ORDER BY s.downloads DESC, positive_votes DESC, s.updated_at DESC"
                         + " LIMIT ? OFFSET ?")) {
-            statement.setString(1, type.key());
+            statement.setString(1, type.scriptLibraryKey());
             statement.setString(2, viewerId.toString());
             statement.setInt(3, Math.max(1, Math.min(45, limit)));
             statement.setInt(4, Math.max(0, offset));
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
-                    result.add(readRecord(rs, type));
+                    SfxAndroidScriptRecord record = readRecord(rs, type);
+                    if (record != null) {
+                        result.add(record);
+                    }
                 }
             }
         }
@@ -186,22 +190,19 @@ public final class SqliteSfxAndroidScriptRepository implements AutoCloseable {
     private SfxAndroidScriptRecord readRecord(ResultSet rs, SfxAndroidType knownType) throws SQLException {
         SfxAndroidType type = knownType;
         if (type == null) {
-            String rawType = rs.getString("android_type");
-            for (SfxAndroidType candidate : SfxAndroidType.values()) {
-                if (candidate.key().equals(rawType)) {
-                    type = candidate;
-                    break;
-                }
-            }
+            type = SfxAndroidType.fromScriptLibraryKey(rs.getString("android_type"));
         }
         if (type == null) {
-            type = SfxAndroidType.NORMAL;
+            return null;
         }
         List<SfxAndroidInstruction> body;
         try {
             body = SfxAndroidScriptCodec.parseReadableScript(type, rs.getString("code"));
         } catch (RuntimeException exception) {
-            body = List.of(SfxAndroidInstruction.WAIT);
+            // Scripts can be shared by function family, but a higher-tier robot may have uploaded
+            // an instruction the current lower-tier robot cannot use. Hide incompatible entries
+            // instead of silently replacing them with WAIT.
+            return null;
         }
         return new SfxAndroidScriptRecord(
                 rs.getLong("id"),
@@ -217,6 +218,15 @@ public final class SqliteSfxAndroidScriptRepository implements AutoCloseable {
                 rs.getLong("created_at"),
                 rs.getLong("updated_at")
         );
+    }
+
+    private void normalizeScriptTypeKeys(Connection connection) throws SQLException {
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate("UPDATE sfx_android_scripts SET android_type = 'normal' WHERE android_type IN ('advanced_normal', 'empowered_normal')");
+            statement.executeUpdate("UPDATE sfx_android_scripts SET android_type = 'farmer' WHERE android_type = 'advanced_farmer'");
+            statement.executeUpdate("UPDATE sfx_android_scripts SET android_type = 'butcher' WHERE android_type IN ('advanced_butcher', 'empowered_butcher')");
+            statement.executeUpdate("UPDATE sfx_android_scripts SET android_type = 'fisherman' WHERE android_type IN ('advanced_fisherman', 'empowered_fisherman')");
+        }
     }
 
     private Connection openConnection() throws SQLException {

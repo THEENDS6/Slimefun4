@@ -62,6 +62,32 @@ public enum SfxAndroidType {
         return function;
     }
 
+    public String scriptLibraryKey() {
+        return switch (function) {
+            case MINING -> "miner";
+            case FARMING -> "farmer";
+            case WOODCUTTING -> "woodcutter";
+            case SLAUGHTERING -> "butcher";
+            case FISHING -> "fisherman";
+            case NONE -> "normal";
+        };
+    }
+
+    public static SfxAndroidType fromScriptLibraryKey(String key) {
+        if (key == null) {
+            return null;
+        }
+        return switch (key.toLowerCase(Locale.ROOT)) {
+            case "normal", "advanced_normal", "empowered_normal" -> NORMAL;
+            case "miner" -> MINER;
+            case "farmer", "advanced_farmer" -> FARMER;
+            case "woodcutter" -> WOODCUTTER;
+            case "butcher", "advanced_butcher", "empowered_butcher" -> BUTCHER;
+            case "fisherman", "advanced_fisherman", "empowered_fisherman" -> FISHERMAN;
+            default -> null;
+        };
+    }
+
     public boolean isAdvancedFarmer() {
         return this == ADVANCED_FARMER;
     }
