@@ -4151,7 +4151,7 @@ android:
         name: '<yellow>Fuel Input</yellow>'
         lore:
           - '<gray>Put compatible fuel in slot 43.</gray>'
-          - '<gray>Current fuel ticks: <white>{fuel}</white></gray>'
+          - '<gray>Remaining fuel: <white>{fuel}</white></gray>'
           - '<gray>State: <white>{state}</white></gray>'
     editor:
       title: '<dark_gray>Android Memory Core</dark_gray>'

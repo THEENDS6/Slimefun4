@@ -4246,7 +4246,7 @@ android:
         name: '<yellow>燃料输入</yellow>'
         lore:
           - '<gray>把兼容燃料放入 43 槽。</gray>'
-          - '<gray>当前燃料 ticks: <white>{fuel}</white></gray>'
+          - '<gray>剩余燃料: <white>{fuel}</white></gray>'
           - '<gray>状态: <white>{state}</white></gray>'
     editor:
       title: '<dark_gray>机器人记忆核心</dark_gray>'
