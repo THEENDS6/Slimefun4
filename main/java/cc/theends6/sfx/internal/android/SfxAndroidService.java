@@ -256,6 +256,7 @@ public final class SfxAndroidService implements Listener {
 
     private void tickRegionBatch(List<SfxBlockInstanceRecord> instances, long tickId) {
         Map<UUID, MoveIntent> moveIntents = new HashMap<>();
+        Set<UUID> runnable = new HashSet<>();
         Set<LocationKey> occupiedBefore = new HashSet<>();
         Map<UUID, SfxAndroidState> batchStates = new HashMap<>();
         for (SfxBlockInstanceRecord instance : instances) {
@@ -267,7 +268,7 @@ public final class SfxAndroidService implements Listener {
             SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), from);
             batchStates.put(instance.instanceId(), state);
             SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
-            if (type == null || !ensureFuel(instance, state, type, from.getBlock())) {
+            if (type == null || state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED) {
                 continue;
             }
             SfxAndroidInstruction instruction = state.currentInstruction();
@@ -277,6 +278,16 @@ public final class SfxAndroidService implements Listener {
                 persist(instance.instanceId(), state);
                 continue;
             }
+            boolean fuelInterfaceBootstrap = instruction == SfxAndroidInstruction.INTERFACE_FUEL
+                    && state.fuelTicks() <= 0
+                    && fuelValue(state.fuelSlot(), type) <= 0;
+            if (!fuelInterfaceBootstrap && !ensureFuel(instance, state, type, from.getBlock())) {
+                continue;
+            }
+            if (fuelInterfaceBootstrap) {
+                state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+            }
+            runnable.add(instance.instanceId());
             BlockFace face = actionFacing(state);
             Block target = targetBlock(from.getBlock(), face, instruction);
             if (isMoveInstruction(instruction)) {
@@ -310,10 +321,11 @@ public final class SfxAndroidService implements Listener {
             }
             SfxAndroidState state = batchStates.getOrDefault(instance.instanceId(), stateFor(instance.instanceId(), instance.typeId(), location));
             SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
-            if (type == null || state.paused() || state.runtimeState() != SfxAndroidRuntimeState.ACTIVE) {
+            if (type == null || !runnable.contains(instance.instanceId()) || state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED || state.runtimeState() == SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID) {
                 continue;
             }
             SfxAndroidInstruction instruction = state.currentInstruction();
+            boolean consumedFuelForInstruction = state.fuelTicks() > 0;
             boolean success = executeInstruction(instance, type, state, instruction, location.getBlock(), acceptedMoves.contains(instance.instanceId()), tickId);
             if (success) {
                 state.advance();
@@ -323,7 +335,9 @@ public final class SfxAndroidService implements Listener {
             } else if (!state.paused() && state.runtimeState() != SfxAndroidRuntimeState.PAUSED && state.runtimeState() != SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID) {
                 state.incrementNoEffectTicks();
             }
-            state.consumeFuelTick();
+            if (consumedFuelForInstruction) {
+                state.consumeFuelTick();
+            }
             persist(currentInstanceId(instance, location), state);
         }
     }
@@ -361,8 +375,8 @@ public final class SfxAndroidService implements Listener {
             case ATTACK_MOBS -> attack(block, state, type, living -> living instanceof Monster);
             case ATTACK_ANIMALS -> attack(block, state, type, living -> living instanceof Animals);
             case ATTACK_ANIMALS_ADULT -> attack(block, state, type, living -> living instanceof Animals animal && animal.isAdult());
-            case INTERFACE_ITEMS -> depositItems(state, block.getRelative(face));
-            case INTERFACE_FUEL -> pullFuel(state, block.getRelative(face), type);
+            case INTERFACE_ITEMS -> depositItems(state, block, face);
+            case INTERFACE_FUEL -> pullFuel(state, block, face, type);
         };
     }
 
@@ -668,11 +682,11 @@ public final class SfxAndroidService implements Listener {
         }
     }
 
-    private boolean depositItems(SfxAndroidState state, Block target) {
-        SfxBlockInstanceRecord instance = blockData.findAnchor(target.getLocation()).flatMap(anchor -> blockData.findInstance(anchor.instanceId())).orElse(null);
-        if (instance == null || !INTERFACE_ITEMS.equals(instance.typeId()) || !(target.getState() instanceof Dispenser dispenser)) {
-            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            return false;
+    private boolean depositItems(SfxAndroidState state, Block androidBlock, BlockFace preferredFace) {
+        Block target = findAdjacentInterface(androidBlock, state, preferredFace, INTERFACE_ITEMS);
+        if (target == null || !(target.getState() instanceof Dispenser dispenser)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_WAITING_EXTERNAL_CHANGE);
+            return true;
         }
         Inventory inventory = dispenser.getInventory();
         boolean moved = false;
@@ -705,11 +719,11 @@ public final class SfxAndroidService implements Listener {
         return true;
     }
 
-    private boolean pullFuel(SfxAndroidState state, Block target, SfxAndroidType type) {
-        SfxBlockInstanceRecord instance = blockData.findAnchor(target.getLocation()).flatMap(anchor -> blockData.findInstance(anchor.instanceId())).orElse(null);
-        if (instance == null || !INTERFACE_FUEL.equals(instance.typeId()) || !(target.getState() instanceof Dispenser dispenser)) {
-            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
-            return false;
+    private boolean pullFuel(SfxAndroidState state, Block androidBlock, BlockFace preferredFace, SfxAndroidType type) {
+        Block target = findAdjacentInterface(androidBlock, state, preferredFace, INTERFACE_FUEL);
+        if (target == null || !(target.getState() instanceof Dispenser dispenser)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_WAITING_EXTERNAL_CHANGE);
+            return true;
         }
         if (state.fuelSlot() != null && fuelValue(state.fuelSlot(), type) > 0) {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
@@ -732,6 +746,38 @@ public final class SfxAndroidService implements Listener {
         }
         state.runtimeState(SfxAndroidRuntimeState.DORMANT_NO_FUEL);
         return true;
+    }
+
+    private Block findAdjacentInterface(Block androidBlock, SfxAndroidState state, BlockFace preferredFace, String interfaceTypeId) {
+        if (androidBlock == null || interfaceTypeId == null) {
+            return null;
+        }
+        List<BlockFace> faces = new ArrayList<>();
+        addFace(faces, preferredFace);
+        addFace(faces, state == null ? null : state.rotation());
+        addFace(faces, preferredFace == null ? null : preferredFace.getOppositeFace());
+        addFace(faces, BlockFace.NORTH);
+        addFace(faces, BlockFace.EAST);
+        addFace(faces, BlockFace.SOUTH);
+        addFace(faces, BlockFace.WEST);
+        addFace(faces, BlockFace.UP);
+        addFace(faces, BlockFace.DOWN);
+        for (BlockFace face : faces) {
+            Block candidate = androidBlock.getRelative(face);
+            SfxBlockInstanceRecord instance = blockData.findAnchor(candidate.getLocation())
+                    .flatMap(anchor -> blockData.findInstance(anchor.instanceId()))
+                    .orElse(null);
+            if (instance != null && interfaceTypeId.equals(instance.typeId()) && candidate.getState() instanceof Dispenser) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private void addFace(List<BlockFace> faces, BlockFace face) {
+        if (face != null && !faces.contains(face)) {
+            faces.add(face);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -1023,12 +1069,31 @@ public final class SfxAndroidService implements Listener {
             refreshMainStatus(top, state);
             player.sendMessage(msg("android.messages.paused", "<yellow>Android paused.</yellow>"));
         } else if (slot == 16) {
+            state.paused(true);
+            state.runtimeState(SfxAndroidRuntimeState.PAUSED);
+            activeAndroids.remove(instance.instanceId());
             persist(instance.instanceId(), state);
+            refreshMainStatus(top, state);
             openEditor(player, instance.instanceId());
         }
     }
+    private void pauseAndroidForScriptEditing(UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+            return;
+        }
+        SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+        if (!state.paused() || state.runtimeState() != SfxAndroidRuntimeState.PAUSED) {
+            state.paused(true);
+            state.runtimeState(SfxAndroidRuntimeState.PAUSED);
+            activeAndroids.remove(instance.instanceId());
+            persist(instance.instanceId(), state);
+        }
+    }
+
 
     private void openEditor(Player player, UUID instanceId) {
+        pauseAndroidForScriptEditing(instanceId);
         Inventory inventory = Bukkit.createInventory(newHolder(player, instanceId, SfxAndroidMenuHolder.MenuType.EDITOR, 0, -1, false), 27, tr("android.menu.editor.title", "<dark_gray>Android Memory Core</dark_gray>"));
         ((SfxAndroidMenuHolder) inventory.getHolder()).bind(inventory);
         fill(inventory, Material.BLACK_STAINED_GLASS_PANE);
@@ -1118,6 +1183,7 @@ public final class SfxAndroidService implements Listener {
     }
 
     private void openScript(Player player, UUID instanceId, int page) {
+        pauseAndroidForScriptEditing(instanceId);
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         if (instance == null) {
             return;
