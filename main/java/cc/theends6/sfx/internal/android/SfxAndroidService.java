@@ -483,14 +483,7 @@ public final class SfxAndroidService implements Listener {
     }
 
     private BlockFace actionFacing(SfxAndroidState state) {
-        BlockFace visual = state == null ? BlockFace.NORTH : state.rotation();
-        return switch (visual) {
-            case NORTH -> BlockFace.SOUTH;
-            case SOUTH -> BlockFace.NORTH;
-            case EAST -> BlockFace.WEST;
-            case WEST -> BlockFace.EAST;
-            default -> BlockFace.NORTH;
-        };
+        return state == null ? BlockFace.NORTH : state.rotation();
     }
 
     private Block targetBlock(Block block, BlockFace face, SfxAndroidInstruction instruction) {
@@ -683,7 +676,7 @@ public final class SfxAndroidService implements Listener {
     }
 
     private boolean depositItems(SfxAndroidState state, Block androidBlock, BlockFace preferredFace) {
-        Block target = findAdjacentInterface(androidBlock, state, preferredFace, INTERFACE_ITEMS);
+        Block target = findFrontInterface(androidBlock, preferredFace, INTERFACE_ITEMS);
         if (target == null || !(target.getState() instanceof Dispenser dispenser)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_WAITING_EXTERNAL_CHANGE);
             return true;
@@ -694,23 +687,20 @@ public final class SfxAndroidService implements Listener {
         ItemStack[] outputs = state.outputs();
         for (int i = 0; i < outputs.length; i++) {
             ItemStack stack = outputs[i];
-            if (stack == null || stack.getType().isAir()) {
+            if (stack == null || stack.getType().isAir() || stack.getAmount() <= 0) {
                 continue;
             }
             hadOutput = true;
-            Map<Integer, ItemStack> left = inventory.addItem(stack.clone());
-            if (left.isEmpty()) {
-                state.output(i, null);
+            ItemStack before = stack.clone();
+            Map<Integer, ItemStack> left = inventory.addItem(before.clone());
+            ItemStack remaining = left.isEmpty() ? null : left.values().iterator().next();
+            int remainingAmount = remaining == null ? 0 : remaining.getAmount();
+            int movedAmount = Math.max(0, before.getAmount() - remainingAmount);
+            if (movedAmount > 0) {
                 moved = true;
-            } else {
-                ItemStack remaining = left.values().iterator().next();
-                if (remaining.getAmount() != stack.getAmount()) {
-                    moved = true;
-                }
-                state.output(i, remaining);
             }
+            state.output(i, remaining);
         }
-        dispenser.update(true, false);
         if (moved) {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         } else {
@@ -720,64 +710,80 @@ public final class SfxAndroidService implements Listener {
     }
 
     private boolean pullFuel(SfxAndroidState state, Block androidBlock, BlockFace preferredFace, SfxAndroidType type) {
-        Block target = findAdjacentInterface(androidBlock, state, preferredFace, INTERFACE_FUEL);
+        Block target = findFrontInterface(androidBlock, preferredFace, INTERFACE_FUEL);
         if (target == null || !(target.getState() instanceof Dispenser dispenser)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_WAITING_EXTERNAL_CHANGE);
             return true;
         }
-        if (state.fuelSlot() != null && fuelValue(state.fuelSlot(), type) > 0) {
+        Inventory inventory = dispenser.getInventory();
+        ItemStack current = state.fuelSlot();
+        if (current != null && fuelValue(current, type) <= 0) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_WAITING_EXTERNAL_CHANGE);
+            return true;
+        }
+        ItemStack template = current == null ? firstFuelTemplate(inventory, type) : current.clone();
+        if (template == null || fuelValue(template, type) <= 0) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_NO_FUEL);
+            return true;
+        }
+        int currentAmount = current == null ? 0 : current.getAmount();
+        int maxAmount = Math.max(1, template.getMaxStackSize());
+        int needed = maxAmount - currentAmount;
+        if (needed <= 0) {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             return true;
         }
-        Inventory inventory = dispenser.getInventory();
-        for (int i = 0; i < inventory.getSize(); i++) {
+        int moved = 0;
+        for (int i = 0; i < inventory.getSize() && needed > 0; i++) {
             ItemStack stack = inventory.getItem(i);
-            if (fuelValue(stack, type) <= 0) {
+            if (stack == null || stack.getType().isAir() || stack.getAmount() <= 0 || fuelValue(stack, type) <= 0 || !stack.isSimilar(template)) {
                 continue;
             }
-            ItemStack one = stack.clone();
-            one.setAmount(1);
-            stack.setAmount(stack.getAmount() - 1);
+            int transfer = Math.min(needed, stack.getAmount());
+            stack.setAmount(stack.getAmount() - transfer);
             inventory.setItem(i, stack.getAmount() <= 0 ? null : stack);
-            dispenser.update(true, false);
-            state.fuelSlot(one);
-            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
-            return true;
+            currentAmount += transfer;
+            needed -= transfer;
+            moved += transfer;
         }
-        state.runtimeState(SfxAndroidRuntimeState.DORMANT_NO_FUEL);
+        if (moved > 0) {
+            ItemStack filled = template.clone();
+            filled.setAmount(currentAmount);
+            state.fuelSlot(filled);
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+        } else {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_NO_FUEL);
+        }
         return true;
     }
 
-    private Block findAdjacentInterface(Block androidBlock, SfxAndroidState state, BlockFace preferredFace, String interfaceTypeId) {
-        if (androidBlock == null || interfaceTypeId == null) {
+    private ItemStack firstFuelTemplate(Inventory inventory, SfxAndroidType type) {
+        if (inventory == null) {
             return null;
         }
-        List<BlockFace> faces = new ArrayList<>();
-        addFace(faces, preferredFace);
-        addFace(faces, state == null ? null : state.rotation());
-        addFace(faces, preferredFace == null ? null : preferredFace.getOppositeFace());
-        addFace(faces, BlockFace.NORTH);
-        addFace(faces, BlockFace.EAST);
-        addFace(faces, BlockFace.SOUTH);
-        addFace(faces, BlockFace.WEST);
-        addFace(faces, BlockFace.UP);
-        addFace(faces, BlockFace.DOWN);
-        for (BlockFace face : faces) {
-            Block candidate = androidBlock.getRelative(face);
-            SfxBlockInstanceRecord instance = blockData.findAnchor(candidate.getLocation())
-                    .flatMap(anchor -> blockData.findInstance(anchor.instanceId()))
-                    .orElse(null);
-            if (instance != null && interfaceTypeId.equals(instance.typeId()) && candidate.getState() instanceof Dispenser) {
-                return candidate;
+        for (int i = 0; i < inventory.getSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (fuelValue(stack, type) > 0) {
+                ItemStack template = stack.clone();
+                template.setAmount(1);
+                return template;
             }
         }
         return null;
     }
 
-    private void addFace(List<BlockFace> faces, BlockFace face) {
-        if (face != null && !faces.contains(face)) {
-            faces.add(face);
+    private Block findFrontInterface(Block androidBlock, BlockFace face, String interfaceTypeId) {
+        if (androidBlock == null || face == null || interfaceTypeId == null) {
+            return null;
         }
+        Block candidate = androidBlock.getRelative(face);
+        SfxBlockInstanceRecord instance = blockData.findAnchor(candidate.getLocation())
+                .flatMap(anchor -> blockData.findInstance(anchor.instanceId()))
+                .orElse(null);
+        if (instance != null && interfaceTypeId.equals(instance.typeId()) && candidate.getState() instanceof Dispenser) {
+            return candidate;
+        }
+        return null;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
