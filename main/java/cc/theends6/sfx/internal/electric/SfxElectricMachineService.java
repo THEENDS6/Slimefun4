@@ -76,9 +76,9 @@ public final class SfxElectricMachineService implements Listener {
     private final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxLocalization localization;
-    private final SfxBlockDataService blockData;
+    final SfxBlockDataService blockData;
     private final SfxPlayerDataService profiles;
-    private final SfxElectricMachineRegistry registry;
+    final SfxElectricMachineRegistry registry;
     private final SfxElectricMachineMenuRenderer menuRenderer;
     private final SfxSimpleIoMachineMenuRenderer simpleIoMenuRenderer;
     private final SfxElectricAssemblerMenuRenderer assemblerMenuRenderer;
@@ -87,19 +87,19 @@ public final class SfxElectricMachineService implements Listener {
     private final SfxAutoCrafterMenuRenderer autoCrafterMenuRenderer;
     private final SfxVirtualContainerService virtualContainers;
     private final SfxFloatingTextDisplayService floatingTextDisplays;
-    private final SfxElectricRecipeProcessor recipeProcessor;
-    private final Map<UUID, SfxElectricMachineState> stateCache = new ConcurrentHashMap<>();
-    private final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
-    private final Set<UUID> activeInstances = ConcurrentHashMap.newKeySet();
-    private final Map<UUID, Integer> recentEnergyConsumption = new ConcurrentHashMap<>();
+    final SfxElectricRecipeProcessor recipeProcessor;
+    final Map<UUID, SfxElectricMachineState> stateCache = new ConcurrentHashMap<>();
+    final Set<UUID> dirtyInstances = ConcurrentHashMap.newKeySet();
+    final Set<UUID> activeInstances = ConcurrentHashMap.newKeySet();
+    final Map<UUID, Integer> recentEnergyConsumption = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastLogicTicks = new ConcurrentHashMap<>();
-    private final Map<UUID, Integer> supplementalEnergyThisSecond = new ConcurrentHashMap<>();
+    final Map<UUID, Integer> supplementalEnergyThisSecond = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> supplementalEnergyAveragePerTick = new ConcurrentHashMap<>();
     private volatile long supplementalEnergyWindow = -1L;
     private final SfxMachineTickSettings tickSettings;
-    private final SfxMachineRuntimeEngine machineRuntime;
+    final SfxMachineRuntimeEngine machineRuntime;
     private final Map<UUID, SfxElectricMachineSession> sessionsByViewer = new ConcurrentHashMap<>();
-    private final Map<UUID, SfxElectricMachineSession> sessionsByInstance = new ConcurrentHashMap<>();
+    final Map<UUID, SfxElectricMachineSession> sessionsByInstance = new ConcurrentHashMap<>();
     private volatile boolean running;
     private volatile long tickCounter;
 
@@ -253,7 +253,7 @@ public final class SfxElectricMachineService implements Listener {
         return SfxMachinePhaseResult.complete(SfxElectricMachineFrameworkBridge.status(customResult.status()), "electric special operation executed through framework effect");
     }
 
-    private Map<String, Object> electricFrameworkAttributes(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineSession session) {
+    Map<String, Object> electricFrameworkAttributes(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineSession session) {
         Map<String, Object> attributes = new LinkedHashMap<>();
         attributes.put("electric.definition", definition);
         attributes.put("electric.state", state);
@@ -264,7 +264,7 @@ public final class SfxElectricMachineService implements Listener {
         return attributes;
     }
 
-    private SfxElectricMachineTickResult runFrameworkSpecialOperation(UUID instanceId, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineSession session, Location location, SfxMachineTickContext context, Map<String, Object> attributes) {
+    SfxElectricMachineTickResult runFrameworkSpecialOperation(UUID instanceId, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineSession session, Location location, SfxMachineTickContext context, Map<String, Object> attributes) {
         if (!definition.recipeProvider().hasWorldAction() && !definition.recipeProvider().hasSpecialTick()) {
             return null;
         }
@@ -273,7 +273,7 @@ public final class SfxElectricMachineService implements Listener {
         return result instanceof SfxElectricMachineTickResult tickResult ? tickResult : null;
     }
 
-    private void runFrameworkOutputCommit(UUID instanceId, SfxElectricMachineDefinition definition, Location location, SfxMachineTickContext context, Map<String, Object> attributes, SfxElectricMachineRenderStatus status) {
+    void runFrameworkOutputCommit(UUID instanceId, SfxElectricMachineDefinition definition, Location location, SfxMachineTickContext context, Map<String, Object> attributes, SfxElectricMachineRenderStatus status) {
         if (definition == null || location == null || context == null) {
             return;
         }
@@ -792,188 +792,11 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private void tickMachine(UUID instanceId, SfxMachineTickContext context) {
-        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
-        if (instance == null) {
-            activeInstances.remove(instanceId);
-            return;
-        }
-        SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
-        if (definition == null) {
-            activeInstances.remove(instanceId);
-            return;
-        }
-        SfxElectricMachineState state = currentState(instanceId, instance);
-        SfxElectricMachineSession session = sessionsByInstance.get(instanceId);
-        if (session != null) {
-            syncInventoryToState(session.inventory(), state);
-        }
-        Location frameworkLocation = locationFor(instance);
-        Map<String, Object> frameworkAttributes = electricFrameworkAttributes(definition, state, session);
-        SfxMachineState frameworkState = new SfxMachineState();
-        try (SfxMachineExecution machineExecution = machineRuntime.beginTick(instanceId, definition.id(), frameworkLocation, context, frameworkState, frameworkAttributes)) {
-        if (!state.enabled()) {
-            SfxElectricMachineRenderStatus paused = SfxElectricMachineRenderStatus.PAUSED;
-            if (session != null && shouldRenderSession(session, paused)) {
-                render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), paused);
-            }
-            if (session != null || state.hasProgress() || state.hasAnyInput()) {
-                activeInstances.add(instanceId);
-            } else {
-                activeInstances.remove(instanceId);
-            }
-            machineExecution.status(cc.theends6.sfx.internal.machine.SfxMachineStatus.PAUSED);
-            return;
-        }
-
-        Location location = frameworkLocation;
-        if (location == null || !isInstanceChunkLoaded(instance)) {
-            activeInstances.add(instanceId);
-            return;
-        }
-        SfxElectricMachineTickResult customResult = location == null ? null : runFrameworkSpecialOperation(instanceId, definition, state, session, location, context, frameworkAttributes);
-        if (customResult != null) {
-            frameworkAttributes.put("electric.renderStatus", customResult.status());
-            if (customResult.consumedEnergy() > 0) {
-                recentEnergyConsumption.merge(instanceId, customResult.consumedEnergy(), Integer::sum);
-            }
-            if (customResult.supplementalEnergy() > 0) {
-                supplementalEnergyThisSecond.merge(instanceId, customResult.supplementalEnergy(), Integer::sum);
-            }
-            if (customResult.changed()) {
-                dirtyInstances.add(instanceId);
-            }
-            if (customResult.changed() || customResult.status() == SfxElectricMachineRenderStatus.WORKING) {
-                machineRuntime.runPhase(definition.id(), SfxMachinePhase.ON_COMPLETE, instanceId, location, context, null, SfxElectricMachineFrameworkBridge.status(customResult.status()), frameworkAttributes);
-            }
-            if (session != null && shouldRenderSession(session, customResult.status())) {
-                SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO
-                        || definition.menuStyle() == SfxElectricMachineMenuStyle.GEO_MINER
-                        || definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER
-                        || definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER
-                        || definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER
-                        ? null
-                        : recipeProcessor.activeRecipe(definition, state);
-                render(session, definition, session.inventory(), state, renderRecipe, customResult.status());
-            }
-            if (customResult.keepActive() || state.hasAnyInput()) {
-                activeInstances.add(instanceId);
-            } else if (session == null && !state.hasProgress()) {
-                activeInstances.remove(instanceId);
-            }
-            machineExecution.status(SfxElectricMachineFrameworkBridge.status(customResult.status()));
-            return;
-        }
-
-        machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
-        SfxElectricRecipe activeRecipe = frameworkAttributes.get("electric.activeRecipe") instanceof SfxElectricRecipe frameworkActiveRecipe
-                ? frameworkActiveRecipe
-                : recipeProcessor.activeRecipe(definition, state);
-        SfxElectricMachineRenderStatus status = SfxElectricMachineRenderStatus.IDLE;
-
-        if (state.hasPendingOutput()) {
-            SfxElectricStack pendingOutput = state.pendingOutput();
-            Integer outputSlot = pendingOutput == null ? null : recipeProcessor.findOutputSlot(definition, state, pendingOutput);
-            if (pendingOutput != null && outputSlot != null) {
-                recipeProcessor.pushOutput(state, outputSlot, pendingOutput);
-                state.resetProgress();
-                dirtyInstances.add(instanceId);
-                runFrameworkOutputCommit(instanceId, definition, location, context, frameworkAttributes, SfxElectricMachineRenderStatus.WORKING);
-                playCompleteSound(session);
-                SfxElectricRecipeStart nextStart = recipeProcessor.tryStartNextRecipe(definition, state);
-                if (nextStart != null) {
-                    activeRecipe = nextStart.recipe();
-                    status = SfxElectricMachineRenderStatus.WORKING;
-                    activeInstances.add(instanceId);
-                } else {
-                    activeRecipe = null;
-                    status = state.hasAnyInput() ? recipeProcessor.deriveStatus(definition, state) : SfxElectricMachineRenderStatus.IDLE;
-                }
-            } else {
-                status = SfxElectricMachineRenderStatus.BLOCKED_OUTPUT;
-                activeInstances.add(instanceId);
-            }
-        } else if (activeRecipe == null) {
-            SfxElectricRecipeMatch match = frameworkAttributes.get("electric.recipeMatch") instanceof SfxElectricRecipeMatch frameworkMatch
-                    ? frameworkMatch
-                    : recipeProcessor.findRecipeMatch(definition, state);
-            if (match == null) {
-                if (state.hasProgress()) {
-                    state.resetProgress();
-                    dirtyInstances.add(instanceId);
-                }
-                status = state.hasAnyInput() ? SfxElectricMachineRenderStatus.NO_RECIPE : SfxElectricMachineRenderStatus.IDLE;
-            } else {
-                frameworkAttributes.put("electric.recipeMatch", match);
-                SfxMachinePhaseResult outputReserve = machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OUTPUT, instanceId, location, context, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
-                boolean outputFits = frameworkAttributes.get("electric.outputFit") instanceof Boolean frameworkOutputFit
-                        ? frameworkOutputFit
-                        : recipeProcessor.canFitOutputForRecipe(definition, state, match.recipe());
-                if (outputReserve.stopsPipeline() || !outputFits) {
-                    status = SfxElectricMachineRenderStatus.OUTPUT_FULL;
-                } else {
-                    SfxElectricRecipeStart start = recipeProcessor.tryStartNextRecipe(definition, state);
-                    if (start != null) {
-                        activeRecipe = start.recipe();
-                        status = SfxElectricMachineRenderStatus.WORKING;
-                        activeInstances.add(instanceId);
-                    } else {
-                        activeRecipe = null;
-                        status = recipeProcessor.deriveStatus(definition, state);
-                    }
-                    dirtyInstances.add(instanceId);
-                }
-            }
-        } else {
-            activeInstances.add(instanceId);
-            if (!state.hasReservedInput()) {
-                state.resetProgress();
-                dirtyInstances.add(instanceId);
-                status = state.hasAnyInput() ? recipeProcessor.deriveStatus(definition, state) : SfxElectricMachineRenderStatus.IDLE;
-            } else {
-                int totalWork = recipeProcessor.requiredWork(activeRecipe);
-                if (state.progressWork() >= totalWork) {
-                    status = completeActiveRecipe(instanceId, state, activeRecipe, definition, session, location, context, frameworkAttributes);
-                } else {
-                    int elapsed = Math.max(1, context.elapsedTicksInt());
-                    int speed = Math.max(1, definition.speed());
-                    int remainingWork = Math.max(0, totalWork - state.progressWork());
-                    int ticksNeeded = Math.max(1, (remainingWork + speed - 1) / speed);
-                    int progressTicks = Math.min(elapsed, ticksNeeded);
-                    int energyPerTick = Math.max(0, definition.energyConsumptionPerTick());
-                    if (energyPerTick > 0) {
-                        progressTicks = Math.min(progressTicks, state.storedEnergy() / energyPerTick);
-                    }
-                    if (progressTicks <= 0) {
-                        status = SfxElectricMachineRenderStatus.NO_POWER;
-                    } else {
-                        if (energyPerTick > 0) {
-                            int consumed = energyPerTick * progressTicks;
-                            state.storedEnergy(state.storedEnergy() - consumed);
-                            recentEnergyConsumption.merge(instanceId, consumed, Integer::sum);
-                        }
-                        int progressed = Math.min(totalWork, state.progressWork() + speed * progressTicks);
-                        state.progressWork(progressed);
-                        status = progressed >= totalWork
-                                ? completeActiveRecipe(instanceId, state, activeRecipe, definition, session, location, context, frameworkAttributes)
-                                : SfxElectricMachineRenderStatus.WORKING;
-                    }
-                }
-                dirtyInstances.add(instanceId);
-            }
-        }
-
-        machineExecution.status(SfxElectricMachineFrameworkBridge.status(status));
-        if (session != null && shouldRenderSession(session, status)) {
-            render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), status);
-        }
-        if (session == null && !state.hasAnyInput() && !state.hasProgress()) {
-            activeInstances.remove(instanceId);
-        }
-        }
+        SfxElectricMachineTickController.tickMachine(this, instanceId, context);
     }
 
 
-    private SfxElectricMachineRenderStatus completeActiveRecipe(
+    SfxElectricMachineRenderStatus completeActiveRecipe(
             UUID instanceId,
             SfxElectricMachineState state,
             SfxElectricRecipe activeRecipe,
@@ -1064,7 +887,7 @@ public final class SfxElectricMachineService implements Listener {
         return recipeProcessor.deriveStatus(definition, state);
     }
 
-    private SfxElectricMachineState currentState(UUID instanceId, SfxBlockInstanceRecord instance) {
+    SfxElectricMachineState currentState(UUID instanceId, SfxBlockInstanceRecord instance) {
         return stateCache.computeIfAbsent(instanceId, ignored -> SfxElectricMachineState.decode(instance.stateBlob()));
     }
 
@@ -1358,7 +1181,7 @@ public final class SfxElectricMachineService implements Listener {
         activeInstances.add(session.instanceId());
     }
 
-    private void syncInventoryToState(Inventory inventory, SfxElectricMachineState state) {
+    void syncInventoryToState(Inventory inventory, SfxElectricMachineState state) {
         SfxElectricMachineDefinition definition = definitionFromInventory(inventory);
         if (definition == null) {
             return;
@@ -1383,7 +1206,7 @@ public final class SfxElectricMachineService implements Listener {
         }
     }
 
-    private void render(SfxElectricMachineSession session, SfxElectricMachineDefinition definition, Inventory inventory, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
+    void render(SfxElectricMachineSession session, SfxElectricMachineDefinition definition, Inventory inventory, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
         if (session != null) {
             session.markRendered(tickCounter, status);
             if (definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO) {
@@ -1462,7 +1285,7 @@ public final class SfxElectricMachineService implements Listener {
         return localization.text("gps.ui.geo-miner-hologram.resource-fallback", "GEO Resource");
     }
 
-    private boolean isInstanceChunkLoaded(SfxBlockInstanceRecord instance) {
+    boolean isInstanceChunkLoaded(SfxBlockInstanceRecord instance) {
         if (instance == null) {
             return false;
         }
@@ -1474,7 +1297,7 @@ public final class SfxElectricMachineService implements Listener {
         return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);
     }
 
-    private Location locationFor(SfxBlockInstanceRecord instance) {
+    Location locationFor(SfxBlockInstanceRecord instance) {
         org.bukkit.World world = plugin.getServer().getWorld(instance.anchorKey().worldId());
         if (world == null) {
             return null;
@@ -1490,7 +1313,7 @@ public final class SfxElectricMachineService implements Listener {
         SfxBlockDrops.dropStack(block, items, stack);
     }
 
-    private void playCompleteSound(SfxElectricMachineSession session) {
+    void playCompleteSound(SfxElectricMachineSession session) {
         if (session == null) {
             return;
         }
@@ -1510,7 +1333,7 @@ public final class SfxElectricMachineService implements Listener {
                 .orElse(true);
     }
 
-    private boolean shouldRenderSession(SfxElectricMachineSession session, SfxElectricMachineRenderStatus status) {
+    boolean shouldRenderSession(SfxElectricMachineSession session, SfxElectricMachineRenderStatus status) {
         
         
         

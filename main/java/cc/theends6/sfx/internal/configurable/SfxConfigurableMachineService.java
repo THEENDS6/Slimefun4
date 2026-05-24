@@ -96,7 +96,7 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
-    private final SfxItems items;
+    final SfxItems items;
     private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
     private final SfxFloatingTextDisplayService floatingText;
@@ -114,7 +114,7 @@ public final class SfxConfigurableMachineService implements Listener {
     private final Map<UUID, SfxConfigurableMachineSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, SfxConfigurableMachineSession> sessionsByHost = new ConcurrentHashMap<>();
     private volatile boolean running;
-    private volatile long tickCounter;
+    volatile long tickCounter;
 
     public SfxConfigurableMachineService(
             JavaPlugin plugin,
@@ -983,76 +983,10 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private ReactorTickResult tickReactor(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location, Map<String, Object> frameworkAttributes) {
-        if (location == null || location.getWorld() == null) {
-            return new ReactorTickResult(0, false);
-        }
-        boolean changed = false;
-        if (isReactorOutputBlocked(definition, state)) {
-            updateReactorHologram(instance.anchorKey(), state);
-            return new ReactorTickResult(0, false);
-        }
-        if (!state.hasActiveFuel()) {
-            SfxConfigurableMachineDefinition.ReactorFuel fuel = findFuel(definition, state);
-            if (fuel == null || (fuel.output() != null && !canFitOutput(items, state, fuel.output(), 0, 1))) {
-                removeReactorHologram(instance.anchorKey());
-                return new ReactorTickResult(0, false);
-            }
-            if (!hasWaterCooling(location) || !consumeCoolantIfNeeded(state, definition)) {
-                meltDownReactor(instance, location);
-                if (frameworkAttributes != null) frameworkAttributes.put("configurable.reactor.meltdown", Boolean.TRUE);
-                return new ReactorTickResult(0, true);
-            }
-            consumeInput(state, fuelSlotIndex(state, fuel), fuel.amount());
-            state.activeFuelKey(fuel.key());
-            state.fuelProgressTicks(0);
-            state.fuelTotalTicks(fuel.seconds() * 20);
-            changed = true;
-        }
-        if (!hasWaterCooling(location)) {
-            meltDownReactor(instance, location);
-            if (frameworkAttributes != null) frameworkAttributes.put("configurable.reactor.meltdown", Boolean.TRUE);
-            return new ReactorTickResult(0, true);
-        }
-        if (!consumeCoolantIfNeeded(state, definition)) {
-            meltDownReactor(instance, location);
-            if (frameworkAttributes != null) frameworkAttributes.put("configurable.reactor.meltdown", Boolean.TRUE);
-            return new ReactorTickResult(0, true);
-        }
-        boolean electricityFocus = state.mode() == 0;
-        if (electricityFocus && state.storedEnergy() + definition.energyPerTick() > definition.capacity()) {
-            updateReactorHologram(instance.anchorKey(), state);
-            return new ReactorTickResult(0, changed);
-        }
-        state.fuelProgressTicks(state.fuelProgressTicks() + 1);
-        if (state.coolantTotalTicks() > 0) {
-            state.coolantProgressTicks(state.coolantProgressTicks() + 1);
-        }
-        int generated = 0;
-        if (state.storedEnergy() + definition.energyPerTick() <= definition.capacity()) {
-            generated = definition.energyPerTick();
-            state.storedEnergy(state.storedEnergy() + generated);
-        }
-        if (definition.witherAura() && tickCounter % 20L == 0L) {
-            applyWitherAura(location);
-        }
-        if (state.fuelProgressTicks() >= state.fuelTotalTicks()) {
-            SfxConfigurableMachineDefinition.ReactorFuel completed = fuelByKey(definition, state.activeFuelKey());
-            if (completed != null && completed.output() != null) {
-                if (!canFitOutput(items, state, completed.output(), 0, 1)) {
-                    state.fuelProgressTicks(state.fuelTotalTicks());
-                    updateReactorHologram(instance.anchorKey(), state);
-                    return new ReactorTickResult(generated, true);
-                }
-                pushOutput(items, state, completed.output(), 0, 1);
-            }
-            state.clearFuel();
-        }
-        updateReactorHologram(instance.anchorKey(), state);
-        if (frameworkAttributes != null) frameworkAttributes.put("configurable.reactor.generated", generated);
-        return new ReactorTickResult(generated, true);
+        return SfxConfigurableReactorController.tickReactor(this, instanceId, instance, definition, state, location, frameworkAttributes);
     }
 
-    private boolean isReactorOutputBlocked(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
+    boolean isReactorOutputBlocked(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
         if (!state.hasActiveFuel() || state.fuelTotalTicks() <= 0 || state.fuelProgressTicks() < state.fuelTotalTicks()) {
             return false;
         }
@@ -1060,7 +994,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return activeFuel != null && activeFuel.output() != null && !canFitOutput(items, state, activeFuel.output(), 0, 1);
     }
 
-    private boolean consumeCoolantIfNeeded(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition definition) {
+    boolean consumeCoolantIfNeeded(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition definition) {
         if (state.coolantTotalTicks() > 0 && state.coolantProgressTicks() < state.coolantTotalTicks()) {
             return true;
         }
@@ -1074,7 +1008,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return true;
     }
 
-    private void applyWitherAura(Location location) {
+    void applyWitherAura(Location location) {
         for (org.bukkit.entity.Entity entity : location.getWorld().getNearbyEntities(location, 5.0D, 5.0D, 5.0D,
                 candidate -> candidate instanceof LivingEntity && candidate.isValid())) {
             if (entity instanceof LivingEntity living) {
@@ -1083,7 +1017,7 @@ public final class SfxConfigurableMachineService implements Listener {
         }
     }
 
-    private void meltDownReactor(SfxBlockInstanceRecord instance, Location location) {
+    void meltDownReactor(SfxBlockInstanceRecord instance, Location location) {
         removeReactorHologram(instance.anchorKey());
         SfxConfigurableMachineSession session = sessionsByHost.remove(instance.instanceId());
         if (session != null) {
@@ -1524,7 +1458,7 @@ public final class SfxConfigurableMachineService implements Listener {
         }
     }
 
-    private int fuelSlotIndex(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition.ReactorFuel fuel) {
+    int fuelSlotIndex(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition.ReactorFuel fuel) {
         for (int slot = 0; slot < 3; slot++) {
             if (fuel.matches(state.input(slot))) {
                 return slot;
@@ -1533,7 +1467,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return 0;
     }
 
-    private SfxConfigurableMachineDefinition.ReactorFuel findFuel(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
+    SfxConfigurableMachineDefinition.ReactorFuel findFuel(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
         for (SfxConfigurableMachineDefinition.ReactorFuel fuel : definition.fuels()) {
             for (int slot = 0; slot < 3; slot++) {
                 if (fuel.matches(state.input(slot))) {
@@ -1544,7 +1478,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return null;
     }
 
-    private SfxConfigurableMachineDefinition.ReactorFuel fuelByKey(SfxConfigurableMachineDefinition definition, String key) {
+    SfxConfigurableMachineDefinition.ReactorFuel fuelByKey(SfxConfigurableMachineDefinition definition, String key) {
         if (key == null) {
             return null;
         }
@@ -1566,7 +1500,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return -1;
     }
 
-    private SfxElectricStack consumeInput(SfxConfigurableMachineState state, int slot, int amount) {
+    SfxElectricStack consumeInput(SfxConfigurableMachineState state, int slot, int amount) {
         SfxElectricStack input = state.input(slot);
         if (input == null || input.amount() < amount) {
             return null;
@@ -1577,7 +1511,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return consumed;
     }
 
-    private boolean canFitOutput(SfxItems items, SfxConfigurableMachineState state, SfxElectricStack output, int startSlot, int slotCount) {
+    boolean canFitOutput(SfxItems items, SfxConfigurableMachineState state, SfxElectricStack output, int startSlot, int slotCount) {
         if (output == null) {
             return true;
         }
@@ -1589,7 +1523,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return slot != null;
     }
 
-    private void pushOutput(SfxItems items, SfxConfigurableMachineState state, SfxElectricStack output, int startSlot, int slotCount) {
+    void pushOutput(SfxItems items, SfxConfigurableMachineState state, SfxElectricStack output, int startSlot, int slotCount) {
         SfxElectricStack[] simulated = new SfxElectricStack[slotCount];
         for (int i = 0; i < slotCount; i++) {
             simulated[i] = state.output(startSlot + i);
@@ -1618,7 +1552,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return null;
     }
 
-    private boolean hasWaterCooling(Location location) {
+    boolean hasWaterCooling(Location location) {
         Block center = location.getBlock();
         for (int y = -1; y <= 1; y++) {
             for (int x = -1; x <= 1; x++) {
@@ -1662,7 +1596,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return port != null && "sf:reactor_access_port".equals(port.typeId()) ? port : null;
     }
 
-    private void updateReactorHologram(SfxBlockAnchorKey key, SfxConfigurableMachineState state) {
+    void updateReactorHologram(SfxBlockAnchorKey key, SfxConfigurableMachineState state) {
         int percent = coolantPercent(state);
         Component text = Text.mm("<aqua>❄ " + percent + "%</aqua>");
         floatingText.update(new SfxFloatingTextProjection(
@@ -1676,7 +1610,7 @@ public final class SfxConfigurableMachineService implements Listener {
                 SfxFloatingTextDisplayMode.ARMOR_STAND));
     }
 
-    private void removeReactorHologram(SfxBlockAnchorKey key) {
+    void removeReactorHologram(SfxBlockAnchorKey key) {
         floatingText.remove(reactorHologramKey(key));
     }
 

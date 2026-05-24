@@ -85,7 +85,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             "sf:juicer",
             "sf:automated_panning_machine"
     );
-    private static final int[] RESEARCH_PROGRESS = {23, 44, 57, 92};
+    static final int[] RESEARCH_PROGRESS = {23, 44, 57, 92};
     private static final org.bukkit.Color[] RESEARCH_FIREWORK_COLORS = {
             org.bukkit.Color.AQUA,
             org.bukkit.Color.BLUE,
@@ -138,19 +138,19 @@ public final class DefaultSfxGuide implements SfxGuide {
             .comparingInt(DisplayEntry::priority)
             .thenComparing(DisplayEntry::label);
 
-    private final JavaPlugin plugin;
-    private final SfxRuntime runtime;
+    final JavaPlugin plugin;
+    final SfxRuntime runtime;
     private final DefaultSfxItemRegistry registry;
     private final SfxItems items;
     private final SfxMenus menus;
     private final SfxGuideAccessPolicy accessPolicy;
     private final DefaultManualMachineRegistry manualMachines;
     private final SfxLocalization localization;
-    private final SfxPlayerDataService profiles;
-    private final SfxResearchService researches;
+    final SfxPlayerDataService profiles;
+    final SfxResearchService researches;
     private final Map<UUID, GuidePreferences> preferencesByPlayer = new ConcurrentHashMap<>();
     private final Map<Material, List<GuideRecipePage>> vanillaRecipeCache = new ConcurrentHashMap<>();
-    private final Set<UUID> researchingPlayers = ConcurrentHashMap.newKeySet();
+    final Set<UUID> researchingPlayers = ConcurrentHashMap.newKeySet();
 
     public DefaultSfxGuide(
             JavaPlugin plugin,
@@ -200,174 +200,8 @@ public final class DefaultSfxGuide implements SfxGuide {
         openSettingsView(player, mode, Navigation.ROOT);
     }
 
-    private void openSettingsView(Player player, GuideMode mode, Navigation navigation) {
-        GuidePreferences preferences = preferences(player);
-        GuideLayout layout = effectiveLayout(preferences);
-        GuideMode targetMode = mode == GuideMode.CHEAT ? GuideMode.SURVIVAL : GuideMode.CHEAT;
-        boolean allowLayoutSwitch = plugin.getConfig().getBoolean("guide.allow-layout-switching", true)
-                && plugin.getConfig().getBoolean("guide.sfx-layout-enabled", true);
-
-        SfxMenu.Builder builder = SfxMenu.builder(title(mode, tr("guide.settings.title", "Guide Settings"))).rows(6);
-        paintSettingsBackground(builder, mode);
-
-        builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-guide", "Back to Guide")), click -> goBack(click.player(), mode)));
-        builder.button(2, new SfxMenuButton(modeInfoIcon(mode), click -> {
-        }));
-        builder.button(4, new SfxMenuButton(ItemBuilder.of(Material.WRITABLE_BOOK)
-                .name(tr("guide.settings.title-item", "<green>Guide Settings</green>"))
-                .lore(
-                        tr("guide.settings.description.1", "<gray>Configure how this guide behaves for you.</gray>"),
-                        tr("guide.settings.description.2", "<gray>The classic layout is the default restored experience.</gray>")
-                )
-                .build(), click -> {
-        }));
-        builder.button(6, new SfxMenuButton(ItemBuilder.of(Material.KNOWLEDGE_BOOK)
-                .name(tr("guide.settings.help.name", "<aqua>Guide Help</aqua>"))
-                .lore(
-                        tr("guide.settings.help.lore.1", "<gray>Shift + Right Click the guide book to open this menu.</gray>"),
-                        tr("guide.settings.help.lore.2", "<gray>Layout, history, and close behavior are per-player guide preferences.</gray>")
-                )
-                .build(), click -> {
-        }));
-        builder.button(8, new SfxMenuButton(closeIcon(), click -> closeGuide(click.player())));
-
-        builder.button(19, toggleButton(
-                targetMode == GuideMode.CHEAT ? Material.COMMAND_BLOCK : Material.ENCHANTED_BOOK,
-                tr("guide.settings.mode.name", "<yellow>Guide Mode</yellow>"),
-                targetMode == GuideMode.CHEAT
-                        ? tr("guide.settings.mode.cheat.lore", "<gray>Click to switch this book to the cheat guide.</gray>")
-                        : tr("guide.settings.mode.survival.lore", "<gray>Click to switch this book back to the survival guide.</gray>"),
-                mode == GuideMode.CHEAT,
-                    click -> switchGuideBookMode(click.player(), targetMode)
-        ));
-
-        if (allowLayoutSwitch) {
-            GuideLayout targetLayout = layout == GuideLayout.CLASSIC ? GuideLayout.SFX : GuideLayout.CLASSIC;
-            builder.button(21, toggleButton(
-                    targetLayout == GuideLayout.CLASSIC ? Material.CRAFTING_TABLE : Material.SMITHING_TABLE,
-                    tr("guide.settings.layout.name", "<yellow>Guide Layout</yellow>"),
-                    layout == GuideLayout.CLASSIC
-                            ? tr("guide.settings.layout.sfx", "<gray>Current: classic. Click to switch to the expanded SFX layout.</gray>")
-                            : tr("guide.settings.layout.classic", "<gray>Current: SFX. Click to switch to the restored classic layout.</gray>"),
-                    layout == GuideLayout.SFX,
-                    click -> {
-                        preferences.setLayout(targetLayout);
-                        persistPreferences(click.player(), preferences, true);
-                        openSettingsView(click.player(), mode, Navigation.REPLACE);
-                    }
-            ));
-        }
-
-        builder.button(23, toggleButton(
-                Material.COMPARATOR,
-                tr("guide.settings.history.name", "<yellow>Nested Recipe History</yellow>"),
-                tr("guide.settings.history.lore", "<gray>Opening a recipe from another recipe remembers the previous page.</gray>"),
-                preferences.recordHistory(),
-                click -> {
-                    preferences.setRecordHistory(!preferences.recordHistory());
-                    persistPreferences(click.player(), preferences, true);
-                    openSettingsView(click.player(), mode, Navigation.REPLACE);
-                }
-        ));
-
-        builder.button(25, toggleButton(
-                Material.OAK_DOOR,
-                tr("guide.settings.close-behavior.name", "<yellow>Esc / E Behavior</yellow>"),
-                tr("guide.settings.close-behavior.lore", "<gray>Choose whether closing the guide returns to the previous page.</gray>"),
-                preferences.closeReturns(),
-                click -> {
-                    preferences.setCloseReturns(!preferences.closeReturns());
-                    persistPreferences(click.player(), preferences, true);
-                    openSettingsView(click.player(), mode, Navigation.REPLACE);
-                }
-        ));
-
-        builder.button(39, toggleButton(
-                Material.FIREWORK_ROCKET,
-                tr("guide.settings.fireworks.name", "<yellow>Research Fireworks</yellow>"),
-                tr("guide.settings.fireworks.lore", "<gray>Show a large firework when you finish researching an item.</gray>"),
-                preferences.fireworks(),
-                click -> {
-                    preferences.setFireworks(!preferences.fireworks());
-                    persistPreferences(click.player(), preferences, true);
-                    openSettingsView(click.player(), mode, Navigation.REPLACE);
-                }
-        ));
-
-        builder.button(41, toggleButton(
-                Material.REDSTONE_TORCH,
-                tr("guide.settings.unlock-animation.name", "<yellow>Unlock Animation</yellow>"),
-                tr("guide.settings.unlock-animation.lore", "<gray>Show the pondering progress in chat while researching an item.</gray>"),
-                preferences.unlockAnimation(),
-                click -> {
-                    preferences.setUnlockAnimation(!preferences.unlockAnimation());
-                    persistPreferences(click.player(), preferences, true);
-                    openSettingsView(click.player(), mode, Navigation.REPLACE);
-                }
-        ));
-
-        builder.button(43, toggleButton(
-                Material.RECOVERY_COMPASS,
-                tr("guide.settings.resume-last.name", "<yellow>Resume Last Page</yellow>"),
-                tr("guide.settings.resume-last.lore", "<gray>Reopen the guide at the last page you closed.</gray>"),
-                preferences.reopenLastLocation(),
-                click -> {
-                    preferences.setReopenLastLocation(!preferences.reopenLastLocation());
-                    persistPreferences(click.player(), preferences, true);
-                    openSettingsView(click.player(), mode, Navigation.REPLACE);
-                }
-        ));
-
-        builder.button(47, toggleButton(
-                Material.COMPASS,
-                tr("guide.settings.machine-ui.name", "<yellow>Machine UI Details</yellow>"),
-                tr("guide.settings.machine-ui.lore", "<gray>Show SFX extra machine details on top of the classic progress display.</gray>"),
-                preferences.machineUiExtended(),
-                click -> {
-                    preferences.setMachineUiExtended(!preferences.machineUiExtended());
-                    persistPreferences(click.player(), preferences, true);
-                    openSettingsView(click.player(), mode, Navigation.REPLACE);
-                }
-        ));
-
-        builder.button(51, toggleButton(
-                Material.NOTE_BLOCK,
-                tr("guide.settings.machine-sound.name", "<yellow>Machine Completion Sound</yellow>"),
-                tr("guide.settings.machine-sound.lore", "<gray>Play the machine completion sound only for you while viewing its UI.</gray>"),
-                preferences.machineCompletionSound(),
-                click -> {
-                    preferences.setMachineCompletionSound(!preferences.machineCompletionSound());
-                    persistPreferences(click.player(), preferences, true);
-                    openSettingsView(click.player(), mode, Navigation.REPLACE);
-                }
-        ));
-
-        builder.button(53, toggleButton(
-                Material.CLOCK,
-                tr("guide.settings.machine-smooth.name", "<yellow>Smooth Machine UI</yellow>"),
-                tr("guide.settings.machine-smooth.lore", "<gray>Enable per-tick machine UI refresh. Disable for a classic 10-tick display style.</gray>"),
-                preferences.machineSmoothUi(),
-                click -> {
-                    preferences.setMachineSmoothUi(!preferences.machineSmoothUi());
-                    persistPreferences(click.player(), preferences, true);
-                    openSettingsView(click.player(), mode, Navigation.REPLACE);
-                }
-        ));
-
-        builder.button(49, new SfxMenuButton(ItemBuilder.of(Material.NETHER_STAR)
-                .name(tr("guide.settings.current-layout.name", "<aqua>Current Layout</aqua>"))
-                .lore(
-                        tr(layout == GuideLayout.CLASSIC ? "guide.settings.current-layout.classic" : "guide.settings.current-layout.sfx",
-                                layout == GuideLayout.CLASSIC
-                                        ? "<gray>Classic layout is active.</gray>"
-                                        : "<gray>SFX layout is active.</gray>"),
-                        tr("guide.settings.current-layout.mode", "<gray>Guide mode: {mode}</gray>")
-                                .replace("{mode}", mode == GuideMode.CHEAT ? "Cheat" : "Survival")
-                )
-                .build(), click -> {
-        }));
-
-        showMenu(player, builder, navigation);
+    void openSettingsView(Player player, GuideMode mode, Navigation navigation) {
+        SfxGuideSettingsView.open(this, player, mode, navigation);
     }
 
     private void openMain(Player player, GuideMode mode, int page, Navigation navigation) {
@@ -1096,33 +930,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private String formatDuration(double seconds) {
-        if (seconds < 60.0) {
-            double rounded = Math.round(seconds * 10.0) / 10.0;
-            if (Math.abs(rounded - Math.rint(rounded)) < 0.0001) {
-                return Integer.toString((int) Math.rint(rounded)) + "s";
-            }
-            return String.format(Locale.ROOT, "%.1fs", rounded);
-        }
-        long totalSeconds = Math.max(0L, Math.round(seconds));
-        long hours = totalSeconds / 3600L;
-        long minutes = (totalSeconds % 3600L) / 60L;
-        long remainingSeconds = totalSeconds % 60L;
-        StringBuilder builder = new StringBuilder();
-        if (hours > 0L) {
-            builder.append(hours).append("h");
-            if (minutes > 0L) {
-                builder.append(minutes).append("m");
-            }
-            if (remainingSeconds > 0L) {
-                builder.append(remainingSeconds).append("s");
-            }
-            return builder.toString();
-        }
-        builder.append(minutes).append("m");
-        if (remainingSeconds > 0L) {
-            builder.append(remainingSeconds).append("s");
-        }
-        return builder.toString();
+        return SfxGuideFormatting.formatDuration(seconds);
     }
 
     private String formatEnergyShort(long value) {
@@ -1511,7 +1319,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         return new ItemStack(Material.AIR);
     }
 
-    private ItemStack modeInfoIcon(GuideMode mode) {
+    ItemStack modeInfoIcon(GuideMode mode) {
         return ItemBuilder.of(mode == GuideMode.CHEAT ? Material.ENCHANTED_BOOK : Material.BOOK)
                 .name(mode == GuideMode.CHEAT
                         ? tr("guide.mode.cheat.name", "<dark_red>Slimefun Cheat Guide</dark_red>")
@@ -1582,7 +1390,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         }));
     }
 
-    private void paintSettingsBackground(SfxMenu.Builder builder, GuideMode mode) {
+    void paintSettingsBackground(SfxMenu.Builder builder, GuideMode mode) {
         ItemStack background = ItemBuilder.of(mode == GuideMode.CHEAT ? Material.RED_STAINED_GLASS_PANE : Material.GREEN_STAINED_GLASS_PANE)
                 .name("<dark_gray> </dark_gray>")
                 .build();
@@ -1677,11 +1485,11 @@ public final class DefaultSfxGuide implements SfxGuide {
                 .build();
     }
 
-    private ItemStack closeIcon() {
+    ItemStack closeIcon() {
         return ItemBuilder.of(Material.BARRIER).name(tr("guide.actions.close-menu", "<red>Close</red>")).build();
     }
 
-    private ItemStack backIcon(String text) {
+    ItemStack backIcon(String text) {
         return ItemBuilder.of(Material.BARRIER).name("<yellow>" + text + "</yellow>").build();
     }
 
@@ -1700,7 +1508,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                 .build();
     }
 
-    private String displayResearchName(SfxResearchDefinition research, SfxItemDefinition definition) {
+    String displayResearchName(SfxResearchDefinition research, SfxItemDefinition definition) {
         Component fallback = definition == null ? Text.mm(research.name()) : localization.itemName(definition.id(), definition.name());
         return PlainTextComponentSerializer.plainText().serialize(localization.researchName(research.id(), fallback));
     }
@@ -1773,7 +1581,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         player.playSound(firework.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.0f);
     }
 
-    private SfxMenuButton toggleButton(Material material, String name, String lore, boolean enabled, java.util.function.Consumer<cc.theends6.sfx.api.menu.SfxMenuClickContext> handler) {
+    SfxMenuButton toggleButton(Material material, String name, String lore, boolean enabled, java.util.function.Consumer<cc.theends6.sfx.api.menu.SfxMenuClickContext> handler) {
         return new SfxMenuButton(ItemBuilder.of(material)
                 .name(name)
                 .lore(
@@ -1909,36 +1717,15 @@ public final class DefaultSfxGuide implements SfxGuide {
 
 
     private Sound resolveSoundCandidate(String candidate) {
-        if (candidate == null || candidate.isBlank()) {
-            return null;
-        }
-
-        if (candidate.indexOf(':') >= 0) {
-            return resolveSoundKey(candidate);
-        }
-
-        Sound namespaced = resolveSoundKey("minecraft:" + candidate);
-        if (namespaced != null) {
-            return namespaced;
-        }
-
-        String dotted = candidate.replace('_', '.');
-        if (!dotted.equals(candidate)) {
-            namespaced = resolveSoundKey("minecraft:" + dotted);
-            if (namespaced != null) {
-                return namespaced;
-            }
-        }
-
-        return null;
+        return SfxGuideFormatting.resolveSoundCandidate(candidate, this::resolveSoundKey);
     }
 
-    private Sound resolveSoundKey(String rawKey) {
+    Sound resolveSoundKey(String rawKey) {
         NamespacedKey key = NamespacedKey.fromString(rawKey);
         return key == null ? null : Registry.SOUNDS.get(key);
     }
 
-    private void showMenu(Player player, SfxMenu.Builder builder, Navigation navigation) {
+    void showMenu(Player player, SfxMenu.Builder builder, Navigation navigation) {
         builder.restorePreviousOnClose(preferences(player).closeReturns());
         SfxMenu menu = builder.build();
         switch (navigation) {
@@ -1948,11 +1735,11 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
     }
 
-    private void closeGuide(Player player) {
+    void closeGuide(Player player) {
         menus.close(player, false);
     }
 
-    private void goBack(Player player, GuideMode fallbackMode) {
+    void goBack(Player player, GuideMode fallbackMode) {
         if (menus.hasHistory(player)) {
             menus.close(player, true);
             return;
@@ -1960,7 +1747,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         openMain(player, fallbackMode, 0, Navigation.ROOT);
     }
 
-    private GuidePreferences preferences(Player player) {
+    GuidePreferences preferences(Player player) {
         return preferencesByPlayer.computeIfAbsent(player.getUniqueId(), ignored -> profiles.find(player.getUniqueId())
                 .map(this::preferencesFromProfile)
                 .orElseGet(this::defaultPreferences));
@@ -1985,7 +1772,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                 decodeGuideLocation(profile.guideLastLocation()));
     }
 
-    private void persistPreferences(Player player, GuidePreferences preferences, boolean saveAsync) {
+    void persistPreferences(Player player, GuidePreferences preferences, boolean saveAsync) {
         SfxPlayerProfile profile = profiles.find(player.getUniqueId()).orElse(null);
         if (profile == null) {
             return;
@@ -2058,7 +1845,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         return GuideLayout.from(plugin.getConfig().getString("guide.layout-mode", "classic"));
     }
 
-    private GuideLayout effectiveLayout(GuidePreferences preferences) {
+    GuideLayout effectiveLayout(GuidePreferences preferences) {
         if (!plugin.getConfig().getBoolean("guide.sfx-layout-enabled", true)) {
             return GuideLayout.CLASSIC;
         }
@@ -2096,63 +1883,10 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private void beginResearchUnlock(Player player, SfxPlayerProfile profile, SfxItemDefinition definition, SfxResearchDefinition research, Runnable onSuccess, Runnable onFailure) {
-        if (profile.hasUnlocked(research.id())) {
-            onSuccess.run();
-            return;
-        }
-        if (!canAffordResearch(player, research)) {
-            player.sendMessage(Text.prefixed(plugin, tr("messages.not-enough-xp", "<red>You do not have enough levels to unlock this research.</red>")));
-            onFailure.run();
-            return;
-        }
-        if (!researchingPlayers.add(player.getUniqueId())) {
-            return;
-        }
-
-        String researchName = displayResearchName(research, definition);
-        consumeResearchCost(player, research);
-        GuidePreferences preferences = preferences(player);
-
-        if (!preferences.unlockAnimation()) {
-            finishResearchUnlock(player, profile, definition, research, onSuccess);
-            return;
-        }
-
-        player.sendMessage(Text.prefixed(plugin,
-                tr("messages.research.start", "<gray>The Ancient Spirits whisper mysterious words into your ear!</gray>")));
-
-        runtime.executeForPlayerLater(player, 5L, () -> {
-            if (!player.isOnline()) {
-                finishResearchUnlock(player, profile, definition, research, onSuccess);
-                return;
-            }
-                playResearchSound(player);
-                player.sendMessage(Text.prefixed(plugin,
-                    tr("messages.research.progress", "<gray>You start to wonder about </gray><aqua>{name}</aqua><gray> ({progress})</gray>")
-                            .replace("{name}", researchName)
-                            .replace("{progress}", "0%")));
-        });
-
-        for (int index = 0; index < RESEARCH_PROGRESS.length; index++) {
-            int progress = RESEARCH_PROGRESS[index];
-            long delay = (index + 1L) * 20L;
-            runtime.executeForPlayerLater(player, delay, () -> {
-                if (!player.isOnline()) {
-                    return;
-                }
-                playResearchSound(player);
-                player.sendMessage(Text.prefixed(plugin,
-                        tr("messages.research.progress", "<gray>You start to wonder about </gray><aqua>{name}</aqua><gray> ({progress})</gray>")
-                                .replace("{name}", researchName)
-                                .replace("{progress}", progress + "%")));
-            });
-        }
-
-        runtime.executeForPlayerLater(player, (RESEARCH_PROGRESS.length + 1L) * 20L, () ->
-                finishResearchUnlock(player, profile, definition, research, onSuccess));
+        SfxGuideResearchUnlockController.begin(this, player, profile, definition, research, onSuccess, onFailure);
     }
 
-    private void finishResearchUnlock(Player player, SfxPlayerProfile profile, SfxItemDefinition definition, SfxResearchDefinition research, Runnable onSuccess) {
+    void finishResearchUnlock(Player player, SfxPlayerProfile profile, SfxItemDefinition definition, SfxResearchDefinition research, Runnable onSuccess) {
         researchingPlayers.remove(player.getUniqueId());
         researches.grant(profile, research);
         if (player.isOnline()) {
@@ -2167,21 +1901,21 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
     }
 
-    private boolean canAffordResearch(Player player, SfxResearchDefinition research) {
+    boolean canAffordResearch(Player player, SfxResearchDefinition research) {
         return player.getGameMode() == org.bukkit.GameMode.CREATIVE || player.getLevel() >= research.cost();
     }
 
-    private void consumeResearchCost(Player player, SfxResearchDefinition research) {
+    void consumeResearchCost(Player player, SfxResearchDefinition research) {
         if (player.getGameMode() != org.bukkit.GameMode.CREATIVE) {
             player.setLevel(player.getLevel() - research.cost());
         }
     }
 
-    private void playResearchSound(Player player) {
+    void playResearchSound(Player player) {
         player.playSound(player.getLocation(), Sound.ENTITY_BAT_TAKEOFF, 0.7f, 1.0f);
     }
 
-    private void switchGuideBookMode(Player player, GuideMode mode) {
+    void switchGuideBookMode(Player player, GuideMode mode) {
         if (!accessPolicy.canOpen(player, mode)) {
             player.sendMessage(Text.prefixed(plugin, tr("guide.errors.no-open", "<red>You do not have permission to open this guide.</red>")));
             return;
@@ -2198,11 +1932,11 @@ public final class DefaultSfxGuide implements SfxGuide {
         openMain(player, mode, 0, Navigation.ROOT);
     }
 
-    private String tr(String key, String fallback) {
+    String tr(String key, String fallback) {
         return localization.text(key, fallback);
     }
 
-    private Component title(GuideMode mode, String suffix) {
+    Component title(GuideMode mode, String suffix) {
         String configured = mode == GuideMode.CHEAT
                 ? plugin.getConfig().getString("guide.cheat-title", tr("guide.mode.cheat.title", "<dark_red>Slimefun Cheat Guide</dark_red>"))
                 : plugin.getConfig().getString("guide.survival-title", tr("guide.mode.survival.title", "<dark_green>Slimefun Guide</dark_green>"));

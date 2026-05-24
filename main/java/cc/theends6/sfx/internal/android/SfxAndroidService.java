@@ -102,15 +102,15 @@ public final class SfxAndroidService implements Listener {
     private static final String HEAD_MEMORY_CORE = "d78f2b7e5e75639ea7fb796c35d364c4df28b4243e66b76277aadcd6261337";
 
     private final JavaPlugin plugin;
-    private final SfxRuntime runtime;
+    final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxItemRegistry itemRegistry;
     private final SfxLocalization localization;
-    private final SfxBlockDataService blockData;
-    private final SfxMachineRuntimeEngine machineRuntime;
+    final SfxBlockDataService blockData;
+    final SfxMachineRuntimeEngine machineRuntime;
     private final SqliteSfxAndroidScriptRepository scripts;
-    private final Map<UUID, SfxAndroidState> states = new ConcurrentHashMap<>();
-    private final Set<UUID> activeAndroids = ConcurrentHashMap.newKeySet();
+    final Map<UUID, SfxAndroidState> states = new ConcurrentHashMap<>();
+    final Set<UUID> activeAndroids = ConcurrentHashMap.newKeySet();
     private final Map<UUID, ImportSession> pendingImports = new ConcurrentHashMap<>();
     private final Map<UUID, UploadSession> pendingUploads = new ConcurrentHashMap<>();
     private final Map<UUID, EditScriptSession> pendingScriptEdits = new ConcurrentHashMap<>();
@@ -119,7 +119,7 @@ public final class SfxAndroidService implements Listener {
     private final AtomicLong androidTick = new AtomicLong();
     private volatile boolean running;
     private long tickInterval;
-    private int maxActivePerRegion;
+    int maxActivePerRegion;
 
     public SfxAndroidService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxItemRegistry itemRegistry, SfxLocalization localization, SfxBlockDataService blockData, SqliteSfxAndroidScriptRepository scripts, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -182,7 +182,7 @@ public final class SfxAndroidService implements Listener {
         return SfxMachinePhaseResult.cont();
     }
 
-    private Map<String, Object> androidFrameworkAttributes(SfxBlockInstanceRecord instance, SfxAndroidType type, SfxAndroidState state, Block block, SfxAndroidInstruction instruction, boolean moveAccepted, long tickId) {
+    Map<String, Object> androidFrameworkAttributes(SfxBlockInstanceRecord instance, SfxAndroidType type, SfxAndroidState state, Block block, SfxAndroidInstruction instruction, boolean moveAccepted, long tickId) {
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("android.instance", instance);
         attributes.put("android.type", type);
@@ -342,142 +342,14 @@ public final class SfxAndroidService implements Listener {
     }
 
     private void tickAndroids(long tickId) {
-        List<SfxBlockInstanceRecord> active = new ArrayList<>();
-        for (UUID instanceId : List.copyOf(activeAndroids)) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
-            if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
-                activeAndroids.remove(instanceId);
-                states.remove(instanceId);
-                continue;
-            }
-            SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
-            if (state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED) {
-                activeAndroids.remove(instanceId);
-                continue;
-            }
-            if (shouldSkipForBackoff(state, tickId)) {
-                continue;
-            }
-            active.add(instance);
-        }
-        Map<String, List<SfxBlockInstanceRecord>> groups = new HashMap<>();
-        for (SfxBlockInstanceRecord instance : active) {
-            String key = instance.anchorKey().worldId() + ":" + (instance.anchorKey().x() >> 4) + ":" + (instance.anchorKey().z() >> 4);
-            groups.computeIfAbsent(key, ignored -> new ArrayList<>()).add(instance);
-        }
-        for (List<SfxBlockInstanceRecord> group : groups.values()) {
-            if (group.isEmpty()) {
-                continue;
-            }
-            group.sort(Comparator.comparing(SfxBlockInstanceRecord::instanceId));
-            SfxBlockInstanceRecord first = group.get(0);
-            Location location = toLocation(first.anchorKey());
-            if (location == null) {
-                continue;
-            }
-            List<SfxBlockInstanceRecord> snapshot = group.size() > maxActivePerRegion ? group.subList(0, maxActivePerRegion) : group;
-            runtime.executeAt(location, () -> {
-                SfxMachineLegacyHookBridge.beforeNetworkTick(machineRuntime, "sf:android", first.instanceId(), location, "android", "SfxAndroidService.tickAndroids");
-                tickRegionBatch(List.copyOf(snapshot), tickId);
-                SfxMachineLegacyHookBridge.afterNetworkTick(machineRuntime, "sf:android", first.instanceId(), location, "android", "SfxAndroidService.tickAndroids");
-            });
-        }
+        SfxAndroidScheduler.tickAndroids(this, tickId);
     }
 
-    private void tickRegionBatch(List<SfxBlockInstanceRecord> instances, long tickId) {
-        Map<UUID, MoveIntent> moveIntents = new HashMap<>();
-        Set<UUID> runnable = new HashSet<>();
-        Set<LocationKey> occupiedBefore = new HashSet<>();
-        Map<UUID, SfxAndroidState> batchStates = new HashMap<>();
-        for (SfxBlockInstanceRecord instance : instances) {
-            Location from = toLocation(instance.anchorKey());
-            if (from == null) {
-                continue;
-            }
-            occupiedBefore.add(LocationKey.of(from));
-            SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), from);
-            batchStates.put(instance.instanceId(), state);
-            SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
-            if (type == null || state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED) {
-                continue;
-            }
-            SfxAndroidInstruction instruction = state.currentInstruction();
-            if (!instruction.validFor(type)) {
-                state.runtimeState(SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID);
-                activeAndroids.remove(instance.instanceId());
-                persist(instance.instanceId(), state);
-                continue;
-            }
-            boolean fuelInterfaceBootstrap = instruction == SfxAndroidInstruction.INTERFACE_FUEL
-                    && state.fuelTicks() <= 0
-                    && fuelValue(state.fuelSlot(), type) <= 0;
-            if (!fuelInterfaceBootstrap && !ensureFuel(instance, state, type, from.getBlock())) {
-                continue;
-            }
-            if (fuelInterfaceBootstrap) {
-                state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
-            }
-            runnable.add(instance.instanceId());
-            BlockFace face = actionFacing(state);
-            Block target = targetBlock(from.getBlock(), face, instruction);
-            if (isMoveInstruction(instruction)) {
-                boolean clearsTarget = isMoveAndDigInstruction(instruction) && canClearTargetForMoveAndDig(state, target);
-                moveIntents.put(instance.instanceId(), new MoveIntent(instance, from, target.getLocation(), instruction, clearsTarget));
-            }
-        }
-        Map<LocationKey, List<MoveIntent>> byTarget = new HashMap<>();
-        Set<LocationKey> leaving = new HashSet<>();
-        for (MoveIntent intent : moveIntents.values()) {
-            byTarget.computeIfAbsent(LocationKey.of(intent.to), ignored -> new ArrayList<>()).add(intent);
-            leaving.add(LocationKey.of(intent.from));
-        }
-        Set<UUID> acceptedMoves = new HashSet<>();
-        for (List<MoveIntent> contenders : byTarget.values()) {
-            contenders.sort(Comparator.comparing(intent -> intent.instance.instanceId()));
-            MoveIntent winner = contenders.get(0);
-            Block target = winner.to.getBlock();
-            LocationKey targetKey = LocationKey.of(winner.to);
-            boolean targetFree = target.getType().isAir()
-                    || (occupiedBefore.contains(targetKey) && leaving.contains(targetKey))
-                    || winner.clearsTargetBeforeMove();
-            if (targetFree) {
-                acceptedMoves.add(winner.instance.instanceId());
-            }
-        }
-        for (SfxBlockInstanceRecord instance : instances) {
-            Location location = toLocation(instance.anchorKey());
-            if (location == null) {
-                continue;
-            }
-            SfxAndroidState state = batchStates.getOrDefault(instance.instanceId(), stateFor(instance.instanceId(), instance.typeId(), location));
-            SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
-            if (type == null || !runnable.contains(instance.instanceId()) || state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED || state.runtimeState() == SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID) {
-                continue;
-            }
-            SfxAndroidInstruction instruction = state.currentInstruction();
-            Map<String, Object> frameworkAttributes = androidFrameworkAttributes(instance, type, state, location.getBlock(), instruction, acceptedMoves.contains(instance.instanceId()), tickId);
-            frameworkAttributes.put("android.instruction.name", instruction.name());
-            SfxMachineTickContext frameworkTick = new SfxMachineTickContext(tickId, 1L, false);
-            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.IDLE, frameworkAttributes);
-            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_PROGRESS, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.IDLE, frameworkAttributes);
-            boolean success = executeInstruction(instance, type, state, instruction, location.getBlock(), acceptedMoves.contains(instance.instanceId()), tickId);
-            frameworkAttributes.put("android.execution.success", success);
-            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_PROGRESS, instance.instanceId(), location, frameworkTick, null, success ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, frameworkAttributes);
-            if (success) {
-                machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.RUNNING, frameworkAttributes);
-                state.advance();
-            }
-            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, frameworkTick, null, success ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, frameworkAttributes);
-            if (state.runtimeState() == SfxAndroidRuntimeState.ACTIVE) {
-                state.resetNoEffectTicks();
-            } else if (!state.paused() && state.runtimeState() != SfxAndroidRuntimeState.PAUSED && state.runtimeState() != SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID) {
-                state.incrementNoEffectTicks();
-            }
-            persist(currentInstanceId(instance, location), state);
-        }
+    void tickRegionBatch(List<SfxBlockInstanceRecord> instances, long tickId) {
+        SfxAndroidBatchTickController.tickRegionBatch(this, instances, tickId);
     }
 
-    private boolean executeInstruction(SfxBlockInstanceRecord instance, SfxAndroidType type, SfxAndroidState state, SfxAndroidInstruction instruction, Block block, boolean moveAccepted, long tickId) {
+    boolean executeInstruction(SfxBlockInstanceRecord instance, SfxAndroidType type, SfxAndroidState state, SfxAndroidInstruction instruction, Block block, boolean moveAccepted, long tickId) {
         BlockFace face = actionFacing(state);
         return switch (instruction) {
             case WAIT -> {
@@ -515,12 +387,12 @@ public final class SfxAndroidService implements Listener {
         };
     }
 
-    private UUID currentInstanceId(SfxBlockInstanceRecord fallback, Location currentLocation) {
+    UUID currentInstanceId(SfxBlockInstanceRecord fallback, Location currentLocation) {
         SfxAnchorRecord anchor = blockData.findAnchor(currentLocation).orElse(null);
         return anchor == null ? fallback.instanceId() : anchor.instanceId();
     }
 
-    private boolean ensureFuel(SfxBlockInstanceRecord instance, SfxAndroidState state, SfxAndroidType type, Block block) {
+    boolean ensureFuel(SfxBlockInstanceRecord instance, SfxAndroidState state, SfxAndroidType type, Block block) {
         if (state.fuelTicks() > 0) {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             return true;
@@ -548,7 +420,7 @@ public final class SfxAndroidService implements Listener {
         return true;
     }
 
-    private int fuelValue(ItemStack item, SfxAndroidType type) {
+    int fuelValue(ItemStack item, SfxAndroidType type) {
         if (item == null || item.getType().isAir() || item.getAmount() <= 0) {
             return 0;
         }
@@ -583,7 +455,7 @@ public final class SfxAndroidService implements Listener {
         return items.readMarker(item).map(SfxItemMarker::itemId).orElse(null);
     }
 
-    private boolean isMoveInstruction(SfxAndroidInstruction instruction) {
+    boolean isMoveInstruction(SfxAndroidInstruction instruction) {
         return instruction == SfxAndroidInstruction.GO_FORWARD
                 || instruction == SfxAndroidInstruction.GO_UP
                 || instruction == SfxAndroidInstruction.GO_DOWN
@@ -592,13 +464,13 @@ public final class SfxAndroidService implements Listener {
                 || instruction == SfxAndroidInstruction.MOVE_AND_DIG_DOWN;
     }
 
-    private boolean isMoveAndDigInstruction(SfxAndroidInstruction instruction) {
+    boolean isMoveAndDigInstruction(SfxAndroidInstruction instruction) {
         return instruction == SfxAndroidInstruction.MOVE_AND_DIG_FORWARD
                 || instruction == SfxAndroidInstruction.MOVE_AND_DIG_UP
                 || instruction == SfxAndroidInstruction.MOVE_AND_DIG_DOWN;
     }
 
-    private boolean canClearTargetForMoveAndDig(SfxAndroidState state, Block target) {
+    boolean canClearTargetForMoveAndDig(SfxAndroidState state, Block target) {
         if (target == null
                 || target.getType().isAir()
                 || isUnbreakable(target.getType())
@@ -610,7 +482,7 @@ public final class SfxAndroidService implements Listener {
     }
 
 
-    private boolean shouldSkipForBackoff(SfxAndroidState state, long tickId) {
+    boolean shouldSkipForBackoff(SfxAndroidState state, long tickId) {
         if (state == null || state.noEffectTicks() <= 0) {
             return false;
         }
@@ -626,11 +498,11 @@ public final class SfxAndroidService implements Listener {
         return divisor > 1 && Math.floorMod(tickId, divisor) != 0;
     }
 
-    private BlockFace actionFacing(SfxAndroidState state) {
+    BlockFace actionFacing(SfxAndroidState state) {
         return state == null ? BlockFace.NORTH : state.rotation();
     }
 
-    private Block targetBlock(Block block, BlockFace face, SfxAndroidInstruction instruction) {
+    Block targetBlock(Block block, BlockFace face, SfxAndroidInstruction instruction) {
         return switch (instruction) {
             case GO_UP, DIG_UP, MOVE_AND_DIG_UP -> block.getRelative(BlockFace.UP);
             case GO_DOWN, DIG_DOWN, MOVE_AND_DIG_DOWN -> block.getRelative(BlockFace.DOWN);
@@ -2248,11 +2120,11 @@ public final class SfxAndroidService implements Listener {
         return -1;
     }
 
-    private void persist(UUID instanceId, SfxAndroidState state) {
+    void persist(UUID instanceId, SfxAndroidState state) {
         persist(instanceId, state, true);
     }
 
-    private void persist(UUID instanceId, SfxAndroidState state, boolean fullRefresh) {
+    void persist(UUID instanceId, SfxAndroidState state, boolean fullRefresh) {
         if (instanceId == null || state == null) {
             return;
         }
@@ -2298,14 +2170,14 @@ public final class SfxAndroidService implements Listener {
         }
     }
 
-    private SfxAndroidState stateFor(UUID instanceId, String typeId, Location location) {
+    SfxAndroidState stateFor(UUID instanceId, String typeId, Location location) {
         return states.computeIfAbsent(instanceId, id -> {
             SfxBlockInstanceRecord instance = blockData.findInstance(id).orElse(null);
             return SfxAndroidState.decode(instance == null ? new byte[0] : instance.stateBlob(), BlockFace.NORTH);
         });
     }
 
-    private Location toLocation(cc.theends6.sfx.internal.block.SfxBlockAnchorKey key) {
+    Location toLocation(cc.theends6.sfx.internal.block.SfxBlockAnchorKey key) {
         if (key == null) {
             return null;
         }
