@@ -135,7 +135,6 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 "basic:hand-input",
                 "hand:consume-input",
                 "world:drop-result",
-                "basic:enhanced-furnace-tick",
                 "furnace:intercept-burn-smelt",
                 "furnace:sync-virtual-state"
         )) {
@@ -148,9 +147,11 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if ("basic:hand-input".equals(effectName) || "hand:consume-input".equals(effectName) || "world:drop-result".equals(effectName)) {
             return frameworkHandInput(phaseContext);
         }
-        if ("basic:enhanced-furnace-tick".equals(effectName) || "furnace:intercept-burn-smelt".equals(effectName) || "furnace:sync-virtual-state".equals(effectName)) {
-            phaseContext.put("basic.furnace.framework-tick", Boolean.TRUE);
-            return SfxMachinePhaseResult.cont();
+        if ("furnace:intercept-burn-smelt".equals(effectName)) {
+            return frameworkEnhancedFurnaceTick(phaseContext);
+        }
+        if ("furnace:sync-virtual-state".equals(effectName)) {
+            return frameworkSyncEnhancedFurnace(phaseContext);
         }
         return SfxMachinePhaseResult.cont();
     }
@@ -172,6 +173,124 @@ public final class SfxBasicMachineBlockListener implements Listener {
             phaseContext.put("basic.handled", Boolean.TRUE);
             return SfxMachinePhaseResult.complete(cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING, "crucible handled through framework effect");
         }
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private SfxMachinePhaseResult frameworkEnhancedFurnaceTick(SfxMachinePhaseContext phaseContext) {
+        Block block = phaseContext.attachment("basic.block", Block.class).orElse(null);
+        SfxBlockAnchorKey key = phaseContext.attachment("basic.furnaceKey", SfxBlockAnchorKey.class).orElse(null);
+        FurnaceStats stats = phaseContext.attachment("basic.furnaceStats", FurnaceStats.class).orElse(null);
+        VirtualFurnaceState state = phaseContext.attachment("basic.furnaceState", VirtualFurnaceState.class).orElse(null);
+        SfxMachineTickContext context = phaseContext.tickContext();
+        if (block == null || key == null || stats == null || state == null || context == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        if (block.getType() != Material.FURNACE) {
+            enhancedFurnaces.remove(key);
+            virtualFurnaces.remove(key);
+            viewedFurnaces.remove(key);
+            phaseContext.put("basic.furnace.status", cc.theends6.sfx.internal.machine.SfxMachineStatus.ERROR);
+            return SfxMachinePhaseResult.failed("enhanced furnace block missing");
+        }
+        if (!state.initialized() || state.externalDirty()) {
+            hydrateVirtualFurnaceFromWorld(block, state);
+        }
+        if (!state.initialized()) {
+            phaseContext.put("basic.furnace.status", cc.theends6.sfx.internal.machine.SfxMachineStatus.ERROR);
+            return SfxMachinePhaseResult.failed("virtual furnace not initialized");
+        }
+        state.sleeping(false);
+
+        int elapsed = Math.max(1, context.elapsedTicksInt());
+        int cookTime = currentCookTime(state);
+        boolean forceVisual = false;
+        boolean outputBlocked = false;
+
+        for (int tick = 0; tick < elapsed; tick++) {
+            ItemStack input = state.smelting();
+            VirtualFurnaceRecipe recipe = resolveFurnaceRecipe(input).orElse(null);
+            if (recipe == null || input == null || input.getType().isAir()) {
+                if (state.cookProgress() != 0 || state.inputKey() != null) {
+                    forceVisual = true;
+                }
+                state.cookProgress(0);
+                state.inputKey(null);
+                burnOneVirtualFuelTick(state);
+                continue;
+            }
+
+            cookTime = recipe.cookingTime();
+            String inputKey = inputKey(input);
+            if (!inputKey.equals(state.inputKey())) {
+                state.inputKey(inputKey);
+                state.cookProgress(0);
+                forceVisual = true;
+            }
+
+            ItemStack result = applyEnhancedFurnaceFortune(recipe.result(), input.getType(), stats);
+            boolean canSmelt = canFitResult(state, result);
+            if (!canSmelt) {
+                outputBlocked = true;
+                if (state.cookProgress() != 0) {
+                    state.cookProgress(0);
+                    forceVisual = true;
+                }
+                burnOneVirtualFuelTick(state);
+                continue;
+            }
+
+            if (state.burnTimeRemaining() <= 0) {
+                ItemStack fuel = state.fuel();
+                int burnTicks = enhancedFuelTicks(fuel, stats);
+                if (burnTicks <= 0) {
+                    if (state.cookProgress() != 0) {
+                        state.cookProgress(0);
+                        forceVisual = true;
+                    }
+                    break;
+                }
+                consumeFuel(state, fuel);
+                state.burnTimeRemaining(burnTicks);
+                state.burnTimeTotal(burnTicks);
+                forceVisual = true;
+            }
+
+            if (state.burnTimeRemaining() > 0) {
+                burnOneVirtualFuelTick(state);
+                state.cookProgress(state.cookProgress() + Math.max(1, stats.processingSpeed()));
+                if (state.cookProgress() >= cookTime) {
+                    consumeSmeltingInput(state, input);
+                    pushFurnaceResult(state, result);
+                    state.cookProgress(0);
+                    ItemStack next = state.smelting();
+                    state.inputKey(next == null || next.getType().isAir() ? null : inputKey(next));
+                    forceVisual = true;
+                }
+            }
+        }
+
+        if (!context.hasViewers() && state.burnTimeRemaining() <= 0 && !canStartOrContinueVirtualSmelting(state, stats)) {
+            state.sleeping(true);
+        }
+        phaseContext.put("basic.furnace.forceVisual", forceVisual);
+        phaseContext.put("basic.furnace.cookTime", cookTime);
+        cc.theends6.sfx.internal.machine.SfxMachineStatus furnaceStatus = SfxBasicMachineFrameworkBridge.furnaceStatus(state.initialized(), state.cookProgress() > 0, outputBlocked, state.burnTimeRemaining() > 0);
+        phaseContext.put("basic.furnace.status", furnaceStatus);
+        return outputBlocked
+                ? SfxMachinePhaseResult.blocked(cc.theends6.sfx.internal.machine.SfxMachineStatus.OUTPUT_FULL, "enhanced furnace output blocked")
+                : SfxMachinePhaseResult.complete(furnaceStatus, "enhanced furnace tick executed through framework effect");
+    }
+
+    private SfxMachinePhaseResult frameworkSyncEnhancedFurnace(SfxMachinePhaseContext phaseContext) {
+        Block block = phaseContext.attachment("basic.block", Block.class).orElse(null);
+        VirtualFurnaceState state = phaseContext.attachment("basic.furnaceState", VirtualFurnaceState.class).orElse(null);
+        Integer cookTime = phaseContext.attachment("basic.furnace.cookTime", Integer.class).orElse(null);
+        Boolean forceVisual = phaseContext.attachment("basic.furnace.forceVisual", Boolean.class).orElse(null);
+        SfxMachineTickContext context = phaseContext.tickContext();
+        if (block == null || state == null || context == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        syncVirtualFurnaceWorld(block, state, cookTime == null ? currentCookTime(state) : cookTime, Boolean.TRUE.equals(forceVisual), context.hasViewers());
         return SfxMachinePhaseResult.cont();
     }
 
@@ -854,9 +973,6 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
-        if (!state.initialized() || state.externalDirty()) {
-            hydrateVirtualFurnaceFromWorld(block, state);
-        }
         String frameworkMachineId = blockData.findAnchor(block.getLocation())
                 .flatMap(anchor -> blockData.findInstance(anchor.instanceId()))
                 .map(SfxBlockInstanceRecord::typeId)
@@ -868,83 +984,10 @@ public final class SfxBasicMachineBlockListener implements Listener {
         frameworkAttributes.put("basic.furnaceState", state);
         frameworkAttributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkBasicEffect);
         try (SfxMachineExecution machineExecution = machineRuntime.beginTick(blockData.findAnchor(block.getLocation()).map(SfxAnchorRecord::instanceId).orElse(null), frameworkMachineId, block.getLocation(), context, new SfxMachineState(), frameworkAttributes)) {
-        if (!state.initialized()) {
-            machineExecution.status(cc.theends6.sfx.internal.machine.SfxMachineStatus.ERROR);
-            return;
-        }
-        state.sleeping(false);
-
-        int elapsed = Math.max(1, context.elapsedTicksInt());
-        int cookTime = currentCookTime(state);
-        boolean forceVisual = false;
-
-        for (int tick = 0; tick < elapsed; tick++) {
-            ItemStack input = state.smelting();
-            VirtualFurnaceRecipe recipe = resolveFurnaceRecipe(input).orElse(null);
-            if (recipe == null || input == null || input.getType().isAir()) {
-                if (state.cookProgress() != 0 || state.inputKey() != null) {
-                    forceVisual = true;
-                }
-                state.cookProgress(0);
-                state.inputKey(null);
-                burnOneVirtualFuelTick(state);
-                continue;
-            }
-
-            cookTime = recipe.cookingTime();
-            String inputKey = inputKey(input);
-            if (!inputKey.equals(state.inputKey())) {
-                state.inputKey(inputKey);
-                state.cookProgress(0);
-                forceVisual = true;
-            }
-
-            ItemStack result = applyEnhancedFurnaceFortune(recipe.result(), input.getType(), stats);
-            boolean canSmelt = canFitResult(state, result);
-            if (!canSmelt) {
-                if (state.cookProgress() != 0) {
-                    state.cookProgress(0);
-                    forceVisual = true;
-                }
-                burnOneVirtualFuelTick(state);
-                continue;
-            }
-
-            if (state.burnTimeRemaining() <= 0) {
-                ItemStack fuel = state.fuel();
-                int burnTicks = enhancedFuelTicks(fuel, stats);
-                if (burnTicks <= 0) {
-                    if (state.cookProgress() != 0) {
-                        state.cookProgress(0);
-                        forceVisual = true;
-                    }
-                    break;
-                }
-                consumeFuel(state, fuel);
-                state.burnTimeRemaining(burnTicks);
-                state.burnTimeTotal(burnTicks);
-                forceVisual = true;
-            }
-
-            if (state.burnTimeRemaining() > 0) {
-                burnOneVirtualFuelTick(state);
-                state.cookProgress(state.cookProgress() + Math.max(1, stats.processingSpeed()));
-                if (state.cookProgress() >= cookTime) {
-                    consumeSmeltingInput(state, input);
-                    pushFurnaceResult(state, result);
-                    state.cookProgress(0);
-                    ItemStack next = state.smelting();
-                    state.inputKey(next == null || next.getType().isAir() ? null : inputKey(next));
-                    forceVisual = true;
-                }
-            }
-        }
-
-        if (!context.hasViewers() && state.burnTimeRemaining() <= 0 && !canStartOrContinueVirtualSmelting(state, stats)) {
-            state.sleeping(true);
-        }
-        syncVirtualFurnaceWorld(block, state, cookTime, forceVisual, context.hasViewers());
-        machineExecution.status(SfxBasicMachineFrameworkBridge.furnaceStatus(state.initialized(), state.cookProgress() > 0, false, state.burnTimeRemaining() > 0));
+            Object status = frameworkAttributes.get("basic.furnace.status");
+            machineExecution.status(status instanceof cc.theends6.sfx.internal.machine.SfxMachineStatus machineStatus
+                    ? machineStatus
+                    : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE);
         }
     }
 

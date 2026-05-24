@@ -159,7 +159,6 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private void registerFrameworkEffects() {
         for (String effectName : List.of(
-                "configurable:legacy-kind-tick",
                 "reactor:consume-coolant",
                 "reactor:emit-energy",
                 "reactor:meltdown-on-error",
@@ -179,29 +178,26 @@ public final class SfxConfigurableMachineService implements Listener {
             return SfxMachinePhaseResult.cont();
         }
         phaseContext.put("configurable.framework.effect", effectName);
-        switch (effectName) {
-            case "configurable:legacy-kind-tick", "reactor:consume-coolant", "reactor:emit-energy", "assembler:validate-offset", "assembler:spawn-entity" -> {
-                return frameworkLegacyKindTick(phaseContext);
-            }
+        return switch (effectName) {
+            case "assembler:validate-offset" -> frameworkAssemblerValidate(phaseContext, instance, definition, state);
+            case "assembler:spawn-entity" -> frameworkAssemblerSpawn(phaseContext, definition, state);
+            case "reactor:consume-coolant" -> frameworkReactorProgress(phaseContext, instance, definition, state);
+            case "reactor:emit-energy" -> frameworkReactorEmit(phaseContext, definition, state);
             case "reactor:meltdown-on-error" -> {
                 phaseContext.put("configurable.reactor.meltdown.checked", Boolean.TRUE);
-                return SfxMachinePhaseResult.cont();
+                yield SfxMachinePhaseResult.cont();
             }
             case "proxy:resolve-host" -> {
                 phaseContext.put("configurable.proxy.host-resolve.requested", Boolean.TRUE);
-                return SfxMachinePhaseResult.cont();
+                phaseContext.put("configurable.proxy.host.instanceId", instance.instanceId());
+                yield SfxMachinePhaseResult.cont();
             }
-            default -> {
-                return SfxMachinePhaseResult.cont();
-            }
-        }
+            default -> SfxMachinePhaseResult.cont();
+        };
     }
 
-    private SfxMachinePhaseResult frameworkLegacyKindTick(SfxMachinePhaseContext phaseContext) {
-        SfxConfigurableMachineDefinition definition = phaseContext.attachment("configurable.definition", SfxConfigurableMachineDefinition.class).orElse(null);
-        SfxConfigurableMachineState state = phaseContext.attachment("configurable.state", SfxConfigurableMachineState.class).orElse(null);
-        SfxBlockInstanceRecord instance = phaseContext.attachment("configurable.instance", SfxBlockInstanceRecord.class).orElse(null);
-        if (definition == null || state == null || instance == null) {
+    private SfxMachinePhaseResult frameworkAssemblerValidate(SfxMachinePhaseContext phaseContext, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
+        if (definition.kind() != SfxConfigurableMachineKind.ASSEMBLER) {
             return SfxMachinePhaseResult.cont();
         }
         Location location = phaseContext.location();
@@ -209,13 +205,52 @@ public final class SfxConfigurableMachineService implements Listener {
         if (location == null || context == null) {
             return SfxMachinePhaseResult.blocked(cc.theends6.sfx.internal.machine.SfxMachineStatus.BLOCKED, "missing location/context");
         }
-        boolean changed = switch (definition.kind()) {
-            case ASSEMBLER -> tickAssembler(phaseContext.instanceId(), definition, state, location, context);
-            case REACTOR -> tickProductionFocusReactor(phaseContext.instanceId(), instance, definition, state, location, context);
-            case ACCESS_PORT -> false;
-        };
+        Location spawn = location.clone().add(0.5D, state.offsetTenths() / 10.0D, 0.5D);
+        phaseContext.put("configurable.assembler.spawn", spawn);
+        boolean changed = tickAssemblerProgress(phaseContext.instanceId(), definition, state, location, context, phaseContext.attributes());
         phaseContext.put("configurable.changed", changed);
-        return SfxMachinePhaseResult.complete(SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), "configurable legacy tick executed through framework effect");
+        return SfxMachinePhaseResult.complete(SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), "assembler progress executed through framework effect");
+    }
+
+    private SfxMachinePhaseResult frameworkAssemblerSpawn(SfxMachinePhaseContext phaseContext, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
+        if (definition.kind() != SfxConfigurableMachineKind.ASSEMBLER) {
+            return SfxMachinePhaseResult.cont();
+        }
+        Location location = phaseContext.location();
+        if (location == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        boolean spawned = spawnAssemblerOutput(definition, state, location, phaseContext.attributes());
+        if (spawned) {
+            phaseContext.put("configurable.changed", Boolean.TRUE);
+            return SfxMachinePhaseResult.complete(SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), "assembler completion executed through framework effect");
+        }
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private SfxMachinePhaseResult frameworkReactorProgress(SfxMachinePhaseContext phaseContext, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
+        if (definition.kind() != SfxConfigurableMachineKind.REACTOR) {
+            return SfxMachinePhaseResult.cont();
+        }
+        Location location = phaseContext.location();
+        SfxMachineTickContext context = phaseContext.tickContext();
+        if (location == null || context == null) {
+            return SfxMachinePhaseResult.blocked(cc.theends6.sfx.internal.machine.SfxMachineStatus.BLOCKED, "missing location/context");
+        }
+        boolean changed = tickProductionFocusReactor(phaseContext.instanceId(), instance, definition, state, location, context, phaseContext.attributes());
+        phaseContext.put("configurable.changed", changed);
+        return SfxMachinePhaseResult.complete(SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), "reactor progress executed through framework effect");
+    }
+
+    private SfxMachinePhaseResult frameworkReactorEmit(SfxMachinePhaseContext phaseContext, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
+        if (definition.kind() != SfxConfigurableMachineKind.REACTOR) {
+            return SfxMachinePhaseResult.cont();
+        }
+        Integer generated = phaseContext.attachment("configurable.reactor.generated", Integer.class).orElse(0);
+        phaseContext.put("configurable.reactor.emitted", generated);
+        return generated > 0
+                ? SfxMachinePhaseResult.complete(SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), "reactor emission recorded through framework effect")
+                : SfxMachinePhaseResult.cont();
     }
 
     private Map<String, Object> configurableFrameworkAttributes(SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, SfxConfigurableMachineSession session) {
@@ -230,7 +265,13 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private boolean runFrameworkConfigurableTick(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, SfxConfigurableMachineSession session, Location location, SfxMachineTickContext context, Map<String, Object> attributes) {
-        machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_PROGRESS, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+        machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+        if (definition.kind() == SfxConfigurableMachineKind.REACTOR) {
+            machineRuntime.runPhase(definition.id(), SfxMachinePhase.AFTER_PROGRESS, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+        }
+        if (definition.kind() == SfxConfigurableMachineKind.ASSEMBLER && Boolean.TRUE.equals(attributes.get("configurable.assembler.readyToSpawn"))) {
+            machineRuntime.runPhase(definition.id(), SfxMachinePhase.ON_COMPLETE, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+        }
         Object changed = attributes.get("configurable.changed");
         return changed instanceof Boolean value && value;
     }
@@ -790,14 +831,14 @@ public final class SfxConfigurableMachineService implements Listener {
         }
     }
 
-    private boolean tickProductionFocusReactor(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location, SfxMachineTickContext context) {
+    private boolean tickProductionFocusReactor(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location, SfxMachineTickContext context, Map<String, Object> frameworkAttributes) {
         if (definition.kind() != SfxConfigurableMachineKind.REACTOR || state.mode() == 0 || location == null) {
             return false;
         }
         boolean changed = false;
         int loops = Math.max(1, Math.min(100, context.elapsedTicksInt()));
         for (int i = 0; i < loops; i++) {
-            ReactorTickResult result = tickReactor(instanceId, instance, definition, state, location);
+            ReactorTickResult result = tickReactor(instanceId, instance, definition, state, location, null);
             changed |= result.changed();
             if (blockData.findInstance(instanceId).isEmpty()) {
                 return changed;
@@ -806,7 +847,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return changed;
     }
 
-    private boolean tickAssembler(UUID instanceId, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location, SfxMachineTickContext context) {
+    private boolean tickAssemblerProgress(UUID instanceId, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location, SfxMachineTickContext context, Map<String, Object> frameworkAttributes) {
         if (location == null) {
             return false;
         }
@@ -842,17 +883,38 @@ public final class SfxConfigurableMachineService implements Listener {
         changed = true;
         if (state.fuelProgressTicks() >= state.fuelTotalTicks()) {
             Location spawn = location.clone().add(0.5D, state.offsetTenths() / 10.0D, 0.5D);
-            if (definition.spawnType() == EntityType.IRON_GOLEM) {
-                IronGolem golem = (IronGolem) location.getWorld().spawnEntity(spawn, EntityType.IRON_GOLEM);
-                golem.setPlayerCreated(true);
-                location.getWorld().playSound(location, Sound.ENTITY_IRON_GOLEM_REPAIR, 1.0F, 1.0F);
-            } else if (definition.spawnType() == EntityType.WITHER) {
-                Wither wither = (Wither) location.getWorld().spawnEntity(spawn, EntityType.WITHER);
-                wither.setInvulnerableTicks(220);
+            if (frameworkAttributes != null) {
+                frameworkAttributes.put("configurable.assembler.readyToSpawn", Boolean.TRUE);
+                frameworkAttributes.put("configurable.assembler.spawn", spawn);
             }
-            state.clearFuel();
         }
         return changed;
+    }
+
+    private boolean spawnAssemblerOutput(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location, Map<String, Object> frameworkAttributes) {
+        if (definition == null || state == null || location == null || location.getWorld() == null) {
+            return false;
+        }
+        if (frameworkAttributes == null || !Boolean.TRUE.equals(frameworkAttributes.get("configurable.assembler.readyToSpawn"))) {
+            return false;
+        }
+        Location spawn = frameworkAttributes.get("configurable.assembler.spawn") instanceof Location loc
+                ? loc.clone()
+                : location.clone().add(0.5D, state.offsetTenths() / 10.0D, 0.5D);
+        if (definition.spawnType() == EntityType.IRON_GOLEM) {
+            IronGolem golem = (IronGolem) location.getWorld().spawnEntity(spawn, EntityType.IRON_GOLEM);
+            golem.setPlayerCreated(true);
+            location.getWorld().playSound(location, Sound.ENTITY_IRON_GOLEM_REPAIR, 1.0F, 1.0F);
+        } else if (definition.spawnType() == EntityType.WITHER) {
+            Wither wither = (Wither) location.getWorld().spawnEntity(spawn, EntityType.WITHER);
+            wither.setInvulnerableTicks(220);
+        } else {
+            return false;
+        }
+        state.clearFuel();
+        frameworkAttributes.put("configurable.assembler.readyToSpawn", Boolean.FALSE);
+        frameworkAttributes.put("configurable.assembler.spawned", Boolean.TRUE);
+        return true;
     }
 
     public int generateProducerEnergy(UUID instanceId) {
@@ -891,7 +953,7 @@ public final class SfxConfigurableMachineService implements Listener {
         boolean changed = false;
         int loops = Math.max(1, Math.min(100, (int) elapsedTicks));
         for (int i = 0; i < loops; i++) {
-            ReactorTickResult result = tickReactor(instanceId, instance, definition, state, location);
+            ReactorTickResult result = tickReactor(instanceId, instance, definition, state, location, null);
             totalGenerated += result.generatedEnergy();
             changed |= result.changed();
             if (blockData.findInstance(instanceId).isEmpty()) {
@@ -909,7 +971,7 @@ public final class SfxConfigurableMachineService implements Listener {
         return totalGenerated;
     }
 
-    private ReactorTickResult tickReactor(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location) {
+    private ReactorTickResult tickReactor(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, Location location, Map<String, Object> frameworkAttributes) {
         if (location == null || location.getWorld() == null) {
             return new ReactorTickResult(0, false);
         }
@@ -926,6 +988,7 @@ public final class SfxConfigurableMachineService implements Listener {
             }
             if (!hasWaterCooling(location) || !consumeCoolantIfNeeded(state, definition)) {
                 meltDownReactor(instance, location);
+                if (frameworkAttributes != null) frameworkAttributes.put("configurable.reactor.meltdown", Boolean.TRUE);
                 return new ReactorTickResult(0, true);
             }
             consumeInput(state, fuelSlotIndex(state, fuel), fuel.amount());
@@ -936,10 +999,12 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         if (!hasWaterCooling(location)) {
             meltDownReactor(instance, location);
+            if (frameworkAttributes != null) frameworkAttributes.put("configurable.reactor.meltdown", Boolean.TRUE);
             return new ReactorTickResult(0, true);
         }
         if (!consumeCoolantIfNeeded(state, definition)) {
             meltDownReactor(instance, location);
+            if (frameworkAttributes != null) frameworkAttributes.put("configurable.reactor.meltdown", Boolean.TRUE);
             return new ReactorTickResult(0, true);
         }
         boolean electricityFocus = state.mode() == 0;
@@ -972,6 +1037,7 @@ public final class SfxConfigurableMachineService implements Listener {
             state.clearFuel();
         }
         updateReactorHologram(instance.anchorKey(), state);
+        if (frameworkAttributes != null) frameworkAttributes.put("configurable.reactor.generated", generated);
         return new ReactorTickResult(generated, true);
     }
 

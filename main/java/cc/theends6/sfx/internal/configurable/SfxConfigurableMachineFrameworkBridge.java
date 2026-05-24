@@ -2,8 +2,6 @@ package cc.theends6.sfx.internal.configurable;
 
 import cc.theends6.sfx.internal.machine.SfxMachineCategory;
 import cc.theends6.sfx.internal.machine.SfxMachineDefinition;
-import cc.theends6.sfx.internal.machine.SfxMachineEffect;
-import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
 import cc.theends6.sfx.internal.ui.SfxMenuLayout;
 import cc.theends6.sfx.internal.ui.SfxSlotPolicy;
@@ -27,7 +25,6 @@ final class SfxConfigurableMachineFrameworkBridge {
         int status = switch (definition.kind()) { case ASSEMBLER -> 22; case REACTOR -> 49; case ACCESS_PORT -> -1; };
         SfxMachineDefinition frameworkDefinition = cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(new SfxMachineDefinition(definition.id(), definition.id(), SfxMachineCategory.CONFIGURABLE, inputs, outputs, status, 1));
         return frameworkDefinition.toBuilder()
-                .effect(SfxMachineEffect.marker("configurable:legacy-kind-tick", SfxMachinePhase.BEFORE_PROGRESS))
                 .build();
     }
     static SfxMachineStatus statusFor(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition definition) {

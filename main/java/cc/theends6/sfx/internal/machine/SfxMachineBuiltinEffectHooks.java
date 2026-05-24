@@ -55,12 +55,7 @@ public final class SfxMachineBuiltinEffectHooks {
             "generator:consume-fuel",
             "generator:emit-energy",
             "charge:write-item-energy",
-            "electric:legacy-recipe-pipeline",
-            "electric:legacy-complete-recipe",
-            "electric:legacy-special-operation",
-            "configurable:legacy-kind-tick",
-            "basic:hand-input",
-            "basic:enhanced-furnace-tick"
+            "basic:hand-input"
     );
 
     /** Registers safe framework-native hooks for every built-in special effect name. */
@@ -83,11 +78,11 @@ public final class SfxMachineBuiltinEffectHooks {
         }
         context.put("framework.effect." + effectName + ".handled", Boolean.FALSE);
         return switch (effectName) {
-            case "recipe:resolve-operation", "electric:legacy-recipe-pipeline" -> recipeResolve(context, effectName);
+            case "recipe:resolve-operation" -> recipeResolve(context, effectName);
             case "inventory:reserve-output" -> inventoryReserveOutput(context);
-            case "inventory:commit-output", "electric:legacy-complete-recipe" -> inventoryCommitOutput(context, effectName);
+            case "inventory:commit-output" -> inventoryCommitOutput(context, effectName);
             case "furnace:intercept-burn-smelt" -> furnaceIntercept(context);
-            case "furnace:sync-virtual-state", "basic:enhanced-furnace-tick" -> furnaceSync(context, effectName);
+            case "furnace:sync-virtual-state" -> furnaceSync(context, effectName);
             case "hand:consume-input", "basic:hand-input" -> handInput(context, effectName);
             case "world:drop-result" -> worldDrop(context);
             case "brew:validate-potions" -> brewValidate(context);

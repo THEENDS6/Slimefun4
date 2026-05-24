@@ -2,8 +2,6 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.internal.machine.SfxMachineCategory;
 import cc.theends6.sfx.internal.machine.SfxMachineDefinition;
-import cc.theends6.sfx.internal.machine.SfxMachineEffect;
-import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
 import cc.theends6.sfx.internal.ui.SfxMenuLayout;
 import cc.theends6.sfx.internal.ui.SfxSlotPolicy;
@@ -23,14 +21,7 @@ final class SfxElectricMachineFrameworkBridge {
     static SfxMachineDefinition toFrameworkDefinition(SfxElectricMachineDefinition definition) {
         int statusSlot = definition.menuStyle() == SfxElectricMachineMenuStyle.NONE ? -1 : 22;
         SfxMachineDefinition frameworkDefinition = new SfxMachineDefinition(definition.id(), definition.title(), SfxMachineCategory.ELECTRIC, ints(definition.inputSlots()), ints(definition.outputSlots()), statusSlot, 1);
-        SfxMachineDefinition.Builder builder = cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(frameworkDefinition).toBuilder();
-        if (definition.recipeProvider().hasWorldAction() || definition.recipeProvider().hasSpecialTick()) {
-            builder.effect(SfxMachineEffect.marker("electric:legacy-special-operation", SfxMachinePhase.BEFORE_OPERATION_RESOLVE));
-        } else {
-            builder.effect(SfxMachineEffect.marker("electric:legacy-recipe-pipeline", SfxMachinePhase.BEFORE_OPERATION_RESOLVE));
-            builder.effect(SfxMachineEffect.marker("electric:legacy-complete-recipe", SfxMachinePhase.ON_COMPLETE));
-        }
-        return builder.build();
+        return cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(frameworkDefinition);
     }
     static SfxMachineStatus status(SfxElectricMachineRenderStatus status) {
         if (status == null) return SfxMachineStatus.ERROR;

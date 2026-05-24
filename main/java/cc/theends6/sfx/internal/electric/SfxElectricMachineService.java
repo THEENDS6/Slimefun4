@@ -142,9 +142,6 @@ public final class SfxElectricMachineService implements Listener {
 
     private void registerFrameworkEffects() {
         for (String effectName : List.of(
-                "electric:legacy-special-operation",
-                "electric:legacy-recipe-pipeline",
-                "electric:legacy-complete-recipe",
                 "recipe:resolve-operation",
                 "inventory:reserve-output",
                 "inventory:commit-output",
@@ -173,13 +170,13 @@ public final class SfxElectricMachineService implements Listener {
         }
         phaseContext.put("electric.framework.effect", effectName);
         switch (effectName) {
-            case "electric:legacy-special-operation", "brew:validate-potions", "crafting:simulate", "gps:check-signal-and-scan", "geo:extract-resource", "fluid:locate-source", "fluid:remove-source-and-update", "meta:validate-input", "meta:apply-transform" -> {
+            case "brew:validate-potions", "crafting:simulate", "gps:check-signal-and-scan", "fluid:locate-source", "meta:validate-input" -> {
                 if (definition.recipeProvider().hasWorldAction() || definition.recipeProvider().hasSpecialTick()) {
-                    return frameworkLegacyElectricSpecialOperation(phaseContext);
+                    return frameworkRunSpecialOperation(phaseContext, effectName);
                 }
                 return SfxMachinePhaseResult.cont();
             }
-            case "recipe:resolve-operation", "electric:legacy-recipe-pipeline" -> {
+            case "recipe:resolve-operation" -> {
                 SfxElectricRecipe active = recipeProcessor.activeRecipe(definition, state);
                 phaseContext.put("electric.activeRecipe", active);
                 if (active == null) {
@@ -201,7 +198,7 @@ public final class SfxElectricMachineService implements Listener {
                 }
                 return SfxMachinePhaseResult.cont();
             }
-            case "inventory:commit-output", "electric:legacy-complete-recipe", "brew:commit-multi-bottle-output", "crafting:commit-transaction" -> {
+            case "inventory:commit-output", "brew:commit-multi-bottle-output", "crafting:commit-transaction", "geo:extract-resource", "fluid:remove-source-and-update", "meta:apply-transform" -> {
                 phaseContext.put("electric.output.committed.by", effectName);
                 return SfxMachinePhaseResult.cont();
             }
@@ -223,7 +220,7 @@ public final class SfxElectricMachineService implements Listener {
         }
     }
 
-    private SfxMachinePhaseResult frameworkLegacyElectricSpecialOperation(SfxMachinePhaseContext phaseContext) {
+    private SfxMachinePhaseResult frameworkRunSpecialOperation(SfxMachinePhaseContext phaseContext, String effectName) {
         SfxElectricMachineDefinition definition = phaseContext.attachment("electric.definition", SfxElectricMachineDefinition.class).orElse(null);
         SfxElectricMachineState state = phaseContext.attachment("electric.state", SfxElectricMachineState.class).orElse(null);
         SfxElectricMachineSession session = phaseContext.attachment("electric.session", SfxElectricMachineSession.class).orElse(null);
@@ -251,7 +248,8 @@ public final class SfxElectricMachineService implements Listener {
             return SfxMachinePhaseResult.cont();
         }
         phaseContext.put("electric.specialResult", customResult);
-        return SfxMachinePhaseResult.complete(SfxElectricMachineFrameworkBridge.status(customResult.status()), "electric legacy special operation executed through framework effect");
+        phaseContext.put("electric.special.executed.by", effectName);
+        return SfxMachinePhaseResult.complete(SfxElectricMachineFrameworkBridge.status(customResult.status()), "electric special operation executed through framework effect");
     }
 
     private Map<String, Object> electricFrameworkAttributes(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineSession session) {
@@ -272,6 +270,16 @@ public final class SfxElectricMachineService implements Listener {
         machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, attributes);
         Object result = attributes.get("electric.specialResult");
         return result instanceof SfxElectricMachineTickResult tickResult ? tickResult : null;
+    }
+
+    private void runFrameworkOutputCommit(UUID instanceId, SfxElectricMachineDefinition definition, Location location, SfxMachineTickContext context, Map<String, Object> attributes, SfxElectricMachineRenderStatus status) {
+        if (definition == null || location == null || context == null) {
+            return;
+        }
+        if (status != null) {
+            attributes.put("electric.renderStatus", status);
+        }
+        machineRuntime.runPhase(definition.id(), SfxMachinePhase.AFTER_OUTPUT, instanceId, location, context, null, SfxElectricMachineFrameworkBridge.status(status == null ? SfxElectricMachineRenderStatus.IDLE : status), attributes);
     }
 
     public boolean supportsType(String typeId) {
@@ -814,6 +822,7 @@ public final class SfxElectricMachineService implements Listener {
         }
         SfxElectricMachineTickResult customResult = location == null ? null : runFrameworkSpecialOperation(instanceId, definition, state, session, location, context, frameworkAttributes);
         if (customResult != null) {
+            frameworkAttributes.put("electric.renderStatus", customResult.status());
             if (customResult.consumedEnergy() > 0) {
                 recentEnergyConsumption.merge(instanceId, customResult.consumedEnergy(), Integer::sum);
             }
@@ -823,8 +832,8 @@ public final class SfxElectricMachineService implements Listener {
             if (customResult.changed()) {
                 dirtyInstances.add(instanceId);
             }
-            if ("sf:geo_miner".equals(definition.id())) {
-                updateGeoMinerFloatingText(location, state, customResult.status());
+            if (customResult.changed() || customResult.status() == SfxElectricMachineRenderStatus.WORKING) {
+                machineRuntime.runPhase(definition.id(), SfxMachinePhase.ON_COMPLETE, instanceId, location, context, null, SfxElectricMachineFrameworkBridge.status(customResult.status()), frameworkAttributes);
             }
             if (session != null && shouldRenderSession(session, customResult.status())) {
                 SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO
@@ -858,6 +867,7 @@ public final class SfxElectricMachineService implements Listener {
                 recipeProcessor.pushOutput(state, outputSlot, pendingOutput);
                 state.resetProgress();
                 dirtyInstances.add(instanceId);
+                runFrameworkOutputCommit(instanceId, definition, location, context, frameworkAttributes, SfxElectricMachineRenderStatus.WORKING);
                 playCompleteSound(session);
                 SfxElectricRecipeStart nextStart = recipeProcessor.tryStartNextRecipe(definition, state);
                 if (nextStart != null) {
@@ -912,7 +922,7 @@ public final class SfxElectricMachineService implements Listener {
             } else {
                 int totalWork = recipeProcessor.requiredWork(activeRecipe);
                 if (state.progressWork() >= totalWork) {
-                    status = completeActiveRecipe(instanceId, state, activeRecipe, definition, session);
+                    status = completeActiveRecipe(instanceId, state, activeRecipe, definition, session, location, context, frameworkAttributes);
                 } else {
                     int elapsed = Math.max(1, context.elapsedTicksInt());
                     int speed = Math.max(1, definition.speed());
@@ -934,7 +944,7 @@ public final class SfxElectricMachineService implements Listener {
                         int progressed = Math.min(totalWork, state.progressWork() + speed * progressTicks);
                         state.progressWork(progressed);
                         status = progressed >= totalWork
-                                ? completeActiveRecipe(instanceId, state, activeRecipe, definition, session)
+                                ? completeActiveRecipe(instanceId, state, activeRecipe, definition, session, location, context, frameworkAttributes)
                                 : SfxElectricMachineRenderStatus.WORKING;
                     }
                 }
@@ -958,7 +968,10 @@ public final class SfxElectricMachineService implements Listener {
             SfxElectricMachineState state,
             SfxElectricRecipe activeRecipe,
             SfxElectricMachineDefinition definition,
-            SfxElectricMachineSession session
+            SfxElectricMachineSession session,
+            Location location,
+            SfxMachineTickContext context,
+            Map<String, Object> frameworkAttributes
     ) {
         List<SfxElectricStack> recipeOutputs = state.activeOutputs().isEmpty()
                 ? activeRecipe.outputs()
@@ -970,6 +983,7 @@ public final class SfxElectricMachineService implements Listener {
         }
         recipeProcessor.pushOutputs(state, outputSlots, recipeOutputs);
         state.resetProgress();
+        runFrameworkOutputCommit(instanceId, definition, location, context, frameworkAttributes, SfxElectricMachineRenderStatus.WORKING);
         SfxElectricRecipeStart nextStart = recipeProcessor.tryStartNextRecipe(definition, state);
         if (nextStart != null) {
             activeInstances.add(instanceId);
