@@ -5,6 +5,7 @@ import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
+import cc.theends6.sfx.internal.machine.*;
 import cc.theends6.sfx.internal.ui.SfxUiItems;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -50,15 +51,43 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
     private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
     private final SfxFloatingTextDisplayService floatingText;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final Map<UUID, UUID> pendingEdits = new ConcurrentHashMap<>();
 
-    public SfxHologramProjectorService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxFloatingTextDisplayService floatingText) {
+    public SfxHologramProjectorService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxFloatingTextDisplayService floatingText, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.floatingText = Objects.requireNonNull(floatingText, "floatingText");
+        this.machineRuntime = machineRuntime == null ? new SfxMachineRuntimeEngine() : machineRuntime;
+        registerFrameworkDefinitions();
+    }
+
+    private void registerFrameworkDefinitions() {
+        machineRuntime.registerDefinitionIfAbsent(SfxMachineDefinition.builder(HOLOGRAM_PROJECTOR)
+                .displayName(HOLOGRAM_PROJECTOR)
+                .category(SfxMachineCategory.SPECIAL)
+                .effect(SfxMachineEffect.marker("hologram:open-editor", SfxMachinePhase.BEFORE_OPERATION_RESOLVE))
+                .effect(SfxMachineEffect.marker("hologram:update-text", SfxMachinePhase.ON_COMPLETE))
+                .effect(SfxMachineEffect.marker("hologram:sync-display", SfxMachinePhase.AFTER_TICK))
+                .build());
+    }
+
+    public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
+        if (context == null) return SfxMachinePhaseResult.cont();
+        context.put("hologram.framework.effect", effectName);
+        context.put("hologram.framework.effect.handled", Boolean.TRUE);
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private Map<String, Object> frameworkAttributes(SfxBlockInstanceRecord instance, HologramState state) {
+        Map<String, Object> attributes = new java.util.HashMap<>();
+        attributes.put("hologram.instance", instance);
+        attributes.put("hologram.state", state);
+        attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkEffect);
+        return attributes;
     }
 
     public boolean supportsType(String typeId) {
@@ -74,10 +103,15 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
             return;
         }
         HologramState state = HologramState.decode(instance.stateBlob());
+        Map<String, Object> framework = frameworkAttributes(instance, state);
+        World world = Bukkit.getWorld(instance.anchorKey().worldId());
+        Location location = world == null ? null : new Location(world, instance.anchorKey().x(), instance.anchorKey().y(), instance.anchorKey().z());
+        machineRuntime.runPhase(typeId, SfxMachinePhase.ON_PLACE, instanceId, location, null, null, SfxMachineStatus.IDLE, framework);
         if (instance.stateBlob().length == 0) {
             blockData.updateInstanceState(instanceId, state.encode(), SfxBlockLifecycleState.IDLE);
         }
         updateProjection(instance, state);
+        machineRuntime.runPhase(typeId, SfxMachinePhase.AFTER_TICK, instanceId, location, null, null, SfxMachineStatus.IDLE, framework);
     }
 
     public void rebuildIndex() {
@@ -92,6 +126,9 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         if (instance != null) {
+            World world = Bukkit.getWorld(instance.anchorKey().worldId());
+            Location location = world == null ? block.getLocation() : new Location(world, instance.anchorKey().x(), instance.anchorKey().y(), instance.anchorKey().z());
+            machineRuntime.runPhase(typeId, SfxMachinePhase.ON_BREAK, instanceId, location, null, null, SfxMachineStatus.IDLE, frameworkAttributes(instance, HologramState.decode(instance.stateBlob())));
             floatingText.remove(key(instance.anchorKey()));
         }
         SfxBlockDrops.dropPluginBlock(block, items, typeId);
@@ -125,6 +162,7 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
             return;
         }
         event.setCancelled(true);
+        machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), event.getClickedBlock().getLocation(), null, null, SfxMachineStatus.IDLE, frameworkAttributes(instance, HologramState.decode(instance.stateBlob())));
         if (!canEdit(event.getPlayer(), instance)) {
             send(event.getPlayer(), "machines.hologram-projector.not-owner", "<red>Only the owner can edit this Hologram Projector.</red>");
             return;
@@ -212,7 +250,12 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
     private void persist(SfxBlockInstanceRecord instance, HologramState state) {
         blockData.updateInstanceState(instance.instanceId(), state.encode(), SfxBlockLifecycleState.IDLE);
         SfxBlockInstanceRecord updated = blockData.findInstance(instance.instanceId()).orElse(instance);
+        World world = Bukkit.getWorld(updated.anchorKey().worldId());
+        Location location = world == null ? null : new Location(world, updated.anchorKey().x(), updated.anchorKey().y(), updated.anchorKey().z());
+        Map<String, Object> framework = frameworkAttributes(updated, state);
+        machineRuntime.runPhase(updated.typeId(), SfxMachinePhase.ON_COMPLETE, updated.instanceId(), location, null, null, SfxMachineStatus.RUNNING, framework);
         updateProjection(updated, state);
+        machineRuntime.runPhase(updated.typeId(), SfxMachinePhase.AFTER_TICK, updated.instanceId(), location, null, null, SfxMachineStatus.RUNNING, framework);
     }
 
     private void updateProjection(SfxBlockInstanceRecord instance, HologramState state) {

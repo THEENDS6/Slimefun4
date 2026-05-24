@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.block;
 
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.internal.machine.*;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
@@ -35,14 +36,46 @@ public final class SfxSpawnerService implements SfxProgrammaticBlockPlacement {
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final NamespacedKey spawnerTypeKey;
 
-    public SfxSpawnerService(JavaPlugin plugin, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData) {
+    public SfxSpawnerService(JavaPlugin plugin, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
+        this.machineRuntime = machineRuntime == null ? new SfxMachineRuntimeEngine() : machineRuntime;
         this.spawnerTypeKey = new NamespacedKey(plugin, "spawner_type");
+        registerFrameworkDefinitions();
+    }
+
+    private void registerFrameworkDefinitions() {
+        machineRuntime.registerDefinitionIfAbsent(SfxMachineDefinition.builder(REINFORCED_SPAWNER)
+                .displayName(REINFORCED_SPAWNER)
+                .category(SfxMachineCategory.SPECIAL)
+                .effect(SfxMachineEffect.marker("spawner:restore-entity-type", SfxMachinePhase.ON_PLACE))
+                .effect(SfxMachineEffect.marker("spawner:drop-fractured-item", SfxMachinePhase.ON_BREAK))
+                .effect(SfxMachineEffect.marker("spawner:repair-to-reinforced", SfxMachinePhase.ON_COMPLETE))
+                .build());
+    }
+
+    public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
+        if (context == null) return SfxMachinePhaseResult.cont();
+        context.put("spawner.framework.effect", effectName);
+        context.put("spawner.framework.effect.handled", Boolean.TRUE);
+        context.attachment("spawner.type", EntityType.class).ifPresent(type -> context.put("spawner.framework.type", type.name()));
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private Map<String, Object> frameworkAttributes(UUID instanceId, String typeId, Block block, EntityType spawnerType, ItemStack sourceItem) {
+        Map<String, Object> attributes = new java.util.HashMap<>();
+        attributes.put("spawner.instanceId", instanceId);
+        attributes.put("spawner.typeId", typeId);
+        attributes.put("spawner.block", block);
+        attributes.put("spawner.type", spawnerType);
+        attributes.put("spawner.sourceItem", sourceItem);
+        attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkEffect);
+        return attributes;
     }
 
     public NamespacedKey spawnerTypeKey() {
@@ -67,8 +100,11 @@ public final class SfxSpawnerService implements SfxProgrammaticBlockPlacement {
         }
         Block block = world.getBlockAt(instance.anchorKey().x(), instance.anchorKey().y(), instance.anchorKey().z());
         EntityType type = readSpawnerType(sourceItem).orElseGet(() -> readSpawnerType(block).orElse(EntityType.PIG));
+        Map<String, Object> framework = frameworkAttributes(instanceId, typeId, block, type, sourceItem);
+        machineRuntime.runPhase(typeId, SfxMachinePhase.ON_PLACE, instanceId, block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, framework);
         applySpawnerType(block, type);
         blockData.updateInstanceState(instanceId, encode(type), SfxBlockLifecycleState.IDLE);
+        machineRuntime.runPhase(typeId, SfxMachinePhase.AFTER_TICK, instanceId, block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, framework);
     }
 
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId, boolean containmentPickaxe) {
@@ -76,6 +112,8 @@ public final class SfxSpawnerService implements SfxProgrammaticBlockPlacement {
             return;
         }
         EntityType type = readSpawnerType(block).orElseGet(() -> readSpawnerType(instanceId).orElse(EntityType.PIG));
+        Map<String, Object> framework = frameworkAttributes(instanceId, typeId, block, type, null);
+        machineRuntime.runPhase(typeId, SfxMachinePhase.ON_BREAK, instanceId, block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, framework);
         DropMode mode = dropMode();
         if (mode == DropMode.REINFORCED) {
             SfxBlockDrops.dropItem(block, createReinforcedSpawner(type, 1));

@@ -487,6 +487,11 @@ public final class SfxAncientAltarService implements Listener {
             return;
         }
         int step = session.step();
+        SfxBlockInstanceRecord frameworkAltar = instanceAt(session.altarKey());
+        Map<String, Object> framework = frameworkAltar == null ? null : altarFrameworkAttributes(frameworkAltar, null, session);
+        if (frameworkAltar != null) {
+            machineRuntime.runPhase(frameworkAltar.typeId(), SfxMachinePhase.BEFORE_PROGRESS, frameworkAltar.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, framework);
+        }
         if (step == STEP_COUNT) {
             completeSession(session);
             return;
@@ -508,6 +513,9 @@ public final class SfxAncientAltarService implements Listener {
         }
 
         session.advanceStep();
+        if (frameworkAltar != null) {
+            machineRuntime.runPhase(frameworkAltar.typeId(), SfxMachinePhase.AFTER_PROGRESS, frameworkAltar.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, framework);
+        }
         scheduleTick(sessionId);
     }
 
@@ -531,6 +539,9 @@ public final class SfxAncientAltarService implements Listener {
             machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.ON_COMPLETE, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, altarFrameworkAttributes(altarInstance, null, session));
             machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.AFTER_TICK, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, altarFrameworkAttributes(altarInstance, null, session));
         }
+        if (altarInstance != null) {
+            machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.AFTER_OUTPUT, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, altarFrameworkAttributes(altarInstance, null, session));
+        }
         unregisterSession(session);
         clearPedestalStates(session, false);
         setLifecycleIdle(session);
@@ -547,6 +558,9 @@ public final class SfxAncientAltarService implements Listener {
     }
 
     private void abortSession(RitualSession session, boolean dropInputs) {
+        if (altarInstance != null) {
+            machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.AFTER_OUTPUT, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, altarFrameworkAttributes(altarInstance, null, session));
+        }
         unregisterSession(session);
         clearPedestalStates(session, false);
         setLifecycleIdle(session);

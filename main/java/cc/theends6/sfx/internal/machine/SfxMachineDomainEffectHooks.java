@@ -2,9 +2,14 @@ package cc.theends6.sfx.internal.machine;
 
 import cc.theends6.sfx.internal.altar.SfxAncientAltarService;
 import cc.theends6.sfx.internal.android.SfxAndroidService;
+import cc.theends6.sfx.internal.block.SfxBlockPlacerService;
+import cc.theends6.sfx.internal.block.SfxHologramProjectorService;
+import cc.theends6.sfx.internal.block.SfxInfusedHopperService;
+import cc.theends6.sfx.internal.block.SfxSpawnerService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
+import cc.theends6.sfx.internal.machine.SfxIndustrialMinerService;
 import java.util.List;
 
 /**
@@ -24,7 +29,12 @@ public final class SfxMachineDomainEffectHooks {
             SfxAndroidService android,
             SfxAncientAltarService altar,
             SfxEnergyService energy,
-            SfxCargoService cargo
+            SfxCargoService cargo,
+            SfxSpawnerService spawner,
+            SfxInfusedHopperService infusedHopper,
+            SfxHologramProjectorService hologram,
+            SfxBlockPlacerService placer,
+            SfxIndustrialMinerService miner
     ) {
         if (runtime == null) return 0;
         int before = runtime.effectHookCount();
@@ -33,6 +43,11 @@ public final class SfxMachineDomainEffectHooks {
         registerAltar(runtime, altar);
         registerEnergy(runtime, energy);
         registerCargo(runtime, cargo);
+        registerSpawner(runtime, spawner);
+        registerInfusedHopper(runtime, infusedHopper);
+        registerHologram(runtime, hologram);
+        registerBlockPlacer(runtime, placer);
+        registerIndustrialMiner(runtime, miner);
         return Math.max(0, runtime.effectHookCount() - before);
     }
 
@@ -63,6 +78,36 @@ public final class SfxMachineDomainEffectHooks {
     private static void registerCargo(SfxMachineRuntimeEngine runtime, SfxCargoService cargo) {
         for (String name : List.of("cargo:resolve-endpoints", "cargo:commit-transfer")) {
             runtime.registerEffectHook(name, ctx -> cargo == null ? domain(ctx, "cargo", null) : cargo.frameworkEffect(name, ctx));
+        }
+    }
+
+    private static void registerSpawner(SfxMachineRuntimeEngine runtime, SfxSpawnerService spawner) {
+        for (String name : List.of("spawner:restore-entity-type", "spawner:drop-fractured-item", "spawner:repair-to-reinforced")) {
+            runtime.registerEffectHook(name, ctx -> spawner == null ? domain(ctx, "spawner", null) : spawner.frameworkEffect(name, ctx));
+        }
+    }
+
+    private static void registerInfusedHopper(SfxMachineRuntimeEngine runtime, SfxInfusedHopperService infusedHopper) {
+        for (String name : List.of("hopper:scan-items", "hopper:teleport-item", "hopper:emit-particles")) {
+            runtime.registerEffectHook(name, ctx -> infusedHopper == null ? domain(ctx, "hopper", null) : infusedHopper.frameworkEffect(name, ctx));
+        }
+    }
+
+    private static void registerHologram(SfxMachineRuntimeEngine runtime, SfxHologramProjectorService hologram) {
+        for (String name : List.of("hologram:open-editor", "hologram:update-text", "hologram:sync-display")) {
+            runtime.registerEffectHook(name, ctx -> hologram == null ? domain(ctx, "hologram", null) : hologram.frameworkEffect(name, ctx));
+        }
+    }
+
+    private static void registerBlockPlacer(SfxMachineRuntimeEngine runtime, SfxBlockPlacerService placer) {
+        for (String name : List.of("placer:resolve-target", "placer:consume-input", "placer:place-block", "placer:rollback-on-fail")) {
+            runtime.registerEffectHook(name, ctx -> placer == null ? domain(ctx, "placer", null) : placer.frameworkEffect(name, ctx));
+        }
+    }
+
+    private static void registerIndustrialMiner(SfxMachineRuntimeEngine runtime, SfxIndustrialMinerService miner) {
+        for (String name : List.of("miner:validate-structure", "miner:consume-fuel", "miner:animate-piston", "miner:extract-ore", "miner:commit-output", "miner:stop-on-error")) {
+            runtime.registerEffectHook(name, ctx -> miner == null ? domain(ctx, "miner", null) : miner.frameworkEffect(name, ctx));
         }
     }
 
