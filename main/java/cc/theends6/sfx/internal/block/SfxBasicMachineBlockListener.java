@@ -656,11 +656,11 @@ public final class SfxBasicMachineBlockListener implements Listener {
 
     private void completeComposter(Block block, ItemStack output) {
         Optional<Inventory> outputChest = findOutputChestFor(block, output);
+        Location dropLocation = block.getRelative(BlockFace.UP).getLocation().add(0.5, 0.5, 0.5);
         if (outputChest.isPresent()) {
-            outputChest.get().addItem(output.clone());
+            cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.insertAllOrDrop(outputChest.get(), output.clone(), false, dropLocation, "basic:composter-output");
         } else {
-            World world = block.getWorld();
-            world.dropItemNaturally(block.getRelative(BlockFace.UP).getLocation().add(0.5, 0.5, 0.5), output.clone());
+            cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.drop(dropLocation, output.clone());
         }
         playSound(block.getLocation(), Sound.BLOCK_COMPOSTER_READY, 1.0f, 1.0f);
     }

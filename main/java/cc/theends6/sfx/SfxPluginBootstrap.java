@@ -128,6 +128,7 @@ final class SfxPluginBootstrap {
         plugin.bootstrapContent();
 
         plugin.machineRuntime = new SfxMachineRuntimeEngine();
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.bindDefaultRuntime(plugin.machineRuntime);
         plugin.machinePhaseLedger = new SfxMachinePhaseLedger();
         plugin.machineRuntime.registerPhaseObserver(plugin.machinePhaseLedger);
         plugin.basicMachineBlockListener = new SfxBasicMachineBlockListener(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.machineRuntime);

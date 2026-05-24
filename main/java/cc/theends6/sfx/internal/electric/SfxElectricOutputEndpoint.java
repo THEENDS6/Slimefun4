@@ -60,6 +60,18 @@ final class SfxElectricOutputEndpoint implements SfxStorageEndpoint {
     }
 
     @Override
+    public Object snapshot() {
+        return ready() ? state.output(slot) : null;
+    }
+
+    @Override
+    public void restoreSnapshot(Object snapshot) {
+        if (ready()) {
+            state.output(slot, snapshot instanceof SfxElectricStack stack ? stack : null);
+        }
+    }
+
+    @Override
     public ItemStack insert(ItemStack stack, boolean smartFill) {
         if (!ready() || stack == null || stack.getType().isAir() || stack.getAmount() <= 0) {
             return stack == null ? null : stack.clone();

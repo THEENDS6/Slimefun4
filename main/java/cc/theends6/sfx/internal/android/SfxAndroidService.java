@@ -606,7 +606,7 @@ public final class SfxAndroidService implements Listener {
             return false;
         }
         List<ItemStack> drops = collectMineDrops(target);
-        return !drops.isEmpty() && canFitAllOutputs(state, drops);
+        return !drops.isEmpty() && SfxAndroidOutputBuffer.canFitAllOutputs(state, drops);
     }
 
 
@@ -671,7 +671,7 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
-        if (!pushAllOutputsAtomically(state, drops)) {
+        if (!SfxAndroidOutputBuffer.pushAllOutputsAtomically(state, drops)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
             return false;
         }
@@ -692,65 +692,6 @@ public final class SfxAndroidService implements Listener {
         }
         return drops;
     }
-
-    private boolean pushAllOutputsAtomically(SfxAndroidState state, List<ItemStack> drops) {
-        ItemStack[] backup = state.outputs();
-        for (ItemStack drop : drops) {
-            if (!state.pushOutput(drop)) {
-                restoreOutputs(state, backup);
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean canFitAllOutputs(SfxAndroidState state, List<ItemStack> drops) {
-        ItemStack[] scratch = state.outputs();
-        for (ItemStack drop : drops) {
-            if (!insertIntoScratch(scratch, drop)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean insertIntoScratch(ItemStack[] scratch, ItemStack stack) {
-        if (stack == null || stack.getType().isAir() || stack.getAmount() <= 0) {
-            return true;
-        }
-        ItemStack remaining = stack.clone();
-        for (int i = 0; i < scratch.length; i++) {
-            ItemStack existing = scratch[i];
-            if (existing == null || existing.getType().isAir() || existing.getAmount() <= 0) {
-                int amount = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
-                ItemStack inserted = remaining.clone();
-                inserted.setAmount(amount);
-                scratch[i] = inserted;
-                remaining.setAmount(remaining.getAmount() - amount);
-                if (remaining.getAmount() <= 0) {
-                    return true;
-                }
-                continue;
-            }
-            if (!existing.isSimilar(remaining) || existing.getAmount() >= existing.getMaxStackSize()) {
-                continue;
-            }
-            int insert = Math.min(remaining.getAmount(), existing.getMaxStackSize() - existing.getAmount());
-            existing.setAmount(existing.getAmount() + insert);
-            remaining.setAmount(remaining.getAmount() - insert);
-            if (remaining.getAmount() <= 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void restoreOutputs(SfxAndroidState state, ItemStack[] backup) {
-        for (int i = 0; i < SfxAndroidState.OUTPUT_SIZE; i++) {
-            state.output(i, backup != null && i < backup.length ? backup[i] : null);
-        }
-    }
-
 
     private void playBlockBreakEffect(Block block) {
         if (block == null || block.getType().isAir()) {
@@ -934,7 +875,7 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
-        if (!pushAllOutputsAtomically(state, drops)) {
+        if (!SfxAndroidOutputBuffer.pushAllOutputsAtomically(state, drops)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL);
             return false;
         }
@@ -1155,30 +1096,11 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_WAITING_EXTERNAL_CHANGE);
             return true;
         }
-        Inventory inventory = dispenser.getInventory();
-        boolean moved = false;
-        boolean hadOutput = false;
-        ItemStack[] outputs = state.outputs();
-        for (int i = 0; i < outputs.length; i++) {
-            ItemStack stack = outputs[i];
-            if (stack == null || stack.getType().isAir() || stack.getAmount() <= 0) {
-                continue;
-            }
-            hadOutput = true;
-            ItemStack before = stack.clone();
-            Map<Integer, ItemStack> left = inventory.addItem(before.clone());
-            ItemStack remaining = left.isEmpty() ? null : left.values().iterator().next();
-            int remainingAmount = remaining == null ? 0 : remaining.getAmount();
-            int movedAmount = Math.max(0, before.getAmount() - remainingAmount);
-            if (movedAmount > 0) {
-                moved = true;
-            }
-            state.output(i, remaining);
-        }
-        if (moved) {
+        SfxAndroidOutputBuffer.DepositResult result = SfxAndroidOutputBuffer.depositOutputs(state, dispenser.getInventory());
+        if (result.moved()) {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         } else {
-            state.runtimeState(hadOutput ? SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL : SfxAndroidRuntimeState.DORMANT_WAITING_EXTERNAL_CHANGE);
+            state.runtimeState(result.hadOutput() ? SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL : SfxAndroidRuntimeState.DORMANT_WAITING_EXTERNAL_CHANGE);
         }
         return true;
     }

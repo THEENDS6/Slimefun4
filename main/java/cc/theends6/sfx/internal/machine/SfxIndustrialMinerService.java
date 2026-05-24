@@ -279,7 +279,7 @@ public final class SfxIndustrialMinerService implements Listener {
                 return;
             }
             for (ItemStack drop : drops) {
-                inventory.addItem(drop);
+                cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.insertAll(inventory, drop, false, "industrial-miner:ore-drop");
             }
             framework.put("miner.drops", drops.size());
             Block furnace = task.structure().blastFurnace();
@@ -369,7 +369,7 @@ public final class SfxIndustrialMinerService implements Listener {
                 int next = stack.getAmount() - 1;
                 inventory.setItem(slot, next <= 0 ? null : withAmount(stack, next));
                 if (fuel.returnItem() != null) {
-                    inventory.addItem(new ItemStack(fuel.returnItem()));
+                    cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.insertAll(inventory, new ItemStack(fuel.returnItem()), false, "industrial-miner:fuel-return");
                 }
                 return fuel.ores();
             }
@@ -381,7 +381,7 @@ public final class SfxIndustrialMinerService implements Listener {
         Inventory clone = Bukkit.createInventory(null, inventory.getSize());
         clone.setContents(inventory.getContents());
         for (ItemStack drop : drops) {
-            if (!clone.addItem(drop.clone()).isEmpty()) {
+            if (!cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.insertAll(clone, drop.clone(), false, "industrial-miner:simulate").success()) {
                 return false;
             }
         }

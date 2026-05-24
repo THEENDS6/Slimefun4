@@ -179,6 +179,22 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
         return stack;
     }
 
+
+    @Override
+    public Object snapshot() {
+        if (container != null) {
+            return container.snapshot();
+        }
+        return null;
+    }
+
+    @Override
+    public void restoreSnapshot(Object snapshot) {
+        if (container != null && snapshot instanceof ItemStack[] contents) {
+            container.setContents(contents);
+        }
+    }
+
     @Override
     public ItemStack insertSingleSlot(ItemStack stack, boolean smartFill) {
         if (trash || isEmpty(stack)) {
