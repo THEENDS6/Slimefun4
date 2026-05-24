@@ -12,10 +12,14 @@ import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.network.SfxNetworkDomain;
+import cc.theends6.sfx.internal.network.SfxNetworkExecution;
+import cc.theends6.sfx.internal.network.SfxNetworkReadiness;
 import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
+import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxEventGuards;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
@@ -193,8 +197,7 @@ public final class SfxEnergyService implements Listener {
         if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxEnergyGeneratorHolder holder)) {
             return;
         }
-        if (event.getClick() == ClickType.DOUBLE_CLICK || event.getClick() == ClickType.NUMBER_KEY || event.getClick() == ClickType.SWAP_OFFHAND) {
-            event.setCancelled(true);
+        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
             return;
         }
         SfxEnergyComponentDefinition clickDefinition = definitionFor(holder.instanceId());
@@ -448,7 +451,10 @@ public final class SfxEnergyService implements Listener {
                 continue;
             }
             EnergyRuntimeGrid grid = runtimeGridFor(component, regulator);
-            runtime.executeAt(regulatorLocation, () -> processGrid(grid));
+            runtime.executeAt(regulatorLocation, () -> SfxNetworkExecution.tick(
+                    SfxNetworkExecution.snapshot(component.componentId(), SfxNetworkDomain.ENERGY, component.members(), component.topologyRevision()),
+                    SfxNetworkReadiness.READY,
+                    () -> processGrid(grid)));
         }
 
         if (topologyChanged) {

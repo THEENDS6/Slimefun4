@@ -14,6 +14,9 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachineExecution;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
 import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
 import cc.theends6.sfx.internal.ui.SfxUiItems;
@@ -101,6 +104,7 @@ public final class SfxConfigurableMachineService implements Listener {
     private final Set<UUID> autoPausedProducers = ConcurrentHashMap.newKeySet();
     private final SfxMachineStatusIconRenderer statusIcons;
     private final SfxMachineTickSettings tickSettings;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final Map<UUID, SfxConfigurableMachineSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, SfxConfigurableMachineSession> sessionsByHost = new ConcurrentHashMap<>();
     private volatile boolean running;
@@ -115,7 +119,8 @@ public final class SfxConfigurableMachineService implements Listener {
             SfxItems items,
             SfxLocalization localization,
             SfxBlockDataService blockData,
-            SfxFloatingTextDisplayService floatingText
+            SfxFloatingTextDisplayService floatingText,
+            SfxMachineRuntimeEngine sharedMachineRuntime
     ) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
@@ -125,6 +130,7 @@ public final class SfxConfigurableMachineService implements Listener {
         this.floatingText = Objects.requireNonNull(floatingText, "floatingText");
         this.statusIcons = new SfxMachineStatusIconRenderer(localization);
         this.tickSettings = SfxMachineTickSettings.from(plugin.getConfig());
+        this.machineRuntime = sharedMachineRuntime == null ? new SfxMachineRuntimeEngine() : sharedMachineRuntime;
         registerDefinitions();
         bootstrapLoadedStates();
         running = true;
@@ -138,6 +144,7 @@ public final class SfxConfigurableMachineService implements Listener {
         register(SfxConfigurableMachineDefinition.nuclearReactor());
         register(SfxConfigurableMachineDefinition.netherStarReactor(netherStarEnergy));
         register(SfxConfigurableMachineDefinition.reactorAccessPort());
+        machineRuntime.registerDefinitions(SfxConfigurableMachineFrameworkBridge.definitions(definitions));
     }
 
     private void register(SfxConfigurableMachineDefinition definition) {
@@ -203,8 +210,7 @@ public final class SfxConfigurableMachineService implements Listener {
         if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxConfigurableMachineHolder holder)) {
             return;
         }
-        if (event.getClick() == ClickType.DOUBLE_CLICK || event.getClick() == ClickType.NUMBER_KEY || event.getClick() == ClickType.SWAP_OFFHAND) {
-            event.setCancelled(true);
+        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
             return;
         }
         SfxBlockInstanceRecord host = blockData.findInstance(holder.hostInstanceId()).orElse(null);
@@ -680,6 +686,7 @@ public final class SfxConfigurableMachineService implements Listener {
             activeInstances.add(instanceId);
             return;
         }
+        try (SfxMachineExecution machineExecution = machineRuntime.beginTick(instanceId, definition.id(), location, context)) {
         boolean changed = switch (definition.kind()) {
             case ASSEMBLER -> tickAssembler(instanceId, definition, state, location, context);
             case REACTOR -> tickProductionFocusReactor(instanceId, instance, definition, state, location, context);
@@ -694,8 +701,10 @@ public final class SfxConfigurableMachineService implements Listener {
         if (session != null && sessionsByHost.get(instanceId) == session) {
             render(session, instance, definition, state);
         }
+        machineExecution.status(SfxConfigurableMachineFrameworkBridge.statusFor(state, definition));
         if (session == null && !state.isActive() && !state.hasInventory()) {
             activeInstances.remove(instanceId);
+        }
         }
     }
 

@@ -16,6 +16,9 @@ import cc.theends6.sfx.internal.gps.SfxGpsExtractionResult;
 import cc.theends6.sfx.internal.gps.SfxGeoChunkKey;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachineExecution;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
@@ -88,6 +91,7 @@ public final class SfxElectricMachineService implements Listener {
     private final Map<UUID, Integer> supplementalEnergyAveragePerTick = new ConcurrentHashMap<>();
     private volatile long supplementalEnergyWindow = -1L;
     private final SfxMachineTickSettings tickSettings;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final Map<UUID, SfxElectricMachineSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, SfxElectricMachineSession> sessionsByInstance = new ConcurrentHashMap<>();
     private volatile boolean running;
@@ -102,7 +106,8 @@ public final class SfxElectricMachineService implements Listener {
             SfxPlayerDataService profiles,
             DefaultManualMachineRegistry manualMachines,
             SfxVirtualContainerService virtualContainers,
-            SfxFloatingTextDisplayService floatingTextDisplays
+            SfxFloatingTextDisplayService floatingTextDisplays,
+            SfxMachineRuntimeEngine sharedMachineRuntime
     ) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
@@ -114,6 +119,8 @@ public final class SfxElectricMachineService implements Listener {
         this.virtualContainers = Objects.requireNonNull(virtualContainers, "virtualContainers");
         this.floatingTextDisplays = Objects.requireNonNull(floatingTextDisplays, "floatingTextDisplays");
         this.registry = SfxElectricMachineDefinitions.create(plugin, items, manualMachines, blockData, virtualContainers);
+        this.machineRuntime = sharedMachineRuntime == null ? new SfxMachineRuntimeEngine() : sharedMachineRuntime;
+        this.machineRuntime.registerDefinitions(SfxElectricMachineFrameworkBridge.definitions(this.registry));
         this.menuRenderer = new SfxElectricMachineMenuRenderer(items, localization, profiles);
         this.simpleIoMenuRenderer = new SfxSimpleIoMachineMenuRenderer(items, localization, profiles);
         this.assemblerMenuRenderer = new SfxElectricAssemblerMenuRenderer(items, localization, profiles);
@@ -262,8 +269,7 @@ public final class SfxElectricMachineService implements Listener {
         if (!(event.getView().getTopInventory().getHolder() instanceof SfxElectricMachineHolder holder)) {
             return;
         }
-        if (event.getClick() == ClickType.DOUBLE_CLICK || event.getClick() == ClickType.NUMBER_KEY || event.getClick() == ClickType.SWAP_OFFHAND) {
-            event.setCancelled(true);
+        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
             return;
         }
         SfxElectricMachineDefinition clickDefinition = definitionFor(holder.instanceId());
@@ -407,6 +413,7 @@ public final class SfxElectricMachineService implements Listener {
         supplementalEnergyThisSecond.clear();
         supplementalEnergyAveragePerTick.clear();
         supplementalEnergyWindow = -1L;
+        machineRuntime.clear();
     }
 
     private void bootstrapLoadedStates() {
@@ -643,6 +650,8 @@ public final class SfxElectricMachineService implements Listener {
         if (session != null) {
             syncInventoryToState(session.inventory(), state);
         }
+        Location frameworkLocation = locationFor(instance);
+        try (SfxMachineExecution machineExecution = machineRuntime.beginTick(instanceId, definition.id(), frameworkLocation, context)) {
         if (!state.enabled()) {
             SfxElectricMachineRenderStatus paused = SfxElectricMachineRenderStatus.PAUSED;
             if (session != null && shouldRenderSession(session, paused)) {
@@ -653,10 +662,11 @@ public final class SfxElectricMachineService implements Listener {
             } else {
                 activeInstances.remove(instanceId);
             }
+            machineExecution.status(cc.theends6.sfx.internal.machine.SfxMachineStatus.PAUSED);
             return;
         }
 
-        Location location = locationFor(instance);
+        Location location = frameworkLocation;
         if (location == null || !isInstanceChunkLoaded(instance)) {
             activeInstances.add(instanceId);
             return;
@@ -701,6 +711,7 @@ public final class SfxElectricMachineService implements Listener {
             } else if (session == null && !state.hasProgress()) {
                 activeInstances.remove(instanceId);
             }
+            machineExecution.status(SfxElectricMachineFrameworkBridge.status(customResult.status()));
             return;
         }
 
@@ -791,11 +802,13 @@ public final class SfxElectricMachineService implements Listener {
             }
         }
 
+        machineExecution.status(SfxElectricMachineFrameworkBridge.status(status));
         if (session != null && shouldRenderSession(session, status)) {
             render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), status);
         }
         if (session == null && !state.hasAnyInput() && !state.hasProgress()) {
             activeInstances.remove(instanceId);
+        }
         }
     }
 

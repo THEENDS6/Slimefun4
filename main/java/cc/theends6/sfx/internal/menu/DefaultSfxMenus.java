@@ -5,6 +5,7 @@ import cc.theends6.sfx.api.menu.SfxMenuButton;
 import cc.theends6.sfx.api.menu.SfxMenuClickContext;
 import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayDeque;
@@ -127,6 +128,9 @@ public final class DefaultSfxMenus implements SfxMenus {
         }
         if (!menuHolder.viewerId().equals(player.getUniqueId())) {
             event.setCancelled(true);
+            return;
+        }
+        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
             return;
         }
         Session session = sessions.get(player.getUniqueId());

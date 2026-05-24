@@ -1,0 +1,58 @@
+package cc.theends6.sfx.internal.machine;
+
+import cc.theends6.sfx.api.item.SfxItemDefinition;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
+
+/** Registers every concrete SFX machine-like item into the shared machine runtime catalog. */
+public final class SfxMachineFrameworkCatalog {
+    private SfxMachineFrameworkCatalog() {}
+
+    public record Candidate(SfxMachineCategory category, Predicate<String> supports) {
+        public Candidate {
+            category = category == null ? SfxMachineCategory.SPECIAL : category;
+            supports = Objects.requireNonNull(supports, "supports");
+        }
+        public static Candidate of(SfxMachineCategory category, Predicate<String> supports) {
+            return new Candidate(category, supports);
+        }
+    }
+
+    public static int registerDefinitions(SfxMachineRuntimeEngine engine, Collection<SfxItemDefinition> items, Candidate... candidates) {
+        if (engine == null || items == null || candidates == null || candidates.length == 0) {
+            return 0;
+        }
+        int registered = 0;
+        for (SfxItemDefinition item : items) {
+            if (item == null || item.id() == null) {
+                continue;
+            }
+            for (Candidate candidate : candidates) {
+                if (candidate == null || !candidate.supports().test(item.id())) {
+                    continue;
+                }
+                if (engine.definition(item.id()).isEmpty()) {
+                    engine.registerDefinitionIfAbsent(new SfxMachineDefinition(item.id(), item.id(), candidate.category(), List.of(), List.of(), -1, 1));
+                    registered++;
+                }
+                break;
+            }
+        }
+        return registered;
+    }
+
+    public static Collection<SfxMachineDefinition> definitionsFor(Collection<String> ids, SfxMachineCategory category) {
+        List<SfxMachineDefinition> result = new ArrayList<>();
+        if (ids != null) {
+            for (String id : ids) {
+                if (id != null && !id.isBlank()) {
+                    result.add(new SfxMachineDefinition(id, id, category, List.of(), List.of(), -1, 1));
+                }
+            }
+        }
+        return result;
+    }
+}

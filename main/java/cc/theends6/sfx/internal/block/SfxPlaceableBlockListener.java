@@ -9,7 +9,10 @@ import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.android.SfxAndroidService;
 import cc.theends6.sfx.internal.android.SfxAndroidType;
+import cc.theends6.sfx.internal.core.SfxResult;
 import cc.theends6.sfx.internal.altar.SfxAncientAltarService;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachineStatus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.Objects;
@@ -78,6 +81,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxInfusedHopperService infusedHopperService;
     private final SfxHologramProjectorService hologramProjectorService;
     private final SfxRuntime runtime;
+    private final SfxMachineRuntimeEngine machineRuntime;
 
     public SfxPlaceableBlockListener(
             SfxItems items,
@@ -95,7 +99,8 @@ public final class SfxPlaceableBlockListener implements Listener {
             SfxBlockPlacerService blockPlacerService,
             SfxInfusedHopperService infusedHopperService,
             SfxHologramProjectorService hologramProjectorService,
-            SfxRuntime runtime
+            SfxRuntime runtime,
+            SfxMachineRuntimeEngine machineRuntime
     ) {
         this.items = Objects.requireNonNull(items, "items");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
@@ -113,6 +118,7 @@ public final class SfxPlaceableBlockListener implements Listener {
         this.infusedHopperService = Objects.requireNonNull(infusedHopperService, "infusedHopperService");
         this.hologramProjectorService = Objects.requireNonNull(hologramProjectorService, "hologramProjectorService");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
+        this.machineRuntime = Objects.requireNonNull(machineRuntime, "machineRuntime");
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -135,46 +141,56 @@ public final class SfxPlaceableBlockListener implements Listener {
             if (blockData.findAnchor(event.getBlockPlaced().getLocation()).isPresent()) {
                 return;
             }
-            java.util.UUID instanceId = null;
-            try {
-                instanceId = blockData.registerSingleBlock(
-                        marker.itemId(),
-                        event.getBlockPlaced().getLocation(),
-                        event.getBlockPlaced().getType(),
-                        event.getPlayer().getUniqueId());
-                if (decorationService.supportsType(marker.itemId())) {
-                    decorationService.handlePlaced(instanceId, marker.itemId());
-                }
-                if (gpsService.supportsType(marker.itemId())) {
-                    gpsService.handlePlaced(instanceId, marker.itemId());
-                }
-                if (ancientAltarService.supportsType(marker.itemId())) {
-                    ancientAltarService.handlePlaced(instanceId, marker.itemId());
-                }
-                if (androidService.supportsType(marker.itemId())) {
-                    androidService.handlePlaced(instanceId, marker.itemId(), event.getPlayer(), event.getBlockPlaced());
-                }
-                if (spawnerService.supportsType(marker.itemId())) {
-                    spawnerService.handlePlaced(instanceId, marker.itemId(), event.getItemInHand());
-                }
-                if (blockPlacerService.supportsType(marker.itemId())) {
-                    blockPlacerService.handlePlaced(instanceId, marker.itemId());
-                }
-                if (infusedHopperService.supportsType(marker.itemId())) {
-                    infusedHopperService.handlePlaced(instanceId, marker.itemId());
-                }
-                if (hologramProjectorService.supportsType(marker.itemId())) {
-                    hologramProjectorService.handlePlaced(instanceId, marker.itemId());
-                }
-            } catch (RuntimeException exception) {
+            SfxBlockPlacementContext context = new SfxBlockPlacementContext(
+                    marker.itemId(),
+                    event.getBlockPlaced().getLocation(),
+                    event.getBlockPlaced().getType(),
+                    event.getPlayer().getUniqueId(),
+                    event.getPlayer(),
+                    event.getItemInHand());
+            SfxBlockPlacementTransaction transaction = new SfxBlockPlacementTransaction(
+                    blockData,
+                    new SfxDelegatingBlockBehavior(marker.itemId(), this::initializePlacedDomain),
+                    LOGGER);
+            SfxResult<java.util.UUID> result = transaction.commit(context);
+            if (!result.success()) {
                 event.setCancelled(true);
-                if (instanceId != null) {
-                    blockData.unregisterAt(event.getBlockPlaced().getLocation());
-                }
-                LOGGER.log(Level.WARNING, "Failed to initialize SFX block placement for " + marker.itemId()
-                        + " at " + event.getBlockPlaced().getLocation(), exception);
+                result.cause().ifPresentOrElse(
+                        cause -> LOGGER.log(Level.WARNING, "Failed to initialize SFX block placement for " + marker.itemId()
+                                + " at " + event.getBlockPlaced().getLocation(), cause),
+                        () -> LOGGER.warning("Failed to initialize SFX block placement for " + marker.itemId()
+                                + " at " + event.getBlockPlaced().getLocation() + ": " + result.message()));
             }
         });
+    }
+
+    private void initializePlacedDomain(SfxBlockPlacementContext context, java.util.UUID instanceId) {
+        String typeId = context.typeId();
+        if (decorationService.supportsType(typeId)) {
+            decorationService.handlePlaced(instanceId, typeId);
+        }
+        if (gpsService.supportsType(typeId)) {
+            gpsService.handlePlaced(instanceId, typeId);
+        }
+        if (ancientAltarService.supportsType(typeId)) {
+            ancientAltarService.handlePlaced(instanceId, typeId);
+        }
+        if (androidService.supportsType(typeId)) {
+            androidService.handlePlaced(instanceId, typeId, context.player(), context.location().getBlock());
+        }
+        if (spawnerService.supportsType(typeId)) {
+            spawnerService.handlePlaced(instanceId, typeId, context.itemInHand());
+        }
+        if (blockPlacerService.supportsType(typeId)) {
+            blockPlacerService.handlePlaced(instanceId, typeId);
+        }
+        if (infusedHopperService.supportsType(typeId)) {
+            infusedHopperService.handlePlaced(instanceId, typeId);
+        }
+        if (hologramProjectorService.supportsType(typeId)) {
+            hologramProjectorService.handlePlaced(instanceId, typeId);
+        }
+        machineRuntime.recordState(instanceId, typeId, context.location(), SfxMachineStatus.IDLE);
     }
 
     private boolean shouldRedirectAndroidPlacement(BlockPlaceEvent event) {
@@ -209,6 +225,7 @@ public final class SfxPlaceableBlockListener implements Listener {
                 placedWorldBlock = true;
                 instanceId = blockData.registerSingleBlock(itemId, target.getLocation(), target.getType(), event.getPlayer().getUniqueId());
                 androidService.handlePlaced(instanceId, itemId, event.getPlayer(), target);
+                machineRuntime.recordState(instanceId, itemId, target.getLocation(), SfxMachineStatus.IDLE);
             } catch (RuntimeException exception) {
                 if (instanceId != null) {
                     blockData.unregisterAt(target.getLocation());
@@ -621,6 +638,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     }
 
     private void destroyAnchoredBlock(Block block, java.util.UUID instanceId, String typeId) {
+        machineRuntime.forget(instanceId);
         if (basicMachines.supportsType(typeId)) {
             basicMachines.destroyAnchoredBlock(block, typeId);
             return;

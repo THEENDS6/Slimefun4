@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.virtualcontainer;
 
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.internal.inventory.SfxInventoryAccessState;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -63,13 +64,6 @@ public final class SfxVirtualContainerService implements Listener {
         public boolean success() {
             return status == CraftingTransactionStatus.SUCCESS;
         }
-    }
-
-    private enum MemoryAccessStatus {
-        READY,
-        BUSY_WRONG_REGION,
-        BUSY_EXTERNAL_FINALIZATION,
-        UNAVAILABLE
     }
 
     private static final long EXTERNAL_SYNC_INTERVAL = 10L;
@@ -377,42 +371,42 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
 
-    private MemoryAccessStatus reconcileForMemoryAccess(SfxVirtualContainer container) {
+    private SfxInventoryAccessState reconcileForMemoryAccess(SfxVirtualContainer container) {
         if (container == null) {
-            return MemoryAccessStatus.UNAVAILABLE;
+            return SfxInventoryAccessState.UNAVAILABLE;
         }
         if (container.externalFinalizationPending()) {
             // A player/hopper/container event marked this inventory dirty, but Bukkit may not
             // have finalized the vanilla inventory mutation yet. Never let cargo or machine
             // logic read the old mirror during this one-tick window.
             runAtContainerLater(container, 1L, () -> inventoryFor(container).ifPresent(inventory -> reconcileBeforeAccess(container, inventory)));
-            return MemoryAccessStatus.BUSY_EXTERNAL_FINALIZATION;
+            return SfxInventoryAccessState.BUSY_EXTERNAL_FINALIZATION;
         }
         if (!container.externalDirty()
                 && !container.mirrorDirty()
                 && !container.externalActive()
                 && !container.viewerActive()
                 && container.revision() != 0L) {
-            return MemoryAccessStatus.READY;
+            return SfxInventoryAccessState.READY;
         }
         Location location = primaryLocation(container);
         if (location == null) {
-            return MemoryAccessStatus.UNAVAILABLE;
+            return SfxInventoryAccessState.UNAVAILABLE;
         }
         if (!owns(location)) {
             runtime.executeAt(location, () -> reconcileForMemoryAccess(container));
-            return MemoryAccessStatus.BUSY_WRONG_REGION;
+            return SfxInventoryAccessState.BUSY_WRONG_REGION;
         }
         Optional<Inventory> inventory = inventoryFor(container);
         if (inventory.isEmpty()) {
-            return MemoryAccessStatus.UNAVAILABLE;
+            return SfxInventoryAccessState.UNAVAILABLE;
         }
         reconcileBeforeAccess(container, inventory.get());
-        return container.externalFinalizationPending() ? MemoryAccessStatus.BUSY_EXTERNAL_FINALIZATION : MemoryAccessStatus.READY;
+        return container.externalFinalizationPending() ? SfxInventoryAccessState.BUSY_EXTERNAL_FINALIZATION : SfxInventoryAccessState.READY;
     }
 
     private boolean isMemoryReady(SfxVirtualContainer container) {
-        return reconcileForMemoryAccess(container) == MemoryAccessStatus.READY;
+        return reconcileForMemoryAccess(container) == SfxInventoryAccessState.READY;
     }
 
     private void pushIfDirty(SfxVirtualContainer container) {
