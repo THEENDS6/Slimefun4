@@ -784,7 +784,7 @@ public final class SfxAndroidService implements Listener {
             return false;
         }
         ageable.setAge(0);
-        target.setBlockData(ageable, true);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(machineRuntime, "sf:android", target, ageable, true, "android", "farm:reset-crop-age");
         target.getWorld().playSound(target.getLocation(), Sound.BLOCK_GRASS_BREAK, 0.7f, 1.0f);
         state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         return true;
@@ -1136,8 +1136,6 @@ public final class SfxAndroidService implements Listener {
         };
     }
 
-    private record WeightedMaterial(Material material, int weight) {
-    }
 
     private void collectNearbyDrops(SfxAndroidState state, Location location) {
         for (Entity entity : location.getWorld().getNearbyEntities(location, 0.75, 0.75, 0.75)) {
@@ -2409,7 +2407,7 @@ public final class SfxAndroidService implements Listener {
         if (block.getBlockData() instanceof Rotatable rotatable) {
             BlockFace visualRotation = rotation == null ? BlockFace.NORTH : rotation.getOppositeFace();
             rotatable.setRotation(visualRotation);
-            block.setBlockData(rotatable, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(machineRuntime, typeId, block, rotatable, false, "android", "applyRotation");
         }
     }
 
@@ -2451,45 +2449,4 @@ public final class SfxAndroidService implements Listener {
         inventory.clear();
     }
 
-    private record MoveIntent(SfxBlockInstanceRecord instance, Location from, Location to, SfxAndroidInstruction instruction, boolean clearsTargetBeforeMove) {
-    }
-
-    private record LocationKey(UUID worldId, int x, int y, int z) {
-        static LocationKey of(Location location) {
-            return new LocationKey(location.getWorld().getUID(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
-        }
-    }
-
-    private record TreeFootprint(Material sapling, List<Block> blocks) {
-        private TreeFootprint {
-            blocks = List.copyOf(blocks);
-        }
-
-        private boolean contains(Block block) {
-            if (block == null) {
-                return false;
-            }
-            for (Block candidate : blocks) {
-                if (candidate.getWorld().equals(block.getWorld())
-                        && candidate.getX() == block.getX()
-                        && candidate.getY() == block.getY()
-                        && candidate.getZ() == block.getZ()) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
-    private record ImportSession(UUID instanceId) {
-    }
-
-    private record UploadSession(UUID instanceId, SfxAndroidType type, List<SfxAndroidInstruction> body, SfxAndroidScriptVisibility visibility) {
-        private UploadSession {
-            body = List.copyOf(body);
-        }
-    }
-
-    private record EditScriptSession(UUID instanceId, int page, long scriptId, boolean force) {
-    }
 }

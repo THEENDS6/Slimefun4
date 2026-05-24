@@ -499,7 +499,7 @@ public final class SfxLegacyCombatToolListener implements Listener {
             org.bukkit.entity.Item dropped = block.getWorld().dropItem(dropLocation, output);
             dropped.setVelocity(new Vector(0.0, 0.0, 0.0));
         }
-        block.setType(Material.AIR, true);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, "sf:legacy_tool", block, Material.AIR, true, "legacy-combat", "smelters-pickaxe");
         damageItem(event.getPlayer(), tool, 1);
     }
 
@@ -525,7 +525,7 @@ public final class SfxLegacyCombatToolListener implements Listener {
 
         event.setCancelled(true);
         ItemStack drop = createSpawnerDrop(block);
-        block.setType(Material.AIR, true);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, "sf:legacy_tool", block, Material.AIR, true, "legacy-combat", "containment-pickaxe");
         block.getWorld().dropItemNaturally(block.getLocation(), drop);
         damageItem(event.getPlayer(), tool, 1);
     }
@@ -682,14 +682,14 @@ public final class SfxLegacyCombatToolListener implements Listener {
         block.getWorld().playSound(block.getLocation(), Sound.ITEM_AXE_STRIP, 1.0f, 1.0f);
         if (block.getBlockData() instanceof Orientable orientable) {
             var axis = orientable.getAxis();
-            block.setType(stripped, true);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, "sf:legacy_tool", block, stripped, true, "legacy-combat", "strip-log");
             if (block.getBlockData() instanceof Orientable updated) {
                 updated.setAxis(axis);
-                block.setBlockData(updated, true);
+                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, "sf:legacy_tool", block, updated, true, "legacy-combat", "strip-log:axis");
             }
             return;
         }
-        block.setType(stripped, true);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, "sf:legacy_tool", block, stripped, true, "legacy-combat", "strip-log");
     }
 
     private boolean breakBlock(Block block, ItemStack tool, boolean allowFortune) {
@@ -699,9 +699,9 @@ public final class SfxLegacyCombatToolListener implements Listener {
         Material type = block.getType();
         block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, type);
         ItemStack dropTool = toolForDrops(tool, allowFortune);
-        boolean broken = block.breakNaturally(dropTool);
+        boolean broken = cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.breakNaturally(null, "sf:legacy_tool", block, dropTool, "legacy-combat", "tool-break");
         if (!broken && block.getType() == type) {
-            block.setType(Material.AIR, true);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, "sf:legacy_tool", block, Material.AIR, true, "legacy-combat", "force-break");
             broken = true;
         }
         return broken;

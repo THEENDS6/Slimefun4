@@ -913,7 +913,7 @@ final class SfxAreaElectricMachineProviders {
             return false;
         }
         ageable.setAge(Math.min(ageable.getMaximumAge(), ageable.getAge() + 1));
-        crop.setBlockData(ageable, false);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, "sf:area_machine", crop, ageable, false, "electric-area", "growth-accelerator");
         return true;
     }
 
@@ -1011,7 +1011,7 @@ final class SfxAreaElectricMachineProviders {
         BlockData data = block.getBlockData();
         if (data instanceof Beehive hive) {
             hive.setHoneyLevel(0);
-            block.setBlockData(hive, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, "sf:area_machine", block, hive, false, "electric-area", "produce-collector:hive-reset");
         }
     }
 
@@ -1743,169 +1743,4 @@ final class SfxAreaElectricMachineProviders {
         return SfxElectricMachineTickResult.changed(state.hasAnyInput() ? SfxElectricMachineRenderStatus.WORKING : SfxElectricMachineRenderStatus.IDLE, 0, state.hasAnyInput());
     }
 
-    private abstract static class WorldActionProvider implements SfxElectricRecipeProvider {
-        @Override
-        public List<SfxElectricRecipe> recipes() {
-            return List.of();
-        }
-
-        @Override
-        public boolean hasWorldAction() {
-            return true;
-        }
-    }
-
-    private abstract static class SpecialProvider implements SfxElectricRecipeProvider {
-        @Override
-        public List<SfxElectricRecipe> recipes() {
-            return List.of();
-        }
-
-        @Override
-        public boolean hasSpecialTick() {
-            return true;
-        }
-
-        @Override
-        public int specialTickIntervalTicks() {
-            return 1;
-        }
-    }
-
-
-    private record FluidPumpAction(SfxElectricMachineRenderStatus status, int inputSlot, SfxElectricStack output, Block source, boolean consumeSource) {
-        static FluidPumpAction status(SfxElectricMachineRenderStatus status) {
-            return new FluidPumpAction(status, -1, null, null, false);
-        }
-    }
-
-    private record FluidPoolCacheKey(UUID worldId, int x, int y, int z, Material fluid, int threshold) {
-    }
-
-    private record FluidPoolCacheEntry(long checkedTick, boolean largeEnough) {
-    }
-
-    private record FluidPumpSourceCacheKey(UUID worldId, int x, int y, int z, Material container) {
-    }
-
-    private record FluidPumpSourceCacheEntry(long checkedTick, boolean found, Material fluid, int x, int y, int z) {
-    }
-
-    private record AssemblerStart(SfxElectricMachineRenderStatus status, List<SfxElectricStack> reservedInputs, int primaryInputSlot) {
-        static AssemblerStart status(SfxElectricMachineRenderStatus status) {
-            return new AssemblerStart(status, List.of(), -1);
-        }
-    }
-
-    private record AssemblerConsume(int slot, int amount) {
-    }
-
-    private enum GrowthTarget {
-        CROP,
-        SAPLING
-    }
-
-    private enum ProduceStartStatus {
-        NO_INPUT,
-        NO_TARGET,
-        OUTPUT_FULL,
-        READY
-    }
-
-    private enum ProduceAction {
-        MILK("milk", false),
-        STEW("stew", false),
-        SHEEP_WOOL("sheep_wool", true),
-        HONEY_BOTTLE("honey_bottle", false),
-        HONEYCOMB("honeycomb", true),
-        ARMADILLO_SCUTE("armadillo_scute", true),
-        MOOSHROOM_SHEAR("mooshroom_shear", true);
-
-        private final String key;
-        private final boolean durableTool;
-
-        ProduceAction(String key, boolean durableTool) {
-            this.key = key;
-            this.durableTool = durableTool;
-        }
-
-        String key() {
-            return key;
-        }
-
-        boolean usesDurableTool() {
-            return durableTool;
-        }
-
-        static ProduceAction fromKey(String key) {
-            if (key == null) {
-                return null;
-            }
-            String prefix = "sf:produce_collector:";
-            if (!key.startsWith(prefix)) {
-                return null;
-            }
-            String actionKey = key.substring(prefix.length()).toLowerCase(Locale.ROOT);
-            for (ProduceAction action : values()) {
-                if (action.key.equals(actionKey)) {
-                    return action;
-                }
-            }
-            return null;
-        }
-    }
-
-    private enum ToolUseStatus {
-        RESTORE_TOOL,
-        OUTPUT_TOOL,
-        BROKEN
-    }
-
-    private record ProduceStart(ProduceStartStatus status, int inputSlot, ProduceAction action, SfxElectricStack primaryOutput) {
-        static ProduceStart noInput() {
-            return new ProduceStart(ProduceStartStatus.NO_INPUT, -1, null, null);
-        }
-
-        static ProduceStart noTarget() {
-            return new ProduceStart(ProduceStartStatus.NO_TARGET, -1, null, null);
-        }
-
-        static ProduceStart outputFull() {
-            return new ProduceStart(ProduceStartStatus.OUTPUT_FULL, -1, null, null);
-        }
-
-        static ProduceStart ready(int inputSlot, ProduceAction action, SfxElectricStack primaryOutput) {
-            return new ProduceStart(ProduceStartStatus.READY, inputSlot, action, primaryOutput);
-        }
-    }
-
-    private record ProduceTarget(List<SfxElectricStack> outputs, Runnable apply) {
-    }
-
-    private record ProduceCompletion(SfxElectricMachineRenderStatus status) {
-        static ProduceCompletion status(SfxElectricMachineRenderStatus status) {
-            return new ProduceCompletion(status);
-        }
-    }
-
-    private record ToolUseResult(ToolUseStatus status, SfxElectricStack tool) {
-        static ToolUseResult restore(SfxElectricStack tool) {
-            return new ToolUseResult(ToolUseStatus.RESTORE_TOOL, tool);
-        }
-
-        static ToolUseResult output(SfxElectricStack tool) {
-            return new ToolUseResult(ToolUseStatus.OUTPUT_TOOL, tool);
-        }
-
-        static ToolUseResult broken() {
-            return new ToolUseResult(ToolUseStatus.BROKEN, null);
-        }
-
-        static ToolUseResult noTool() {
-            return new ToolUseResult(ToolUseStatus.BROKEN, null);
-        }
-    }
-
-    private record FlushResult(boolean changed, int consumedEnergy) {
-    }
 }

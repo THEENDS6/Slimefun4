@@ -1011,25 +1011,6 @@ public final class SfxEnergyService implements Listener {
         return definition.energyPerTick();
     }
 
-    private record EnergyRuntimeGrid(
-            UUID componentId,
-            long topologyRevision,
-            UUID regulatorId,
-            SfxBlockAnchorKey regulatorKey,
-            Set<UUID> members,
-            Set<UUID> controllers,
-            List<SfxBlockInstanceRecord> capacitors,
-            List<SfxBlockInstanceRecord> generators,
-            List<SfxBlockInstanceRecord> chargers,
-            List<SfxBlockInstanceRecord> electricConsumers,
-            List<SfxBlockInstanceRecord> configurableConsumers,
-            List<SfxBlockInstanceRecord> configurableProducers
-    ) {
-    }
-
-    private record AutoPauseCandidate(UUID instanceId, int generation, boolean configurable) {
-    }
-
     private void sortCapacitors(List<SfxEnergyNodeRef> capacitorRefs) {
         capacitorRefs.sort((left, right) -> {
             int byDistance = Integer.compare(left.instance().energyPriorityDistance(), right.instance().energyPriorityDistance());

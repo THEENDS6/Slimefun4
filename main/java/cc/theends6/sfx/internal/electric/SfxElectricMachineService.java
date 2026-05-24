@@ -1614,9 +1614,6 @@ public final class SfxElectricMachineService implements Listener {
         return (marker == null ? "vanilla:" + stack.getType().key() : "sfx:" + marker) + ":" + probe.hashCode();
     }
 
-    private record CargoInventorySnapshot(UUID instanceId, SfxElectricMachineState state, boolean inputInventory, ItemStack[] contents) {
-    }
-
     private void syncSessionState(SfxElectricMachineSession session) {
         SfxBlockInstanceRecord instance = blockData.findInstance(session.instanceId()).orElse(null);
         if (instance == null) {

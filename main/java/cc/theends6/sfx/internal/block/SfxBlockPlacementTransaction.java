@@ -30,7 +30,7 @@ public final class SfxBlockPlacementTransaction {
         boolean changedWorldBlock = previous != context.material();
         try {
             if (changedWorldBlock) {
-                context.location().getBlock().setType(context.material(), true);
+                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, context.typeId(), context.location().getBlock(), context.material(), true, "block-placement", "commit");
             }
             instanceId = blockData.registerSingleBlock(context.typeId(), context.location(), context.material(), context.ownerId());
             if (behavior != null) {
@@ -38,7 +38,7 @@ public final class SfxBlockPlacementTransaction {
                 if (!placed.success()) {
                     blockData.unregisterAt(context.location());
                     if (changedWorldBlock) {
-                        context.location().getBlock().setType(previous, false);
+                        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, context.typeId(), context.location().getBlock(), previous, false, "block-placement", "rollback");
                     }
                     return SfxResult.fail(placed.code(), placed.message());
                 }
@@ -56,7 +56,7 @@ public final class SfxBlockPlacementTransaction {
             }
             if (changedWorldBlock) {
                 try {
-                    context.location().getBlock().setType(previous, false);
+                    cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, context.typeId(), context.location().getBlock(), previous, false, "block-placement", "rollback");
                 } catch (Throwable rollback) {
                     if (logger != null) {
                         logger.warning("Failed to restore world block after SFX placement failure at " + context.location() + ": " + rollback.getMessage());
