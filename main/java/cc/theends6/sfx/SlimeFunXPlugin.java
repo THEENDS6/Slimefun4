@@ -50,6 +50,7 @@ import cc.theends6.sfx.internal.listener.SfxVanillaGuardListener;
 import cc.theends6.sfx.internal.machine.ManualMachineService;
 import cc.theends6.sfx.internal.machine.SfxMachineCategory;
 import cc.theends6.sfx.internal.machine.SfxMachineBuiltinEffectHooks;
+import cc.theends6.sfx.internal.machine.SfxMachineDomainEffectHooks;
 import cc.theends6.sfx.internal.machine.SfxMachineFrameworkCatalog;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxManualMachineDeployListener;
@@ -173,8 +174,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.electricMachineService = new SfxElectricMachineService(this, api.runtime(), api.items(), localization, blockDataService, playerDataService, api.internalManualMachines(), virtualContainerService, floatingTextDisplayService, machineRuntime);
         this.configurableMachineService = new SfxConfigurableMachineService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService, machineRuntime);
         this.technicalGadgetService = new SfxTechnicalGadgetService(this, api.runtime(), api.items(), localization);
-        this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService, technicalGadgetService.rechargeableItems());
-        this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService, electricMachineService);
+        this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService, technicalGadgetService.rechargeableItems(), machineRuntime);
+        this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService, electricMachineService, machineRuntime);
         this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService);
         this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), localization, blockDataService, decorationService, electricMachineService, new SqliteSfxGpsDataRepository(this, gpsDataFile()));
         this.androidService = new SfxAndroidService(this, api.runtime(), api.items(), api.itemRegistry(), localization, blockDataService, new SqliteSfxAndroidScriptRepository(this, androidScriptsFile()));
@@ -184,6 +185,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.hologramProjectorService = new SfxHologramProjectorService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService);
         this.blockPlacerService = new SfxBlockPlacerService(api.runtime(), api.items(), blockDataService, spawnerService, hologramProjectorService, infusedHopperService);
         this.industrialMinerService = new SfxIndustrialMinerService(this, api.runtime(), api.items(), localization, blockDataService);
+        int domainEffectHooks = SfxMachineDomainEffectHooks.register(machineRuntime, gpsService, androidService, ancientAltarService, energyService, cargoService);
         int frameworkCatalogExtras = SfxMachineFrameworkCatalog.registerDefinitions(machineRuntime, api.itemRegistry().items(),
                 SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.BASIC, basicMachineBlockListener::supportsType),
                 SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ELECTRIC, electricMachineService::supportsType),
@@ -266,7 +268,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
                 + machineRuntime.capabilityDeclarationCount() + " capabilities, "
                 + machineRuntime.policyRefCount() + " policy refs, "
                 + machineRuntime.effectCount() + " phase effects, "
-                + machineRuntime.effectHookCount() + " bound effect hooks (" + builtinEffectHooks + " built-in defaults), "
+                + machineRuntime.effectHookCount() + " bound effect hooks (" + builtinEffectHooks + " built-in defaults, " + domainEffectHooks + " domain hooks), "
                 + machineRuntime.unboundDeclaredEffectNames().size() + " unbound declared effects. "
                 + "Loaded " + blockDataService.anchorCount() + " block anchors and "
                 + blockDataService.instanceCount() + " block instances.");

@@ -13,6 +13,10 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.inventory.SfxReservationLedger;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.network.SfxNetworkDomain;
 import cc.theends6.sfx.internal.network.SfxNetworkExecution;
 import cc.theends6.sfx.internal.network.SfxNetworkReadiness;
@@ -99,6 +103,7 @@ public final class SfxCargoService implements Listener {
     private final SfxVirtualContainerService virtualContainers;
     private final SfxFloatingTextDisplayService floatingText;
     private final SfxElectricMachineService electricMachines;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final Set<SfxFloatingTextKey> displayKeys = ConcurrentHashMap.newKeySet();
     private final Map<String, SfxCargoComponentDefinition> definitions = SfxCargoDefinitions.create();
     private final SfxTopologyService topology;
@@ -112,7 +117,7 @@ public final class SfxCargoService implements Listener {
     private final Map<UUID, CargoTransferStats> managerStats = new ConcurrentHashMap<>();
     private volatile boolean running = true;
 
-    public SfxCargoService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxVirtualContainerService virtualContainers, SfxFloatingTextDisplayService floatingText, SfxElectricMachineService electricMachines) {
+    public SfxCargoService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxVirtualContainerService virtualContainers, SfxFloatingTextDisplayService floatingText, SfxElectricMachineService electricMachines, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
@@ -121,12 +126,26 @@ public final class SfxCargoService implements Listener {
         this.virtualContainers = Objects.requireNonNull(virtualContainers, "virtualContainers");
         this.floatingText = Objects.requireNonNull(floatingText, "floatingText");
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
+        this.machineRuntime = machineRuntime == null ? new SfxMachineRuntimeEngine() : machineRuntime;
+        registerFrameworkEffects();
         this.topology = new SfxTopologyService(blockData, new SfxCargoTopologyPolicy(definitions), new SfxCargoConnectivityPolicy(RANGE));
         bootstrapLoadedStates();
         topology.rebuild();
         scheduleTopologyRefresh();
         scheduleTick();
         scheduleFlush();
+    }
+
+
+    private void registerFrameworkEffects() {
+        machineRuntime.registerEffectHook("cargo:resolve-endpoints", this::frameworkCargoEffect);
+        machineRuntime.registerEffectHook("cargo:commit-transfer", this::frameworkCargoEffect);
+    }
+
+    private SfxMachinePhaseResult frameworkCargoEffect(cc.theends6.sfx.internal.machine.SfxMachinePhaseContext context) {
+        if (context == null) return SfxMachinePhaseResult.cont();
+        context.put("cargo.framework.effect.handled", Boolean.TRUE);
+        return SfxMachinePhaseResult.cont();
     }
 
     public boolean supportsType(String typeId) {
@@ -524,6 +543,11 @@ public final class SfxCargoService implements Listener {
         if (!running || network == null) {
             return;
         }
+        Map<String, Object> frameworkAttributes = new LinkedHashMap<>();
+        frameworkAttributes.put("cargo.network", network);
+        SfxBlockInstanceRecord managerInstance = blockData.findInstance(network.managerId()).orElse(null);
+        String frameworkMachineId = managerInstance == null ? "sfx:cargo_manager" : managerInstance.typeId();
+        machineRuntime.runPhase(frameworkMachineId, SfxMachinePhase.BEFORE_OPERATION_RESOLVE, network.managerId(), null, new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
         for (NodeRef input : network.inputs()) {
             int moved = input.definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE
                     ? processAdvancedInput(input, network.outputs())
@@ -533,6 +557,7 @@ public final class SfxCargoService implements Listener {
             }
         }
         virtualContainers.pushDirtyAfterLogic();
+        machineRuntime.runPhase(frameworkMachineId, SfxMachinePhase.ON_COMPLETE, network.managerId(), null, new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
     }
 
     private void recordManagerTransfer(UUID managerId, int amount) {

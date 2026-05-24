@@ -19,6 +19,7 @@ import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
+import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
@@ -140,9 +141,86 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private void registerFrameworkEffects() {
-        machineRuntime.registerEffectHook("electric:legacy-special-operation", this::frameworkLegacyElectricSpecialOperation);
-        machineRuntime.registerEffectHook("electric:legacy-recipe-pipeline", context -> SfxMachinePhaseResult.cont());
-        machineRuntime.registerEffectHook("electric:legacy-complete-recipe", context -> SfxMachinePhaseResult.cont());
+        for (String effectName : List.of(
+                "electric:legacy-special-operation",
+                "electric:legacy-recipe-pipeline",
+                "electric:legacy-complete-recipe",
+                "recipe:resolve-operation",
+                "inventory:reserve-output",
+                "inventory:commit-output",
+                "brew:validate-potions",
+                "brew:refund-on-interrupt",
+                "brew:commit-multi-bottle-output",
+                "crafting:simulate",
+                "crafting:commit-transaction",
+                "gps:check-signal-and-scan",
+                "geo:extract-resource",
+                "visual:update-floating-text",
+                "fluid:locate-source",
+                "fluid:remove-source-and-update",
+                "meta:validate-input",
+                "meta:apply-transform"
+        )) {
+            machineRuntime.registerEffectHook(effectName, context -> frameworkElectricEffect(effectName, context));
+        }
+    }
+
+    private SfxMachinePhaseResult frameworkElectricEffect(String effectName, SfxMachinePhaseContext phaseContext) {
+        SfxElectricMachineDefinition definition = phaseContext.attachment("electric.definition", SfxElectricMachineDefinition.class).orElse(null);
+        SfxElectricMachineState state = phaseContext.attachment("electric.state", SfxElectricMachineState.class).orElse(null);
+        if (definition == null || state == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        phaseContext.put("electric.framework.effect", effectName);
+        switch (effectName) {
+            case "electric:legacy-special-operation", "brew:validate-potions", "crafting:simulate", "gps:check-signal-and-scan", "geo:extract-resource", "fluid:locate-source", "fluid:remove-source-and-update", "meta:validate-input", "meta:apply-transform" -> {
+                if (definition.recipeProvider().hasWorldAction() || definition.recipeProvider().hasSpecialTick()) {
+                    return frameworkLegacyElectricSpecialOperation(phaseContext);
+                }
+                return SfxMachinePhaseResult.cont();
+            }
+            case "recipe:resolve-operation", "electric:legacy-recipe-pipeline" -> {
+                SfxElectricRecipe active = recipeProcessor.activeRecipe(definition, state);
+                phaseContext.put("electric.activeRecipe", active);
+                if (active == null) {
+                    SfxElectricRecipeMatch match = recipeProcessor.findRecipeMatch(definition, state);
+                    phaseContext.put("electric.recipeMatch", match);
+                }
+                return SfxMachinePhaseResult.cont();
+            }
+            case "inventory:reserve-output" -> {
+                SfxElectricRecipeMatch match = phaseContext.attachment("electric.recipeMatch", SfxElectricRecipeMatch.class).orElse(null);
+                SfxElectricRecipe recipe = phaseContext.attachment("electric.activeRecipe", SfxElectricRecipe.class).orElse(null);
+                if (match != null) recipe = match.recipe();
+                if (recipe != null) {
+                    boolean fits = recipeProcessor.canFitOutputForRecipe(definition, state, recipe);
+                    phaseContext.put("electric.outputFit", fits);
+                    if (!fits) {
+                        return SfxMachinePhaseResult.blocked(cc.theends6.sfx.internal.machine.SfxMachineStatus.OUTPUT_FULL, "electric framework output reservation failed");
+                    }
+                }
+                return SfxMachinePhaseResult.cont();
+            }
+            case "inventory:commit-output", "electric:legacy-complete-recipe", "brew:commit-multi-bottle-output", "crafting:commit-transaction" -> {
+                phaseContext.put("electric.output.committed.by", effectName);
+                return SfxMachinePhaseResult.cont();
+            }
+            case "brew:refund-on-interrupt" -> {
+                phaseContext.put("electric.interrupt.refund.requested", Boolean.TRUE);
+                return SfxMachinePhaseResult.cont();
+            }
+            case "visual:update-floating-text" -> {
+                SfxElectricMachineRenderStatus status = phaseContext.attachment("electric.renderStatus", SfxElectricMachineRenderStatus.class).orElse(null);
+                if ("sf:geo_miner".equals(definition.id()) && phaseContext.location() != null) {
+                    updateGeoMinerFloatingText(phaseContext.location(), state, status == null ? retainedSpecialStatus(definition, state, null) : status);
+                    phaseContext.put("electric.visual.geo.updated", Boolean.TRUE);
+                }
+                return SfxMachinePhaseResult.cont();
+            }
+            default -> {
+                return SfxMachinePhaseResult.cont();
+            }
+        }
     }
 
     private SfxMachinePhaseResult frameworkLegacyElectricSpecialOperation(SfxMachinePhaseContext phaseContext) {
@@ -183,6 +261,7 @@ public final class SfxElectricMachineService implements Listener {
         if (session != null) attributes.put("electric.session", session);
         attributes.put("electric.recipeProcessor", recipeProcessor);
         attributes.put("electric.service", this);
+        attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkElectricEffect);
         return attributes;
     }
 
@@ -766,7 +845,10 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
 
-        SfxElectricRecipe activeRecipe = recipeProcessor.activeRecipe(definition, state);
+        machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
+        SfxElectricRecipe activeRecipe = frameworkAttributes.get("electric.activeRecipe") instanceof SfxElectricRecipe frameworkActiveRecipe
+                ? frameworkActiveRecipe
+                : recipeProcessor.activeRecipe(definition, state);
         SfxElectricMachineRenderStatus status = SfxElectricMachineRenderStatus.IDLE;
 
         if (state.hasPendingOutput()) {
@@ -791,7 +873,9 @@ public final class SfxElectricMachineService implements Listener {
                 activeInstances.add(instanceId);
             }
         } else if (activeRecipe == null) {
-            SfxElectricRecipeMatch match = recipeProcessor.findRecipeMatch(definition, state);
+            SfxElectricRecipeMatch match = frameworkAttributes.get("electric.recipeMatch") instanceof SfxElectricRecipeMatch frameworkMatch
+                    ? frameworkMatch
+                    : recipeProcessor.findRecipeMatch(definition, state);
             if (match == null) {
                 if (state.hasProgress()) {
                     state.resetProgress();
@@ -799,7 +883,12 @@ public final class SfxElectricMachineService implements Listener {
                 }
                 status = state.hasAnyInput() ? SfxElectricMachineRenderStatus.NO_RECIPE : SfxElectricMachineRenderStatus.IDLE;
             } else {
-                if (!recipeProcessor.canFitOutputForRecipe(definition, state, match.recipe())) {
+                frameworkAttributes.put("electric.recipeMatch", match);
+                SfxMachinePhaseResult outputReserve = machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OUTPUT, instanceId, location, context, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
+                boolean outputFits = frameworkAttributes.get("electric.outputFit") instanceof Boolean frameworkOutputFit
+                        ? frameworkOutputFit
+                        : recipeProcessor.canFitOutputForRecipe(definition, state, match.recipe());
+                if (outputReserve.stopsPipeline() || !outputFits) {
                     status = SfxElectricMachineRenderStatus.OUTPUT_FULL;
                 } else {
                     SfxElectricRecipeStart start = recipeProcessor.tryStartNextRecipe(definition, state);
