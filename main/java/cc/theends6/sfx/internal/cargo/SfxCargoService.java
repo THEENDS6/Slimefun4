@@ -12,9 +12,14 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
+import cc.theends6.sfx.internal.inventory.SfxReservationLedger;
+import cc.theends6.sfx.internal.network.SfxNetworkDomain;
+import cc.theends6.sfx.internal.network.SfxNetworkExecution;
+import cc.theends6.sfx.internal.network.SfxNetworkReadiness;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
+import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.topology.SfxTopologyStatus;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
@@ -213,6 +218,9 @@ public final class SfxCargoService implements Listener {
             return;
         }
         if (!(top.getHolder() instanceof SfxCargoSessionHolder holder)) {
+            return;
+        }
+        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
             return;
         }
         SfxCargoComponentDefinition definition = typeDefinition(holder.type());
@@ -453,7 +461,10 @@ public final class SfxCargoService implements Listener {
             if (network == null || network.inputs().isEmpty() || network.outputs().isEmpty()) {
                 continue;
             }
-            runtime.executeAt(managerLocation, () -> processCargoNetwork(network));
+            runtime.executeAt(managerLocation, () -> SfxNetworkExecution.tick(
+                    SfxNetworkExecution.snapshot(component.componentId(), SfxNetworkDomain.CARGO, component.members(), component.topologyRevision()),
+                    SfxNetworkReadiness.READY,
+                    () -> processCargoNetwork(network)));
         }
         renderVisualizers();
     }
@@ -741,7 +752,7 @@ public final class SfxCargoService implements Listener {
             return List.of();
         }
         List<NodeRef> candidates = new ArrayList<>();
-        Map<String, Integer> reservations = new HashMap<>();
+        SfxReservationLedger reservations = new SfxReservationLedger();
         for (NodeRef output : outputs) {
             if (output.state.channel != input.state.channel) {
                 continue;
@@ -789,7 +800,7 @@ public final class SfxCargoService implements Listener {
         return moves;
     }
 
-    private int availableCapacityFor(NodeRef output, NodeRef input, ItemStack stack, Map<String, Integer> reservations) {
+    private int availableCapacityFor(NodeRef output, NodeRef input, ItemStack stack, SfxReservationLedger reservations) {
         if (output == null || output.endpoint == null) {
             return 0;
         }
@@ -797,21 +808,20 @@ public final class SfxCargoService implements Listener {
                 ? output.endpoint.capacityForSingleSlot(stack, input.state.smartFill)
                 : output.endpoint.capacityFor(stack, input.state.smartFill);
         String key = output.endpoint.storageKey();
-        int reserved = key == null ? 0 : reservations.getOrDefault(key, 0);
-        return Math.max(0, capacity - reserved);
+        return reservations.available(key, capacity);
     }
 
-    private void reserveCapacity(Endpoint endpoint, int amount, Map<String, Integer> reservations) {
+    private void reserveCapacity(Endpoint endpoint, int amount, SfxReservationLedger reservations) {
         if (endpoint == null || amount <= 0) {
             return;
         }
         String key = endpoint.storageKey();
         if (key != null) {
-            reservations.merge(key, amount, Integer::sum);
+            reservations.reserve(key, amount);
         }
     }
 
-    private int planSequentialMoves(NodeRef input, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves, Map<String, Integer> reservations) {
+    private int planSequentialMoves(NodeRef input, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves, SfxReservationLedger reservations) {
         for (NodeRef output : group) {
             if (remaining <= 0) {
                 break;
@@ -830,7 +840,7 @@ public final class SfxCargoService implements Listener {
         return remaining;
     }
 
-    private int planRoundRobinMoves(NodeRef input, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves, Map<String, Integer> reservations) {
+    private int planRoundRobinMoves(NodeRef input, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves, SfxReservationLedger reservations) {
         if (group.isEmpty() || remaining <= 0) {
             return remaining;
         }
@@ -857,7 +867,7 @@ public final class SfxCargoService implements Listener {
         return remaining;
     }
 
-    private int planEvenMoves(NodeRef input, int priority, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves, Map<String, Integer> reservations) {
+    private int planEvenMoves(NodeRef input, int priority, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves, SfxReservationLedger reservations) {
         if (group.isEmpty() || remaining <= 0) {
             return remaining;
         }

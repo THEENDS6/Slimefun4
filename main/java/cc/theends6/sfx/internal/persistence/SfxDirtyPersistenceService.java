@@ -7,11 +7,18 @@ import org.bukkit.World;
 
 
 
-public interface SfxDirtyPersistenceService {
+public interface SfxDirtyPersistenceService extends SfxFlushCoordinator.FlushableStore {
+    @Override
+    default String name() {
+        return getClass().getSimpleName();
+    }
+
+    @Override
     void requestDirtyFlushAsync();
 
     void requestChunkFlushAsync(World world, int chunkX, int chunkZ);
 
+    @Override
     void flushAllBlocking();
 
     void shutdown();

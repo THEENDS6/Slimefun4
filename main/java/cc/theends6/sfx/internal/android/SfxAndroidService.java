@@ -9,6 +9,7 @@ import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -1244,6 +1245,9 @@ public final class SfxAndroidService implements Listener {
         }
         if (!holder.viewerId().equals(player.getUniqueId())) {
             event.setCancelled(true);
+            return;
+        }
+        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
             return;
         }
         int raw = event.getRawSlot();

@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.block;
 
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.persistence.SfxDirtyPersistenceService;
+import cc.theends6.sfx.internal.persistence.SfxFlushCoordinator;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ public final class SfxBlockPersistenceListener implements Listener {
     private final SfxRuntime runtime;
     private final SfxBlockDataService blockData;
     private final List<SfxDirtyPersistenceService> dirtyServices;
+    private final SfxFlushCoordinator flushCoordinator;
     private final long autosaveIntervalTicks;
     private volatile boolean running = true;
 
@@ -29,6 +31,10 @@ public final class SfxBlockPersistenceListener implements Listener {
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.dirtyServices = normalizeServices(blockData, dirtyServices);
+        this.flushCoordinator = new SfxFlushCoordinator(plugin.getLogger());
+        for (SfxDirtyPersistenceService service : this.dirtyServices) {
+            this.flushCoordinator.register(service);
+        }
         this.autosaveIntervalTicks = resolveAutosaveInterval(plugin);
         scheduleAutosaveFlush();
     }
@@ -71,19 +77,11 @@ public final class SfxBlockPersistenceListener implements Listener {
     }
 
     private void requestAllDirtyFlushes() {
-        for (SfxDirtyPersistenceService service : dirtyServices) {
-            service.requestDirtyFlushAsync();
-        }
+        flushCoordinator.requestAsyncFlushAll();
     }
 
     private void flushAllDirtyBlocking() {
-        for (SfxDirtyPersistenceService service : dirtyServices) {
-            try {
-                service.flushAllBlocking();
-            } catch (RuntimeException exception) {
-                plugin.getLogger().warning("Failed to flush dirty SFX state during world save: " + exception.getMessage());
-            }
-        }
+        flushCoordinator.flushAllBlocking();
     }
 
     private List<SfxDirtyPersistenceService> normalizeServices(SfxBlockDataService blockData, SfxDirtyPersistenceService[] services) {

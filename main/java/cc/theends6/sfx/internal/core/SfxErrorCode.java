@@ -1,0 +1,16 @@
+package cc.theends6.sfx.internal.core;
+
+public enum SfxErrorCode {
+    OK,
+    INVALID_INPUT,
+    NOT_READY,
+    BUSY_WRONG_REGION,
+    BUSY_EXTERNAL_FINALIZATION,
+    UNAVAILABLE,
+    VALIDATION_FAILED,
+    TRANSACTION_FAILED,
+    ROLLBACK_FAILED,
+    PERSISTENCE_FAILED,
+    UNSUPPORTED,
+    INTERNAL_ERROR
+}

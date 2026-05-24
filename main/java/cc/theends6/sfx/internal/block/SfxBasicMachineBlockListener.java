@@ -4,7 +4,10 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.energy.SfxFuelBurnTimeBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachineExecution;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
+import cc.theends6.sfx.internal.machine.SfxOutputPolicies;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -104,16 +107,19 @@ public final class SfxBasicMachineBlockListener implements Listener {
     private final Map<Material, Optional<VirtualFurnaceRecipe>> furnaceRecipeCache = new ConcurrentHashMap<>();
     private volatile SfxFuelBurnTimeBridge fuelBurnTimeBridge;
     private final SfxMachineTickSettings tickSettings;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private volatile boolean furnaceTickerRunning;
     private volatile long furnaceTickCounter;
 
-    public SfxBasicMachineBlockListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData) {
+    public SfxBasicMachineBlockListener(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxMachineRuntimeEngine sharedMachineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.tickSettings = SfxMachineTickSettings.from(plugin.getConfig());
+        this.machineRuntime = sharedMachineRuntime == null ? new SfxMachineRuntimeEngine() : sharedMachineRuntime;
+        this.machineRuntime.registerDefinitions(SfxBasicMachineFrameworkBridge.definitions());
         bootstrapEnhancedFurnaces();
         startEnhancedFurnaceTicker();
     }
@@ -599,19 +605,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private boolean fits(Inventory inventory, ItemStack stack) {
-        ItemStack[] contents = inventory.getStorageContents();
-        int remaining = stack.getAmount();
-        for (ItemStack current : contents) {
-            if (current == null || current.getType().isAir()) {
-                remaining -= stack.getMaxStackSize();
-            } else if (current.isSimilar(stack)) {
-                remaining -= Math.max(0, current.getMaxStackSize() - current.getAmount());
-            }
-            if (remaining <= 0) {
-                return true;
-            }
-        }
-        return false;
+        return inventory != null && SfxOutputPolicies.canFitIntoContents(inventory.getStorageContents(), stack);
     }
 
     private ItemStack itemInHand(PlayerInteractEvent event) {
@@ -804,7 +798,13 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (!state.initialized() || state.externalDirty()) {
             hydrateVirtualFurnaceFromWorld(block, state);
         }
+        String frameworkMachineId = blockData.findAnchor(block.getLocation())
+                .flatMap(anchor -> blockData.findInstance(anchor.instanceId()))
+                .map(SfxBlockInstanceRecord::typeId)
+                .orElse("sf:enhanced_furnace");
+        try (SfxMachineExecution machineExecution = machineRuntime.beginTick(blockData.findAnchor(block.getLocation()).map(SfxAnchorRecord::instanceId).orElse(null), frameworkMachineId, block.getLocation(), context)) {
         if (!state.initialized()) {
+            machineExecution.status(cc.theends6.sfx.internal.machine.SfxMachineStatus.ERROR);
             return;
         }
         state.sleeping(false);
@@ -879,6 +879,8 @@ public final class SfxBasicMachineBlockListener implements Listener {
             state.sleeping(true);
         }
         syncVirtualFurnaceWorld(block, state, cookTime, forceVisual, context.hasViewers());
+        machineExecution.status(SfxBasicMachineFrameworkBridge.furnaceStatus(state.initialized(), state.cookProgress() > 0, false, state.burnTimeRemaining() > 0));
+        }
     }
 
     private void burnOneVirtualFuelTick(VirtualFurnaceState state) {
@@ -1084,9 +1086,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private boolean canFitResult(VirtualFurnaceState state, ItemStack result) {
-        ItemStack existing = state.result();
-        return existing == null || existing.getType().isAir()
-                || (existing.isSimilar(result) && existing.getAmount() + result.getAmount() <= existing.getMaxStackSize());
+        return state != null && SfxOutputPolicies.canFitSingle(state.result(), result);
     }
 
     private void pushFurnaceResult(VirtualFurnaceState state, ItemStack result) {
@@ -1132,9 +1132,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private boolean canFitResult(FurnaceInventory inventory, ItemStack result) {
-        ItemStack existing = inventory.getResult();
-        return existing == null || existing.getType().isAir()
-                || (existing.isSimilar(result) && existing.getAmount() + result.getAmount() <= existing.getMaxStackSize());
+        return inventory != null && SfxOutputPolicies.canFitSingle(inventory.getResult(), result);
     }
 
     private void pushFurnaceResult(FurnaceInventory inventory, ItemStack result) {
