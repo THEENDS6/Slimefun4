@@ -49,6 +49,7 @@ import cc.theends6.sfx.internal.listener.SfxLegacyUtilityListener;
 import cc.theends6.sfx.internal.listener.SfxVanillaGuardListener;
 import cc.theends6.sfx.internal.machine.ManualMachineService;
 import cc.theends6.sfx.internal.machine.SfxMachineCategory;
+import cc.theends6.sfx.internal.machine.SfxMachineBuiltinEffectHooks;
 import cc.theends6.sfx.internal.machine.SfxMachineFrameworkCatalog;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxManualMachineDeployListener;
@@ -198,6 +199,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
                 SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, infusedHopperService::supportsType),
                 SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, hologramProjectorService::supportsType));
         machineRuntime.ensureDefaultProcessors();
+        int builtinEffectHooks = SfxMachineBuiltinEffectHooks.registerDefaults(machineRuntime);
         SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, ancientAltarService, androidService, spawnerService, blockPlacerService, infusedHopperService, hologramProjectorService, api.runtime(), machineRuntime);
         this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService, gpsService);
         this.radiationService = new SfxRadiationService(this, api.runtime(), api.items(), api.itemRegistry(), playerDataService);
@@ -264,7 +266,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
                 + machineRuntime.capabilityDeclarationCount() + " capabilities, "
                 + machineRuntime.policyRefCount() + " policy refs, "
                 + machineRuntime.effectCount() + " phase effects, "
-                + machineRuntime.effectHookCount() + " bound effect hooks. "
+                + machineRuntime.effectHookCount() + " bound effect hooks (" + builtinEffectHooks + " built-in defaults), "
+                + machineRuntime.unboundDeclaredEffectNames().size() + " unbound declared effects. "
                 + "Loaded " + blockDataService.anchorCount() + " block anchors and "
                 + blockDataService.instanceCount() + " block instances.");
     }

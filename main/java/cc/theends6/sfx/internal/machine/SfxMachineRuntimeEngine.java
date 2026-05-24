@@ -5,6 +5,8 @@ import cc.theends6.sfx.internal.core.SfxResult;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.HashMap;
@@ -71,6 +73,42 @@ public final class SfxMachineRuntimeEngine {
         if (effectName != null && !effectName.isBlank() && hook != null) {
             effectHooks.put(effectName, hook);
         }
+    }
+
+    public void registerEffectHookIfAbsent(String effectName, SfxMachineHook hook) {
+        if (effectName != null && !effectName.isBlank() && hook != null) {
+            effectHooks.putIfAbsent(effectName, hook);
+        }
+    }
+
+    public boolean hasEffectHook(String effectName) {
+        return effectName != null && effectHooks.containsKey(effectName);
+    }
+
+    public Set<String> boundEffectNames() {
+        return Set.copyOf(effectHooks.keySet());
+    }
+
+    public synchronized Set<String> declaredEffectNames() {
+        Set<String> names = new LinkedHashSet<>();
+        for (SfxMachineDefinition definition : definitions.values()) {
+            for (SfxMachineEffect effect : definition.effects()) {
+                if (effect != null && effect.name() != null && !effect.name().isBlank()) {
+                    names.add(effect.name());
+                }
+            }
+        }
+        return Set.copyOf(names);
+    }
+
+    public synchronized Set<String> unboundDeclaredEffectNames() {
+        Set<String> names = new LinkedHashSet<>();
+        for (String effectName : declaredEffectNames()) {
+            if (!effectHooks.containsKey(effectName)) {
+                names.add(effectName);
+            }
+        }
+        return Set.copyOf(names);
     }
 
     public void unregisterEffectHook(String effectName) {
