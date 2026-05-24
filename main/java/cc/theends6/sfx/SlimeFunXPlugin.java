@@ -74,39 +74,39 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SlimeFunXPlugin extends JavaPlugin {
 
-    private SfxApiImpl api;
-    private SfxLocalization localization;
-    private SfxLegacyItemBehaviorConfig legacyItemBehaviorConfig;
-    private SfxPlayerDataService playerDataService;
-    private SfxBlockDataService blockDataService;
-    private SfxBlockPersistenceListener blockPersistenceListener;
-    private SfxResearchRegistry researchRegistry;
-    private SfxResearchService researchService;
-    private SfxBackpackListener backpackListener;
-    private SfxBasicMachineBlockListener basicMachineBlockListener;
-    private SfxElectricMachineService electricMachineService;
-    private SfxConfigurableMachineService configurableMachineService;
-    private SfxEnergyService energyService;
-    private SfxVirtualContainerService virtualContainerService;
-    private SfxCargoService cargoService;
-    private SfxDecorationService decorationService;
-    private SfxGpsService gpsService;
-    private SfxAndroidService androidService;
-    private SfxRadiationService radiationService;
-    private SfxTechnicalGadgetService technicalGadgetService;
-    private SfxFloatingTextDisplayService floatingTextDisplayService;
-    private SfxAncientAltarService ancientAltarService;
-    private SfxSpawnerService spawnerService;
-    private SfxBlockPlacerService blockPlacerService;
-    private SfxInfusedHopperService infusedHopperService;
-    private SfxHologramProjectorService hologramProjectorService;
-    private SfxIndustrialMinerService industrialMinerService;
-    private SfxListenerRegistrar listenerRegistrar;
-    private SfxMachineRuntimeEngine machineRuntime;
-    private SfxMachinePhaseLedger machinePhaseLedger;
-    private Object packetEventsApi;
-    private boolean packetEventsLoaded;
-    private boolean packetEventsUnavailable;
+    SfxApiImpl api;
+    SfxLocalization localization;
+    SfxLegacyItemBehaviorConfig legacyItemBehaviorConfig;
+    SfxPlayerDataService playerDataService;
+    SfxBlockDataService blockDataService;
+    SfxBlockPersistenceListener blockPersistenceListener;
+    SfxResearchRegistry researchRegistry;
+    SfxResearchService researchService;
+    SfxBackpackListener backpackListener;
+    SfxBasicMachineBlockListener basicMachineBlockListener;
+    SfxElectricMachineService electricMachineService;
+    SfxConfigurableMachineService configurableMachineService;
+    SfxEnergyService energyService;
+    SfxVirtualContainerService virtualContainerService;
+    SfxCargoService cargoService;
+    SfxDecorationService decorationService;
+    SfxGpsService gpsService;
+    SfxAndroidService androidService;
+    SfxRadiationService radiationService;
+    SfxTechnicalGadgetService technicalGadgetService;
+    SfxFloatingTextDisplayService floatingTextDisplayService;
+    SfxAncientAltarService ancientAltarService;
+    SfxSpawnerService spawnerService;
+    SfxBlockPlacerService blockPlacerService;
+    SfxInfusedHopperService infusedHopperService;
+    SfxHologramProjectorService hologramProjectorService;
+    SfxIndustrialMinerService industrialMinerService;
+    SfxListenerRegistrar listenerRegistrar;
+    SfxMachineRuntimeEngine machineRuntime;
+    SfxMachinePhaseLedger machinePhaseLedger;
+    Object packetEventsApi;
+    boolean packetEventsLoaded;
+    boolean packetEventsUnavailable;
 
     @Override
     public void onLoad() {
@@ -126,235 +126,17 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        if (packetEventsUnavailable || !packetEventsLoaded) {
-            if (!packetEventsUnavailable) {
-                logPacketEventsStartupFailure(new IllegalStateException("PacketEvents was not initialized during onLoad"));
-            }
-            getLogger().severe("SlimeFunX is disabling because PacketEvents is not available or failed to initialize.");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-        if (machineRuntime != null) {
-            machineRuntime.clear();
-        }
-        if (packetEventsLoaded) {
-            try {
-                invokePacketEventsApi("init");
-            } catch (Throwable throwable) {
-                logPacketEventsStartupFailure(throwable);
-                getServer().getPluginManager().disablePlugin(this);
-                return;
-            }
-        }
-        saveDefaultConfig();
-        syncBundledLanguages();
-        var runtime = new cc.theends6.sfx.internal.runtime.PaperSfxRuntime(this);
-        try {
-            this.playerDataService = new SfxPlayerDataService(this, runtime, new SqliteSfxPlayerDataRepository(this, playerDataFile()));
-            playerDataService.initialize();
-            this.blockDataService = new SfxBlockDataService(this, runtime, new SqliteSfxBlockDataRepository(this, blockDataFile()));
-            blockDataService.initialize();
-        } catch (Exception exception) {
-            throw new IllegalStateException("Failed to initialize SFX persistent storage", exception);
-        }
-        this.researchRegistry = new SfxResearchRegistry();
-        this.researchService = new SfxResearchService(researchRegistry, playerDataService);
-
-        this.localization = new SfxLocalization(this);
-        this.legacyItemBehaviorConfig = new SfxLegacyItemBehaviorConfig(this);
-        legacyItemBehaviorConfig.ensureDefaultFile();
-        legacyItemBehaviorConfig.reload();
-        this.api = SfxApiImpl.bootstrap(this, localization, playerDataService, researchService);
-
-        bootstrapContent();
-
-        this.machineRuntime = new SfxMachineRuntimeEngine();
-        this.machinePhaseLedger = new SfxMachinePhaseLedger();
-        this.machineRuntime.registerPhaseObserver(machinePhaseLedger);
-        this.basicMachineBlockListener = new SfxBasicMachineBlockListener(this, api.runtime(), api.items(), localization, blockDataService, machineRuntime);
-        ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization, basicMachineBlockListener);
-        this.floatingTextDisplayService = new SfxFloatingTextDisplayService(this, api.runtime());
-        this.virtualContainerService = new SfxVirtualContainerService(this, api.runtime());
-        this.electricMachineService = new SfxElectricMachineService(this, api.runtime(), api.items(), localization, blockDataService, playerDataService, api.internalManualMachines(), virtualContainerService, floatingTextDisplayService, machineRuntime);
-        this.configurableMachineService = new SfxConfigurableMachineService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService, machineRuntime);
-        this.technicalGadgetService = new SfxTechnicalGadgetService(this, api.runtime(), api.items(), localization);
-        this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService, technicalGadgetService.rechargeableItems(), machineRuntime);
-        this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService, electricMachineService, machineRuntime);
-        this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService, machineRuntime);
-        this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), localization, blockDataService, decorationService, electricMachineService, new SqliteSfxGpsDataRepository(this, gpsDataFile()), machineRuntime);
-        this.androidService = new SfxAndroidService(this, api.runtime(), api.items(), api.itemRegistry(), localization, blockDataService, new SqliteSfxAndroidScriptRepository(this, androidScriptsFile()), machineRuntime);
-        this.ancientAltarService = new SfxAncientAltarService(this, api.runtime(), api.items(), api.itemRegistry(), localization, blockDataService, machineRuntime);
-        this.spawnerService = new SfxSpawnerService(this, api.items(), localization, blockDataService, machineRuntime);
-        this.infusedHopperService = new SfxInfusedHopperService(this, api.runtime(), api.items(), blockDataService, machineRuntime);
-        this.hologramProjectorService = new SfxHologramProjectorService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService, machineRuntime);
-        this.blockPlacerService = new SfxBlockPlacerService(api.runtime(), api.items(), blockDataService, spawnerService, hologramProjectorService, infusedHopperService, machineRuntime);
-        this.industrialMinerService = new SfxIndustrialMinerService(this, api.runtime(), api.items(), localization, blockDataService, machineRuntime);
-        int domainEffectHooks = SfxMachineDomainEffectHooks.register(machineRuntime, gpsService, androidService, ancientAltarService, energyService, cargoService, spawnerService, infusedHopperService, hologramProjectorService, blockPlacerService, industrialMinerService, decorationService);
-        int frameworkCatalogExtras = SfxMachineFrameworkCatalog.registerDefinitions(machineRuntime, api.itemRegistry().items(),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.BASIC, basicMachineBlockListener::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ELECTRIC, electricMachineService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.CONFIGURABLE, configurableMachineService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ENERGY, energyService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.CARGO, cargoService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.GPS, gpsService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ANDROID, androidService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, decorationService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, ancientAltarService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, spawnerService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, blockPlacerService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, infusedHopperService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, hologramProjectorService::supportsType));
-        machineRuntime.ensureDefaultProcessors();
-        int builtinEffectHooks = SfxMachineBuiltinEffectHooks.registerDefaults(machineRuntime);
-        int genericEffectHooks = machineRuntime.bindUnboundDeclaredEffectHooks();
-        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, ancientAltarService, androidService, spawnerService, blockPlacerService, infusedHopperService, hologramProjectorService, api.runtime(), machineRuntime);
-        this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService, gpsService);
-        this.radiationService = new SfxRadiationService(this, api.runtime(), api.items(), api.itemRegistry(), playerDataService);
-        this.listenerRegistrar = new SfxListenerRegistrar(this);
-
-        this.backpackListener = new SfxBackpackListener(this, api.runtime(), api.items(), localization, playerDataService, researchService);
-        SfxLegacyUtilityListener utilityListener = new SfxLegacyUtilityListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig, blockDataService, radiationService, playerDataService, researchService);
-        SfxLegacyCombatToolListener combatToolListener = new SfxLegacyCombatToolListener(this, api.runtime(), api.items(), localization, legacyItemBehaviorConfig, blockDataService);
-        SfxLegacyFoodListener foodListener = new SfxLegacyFoodListener(this, api.runtime(), api.items(), localization);
-        SfxTalismanListener talismanListener = new SfxTalismanListener(this, api.runtime(), api.items(), researchService, legacyItemBehaviorConfig.talismans());
-
-        listenerRegistrar.register(api.menus());
-        listenerRegistrar.register(new SfxFloatingTextDisplayListener(floatingTextDisplayService));
-        listenerRegistrar.register(new SfxPlayerProfileListener(playerDataService));
-        listenerRegistrar.register(radiationService);
-        listenerRegistrar.register(new SfxGuideListener(this, api.items(), api.guide()));
-        listenerRegistrar.register(new SfxItemUseDispatcher(api.items(), backpackListener, utilityListener, combatToolListener, foodListener, researchService, localization));
-        listenerRegistrar.register(new SfxManualMachineListener(manualMachineService, api.items()));
-        listenerRegistrar.register(new SfxManualMachineDeployListener(this, api.internalManualMachines(), localization, blockDataService));
-        listenerRegistrar.register(new SfxMultimeterListener(this, api.items(), localization, blockDataService, electricMachineService, configurableMachineService, energyService));
-        listenerRegistrar.register(placeableBlockListener);
-        listenerRegistrar.register(blockPersistenceListener);
-        listenerRegistrar.register(basicMachineBlockListener);
-        listenerRegistrar.register(electricMachineService);
-        listenerRegistrar.register(configurableMachineService);
-        listenerRegistrar.register(energyService);
-        listenerRegistrar.register(virtualContainerService);
-        listenerRegistrar.register(cargoService);
-        listenerRegistrar.register(decorationService);
-        listenerRegistrar.register(gpsService);
-        listenerRegistrar.register(androidService);
-        listenerRegistrar.register(ancientAltarService);
-        listenerRegistrar.register(blockPlacerService);
-        listenerRegistrar.register(infusedHopperService);
-        listenerRegistrar.register(hologramProjectorService);
-        listenerRegistrar.register(industrialMinerService);
-        listenerRegistrar.register(technicalGadgetService);
-        listenerRegistrar.register(backpackListener);
-        listenerRegistrar.register(utilityListener);
-        listenerRegistrar.register(combatToolListener);
-        listenerRegistrar.register(foodListener);
-        listenerRegistrar.register(talismanListener);
-        listenerRegistrar.register(new SfxAncientRuneEffectListener(this, api.runtime(), api.items()));
-        listenerRegistrar.register(new SfxSoulboundListener(this, api.items(), researchService));
-        listenerRegistrar.register(new SfxResearchFireworksListener());
-        listenerRegistrar.register(new SfxVanillaGuardListener(this, api.items()));
-        listenerRegistrar.register(new SfxArmorEffectListener(api.items()));
-        decorationService.start();
-        ancientAltarService.start();
-        infusedHopperService.start();
-        hologramProjectorService.rebuildIndex();
-        radiationService.start();
-        androidService.start();
-
-        SfxCommand command = new SfxCommand(this, api);
-        PluginCommand pluginCommand = Objects.requireNonNull(getCommand("slimefunx"), "plugin.yml missing /slimefunx command");
-        pluginCommand.setExecutor(command);
-        pluginCommand.setTabCompleter(command);
-
-        getLogger().info("SFX enabled. Registered " + api.itemRegistry().items().size()
-                + " item definitions and " + api.manualMachines().machines().size() + " manual machines. "
-                + "Registered " + listenerRegistrar.registered().size() + " listeners through sfx-core. "
-                + "Machine framework definitions: " + machineRuntime.definitionCount() + " (" + frameworkCatalogExtras + " catalog extras), "
-                + machineRuntime.capabilityDeclarationCount() + " capabilities, "
-                + machineRuntime.policyRefCount() + " policy refs, "
-                + machineRuntime.effectCount() + " phase effects, "
-                + machineRuntime.effectHookCount() + " bound effect hooks (" + builtinEffectHooks + " built-in defaults, " + domainEffectHooks + " domain hooks, " + genericEffectHooks + " generic fallbacks), "
-                + machineRuntime.phaseObserverCount() + " phase observers, "
-                + machineRuntime.unboundDeclaredEffectNames().size() + " unbound declared effects. "
-                + "Loaded " + blockDataService.anchorCount() + " block anchors and "
-                + blockDataService.instanceCount() + " block instances.");
+        SfxPluginBootstrap.enable(this);
     }
+
+    
 
     @Override
     public void onDisable() {
-        if (api != null) {
-            api.menus().closeAll();
-        }
-        if (blockPersistenceListener != null) {
-            blockPersistenceListener.shutdown();
-        }
-        if (backpackListener != null) {
-            backpackListener.shutdown();
-        }
-        if (basicMachineBlockListener != null) {
-            basicMachineBlockListener.shutdown();
-        }
-        if (electricMachineService != null) {
-            electricMachineService.shutdown();
-        }
-        if (configurableMachineService != null) {
-            configurableMachineService.shutdown();
-        }
-        if (cargoService != null) {
-            cargoService.shutdown();
-        }
-        if (gpsService != null) {
-            gpsService.shutdown();
-        }
-        if (androidService != null) {
-            androidService.shutdown();
-        }
-        if (decorationService != null) {
-            decorationService.shutdown();
-        }
-        if (ancientAltarService != null) {
-            ancientAltarService.shutdown();
-        }
-        if (infusedHopperService != null) {
-            infusedHopperService.shutdown();
-        }
-        if (industrialMinerService != null) {
-            industrialMinerService.shutdown();
-        }
-        if (virtualContainerService != null) {
-            virtualContainerService.shutdown();
-        }
-        if (energyService != null) {
-            energyService.shutdown();
-        }
-        if (technicalGadgetService != null) {
-            technicalGadgetService.shutdown();
-        }
-        if (floatingTextDisplayService != null) {
-            floatingTextDisplayService.shutdown();
-        }
-        if (radiationService != null) {
-            radiationService.shutdown();
-        }
-        if (playerDataService != null) {
-            playerDataService.shutdown();
-        }
-        if (blockDataService != null) {
-            blockDataService.shutdown();
-        }
-        if (machineRuntime != null) {
-            machineRuntime.clear();
-        }
-        if (packetEventsLoaded) {
-            try {
-                invokePacketEventsApi("terminate");
-            } catch (Throwable throwable) {
-                getLogger().warning("Failed to terminate PacketEvents cleanly: " + throwable.getMessage());
-            }
-            packetEventsLoaded = false;
-            packetEventsApi = null;
-        }
+        SfxPluginBootstrap.disable(this);
     }
+
+    
 
     public SfxApi api() {
         return api;
@@ -403,58 +185,23 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
     }
 
-    private void bootstrapContent() {
-        DefaultSfxItemRegistry itemRegistry = (DefaultSfxItemRegistry) api.itemRegistry();
-        itemRegistry.clear();
-        api.internalManualMachines().clear();
-
-        BaseContentBootstrap.register(itemRegistry, api.internalManualMachines());
-        SfxYamlContentLoader yamlContentLoader = new SfxYamlContentLoader(this, itemRegistry);
-        yamlContentLoader.ensureDefaultFiles(syncBundledItemFiles());
-        yamlContentLoader.registerAll();
-
-        SfxRecipeYamlLoader recipeYamlLoader = new SfxRecipeYamlLoader(this);
-        recipeYamlLoader.ensureDefaultFiles(syncBundledRecipeFiles());
-        DefaultSfxRecipeRegistry recipeRegistry = new DefaultSfxRecipeRegistry();
-        recipeYamlLoader.loadInto(recipeRegistry);
-        DefaultSfxRecipeRegistry.AuditResult recipeAudit = recipeRegistry.apply(itemRegistry, api.internalManualMachines());
-        logRecipeAudit(recipeAudit);
-        BaseContentBootstrap.syncManualMachineGuideContent(itemRegistry, api.internalManualMachines());
-        SfxResearchYamlLoader researchYamlLoader = new SfxResearchYamlLoader(this);
-        researchYamlLoader.ensureDefaultFiles(syncBundledResearchFiles());
-        researchYamlLoader.loadInto(researchRegistry);
-
+    void bootstrapContent() {
+        SfxContentBootstrapper.bootstrap(this, api, researchRegistry);
     }
 
-
-    private void logRecipeAudit(DefaultSfxRecipeRegistry.AuditResult audit) {
-        if (audit == null) {
-            return;
-        }
-        SfxAuditReport.Builder report = SfxAuditReport.builder("recipe-import").info(audit.summary());
-        int shown = Math.min(20, audit.warnings().size());
-        for (int i = 0; i < shown; i++) {
-            report.warning(audit.warnings().get(i));
-        }
-        if (audit.warnings().size() > shown) {
-            report.warning((audit.warnings().size() - shown) + " additional recipe import warnings suppressed");
-        }
-        SfxAuditSink.toLogger(getLogger()).publish(report.build());
-    }
-
-    private boolean syncBundledRecipeFiles() {
+    boolean syncBundledRecipeFiles() {
         return getConfig().getBoolean("content.sync-bundled-recipes-on-startup", false);
     }
 
-    private boolean syncBundledItemFiles() {
+    boolean syncBundledItemFiles() {
         return getConfig().getBoolean("content.sync-bundled-items-on-startup", false);
     }
 
-    private boolean syncBundledResearchFiles() {
+    boolean syncBundledResearchFiles() {
         return getConfig().getBoolean("content.sync-bundled-researches-on-startup", false);
     }
 
-    private void saveBundledLanguage(String language) {
+    void saveBundledLanguage(String language) {
         File target = new File(new File(getDataFolder(), "lang"), language + ".yml");
         boolean overwrite = getConfig().getBoolean("content.sync-bundled-languages-on-startup", false);
         if (!target.exists() || overwrite) {
@@ -462,32 +209,32 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
     }
 
-    private void syncBundledLanguages() {
+    void syncBundledLanguages() {
         saveBundledLanguage("zh-CN");
         saveBundledLanguage("en-US");
     }
 
-    private File playerDataFile() {
+    File playerDataFile() {
         String configured = getConfig().getString("storage.sqlite-file", "data/player-data.db");
         return new File(getDataFolder(), configured);
     }
 
-    private File blockDataFile() {
+    File blockDataFile() {
         String configured = getConfig().getString("storage.block-data.sqlite-file", "data/block-data.db");
         return new File(getDataFolder(), configured);
     }
 
-    private File gpsDataFile() {
+    File gpsDataFile() {
         String configured = getConfig().getString("storage.gps-data.sqlite-file", "data/gps-data.db");
         return new File(getDataFolder(), configured);
     }
 
-    private File androidScriptsFile() {
+    File androidScriptsFile() {
         String configured = getConfig().getString("storage.android-scripts.sqlite-file", "data/android-scripts.db");
         return new File(getDataFolder(), configured);
     }
 
-    private void invokePacketEventsApi(String methodName) throws Exception {
+    void invokePacketEventsApi(String methodName) throws Exception {
         if (packetEventsApi == null) {
             throw new IllegalStateException("PacketEvents API is not initialized");
         }
@@ -496,7 +243,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         method.invoke(packetEventsApi);
     }
 
-    private Object invokeSingleArgStaticReturning(Class<?> target, String methodName, Object argument) throws Exception {
+    Object invokeSingleArgStaticReturning(Class<?> target, String methodName, Object argument) throws Exception {
         for (Method method : target.getMethods()) {
             if (method.getName().equals(methodName) && method.getParameterCount() == 1 && method.getParameterTypes()[0].isInstance(argument)) {
                 forceAccessible(method);
@@ -506,7 +253,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         throw new NoSuchMethodException(target.getName() + "." + methodName + "(<arg>)");
     }
 
-    private void invokeSingleArgStatic(Class<?> target, String methodName, Object argument) throws Exception {
+    void invokeSingleArgStatic(Class<?> target, String methodName, Object argument) throws Exception {
         for (Method method : target.getMethods()) {
             if (method.getName().equals(methodName) && method.getParameterCount() == 1 && method.getParameterTypes()[0].isInstance(argument)) {
                 forceAccessible(method);
@@ -517,7 +264,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         throw new NoSuchMethodException(target.getName() + "." + methodName + "(<api>)");
     }
 
-    private void forceAccessible(Method method) {
+    void forceAccessible(Method method) {
         try {
             method.setAccessible(true);
         } catch (RuntimeException ignored) {
@@ -526,7 +273,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
     }
 
-    private void logPacketEventsStartupFailure(Throwable throwable) {
+    void logPacketEventsStartupFailure(Throwable throwable) {
         Throwable cause = throwable;
         if (throwable instanceof java.lang.reflect.InvocationTargetException invocationTargetException && invocationTargetException.getTargetException() != null) {
             cause = invocationTargetException.getTargetException();

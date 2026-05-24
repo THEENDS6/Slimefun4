@@ -135,7 +135,7 @@ public final class SfxMultimeterListener implements Listener {
     }
 
     private void inspectEnergyComponent(Player player, SfxBlockInstanceRecord instance) {
-        SfxEnergyService.SfxEnergyInspection inspection = energyService.inspectEnergyComponent(instance.instanceId());
+        SfxEnergyInspection inspection = energyService.inspectEnergyComponent(instance.instanceId());
         if (inspection == null) {
             send(player, "tools.multimeter.unsupported", "<red>This block has no readable energy storage.</red>", Map.of());
             return;
@@ -177,7 +177,7 @@ public final class SfxMultimeterListener implements Listener {
     }
 
     private void sendGridSummary(Player player, UUID instanceId) {
-        SfxEnergyService.SfxEnergyGridInspection grid = energyService.inspectGridForMember(instanceId);
+        SfxEnergyGridInspection grid = energyService.inspectGridForMember(instanceId);
         if (grid == null) {
             send(player, "tools.multimeter.enhanced.scheduler-missing", "<gray>Scheduler: <red>not connected</red></gray>", Map.of());
             return;
@@ -215,7 +215,7 @@ public final class SfxMultimeterListener implements Listener {
 
     private EnergyNumbers energyNumbers(SfxBlockInstanceRecord instance) {
         if (energyService.supportsType(instance.typeId())) {
-            SfxEnergyService.SfxEnergyInspection inspection = energyService.inspectEnergyComponent(instance.instanceId());
+            SfxEnergyInspection inspection = energyService.inspectEnergyComponent(instance.instanceId());
             return inspection == null ? null : new EnergyNumbers(inspection.storedEnergy(), inspection.capacity());
         }
         if (electricMachines.supportsType(instance.typeId())) {
