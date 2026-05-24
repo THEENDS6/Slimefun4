@@ -2,6 +2,8 @@ package cc.theends6.sfx.internal.block;
 
 import cc.theends6.sfx.internal.machine.SfxMachineCategory;
 import cc.theends6.sfx.internal.machine.SfxMachineDefinition;
+import cc.theends6.sfx.internal.machine.SfxMachineEffect;
+import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
 import java.util.List;
 

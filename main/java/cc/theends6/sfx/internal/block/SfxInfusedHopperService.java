@@ -110,10 +110,20 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
         if (!canPlaceFromBlockPlacer(itemId, stack, target, ownerId)) {
             return false;
         }
-        target.setType(Material.HOPPER, true);
-        blockData.registerSingleBlock(itemId, target.getLocation(), Material.HOPPER, ownerId);
-        tickStates.remove(SfxBlockAnchorKey.fromLocation(target.getLocation()));
-        return true;
+        return SfxProgrammaticPlacementTransactions.place(
+                blockData,
+                itemId,
+                target,
+                Material.HOPPER,
+                ownerId,
+                stack,
+                (context, instanceId) -> {
+                    handlePlaced(instanceId, itemId);
+                    tickStates.remove(SfxBlockAnchorKey.fromLocation(target.getLocation()));
+                    machineRuntime.recordState(instanceId, itemId, target.getLocation(), SfxMachineStatus.IDLE);
+                },
+                plugin.getLogger()
+        ).isPresent();
     }
 
     private void scheduleTick() {

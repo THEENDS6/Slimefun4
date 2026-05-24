@@ -74,7 +74,10 @@ public final class SfxMachineBuiltinEffectHooks {
             "miner:animate-piston",
             "miner:extract-ore",
             "miner:commit-output",
-            "miner:stop-on-error"
+            "miner:stop-on-error",
+            "decoration:animate-state",
+            "decoration:sync-visual",
+            "decoration:drop-plugin-block"
     );
 
     /** Registers safe framework-native hooks for every built-in special effect name. */
@@ -138,6 +141,7 @@ public final class SfxMachineBuiltinEffectHooks {
             case "hologram:open-editor", "hologram:update-text", "hologram:sync-display" -> domainMark(context, "hologram", effectName);
             case "placer:resolve-target", "placer:consume-input", "placer:place-block", "placer:rollback-on-fail" -> domainMark(context, "placer", effectName);
             case "miner:validate-structure", "miner:consume-fuel", "miner:animate-piston", "miner:extract-ore", "miner:commit-output", "miner:stop-on-error" -> domainMark(context, "miner", effectName);
+            case "decoration:animate-state", "decoration:sync-visual", "decoration:drop-plugin-block" -> domainMark(context, "decoration", effectName);
             case "framework:audit-tick" -> auditTick(context);
             default -> SfxMachinePhaseResult.cont();
         };

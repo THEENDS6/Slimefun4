@@ -145,10 +145,19 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
         if (!canPlaceFromBlockPlacer(itemId, stack, target, ownerId)) {
             return false;
         }
-        target.setType(Material.QUARTZ_SLAB, true);
-        UUID instanceId = blockData.registerSingleBlock(itemId, target.getLocation(), Material.QUARTZ_SLAB, ownerId);
-        handlePlaced(instanceId, itemId);
-        return true;
+        return SfxProgrammaticPlacementTransactions.place(
+                blockData,
+                itemId,
+                target,
+                Material.QUARTZ_SLAB,
+                ownerId,
+                stack,
+                (context, instanceId) -> {
+                    handlePlaced(instanceId, itemId);
+                    machineRuntime.recordState(instanceId, itemId, target.getLocation(), SfxMachineStatus.IDLE);
+                },
+                plugin.getLogger()
+        ).isPresent();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

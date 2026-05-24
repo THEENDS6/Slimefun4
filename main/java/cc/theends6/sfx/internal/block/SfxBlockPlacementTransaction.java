@@ -27,13 +27,19 @@ public final class SfxBlockPlacementTransaction {
         }
         UUID instanceId = null;
         Material previous = context.location().getBlock().getType();
+        boolean changedWorldBlock = previous != context.material();
         try {
+            if (changedWorldBlock) {
+                context.location().getBlock().setType(context.material(), true);
+            }
             instanceId = blockData.registerSingleBlock(context.typeId(), context.location(), context.material(), context.ownerId());
             if (behavior != null) {
                 SfxResult<Void> placed = behavior.afterPlace(context, instanceId);
                 if (!placed.success()) {
                     blockData.unregisterAt(context.location());
-                    context.location().getBlock().setType(previous, false);
+                    if (changedWorldBlock) {
+                        context.location().getBlock().setType(previous, false);
+                    }
                     return SfxResult.fail(placed.code(), placed.message());
                 }
             }
@@ -45,6 +51,15 @@ public final class SfxBlockPlacementTransaction {
                 } catch (Throwable rollback) {
                     if (logger != null) {
                         logger.warning("Failed to roll back SFX placement at " + context.location() + ": " + rollback.getMessage());
+                    }
+                }
+            }
+            if (changedWorldBlock) {
+                try {
+                    context.location().getBlock().setType(previous, false);
+                } catch (Throwable rollback) {
+                    if (logger != null) {
+                        logger.warning("Failed to restore world block after SFX placement failure at " + context.location() + ": " + rollback.getMessage());
                     }
                 }
             }

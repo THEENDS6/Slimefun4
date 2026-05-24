@@ -236,10 +236,19 @@ public final class SfxSpawnerService implements SfxProgrammaticBlockPlacement {
         if (!canPlaceFromBlockPlacer(itemId, stack, target, ownerId)) {
             return false;
         }
-        target.setType(Material.SPAWNER, true);
-        UUID instanceId = blockData.registerSingleBlock(itemId, target.getLocation(), Material.SPAWNER, ownerId);
-        handlePlaced(instanceId, itemId, stack);
-        return true;
+        return SfxProgrammaticPlacementTransactions.place(
+                blockData,
+                itemId,
+                target,
+                Material.SPAWNER,
+                ownerId,
+                stack,
+                (context, instanceId) -> {
+                    handlePlaced(instanceId, itemId, stack);
+                    machineRuntime.recordState(instanceId, itemId, target.getLocation(), SfxMachineStatus.IDLE);
+                },
+                plugin.getLogger()
+        ).isPresent();
     }
 
     private List<Component> brokenSpawnerLore(EntityType type) {

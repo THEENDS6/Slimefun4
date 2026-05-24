@@ -34,6 +34,7 @@ public final class SfxInventoryPolicy {
             return false;
         }
         SfxSlotPolicy policy = layout.policyAt(raw);
+        InventoryAction action = event.getAction();
         if (cancelDangerousClick(event)) {
             return true;
         }

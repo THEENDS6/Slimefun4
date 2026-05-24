@@ -7,6 +7,7 @@ import cc.theends6.sfx.internal.block.SfxHologramProjectorService;
 import cc.theends6.sfx.internal.block.SfxInfusedHopperService;
 import cc.theends6.sfx.internal.block.SfxSpawnerService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
+import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.machine.SfxIndustrialMinerService;
@@ -34,7 +35,8 @@ public final class SfxMachineDomainEffectHooks {
             SfxInfusedHopperService infusedHopper,
             SfxHologramProjectorService hologram,
             SfxBlockPlacerService placer,
-            SfxIndustrialMinerService miner
+            SfxIndustrialMinerService miner,
+            SfxDecorationService decoration
     ) {
         if (runtime == null) return 0;
         int before = runtime.effectHookCount();
@@ -48,6 +50,7 @@ public final class SfxMachineDomainEffectHooks {
         registerHologram(runtime, hologram);
         registerBlockPlacer(runtime, placer);
         registerIndustrialMiner(runtime, miner);
+        registerDecoration(runtime, decoration);
         return Math.max(0, runtime.effectHookCount() - before);
     }
 
@@ -108,6 +111,12 @@ public final class SfxMachineDomainEffectHooks {
     private static void registerIndustrialMiner(SfxMachineRuntimeEngine runtime, SfxIndustrialMinerService miner) {
         for (String name : List.of("miner:validate-structure", "miner:consume-fuel", "miner:animate-piston", "miner:extract-ore", "miner:commit-output", "miner:stop-on-error")) {
             runtime.registerEffectHook(name, ctx -> miner == null ? domain(ctx, "miner", null) : miner.frameworkEffect(name, ctx));
+        }
+    }
+
+    private static void registerDecoration(SfxMachineRuntimeEngine runtime, SfxDecorationService decoration) {
+        for (String name : List.of("decoration:animate-state", "decoration:sync-visual", "decoration:drop-plugin-block")) {
+            runtime.registerEffectHook(name, ctx -> decoration == null ? domain(ctx, "decoration", null) : decoration.frameworkEffect(name, ctx));
         }
     }
 

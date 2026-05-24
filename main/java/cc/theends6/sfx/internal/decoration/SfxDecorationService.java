@@ -5,8 +5,19 @@ import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.internal.machine.SfxMachineCategory;
+import cc.theends6.sfx.internal.machine.SfxMachineDefinition;
+import cc.theends6.sfx.internal.machine.SfxMachineExecution;
+import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles;
+import cc.theends6.sfx.internal.machine.SfxMachineStatus;
+import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -77,18 +88,21 @@ public final class SfxDecorationService implements Listener {
     private final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxBlockDataService blockData;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final Map<String, SfxDecorationDefinition> definitions = new ConcurrentHashMap<>();
     private final Set<UUID> animatedInstances = ConcurrentHashMap.newKeySet();
     private final Map<UUID, SfxDecorationState> states = new ConcurrentHashMap<>();
     private long animationPhase;
     private boolean shutdown;
 
-    public SfxDecorationService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxBlockDataService blockData) {
+    public SfxDecorationService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxBlockDataService blockData, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
+        this.machineRuntime = Objects.requireNonNull(machineRuntime, "machineRuntime");
         registerDefaults();
+        registerFrameworkDefinitions();
     }
 
     public void start() {
@@ -128,6 +142,8 @@ public final class SfxDecorationService implements Listener {
             animatedInstances.add(instanceId);
         }
         states.putIfAbsent(instanceId, SfxDecorationState.DEFAULT);
+        machineRuntime.runPhase(typeId, SfxMachinePhase.ON_PLACE, instanceId, locationOf(blockData.findInstance(instanceId).orElse(null)),
+                new SfxMachineTickContext(0L, 10L, false), null, SfxMachineStatus.IDLE, frameworkAttributes(definition, null, null, 0L));
     }
 
     public void setState(Location location, SfxDecorationState state) {
@@ -143,6 +159,9 @@ public final class SfxDecorationService implements Listener {
             return;
         }
         states.put(instance.instanceId(), state == null ? SfxDecorationState.DEFAULT : state);
+        Map<String, Object> attributes = frameworkAttributes(definitions.get(instance.typeId()), state, location, 0L);
+        machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), location,
+                new SfxMachineTickContext(0L, 10L, false), null, SfxMachineStatus.RUNNING, attributes);
         applyState(location, instance, 0L);
     }
 
@@ -152,8 +171,12 @@ public final class SfxDecorationService implements Listener {
             states.remove(instanceId);
         }
         if (block != null && typeId != null) {
+            SfxDecorationDefinition definition = definitions.get(typeId);
+            machineRuntime.runPhase(typeId, SfxMachinePhase.ON_BREAK, instanceId, block.getLocation(),
+                    new SfxMachineTickContext(0L, 10L, false), null, SfxMachineStatus.IDLE, frameworkAttributes(definition, null, block.getLocation(), 0L));
             SfxBlockDrops.dropPluginBlock(block, items, typeId);
             blockData.unregisterAt(block.getLocation());
+            machineRuntime.forget(instanceId);
         }
     }
 
@@ -240,10 +263,60 @@ public final class SfxDecorationService implements Listener {
             states.remove(instance.instanceId());
             return;
         }
-        Material next = definition.materialFor(states.getOrDefault(instance.instanceId(), SfxDecorationState.DEFAULT), phase);
-        if (block.getType() != next) {
-            block.setType(next, false);
+        Map<String, Object> attributes = frameworkAttributes(definition, states.getOrDefault(instance.instanceId(), SfxDecorationState.DEFAULT), location, phase);
+        SfxMachineTickContext tickContext = new SfxMachineTickContext(phase, 10L, false);
+        try (SfxMachineExecution execution = machineRuntime.beginTick(instance.instanceId(), liveInstance.typeId(), location, tickContext, null, attributes)) {
+            machineRuntime.runPhase(liveInstance.typeId(), SfxMachinePhase.BEFORE_PROGRESS, instance.instanceId(), location, tickContext, null, SfxMachineStatus.IDLE, attributes);
+            Material next = definition.materialFor(states.getOrDefault(instance.instanceId(), SfxDecorationState.DEFAULT), phase);
+            attributes.put("decoration.previousMaterial", block.getType().name());
+            attributes.put("decoration.nextMaterial", next.name());
+            if (block.getType() != next) {
+                block.setType(next, false);
+                attributes.put("decoration.visual.changed", Boolean.TRUE);
+                execution.status(SfxMachineStatus.RUNNING);
+            } else {
+                attributes.put("decoration.visual.changed", Boolean.FALSE);
+                execution.status(SfxMachineStatus.IDLE);
+            }
         }
+    }
+
+    public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
+        if (context == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        context.put("decoration.framework.effect", effectName);
+        context.put("decoration.framework.service", getClass().getName());
+        if (context.definition() != null) {
+            SfxDecorationDefinition definition = definitions.get(context.definition().id());
+            if (definition != null) {
+                context.put("decoration.animated", definition.animated());
+                context.put("decoration.structural", definition.structural());
+            }
+        }
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private void registerFrameworkDefinitions() {
+        for (SfxDecorationDefinition definition : definitions.values()) {
+            machineRuntime.registerDefinitionIfAbsent(SfxMachineSpecialProfiles.apply(
+                    new SfxMachineDefinition(definition.itemId(), definition.itemId(), SfxMachineCategory.SPECIAL, List.of(), List.of(), -1, 10)));
+        }
+    }
+
+    private Map<String, Object> frameworkAttributes(SfxDecorationDefinition definition, SfxDecorationState state, Location location, long phase) {
+        Map<String, Object> attributes = new LinkedHashMap<>();
+        if (definition != null) {
+            attributes.put("decoration.typeId", definition.itemId());
+            attributes.put("decoration.animated", definition.animated());
+            attributes.put("decoration.structural", definition.structural());
+        }
+        if (state != null) {
+            attributes.put("decoration.state", state.name());
+        }
+        attributes.put("decoration.animationPhase", phase);
+        attributes.put("decoration.location", location == null ? null : location.clone());
+        return attributes;
     }
 
     private void registerDefaults() {

@@ -42,6 +42,8 @@ public final class SfxMachineSpecialProfiles {
             reactor(builder);
         } else if (id.contains("assembler")) {
             assembler(builder);
+        } else if (isDecoration(id)) {
+            decoration(builder, id);
         } else if (id.contains("gps_")) {
             gpsDevice(builder);
         } else if (id.contains("android_interface")) {
@@ -81,6 +83,25 @@ public final class SfxMachineSpecialProfiles {
             commonMachine(builder);
         }
         return builder.build();
+    }
+
+    private static boolean isDecoration(String id) {
+        return id.equals("sf:gps_teleporter_pylon")
+                || id.equals("sf:hardened_glass")
+                || id.equals("sf:wither_proof_obsidian")
+                || id.equals("sf:wither_proof_glass")
+                || id.contains("rainbow_");
+    }
+
+    private static void decoration(SfxMachineDefinition.Builder builder, String id) {
+        commonMachine(builder);
+        builder.capability(SfxMachineCapability.MUTATES_WORLD)
+                .capability(SfxMachineCapability.HAS_VISUAL_EFFECTS)
+                .policyRef(SfxMachinePolicyRef.of("block", id.contains("wither_proof") || id.contains("hardened_glass") ? "structural-decoration-protection" : "decoration-lifecycle"))
+                .effect(SfxMachineEffect.marker("decoration:sync-visual", SfxMachinePhase.ON_PLACE))
+                .effect(SfxMachineEffect.marker("decoration:animate-state", SfxMachinePhase.BEFORE_PROGRESS))
+                .effect(SfxMachineEffect.marker("decoration:sync-visual", SfxMachinePhase.AFTER_TICK))
+                .effect(SfxMachineEffect.marker("decoration:drop-plugin-block", SfxMachinePhase.ON_BREAK));
     }
 
     private static void commonMachine(SfxMachineDefinition.Builder builder) {

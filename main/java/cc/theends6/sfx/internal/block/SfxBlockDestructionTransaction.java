@@ -36,7 +36,9 @@ public final class SfxBlockDestructionTransaction {
                 }
             }
             blockData.unregisterAt(context.location());
-            instance.ifPresent(record -> behaviors.find(record.typeId()).ifPresent(behavior -> behavior.afterBreak(context, anchor.get(), record)));
+            if (behaviors != null) {
+                instance.ifPresent(record -> behaviors.find(record.typeId()).ifPresent(behavior -> behavior.afterBreak(context, anchor.get(), record)));
+            }
             return SfxResult.ok();
         } catch (Throwable throwable) {
             if (logger != null) {

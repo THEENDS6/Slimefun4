@@ -310,10 +310,10 @@ public final class SfxBasicMachineBlockListener implements Listener {
             if (!SUPPORTED_BLOCKS.contains(marker.itemId())) {
                 return;
             }
-            if (blockData.findAnchor(event.getBlockPlaced().getLocation()).isPresent()) {
-                return;
-            }
-            blockData.registerSingleBlock(marker.itemId(), event.getBlockPlaced().getLocation(), event.getBlockPlaced().getType(), event.getPlayer().getUniqueId());
+            UUID instanceId = blockData.findAnchor(event.getBlockPlaced().getLocation())
+                    .map(SfxAnchorRecord::instanceId)
+                    .orElseGet(() -> blockData.registerSingleBlock(marker.itemId(), event.getBlockPlaced().getLocation(), event.getBlockPlaced().getType(), event.getPlayer().getUniqueId()));
+            machineRuntime.recordState(instanceId, marker.itemId(), event.getBlockPlaced().getLocation(), cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE);
             if (furnaceStats(marker.itemId()) != null) {
                 SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(event.getBlockPlaced().getLocation());
                 enhancedFurnaces.add(key);

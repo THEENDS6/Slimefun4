@@ -176,7 +176,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.technicalGadgetService = new SfxTechnicalGadgetService(this, api.runtime(), api.items(), localization);
         this.energyService = new SfxEnergyService(this, api.runtime(), api.items(), localization, blockDataService, electricMachineService, configurableMachineService, floatingTextDisplayService, technicalGadgetService.rechargeableItems(), machineRuntime);
         this.cargoService = new SfxCargoService(this, api.runtime(), api.items(), localization, blockDataService, virtualContainerService, floatingTextDisplayService, electricMachineService, machineRuntime);
-        this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService);
+        this.decorationService = new SfxDecorationService(this, api.runtime(), api.items(), blockDataService, machineRuntime);
         this.gpsService = new SfxGpsService(this, api.runtime(), api.items(), api.menus(), localization, blockDataService, decorationService, electricMachineService, new SqliteSfxGpsDataRepository(this, gpsDataFile()), machineRuntime);
         this.androidService = new SfxAndroidService(this, api.runtime(), api.items(), api.itemRegistry(), localization, blockDataService, new SqliteSfxAndroidScriptRepository(this, androidScriptsFile()), machineRuntime);
         this.ancientAltarService = new SfxAncientAltarService(this, api.runtime(), api.items(), api.itemRegistry(), localization, blockDataService, machineRuntime);
@@ -185,7 +185,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         this.hologramProjectorService = new SfxHologramProjectorService(this, api.runtime(), api.items(), localization, blockDataService, floatingTextDisplayService, machineRuntime);
         this.blockPlacerService = new SfxBlockPlacerService(api.runtime(), api.items(), blockDataService, spawnerService, hologramProjectorService, infusedHopperService, machineRuntime);
         this.industrialMinerService = new SfxIndustrialMinerService(this, api.runtime(), api.items(), localization, blockDataService, machineRuntime);
-        int domainEffectHooks = SfxMachineDomainEffectHooks.register(machineRuntime, gpsService, androidService, ancientAltarService, energyService, cargoService, spawnerService, infusedHopperService, hologramProjectorService, blockPlacerService, industrialMinerService);
+        int domainEffectHooks = SfxMachineDomainEffectHooks.register(machineRuntime, gpsService, androidService, ancientAltarService, energyService, cargoService, spawnerService, infusedHopperService, hologramProjectorService, blockPlacerService, industrialMinerService, decorationService);
         int frameworkCatalogExtras = SfxMachineFrameworkCatalog.registerDefinitions(machineRuntime, api.itemRegistry().items(),
                 SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.BASIC, basicMachineBlockListener::supportsType),
                 SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ELECTRIC, electricMachineService::supportsType),

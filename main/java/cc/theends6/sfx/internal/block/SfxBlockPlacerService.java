@@ -106,9 +106,19 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
         if (!canPlaceFromBlockPlacer(itemId, stack, target, ownerId)) {
             return false;
         }
-        target.setType(Material.DISPENSER, true);
-        blockData.registerSingleBlock(itemId, target.getLocation(), Material.DISPENSER, ownerId);
-        return true;
+        return SfxProgrammaticPlacementTransactions.place(
+                blockData,
+                itemId,
+                target,
+                Material.DISPENSER,
+                ownerId,
+                stack,
+                (context, instanceId) -> {
+                    handlePlaced(instanceId, itemId);
+                    machineRuntime.recordState(instanceId, itemId, target.getLocation(), SfxMachineStatus.IDLE);
+                },
+                java.util.logging.Logger.getLogger("SlimeFunX")
+        ).isPresent();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
