@@ -14,6 +14,13 @@ import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationState;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
+import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
+import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachineStatus;
+import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.ItemBuilder;
@@ -144,6 +151,7 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
     private final SfxBlockDataService blockData;
     private final SfxDecorationService decorations;
     private final SfxElectricMachineService electricMachines;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final SfxGpsDataStore dataStore;
     private final Set<UUID> activeTeleports = ConcurrentHashMap.newKeySet();
     private final Set<UUID> activeTeleporterMenus = ConcurrentHashMap.newKeySet();
@@ -156,7 +164,8 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
 
     public SfxGpsService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxMenus menus,
                          SfxLocalization localization, SfxBlockDataService blockData, SfxDecorationService decorations,
-                         SfxElectricMachineService electricMachines, SfxGpsDataRepository dataRepository) {
+                         SfxElectricMachineService electricMachines, SfxGpsDataRepository dataRepository,
+                         SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
@@ -165,6 +174,7 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.decorations = Objects.requireNonNull(decorations, "decorations");
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
+        this.machineRuntime = Objects.requireNonNull(machineRuntime, "machineRuntime");
         this.dataStore = new SfxGpsDataStore(plugin, Objects.requireNonNull(dataRepository, "dataRepository"));
         try {
             this.dataStore.load();
@@ -208,6 +218,37 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         return PLACEABLE_GPS_TYPES.contains(typeId);
     }
 
+
+    public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
+        if (context == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        context.put("gps.framework.effect", effectName);
+        context.put("gps.framework.effect.handled", Boolean.TRUE);
+        Player player = context.attachment("gps.player", Player.class).orElse(null);
+        if (player != null) {
+            context.put("gps.framework.player", player.getUniqueId());
+            context.put("gps.framework.complexity", networkComplexity(player.getUniqueId()));
+        }
+        if (context.location() != null && context.location().getWorld() != null) {
+            context.put("gps.framework.world", context.location().getWorld().getName());
+        }
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private void runFrameworkInteraction(Player player, Block block, SfxBlockInstanceRecord instance) {
+        if (block == null || instance == null) {
+            return;
+        }
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("gps.player", player);
+        attributes.put("gps.instance", instance);
+        attributes.put("gps.service", this);
+        attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkEffect);
+        machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, attributes);
+        machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, attributes);
+    }
+
     public void handlePlaced(UUID instanceId, String typeId) {
         if ("sf:gps_teleporter_pylon".equals(typeId)) {
             decorations.handlePlaced(instanceId, typeId);
@@ -239,6 +280,7 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
             if (instance == null || !supportsType(instance.typeId())) {
                 return;
             }
+            runFrameworkInteraction(player, block, instance);
             scheduleGpsPhysicalUse(player, block, instance);
             return;
         }
@@ -263,6 +305,7 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         if (instance == null || !supportsType(instance.typeId())) {
             return;
         }
+        runFrameworkInteraction(player, block, instance);
         if (handleGpsBlockRightClick(player, block, instance)) {
             event.setCancelled(true);
         }

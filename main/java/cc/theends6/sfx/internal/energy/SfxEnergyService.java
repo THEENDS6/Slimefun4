@@ -144,14 +144,48 @@ public final class SfxEnergyService implements Listener {
                 "generator:emit-energy",
                 "charge:write-item-energy"
         )) {
-            machineRuntime.registerEffectHook(effectName, this::frameworkEnergyEffect);
+            machineRuntime.registerEffectHook(effectName, context -> frameworkEnergyEffect(effectName, context));
         }
     }
 
-    private SfxMachinePhaseResult frameworkEnergyEffect(cc.theends6.sfx.internal.machine.SfxMachinePhaseContext context) {
+    public SfxMachinePhaseResult frameworkEffect(String effectName, cc.theends6.sfx.internal.machine.SfxMachinePhaseContext context) {
+        return frameworkEnergyEffect(effectName, context);
+    }
+
+    private SfxMachinePhaseResult frameworkEnergyEffect(String effectName, cc.theends6.sfx.internal.machine.SfxMachinePhaseContext context) {
         if (context == null) return SfxMachinePhaseResult.cont();
+        context.put("energy.framework.effect", effectName);
         context.put("energy.framework.effect.handled", Boolean.TRUE);
+        EnergyRuntimeGrid grid = context.attachment("energy.grid", EnergyRuntimeGrid.class).orElse(null);
+        SfxBlockInstanceRecord instance = context.attachment("energy.instance", SfxBlockInstanceRecord.class).orElse(null);
+        SfxEnergyComponentDefinition definition = context.attachment("energy.definition", SfxEnergyComponentDefinition.class).orElse(null);
+        SfxEnergyNodeState state = context.attachment("energy.state", SfxEnergyNodeState.class).orElse(null);
+        if (grid != null) {
+            context.put("energy.framework.grid.members", grid.members().size());
+            context.put("energy.framework.grid.regulator", grid.regulatorId());
+        }
+        if (instance != null) {
+            context.put("energy.framework.instance", instance.instanceId());
+        }
+        if (definition != null) {
+            context.put("energy.framework.component-type", definition.componentType().name());
+            context.put("energy.framework.capacity", definition.capacity());
+        }
+        if (state != null) {
+            context.put("energy.framework.stored", state.storedEnergy());
+        }
         return SfxMachinePhaseResult.cont();
+    }
+
+    private Map<String, Object> energyFrameworkAttributes(EnergyRuntimeGrid grid, SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+        Map<String, Object> attributes = new LinkedHashMap<>();
+        attributes.put("energy.grid", grid);
+        attributes.put("energy.instance", instance);
+        attributes.put("energy.definition", definition);
+        attributes.put("energy.state", state);
+        attributes.put("energy.service", this);
+        attributes.put("framework.effect.dispatcher", (cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher) this::frameworkEnergyEffect);
+        return attributes;
     }
 
     public boolean supportsType(String typeId) {
@@ -587,8 +621,7 @@ public final class SfxEnergyService implements Listener {
             }
             return;
         }
-        Map<String, Object> frameworkAttributes = new LinkedHashMap<>();
-        frameworkAttributes.put("energy.grid", grid);
+        Map<String, Object> frameworkAttributes = energyFrameworkAttributes(grid, regulator, definitions.get(regulator.typeId()), currentState(regulator.instanceId(), regulator));
         machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, grid.regulatorId(), toLocation(regulator.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
         int available = 0;
         int supply = 0;
@@ -680,12 +713,16 @@ public final class SfxEnergyService implements Listener {
         }
 
         for (SfxEnergyNodeRef generator : generatorRefs) {
+            Map<String, Object> generatorFramework = energyFrameworkAttributes(grid, generator.instance(), generator.definition(), generator.state());
+            machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, generator.instance().instanceId(), toLocation(generator.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework);
             if (generator.state().storedEnergy() > 0) {
                 available += generator.state().storedEnergy();
                 generator.state().storedEnergy(0);
                 dirtyNodes.add(generator.instance().instanceId());
             }
             int produced = autoPausedGenerators.contains(generator.instance().instanceId()) ? 0 : generate(generator.instance(), generator.definition(), generator.state());
+            generatorFramework.put("energy.generated", produced);
+            machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.AFTER_PROGRESS, generator.instance().instanceId(), toLocation(generator.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, produced > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework);
             available += produced;
             supply += produced;
         }
@@ -768,7 +805,11 @@ public final class SfxEnergyService implements Listener {
         }
 
         for (SfxEnergyNodeRef charger : chargerRefs) {
+            Map<String, Object> chargerFramework = energyFrameworkAttributes(grid, charger.instance(), charger.definition(), charger.state());
+            int storedBeforeCharge = charger.state().storedEnergy();
             tickChargingBench(charger);
+            chargerFramework.put("energy.charger.delta", Math.max(0, charger.state().storedEnergy() - storedBeforeCharge));
+            machineRuntime.runPhase(charger.instance().typeId(), SfxMachinePhase.AFTER_PROGRESS, charger.instance().instanceId(), toLocation(charger.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, chargerFramework);
         }
 
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {
@@ -822,6 +863,16 @@ public final class SfxEnergyService implements Listener {
         int net = displaySupply - requestedConsumption;
         displayStatus(grid.regulatorKey(), SfxEnergyGridStatus.ONLINE, displaySupply, requestedConsumption, net, displayStored, totalCapacity);
         refreshOpenSfxEnergyGeneratorSessions();
+        for (SfxEnergyNodeRef capacitor : capacitorRefs) {
+            machineRuntime.runPhase(capacitor.instance().typeId(), SfxMachinePhase.AFTER_TICK, capacitor.instance().instanceId(), toLocation(capacitor.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, energyFrameworkAttributes(grid, capacitor.instance(), capacitor.definition(), capacitor.state()));
+        }
+        for (SfxEnergyNodeRef generator : generatorRefs) {
+            machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.AFTER_TICK, generator.instance().instanceId(), toLocation(generator.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, energyFrameworkAttributes(grid, generator.instance(), generator.definition(), generator.state()));
+        }
+        for (SfxEnergyNodeRef charger : chargerRefs) {
+            machineRuntime.runPhase(charger.instance().typeId(), SfxMachinePhase.AFTER_TICK, charger.instance().instanceId(), toLocation(charger.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, energyFrameworkAttributes(grid, charger.instance(), charger.definition(), charger.state()));
+        }
+        machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.AFTER_TICK, grid.regulatorId(), toLocation(regulator.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
         machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.ON_COMPLETE, grid.regulatorId(), toLocation(regulator.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
     }
 
