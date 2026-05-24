@@ -214,28 +214,25 @@ public final class SfxPlaceableBlockListener implements Listener {
         ItemStack refund = singleRefundItem(event.getItemInHand());
         boolean consumed = consumeManualPlacementItem(event);
         runtime.executeAtLater(target.getLocation(), 1L, () -> {
-            boolean placedWorldBlock = false;
-            java.util.UUID instanceId = null;
-            try {
-                if (!target.getType().isAir() || blockData.findAnchor(target.getLocation()).isPresent()) {
-                    refundManualPlacementItem(event.getPlayer(), refund, consumed);
-                    return;
-                }
-                target.setType(Material.PLAYER_HEAD, false);
-                placedWorldBlock = true;
-                instanceId = blockData.registerSingleBlock(itemId, target.getLocation(), target.getType(), event.getPlayer().getUniqueId());
-                androidService.handlePlaced(instanceId, itemId, event.getPlayer(), target);
-                machineRuntime.recordState(instanceId, itemId, target.getLocation(), SfxMachineStatus.IDLE);
-            } catch (RuntimeException exception) {
-                if (instanceId != null) {
-                    blockData.unregisterAt(target.getLocation());
-                }
-                if (placedWorldBlock && blockData.findAnchorFast(target.getLocation()).isEmpty()) {
-                    target.setType(Material.AIR, false);
-                }
+            if (!target.getType().isAir() || blockData.findAnchor(target.getLocation()).isPresent()) {
                 refundManualPlacementItem(event.getPlayer(), refund, consumed);
-                LOGGER.log(Level.WARNING, "Failed to redirect android placement for " + itemId
-                        + " at " + target.getLocation(), exception);
+                return;
+            }
+            boolean placed = SfxProgrammaticPlacementTransactions.place(
+                    blockData,
+                    itemId,
+                    target,
+                    Material.PLAYER_HEAD,
+                    event.getPlayer().getUniqueId(),
+                    event.getItemInHand(),
+                    (context, instanceId) -> {
+                        androidService.handlePlaced(instanceId, itemId, event.getPlayer(), target);
+                        machineRuntime.recordState(instanceId, itemId, target.getLocation(), SfxMachineStatus.IDLE);
+                    },
+                    LOGGER
+            ).isPresent();
+            if (!placed) {
+                refundManualPlacementItem(event.getPlayer(), refund, consumed);
             }
         });
     }
@@ -698,9 +695,39 @@ public final class SfxPlaceableBlockListener implements Listener {
             hologramProjectorService.destroyAnchoredBlock(block, instanceId, typeId);
             return;
         }
-        dropStoredContents(block);
-        dropPluginBlock(block, typeId);
-        blockData.unregisterAt(block.getLocation());
+        commitGenericDestruction(block, instanceId, typeId);
+    }
+
+    private void commitGenericDestruction(Block block, java.util.UUID instanceId, String typeId) {
+        if (block == null || typeId == null) {
+            return;
+        }
+        SfxBlockBehaviorRegistry registry = new SfxBlockBehaviorRegistry();
+        registry.register(new SfxBlockBehavior() {
+            @Override
+            public String typeId() {
+                return typeId;
+            }
+
+            @Override
+            public SfxResult<Void> beforeBreak(SfxBlockBreakContext context, SfxAnchorRecord anchor, SfxBlockInstanceRecord instance) {
+                dropStoredContents(block);
+                dropPluginBlock(block, typeId);
+                return SfxResult.ok();
+            }
+
+            @Override
+            public void afterBreak(SfxBlockBreakContext context, SfxAnchorRecord anchor, SfxBlockInstanceRecord instance) {
+                machineRuntime.forget(instanceId);
+            }
+        });
+        SfxBlockDestructionTransaction transaction = new SfxBlockDestructionTransaction(blockData, registry, LOGGER);
+        SfxResult<Void> result = transaction.commit(new SfxBlockBreakContext(block.getLocation(), null, SfxBlockDestructionCause.UNKNOWN));
+        if (!result.success()) {
+            result.cause().ifPresentOrElse(
+                    cause -> LOGGER.log(Level.WARNING, "Failed to destroy generic SFX block " + typeId + " at " + block.getLocation(), cause),
+                    () -> LOGGER.warning("Failed to destroy generic SFX block " + typeId + " at " + block.getLocation() + ": " + result.message()));
+        }
     }
 
     private boolean isPlaceableMarker(String itemId, java.util.List<String> flags) {
