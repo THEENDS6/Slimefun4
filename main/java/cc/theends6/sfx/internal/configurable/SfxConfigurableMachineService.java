@@ -137,6 +137,12 @@ public final class SfxConfigurableMachineService implements Listener {
         registerDefinitions();
         registerFrameworkEffects();
         bootstrapLoadedStates();
+    }
+
+    public synchronized void start() {
+        if (running) {
+            return;
+        }
         running = true;
         scheduleTick();
         scheduleFlush();

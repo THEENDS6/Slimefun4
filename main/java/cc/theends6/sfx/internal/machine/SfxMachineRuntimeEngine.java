@@ -137,25 +137,18 @@ public final class SfxMachineRuntimeEngine {
     private void ensureDeclaredEffectHooks(SfxMachineDefinition definition) {
         
         
+        
     }
 
+    
+
+
+
+
+
+    @Deprecated(forRemoval = false)
     public synchronized int bindUnboundDeclaredEffectHooks() {
-        int before = effectHooks.size();
-        for (SfxMachineDefinition definition : definitions.values()) {
-            if (definition == null || definition.effects() == null) continue;
-            for (SfxMachineEffect effect : definition.effects()) {
-                if (effect == null || effect.name() == null || effect.name().isBlank()) continue;
-                effectHooks.putIfAbsent(effect.name(), context -> {
-                    if (context != null) {
-                        context.put("framework.effect." + effect.name(), Boolean.TRUE);
-                        context.put("framework.effect." + effect.name() + ".generic-fallback", Boolean.TRUE);
-                        context.put("framework.last-effect", effect.name());
-                    }
-                    return SfxMachinePhaseResult.cont();
-                });
-            }
-        }
-        return Math.max(0, effectHooks.size() - before);
+        return 0;
     }
 
     public synchronized void ensureDefaultProcessors() {
@@ -291,7 +284,12 @@ public final class SfxMachineRuntimeEngine {
             if (effect.phase() != phase) continue;
             try {
                 SfxMachineHook registered = effectHooks.get(effect.name());
-                SfxMachinePhaseResult result = (registered == null ? effect.hook() : registered).apply(phaseContext);
+                if (registered == null) {
+                    phaseContext.put("framework.effect." + effect.name() + ".unbound", Boolean.TRUE);
+                    stoppedPipelines.incrementAndGet();
+                    return SfxMachinePhaseResult.failed("unbound machine effect: " + effect.name());
+                }
+                SfxMachinePhaseResult result = registered.apply(phaseContext);
                 if (result != null && result.stopsPipeline()) {
                     stoppedPipelines.incrementAndGet();
                     phaseContext.put("framework.pipeline.stopped-by", effect.name());

@@ -40,10 +40,11 @@ final class SfxPluginFrameworkWiring {
                 SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.hologramProjectorService::supportsType));
         plugin.machineRuntime.ensureDefaultProcessors();
         int builtinEffectHooks = SfxMachineBuiltinEffectHooks.registerDefaults(plugin.machineRuntime);
-        int genericEffectHooks = plugin.machineRuntime.bindUnboundDeclaredEffectHooks();
-        return new Stats(domainEffectHooks, frameworkCatalogExtras, builtinEffectHooks, genericEffectHooks);
+        int unboundDeclaredEffects = plugin.machineRuntime.unboundDeclaredEffectNames().size();
+        return new Stats(domainEffectHooks, frameworkCatalogExtras, builtinEffectHooks, unboundDeclaredEffects);
     }
 
-    record Stats(int domainEffectHooks, int frameworkCatalogExtras, int builtinEffectHooks, int genericEffectHooks) {
+    record Stats(int domainEffectHooks, int frameworkCatalogExtras, int builtinEffectHooks, int unboundDeclaredEffects) {
+        boolean valid() { return unboundDeclaredEffects == 0; }
     }
 }

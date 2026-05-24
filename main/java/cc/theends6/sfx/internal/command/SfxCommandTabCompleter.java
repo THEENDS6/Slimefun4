@@ -32,7 +32,7 @@ final class SfxCommandTabCompleter {
             return filter(List.of("cheat"), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("reload")) {
-            return filter(List.of("all"), args[1]);
+            return filter(List.of("config", "runtime", "all"), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("research")) {
             return filter(knownPlayerNames(), args[1]);

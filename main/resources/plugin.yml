@@ -6,12 +6,13 @@ folia-supported: true
 authors: [THEENDS6]
 description: Restored Slimefun-style content and guide runtime for Paper 1.21.8.
 load: POSTWORLD
-softdepend: [packetevents, PacketEvents, ProtocolLib, ProtocolSupport, ViaVersion, ViaBackwards, ViaRewind, Geyser-Spigot]
+depend: [packetevents]
+softdepend: [ProtocolLib, ProtocolSupport, ViaVersion, ViaBackwards, ViaRewind, Geyser-Spigot]
 
 commands:
   slimefunx:
     description: SlimeFunX main command
-    usage: /slimefunx <guide|cheatguide|book|give|research|backpack|inspect|list|reload [all]>
+    usage: /slimefunx <guide|cheatguide|book|give|research|backpack|inspect|list|reload [config|runtime]>
     aliases: [sfx, sf, x]
 
 permissions:

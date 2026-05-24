@@ -9,6 +9,36 @@ final class SfxPluginShutdown {
         if (plugin.api != null) {
             plugin.api.menus().closeAll();
         }
+
+        if (plugin.moduleManager != null) {
+            plugin.moduleManager.disableAllReverse();
+            plugin.moduleManager = null;
+        } else {
+            disableLegacyFallback(plugin);
+        }
+
+        if (plugin.playerDataService != null) {
+            plugin.playerDataService.shutdown();
+        }
+        if (plugin.blockDataService != null) {
+            plugin.blockDataService.shutdown();
+        }
+        if (plugin.machineRuntime != null) {
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.clearDefaultRuntime(plugin.machineRuntime);
+            plugin.machineRuntime.clear();
+        }
+        if (plugin.packetEventsLoaded) {
+            try {
+                plugin.invokePacketEventsApi("terminate");
+            } catch (Throwable throwable) {
+                plugin.getLogger().warning("Failed to terminate PacketEvents cleanly: " + throwable.getMessage());
+            }
+            plugin.packetEventsLoaded = false;
+            plugin.packetEventsApi = null;
+        }
+    }
+
+    private static void disableLegacyFallback(SlimeFunXPlugin plugin) {
         if (plugin.blockPersistenceListener != null) {
             plugin.blockPersistenceListener.shutdown();
         }
@@ -60,26 +90,5 @@ final class SfxPluginShutdown {
         if (plugin.radiationService != null) {
             plugin.radiationService.shutdown();
         }
-        if (plugin.playerDataService != null) {
-            plugin.playerDataService.shutdown();
-        }
-        if (plugin.blockDataService != null) {
-            plugin.blockDataService.shutdown();
-        }
-        if (plugin.machineRuntime != null) {
-            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.clearDefaultRuntime(plugin.machineRuntime);
-            plugin.machineRuntime.clear();
-        }
-        if (plugin.packetEventsLoaded) {
-            try {
-                plugin.invokePacketEventsApi("terminate");
-            } catch (Throwable throwable) {
-                plugin.getLogger().warning("Failed to terminate PacketEvents cleanly: " + throwable.getMessage());
-            }
-            plugin.packetEventsLoaded = false;
-            plugin.packetEventsApi = null;
-        }
-    
-    
     }
 }
