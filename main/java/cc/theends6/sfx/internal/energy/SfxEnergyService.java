@@ -714,6 +714,7 @@ public final class SfxEnergyService implements Listener {
 
         for (SfxEnergyNodeRef generator : generatorRefs) {
             Map<String, Object> generatorFramework = energyFrameworkAttributes(grid, generator.instance(), generator.definition(), generator.state());
+            machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.BEFORE_INPUT, generator.instance().instanceId(), toLocation(generator.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework);
             machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, generator.instance().instanceId(), toLocation(generator.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework);
             if (generator.state().storedEnergy() > 0) {
                 available += generator.state().storedEnergy();
@@ -810,6 +811,7 @@ public final class SfxEnergyService implements Listener {
             tickChargingBench(charger);
             chargerFramework.put("energy.charger.delta", Math.max(0, charger.state().storedEnergy() - storedBeforeCharge));
             machineRuntime.runPhase(charger.instance().typeId(), SfxMachinePhase.AFTER_PROGRESS, charger.instance().instanceId(), toLocation(charger.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, chargerFramework);
+            machineRuntime.runPhase(charger.instance().typeId(), SfxMachinePhase.AFTER_OUTPUT, charger.instance().instanceId(), toLocation(charger.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, chargerFramework);
         }
 
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {

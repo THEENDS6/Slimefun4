@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.block;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.machine.*;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.List;
 import java.util.Map;
@@ -31,15 +32,44 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
     private final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxBlockDataService blockData;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final Map<SfxBlockAnchorKey, HopperTickState> tickStates = new ConcurrentHashMap<>();
     private volatile boolean running;
     private volatile long tickClock;
 
-    public SfxInfusedHopperService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxBlockDataService blockData) {
+    public SfxInfusedHopperService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxBlockDataService blockData, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
+        this.machineRuntime = machineRuntime == null ? new SfxMachineRuntimeEngine() : machineRuntime;
+        registerFrameworkDefinitions();
+    }
+
+    private void registerFrameworkDefinitions() {
+        machineRuntime.registerDefinitionIfAbsent(SfxMachineDefinition.builder(INFUSED_HOPPER)
+                .displayName(INFUSED_HOPPER)
+                .category(SfxMachineCategory.SPECIAL)
+                .effect(SfxMachineEffect.marker("hopper:scan-items", SfxMachinePhase.BEFORE_OPERATION_RESOLVE))
+                .effect(SfxMachineEffect.marker("hopper:teleport-item", SfxMachinePhase.AFTER_PROGRESS))
+                .effect(SfxMachineEffect.marker("hopper:emit-particles", SfxMachinePhase.ON_COMPLETE))
+                .build());
+    }
+
+    public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
+        if (context == null) return SfxMachinePhaseResult.cont();
+        context.put("hopper.framework.effect", effectName);
+        context.put("hopper.framework.effect.handled", Boolean.TRUE);
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private Map<String, Object> frameworkAttributes(SfxBlockInstanceRecord instance, Location location, HopperTickState state) {
+        Map<String, Object> attributes = new java.util.HashMap<>();
+        attributes.put("hopper.instance", instance);
+        attributes.put("hopper.state", state);
+        attributes.put("hopper.location", location);
+        attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkEffect);
+        return attributes;
     }
 
     public void start() {
@@ -62,6 +92,8 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
     }
 
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {
+        Map<String, Object> framework = frameworkAttributes(blockData.findInstance(instanceId).orElse(null), block.getLocation(), null);
+        machineRuntime.runPhase(typeId, SfxMachinePhase.ON_BREAK, instanceId, block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, framework);
         tickStates.remove(SfxBlockAnchorKey.fromLocation(block.getLocation()));
         dropStoredContents(block);
         SfxBlockDrops.dropPluginBlock(block, items, typeId);
@@ -114,7 +146,16 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
             }
             Location location = new Location(world, anchor.key().x(), anchor.key().y(), anchor.key().z());
             runtime.executeAt(location, () -> {
-                TickResult result = tickOne(location);
+                Map<String, Object> framework = frameworkAttributes(instance, location, state);
+                SfxMachineTickContext tickContext = new SfxMachineTickContext(nowTick, baseIntervalTicks(), false);
+                machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), location, tickContext, null, SfxMachineStatus.IDLE, framework);
+                TickResult result = tickOne(location, framework);
+                framework.put("hopper.moved", result.movedItems());
+                machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_PROGRESS, instance.instanceId(), location, tickContext, null, result.movedItems() ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, framework);
+                if (result.movedItems()) {
+                    machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), location, tickContext, null, SfxMachineStatus.RUNNING, framework);
+                }
+                machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, tickContext, null, result.movedItems() ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, framework);
                 finishTick(anchor.key(), state, nowTick, result.validBlock(), result.movedItems());
             });
         }
@@ -131,7 +172,7 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
         state.finish(nowTick, movedItems, baseInterval, maxInterval, backoffAfterTicks);
     }
 
-    private TickResult tickOne(Location location) {
+    private TickResult tickOne(Location location, Map<String, Object> framework) {
         Block block = location.getBlock();
         if (block.getType() != Material.HOPPER) {
             blockData.unregisterAt(location);
@@ -144,7 +185,9 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
         double radius = Math.max(0.1D, plugin.getConfig().getDouble("legacy.infused-hopper.radius", 3.5D));
         Location pull = block.getLocation().add(0.5D, 1.2D, 0.5D);
         boolean moved = false;
+        int scanned = 0;
         for (Entity entity : block.getWorld().getNearbyEntities(pull, radius, radius, radius)) {
+            scanned++;
             if (!isValidItem(pull, entity)) {
                 continue;
             }
@@ -153,6 +196,7 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
                 moved = true;
             }
         }
+        if (framework != null) { framework.put("hopper.scanned", scanned); }
         if (moved) {
             int particleCount = plugin.getConfig().getInt("legacy.infused-hopper.particle-count", 12);
             if (particleCount > 0) {

@@ -3,6 +3,7 @@ package cc.theends6.sfx.internal.block;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.machine.*;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.HashSet;
 import java.util.Objects;
@@ -39,14 +40,45 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
     private final SfxSpawnerService spawners;
     private final SfxHologramProjectorService holograms;
     private final SfxInfusedHopperService infusedHoppers;
+    private final SfxMachineRuntimeEngine machineRuntime;
 
-    public SfxBlockPlacerService(SfxRuntime runtime, SfxItems items, SfxBlockDataService blockData, SfxSpawnerService spawners, SfxHologramProjectorService holograms, SfxInfusedHopperService infusedHoppers) {
+    public SfxBlockPlacerService(SfxRuntime runtime, SfxItems items, SfxBlockDataService blockData, SfxSpawnerService spawners, SfxHologramProjectorService holograms, SfxInfusedHopperService infusedHoppers, SfxMachineRuntimeEngine machineRuntime) {
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.spawners = Objects.requireNonNull(spawners, "spawners");
         this.holograms = Objects.requireNonNull(holograms, "holograms");
         this.infusedHoppers = Objects.requireNonNull(infusedHoppers, "infusedHoppers");
+        this.machineRuntime = machineRuntime == null ? new SfxMachineRuntimeEngine() : machineRuntime;
+        registerFrameworkDefinitions();
+    }
+
+    private void registerFrameworkDefinitions() {
+        machineRuntime.registerDefinitionIfAbsent(SfxMachineDefinition.builder(BLOCK_PLACER)
+                .displayName(BLOCK_PLACER)
+                .category(SfxMachineCategory.SPECIAL)
+                .effect(SfxMachineEffect.marker("placer:resolve-target", SfxMachinePhase.BEFORE_OPERATION_RESOLVE))
+                .effect(SfxMachineEffect.marker("placer:consume-input", SfxMachinePhase.BEFORE_INPUT))
+                .effect(SfxMachineEffect.marker("placer:place-block", SfxMachinePhase.ON_COMPLETE))
+                .effect(SfxMachineEffect.marker("placer:rollback-on-fail", SfxMachinePhase.ON_ERROR))
+                .build());
+    }
+
+    public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
+        if (context == null) return SfxMachinePhaseResult.cont();
+        context.put("placer.framework.effect", effectName);
+        context.put("placer.framework.effect.handled", Boolean.TRUE);
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private java.util.Map<String, Object> frameworkAttributes(SfxBlockInstanceRecord instance, Block dispenserBlock, Block target, ItemStack item) {
+        java.util.Map<String, Object> attributes = new java.util.HashMap<>();
+        attributes.put("placer.instance", instance);
+        attributes.put("placer.dispenser", dispenserBlock);
+        attributes.put("placer.target", target);
+        attributes.put("placer.item", item);
+        attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkEffect);
+        return attributes;
     }
 
     public boolean supportsType(String typeId) {
@@ -58,6 +90,7 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
     }
 
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {
+        machineRuntime.runPhase(typeId, SfxMachinePhase.ON_BREAK, instanceId, block.getLocation(), null, null, SfxMachineStatus.IDLE, frameworkAttributes(blockData.findInstance(instanceId).orElse(null), block, null, null));
         dropStoredContents(block);
         SfxBlockDrops.dropPluginBlock(block, items, typeId);
         blockData.unregisterAt(block.getLocation());
@@ -109,17 +142,28 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
         one.setAmount(1);
         UUID ownerId = instance.ownerId();
         runtime.executeAtLater(target.getLocation(), 2L, () -> {
+            java.util.Map<String, Object> framework = frameworkAttributes(instance, dispenserBlock, target, one);
+            SfxMachineTickContext tickContext = new SfxMachineTickContext(0L, 1L, false);
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework);
             if (!canReplace(target)) {
+                machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_ERROR, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.ERROR, framework);
                 return;
             }
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_INPUT, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework);
             if (!consumeOne(dispenserBlock, dispensed)) {
+                machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_ERROR, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.ERROR, framework);
                 return;
             }
             target.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, one.getType());
             boolean placed = placeOne(one, target, ownerId);
+            framework.put("placer.placed", placed);
             if (!placed) {
                 returnOne(dispenserBlock, one);
+                machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_ERROR, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.ERROR, framework);
+                return;
             }
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework);
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework);
         });
     }
 

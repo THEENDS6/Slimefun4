@@ -580,6 +580,7 @@ public final class SfxCargoService implements Listener {
         for (NodeRef input : network.inputs()) {
             Map<String, Object> inputFramework = cargoFrameworkAttributes(network, input);
             machineRuntime.runPhase(input.instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, input.instance.instanceId(), toLocation(input.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework);
+            machineRuntime.runPhase(input.instance.typeId(), SfxMachinePhase.BEFORE_INPUT, input.instance.instanceId(), toLocation(input.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework);
             int moved = input.definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE
                     ? processAdvancedInput(input, network.outputs())
                     : processBasicInput(input, network.outputs());
@@ -592,6 +593,7 @@ public final class SfxCargoService implements Listener {
         }
         for (NodeRef output : network.outputs()) {
             machineRuntime.runPhase(output.instance.typeId(), SfxMachinePhase.ON_COMPLETE, output.instance.instanceId(), toLocation(output.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, cargoFrameworkAttributes(network, output));
+            machineRuntime.runPhase(output.instance.typeId(), SfxMachinePhase.AFTER_OUTPUT, output.instance.instanceId(), toLocation(output.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, cargoFrameworkAttributes(network, output));
             machineRuntime.runPhase(output.instance.typeId(), SfxMachinePhase.AFTER_TICK, output.instance.instanceId(), toLocation(output.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, cargoFrameworkAttributes(network, output));
         }
         virtualContainers.pushDirtyAfterLogic();

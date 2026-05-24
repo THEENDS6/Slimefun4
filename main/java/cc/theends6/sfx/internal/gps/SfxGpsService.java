@@ -236,15 +236,22 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         return SfxMachinePhaseResult.cont();
     }
 
-    private void runFrameworkInteraction(Player player, Block block, SfxBlockInstanceRecord instance) {
-        if (block == null || instance == null) {
-            return;
-        }
+    private Map<String, Object> gpsInteractionAttributes(Player player, SfxBlockInstanceRecord instance) {
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("gps.player", player);
         attributes.put("gps.instance", instance);
         attributes.put("gps.service", this);
         attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkEffect);
+        return attributes;
+    }
+
+    private void runFrameworkInteraction(Player player, Block block, SfxBlockInstanceRecord instance, Map<String, Object> attributes) {
+        if (block == null || instance == null) {
+            return;
+        }
+        if (attributes == null) {
+            attributes = gpsInteractionAttributes(player, instance);
+        }
         machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, attributes);
         machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, attributes);
     }
@@ -280,8 +287,11 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
             if (instance == null || !supportsType(instance.typeId())) {
                 return;
             }
-            runFrameworkInteraction(player, block, instance);
+            Map<String, Object> physicalFramework = gpsInteractionAttributes(player, instance);
+            runFrameworkInteraction(player, block, instance, physicalFramework);
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_PROGRESS, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, physicalFramework);
             scheduleGpsPhysicalUse(player, block, instance);
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, physicalFramework);
             return;
         }
 
@@ -305,8 +315,10 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         if (instance == null || !supportsType(instance.typeId())) {
             return;
         }
-        runFrameworkInteraction(player, block, instance);
+        Map<String, Object> clickFramework = gpsInteractionAttributes(player, instance);
+        runFrameworkInteraction(player, block, instance, clickFramework);
         if (handleGpsBlockRightClick(player, block, instance)) {
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, clickFramework);
             event.setCancelled(true);
         }
     }

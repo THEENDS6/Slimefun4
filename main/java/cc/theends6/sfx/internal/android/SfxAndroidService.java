@@ -451,8 +451,10 @@ public final class SfxAndroidService implements Listener {
             }
             SfxAndroidInstruction instruction = state.currentInstruction();
             Map<String, Object> frameworkAttributes = androidFrameworkAttributes(instance, type, state, location.getBlock(), instruction, acceptedMoves.contains(instance.instanceId()), tickId);
+            frameworkAttributes.put("android.instruction.name", instruction.name());
             SfxMachineTickContext frameworkTick = new SfxMachineTickContext(tickId, 1L, false);
             machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.IDLE, frameworkAttributes);
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_PROGRESS, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.IDLE, frameworkAttributes);
             boolean success = executeInstruction(instance, type, state, instruction, location.getBlock(), acceptedMoves.contains(instance.instanceId()), tickId);
             frameworkAttributes.put("android.execution.success", success);
             machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_PROGRESS, instance.instanceId(), location, frameworkTick, null, success ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, frameworkAttributes);
