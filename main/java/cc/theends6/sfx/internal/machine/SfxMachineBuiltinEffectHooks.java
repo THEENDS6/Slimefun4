@@ -15,70 +15,7 @@ import java.util.Set;
 public final class SfxMachineBuiltinEffectHooks {
     private SfxMachineBuiltinEffectHooks() {}
 
-    private static final Set<String> KNOWN_EFFECTS = Set.of(
-            "framework:audit-tick",
-            "recipe:resolve-operation",
-            "inventory:reserve-output",
-            "inventory:commit-output",
-            "furnace:intercept-burn-smelt",
-            "furnace:sync-virtual-state",
-            "hand:consume-input",
-            "world:drop-result",
-            "brew:validate-potions",
-            "brew:refund-on-interrupt",
-            "brew:commit-multi-bottle-output",
-            "crafting:simulate",
-            "crafting:commit-transaction",
-            "gps:check-signal-and-scan",
-            "geo:extract-resource",
-            "visual:update-floating-text",
-            "fluid:locate-source",
-            "fluid:remove-source-and-update",
-            "meta:validate-input",
-            "meta:apply-transform",
-            "reactor:consume-coolant",
-            "reactor:emit-energy",
-            "reactor:meltdown-on-error",
-            "assembler:validate-offset",
-            "assembler:spawn-entity",
-            "gps:resolve-signal",
-            "proxy:resolve-host",
-            "android-interface:sync-storage",
-            "android:execute-script-step",
-            "android:relocate-anchor",
-            "altar:validate-structure",
-            "altar:play-ritual",
-            "cargo:resolve-endpoints",
-            "cargo:commit-transfer",
-            "energy:inspect-grid",
-            "generator:check-world-condition",
-            "generator:consume-fuel",
-            "generator:emit-energy",
-            "charge:write-item-energy",
-            "basic:hand-input",
-            "spawner:restore-entity-type",
-            "spawner:drop-fractured-item",
-            "spawner:repair-to-reinforced",
-            "hopper:scan-items",
-            "hopper:teleport-item",
-            "hopper:emit-particles",
-            "hologram:open-editor",
-            "hologram:update-text",
-            "hologram:sync-display",
-            "placer:resolve-target",
-            "placer:consume-input",
-            "placer:place-block",
-            "placer:rollback-on-fail",
-            "miner:validate-structure",
-            "miner:consume-fuel",
-            "miner:animate-piston",
-            "miner:extract-ore",
-            "miner:commit-output",
-            "miner:stop-on-error",
-            "decoration:animate-state",
-            "decoration:sync-visual",
-            "decoration:drop-plugin-block"
-    );
+    private static final Set<String> KNOWN_EFFECTS = Set.of("framework:audit-tick");
 
     /** Registers safe framework-native hooks for every built-in special effect name. */
     public static int registerDefaults(SfxMachineRuntimeEngine runtime) {
@@ -98,53 +35,11 @@ public final class SfxMachineBuiltinEffectHooks {
             context.put("framework.effect." + effectName + ".handled", Boolean.TRUE);
             return dispatched;
         }
+        if ("framework:audit-tick".equals(effectName)) {
+            return auditTick(context);
+        }
         context.put("framework.effect." + effectName + ".handled", Boolean.FALSE);
-        return switch (effectName) {
-            case "recipe:resolve-operation" -> recipeResolve(context, effectName);
-            case "inventory:reserve-output" -> inventoryReserveOutput(context);
-            case "inventory:commit-output" -> inventoryCommitOutput(context, effectName);
-            case "furnace:intercept-burn-smelt" -> furnaceIntercept(context);
-            case "furnace:sync-virtual-state" -> furnaceSync(context, effectName);
-            case "hand:consume-input", "basic:hand-input" -> handInput(context, effectName);
-            case "world:drop-result" -> worldDrop(context);
-            case "brew:validate-potions" -> brewValidate(context);
-            case "brew:refund-on-interrupt" -> brewRefund(context);
-            case "brew:commit-multi-bottle-output" -> brewCommit(context);
-            case "crafting:simulate" -> craftingSimulate(context);
-            case "crafting:commit-transaction" -> craftingCommit(context);
-            case "gps:check-signal-and-scan", "gps:resolve-signal" -> gpsResolve(context, effectName);
-            case "geo:extract-resource" -> geoExtract(context);
-            case "visual:update-floating-text" -> visualUpdate(context);
-            case "fluid:locate-source" -> fluidLocate(context);
-            case "fluid:remove-source-and-update" -> fluidCommit(context);
-            case "meta:validate-input" -> metaValidate(context);
-            case "meta:apply-transform" -> metaApply(context);
-            case "reactor:consume-coolant" -> reactorCoolant(context);
-            case "reactor:emit-energy", "generator:emit-energy" -> energyEmit(context, effectName);
-            case "reactor:meltdown-on-error" -> reactorMeltdown(context);
-            case "assembler:validate-offset" -> assemblerValidate(context);
-            case "assembler:spawn-entity" -> assemblerSpawn(context);
-            case "proxy:resolve-host" -> proxyResolve(context);
-            case "android-interface:sync-storage" -> androidInterfaceSync(context);
-            case "android:execute-script-step" -> androidScriptStep(context);
-            case "android:relocate-anchor" -> androidRelocate(context);
-            case "altar:validate-structure" -> altarValidate(context);
-            case "altar:play-ritual" -> altarRitual(context);
-            case "cargo:resolve-endpoints" -> cargoResolve(context);
-            case "cargo:commit-transfer" -> cargoCommit(context);
-            case "energy:inspect-grid" -> energyInspect(context);
-            case "generator:check-world-condition" -> generatorWorldCondition(context);
-            case "generator:consume-fuel" -> generatorConsumeFuel(context);
-            case "charge:write-item-energy" -> chargeItem(context);
-            case "spawner:restore-entity-type", "spawner:drop-fractured-item", "spawner:repair-to-reinforced" -> domainMark(context, "spawner", effectName);
-            case "hopper:scan-items", "hopper:teleport-item", "hopper:emit-particles" -> domainMark(context, "hopper", effectName);
-            case "hologram:open-editor", "hologram:update-text", "hologram:sync-display" -> domainMark(context, "hologram", effectName);
-            case "placer:resolve-target", "placer:consume-input", "placer:place-block", "placer:rollback-on-fail" -> domainMark(context, "placer", effectName);
-            case "miner:validate-structure", "miner:consume-fuel", "miner:animate-piston", "miner:extract-ore", "miner:commit-output", "miner:stop-on-error" -> domainMark(context, "miner", effectName);
-            case "decoration:animate-state", "decoration:sync-visual", "decoration:drop-plugin-block" -> domainMark(context, "decoration", effectName);
-            case "framework:audit-tick" -> auditTick(context);
-            default -> SfxMachinePhaseResult.cont();
-        };
+        return SfxMachinePhaseResult.failed("no built-in implementation for effect: " + effectName);
     }
 
     private static SfxMachinePhaseResult recipeResolve(SfxMachinePhaseContext context, String source) {

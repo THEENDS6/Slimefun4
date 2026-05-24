@@ -21,6 +21,7 @@ import cc.theends6.sfx.internal.inventory.SfxTransferTransaction;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.network.SfxNetworkDomain;
@@ -600,14 +601,24 @@ public final class SfxCargoService implements Listener {
         frameworkAttributes.put("framework.effect.dispatcher", (cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher) this::frameworkCargoEffect);
         SfxBlockInstanceRecord managerInstance = blockData.findInstance(network.managerId()).orElse(null);
         String frameworkMachineId = managerInstance == null ? "sfx:cargo_manager" : managerInstance.typeId();
-        machineRuntime.runPhase(frameworkMachineId, SfxMachinePhase.BEFORE_OPERATION_RESOLVE, network.managerId(), null, new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
+        SfxMachineTickContext cargoTick = new SfxMachineTickContext(0L, 1L, false);
+        if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkMachineId, SfxMachinePhase.BEFORE_OPERATION_RESOLVE, network.managerId(), null, cargoTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes), frameworkAttributes, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+            return;
+        }
         for (SfxCargoNodeRef output : network.outputs()) {
-            machineRuntime.runPhase(output.instance().typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, output.instance().instanceId(), toLocation(output.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, cargoFrameworkAttributes(network, output));
+            Map<String, Object> outputFramework = cargoFrameworkAttributes(network, output);
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(output.instance().typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, output.instance().instanceId(), toLocation(output.instance().anchorKey()), cargoTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, outputFramework), outputFramework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+                return;
+            }
         }
         for (SfxCargoNodeRef input : network.inputs()) {
             Map<String, Object> inputFramework = cargoFrameworkAttributes(network, input);
-            machineRuntime.runPhase(input.instance().typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, input.instance().instanceId(), toLocation(input.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework);
-            machineRuntime.runPhase(input.instance().typeId(), SfxMachinePhase.BEFORE_INPUT, input.instance().instanceId(), toLocation(input.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework);
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(input.instance().typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, input.instance().instanceId(), toLocation(input.instance().anchorKey()), cargoTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework), inputFramework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+                continue;
+            }
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(input.instance().typeId(), SfxMachinePhase.BEFORE_INPUT, input.instance().instanceId(), toLocation(input.instance().anchorKey()), cargoTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework), inputFramework, SfxMachinePhase.BEFORE_INPUT.name())) {
+                continue;
+            }
             int moved = input.definition().type() == SfxCargoComponentType.ADVANCED_INPUT_NODE
                     ? processAdvancedInput(input, network.outputs())
                     : processBasicInput(input, network.outputs());
@@ -615,16 +626,22 @@ public final class SfxCargoService implements Listener {
             if (moved > 0) {
                 recordManagerTransfer(network.managerId(), moved);
             }
-            machineRuntime.runPhase(input.instance().typeId(), SfxMachinePhase.ON_COMPLETE, input.instance().instanceId(), toLocation(input.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, moved > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework);
-            machineRuntime.runPhase(input.instance().typeId(), SfxMachinePhase.AFTER_TICK, input.instance().instanceId(), toLocation(input.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, moved > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework);
+            if (SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(input.instance().typeId(), SfxMachinePhase.ON_COMPLETE, input.instance().instanceId(), toLocation(input.instance().anchorKey()), cargoTick, null, moved > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework), inputFramework, SfxMachinePhase.ON_COMPLETE.name())) {
+                machineRuntime.runPhase(input.instance().typeId(), SfxMachinePhase.AFTER_TICK, input.instance().instanceId(), toLocation(input.instance().anchorKey()), cargoTick, null, moved > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework);
+            }
         }
         for (SfxCargoNodeRef output : network.outputs()) {
-            machineRuntime.runPhase(output.instance().typeId(), SfxMachinePhase.ON_COMPLETE, output.instance().instanceId(), toLocation(output.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, cargoFrameworkAttributes(network, output));
-            machineRuntime.runPhase(output.instance().typeId(), SfxMachinePhase.AFTER_OUTPUT, output.instance().instanceId(), toLocation(output.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, cargoFrameworkAttributes(network, output));
-            machineRuntime.runPhase(output.instance().typeId(), SfxMachinePhase.AFTER_TICK, output.instance().instanceId(), toLocation(output.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, cargoFrameworkAttributes(network, output));
+            Map<String, Object> outputFramework = cargoFrameworkAttributes(network, output);
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(output.instance().typeId(), SfxMachinePhase.ON_COMPLETE, output.instance().instanceId(), toLocation(output.instance().anchorKey()), cargoTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, outputFramework), outputFramework, SfxMachinePhase.ON_COMPLETE.name())) {
+                continue;
+            }
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(output.instance().typeId(), SfxMachinePhase.AFTER_OUTPUT, output.instance().instanceId(), toLocation(output.instance().anchorKey()), cargoTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, outputFramework), outputFramework, SfxMachinePhase.AFTER_OUTPUT.name())) {
+                continue;
+            }
+            machineRuntime.runPhase(output.instance().typeId(), SfxMachinePhase.AFTER_TICK, output.instance().instanceId(), toLocation(output.instance().anchorKey()), cargoTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, outputFramework);
         }
         virtualContainers.pushDirtyAfterLogic();
-        machineRuntime.runPhase(frameworkMachineId, SfxMachinePhase.ON_COMPLETE, network.managerId(), null, new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
+        machineRuntime.runPhase(frameworkMachineId, SfxMachinePhase.ON_COMPLETE, network.managerId(), null, cargoTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
     }
 
     private void recordManagerTransfer(UUID managerId, int amount) {

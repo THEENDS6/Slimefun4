@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.android;
 
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import java.util.ArrayList;
@@ -97,14 +98,24 @@ final class SfxAndroidBatchTickController {
             Map<String, Object> frameworkAttributes = service.androidFrameworkAttributes(instance, type, state, location.getBlock(), instruction, acceptedMoves.contains(instance.instanceId()), tickId);
             frameworkAttributes.put("android.instruction.name", instruction.name());
             SfxMachineTickContext frameworkTick = new SfxMachineTickContext(tickId, 1L, false);
-            service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.IDLE, frameworkAttributes);
-            service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_PROGRESS, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.IDLE, frameworkAttributes);
+            if (!SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.IDLE, frameworkAttributes), frameworkAttributes, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+                service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.BLOCKED, frameworkAttributes);
+                continue;
+            }
+            if (!SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_PROGRESS, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.IDLE, frameworkAttributes), frameworkAttributes, SfxMachinePhase.BEFORE_PROGRESS.name())) {
+                service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.BLOCKED, frameworkAttributes);
+                continue;
+            }
             boolean success = service.executeInstruction(instance, type, state, instruction, location.getBlock(), acceptedMoves.contains(instance.instanceId()), tickId);
             frameworkAttributes.put("android.execution.success", success);
-            service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_PROGRESS, instance.instanceId(), location, frameworkTick, null, success ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, frameworkAttributes);
+            if (!SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_PROGRESS, instance.instanceId(), location, frameworkTick, null, success ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, frameworkAttributes), frameworkAttributes, SfxMachinePhase.AFTER_PROGRESS.name())) {
+                service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.BLOCKED, frameworkAttributes);
+                continue;
+            }
             if (success) {
-                service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.RUNNING, frameworkAttributes);
-                state.advance();
+                if (SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.RUNNING, frameworkAttributes), frameworkAttributes, SfxMachinePhase.ON_COMPLETE.name())) {
+                    state.advance();
+                }
             }
             service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, frameworkTick, null, success ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, frameworkAttributes);
             if (state.runtimeState() == SfxAndroidRuntimeState.ACTIVE) {

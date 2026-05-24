@@ -16,6 +16,7 @@ import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
@@ -374,7 +375,10 @@ public final class SfxAncientAltarService implements Listener {
             sendMessage(player, "machines.ancient-altar.in-use", "<red>This Ancient Altar is already in use.</red>");
             return;
         }
-        machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, altarInstance.instanceId(), altarBlock.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, altarFrameworkAttributes(altarInstance, player, null));
+        Map<String, Object> startFramework = altarFrameworkAttributes(altarInstance, player, null);
+        if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, altarInstance.instanceId(), altarBlock.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, startFramework), startFramework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+            return;
+        }
         List<SfxBlockAnchorKey> pedestalKeys = pedestalKeys(altarBlock.getLocation());
         List<SfxBlockInstanceRecord> pedestals = new ArrayList<>(8);
         for (SfxBlockAnchorKey key : pedestalKeys) {
@@ -490,7 +494,10 @@ public final class SfxAncientAltarService implements Listener {
         SfxBlockInstanceRecord frameworkAltar = instanceAt(session.altarKey());
         Map<String, Object> framework = frameworkAltar == null ? null : altarFrameworkAttributes(frameworkAltar, null, session);
         if (frameworkAltar != null) {
-            machineRuntime.runPhase(frameworkAltar.typeId(), SfxMachinePhase.BEFORE_PROGRESS, frameworkAltar.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, framework);
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkAltar.typeId(), SfxMachinePhase.BEFORE_PROGRESS, frameworkAltar.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, framework), framework, SfxMachinePhase.BEFORE_PROGRESS.name())) {
+                abortSession(session, true);
+                return;
+            }
         }
         if (step == STEP_COUNT) {
             completeSession(session);
@@ -514,7 +521,10 @@ public final class SfxAncientAltarService implements Listener {
 
         session.advanceStep();
         if (frameworkAltar != null) {
-            machineRuntime.runPhase(frameworkAltar.typeId(), SfxMachinePhase.AFTER_PROGRESS, frameworkAltar.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, framework);
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkAltar.typeId(), SfxMachinePhase.AFTER_PROGRESS, frameworkAltar.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, framework), framework, SfxMachinePhase.AFTER_PROGRESS.name())) {
+                abortSession(session, true);
+                return;
+            }
         }
         scheduleTick(sessionId);
     }
@@ -536,11 +546,11 @@ public final class SfxAncientAltarService implements Listener {
     private void completeSession(RitualSession session) {
         SfxBlockInstanceRecord altarInstance = instanceAt(session.altarKey());
         if (altarInstance != null) {
-            machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.ON_COMPLETE, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, altarFrameworkAttributes(altarInstance, null, session));
-            machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.AFTER_TICK, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, altarFrameworkAttributes(altarInstance, null, session));
-        }
-        if (altarInstance != null) {
-            machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.AFTER_OUTPUT, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, altarFrameworkAttributes(altarInstance, null, session));
+            Map<String, Object> completeFramework = altarFrameworkAttributes(altarInstance, null, session);
+            if (SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.ON_COMPLETE, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, completeFramework), completeFramework, SfxMachinePhase.ON_COMPLETE.name())) {
+                SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.AFTER_OUTPUT, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, completeFramework), completeFramework, SfxMachinePhase.AFTER_OUTPUT.name());
+                machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.AFTER_TICK, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, completeFramework);
+            }
         }
         unregisterSession(session);
         clearPedestalStates(session, false);

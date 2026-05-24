@@ -18,6 +18,7 @@ import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
@@ -252,8 +253,9 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         if (attributes == null) {
             attributes = gpsInteractionAttributes(player, instance);
         }
-        machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, attributes);
-        machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, attributes);
+        if (SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, attributes), attributes, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, attributes);
+        }
     }
 
     public void handlePlaced(UUID instanceId, String typeId) {
@@ -289,9 +291,11 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
             }
             Map<String, Object> physicalFramework = gpsInteractionAttributes(player, instance);
             runFrameworkInteraction(player, block, instance, physicalFramework);
-            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_PROGRESS, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, physicalFramework);
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_PROGRESS, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, physicalFramework), physicalFramework, SfxMachinePhase.BEFORE_PROGRESS.name())) {
+                return;
+            }
             scheduleGpsPhysicalUse(player, block, instance);
-            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, physicalFramework);
+            SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, physicalFramework), physicalFramework, SfxMachinePhase.ON_COMPLETE.name());
             return;
         }
 
@@ -318,7 +322,7 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         Map<String, Object> clickFramework = gpsInteractionAttributes(player, instance);
         runFrameworkInteraction(player, block, instance, clickFramework);
         if (handleGpsBlockRightClick(player, block, instance)) {
-            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, clickFramework);
+            SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, clickFramework), clickFramework, SfxMachinePhase.ON_COMPLETE.name());
             event.setCancelled(true);
         }
     }

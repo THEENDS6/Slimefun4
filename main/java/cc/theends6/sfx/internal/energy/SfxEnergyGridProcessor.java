@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.energy;
 
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -29,7 +30,11 @@ final class SfxEnergyGridProcessor {
             return;
         }
         Map<String, Object> frameworkAttributes = service.energyFrameworkAttributes(grid, regulator, service.definitions.get(regulator.typeId()), service.currentState(regulator.instanceId(), regulator));
-        service.machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, grid.regulatorId(), service.toLocation(regulator.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
+        SfxMachineTickContext energyTick = new SfxMachineTickContext(0L, 1L, false);
+        if (!SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, grid.regulatorId(), service.toLocation(regulator.anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes), frameworkAttributes, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+            service.displayStatus(grid.regulatorKey(), SfxEnergyGridStatus.NO_NETWORK, 0, 0, 0, 0, 0);
+            return;
+        }
         int available = 0;
         int supply = 0;
         List<SfxEnergyNodeRef> capacitorRefs = new ArrayList<>(grid.capacitors().size());
@@ -121,8 +126,12 @@ final class SfxEnergyGridProcessor {
 
         for (SfxEnergyNodeRef generator : generatorRefs) {
             Map<String, Object> generatorFramework = service.energyFrameworkAttributes(grid, generator.instance(), generator.definition(), generator.state());
-            service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.BEFORE_INPUT, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework);
-            service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework);
+            if (!SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.BEFORE_INPUT, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework), generatorFramework, SfxMachinePhase.BEFORE_INPUT.name())) {
+                continue;
+            }
+            if (!SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework), generatorFramework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+                continue;
+            }
             if (generator.state().storedEnergy() > 0) {
                 available += generator.state().storedEnergy();
                 generator.state().storedEnergy(0);
@@ -130,7 +139,7 @@ final class SfxEnergyGridProcessor {
             }
             int produced = service.autoPausedGenerators.contains(generator.instance().instanceId()) ? 0 : service.generate(generator.instance(), generator.definition(), generator.state());
             generatorFramework.put("energy.generated", produced);
-            service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.AFTER_PROGRESS, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, produced > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework);
+            SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.AFTER_PROGRESS, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), energyTick, null, produced > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework), generatorFramework, SfxMachinePhase.AFTER_PROGRESS.name());
             available += produced;
             supply += produced;
         }
@@ -217,8 +226,9 @@ final class SfxEnergyGridProcessor {
             int storedBeforeCharge = charger.state().storedEnergy();
             service.tickChargingBench(charger);
             chargerFramework.put("energy.charger.delta", Math.max(0, charger.state().storedEnergy() - storedBeforeCharge));
-            service.machineRuntime.runPhase(charger.instance().typeId(), SfxMachinePhase.AFTER_PROGRESS, charger.instance().instanceId(), service.toLocation(charger.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, chargerFramework);
-            service.machineRuntime.runPhase(charger.instance().typeId(), SfxMachinePhase.AFTER_OUTPUT, charger.instance().instanceId(), service.toLocation(charger.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, chargerFramework);
+            if (SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(charger.instance().typeId(), SfxMachinePhase.AFTER_PROGRESS, charger.instance().instanceId(), service.toLocation(charger.instance().anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, chargerFramework), chargerFramework, SfxMachinePhase.AFTER_PROGRESS.name())) {
+                SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(charger.instance().typeId(), SfxMachinePhase.AFTER_OUTPUT, charger.instance().instanceId(), service.toLocation(charger.instance().anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, chargerFramework), chargerFramework, SfxMachinePhase.AFTER_OUTPUT.name());
+            }
         }
 
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {
@@ -273,16 +283,16 @@ final class SfxEnergyGridProcessor {
         service.displayStatus(grid.regulatorKey(), SfxEnergyGridStatus.ONLINE, displaySupply, requestedConsumption, net, displayStored, totalCapacity);
         service.refreshOpenSfxEnergyGeneratorSessions();
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {
-            service.machineRuntime.runPhase(capacitor.instance().typeId(), SfxMachinePhase.AFTER_TICK, capacitor.instance().instanceId(), service.toLocation(capacitor.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, service.energyFrameworkAttributes(grid, capacitor.instance(), capacitor.definition(), capacitor.state()));
+            service.machineRuntime.runPhase(capacitor.instance().typeId(), SfxMachinePhase.AFTER_TICK, capacitor.instance().instanceId(), service.toLocation(capacitor.instance().anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, service.energyFrameworkAttributes(grid, capacitor.instance(), capacitor.definition(), capacitor.state()));
         }
         for (SfxEnergyNodeRef generator : generatorRefs) {
-            service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.AFTER_TICK, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, service.energyFrameworkAttributes(grid, generator.instance(), generator.definition(), generator.state()));
+            service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.AFTER_TICK, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, service.energyFrameworkAttributes(grid, generator.instance(), generator.definition(), generator.state()));
         }
         for (SfxEnergyNodeRef charger : chargerRefs) {
-            service.machineRuntime.runPhase(charger.instance().typeId(), SfxMachinePhase.AFTER_TICK, charger.instance().instanceId(), service.toLocation(charger.instance().anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, service.energyFrameworkAttributes(grid, charger.instance(), charger.definition(), charger.state()));
+            service.machineRuntime.runPhase(charger.instance().typeId(), SfxMachinePhase.AFTER_TICK, charger.instance().instanceId(), service.toLocation(charger.instance().anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, service.energyFrameworkAttributes(grid, charger.instance(), charger.definition(), charger.state()));
         }
-        service.machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.AFTER_TICK, grid.regulatorId(), service.toLocation(regulator.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
-        service.machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.ON_COMPLETE, grid.regulatorId(), service.toLocation(regulator.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
+        service.machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.AFTER_TICK, grid.regulatorId(), service.toLocation(regulator.anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
+        service.machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.ON_COMPLETE, grid.regulatorId(), service.toLocation(regulator.anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
     
     }
 }

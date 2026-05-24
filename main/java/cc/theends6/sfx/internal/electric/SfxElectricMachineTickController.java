@@ -69,7 +69,8 @@ final class SfxElectricMachineTickController {
                 service.dirtyInstances.add(instanceId);
             }
             if (customResult.changed() || customResult.status() == SfxElectricMachineRenderStatus.WORKING) {
-                service.machineRuntime.runPhase(definition.id(), SfxMachinePhase.ON_COMPLETE, instanceId, location, context, null, SfxElectricMachineFrameworkBridge.status(customResult.status()), frameworkAttributes);
+                SfxMachinePhaseResult complete = service.machineRuntime.runPhase(definition.id(), SfxMachinePhase.ON_COMPLETE, instanceId, location, context, null, SfxElectricMachineFrameworkBridge.status(customResult.status()), frameworkAttributes);
+                cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard.proceed(complete, frameworkAttributes, SfxMachinePhase.ON_COMPLETE.name());
             }
             if (session != null && service.shouldRenderSession(session, customResult.status())) {
                 SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO
@@ -90,7 +91,12 @@ final class SfxElectricMachineTickController {
             return;
         }
 
-        service.machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
+        SfxMachinePhaseResult beforeOperation = service.machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
+        if (!cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard.proceed(beforeOperation, frameworkAttributes, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+            machineExecution.status(beforeOperation.status() == null ? cc.theends6.sfx.internal.machine.SfxMachineStatus.BLOCKED : beforeOperation.status());
+            service.activeInstances.add(instanceId);
+            return;
+        }
         SfxElectricRecipe activeRecipe = frameworkAttributes.get("electric.activeRecipe") instanceof SfxElectricRecipe frameworkActiveRecipe
                 ? frameworkActiveRecipe
                 : service.recipeProcessor.activeRecipe(definition, state);

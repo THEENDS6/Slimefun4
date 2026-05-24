@@ -22,6 +22,7 @@ import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineState;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
 import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
@@ -269,12 +270,21 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private boolean runFrameworkConfigurableTick(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, SfxConfigurableMachineSession session, Location location, SfxMachineTickContext context, Map<String, Object> attributes) {
-        machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+        SfxMachinePhaseResult before = machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+        if (!SfxMachinePipelineGuard.proceed(before, attributes, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+            return false;
+        }
         if (definition.kind() == SfxConfigurableMachineKind.REACTOR) {
-            machineRuntime.runPhase(definition.id(), SfxMachinePhase.AFTER_PROGRESS, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+            SfxMachinePhaseResult afterProgress = machineRuntime.runPhase(definition.id(), SfxMachinePhase.AFTER_PROGRESS, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+            if (!SfxMachinePipelineGuard.proceed(afterProgress, attributes, SfxMachinePhase.AFTER_PROGRESS.name())) {
+                return false;
+            }
         }
         if (definition.kind() == SfxConfigurableMachineKind.ASSEMBLER && Boolean.TRUE.equals(attributes.get("configurable.assembler.readyToSpawn"))) {
-            machineRuntime.runPhase(definition.id(), SfxMachinePhase.ON_COMPLETE, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+            SfxMachinePhaseResult complete = machineRuntime.runPhase(definition.id(), SfxMachinePhase.ON_COMPLETE, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+            if (!SfxMachinePipelineGuard.proceed(complete, attributes, SfxMachinePhase.ON_COMPLETE.name())) {
+                return false;
+            }
         }
         Object changed = attributes.get("configurable.changed");
         return changed instanceof Boolean value && value;
