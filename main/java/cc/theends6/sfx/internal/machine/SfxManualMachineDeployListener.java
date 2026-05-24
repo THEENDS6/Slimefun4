@@ -201,7 +201,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         for (Block block : placedBlocks) {
             BlockData updated = orientedData(block, plan.center(), definition, sideDirection, playerFacing);
             if (updated != null) {
-                block.setBlockData(updated, false);
+                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, itemId, block, updated, false, "manual-deploy", "orient-structure");
             }
             clearPlacedBlockName(block);
         }
@@ -210,10 +210,10 @@ public final class SfxManualMachineDeployListener implements Listener {
             cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, itemId, plan.anchor(), Material.AIR, false, "manual-deploy", "rollback-anchor");
         }
         for (Block block : placedBlocks) {
-            block.setBlockData(block.getBlockData(), true);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, itemId, block, block.getBlockData(), true, "manual-deploy", "rollback-physics");
         }
         if (anchorExpected == null || anchorExpected.isAir()) {
-            plan.anchor().setBlockData(plan.anchor().getBlockData(), true);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, itemId, plan.anchor(), plan.anchor().getBlockData(), true, "manual-deploy", "rollback-anchor-physics");
         }
     }
 

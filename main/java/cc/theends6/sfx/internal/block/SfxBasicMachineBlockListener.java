@@ -716,7 +716,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instanceTypeAt(block.getLocation()), block, water ? Material.WATER : Material.LAVA, false, "basic", "placeLiquid");
         } else if (water && block.getBlockData() instanceof Waterlogged waterlogged) {
             waterlogged.setWaterlogged(true);
-            block.setBlockData(waterlogged, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(machineRuntime, instanceTypeAt(block.getLocation()), block, waterlogged, false, "basic", "placeLiquid:waterlog");
             playSound(block.getLocation(), Sound.ITEM_BUCKET_EMPTY, 1.0f, 1.0f);
             clearActiveCrucible(anchorKey, false);
             setInstanceState(block.getRelative(BlockFace.DOWN), SfxBlockLifecycleState.IDLE, "crucible:idle");
@@ -737,7 +737,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
         playSound(block.getLocation(), water ? Sound.ITEM_BUCKET_EMPTY : Sound.ITEM_BUCKET_EMPTY_LAVA, 1.0f, 1.0f);
         levelled.setLevel(8 - times);
-        block.setBlockData(levelled, false);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(machineRuntime, instanceTypeAt(block.getLocation()), block, levelled, false, "basic", "runCruciblePostTask:level");
         if (times < 8) {
             runtime.executeAtLater(block.getLocation(), 50L, () -> runCruciblePostTask(anchorKey, token, block, water, times + 1));
         } else {
@@ -1416,7 +1416,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         lightable.setLit(lit);
-        block.setBlockData(lightable, false);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(machineRuntime, instanceTypeAt(block.getLocation()), block, lightable, false, "basic", "syncFurnaceLitAppearance");
         if (state != null) {
             state.lastLit(lit);
         }
@@ -1452,7 +1452,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         BlockData data = block.getBlockData();
         if (data instanceof Waterlogged waterlogged && waterlogged.isWaterlogged()) {
             waterlogged.setWaterlogged(false);
-            block.setBlockData(waterlogged, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(machineRuntime, instanceTypeAt(block.getLocation()), block, waterlogged, false, "basic", "clearActiveCrucible:waterlog");
         }
     }
 
@@ -1525,158 +1525,5 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
     }
 
-
-    private record ActiveCrucibleProcess(UUID token, Location outputLocation, boolean water) {
-    }
-
-    private record CruciblePlan(int inputAmount, boolean water) {
-    }
-
-    private record FurnaceStats(int processingSpeed, int fuelEfficiency, int fortuneLevel) {
-    }
-
-    private record VirtualFurnaceRecipe(ItemStack result, int cookingTime) {
-    }
-
-    private static final class VirtualFurnaceState {
-        private ItemStack smelting;
-        private ItemStack fuel;
-        private ItemStack result;
-        private int burnTimeRemaining;
-        private int burnTimeTotal;
-        private int cookProgress;
-        private int visualTick;
-        private int cookTimeTotal = 200;
-        private long lastLogicTick;
-        private boolean sleeping;
-        private boolean initialized;
-        private boolean externalDirty = true;
-        private boolean mirrorDirty;
-        private Boolean lastLit;
-        private String inputKey;
-
-        ItemStack smelting() {
-            return cloneSlotInternal(smelting);
-        }
-
-        void smelting(ItemStack smelting) {
-            this.smelting = cloneSlotInternal(smelting);
-        }
-
-        ItemStack fuel() {
-            return cloneSlotInternal(fuel);
-        }
-
-        void fuel(ItemStack fuel) {
-            this.fuel = cloneSlotInternal(fuel);
-        }
-
-        ItemStack result() {
-            return cloneSlotInternal(result);
-        }
-
-        void result(ItemStack result) {
-            this.result = cloneSlotInternal(result);
-        }
-
-        int burnTimeRemaining() {
-            return burnTimeRemaining;
-        }
-
-        void burnTimeRemaining(int burnTimeRemaining) {
-            this.burnTimeRemaining = Math.max(0, burnTimeRemaining);
-        }
-
-        void burnTimeTotal(int burnTimeTotal) {
-            this.burnTimeTotal = Math.max(0, burnTimeTotal);
-        }
-
-        int cookTimeTotal() {
-            return Math.max(1, cookTimeTotal);
-        }
-
-        void cookTimeTotal(int cookTimeTotal) {
-            this.cookTimeTotal = Math.max(1, cookTimeTotal);
-        }
-
-        int cookProgress() {
-            return cookProgress;
-        }
-
-        void cookProgress(int cookProgress) {
-            this.cookProgress = Math.max(0, cookProgress);
-        }
-
-        int visualTick() {
-            return visualTick;
-        }
-
-        void visualTick(int visualTick) {
-            this.visualTick = visualTick;
-        }
-
-        long lastLogicTick() {
-            return lastLogicTick;
-        }
-
-        void lastLogicTick(long lastLogicTick) {
-            this.lastLogicTick = lastLogicTick;
-        }
-
-        boolean sleeping() {
-            return sleeping;
-        }
-
-        void sleeping(boolean sleeping) {
-            this.sleeping = sleeping;
-        }
-
-        boolean initialized() {
-            return initialized;
-        }
-
-        void initialized(boolean initialized) {
-            this.initialized = initialized;
-        }
-
-        boolean externalDirty() {
-            return externalDirty;
-        }
-
-        void externalDirty(boolean externalDirty) {
-            this.externalDirty = externalDirty;
-        }
-
-        boolean mirrorDirty() {
-            return mirrorDirty;
-        }
-
-        void mirrorDirty(boolean mirrorDirty) {
-            this.mirrorDirty = mirrorDirty;
-        }
-
-        Boolean lastLit() {
-            return lastLit;
-        }
-
-        void lastLit(boolean lastLit) {
-            this.lastLit = lastLit;
-        }
-
-        String inputKey() {
-            return inputKey;
-        }
-
-        void inputKey(String inputKey) {
-            this.inputKey = inputKey;
-        }
-
-        private static ItemStack cloneSlotInternal(ItemStack stack) {
-            if (stack == null || stack.getType().isAir()) {
-                return null;
-            }
-            return stack.clone();
-        }
-    }
 
 }

@@ -296,7 +296,7 @@ public final class SfxLegacyUtilityListener implements Listener {
         }
 
         ageable.setAge(ageable.getMaximumAge());
-        block.setBlockData(ageable);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, "sf:legacy_tool", block, ageable, true, "legacy-utility", "growth-accelerator");
         block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, Material.REDSTONE_BLOCK);
         consumeOne(event.getItem(), event.getPlayer());
     }
@@ -371,7 +371,7 @@ public final class SfxLegacyUtilityListener implements Listener {
         Material brokenType = block.getType();
         ItemStack output = rollDrop(drops);
         block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, brokenType);
-        block.setType(Material.AIR, true);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, "sf:legacy_tool", block, Material.AIR, true, "legacy-utility", "gold-pan");
         if (output != null && output.getType() != Material.AIR) {
             block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), output);
         }

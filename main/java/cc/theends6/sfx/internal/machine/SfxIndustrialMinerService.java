@@ -425,11 +425,11 @@ public final class SfxIndustrialMinerService implements Listener {
                 return;
             }
             piston.setExtended(extended);
-            block.setBlockData(piston, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(machineRuntime, frameworkInstance == null ? "sf:industrial_miner" : frameworkInstance.typeId(), block, piston, false, "industrial-miner", "restore-piston-facing");
             if (extended) {
                 PistonHead head = (PistonHead) Material.PISTON_HEAD.createBlockData();
                 head.setFacing(BlockFace.UP);
-                above.setBlockData(head, false);
+                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(machineRuntime, frameworkInstance == null ? "sf:industrial_miner" : frameworkInstance.typeId(), above, head, false, "industrial-miner", "restore-piston-head-facing");
             } else if (above.getType() == Material.PISTON_HEAD) {
                 cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, frameworkInstance == null ? "sf:industrial_miner" : frameworkInstance.typeId(), above, Material.AIR, false, "industrial-miner", "clear-above");
             }

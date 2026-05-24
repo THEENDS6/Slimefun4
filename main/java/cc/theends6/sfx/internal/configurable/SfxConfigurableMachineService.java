@@ -116,9 +116,6 @@ public final class SfxConfigurableMachineService implements Listener {
     private volatile boolean running;
     private volatile long tickCounter;
 
-    private record ReactorTickResult(int generatedEnergy, boolean changed) {
-    }
-
     public SfxConfigurableMachineService(
             JavaPlugin plugin,
             SfxRuntime runtime,
