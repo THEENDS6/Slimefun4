@@ -263,7 +263,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
                 + "Machine framework definitions: " + machineRuntime.definitionCount() + " (" + frameworkCatalogExtras + " catalog extras), "
                 + machineRuntime.capabilityDeclarationCount() + " capabilities, "
                 + machineRuntime.policyRefCount() + " policy refs, "
-                + machineRuntime.effectCount() + " phase effects. "
+                + machineRuntime.effectCount() + " phase effects, "
+                + machineRuntime.effectHookCount() + " bound effect hooks. "
                 + "Loaded " + blockDataService.anchorCount() + " block anchors and "
                 + blockDataService.instanceCount() + " block instances.");
     }

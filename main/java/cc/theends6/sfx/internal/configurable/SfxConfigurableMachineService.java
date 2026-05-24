@@ -17,6 +17,10 @@ import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
+import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachineState;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
 import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
 import cc.theends6.sfx.internal.ui.SfxUiItems;
@@ -132,6 +136,7 @@ public final class SfxConfigurableMachineService implements Listener {
         this.tickSettings = SfxMachineTickSettings.from(plugin.getConfig());
         this.machineRuntime = sharedMachineRuntime == null ? new SfxMachineRuntimeEngine() : sharedMachineRuntime;
         registerDefinitions();
+        registerFrameworkEffects();
         bootstrapLoadedStates();
         running = true;
         scheduleTick();
@@ -149,6 +154,47 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private void register(SfxConfigurableMachineDefinition definition) {
         definitions.put(definition.id(), definition);
+    }
+
+    private void registerFrameworkEffects() {
+        machineRuntime.registerEffectHook("configurable:legacy-kind-tick", this::frameworkLegacyKindTick);
+    }
+
+    private SfxMachinePhaseResult frameworkLegacyKindTick(SfxMachinePhaseContext phaseContext) {
+        SfxConfigurableMachineDefinition definition = phaseContext.attachment("configurable.definition", SfxConfigurableMachineDefinition.class).orElse(null);
+        SfxConfigurableMachineState state = phaseContext.attachment("configurable.state", SfxConfigurableMachineState.class).orElse(null);
+        SfxBlockInstanceRecord instance = phaseContext.attachment("configurable.instance", SfxBlockInstanceRecord.class).orElse(null);
+        if (definition == null || state == null || instance == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        Location location = phaseContext.location();
+        SfxMachineTickContext context = phaseContext.tickContext();
+        if (location == null || context == null) {
+            return SfxMachinePhaseResult.blocked(cc.theends6.sfx.internal.machine.SfxMachineStatus.BLOCKED, "missing location/context");
+        }
+        boolean changed = switch (definition.kind()) {
+            case ASSEMBLER -> tickAssembler(phaseContext.instanceId(), definition, state, location, context);
+            case REACTOR -> tickProductionFocusReactor(phaseContext.instanceId(), instance, definition, state, location, context);
+            case ACCESS_PORT -> false;
+        };
+        phaseContext.put("configurable.changed", changed);
+        return SfxMachinePhaseResult.complete(SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), "configurable legacy tick executed through framework effect");
+    }
+
+    private Map<String, Object> configurableFrameworkAttributes(SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, SfxConfigurableMachineSession session) {
+        Map<String, Object> attributes = new LinkedHashMap<>();
+        attributes.put("configurable.instance", instance);
+        attributes.put("configurable.definition", definition);
+        attributes.put("configurable.state", state);
+        if (session != null) attributes.put("configurable.session", session);
+        attributes.put("configurable.service", this);
+        return attributes;
+    }
+
+    private boolean runFrameworkConfigurableTick(UUID instanceId, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, SfxConfigurableMachineSession session, Location location, SfxMachineTickContext context, Map<String, Object> attributes) {
+        machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_PROGRESS, instanceId, location, context, null, SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), attributes);
+        Object changed = attributes.get("configurable.changed");
+        return changed instanceof Boolean value && value;
     }
 
     public boolean supportsType(String typeId) {
@@ -686,12 +732,10 @@ public final class SfxConfigurableMachineService implements Listener {
             activeInstances.add(instanceId);
             return;
         }
-        try (SfxMachineExecution machineExecution = machineRuntime.beginTick(instanceId, definition.id(), location, context)) {
-        boolean changed = switch (definition.kind()) {
-            case ASSEMBLER -> tickAssembler(instanceId, definition, state, location, context);
-            case REACTOR -> tickProductionFocusReactor(instanceId, instance, definition, state, location, context);
-            case ACCESS_PORT -> false;
-        };
+        Map<String, Object> frameworkAttributes = configurableFrameworkAttributes(instance, definition, state, session);
+        SfxMachineState frameworkState = new SfxMachineState();
+        try (SfxMachineExecution machineExecution = machineRuntime.beginTick(instanceId, definition.id(), location, context, frameworkState, frameworkAttributes)) {
+        boolean changed = runFrameworkConfigurableTick(instanceId, instance, definition, state, session, location, context, frameworkAttributes);
         if (changed) {
             if (blockData.findInstance(instanceId).isEmpty()) {
                 return;

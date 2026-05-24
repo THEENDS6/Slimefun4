@@ -6,6 +6,9 @@ import cc.theends6.sfx.internal.energy.SfxFuelBurnTimeBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
+import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
 import cc.theends6.sfx.internal.machine.SfxOutputPolicies;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
@@ -120,8 +123,43 @@ public final class SfxBasicMachineBlockListener implements Listener {
         this.tickSettings = SfxMachineTickSettings.from(plugin.getConfig());
         this.machineRuntime = sharedMachineRuntime == null ? new SfxMachineRuntimeEngine() : sharedMachineRuntime;
         this.machineRuntime.registerDefinitions(SfxBasicMachineFrameworkBridge.definitions());
+        registerFrameworkEffects();
         bootstrapEnhancedFurnaces();
         startEnhancedFurnaceTicker();
+    }
+
+    private void registerFrameworkEffects() {
+        machineRuntime.registerEffectHook("basic:hand-input", this::frameworkHandInput);
+        machineRuntime.registerEffectHook("basic:enhanced-furnace-tick", context -> SfxMachinePhaseResult.cont());
+    }
+
+    private SfxMachinePhaseResult frameworkHandInput(SfxMachinePhaseContext phaseContext) {
+        PlayerInteractEvent event = phaseContext.attachment("basic.interactEvent", PlayerInteractEvent.class).orElse(null);
+        Block block = phaseContext.attachment("basic.block", Block.class).orElse(null);
+        if (event == null || block == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        String typeId = phaseContext.definition() == null ? null : phaseContext.definition().id();
+        if ("sf:composter".equals(typeId)) {
+            handleComposter(event, block);
+            phaseContext.put("basic.handled", Boolean.TRUE);
+            return SfxMachinePhaseResult.complete(cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING, "composter handled through framework effect");
+        }
+        if ("sf:crucible".equals(typeId)) {
+            handleCrucible(event, block);
+            phaseContext.put("basic.handled", Boolean.TRUE);
+            return SfxMachinePhaseResult.complete(cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING, "crucible handled through framework effect");
+        }
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private boolean runFrameworkHandInput(String typeId, SfxBlockInstanceRecord instance, PlayerInteractEvent event, Block block) {
+        Map<String, Object> attributes = new LinkedHashMap<>();
+        attributes.put("basic.interactEvent", event);
+        attributes.put("basic.block", block);
+        machineRuntime.runPhase(typeId, SfxMachinePhase.ON_COMPLETE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, true), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, attributes);
+        Object handled = attributes.get("basic.handled");
+        return handled instanceof Boolean value && value;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -196,12 +234,10 @@ public final class SfxBasicMachineBlockListener implements Listener {
             state.externalDirty(true);
             return;
         }
-        if ("sf:composter".equals(typeId)) {
-            handleComposter(event, clicked);
-            return;
-        }
-        if ("sf:crucible".equals(typeId)) {
-            handleCrucible(event, clicked);
+        if ("sf:composter".equals(typeId) || "sf:crucible".equals(typeId)) {
+            if (runFrameworkHandInput(typeId, interaction.instance(), event, clicked)) {
+                return;
+            }
         }
     }
 
