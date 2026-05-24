@@ -6,7 +6,7 @@ For now, the preferred contribution process is simple:
 
 1. Contact THEENDS6 directly before large changes.
 2. Describe the problem or feature clearly.
-3. Include server version, PacketEvents version, and logs when reporting bugs.
+3. Include server version, whether the server is Paper `26.1` or Folia, PacketEvents version, and logs when reporting bugs.
 4. Do not submit large rewrites without prior discussion.
 
 ## Local checks
