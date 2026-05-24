@@ -195,7 +195,7 @@ public final class SfxManualMachineDeployListener implements Listener {
                 continue;
             }
             Block block = entry.getKey();
-            block.setType(material, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, itemId, block, material, false, "manual-deploy", "place-structure");
             placedBlocks.add(block);
         }
         for (Block block : placedBlocks) {
@@ -207,7 +207,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         }
         Material anchorExpected = plan.placements().get(plan.anchor());
         if (anchorExpected == null || anchorExpected.isAir()) {
-            plan.anchor().setType(Material.AIR, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, itemId, plan.anchor(), Material.AIR, false, "manual-deploy", "rollback-anchor");
         }
         for (Block block : placedBlocks) {
             block.setBlockData(block.getBlockData(), true);

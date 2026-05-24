@@ -1103,7 +1103,7 @@ public final class SfxConfigurableMachineService implements Listener {
         recentGeneratedEnergy.remove(instance.instanceId());
         autoPausedProducers.remove(instance.instanceId());
         blockData.unregisterAt(location);
-        location.getBlock().setType(Material.OBSIDIAN, false);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instance.typeId(), location.getBlock(), Material.OBSIDIAN, false, "configurable", "meltDownReactor");
     }
 
     private void openMachine(Player player, SfxBlockInstanceRecord instance) {

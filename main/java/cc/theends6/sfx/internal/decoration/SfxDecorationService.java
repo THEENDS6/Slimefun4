@@ -271,7 +271,7 @@ public final class SfxDecorationService implements Listener {
             attributes.put("decoration.previousMaterial", block.getType().name());
             attributes.put("decoration.nextMaterial", next.name());
             if (block.getType() != next) {
-                block.setType(next, false);
+                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, liveInstance.typeId(), block, next, false, "decoration", "animate");
                 attributes.put("decoration.visual.changed", Boolean.TRUE);
                 execution.status(SfxMachineStatus.RUNNING);
             } else {

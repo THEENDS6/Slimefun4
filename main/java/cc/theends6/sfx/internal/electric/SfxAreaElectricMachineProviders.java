@@ -1387,7 +1387,7 @@ final class SfxAreaElectricMachineProviders {
         }
         pushOutput(items, definition, state, action.output());
         if (action.consumeSource()) {
-            action.source().setType(Material.AIR, true);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, definition.id(), action.source(), Material.AIR, true, "electric-area", "consume-source");
         }
         state.resetProgress();
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, 0, true);
