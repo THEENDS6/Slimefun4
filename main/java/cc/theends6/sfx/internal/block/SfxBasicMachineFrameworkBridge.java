@@ -16,6 +16,6 @@ final class SfxBasicMachineFrameworkBridge {
         if (canContinue) return SfxMachineStatus.RUNNING;
         return hasFuel ? SfxMachineStatus.IDLE : SfxMachineStatus.NO_INPUT;
     }
-    private static SfxMachineDefinition furnace(String id) { return new SfxMachineDefinition(id, id, SfxMachineCategory.BASIC, List.of(0, 1), List.of(2), -1, 1); }
-    private static SfxMachineDefinition simple(String id) { return new SfxMachineDefinition(id, id, SfxMachineCategory.BASIC, List.of(), List.of(), -1, 1); }
+    private static SfxMachineDefinition furnace(String id) { return cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(new SfxMachineDefinition(id, id, SfxMachineCategory.BASIC, List.of(0, 1), List.of(2), -1, 1)); }
+    private static SfxMachineDefinition simple(String id) { return cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(new SfxMachineDefinition(id, id, SfxMachineCategory.BASIC, List.of(), List.of(), -1, 1)); }
 }

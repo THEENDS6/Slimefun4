@@ -35,7 +35,7 @@ public final class SfxMachineFrameworkCatalog {
                     continue;
                 }
                 if (engine.definition(item.id()).isEmpty()) {
-                    engine.registerDefinitionIfAbsent(new SfxMachineDefinition(item.id(), item.id(), candidate.category(), List.of(), List.of(), -1, 1));
+                    engine.registerDefinitionIfAbsent(SfxMachineSpecialProfiles.apply(new SfxMachineDefinition(item.id(), item.id(), candidate.category(), List.of(), List.of(), -1, 1)));
                     registered++;
                 }
                 break;
@@ -49,7 +49,7 @@ public final class SfxMachineFrameworkCatalog {
         if (ids != null) {
             for (String id : ids) {
                 if (id != null && !id.isBlank()) {
-                    result.add(new SfxMachineDefinition(id, id, category, List.of(), List.of(), -1, 1));
+                    result.add(SfxMachineSpecialProfiles.apply(new SfxMachineDefinition(id, id, category, List.of(), List.of(), -1, 1)));
                 }
             }
         }

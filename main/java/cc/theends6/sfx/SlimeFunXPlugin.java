@@ -260,7 +260,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         getLogger().info("SFX enabled. Registered " + api.itemRegistry().items().size()
                 + " item definitions and " + api.manualMachines().machines().size() + " manual machines. "
                 + "Registered " + listenerRegistrar.registered().size() + " listeners through sfx-core. "
-                + "Machine framework definitions: " + machineRuntime.definitionCount() + " (" + frameworkCatalogExtras + " catalog extras). "
+                + "Machine framework definitions: " + machineRuntime.definitionCount() + " (" + frameworkCatalogExtras + " catalog extras), "
+                + machineRuntime.capabilityDeclarationCount() + " capabilities, "
+                + machineRuntime.policyRefCount() + " policy refs, "
+                + machineRuntime.effectCount() + " phase effects. "
                 + "Loaded " + blockDataService.anchorCount() + " block anchors and "
                 + blockDataService.instanceCount() + " block instances.");
     }

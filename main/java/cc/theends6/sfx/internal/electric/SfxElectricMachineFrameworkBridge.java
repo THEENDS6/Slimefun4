@@ -20,7 +20,7 @@ final class SfxElectricMachineFrameworkBridge {
     }
     static SfxMachineDefinition toFrameworkDefinition(SfxElectricMachineDefinition definition) {
         int statusSlot = definition.menuStyle() == SfxElectricMachineMenuStyle.NONE ? -1 : 22;
-        return new SfxMachineDefinition(definition.id(), definition.title(), SfxMachineCategory.ELECTRIC, ints(definition.inputSlots()), ints(definition.outputSlots()), statusSlot, 1);
+        return cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(new SfxMachineDefinition(definition.id(), definition.title(), SfxMachineCategory.ELECTRIC, ints(definition.inputSlots()), ints(definition.outputSlots()), statusSlot, 1));
     }
     static SfxMachineStatus status(SfxElectricMachineRenderStatus status) {
         if (status == null) return SfxMachineStatus.ERROR;

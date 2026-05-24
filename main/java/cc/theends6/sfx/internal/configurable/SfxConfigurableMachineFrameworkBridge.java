@@ -23,7 +23,7 @@ final class SfxConfigurableMachineFrameworkBridge {
         List<Integer> inputs = switch (definition.kind()) { case ASSEMBLER -> List.of(19, 28, 25, 34); case REACTOR -> List.of(19, 28, 37, 25, 34, 43); case ACCESS_PORT -> List.of(); };
         List<Integer> outputs = switch (definition.kind()) { case ASSEMBLER -> List.of(); case REACTOR -> List.of(40); case ACCESS_PORT -> List.of(); };
         int status = switch (definition.kind()) { case ASSEMBLER -> 22; case REACTOR -> 49; case ACCESS_PORT -> -1; };
-        return new SfxMachineDefinition(definition.id(), definition.id(), SfxMachineCategory.CONFIGURABLE, inputs, outputs, status, 1);
+        return cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(new SfxMachineDefinition(definition.id(), definition.id(), SfxMachineCategory.CONFIGURABLE, inputs, outputs, status, 1));
     }
     static SfxMachineStatus statusFor(SfxConfigurableMachineState state, SfxConfigurableMachineDefinition definition) {
         if (definition == null || state == null) return SfxMachineStatus.ERROR;
