@@ -1848,33 +1848,7 @@ public final class SfxEnergyService implements Listener {
         return new SfxEnergyGridInspection(grid.regulatorKey(), grid.status(), grid.members().size(), generators, reactors, capacitors, connectors, consumers, displayedEnergy(stored, capacity), capacity, generation, consumption, autoPaused);
     }
 
-    public record SfxEnergyInspection(
-            String typeId,
-            SfxEnergyComponentType componentType,
-            int storedEnergy,
-            int capacity,
-            int generationPerTick,
-            boolean connected,
-            boolean autoPaused
-    ) {
-    }
 
-    public record SfxEnergyGridInspection(
-            SfxBlockAnchorKey regulatorKey,
-            SfxEnergyGridStatus status,
-            int members,
-            int generators,
-            int reactors,
-            int capacitors,
-            int connectors,
-            int consumers,
-            int storedEnergy,
-            int capacity,
-            int generationPerTick,
-            int consumptionPerTick,
-            int autoPaused
-    ) {
-    }
 
 
 

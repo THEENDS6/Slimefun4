@@ -204,12 +204,12 @@ public final class SfxAndroidService implements Listener {
         if (type == null) {
             return;
         }
-        BlockFace rotation = facingFromPlayer(player);
+        BlockFace rotation = SfxAndroidBlockAppearance.facingFromPlayer(player);
         SfxAndroidState state = SfxAndroidState.createDefault(rotation);
         states.put(instanceId, state);
         persist(instanceId, state);
-        applyAndroidBlockAppearance(block, typeId, rotation);
-        runtime.executeAtLater(block.getLocation(), 1L, () -> applyAndroidBlockAppearance(block, typeId, rotation));
+        SfxAndroidBlockAppearance.apply(machineRuntime, itemRegistry, block, typeId, rotation);
+        runtime.executeAtLater(block.getLocation(), 1L, () -> SfxAndroidBlockAppearance.apply(machineRuntime, itemRegistry, block, typeId, rotation));
     }
 
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {
@@ -229,7 +229,7 @@ public final class SfxAndroidService implements Listener {
             return;
         }
         if (INTERFACE_FUEL.equals(typeId) || INTERFACE_ITEMS.equals(typeId)) {
-            dropInventory(block);
+            SfxAndroidBlockAppearance.dropInventory(block);
             SfxBlockDrops.dropPluginBlock(block, items, typeId);
             blockData.unregisterAt(block.getLocation());
         }
@@ -485,14 +485,14 @@ public final class SfxAndroidService implements Listener {
                 yield true;
             }
             case TURN_LEFT -> {
-                state.rotation(turnLeft(state.rotation()));
-                applyRotation(block, state.rotation());
+                state.rotation(SfxAndroidBlockAppearance.turnLeft(state.rotation()));
+                SfxAndroidBlockAppearance.applyRotation(machineRuntime, instance.typeId(), block, state.rotation());
                 state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
                 yield true;
             }
             case TURN_RIGHT -> {
-                state.rotation(turnRight(state.rotation()));
-                applyRotation(block, state.rotation());
+                state.rotation(SfxAndroidBlockAppearance.turnRight(state.rotation()));
+                SfxAndroidBlockAppearance.applyRotation(machineRuntime, instance.typeId(), block, state.rotation());
                 state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
                 yield true;
             }
@@ -650,7 +650,7 @@ public final class SfxAndroidService implements Listener {
         }
         cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instance.typeId(), from, Material.AIR, false, "android", "moveAndroid:clear-from");
         cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instance.typeId(), to, Material.PLAYER_HEAD, false, "android", "moveAndroid:place-to");
-        applyAndroidBlockAppearance(to, instance.typeId(), state.rotation());
+        SfxAndroidBlockAppearance.apply(machineRuntime, itemRegistry, to, instance.typeId(), state.rotation());
         blockData.unregisterAt(from.getLocation());
         UUID newId = blockData.registerSingleBlock(instance.typeId(), to.getLocation(), Material.PLAYER_HEAD, instance.ownerId());
         states.remove(instance.instanceId());
@@ -894,7 +894,7 @@ public final class SfxAndroidService implements Listener {
     private int stableSideCoordinate(Block block, Block root, BlockFace face) {
         int dx = block.getX() - root.getX();
         int dz = block.getZ() - root.getZ();
-        BlockFace right = turnRight(normalizeHorizontal(face));
+        BlockFace right = SfxAndroidBlockAppearance.turnRight(normalizeHorizontal(face));
         return dx * right.getModX() + dz * right.getModZ();
     }
 
@@ -2391,62 +2391,5 @@ public final class SfxAndroidService implements Listener {
         return world == null ? null : new Location(world, key.x(), key.y(), key.z());
     }
 
-    private void applyAndroidBlockAppearance(Block block, String typeId, BlockFace rotation) {
-        if (block == null || typeId == null) {
-            return;
-        }
-        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, typeId, block, Material.PLAYER_HEAD, false, "android", "applyHeadRotation");
-        applyRotation(block, rotation);
-        SfxItemDefinition definition = itemRegistry.item(typeId).orElse(null);
-        if (definition != null && block.getState() instanceof Skull skull) {
-            HeadTextures.apply(skull, definition.headTextureHash());
-        }
-    }
-
-    private void applyRotation(Block block, BlockFace rotation) {
-        if (block.getBlockData() instanceof Rotatable rotatable) {
-            BlockFace visualRotation = rotation == null ? BlockFace.NORTH : rotation.getOppositeFace();
-            rotatable.setRotation(visualRotation);
-            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(machineRuntime, typeId, block, rotatable, false, "android", "applyRotation");
-        }
-    }
-
-    private BlockFace facingFromPlayer(Player player) {
-        if (player == null) {
-            return BlockFace.NORTH;
-        }
-        return player.getFacing();
-    }
-
-    private BlockFace turnLeft(BlockFace face) {
-        return switch (face) {
-            case NORTH -> BlockFace.WEST;
-            case WEST -> BlockFace.SOUTH;
-            case SOUTH -> BlockFace.EAST;
-            case EAST -> BlockFace.NORTH;
-            default -> BlockFace.NORTH;
-        };
-    }
-
-    private BlockFace turnRight(BlockFace face) {
-        return switch (face) {
-            case NORTH -> BlockFace.EAST;
-            case EAST -> BlockFace.SOUTH;
-            case SOUTH -> BlockFace.WEST;
-            case WEST -> BlockFace.NORTH;
-            default -> BlockFace.NORTH;
-        };
-    }
-
-    private void dropInventory(Block block) {
-        if (!(block.getState() instanceof InventoryHolder holder)) {
-            return;
-        }
-        Inventory inventory = holder.getInventory();
-        for (ItemStack stack : inventory.getContents()) {
-            SfxBlockDrops.dropItem(block, stack);
-        }
-        inventory.clear();
-    }
 
 }

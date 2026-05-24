@@ -1121,7 +1121,7 @@ public final class SfxElectricMachineService implements Listener {
         for (int slot = 0; slot < definition.outputSlots().length; slot++) {
             SfxElectricStack electricStack = state.output(slot);
             ItemStack stack = electricStack == null ? null : electricStack.toItemStack(items);
-            if (isEmpty(stack) || (filter != null && !filter.test(stack))) {
+            if (SfxElectricCargoInventoryOps.isEmpty(stack) || (filter != null && !filter.test(stack))) {
                 continue;
             }
             int amount = Math.max(1, Math.min(Math.min(limit, stack.getMaxStackSize()), stack.getAmount()));
@@ -1148,7 +1148,7 @@ public final class SfxElectricMachineService implements Listener {
         for (int slot = 0; slot < definition.outputSlots().length && remaining > 0; slot++) {
             SfxElectricStack electricStack = state.output(slot);
             ItemStack stack = electricStack == null ? null : electricStack.toItemStack(items);
-            if (isEmpty(stack) || (filter != null && !filter.test(stack))) {
+            if (SfxElectricCargoInventoryOps.isEmpty(stack) || (filter != null && !filter.test(stack))) {
                 continue;
             }
             String key = cargoItemKey(stack);
@@ -1189,7 +1189,7 @@ public final class SfxElectricMachineService implements Listener {
             }
             SfxElectricStack electricStack = state.output(take.slot());
             ItemStack stack = electricStack == null ? null : electricStack.toItemStack(items);
-            if (isEmpty(stack) || !stack.isSimilar(take.template()) || stack.getAmount() < take.amount()) {
+            if (SfxElectricCargoInventoryOps.isEmpty(stack) || !stack.isSimilar(take.template()) || stack.getAmount() < take.amount()) {
                 return false;
             }
         }
@@ -1254,7 +1254,7 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private int cargoCapacity(UUID instanceId, ItemStack probe, boolean smartFill, boolean inputInventory, boolean singleSlot) {
-        if (isEmpty(probe)) {
+        if (SfxElectricCargoInventoryOps.isEmpty(probe)) {
             return 0;
         }
         CargoInventorySnapshot snapshot = cargoInventorySnapshot(instanceId, inputInventory);
@@ -1262,28 +1262,28 @@ public final class SfxElectricMachineService implements Listener {
             return 0;
         }
         if (singleSlot) {
-            return cargoCapacityForSingleSlot(snapshot.contents, probe, smartFill);
+            return SfxElectricCargoInventoryOps.capacityForSingleSlot(snapshot.contents, probe, smartFill);
         }
-        return cargoCapacityFor(snapshot.contents, probe, smartFill);
+        return SfxElectricCargoInventoryOps.capacityFor(snapshot.contents, probe, smartFill);
     }
 
     private ItemStack insertCargoStack(UUID instanceId, ItemStack input, boolean smartFill, boolean inputInventory, boolean singleSlot) {
-        if (isEmpty(input)) {
+        if (SfxElectricCargoInventoryOps.isEmpty(input)) {
             return null;
         }
         CargoInventorySnapshot snapshot = cargoInventorySnapshot(instanceId, inputInventory);
         if (snapshot == null || snapshot.contents.length == 0) {
             return input;
         }
-        ItemStack[] before = cloneContents(snapshot.contents);
+        ItemStack[] before = SfxElectricCargoInventoryOps.cloneContents(snapshot.contents);
         ItemStack remainder = singleSlot
-                ? cargoInsertSingleSlot(snapshot.contents, input, smartFill)
-                : cargoInsert(snapshot.contents, input, smartFill);
-        if (!sameContents(before, snapshot.contents)) {
+                ? SfxElectricCargoInventoryOps.insertSingleSlot(snapshot.contents, input, smartFill)
+                : SfxElectricCargoInventoryOps.insert(snapshot.contents, input, smartFill);
+        if (!SfxElectricCargoInventoryOps.sameContents(before, snapshot.contents)) {
             writeCargoInventory(snapshot);
             markCargoMutated(instanceId);
         }
-        return isEmpty(remainder) ? null : remainder;
+        return SfxElectricCargoInventoryOps.isEmpty(remainder) ? null : remainder;
     }
 
     private CargoInventorySnapshot cargoInventorySnapshot(UUID instanceId, boolean inputInventory) {
@@ -1343,275 +1343,8 @@ public final class SfxElectricMachineService implements Listener {
         return instance == null ? null : registry.definition(instance.typeId()).orElse(null);
     }
 
-    private int cargoCapacityFor(ItemStack[] contents, ItemStack probe, boolean smartFill) {
-        if (smartFill) {
-            int existingCapacity = cargoExistingCapacity(contents, probe);
-            if (cargoHasSimilar(contents, probe)) {
-                return existingCapacity;
-            }
-            return cargoEmptyCapacity(contents, probe);
-        }
-        int capacity = 0;
-        for (ItemStack stack : contents) {
-            if (isEmpty(stack)) {
-                capacity += probe.getMaxStackSize();
-                continue;
-            }
-            if (stack.isSimilar(probe)) {
-                capacity += Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
-            }
-        }
-        return capacity;
-    }
-
-    private int cargoCapacityForSingleSlot(ItemStack[] contents, ItemStack probe, boolean smartFill) {
-        if (smartFill) {
-            boolean hasSimilar = cargoHasSimilar(contents, probe);
-            if (hasSimilar) {
-                for (ItemStack stack : contents) {
-                    if (!isEmpty(stack) && stack.isSimilar(probe)) {
-                        int capacity = Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
-                        if (capacity > 0) {
-                            return capacity;
-                        }
-                    }
-                }
-                return 0;
-            }
-            return cargoFirstEmptyCapacity(contents, probe);
-        }
-        for (ItemStack stack : contents) {
-            if (isEmpty(stack)) {
-                return probe.getMaxStackSize();
-            }
-            if (stack.isSimilar(probe)) {
-                int capacity = Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
-                if (capacity > 0) {
-                    return capacity;
-                }
-            }
-        }
-        return 0;
-    }
-
-    private ItemStack cargoInsert(ItemStack[] contents, ItemStack input, boolean smartFill) {
-        ItemStack remaining = input.clone();
-        if (smartFill) {
-            remaining = cargoHasSimilar(contents, remaining) ? cargoFillExisting(contents, remaining) : cargoFillEmptyOnly(contents, remaining);
-        } else {
-            remaining = cargoFillEmptyOrExisting(contents, remaining, true);
-        }
-        return isEmpty(remaining) ? null : remaining;
-    }
-
-    private ItemStack cargoInsertSingleSlot(ItemStack[] contents, ItemStack input, boolean smartFill) {
-        ItemStack remaining = input.clone();
-        if (smartFill) {
-            remaining = cargoHasSimilar(contents, remaining) ? cargoFillOneExistingSlot(contents, remaining) : cargoFillOneEmptySlot(contents, remaining);
-        } else {
-            remaining = cargoFillOneEmptyOrExistingSlot(contents, remaining);
-        }
-        return isEmpty(remaining) ? null : remaining;
-    }
-
-    private boolean cargoHasSimilar(ItemStack[] contents, ItemStack probe) {
-        for (ItemStack stack : contents) {
-            if (!isEmpty(stack) && stack.isSimilar(probe)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private int cargoExistingCapacity(ItemStack[] contents, ItemStack probe) {
-        int capacity = 0;
-        for (ItemStack stack : contents) {
-            if (!isEmpty(stack) && stack.isSimilar(probe)) {
-                capacity += Math.max(0, Math.min(stack.getMaxStackSize(), probe.getMaxStackSize()) - stack.getAmount());
-            }
-        }
-        return capacity;
-    }
-
-    private int cargoEmptyCapacity(ItemStack[] contents, ItemStack probe) {
-        int capacity = 0;
-        for (ItemStack stack : contents) {
-            if (isEmpty(stack)) {
-                capacity += probe.getMaxStackSize();
-            }
-        }
-        return capacity;
-    }
-
-    private int cargoFirstEmptyCapacity(ItemStack[] contents, ItemStack probe) {
-        for (ItemStack stack : contents) {
-            if (isEmpty(stack)) {
-                return probe.getMaxStackSize();
-            }
-        }
-        return 0;
-    }
-
-    private ItemStack cargoFillExisting(ItemStack[] contents, ItemStack input) {
-        ItemStack remaining = input.clone();
-        for (ItemStack stack : contents) {
-            if (isEmpty(stack) || !stack.isSimilar(remaining)) {
-                continue;
-            }
-            int limit = Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize());
-            int moved = Math.min(remaining.getAmount(), Math.max(0, limit - stack.getAmount()));
-            if (moved <= 0) {
-                continue;
-            }
-            stack.setAmount(stack.getAmount() + moved);
-            remaining.setAmount(remaining.getAmount() - moved);
-            if (remaining.getAmount() <= 0) {
-                return null;
-            }
-        }
-        return remaining;
-    }
-
-    private ItemStack cargoFillEmptyOnly(ItemStack[] contents, ItemStack input) {
-        ItemStack remaining = input.clone();
-        for (int i = 0; i < contents.length; i++) {
-            if (!isEmpty(contents[i])) {
-                continue;
-            }
-            int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
-            ItemStack placed = remaining.clone();
-            placed.setAmount(moved);
-            contents[i] = placed;
-            remaining.setAmount(remaining.getAmount() - moved);
-            if (remaining.getAmount() <= 0) {
-                return null;
-            }
-        }
-        return remaining;
-    }
-
-    private ItemStack cargoFillOneExistingSlot(ItemStack[] contents, ItemStack input) {
-        ItemStack remaining = input.clone();
-        for (ItemStack stack : contents) {
-            if (isEmpty(stack) || !stack.isSimilar(remaining)) {
-                continue;
-            }
-            int limit = Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize());
-            int moved = Math.min(remaining.getAmount(), Math.max(0, limit - stack.getAmount()));
-            if (moved <= 0) {
-                continue;
-            }
-            stack.setAmount(stack.getAmount() + moved);
-            remaining.setAmount(remaining.getAmount() - moved);
-            return remaining.getAmount() <= 0 ? null : remaining;
-        }
-        return remaining;
-    }
-
-    private ItemStack cargoFillOneEmptySlot(ItemStack[] contents, ItemStack input) {
-        ItemStack remaining = input.clone();
-        for (int i = 0; i < contents.length; i++) {
-            if (!isEmpty(contents[i])) {
-                continue;
-            }
-            int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
-            ItemStack placed = remaining.clone();
-            placed.setAmount(moved);
-            contents[i] = placed;
-            remaining.setAmount(remaining.getAmount() - moved);
-            return remaining.getAmount() <= 0 ? null : remaining;
-        }
-        return remaining;
-    }
-
-    private ItemStack cargoFillOneEmptyOrExistingSlot(ItemStack[] contents, ItemStack input) {
-        ItemStack remaining = input.clone();
-        for (int i = 0; i < contents.length; i++) {
-            ItemStack stack = contents[i];
-            if (isEmpty(stack)) {
-                int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
-                ItemStack placed = remaining.clone();
-                placed.setAmount(moved);
-                contents[i] = placed;
-                remaining.setAmount(remaining.getAmount() - moved);
-                return remaining.getAmount() <= 0 ? null : remaining;
-            }
-            if (stack.isSimilar(remaining)) {
-                int limit = Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize());
-                int moved = Math.min(remaining.getAmount(), Math.max(0, limit - stack.getAmount()));
-                if (moved <= 0) {
-                    continue;
-                }
-                stack.setAmount(stack.getAmount() + moved);
-                remaining.setAmount(remaining.getAmount() - moved);
-                return remaining.getAmount() <= 0 ? null : remaining;
-            }
-        }
-        return remaining;
-    }
-
-    private ItemStack cargoFillEmptyOrExisting(ItemStack[] contents, ItemStack input, boolean existingAllowed) {
-        ItemStack remaining = input.clone();
-        for (int i = 0; i < contents.length; i++) {
-            ItemStack stack = contents[i];
-            if (isEmpty(stack)) {
-                int moved = Math.min(remaining.getAmount(), remaining.getMaxStackSize());
-                ItemStack placed = remaining.clone();
-                placed.setAmount(moved);
-                contents[i] = placed;
-                remaining.setAmount(remaining.getAmount() - moved);
-            } else if (existingAllowed && stack.isSimilar(remaining)) {
-                int limit = Math.min(stack.getMaxStackSize(), remaining.getMaxStackSize());
-                int moved = Math.min(remaining.getAmount(), Math.max(0, limit - stack.getAmount()));
-                stack.setAmount(stack.getAmount() + moved);
-                remaining.setAmount(remaining.getAmount() - moved);
-            }
-            if (remaining.getAmount() <= 0) {
-                return null;
-            }
-        }
-        return remaining;
-    }
-
-    private boolean isEmpty(ItemStack stack) {
-        return stack == null || stack.getType().isAir() || stack.getAmount() <= 0;
-    }
-
-    private boolean sameContents(ItemStack[] left, ItemStack[] right) {
-        if (left == null || right == null || left.length != right.length) {
-            return false;
-        }
-        for (int i = 0; i < left.length; i++) {
-            if (!sameStack(left[i], right[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean sameStack(ItemStack left, ItemStack right) {
-        if (isEmpty(left) || isEmpty(right)) {
-            return isEmpty(left) && isEmpty(right);
-        }
-        return left.getAmount() == right.getAmount() && left.isSimilar(right);
-    }
-
-    private ItemStack[] cloneContents(ItemStack[] contents) {
-        ItemStack[] copy = new ItemStack[contents == null ? 0 : contents.length];
-        for (int i = 0; i < copy.length; i++) {
-            copy[i] = contents[i] == null ? null : contents[i].clone();
-        }
-        return copy;
-    }
-
     private String cargoItemKey(ItemStack stack) {
-        if (isEmpty(stack)) {
-            return "air";
-        }
-        String marker = items.readMarker(stack).map(cc.theends6.sfx.api.item.SfxItemMarker::itemId).orElse(null);
-        ItemStack probe = stack.clone();
-        probe.setAmount(1);
-        return (marker == null ? "vanilla:" + stack.getType().key() : "sfx:" + marker) + ":" + probe.hashCode();
+        return SfxElectricCargoInventoryOps.itemKey(items, stack);
     }
 
     private void syncSessionState(SfxElectricMachineSession session) {
