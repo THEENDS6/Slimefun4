@@ -20,6 +20,7 @@ import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
@@ -214,6 +215,7 @@ public final class SfxEnergyService implements Listener {
                 blockData.updateEnergyPriorityDistance(instanceId, priorityDistance);
             }
             nodeStates.putIfAbsent(instanceId, SfxEnergyNodeState.empty());
+            SfxMachineLegacyHookBridge.place(machineRuntime, marker.itemId(), instanceId, event.getBlockPlaced().getLocation(), "energy", "SfxEnergyService.onPlace");
             activeNodes.add(instanceId);
             dirtyNodes.add(instanceId);
         });
@@ -229,6 +231,7 @@ public final class SfxEnergyService implements Listener {
             return;
         }
         SfxBlockInstanceRecord instance = interaction.instance();
+        SfxMachineLegacyHookBridge.interact(machineRuntime, instance.typeId(), instance.instanceId(), interaction.block().getLocation(), "energy", "SfxEnergyService.onInteract");
         SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
         if (definition == null) {
             return;
@@ -262,6 +265,9 @@ public final class SfxEnergyService implements Listener {
             return;
         }
         SfxEnergyComponentDefinition clickDefinition = definitionFor(holder.instanceId());
+        if (clickDefinition != null) {
+            SfxMachineLegacyHookBridge.menuClick(machineRuntime, clickDefinition.id(), holder.instanceId(), null, "energy", "SfxEnergyService.onInventoryClick");
+        }
         if (clickDefinition == null) {
             event.setCancelled(true);
             return;
@@ -339,6 +345,10 @@ public final class SfxEnergyService implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getInventory().getHolder() instanceof SfxEnergyGeneratorHolder holder)) {
             return;
+        }
+        SfxEnergyComponentDefinition closeDefinition = definitionFor(holder.instanceId());
+        if (closeDefinition != null) {
+            SfxMachineLegacyHookBridge.menuClose(machineRuntime, closeDefinition.id(), holder.instanceId(), null, "energy", "SfxEnergyService.onInventoryClose");
         }
         SfxEnergyGeneratorSession session = sessionsByInstance.remove(holder.instanceId());
         if (session == null) {
@@ -515,7 +525,11 @@ public final class SfxEnergyService implements Listener {
             runtime.executeAt(regulatorLocation, () -> SfxNetworkExecution.tick(
                     SfxNetworkExecution.snapshot(component.componentId(), SfxNetworkDomain.ENERGY, component.members(), component.topologyRevision()),
                     SfxNetworkReadiness.READY,
-                    () -> processGrid(grid)));
+                    () -> {
+                        SfxMachineLegacyHookBridge.beforeNetworkTick(machineRuntime, "sf:energy_regulator", regulatorId, regulatorLocation, "energy", "SfxEnergyService.tickEnergy");
+                        processGrid(grid);
+                        SfxMachineLegacyHookBridge.afterNetworkTick(machineRuntime, "sf:energy_regulator", regulatorId, regulatorLocation, "energy", "SfxEnergyService.tickEnergy");
+                    }));
         }
 
         if (topologyChanged) {
@@ -1493,6 +1507,7 @@ public final class SfxEnergyService implements Listener {
     }
 
     private void openGenerator(Player player, SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition) {
+        SfxMachineLegacyHookBridge.menuOpen(machineRuntime, definition.id(), instance.instanceId(), toLocation(instance.anchorKey()), "energy", "SfxEnergyService.openGenerator");
         SfxEnergyGeneratorSession existing = sessionsByInstance.get(instance.instanceId());
         if (existing != null && !existing.viewerId().equals(player.getUniqueId())) {
             player.sendMessage(Text.prefixed(plugin, localization.text("machines.busy", "<red>This machine is already open.</red>")));

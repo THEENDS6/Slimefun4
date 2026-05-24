@@ -106,6 +106,18 @@ public final class SfxMachineSpecialProfiles {
 
     private static void commonMachine(SfxMachineDefinition.Builder builder) {
         builder.capability(SfxMachineCapability.HAS_CUSTOM_STATUS)
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.ON_PLACE))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.ON_BREAK))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.ON_INTERACT))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.ON_MENU_OPEN))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.ON_MENU_CLICK))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.ON_MENU_CLOSE))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.BEFORE_TRANSFER))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.AFTER_TRANSFER))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.BEFORE_NETWORK_TICK))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.AFTER_NETWORK_TICK))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.BEFORE_WORLD_MUTATION))
+                .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.AFTER_WORLD_MUTATION))
                 .effect(SfxMachineEffect.marker("framework:audit-tick", SfxMachinePhase.AFTER_TICK));
     }
 

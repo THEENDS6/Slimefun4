@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import org.bukkit.Location;
@@ -27,6 +28,7 @@ public final class SfxMachineRuntimeEngine {
     private final Map<String, SfxMachineDefinition> definitions = new LinkedHashMap<>();
     private final Map<String, SfxMachineProcessor> processors = new ConcurrentHashMap<>();
     private final Map<String, SfxMachineHook> effectHooks = new ConcurrentHashMap<>();
+    private final CopyOnWriteArrayList<SfxMachinePhaseObserver> phaseObservers = new CopyOnWriteArrayList<>();
     private final Map<UUID, SfxMachineRuntimeSnapshot> snapshots = new ConcurrentHashMap<>();
     private final AtomicLong phaseInvocations = new AtomicLong();
     private final AtomicLong stoppedPipelines = new AtomicLong();
@@ -36,6 +38,7 @@ public final class SfxMachineRuntimeEngine {
             definition = SfxMachineSpecialProfiles.apply(definition);
             definitions.put(definition.id(), definition);
             ensureDefaultProcessor(definition);
+            ensureDeclaredEffectHooks(definition);
         }
     }
 
@@ -43,7 +46,9 @@ public final class SfxMachineRuntimeEngine {
         if (definition != null && definition.id() != null && !definition.id().isBlank()) {
             definition = SfxMachineSpecialProfiles.apply(definition);
             definitions.putIfAbsent(definition.id(), definition);
-            ensureDefaultProcessor(definitions.get(definition.id()));
+            SfxMachineDefinition registered = definitions.get(definition.id());
+            ensureDefaultProcessor(registered);
+            ensureDeclaredEffectHooks(registered);
         }
     }
 
@@ -55,6 +60,7 @@ public final class SfxMachineRuntimeEngine {
         if (enriched != null) {
             definitions.put(machineId, enriched);
             ensureDefaultProcessor(enriched);
+            ensureDeclaredEffectHooks(enriched);
         }
     }
 
@@ -128,6 +134,30 @@ public final class SfxMachineRuntimeEngine {
         }
     }
 
+    private void ensureDeclaredEffectHooks(SfxMachineDefinition definition) {
+        
+        
+    }
+
+    public synchronized int bindUnboundDeclaredEffectHooks() {
+        int before = effectHooks.size();
+        for (SfxMachineDefinition definition : definitions.values()) {
+            if (definition == null || definition.effects() == null) continue;
+            for (SfxMachineEffect effect : definition.effects()) {
+                if (effect == null || effect.name() == null || effect.name().isBlank()) continue;
+                effectHooks.putIfAbsent(effect.name(), context -> {
+                    if (context != null) {
+                        context.put("framework.effect." + effect.name(), Boolean.TRUE);
+                        context.put("framework.effect." + effect.name() + ".generic-fallback", Boolean.TRUE);
+                        context.put("framework.last-effect", effect.name());
+                    }
+                    return SfxMachinePhaseResult.cont();
+                });
+            }
+        }
+        return Math.max(0, effectHooks.size() - before);
+    }
+
     public synchronized void ensureDefaultProcessors() {
         for (SfxMachineDefinition definition : definitions.values()) {
             ensureDefaultProcessor(definition);
@@ -140,6 +170,18 @@ public final class SfxMachineRuntimeEngine {
 
     public Collection<SfxMachineProcessor> processors() {
         return java.util.List.copyOf(processors.values());
+    }
+
+    public void registerPhaseObserver(SfxMachinePhaseObserver observer) {
+        if (observer != null) phaseObservers.addIfAbsent(observer);
+    }
+
+    public void unregisterPhaseObserver(SfxMachinePhaseObserver observer) {
+        if (observer != null) phaseObservers.remove(observer);
+    }
+
+    public int phaseObserverCount() {
+        return phaseObservers.size();
     }
 
     public synchronized Optional<SfxMachineDefinition> definition(String id) { return Optional.ofNullable(definitions.get(id)); }
@@ -237,12 +279,13 @@ public final class SfxMachineRuntimeEngine {
 
     public SfxMachinePhaseResult runPhase(String machineId, SfxMachinePhase phase, UUID instanceId, Location location, SfxMachineTickContext context, SfxMachineState state, SfxMachineStatus currentStatus, Map<String, Object> attributes) {
         SfxMachineDefinition definition = definition(machineId).orElse(null);
-        if (definition == null || definition.effects().isEmpty()) return SfxMachinePhaseResult.cont();
         phaseInvocations.incrementAndGet();
         Map<String, Object> mutableAttributes = attributes == null ? new HashMap<>() : attributes;
         mutableAttributes.put("framework.pipeline.machineId", machineId);
         mutableAttributes.put("framework.pipeline.phase", phase == null ? null : phase.name());
-        mutableAttributes.put("framework.pipeline.category", definition.category() == null ? null : definition.category().name());
+        mutableAttributes.put("framework.pipeline.category", definition == null || definition.category() == null ? null : definition.category().name());
+        notifyPhaseObservers(machineId, phase, instanceId, location, currentStatus, mutableAttributes);
+        if (definition == null || definition.effects().isEmpty()) return SfxMachinePhaseResult.cont();
         SfxMachinePhaseContext phaseContext = new SfxMachinePhaseContext(definition, phase, instanceId, location == null ? null : location.clone(), context, state, currentStatus, mutableAttributes);
         for (SfxMachineEffect effect : definition.effects()) {
             if (effect.phase() != phase) continue;
@@ -261,6 +304,18 @@ public final class SfxMachineRuntimeEngine {
             }
         }
         return SfxMachinePhaseResult.cont();
+    }
+
+    private void notifyPhaseObservers(String machineId, SfxMachinePhase phase, UUID instanceId, Location location, SfxMachineStatus currentStatus, Map<String, Object> attributes) {
+        if (phaseObservers.isEmpty()) return;
+        Location cloned = location == null ? null : location.clone();
+        for (SfxMachinePhaseObserver observer : phaseObservers) {
+            try {
+                observer.observe(machineId, phase, instanceId, cloned == null ? null : cloned.clone(), currentStatus, attributes);
+            } catch (RuntimeException ignored) {
+                
+            }
+        }
     }
 
     public void recordState(UUID instanceId, String machineId, Location location, SfxMachineStatus status) {
@@ -286,6 +341,7 @@ public final class SfxMachineRuntimeEngine {
         snapshots.clear();
         processors.clear();
         effectHooks.clear();
+        phaseObservers.clear();
         phaseInvocations.set(0L);
         stoppedPipelines.set(0L);
         synchronized (this) { definitions.clear(); }

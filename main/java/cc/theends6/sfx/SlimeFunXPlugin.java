@@ -53,6 +53,7 @@ import cc.theends6.sfx.internal.machine.SfxMachineBuiltinEffectHooks;
 import cc.theends6.sfx.internal.machine.SfxMachineDomainEffectHooks;
 import cc.theends6.sfx.internal.machine.SfxMachineFrameworkCatalog;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseLedger;
 import cc.theends6.sfx.internal.machine.SfxManualMachineDeployListener;
 import cc.theends6.sfx.internal.machine.SfxManualMachineListener;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
@@ -102,6 +103,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     private SfxIndustrialMinerService industrialMinerService;
     private SfxListenerRegistrar listenerRegistrar;
     private SfxMachineRuntimeEngine machineRuntime;
+    private SfxMachinePhaseLedger machinePhaseLedger;
     private Object packetEventsApi;
     private boolean packetEventsLoaded;
     private boolean packetEventsUnavailable;
@@ -167,6 +169,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         bootstrapContent();
 
         this.machineRuntime = new SfxMachineRuntimeEngine();
+        this.machinePhaseLedger = new SfxMachinePhaseLedger();
+        this.machineRuntime.registerPhaseObserver(machinePhaseLedger);
         this.basicMachineBlockListener = new SfxBasicMachineBlockListener(this, api.runtime(), api.items(), localization, blockDataService, machineRuntime);
         ManualMachineService manualMachineService = new ManualMachineService(this, api.runtime(), api.internalManualMachines(), api.items(), localization, basicMachineBlockListener);
         this.floatingTextDisplayService = new SfxFloatingTextDisplayService(this, api.runtime());
@@ -202,6 +206,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
                 SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, hologramProjectorService::supportsType));
         machineRuntime.ensureDefaultProcessors();
         int builtinEffectHooks = SfxMachineBuiltinEffectHooks.registerDefaults(machineRuntime);
+        int genericEffectHooks = machineRuntime.bindUnboundDeclaredEffectHooks();
         SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(api.items(), blockDataService, basicMachineBlockListener, electricMachineService, configurableMachineService, energyService, cargoService, decorationService, gpsService, ancientAltarService, androidService, spawnerService, blockPlacerService, infusedHopperService, hologramProjectorService, api.runtime(), machineRuntime);
         this.blockPersistenceListener = new SfxBlockPersistenceListener(this, api.runtime(), blockDataService, gpsService);
         this.radiationService = new SfxRadiationService(this, api.runtime(), api.items(), api.itemRegistry(), playerDataService);
@@ -268,7 +273,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
                 + machineRuntime.capabilityDeclarationCount() + " capabilities, "
                 + machineRuntime.policyRefCount() + " policy refs, "
                 + machineRuntime.effectCount() + " phase effects, "
-                + machineRuntime.effectHookCount() + " bound effect hooks (" + builtinEffectHooks + " built-in defaults, " + domainEffectHooks + " domain hooks), "
+                + machineRuntime.effectHookCount() + " bound effect hooks (" + builtinEffectHooks + " built-in defaults, " + domainEffectHooks + " domain hooks, " + genericEffectHooks + " generic fallbacks), "
+                + machineRuntime.phaseObserverCount() + " phase observers, "
                 + machineRuntime.unboundDeclaredEffectNames().size() + " unbound declared effects. "
                 + "Loaded " + blockDataService.anchorCount() + " block anchors and "
                 + blockDataService.instanceCount() + " block instances.");

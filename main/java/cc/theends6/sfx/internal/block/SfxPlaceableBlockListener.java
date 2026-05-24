@@ -82,6 +82,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxHologramProjectorService hologramProjectorService;
     private final SfxRuntime runtime;
     private final SfxMachineRuntimeEngine machineRuntime;
+    private final SfxBlockLifecycleRouter lifecycleRouter;
 
     public SfxPlaceableBlockListener(
             SfxItems items,
@@ -119,6 +120,24 @@ public final class SfxPlaceableBlockListener implements Listener {
         this.hologramProjectorService = Objects.requireNonNull(hologramProjectorService, "hologramProjectorService");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.machineRuntime = Objects.requireNonNull(machineRuntime, "machineRuntime");
+        this.lifecycleRouter = new SfxBlockLifecycleRouter(
+                this.items,
+                this.blockData,
+                this.basicMachines,
+                this.electricMachines,
+                this.configurableMachines,
+                this.energyService,
+                this.cargoService,
+                this.decorationService,
+                this.gpsService,
+                this.ancientAltarService,
+                this.androidService,
+                this.spawnerService,
+                this.blockPlacerService,
+                this.infusedHopperService,
+                this.hologramProjectorService,
+                this.machineRuntime,
+                LOGGER);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -642,93 +661,9 @@ public final class SfxPlaceableBlockListener implements Listener {
     }
 
     private void destroyAnchoredBlock(Block block, java.util.UUID instanceId, String typeId) {
-        runFrameworkBreakPhase(block, instanceId, typeId);
-        if (basicMachines.supportsType(typeId)) {
-            basicMachines.destroyAnchoredBlock(block, typeId);
-            return;
-        }
-        if (electricMachines.supportsType(typeId)) {
-            electricMachines.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        if (configurableMachines.supportsType(typeId)) {
-            configurableMachines.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        if (energyService.supportsType(typeId)) {
-            energyService.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        if (cargoService.supportsType(typeId)) {
-            cargoService.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        if (gpsService.supportsType(typeId)) {
-            gpsService.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        if (decorationService.supportsType(typeId)) {
-            decorationService.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        if (ancientAltarService.supportsType(typeId)) {
-            ancientAltarService.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        if (androidService.supportsType(typeId)) {
-            androidService.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        if (spawnerService.supportsType(typeId)) {
-            spawnerService.destroyAnchoredBlock(block, instanceId, typeId, false);
-            return;
-        }
-        if (blockPlacerService.supportsType(typeId)) {
-            blockPlacerService.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        if (infusedHopperService.supportsType(typeId)) {
-            infusedHopperService.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        if (hologramProjectorService.supportsType(typeId)) {
-            hologramProjectorService.destroyAnchoredBlock(block, instanceId, typeId);
-            return;
-        }
-        commitGenericDestruction(block, instanceId, typeId);
+        lifecycleRouter.destroyAnchoredBlock(block, instanceId, typeId);
     }
 
-    private void commitGenericDestruction(Block block, java.util.UUID instanceId, String typeId) {
-        if (block == null || typeId == null) {
-            return;
-        }
-        SfxBlockBehaviorRegistry registry = new SfxBlockBehaviorRegistry();
-        registry.register(new SfxBlockBehavior() {
-            @Override
-            public String typeId() {
-                return typeId;
-            }
-
-            @Override
-            public SfxResult<Void> beforeBreak(SfxBlockBreakContext context, SfxAnchorRecord anchor, SfxBlockInstanceRecord instance) {
-                dropStoredContents(block);
-                dropPluginBlock(block, typeId);
-                return SfxResult.ok();
-            }
-
-            @Override
-            public void afterBreak(SfxBlockBreakContext context, SfxAnchorRecord anchor, SfxBlockInstanceRecord instance) {
-                machineRuntime.forget(instanceId);
-            }
-        });
-        SfxBlockDestructionTransaction transaction = new SfxBlockDestructionTransaction(blockData, registry, LOGGER);
-        SfxResult<Void> result = transaction.commit(new SfxBlockBreakContext(block.getLocation(), null, SfxBlockDestructionCause.UNKNOWN));
-        if (!result.success()) {
-            result.cause().ifPresentOrElse(
-                    cause -> LOGGER.log(Level.WARNING, "Failed to destroy generic SFX block " + typeId + " at " + block.getLocation(), cause),
-                    () -> LOGGER.warning("Failed to destroy generic SFX block " + typeId + " at " + block.getLocation() + ": " + result.message()));
-        }
-    }
 
     private boolean isPlaceableMarker(String itemId, java.util.List<String> flags) {
         if (basicMachines.supportsType(itemId)
@@ -752,21 +687,7 @@ public final class SfxPlaceableBlockListener implements Listener {
         return flags.contains("placeable-block") && GENERIC_ANCHORED_BLOCKS.contains(itemId);
     }
 
-    private void dropPluginBlock(Block block, String typeId) {
-        SfxBlockDrops.dropPluginBlock(block, items, typeId);
-    }
 
-    private void dropStoredContents(Block block) {
-        if (!(block.getState() instanceof InventoryHolder holder)) {
-            return;
-        }
-        Inventory inventory = holder.getInventory();
-        for (ItemStack content : inventory.getContents()) {
-            if (content == null || content.getType().isAir()) {
-                continue;
-            }
-            SfxBlockDrops.dropItem(block, content.clone());
-        }
-        inventory.clear();
-    }
+
+
 }

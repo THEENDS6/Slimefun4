@@ -16,6 +16,7 @@ import cc.theends6.sfx.internal.gps.SfxGpsExtractionResult;
 import cc.theends6.sfx.internal.gps.SfxGeoChunkKey;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
@@ -300,6 +301,7 @@ public final class SfxElectricMachineService implements Listener {
                             event.getBlockPlaced().getType(),
                             event.getPlayer().getUniqueId()));
             stateCache.putIfAbsent(instanceId, SfxElectricMachineState.empty());
+            SfxMachineLegacyHookBridge.place(machineRuntime, marker.itemId(), instanceId, event.getBlockPlaced().getLocation(), "electric", "SfxElectricMachineService.onPlace");
             if ("sf:fluid_pump".equals(marker.itemId())) {
                 SfxAreaElectricMachineProviders.warmFluidPumpPoolCache(plugin, event.getBlockPlaced().getLocation());
             }
@@ -382,6 +384,7 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         SfxBlockInstanceRecord instance = interaction.instance();
+        SfxMachineLegacyHookBridge.interact(machineRuntime, instance.typeId(), instance.instanceId(), interaction.block().getLocation(), "electric", "SfxElectricMachineService.onInteract");
         SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
         boolean autoCrafter = definition != null && definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER;
         boolean autoCrafterSelection = autoCrafter
@@ -421,6 +424,9 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         SfxElectricMachineDefinition clickDefinition = definitionFor(holder.instanceId());
+        if (clickDefinition != null) {
+            SfxMachineLegacyHookBridge.menuClick(machineRuntime, clickDefinition.id(), holder.instanceId(), null, "electric", "SfxElectricMachineService.onInventoryClick");
+        }
         if (clickDefinition == null) {
             event.setCancelled(true);
             return;
@@ -522,6 +528,10 @@ public final class SfxElectricMachineService implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getInventory().getHolder() instanceof SfxElectricMachineHolder holder)) {
             return;
+        }
+        SfxElectricMachineDefinition closeDefinition = definitionFor(holder.instanceId());
+        if (closeDefinition != null) {
+            SfxMachineLegacyHookBridge.menuClose(machineRuntime, closeDefinition.id(), holder.instanceId(), null, "electric", "SfxElectricMachineService.onInventoryClose");
         }
         SfxElectricMachineSession session = sessionsByInstance.remove(holder.instanceId());
         if (session == null) {
@@ -996,6 +1006,7 @@ public final class SfxElectricMachineService implements Listener {
 
 
     private void openMachine(Player player, SfxBlockInstanceRecord instance) {
+        SfxMachineLegacyHookBridge.menuOpen(machineRuntime, instance.typeId(), instance.instanceId(), locationFor(instance), "electric", "SfxElectricMachineService.openMachine");
         SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
         if (definition == null || definition.menuStyle() == SfxElectricMachineMenuStyle.NONE) {
             return;

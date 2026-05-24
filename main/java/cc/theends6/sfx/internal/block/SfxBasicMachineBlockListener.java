@@ -4,6 +4,7 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.energy.SfxFuelBurnTimeBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
 import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
@@ -314,6 +315,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
                     .map(SfxAnchorRecord::instanceId)
                     .orElseGet(() -> blockData.registerSingleBlock(marker.itemId(), event.getBlockPlaced().getLocation(), event.getBlockPlaced().getType(), event.getPlayer().getUniqueId()));
             machineRuntime.recordState(instanceId, marker.itemId(), event.getBlockPlaced().getLocation(), cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE);
+            SfxMachineLegacyHookBridge.place(machineRuntime, marker.itemId(), instanceId, event.getBlockPlaced().getLocation(), "basic", "SfxBasicMachineBlockListener.onPlace");
             if (furnaceStats(marker.itemId()) != null) {
                 SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(event.getBlockPlaced().getLocation());
                 enhancedFurnaces.add(key);
@@ -365,6 +367,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
         Block clicked = interaction.block();
         String typeId = interaction.instance().typeId();
+        SfxMachineLegacyHookBridge.interact(machineRuntime, typeId, interaction.instance().instanceId(), clicked.getLocation(), "basic", "SfxBasicMachineBlockListener.onInteract");
         if (typeId != null && SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
@@ -433,6 +436,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
+        SfxMachineLegacyHookBridge.menuOpen(machineRuntime, instanceTypeAt(furnace.getLocation()), null, furnace.getLocation(), "basic", "SfxBasicMachineBlockListener.onFurnaceInventoryOpen");
         if (furnaceStats(furnace.getLocation()) == null) {
             return;
         }
@@ -453,6 +457,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
+        SfxMachineLegacyHookBridge.menuClose(machineRuntime, instanceTypeAt(furnace.getLocation()), null, furnace.getLocation(), "basic", "SfxBasicMachineBlockListener.onFurnaceInventoryClose");
         VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
         hydrateVirtualFurnaceState(state, event.getInventory());
         runtime.executeAtLater(furnace.getLocation(), 1L, () -> {

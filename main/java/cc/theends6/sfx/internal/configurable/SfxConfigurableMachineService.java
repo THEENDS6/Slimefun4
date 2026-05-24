@@ -14,6 +14,7 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
@@ -309,6 +310,7 @@ public final class SfxConfigurableMachineService implements Listener {
                             event.getBlockPlaced().getType(),
                             event.getPlayer().getUniqueId()));
             states.putIfAbsent(instanceId, SfxConfigurableMachineState.empty());
+            SfxMachineLegacyHookBridge.place(machineRuntime, marker.itemId(), instanceId, event.getBlockPlaced().getLocation(), "configurable", "SfxConfigurableMachineService.onPlace");
             activeInstances.add(instanceId);
         });
     }
@@ -323,6 +325,7 @@ public final class SfxConfigurableMachineService implements Listener {
             return;
         }
         SfxBlockInstanceRecord instance = interaction.instance();
+        SfxMachineLegacyHookBridge.interact(machineRuntime, instance.typeId(), instance.instanceId(), interaction.block().getLocation(), "configurable", "SfxConfigurableMachineService.onInteract");
         if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
@@ -340,6 +343,9 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         SfxBlockInstanceRecord host = blockData.findInstance(holder.hostInstanceId()).orElse(null);
         SfxConfigurableMachineDefinition definition = host == null ? null : definitions.get(host.typeId());
+        if (host != null && definition != null) {
+            SfxMachineLegacyHookBridge.menuClick(machineRuntime, definition.id(), host.instanceId(), locationFor(host), "configurable", "SfxConfigurableMachineService.onInventoryClick");
+        }
         if (host == null || definition == null) {
             event.setCancelled(true);
             return;
@@ -396,6 +402,9 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         SfxBlockInstanceRecord host = blockData.findInstance(holder.hostInstanceId()).orElse(null);
         SfxConfigurableMachineDefinition definition = host == null ? null : definitions.get(host.typeId());
+        if (host != null && definition != null) {
+            SfxMachineLegacyHookBridge.menuClick(machineRuntime, definition.id(), host.instanceId(), locationFor(host), "configurable", "SfxConfigurableMachineService.onInventoryClick");
+        }
         if (host == null || definition == null) {
             event.setCancelled(true);
             return;
@@ -423,6 +432,11 @@ public final class SfxConfigurableMachineService implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getInventory().getHolder() instanceof SfxConfigurableMachineHolder holder)) {
             return;
+        }
+        SfxBlockInstanceRecord closeHost = blockData.findInstance(holder.hostInstanceId()).orElse(null);
+        SfxConfigurableMachineDefinition closeDefinition = closeHost == null ? null : definitions.get(closeHost.typeId());
+        if (closeHost != null && closeDefinition != null) {
+            SfxMachineLegacyHookBridge.menuClose(machineRuntime, closeDefinition.id(), closeHost.instanceId(), locationFor(closeHost), "configurable", "SfxConfigurableMachineService.onInventoryClose");
         }
         SfxConfigurableMachineSession session = sessionsByHost.remove(holder.hostInstanceId());
         if (session == null) {
@@ -1093,6 +1107,7 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private void openMachine(Player player, SfxBlockInstanceRecord instance) {
+        SfxMachineLegacyHookBridge.menuOpen(machineRuntime, instance.typeId(), instance.instanceId(), locationFor(instance), "configurable", "SfxConfigurableMachineService.openMachine");
         SfxConfigurableMachineDefinition definition = definitions.get(instance.typeId());
         if (definition == null) {
             return;
