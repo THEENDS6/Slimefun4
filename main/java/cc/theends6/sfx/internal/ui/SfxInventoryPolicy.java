@@ -20,7 +20,7 @@ public final class SfxInventoryPolicy {
         if (event == null) { return true; }
         ClickType click = event.getClick();
         InventoryAction action = event.getAction();
-        boolean dangerous = click == ClickType.NUMBER_KEY || click == ClickType.DROP || click == ClickType.CONTROL_DROP || click == ClickType.DOUBLE_CLICK || click == ClickType.SWAP_OFFHAND || action == InventoryAction.COLLECT_TO_CURSOR || action == InventoryAction.MOVE_TO_OTHER_INVENTORY || action == InventoryAction.HOTBAR_MOVE_AND_READD || action == InventoryAction.HOTBAR_SWAP;
+        boolean dangerous = click == ClickType.NUMBER_KEY || click == ClickType.DROP || click == ClickType.CONTROL_DROP || click == ClickType.DOUBLE_CLICK || click == ClickType.SWAP_OFFHAND || action == InventoryAction.COLLECT_TO_CURSOR || action == InventoryAction.MOVE_TO_OTHER_INVENTORY || action == InventoryAction.HOTBAR_SWAP;
         if (dangerous) { event.setCancelled(true); return true; }
         return false;
     }

@@ -52,6 +52,15 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
         return container != null || (electricMachineId != null && !electricInputTarget);
     }
 
+
+    boolean trash() {
+        return trash;
+    }
+
+    SfxVirtualContainer container() {
+        return container;
+    }
+
     boolean sameStorage(SfxCargoEndpoint other) {
         if (other == null) {
             return false;

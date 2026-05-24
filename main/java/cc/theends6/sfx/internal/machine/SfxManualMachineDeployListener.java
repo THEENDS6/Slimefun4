@@ -195,25 +195,25 @@ public final class SfxManualMachineDeployListener implements Listener {
                 continue;
             }
             Block block = entry.getKey();
-            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, itemId, block, material, false, "manual-deploy", "place-structure");
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, definition.id(), block, material, false, "manual-deploy", "place-structure");
             placedBlocks.add(block);
         }
         for (Block block : placedBlocks) {
             BlockData updated = orientedData(block, plan.center(), definition, sideDirection, playerFacing);
             if (updated != null) {
-                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, itemId, block, updated, false, "manual-deploy", "orient-structure");
+                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, definition.id(), block, updated, false, "manual-deploy", "orient-structure");
             }
             clearPlacedBlockName(block);
         }
         Material anchorExpected = plan.placements().get(plan.anchor());
         if (anchorExpected == null || anchorExpected.isAir()) {
-            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, itemId, plan.anchor(), Material.AIR, false, "manual-deploy", "rollback-anchor");
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, definition.id(), plan.anchor(), Material.AIR, false, "manual-deploy", "rollback-anchor");
         }
         for (Block block : placedBlocks) {
-            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, itemId, block, block.getBlockData(), true, "manual-deploy", "rollback-physics");
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, definition.id(), block, block.getBlockData(), true, "manual-deploy", "rollback-physics");
         }
         if (anchorExpected == null || anchorExpected.isAir()) {
-            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, itemId, plan.anchor(), plan.anchor().getBlockData(), true, "manual-deploy", "rollback-anchor-physics");
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, definition.id(), plan.anchor(), plan.anchor().getBlockData(), true, "manual-deploy", "rollback-anchor-physics");
         }
     }
 

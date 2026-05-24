@@ -1081,13 +1081,13 @@ public final class SfxElectricMachineService implements Listener {
             return 0;
         }
         CargoInventorySnapshot snapshot = cargoInventorySnapshot(instanceId, inputInventory);
-        if (snapshot == null || snapshot.contents.length == 0) {
+        if (snapshot == null || snapshot.contents().length == 0) {
             return 0;
         }
         if (singleSlot) {
-            return SfxElectricCargoInventoryOps.capacityForSingleSlot(snapshot.contents, probe, smartFill);
+            return SfxElectricCargoInventoryOps.capacityForSingleSlot(snapshot.contents(), probe, smartFill);
         }
-        return SfxElectricCargoInventoryOps.capacityFor(snapshot.contents, probe, smartFill);
+        return SfxElectricCargoInventoryOps.capacityFor(snapshot.contents(), probe, smartFill);
     }
 
     private ItemStack insertCargoStack(UUID instanceId, ItemStack input, boolean smartFill, boolean inputInventory, boolean singleSlot) {
@@ -1095,14 +1095,14 @@ public final class SfxElectricMachineService implements Listener {
             return null;
         }
         CargoInventorySnapshot snapshot = cargoInventorySnapshot(instanceId, inputInventory);
-        if (snapshot == null || snapshot.contents.length == 0) {
+        if (snapshot == null || snapshot.contents().length == 0) {
             return input;
         }
-        ItemStack[] before = SfxElectricCargoInventoryOps.cloneContents(snapshot.contents);
+        ItemStack[] before = SfxElectricCargoInventoryOps.cloneContents(snapshot.contents());
         ItemStack remainder = singleSlot
-                ? SfxElectricCargoInventoryOps.insertSingleSlot(snapshot.contents, input, smartFill)
-                : SfxElectricCargoInventoryOps.insert(snapshot.contents, input, smartFill);
-        if (!SfxElectricCargoInventoryOps.sameContents(before, snapshot.contents)) {
+                ? SfxElectricCargoInventoryOps.insertSingleSlot(snapshot.contents(), input, smartFill)
+                : SfxElectricCargoInventoryOps.insert(snapshot.contents(), input, smartFill);
+        if (!SfxElectricCargoInventoryOps.sameContents(before, snapshot.contents())) {
             writeCargoInventory(snapshot);
             markCargoMutated(instanceId);
         }
@@ -1129,12 +1129,12 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private void writeCargoInventory(CargoInventorySnapshot snapshot) {
-        for (int slot = 0; slot < snapshot.contents.length; slot++) {
-            SfxElectricStack stack = SfxElectricStack.fromItemStack(items, snapshot.contents[slot]);
-            if (snapshot.inputInventory) {
-                snapshot.state.input(slot, stack);
+        for (int slot = 0; slot < snapshot.contents().length; slot++) {
+            SfxElectricStack stack = SfxElectricStack.fromItemStack(items, snapshot.contents()[slot]);
+            if (snapshot.inputInventory()) {
+                snapshot.state().input(slot, stack);
             } else {
-                snapshot.state.output(slot, stack);
+                snapshot.state().output(slot, stack);
             }
         }
     }

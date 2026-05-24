@@ -31,7 +31,7 @@ final class SfxGuideResearchUnlockController {
         guide.consumeResearchCost(player, research);
         GuidePreferences preferences = guide.preferences(player);
 
-        if (!guide.preferences.unlockAnimation()) {
+        if (!preferences.unlockAnimation()) {
             guide.finishResearchUnlock(player, profile, definition, research, onSuccess);
             return;
         }
