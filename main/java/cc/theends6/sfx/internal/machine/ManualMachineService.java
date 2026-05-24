@@ -532,24 +532,15 @@ public final class ManualMachineService {
 
     private void addOutputs(Inventory inventory, List<ManualMachineOutput> outputs) {
         for (ManualMachineOutput output : outputs) {
-            inventory.addItem(output.create(items));
+            cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.insertAll(inventory, output.create(items), false, "manual-machine:output");
         }
     }
 
     private void addOutputsOrDrop(Location origin, Inventory inventory, List<ManualMachineOutput> outputs) {
-        World world = origin.getWorld();
         Location dropLocation = origin.clone().add(0.5, 0.8, 0.5);
         for (ManualMachineOutput output : outputs) {
             ItemStack stack = output.create(items);
-            var leftovers = inventory.addItem(stack);
-            if (world == null) {
-                continue;
-            }
-            for (ItemStack leftover : leftovers.values()) {
-                if (leftover != null && !leftover.getType().isAir() && leftover.getAmount() > 0) {
-                    world.dropItemNaturally(dropLocation, leftover);
-                }
-            }
+            cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.insertAllOrDrop(inventory, stack, false, dropLocation, "manual-machine:output-or-drop");
         }
     }
 

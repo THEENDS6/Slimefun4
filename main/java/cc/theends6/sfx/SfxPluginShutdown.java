@@ -67,6 +67,7 @@ final class SfxPluginShutdown {
             plugin.blockDataService.shutdown();
         }
         if (plugin.machineRuntime != null) {
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.clearDefaultRuntime(plugin.machineRuntime);
             plugin.machineRuntime.clear();
         }
         if (plugin.packetEventsLoaded) {

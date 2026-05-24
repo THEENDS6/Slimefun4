@@ -19,7 +19,15 @@ public interface SfxStorageEndpoint {
         return insert(stack, smartFill);
     }
 
+    default Object snapshot() {
+        return null;
+    }
+
+    default void restoreSnapshot(Object snapshot) {
+    }
+
     default boolean ready() {
         return accessState().ready();
     }
 }
+

@@ -251,7 +251,7 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
         if (!(dispenserBlock.getState() instanceof Dispenser dispenser)) {
             return;
         }
-        dispenser.getInventory().addItem(item.clone());
+        cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.insertAll(dispenser.getInventory(), item.clone(), false, "block-placer:return-one");
     }
 
     private void dropStoredContents(Block block) {
