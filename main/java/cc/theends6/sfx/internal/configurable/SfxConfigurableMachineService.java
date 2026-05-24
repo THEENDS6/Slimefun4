@@ -205,7 +205,7 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         Location spawn = location.clone().add(0.5D, state.offsetTenths() / 10.0D, 0.5D);
         phaseContext.put("configurable.assembler.spawn", spawn);
-        boolean changed = tickAssemblerProgress(phaseContext.instanceId(), definition, state, location, context, phaseContext.attributes());
+        boolean changed = tickAssemblerProgress(phaseContext.instanceId(), definition, state, location, context, phaseContext.attachments());
         phaseContext.put("configurable.changed", changed);
         return SfxMachinePhaseResult.complete(SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), "assembler progress executed through framework effect");
     }
@@ -218,7 +218,7 @@ public final class SfxConfigurableMachineService implements Listener {
         if (location == null) {
             return SfxMachinePhaseResult.cont();
         }
-        boolean spawned = spawnAssemblerOutput(definition, state, location, phaseContext.attributes());
+        boolean spawned = spawnAssemblerOutput(definition, state, location, phaseContext.attachments());
         if (spawned) {
             phaseContext.put("configurable.changed", Boolean.TRUE);
             return SfxMachinePhaseResult.complete(SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), "assembler completion executed through framework effect");
@@ -235,7 +235,7 @@ public final class SfxConfigurableMachineService implements Listener {
         if (location == null || context == null) {
             return SfxMachinePhaseResult.blocked(cc.theends6.sfx.internal.machine.SfxMachineStatus.BLOCKED, "missing location/context");
         }
-        boolean changed = tickProductionFocusReactor(phaseContext.instanceId(), instance, definition, state, location, context, phaseContext.attributes());
+        boolean changed = tickProductionFocusReactor(phaseContext.instanceId(), instance, definition, state, location, context, phaseContext.attachments());
         phaseContext.put("configurable.changed", changed);
         return SfxMachinePhaseResult.complete(SfxConfigurableMachineFrameworkBridge.statusFor(state, definition), "reactor progress executed through framework effect");
     }

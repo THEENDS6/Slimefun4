@@ -558,6 +558,7 @@ public final class SfxAncientAltarService implements Listener {
     }
 
     private void abortSession(RitualSession session, boolean dropInputs) {
+        SfxBlockInstanceRecord altarInstance = instanceAt(session.altarKey());
         if (altarInstance != null) {
             machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.AFTER_OUTPUT, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, altarFrameworkAttributes(altarInstance, null, session));
         }

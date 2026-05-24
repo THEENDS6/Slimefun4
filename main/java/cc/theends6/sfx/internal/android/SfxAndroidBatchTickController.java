@@ -67,20 +67,20 @@ final class SfxAndroidBatchTickController {
         Map<LocationKey, List<MoveIntent>> byTarget = new HashMap<>();
         Set<LocationKey> leaving = new HashSet<>();
         for (MoveIntent intent : moveIntents.values()) {
-            byTarget.computeIfAbsent(LocationKey.of(intent.to), ignored -> new ArrayList<>()).add(intent);
-            leaving.add(LocationKey.of(intent.from));
+            byTarget.computeIfAbsent(LocationKey.of(intent.to()), ignored -> new ArrayList<>()).add(intent);
+            leaving.add(LocationKey.of(intent.from()));
         }
         Set<UUID> acceptedMoves = new HashSet<>();
         for (List<MoveIntent> contenders : byTarget.values()) {
-            contenders.sort(Comparator.comparing(intent -> intent.instance.instanceId()));
+            contenders.sort(Comparator.comparing(intent -> intent.instance().instanceId()));
             MoveIntent winner = contenders.get(0);
-            Block target = winner.to.getBlock();
-            LocationKey targetKey = LocationKey.of(winner.to);
+            Block target = winner.to().getBlock();
+            LocationKey targetKey = LocationKey.of(winner.to());
             boolean targetFree = target.getType().isAir()
                     || (occupiedBefore.contains(targetKey) && leaving.contains(targetKey))
                     || winner.clearsTargetBeforeMove();
             if (targetFree) {
-                acceptedMoves.add(winner.instance.instanceId());
+                acceptedMoves.add(winner.instance().instanceId());
             }
         }
         for (SfxBlockInstanceRecord instance : instances) {

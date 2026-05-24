@@ -9,7 +9,7 @@ import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.InventoryHolder;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.block.Skull;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.entity.Player;

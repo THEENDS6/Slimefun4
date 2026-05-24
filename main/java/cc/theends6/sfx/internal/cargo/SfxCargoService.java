@@ -832,7 +832,7 @@ public final class SfxCargoService implements Listener {
 
     private SfxCargoEndpoint resolveOutputEndpoint(SfxBlockInstanceRecord node, SfxCargoNodeState state, SfxVirtualContainer sourceContainer, Map<SfxCargoEndpointCacheKey, Optional<SfxCargoEndpoint>> endpointCache) {
         SfxCargoEndpoint endpoint = resolveEndpointAt(node, state.attachedFace, true, endpointCache);
-        if (endpoint != null && (endpoint.trash || endpoint.container != sourceContainer)) {
+        if (endpoint != null && (endpoint.trash() || endpoint.container() != sourceContainer)) {
             return endpoint;
         }
         for (BlockFace face : List.of(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST)) {
@@ -840,7 +840,7 @@ public final class SfxCargoService implements Listener {
                 continue;
             }
             endpoint = resolveEndpointAt(node, face, true, endpointCache);
-            if (endpoint != null && (endpoint.trash || endpoint.container != sourceContainer)) {
+            if (endpoint != null && (endpoint.trash() || endpoint.container() != sourceContainer)) {
                 state.attachedFace = face;
                 persistState(node.instanceId(), state);
                 return endpoint;

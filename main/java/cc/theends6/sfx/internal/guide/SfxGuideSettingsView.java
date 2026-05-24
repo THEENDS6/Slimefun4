@@ -171,7 +171,7 @@ final class SfxGuideSettingsView {
         builder.button(49, new SfxMenuButton(ItemBuilder.of(Material.NETHER_STAR)
                 .name(guide.tr("guide.settings.current-layout.name", "<aqua>Current Layout</aqua>"))
                 .lore(
-                        tr(layout == GuideLayout.CLASSIC ? "guide.settings.current-layout.classic" : "guide.settings.current-layout.sfx",
+                        guide.tr(layout == GuideLayout.CLASSIC ? "guide.settings.current-layout.classic" : "guide.settings.current-layout.sfx",
                                 layout == GuideLayout.CLASSIC
                                         ? "<gray>Classic layout is active.</gray>"
                                         : "<gray>SFX layout is active.</gray>"),
