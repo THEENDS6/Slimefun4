@@ -14,6 +14,7 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
@@ -375,7 +376,11 @@ public final class SfxAndroidService implements Listener {
                 continue;
             }
             List<SfxBlockInstanceRecord> snapshot = group.size() > maxActivePerRegion ? group.subList(0, maxActivePerRegion) : group;
-            runtime.executeAt(location, () -> tickRegionBatch(List.copyOf(snapshot), tickId));
+            runtime.executeAt(location, () -> {
+                SfxMachineLegacyHookBridge.beforeNetworkTick(machineRuntime, "sf:android", first.instanceId(), location, "android", "SfxAndroidService.tickAndroids");
+                tickRegionBatch(List.copyOf(snapshot), tickId);
+                SfxMachineLegacyHookBridge.afterNetworkTick(machineRuntime, "sf:android", first.instanceId(), location, "android", "SfxAndroidService.tickAndroids");
+            });
         }
     }
 
@@ -1268,6 +1273,7 @@ public final class SfxAndroidService implements Listener {
             return;
         }
         event.setCancelled(true);
+        SfxMachineLegacyHookBridge.interact(machineRuntime, instance.typeId(), instance.instanceId(), block.getLocation(), "android", "SfxAndroidService.onInteract");
         Player player = event.getPlayer();
         if (!player.getUniqueId().equals(instance.ownerId()) && !player.hasPermission("sfx.android.bypass")) {
             player.sendMessage(msg("android.messages.no_access", "<red>This Android belongs to another player.</red>"));
@@ -1299,6 +1305,10 @@ public final class SfxAndroidService implements Listener {
         }
         if (SfxInventoryPolicy.cancelDangerousClick(event)) {
             return;
+        }
+        SfxBlockInstanceRecord clickInstance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (clickInstance != null) {
+            SfxMachineLegacyHookBridge.menuClick(machineRuntime, clickInstance.typeId(), clickInstance.instanceId(), toLocation(clickInstance.anchorKey()), "android", "SfxAndroidService.onMenuClick");
         }
         int raw = event.getRawSlot();
         if (holder.menuType() == SfxAndroidMenuHolder.MenuType.MAIN) {
@@ -1398,6 +1408,9 @@ public final class SfxAndroidService implements Listener {
         }
         removeMainViewer(holder.instanceId(), player.getUniqueId());
         SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        if (instance != null) {
+            SfxMachineLegacyHookBridge.menuClose(machineRuntime, instance.typeId(), instance.instanceId(), toLocation(instance.anchorKey()), "android", "SfxAndroidService.onMenuClose");
+        }
         if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
             return;
         }
@@ -1480,6 +1493,7 @@ public final class SfxAndroidService implements Listener {
         if (instance == null) {
             return;
         }
+        SfxMachineLegacyHookBridge.menuOpen(machineRuntime, instance.typeId(), instance.instanceId(), toLocation(instance.anchorKey()), "android", "SfxAndroidService.openMain");
         SfxAndroidState state = stateFor(instanceId, instance.typeId(), toLocation(instance.anchorKey()));
         Inventory inventory = Bukkit.createInventory(newHolder(player, instanceId, SfxAndroidMenuHolder.MenuType.MAIN, 0, -1, false), 54, tr("android.menu.main.title", "Programmable Android"));
         ((SfxAndroidMenuHolder) inventory.getHolder()).bind(inventory);

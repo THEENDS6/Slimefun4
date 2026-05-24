@@ -22,6 +22,7 @@ import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.network.SfxNetworkDomain;
 import cc.theends6.sfx.internal.network.SfxNetworkExecution;
 import cc.theends6.sfx.internal.network.SfxNetworkReadiness;
@@ -213,6 +214,7 @@ public final class SfxCargoService implements Listener {
             BlockFace face = attachedFace(event);
             SfxCargoNodeState state = SfxCargoNodeState.defaultFor(definition.type(), face == null ? BlockFace.NORTH : face);
             states.put(instanceId, state);
+            SfxMachineLegacyHookBridge.place(machineRuntime, marker.itemId(), instanceId, event.getBlockPlaced().getLocation(), "cargo", "SfxCargoService.onPlace");
             dirtyStates.add(instanceId);
             persistState(instanceId, state);
             scheduleTopologyRefresh();
@@ -229,6 +231,7 @@ public final class SfxCargoService implements Listener {
             return;
         }
         SfxBlockInstanceRecord instance = interaction.instance();
+        SfxMachineLegacyHookBridge.interact(machineRuntime, instance.typeId(), instance.instanceId(), interaction.block().getLocation(), "cargo", "SfxCargoService.onInteract");
         SfxCargoComponentDefinition definition = definitions.get(instance.typeId());
         if (definition == null) {
             return;
@@ -272,6 +275,9 @@ public final class SfxCargoService implements Listener {
             return;
         }
         SfxCargoComponentDefinition definition = typeDefinition(holder.type());
+        if (definition != null) {
+            SfxMachineLegacyHookBridge.menuClick(machineRuntime, definition.id(), holder.instanceId(), null, "cargo", "SfxCargoService.onInventoryClick");
+        }
         if (definition == null) {
             return;
         }
@@ -378,6 +384,10 @@ public final class SfxCargoService implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         Inventory top = event.getView().getTopInventory();
         if (top.getHolder() instanceof SfxCargoSessionHolder holder) {
+            SfxCargoComponentDefinition closeDefinition = typeDefinition(holder.type());
+            if (closeDefinition != null) {
+                SfxMachineLegacyHookBridge.menuClose(machineRuntime, closeDefinition.id(), holder.instanceId(), null, "cargo", "SfxCargoService.onInventoryClose");
+            }
             SfxCargoNodeState state = currentState(holder.instanceId());
             syncFilterFromInventory(top, state);
             persistState(holder.instanceId(), state);
@@ -512,7 +522,11 @@ public final class SfxCargoService implements Listener {
             runtime.executeAt(managerLocation, () -> SfxNetworkExecution.tick(
                     SfxNetworkExecution.snapshot(component.componentId(), SfxNetworkDomain.CARGO, component.members(), component.topologyRevision()),
                     SfxNetworkReadiness.READY,
-                    () -> processCargoNetwork(network)));
+                    () -> {
+                        SfxMachineLegacyHookBridge.beforeNetworkTick(machineRuntime, "sf:cargo_manager", managerId, managerLocation, "cargo", "SfxCargoService.tickCargo");
+                        processCargoNetwork(network);
+                        SfxMachineLegacyHookBridge.afterNetworkTick(machineRuntime, "sf:cargo_manager", managerId, managerLocation, "cargo", "SfxCargoService.tickCargo");
+                    }));
         }
         renderVisualizers();
     }
@@ -770,6 +784,7 @@ public final class SfxCargoService implements Listener {
         if (planned <= 0) {
             return 0;
         }
+        SfxMachineLegacyHookBridge.beforeTransfer(machineRuntime, input.instance.typeId(), input.instance.instanceId(), toLocation(input.instance.anchorKey()), "cargo", "SfxCargoService.commitPlannedTransfer");
         if (!source.removePlanned(limitTakes(plan, planned))) {
             return 0;
         }
@@ -793,6 +808,7 @@ public final class SfxCargoService implements Listener {
                         + "; lost remainder=" + failedRefund.getAmount() + " of " + failedRefund.getType());
             }
         }
+        SfxMachineLegacyHookBridge.afterTransfer(machineRuntime, input.instance.typeId(), input.instance.instanceId(), toLocation(input.instance.anchorKey()), "cargo", "SfxCargoService.commitPlannedTransfer");
         return inserted;
     }
 
