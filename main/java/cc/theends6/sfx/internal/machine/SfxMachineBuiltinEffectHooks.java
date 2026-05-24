@@ -76,6 +76,12 @@ public final class SfxMachineBuiltinEffectHooks {
     private static SfxMachinePhaseResult apply(String effectName, SfxMachinePhaseContext context) {
         if (context == null) return SfxMachinePhaseResult.cont();
         mark(context, effectName);
+        SfxMachinePhaseResult dispatched = dispatchAttached(effectName, context);
+        if (dispatched != null) {
+            context.put("framework.effect." + effectName + ".handled", Boolean.TRUE);
+            return dispatched;
+        }
+        context.put("framework.effect." + effectName + ".handled", Boolean.FALSE);
         return switch (effectName) {
             case "recipe:resolve-operation", "electric:legacy-recipe-pipeline" -> recipeResolve(context, effectName);
             case "inventory:reserve-output" -> inventoryReserveOutput(context);
@@ -327,6 +333,21 @@ public final class SfxMachineBuiltinEffectHooks {
         audit.put("effects", context.definition().effects().size());
         context.put("framework.audit.last", audit);
         return SfxMachinePhaseResult.cont();
+    }
+
+    private static SfxMachinePhaseResult dispatchAttached(String effectName, SfxMachinePhaseContext context) {
+        SfxMachineEffectDispatcher dispatcher = context.attachment("framework.effect.dispatcher", SfxMachineEffectDispatcher.class).orElse(null);
+        if (dispatcher == null) {
+            dispatcher = context.attachment("framework.effect.dispatcher." + effectName, SfxMachineEffectDispatcher.class).orElse(null);
+        }
+        if (dispatcher == null) {
+            SfxMachineHook hook = context.attachment("framework.effect.hook." + effectName, SfxMachineHook.class).orElse(null);
+            if (hook != null) {
+                return hook.apply(context);
+            }
+            return null;
+        }
+        return dispatcher.apply(effectName, context);
     }
 
     private static void mark(SfxMachinePhaseContext context, String effectName) {

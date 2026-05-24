@@ -6,6 +6,8 @@ import cc.theends6.sfx.internal.energy.SfxFuelBurnTimeBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
+import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
+import cc.theends6.sfx.internal.machine.SfxMachineState;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
@@ -129,8 +131,28 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private void registerFrameworkEffects() {
-        machineRuntime.registerEffectHook("basic:hand-input", this::frameworkHandInput);
-        machineRuntime.registerEffectHook("basic:enhanced-furnace-tick", context -> SfxMachinePhaseResult.cont());
+        for (String effectName : List.of(
+                "basic:hand-input",
+                "hand:consume-input",
+                "world:drop-result",
+                "basic:enhanced-furnace-tick",
+                "furnace:intercept-burn-smelt",
+                "furnace:sync-virtual-state"
+        )) {
+            machineRuntime.registerEffectHook(effectName, context -> frameworkBasicEffect(effectName, context));
+        }
+    }
+
+    private SfxMachinePhaseResult frameworkBasicEffect(String effectName, SfxMachinePhaseContext phaseContext) {
+        phaseContext.put("basic.framework.effect", effectName);
+        if ("basic:hand-input".equals(effectName) || "hand:consume-input".equals(effectName) || "world:drop-result".equals(effectName)) {
+            return frameworkHandInput(phaseContext);
+        }
+        if ("basic:enhanced-furnace-tick".equals(effectName) || "furnace:intercept-burn-smelt".equals(effectName) || "furnace:sync-virtual-state".equals(effectName)) {
+            phaseContext.put("basic.furnace.framework-tick", Boolean.TRUE);
+            return SfxMachinePhaseResult.cont();
+        }
+        return SfxMachinePhaseResult.cont();
     }
 
     private SfxMachinePhaseResult frameworkHandInput(SfxMachinePhaseContext phaseContext) {
@@ -157,6 +179,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         Map<String, Object> attributes = new LinkedHashMap<>();
         attributes.put("basic.interactEvent", event);
         attributes.put("basic.block", block);
+        attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkBasicEffect);
         machineRuntime.runPhase(typeId, SfxMachinePhase.ON_COMPLETE, instance.instanceId(), block.getLocation(), new SfxMachineTickContext(0L, 1L, true), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, attributes);
         Object handled = attributes.get("basic.handled");
         return handled instanceof Boolean value && value;
@@ -838,7 +861,13 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 .flatMap(anchor -> blockData.findInstance(anchor.instanceId()))
                 .map(SfxBlockInstanceRecord::typeId)
                 .orElse("sf:enhanced_furnace");
-        try (SfxMachineExecution machineExecution = machineRuntime.beginTick(blockData.findAnchor(block.getLocation()).map(SfxAnchorRecord::instanceId).orElse(null), frameworkMachineId, block.getLocation(), context)) {
+        Map<String, Object> frameworkAttributes = new LinkedHashMap<>();
+        frameworkAttributes.put("basic.block", block);
+        frameworkAttributes.put("basic.furnaceKey", key);
+        frameworkAttributes.put("basic.furnaceStats", stats);
+        frameworkAttributes.put("basic.furnaceState", state);
+        frameworkAttributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkBasicEffect);
+        try (SfxMachineExecution machineExecution = machineRuntime.beginTick(blockData.findAnchor(block.getLocation()).map(SfxAnchorRecord::instanceId).orElse(null), frameworkMachineId, block.getLocation(), context, new SfxMachineState(), frameworkAttributes)) {
         if (!state.initialized()) {
             machineExecution.status(cc.theends6.sfx.internal.machine.SfxMachineStatus.ERROR);
             return;

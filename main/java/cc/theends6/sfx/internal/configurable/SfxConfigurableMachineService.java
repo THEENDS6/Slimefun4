@@ -17,6 +17,7 @@ import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
+import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
@@ -157,7 +158,43 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private void registerFrameworkEffects() {
-        machineRuntime.registerEffectHook("configurable:legacy-kind-tick", this::frameworkLegacyKindTick);
+        for (String effectName : List.of(
+                "configurable:legacy-kind-tick",
+                "reactor:consume-coolant",
+                "reactor:emit-energy",
+                "reactor:meltdown-on-error",
+                "assembler:validate-offset",
+                "assembler:spawn-entity",
+                "proxy:resolve-host"
+        )) {
+            machineRuntime.registerEffectHook(effectName, context -> frameworkConfigurableEffect(effectName, context));
+        }
+    }
+
+    private SfxMachinePhaseResult frameworkConfigurableEffect(String effectName, SfxMachinePhaseContext phaseContext) {
+        SfxConfigurableMachineDefinition definition = phaseContext.attachment("configurable.definition", SfxConfigurableMachineDefinition.class).orElse(null);
+        SfxConfigurableMachineState state = phaseContext.attachment("configurable.state", SfxConfigurableMachineState.class).orElse(null);
+        SfxBlockInstanceRecord instance = phaseContext.attachment("configurable.instance", SfxBlockInstanceRecord.class).orElse(null);
+        if (definition == null || state == null || instance == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        phaseContext.put("configurable.framework.effect", effectName);
+        switch (effectName) {
+            case "configurable:legacy-kind-tick", "reactor:consume-coolant", "reactor:emit-energy", "assembler:validate-offset", "assembler:spawn-entity" -> {
+                return frameworkLegacyKindTick(phaseContext);
+            }
+            case "reactor:meltdown-on-error" -> {
+                phaseContext.put("configurable.reactor.meltdown.checked", Boolean.TRUE);
+                return SfxMachinePhaseResult.cont();
+            }
+            case "proxy:resolve-host" -> {
+                phaseContext.put("configurable.proxy.host-resolve.requested", Boolean.TRUE);
+                return SfxMachinePhaseResult.cont();
+            }
+            default -> {
+                return SfxMachinePhaseResult.cont();
+            }
+        }
     }
 
     private SfxMachinePhaseResult frameworkLegacyKindTick(SfxMachinePhaseContext phaseContext) {
@@ -188,6 +225,7 @@ public final class SfxConfigurableMachineService implements Listener {
         attributes.put("configurable.state", state);
         if (session != null) attributes.put("configurable.session", session);
         attributes.put("configurable.service", this);
+        attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkConfigurableEffect);
         return attributes;
     }
 

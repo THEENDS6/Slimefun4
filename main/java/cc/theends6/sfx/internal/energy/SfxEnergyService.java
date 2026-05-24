@@ -16,6 +16,10 @@ import cc.theends6.sfx.internal.network.SfxNetworkDomain;
 import cc.theends6.sfx.internal.network.SfxNetworkExecution;
 import cc.theends6.sfx.internal.network.SfxNetworkReadiness;
 import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
@@ -79,6 +83,7 @@ public final class SfxEnergyService implements Listener {
     private final SfxCapacitorAppearanceProjector capacitorProjector;
     private final SfxEnergyGeneratorMenuRenderer generatorMenuRenderer;
     private final SfxRechargeableItemService rechargeableItems;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final SfxTopologyService topology;
     private final Map<String, SfxEnergyComponentDefinition> definitions = new LinkedHashMap<>();
     private final Map<UUID, SfxEnergyNodeState> nodeStates = new ConcurrentHashMap<>();
@@ -102,7 +107,8 @@ public final class SfxEnergyService implements Listener {
             SfxElectricMachineService electricMachines,
             SfxConfigurableMachineService configurableMachines,
             SfxFloatingTextDisplayService floatingTextDisplay,
-            SfxRechargeableItemService rechargeableItems
+            SfxRechargeableItemService rechargeableItems,
+            SfxMachineRuntimeEngine machineRuntime
     ) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
@@ -112,6 +118,8 @@ public final class SfxEnergyService implements Listener {
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
         this.configurableMachines = Objects.requireNonNull(configurableMachines, "configurableMachines");
         this.rechargeableItems = Objects.requireNonNull(rechargeableItems, "rechargeableItems");
+        this.machineRuntime = machineRuntime == null ? new SfxMachineRuntimeEngine() : machineRuntime;
+        registerFrameworkEffects();
         this.displayController = new SfxEnergyDisplayController(plugin, localization, Objects.requireNonNull(floatingTextDisplay, "floatingTextDisplay"));
         this.capacitorProjector = new SfxCapacitorAppearanceProjector(runtime, blockData, definitions);
         this.generatorMenuRenderer = new SfxEnergyGeneratorMenuRenderer(plugin, items, localization, rechargeableItems);
@@ -125,6 +133,25 @@ public final class SfxEnergyService implements Listener {
         running = true;
         scheduleTick();
         scheduleFlush();
+    }
+
+
+    private void registerFrameworkEffects() {
+        for (String effectName : java.util.List.of(
+                "energy:inspect-grid",
+                "generator:check-world-condition",
+                "generator:consume-fuel",
+                "generator:emit-energy",
+                "charge:write-item-energy"
+        )) {
+            machineRuntime.registerEffectHook(effectName, this::frameworkEnergyEffect);
+        }
+    }
+
+    private SfxMachinePhaseResult frameworkEnergyEffect(cc.theends6.sfx.internal.machine.SfxMachinePhaseContext context) {
+        if (context == null) return SfxMachinePhaseResult.cont();
+        context.put("energy.framework.effect.handled", Boolean.TRUE);
+        return SfxMachinePhaseResult.cont();
     }
 
     public boolean supportsType(String typeId) {
@@ -560,6 +587,9 @@ public final class SfxEnergyService implements Listener {
             }
             return;
         }
+        Map<String, Object> frameworkAttributes = new LinkedHashMap<>();
+        frameworkAttributes.put("energy.grid", grid);
+        machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, grid.regulatorId(), toLocation(regulator.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
         int available = 0;
         int supply = 0;
         List<SfxEnergyNodeRef> capacitorRefs = new ArrayList<>(grid.capacitors().size());
@@ -792,6 +822,7 @@ public final class SfxEnergyService implements Listener {
         int net = displaySupply - requestedConsumption;
         displayStatus(grid.regulatorKey(), SfxEnergyGridStatus.ONLINE, displaySupply, requestedConsumption, net, displayStored, totalCapacity);
         refreshOpenSfxEnergyGeneratorSessions();
+        machineRuntime.runPhase(regulator.typeId(), SfxMachinePhase.ON_COMPLETE, grid.regulatorId(), toLocation(regulator.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
     }
 
     private List<SfxBlockInstanceRecord> join(List<SfxBlockInstanceRecord> first, List<SfxBlockInstanceRecord> second) {
