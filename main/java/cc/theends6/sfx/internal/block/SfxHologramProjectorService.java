@@ -123,6 +123,10 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
         }
     }
 
+    public void shutdown() {
+        pendingEdits.clear();
+    }
+
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         if (instance != null) {
