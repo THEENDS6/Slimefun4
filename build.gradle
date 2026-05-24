@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'cc.theends6'
-version = 'SFX-20260524b1'
+version = 'SFX-20260524c1'
 
 description = 'SlimeFunX restored single-module workspace.'
 
@@ -63,7 +63,6 @@ sourceSets {
 dependencies {
     compileOnly "io.papermc.paper:paper-api:${rootProject.ext.paperApiVersion}"
     compileOnly "com.github.retrooper:packetevents-spigot:2.12.1"
-    shade "com.github.retrooper:packetevents-spigot:2.12.1"
     compileOnly "org.xerial:sqlite-jdbc:3.50.3.0"
     shade "org.xerial:sqlite-jdbc:3.50.3.0"
 }
