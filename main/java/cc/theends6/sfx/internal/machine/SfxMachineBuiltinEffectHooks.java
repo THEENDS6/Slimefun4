@@ -55,7 +55,26 @@ public final class SfxMachineBuiltinEffectHooks {
             "generator:consume-fuel",
             "generator:emit-energy",
             "charge:write-item-energy",
-            "basic:hand-input"
+            "basic:hand-input",
+            "spawner:restore-entity-type",
+            "spawner:drop-fractured-item",
+            "spawner:repair-to-reinforced",
+            "hopper:scan-items",
+            "hopper:teleport-item",
+            "hopper:emit-particles",
+            "hologram:open-editor",
+            "hologram:update-text",
+            "hologram:sync-display",
+            "placer:resolve-target",
+            "placer:consume-input",
+            "placer:place-block",
+            "placer:rollback-on-fail",
+            "miner:validate-structure",
+            "miner:consume-fuel",
+            "miner:animate-piston",
+            "miner:extract-ore",
+            "miner:commit-output",
+            "miner:stop-on-error"
     );
 
     /** Registers safe framework-native hooks for every built-in special effect name. */
@@ -114,6 +133,11 @@ public final class SfxMachineBuiltinEffectHooks {
             case "generator:check-world-condition" -> generatorWorldCondition(context);
             case "generator:consume-fuel" -> generatorConsumeFuel(context);
             case "charge:write-item-energy" -> chargeItem(context);
+            case "spawner:restore-entity-type", "spawner:drop-fractured-item", "spawner:repair-to-reinforced" -> domainMark(context, "spawner", effectName);
+            case "hopper:scan-items", "hopper:teleport-item", "hopper:emit-particles" -> domainMark(context, "hopper", effectName);
+            case "hologram:open-editor", "hologram:update-text", "hologram:sync-display" -> domainMark(context, "hologram", effectName);
+            case "placer:resolve-target", "placer:consume-input", "placer:place-block", "placer:rollback-on-fail" -> domainMark(context, "placer", effectName);
+            case "miner:validate-structure", "miner:consume-fuel", "miner:animate-piston", "miner:extract-ore", "miner:commit-output", "miner:stop-on-error" -> domainMark(context, "miner", effectName);
             case "framework:audit-tick" -> auditTick(context);
             default -> SfxMachinePhaseResult.cont();
         };
@@ -315,6 +339,14 @@ public final class SfxMachineBuiltinEffectHooks {
 
     private static SfxMachinePhaseResult chargeItem(SfxMachinePhaseContext context) {
         context.put("framework.charge.write-item-energy", Boolean.TRUE);
+        return SfxMachinePhaseResult.cont();
+    }
+
+
+    private static SfxMachinePhaseResult domainMark(SfxMachinePhaseContext context, String domain, String effectName) {
+        context.put("framework.domain", domain);
+        context.put("framework.domain.effect", effectName);
+        context.put(domain + ".framework.default-hook", Boolean.TRUE);
         return SfxMachinePhaseResult.cont();
     }
 

@@ -5,6 +5,8 @@ import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import cc.theends6.sfx.internal.inventory.SfxTransferResult;
+import cc.theends6.sfx.internal.inventory.SfxTransferTransaction;
 
 final class SfxElectricRecipeProcessor {
     private final SfxItems items;
@@ -211,12 +213,21 @@ final class SfxElectricRecipeProcessor {
     }
 
     void pushOutput(SfxElectricMachineState state, int slot, SfxElectricStack recipeOutput) {
-        SfxElectricStack current = state.output(slot);
-        if (current == null) {
-            state.output(slot, recipeOutput);
+        if (state == null || recipeOutput == null) {
             return;
         }
-        state.output(slot, current.copyWithAmount(current.amount() + recipeOutput.amount()));
+        SfxElectricOutputEndpoint endpoint = new SfxElectricOutputEndpoint(items, state, slot);
+        SfxTransferTransaction transaction = new SfxTransferTransaction();
+        SfxTransferResult result = transaction.commit(
+                recipeOutput.toItemStack(items),
+                recipeOutput.amount(),
+                List.of(new SfxTransferTransaction.Target(endpoint, recipeOutput.amount())),
+                true
+        );
+        if (result.inserted() != recipeOutput.amount()) {
+            throw new IllegalStateException("Electric output transaction failed after reservation: requested="
+                    + recipeOutput.amount() + ", inserted=" + result.inserted() + ", slot=" + slot);
+        }
     }
 
     void pushOutputs(SfxElectricMachineState state, int[] slots, List<SfxElectricStack> outputs) {

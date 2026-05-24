@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import org.bukkit.Location;
 
@@ -27,6 +28,8 @@ public final class SfxMachineRuntimeEngine {
     private final Map<String, SfxMachineProcessor> processors = new ConcurrentHashMap<>();
     private final Map<String, SfxMachineHook> effectHooks = new ConcurrentHashMap<>();
     private final Map<UUID, SfxMachineRuntimeSnapshot> snapshots = new ConcurrentHashMap<>();
+    private final AtomicLong phaseInvocations = new AtomicLong();
+    private final AtomicLong stoppedPipelines = new AtomicLong();
 
     public synchronized void registerDefinition(SfxMachineDefinition definition) {
         if (definition != null && definition.id() != null && !definition.id().isBlank()) {
@@ -159,6 +162,14 @@ public final class SfxMachineRuntimeEngine {
         return definitions.values().stream().mapToLong(definition -> definition.capabilities().size()).sum();
     }
 
+    public long phaseInvocations() { return phaseInvocations.get(); }
+    public long stoppedPipelines() { return stoppedPipelines.get(); }
+
+    /** Executes a single legacy-domain phase through the common framework pipeline. */
+    public SfxMachinePhaseResult runLegacyPhase(String machineId, SfxMachinePhase phase, UUID instanceId, Location location, SfxMachineTickContext context, SfxMachineStatus status, Map<String, Object> attributes) {
+        return runPhase(machineId, phase, instanceId, location, context, null, status, attributes);
+    }
+
     public SfxMachineExecution beginTick(UUID instanceId, String machineId, Location location, SfxMachineTickContext context) {
         return beginTick(instanceId, machineId, location, context, null, null);
     }
@@ -227,14 +238,23 @@ public final class SfxMachineRuntimeEngine {
     public SfxMachinePhaseResult runPhase(String machineId, SfxMachinePhase phase, UUID instanceId, Location location, SfxMachineTickContext context, SfxMachineState state, SfxMachineStatus currentStatus, Map<String, Object> attributes) {
         SfxMachineDefinition definition = definition(machineId).orElse(null);
         if (definition == null || definition.effects().isEmpty()) return SfxMachinePhaseResult.cont();
+        phaseInvocations.incrementAndGet();
         Map<String, Object> mutableAttributes = attributes == null ? new HashMap<>() : attributes;
+        mutableAttributes.put("framework.pipeline.machineId", machineId);
+        mutableAttributes.put("framework.pipeline.phase", phase == null ? null : phase.name());
+        mutableAttributes.put("framework.pipeline.category", definition.category() == null ? null : definition.category().name());
         SfxMachinePhaseContext phaseContext = new SfxMachinePhaseContext(definition, phase, instanceId, location == null ? null : location.clone(), context, state, currentStatus, mutableAttributes);
         for (SfxMachineEffect effect : definition.effects()) {
             if (effect.phase() != phase) continue;
             try {
                 SfxMachineHook registered = effectHooks.get(effect.name());
                 SfxMachinePhaseResult result = (registered == null ? effect.hook() : registered).apply(phaseContext);
-                if (result != null && result.stopsPipeline()) return result;
+                if (result != null && result.stopsPipeline()) {
+                    stoppedPipelines.incrementAndGet();
+                    phaseContext.put("framework.pipeline.stopped-by", effect.name());
+                    phaseContext.put("framework.pipeline.stop-action", result.action().name());
+                    return result;
+                }
             } catch (RuntimeException exception) {
                 phaseContext.put("framework.exception", exception);
                 return SfxMachinePhaseResult.failed("machine effect failed: " + effect.name());
@@ -262,5 +282,12 @@ public final class SfxMachineRuntimeEngine {
     public Optional<SfxMachineRuntimeSnapshot> snapshot(UUID instanceId) { return Optional.ofNullable(snapshots.get(instanceId)); }
     public Collection<SfxMachineRuntimeSnapshot> snapshots() { return java.util.List.copyOf(snapshots.values()); }
     public void forget(UUID instanceId) { if (instanceId != null) snapshots.remove(instanceId); }
-    public void clear() { snapshots.clear(); processors.clear(); effectHooks.clear(); synchronized (this) { definitions.clear(); } }
+    public void clear() {
+        snapshots.clear();
+        processors.clear();
+        effectHooks.clear();
+        phaseInvocations.set(0L);
+        stoppedPipelines.set(0L);
+        synchronized (this) { definitions.clear(); }
+    }
 }

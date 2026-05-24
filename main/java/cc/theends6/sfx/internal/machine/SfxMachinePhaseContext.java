@@ -82,4 +82,15 @@ public final class SfxMachinePhaseContext {
     public Object attachment(String key) {
         return key == null ? null : attachments.get(key);
     }
+
+    public <T> T attachmentOrDefault(String key, Class<T> type, T fallback) {
+        return attachment(key, type).orElse(fallback);
+    }
+
+    public void putAll(Map<String, ?> values) {
+        if (values == null) return;
+        for (Map.Entry<String, ?> entry : values.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
+    }
 }

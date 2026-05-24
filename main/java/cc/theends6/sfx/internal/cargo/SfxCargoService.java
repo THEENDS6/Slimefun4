@@ -13,6 +13,11 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.inventory.SfxReservationLedger;
+import cc.theends6.sfx.internal.inventory.SfxInventoryAccessState;
+import cc.theends6.sfx.internal.inventory.SfxStorageEndpoint;
+import cc.theends6.sfx.internal.inventory.SfxStorageKey;
+import cc.theends6.sfx.internal.inventory.SfxTransferResult;
+import cc.theends6.sfx.internal.inventory.SfxTransferTransaction;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
@@ -770,22 +775,15 @@ public final class SfxCargoService implements Listener {
         }
         ItemStack template = plan.stack().clone();
         template.setAmount(1);
-        int inserted = 0;
+        List<SfxTransferTransaction.Target> targets = new ArrayList<>();
+        boolean singleSlot = input.definition.type() == SfxCargoComponentType.INPUT_NODE;
         for (OutputMove move : moves) {
-            if (move.amount() <= 0) {
-                continue;
+            if (move.amount() > 0) {
+                targets.add(new SfxTransferTransaction.Target(move.endpoint(), move.amount(), singleSlot));
             }
-            if (move.endpoint().trash) {
-                inserted += move.amount();
-                continue;
-            }
-            ItemStack part = template.clone();
-            part.setAmount(move.amount());
-            ItemStack remainder = input.definition.type() == SfxCargoComponentType.INPUT_NODE
-                    ? move.endpoint().insertSingleSlot(part, input.state.smartFill)
-                    : move.endpoint().insert(part, input.state.smartFill);
-            inserted += move.amount() - (isEmpty(remainder) ? 0 : remainder.getAmount());
         }
+        SfxTransferResult transfer = new SfxTransferTransaction().commit(template, planned, targets, input.state.smartFill);
+        int inserted = transfer.inserted();
         if (inserted < planned) {
             ItemStack refund = template.clone();
             refund.setAmount(planned - inserted);
@@ -872,17 +870,17 @@ public final class SfxCargoService implements Listener {
         int capacity = input.definition.type() == SfxCargoComponentType.INPUT_NODE
                 ? output.endpoint.capacityForSingleSlot(stack, input.state.smartFill)
                 : output.endpoint.capacityFor(stack, input.state.smartFill);
-        String key = output.endpoint.storageKey();
-        return reservations.available(key, capacity);
+        SfxStorageKey key = output.endpoint.storageKey();
+        return reservations.available(key == null ? null : key.value(), capacity);
     }
 
     private void reserveCapacity(Endpoint endpoint, int amount, SfxReservationLedger reservations) {
         if (endpoint == null || amount <= 0) {
             return;
         }
-        String key = endpoint.storageKey();
+        SfxStorageKey key = endpoint.storageKey();
         if (key != null) {
-            reservations.reserve(key, amount);
+            reservations.reserve(key.value(), amount);
         }
     }
 
@@ -1726,7 +1724,7 @@ public final class SfxCargoService implements Listener {
         return new Endpoint(null, instanceId, insertIntoInputs, false);
     }
 
-    private final class Endpoint {
+    private final class Endpoint implements SfxStorageEndpoint {
         private final SfxVirtualContainer container;
         private final UUID electricMachineId;
         private final boolean electricInputTarget;
@@ -1753,17 +1751,25 @@ public final class SfxCargoService implements Listener {
             return electricMachineId != null && electricMachineId.equals(other.electricMachineId);
         }
 
-        String storageKey() {
+        @Override
+        public SfxStorageKey storageKey() {
             if (trash) {
-                return null;
+                return new SfxStorageKey("trash");
             }
             if (container != null) {
-                return "container:" + container.key();
+                return new SfxStorageKey("container:" + container.key());
             }
             if (electricMachineId != null) {
-                return "electric:" + electricMachineId + ":" + electricInputTarget;
+                return new SfxStorageKey("electric:" + electricMachineId + ":" + electricInputTarget);
             }
-            return null;
+            return new SfxStorageKey("unknown");
+        }
+
+        @Override
+        public SfxInventoryAccessState accessState() {
+            return trash || container != null || electricMachineId != null
+                    ? SfxInventoryAccessState.READY
+                    : SfxInventoryAccessState.UNAVAILABLE;
         }
 
         PlannedStack planFirst(Predicate<ItemStack> filter, int maxAmount) {
@@ -1806,6 +1812,16 @@ public final class SfxCargoService implements Listener {
             return false;
         }
 
+        @Override
+        public int simulateInsert(ItemStack stack, boolean smartFill) {
+            return capacityFor(stack, smartFill);
+        }
+
+        @Override
+        public int simulateInsertSingleSlot(ItemStack stack, boolean smartFill) {
+            return capacityForSingleSlot(stack, smartFill);
+        }
+
         int capacityFor(ItemStack stack, boolean smartFill) {
             if (trash) {
                 return stack == null ? 0 : stack.getAmount();
@@ -1836,7 +1852,8 @@ public final class SfxCargoService implements Listener {
             return 0;
         }
 
-        ItemStack insert(ItemStack stack, boolean smartFill) {
+        @Override
+        public ItemStack insert(ItemStack stack, boolean smartFill) {
             if (trash || isEmpty(stack)) {
                 return null;
             }
@@ -1851,7 +1868,8 @@ public final class SfxCargoService implements Listener {
             return stack;
         }
 
-        ItemStack insertSingleSlot(ItemStack stack, boolean smartFill) {
+        @Override
+        public ItemStack insertSingleSlot(ItemStack stack, boolean smartFill) {
             if (trash || isEmpty(stack)) {
                 return null;
             }
