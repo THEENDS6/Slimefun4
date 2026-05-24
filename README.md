@@ -9,8 +9,9 @@ It tries to keep the classic Slimefun gameplay feel while rebuilding large parts
 - Version: `SFX-20260524c1`
 - Status: experimental development build
 - Target server: Paper `1.21.x`, currently developed around Paper `1.21.8`
+- Expected compatibility: Paper `26.1` and Folia are intended to be supported by this development line
 - Java: `21`
-- Folia: `plugin.yml` declares Folia support, but runtime behavior should still be tested carefully before production use
+- Folia: `plugin.yml` declares Folia support and the runtime is written with region/player scheduler integration in mind
 - Addon/API stability: not stable yet
 
 Use this build for testing, development, and controlled servers. Do not assume data compatibility with upstream Slimefun4 or with older SlimeFunX builds.
@@ -116,7 +117,7 @@ Addon/addition support should be designed after the core runtime is stable. Unti
 
 ## Feedback
 
-This is currently a small, fast-moving project. For now, report problems directly to THEENDS6. Formal issue templates, pull request rules, and security reporting rules may be added later if the project grows.
+This is currently a small, fast-moving project. Paper `26.1` and Folia are expected to work in this development line, but if they do not, contact THEENDS6 directly. Formal issue templates, pull request rules, and security reporting rules may be added later if the project grows.
 
 When reporting a problem, include:
 
@@ -124,6 +125,7 @@ When reporting a problem, include:
 - Paper version
 - PacketEvents version
 - whether Folia is being used
+- whether the server is Paper `26.1`
 - the relevant console error or stack trace
 - reproduction steps, if possible
 
