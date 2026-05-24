@@ -12,6 +12,13 @@ import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
+import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachineStatus;
+import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -106,6 +113,7 @@ public final class SfxAncientAltarService implements Listener {
     private final SfxItemRegistry itemRegistry;
     private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final NamespacedKey spawnerTypeKey;
     private final AtomicInteger virtualEntityIds = new AtomicInteger(4_000_000);
     private final Map<SfxBlockAnchorKey, PedestalState> pedestalStates = new ConcurrentHashMap<>();
@@ -116,13 +124,14 @@ public final class SfxAncientAltarService implements Listener {
     private volatile List<AltarRecipe> recipes = List.of();
     private volatile boolean shutdown;
 
-    public SfxAncientAltarService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxItemRegistry itemRegistry, SfxLocalization localization, SfxBlockDataService blockData) {
+    public SfxAncientAltarService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxItemRegistry itemRegistry, SfxLocalization localization, SfxBlockDataService blockData, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.itemRegistry = Objects.requireNonNull(itemRegistry, "itemRegistry");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
+        this.machineRuntime = Objects.requireNonNull(machineRuntime, "machineRuntime");
         this.spawnerTypeKey = new NamespacedKey(plugin, "spawner_type");
         reloadRecipes();
     }
@@ -150,6 +159,36 @@ public final class SfxAncientAltarService implements Listener {
 
     public boolean supportsType(String typeId) {
         return ANCIENT_ALTAR.equals(typeId) || ANCIENT_PEDESTAL.equals(typeId);
+    }
+
+
+    public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
+        if (context == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        context.put("altar.framework.effect", effectName);
+        context.put("altar.framework.effect.handled", Boolean.TRUE);
+        if ("altar:validate-structure".equals(effectName)) {
+            RitualSession session = context.attachment("altar.session", RitualSession.class).orElse(null);
+            if (session != null) {
+                context.put("altar.framework.structure-valid", structureStillValid(session));
+            }
+        }
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private Map<String, Object> altarFrameworkAttributes(SfxBlockInstanceRecord altarInstance, Player player, RitualSession session) {
+        Map<String, Object> attributes = new java.util.LinkedHashMap<>();
+        attributes.put("altar.instance", altarInstance);
+        if (player != null) {
+            attributes.put("altar.player", player);
+        }
+        if (session != null) {
+            attributes.put("altar.session", session);
+        }
+        attributes.put("altar.service", this);
+        attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkEffect);
+        return attributes;
     }
 
     public void handlePlaced(UUID instanceId, String typeId) {
@@ -335,6 +374,7 @@ public final class SfxAncientAltarService implements Listener {
             sendMessage(player, "machines.ancient-altar.in-use", "<red>This Ancient Altar is already in use.</red>");
             return;
         }
+        machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, altarInstance.instanceId(), altarBlock.getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, altarFrameworkAttributes(altarInstance, player, null));
         List<SfxBlockAnchorKey> pedestalKeys = pedestalKeys(altarBlock.getLocation());
         List<SfxBlockInstanceRecord> pedestals = new ArrayList<>(8);
         for (SfxBlockAnchorKey key : pedestalKeys) {
@@ -486,6 +526,11 @@ public final class SfxAncientAltarService implements Listener {
     }
 
     private void completeSession(RitualSession session) {
+        SfxBlockInstanceRecord altarInstance = instanceAt(session.altarKey());
+        if (altarInstance != null) {
+            machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.ON_COMPLETE, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, altarFrameworkAttributes(altarInstance, null, session));
+            machineRuntime.runPhase(altarInstance.typeId(), SfxMachinePhase.AFTER_TICK, altarInstance.instanceId(), session.altarLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.RUNNING, altarFrameworkAttributes(altarInstance, null, session));
+        }
         unregisterSession(session);
         clearPedestalStates(session, false);
         setLifecycleIdle(session);

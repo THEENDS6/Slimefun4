@@ -138,14 +138,38 @@ public final class SfxCargoService implements Listener {
 
 
     private void registerFrameworkEffects() {
-        machineRuntime.registerEffectHook("cargo:resolve-endpoints", this::frameworkCargoEffect);
-        machineRuntime.registerEffectHook("cargo:commit-transfer", this::frameworkCargoEffect);
+        machineRuntime.registerEffectHook("cargo:resolve-endpoints", context -> frameworkCargoEffect("cargo:resolve-endpoints", context));
+        machineRuntime.registerEffectHook("cargo:commit-transfer", context -> frameworkCargoEffect("cargo:commit-transfer", context));
     }
 
-    private SfxMachinePhaseResult frameworkCargoEffect(cc.theends6.sfx.internal.machine.SfxMachinePhaseContext context) {
+    public SfxMachinePhaseResult frameworkEffect(String effectName, cc.theends6.sfx.internal.machine.SfxMachinePhaseContext context) {
+        return frameworkCargoEffect(effectName, context);
+    }
+
+    private SfxMachinePhaseResult frameworkCargoEffect(String effectName, cc.theends6.sfx.internal.machine.SfxMachinePhaseContext context) {
         if (context == null) return SfxMachinePhaseResult.cont();
+        context.put("cargo.framework.effect", effectName);
         context.put("cargo.framework.effect.handled", Boolean.TRUE);
+        CargoRuntimeNetwork network = context.attachment("cargo.network", CargoRuntimeNetwork.class).orElse(null);
+        NodeRef node = context.attachment("cargo.node", NodeRef.class).orElse(null);
+        if (network != null) {
+            context.put("cargo.framework.network.inputs", network.inputs().size());
+            context.put("cargo.framework.network.outputs", network.outputs().size());
+        }
+        if (node != null) {
+            context.put("cargo.framework.node.type", node.definition().type().name());
+            context.put("cargo.framework.node.priority", node.priority());
+        }
         return SfxMachinePhaseResult.cont();
+    }
+
+    private Map<String, Object> cargoFrameworkAttributes(CargoRuntimeNetwork network, NodeRef node) {
+        Map<String, Object> attributes = new LinkedHashMap<>();
+        attributes.put("cargo.network", network);
+        attributes.put("cargo.node", node);
+        attributes.put("cargo.service", this);
+        attributes.put("framework.effect.dispatcher", (cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher) this::frameworkCargoEffect);
+        return attributes;
     }
 
     public boolean supportsType(String typeId) {
@@ -545,16 +569,30 @@ public final class SfxCargoService implements Listener {
         }
         Map<String, Object> frameworkAttributes = new LinkedHashMap<>();
         frameworkAttributes.put("cargo.network", network);
+        frameworkAttributes.put("cargo.service", this);
+        frameworkAttributes.put("framework.effect.dispatcher", (cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher) this::frameworkCargoEffect);
         SfxBlockInstanceRecord managerInstance = blockData.findInstance(network.managerId()).orElse(null);
         String frameworkMachineId = managerInstance == null ? "sfx:cargo_manager" : managerInstance.typeId();
         machineRuntime.runPhase(frameworkMachineId, SfxMachinePhase.BEFORE_OPERATION_RESOLVE, network.managerId(), null, new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
+        for (NodeRef output : network.outputs()) {
+            machineRuntime.runPhase(output.instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, output.instance.instanceId(), toLocation(output.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, cargoFrameworkAttributes(network, output));
+        }
         for (NodeRef input : network.inputs()) {
+            Map<String, Object> inputFramework = cargoFrameworkAttributes(network, input);
+            machineRuntime.runPhase(input.instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, input.instance.instanceId(), toLocation(input.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework);
             int moved = input.definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE
                     ? processAdvancedInput(input, network.outputs())
                     : processBasicInput(input, network.outputs());
+            inputFramework.put("cargo.moved", moved);
             if (moved > 0) {
                 recordManagerTransfer(network.managerId(), moved);
             }
+            machineRuntime.runPhase(input.instance.typeId(), SfxMachinePhase.ON_COMPLETE, input.instance.instanceId(), toLocation(input.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, moved > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework);
+            machineRuntime.runPhase(input.instance.typeId(), SfxMachinePhase.AFTER_TICK, input.instance.instanceId(), toLocation(input.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, moved > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework);
+        }
+        for (NodeRef output : network.outputs()) {
+            machineRuntime.runPhase(output.instance.typeId(), SfxMachinePhase.ON_COMPLETE, output.instance.instanceId(), toLocation(output.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, cargoFrameworkAttributes(network, output));
+            machineRuntime.runPhase(output.instance.typeId(), SfxMachinePhase.AFTER_TICK, output.instance.instanceId(), toLocation(output.instance.anchorKey()), new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, cargoFrameworkAttributes(network, output));
         }
         virtualContainers.pushDirtyAfterLogic();
         machineRuntime.runPhase(frameworkMachineId, SfxMachinePhase.ON_COMPLETE, network.managerId(), null, new SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);

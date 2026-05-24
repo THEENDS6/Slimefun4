@@ -300,10 +300,12 @@ public final class SfxPlaceableBlockListener implements Listener {
         String typeId = instance.typeId();
         event.setDropItems(false);
         if (androidService.supportsType(typeId)) {
+            runFrameworkBreakPhase(event.getBlock(), instance.instanceId(), typeId);
             androidService.destroyAnchoredBlock(event.getBlock(), instance.instanceId(), typeId);
             return;
         }
         if (spawnerService.supportsType(typeId)) {
+            runFrameworkBreakPhase(event.getBlock(), instance.instanceId(), typeId);
             boolean containment = items.readMarker(event.getPlayer().getInventory().getItemInMainHand())
                     .map(marker -> "sf:pickaxe_of_containment".equals(marker.itemId()))
                     .orElse(false);
@@ -637,9 +639,13 @@ public final class SfxPlaceableBlockListener implements Listener {
         return false;
     }
 
-    private void destroyAnchoredBlock(Block block, java.util.UUID instanceId, String typeId) {
+    private void runFrameworkBreakPhase(Block block, java.util.UUID instanceId, String typeId) {
         machineRuntime.runPhase(typeId, cc.theends6.sfx.internal.machine.SfxMachinePhase.ON_BREAK, instanceId, block == null ? null : block.getLocation(), new cc.theends6.sfx.internal.machine.SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE);
         machineRuntime.forget(instanceId);
+    }
+
+    private void destroyAnchoredBlock(Block block, java.util.UUID instanceId, String typeId) {
+        runFrameworkBreakPhase(block, instanceId, typeId);
         if (basicMachines.supportsType(typeId)) {
             basicMachines.destroyAnchoredBlock(block, typeId);
             return;

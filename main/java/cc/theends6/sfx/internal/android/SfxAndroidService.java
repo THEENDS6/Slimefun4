@@ -9,6 +9,13 @@ import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
+import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
+import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.machine.SfxMachineStatus;
+import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.ItemBuilder;
@@ -99,6 +106,7 @@ public final class SfxAndroidService implements Listener {
     private final SfxItemRegistry itemRegistry;
     private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
+    private final SfxMachineRuntimeEngine machineRuntime;
     private final SqliteSfxAndroidScriptRepository scripts;
     private final Map<UUID, SfxAndroidState> states = new ConcurrentHashMap<>();
     private final Set<UUID> activeAndroids = ConcurrentHashMap.newKeySet();
@@ -112,7 +120,7 @@ public final class SfxAndroidService implements Listener {
     private long tickInterval;
     private int maxActivePerRegion;
 
-    public SfxAndroidService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxItemRegistry itemRegistry, SfxLocalization localization, SfxBlockDataService blockData, SqliteSfxAndroidScriptRepository scripts) {
+    public SfxAndroidService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxItemRegistry itemRegistry, SfxLocalization localization, SfxBlockDataService blockData, SqliteSfxAndroidScriptRepository scripts, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
@@ -120,6 +128,7 @@ public final class SfxAndroidService implements Listener {
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.scripts = Objects.requireNonNull(scripts, "scripts");
+        this.machineRuntime = Objects.requireNonNull(machineRuntime, "machineRuntime");
     }
 
     public void start() {
@@ -152,6 +161,38 @@ public final class SfxAndroidService implements Listener {
 
     public boolean supportsType(String typeId) {
         return SfxAndroidType.isAndroidItem(typeId) || INTERFACE_FUEL.equals(typeId) || INTERFACE_ITEMS.equals(typeId);
+    }
+
+
+    public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
+        if (context == null) {
+            return SfxMachinePhaseResult.cont();
+        }
+        context.put("android.framework.effect", effectName);
+        context.put("android.framework.effect.handled", Boolean.TRUE);
+        SfxAndroidInstruction instruction = context.attachment("android.instruction", SfxAndroidInstruction.class).orElse(null);
+        if (instruction != null) {
+            context.put("android.framework.instruction", instruction.name());
+        }
+        SfxAndroidState state = context.attachment("android.state", SfxAndroidState.class).orElse(null);
+        if (state != null) {
+            context.put("android.framework.runtime-state", state.runtimeState().name());
+        }
+        return SfxMachinePhaseResult.cont();
+    }
+
+    private Map<String, Object> androidFrameworkAttributes(SfxBlockInstanceRecord instance, SfxAndroidType type, SfxAndroidState state, Block block, SfxAndroidInstruction instruction, boolean moveAccepted, long tickId) {
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("android.instance", instance);
+        attributes.put("android.type", type);
+        attributes.put("android.state", state);
+        attributes.put("android.block", block);
+        attributes.put("android.instruction", instruction);
+        attributes.put("android.moveAccepted", moveAccepted);
+        attributes.put("android.tickId", tickId);
+        attributes.put("android.service", this);
+        attributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkEffect);
+        return attributes;
     }
 
     public void handlePlaced(UUID instanceId, String typeId, Player player, Block block) {
@@ -409,10 +450,17 @@ public final class SfxAndroidService implements Listener {
                 continue;
             }
             SfxAndroidInstruction instruction = state.currentInstruction();
+            Map<String, Object> frameworkAttributes = androidFrameworkAttributes(instance, type, state, location.getBlock(), instruction, acceptedMoves.contains(instance.instanceId()), tickId);
+            SfxMachineTickContext frameworkTick = new SfxMachineTickContext(tickId, 1L, false);
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.IDLE, frameworkAttributes);
             boolean success = executeInstruction(instance, type, state, instruction, location.getBlock(), acceptedMoves.contains(instance.instanceId()), tickId);
+            frameworkAttributes.put("android.execution.success", success);
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_PROGRESS, instance.instanceId(), location, frameworkTick, null, success ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, frameworkAttributes);
             if (success) {
+                machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.RUNNING, frameworkAttributes);
                 state.advance();
             }
+            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, frameworkTick, null, success ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, frameworkAttributes);
             if (state.runtimeState() == SfxAndroidRuntimeState.ACTIVE) {
                 state.resetNoEffectTicks();
             } else if (!state.paused() && state.runtimeState() != SfxAndroidRuntimeState.PAUSED && state.runtimeState() != SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID) {
