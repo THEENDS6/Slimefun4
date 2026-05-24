@@ -58,6 +58,16 @@ public final class SfxMachineSpecialProfiles {
             generator(builder, id.contains("solar"));
         } else if (id.contains("charging_bench")) {
             chargingBench(builder);
+        } else if (id.contains("reinforced_spawner")) {
+            reinforcedSpawner(builder);
+        } else if (id.contains("infused_hopper")) {
+            infusedHopper(builder);
+        } else if (id.contains("hologram_projector")) {
+            hologramProjector(builder);
+        } else if (id.contains("block_placer")) {
+            blockPlacer(builder);
+        } else if (id.contains("industrial_miner")) {
+            industrialMiner(builder);
         } else if (definition.category() == SfxMachineCategory.ELECTRIC) {
             recipeMachine(builder);
             builder.capability(SfxMachineCapability.USES_ENERGY);
@@ -65,6 +75,9 @@ public final class SfxMachineSpecialProfiles {
             commonMachine(builder);
             builder.capability(SfxMachineCapability.HAS_GUI).capability(SfxMachineCapability.USES_ENERGY);
         } else if (definition.category() == SfxMachineCategory.BASIC) {
+            commonMachine(builder);
+        }
+        if (definition.category() == SfxMachineCategory.SPECIAL && !definition.effects().isEmpty()) {
             commonMachine(builder);
         }
         return builder.build();
@@ -290,6 +303,67 @@ public final class SfxMachineSpecialProfiles {
                 .capability(SfxMachineCapability.ITEM_META_TRANSFORM)
                 .policyRef(SfxMachinePolicyRef.of("charge", "rechargeable-item-bridge"))
                 .effect(SfxMachineEffect.marker("charge:write-item-energy", SfxMachinePhase.AFTER_PROGRESS));
+    }
+
+
+    private static void reinforcedSpawner(SfxMachineDefinition.Builder builder) {
+        commonMachine(builder);
+        builder.capability(SfxMachineCapability.MUTATES_WORLD)
+                .capability(SfxMachineCapability.HAS_CUSTOM_STATUS)
+                .policyRef(SfxMachinePolicyRef.of("spawner", "reinforced-spawner-block-state"))
+                .effect(SfxMachineEffect.marker("spawner:restore-entity-type", SfxMachinePhase.ON_PLACE))
+                .effect(SfxMachineEffect.marker("spawner:drop-fractured-item", SfxMachinePhase.ON_BREAK))
+                .effect(SfxMachineEffect.marker("spawner:repair-to-reinforced", SfxMachinePhase.ON_COMPLETE));
+    }
+
+    private static void infusedHopper(SfxMachineDefinition.Builder builder) {
+        commonMachine(builder);
+        builder.capability(SfxMachineCapability.TOPOLOGY_NODE)
+                .capability(SfxMachineCapability.STORAGE_ENDPOINT)
+                .capability(SfxMachineCapability.HAS_VISUAL_EFFECTS)
+                .policyRef(SfxMachinePolicyRef.of("inventory", "nearby-item-pickup-transfer"))
+                .effect(SfxMachineEffect.marker("hopper:scan-items", SfxMachinePhase.BEFORE_OPERATION_RESOLVE))
+                .effect(SfxMachineEffect.marker("hopper:teleport-item", SfxMachinePhase.AFTER_PROGRESS))
+                .effect(SfxMachineEffect.marker("hopper:emit-particles", SfxMachinePhase.ON_COMPLETE));
+    }
+
+    private static void hologramProjector(SfxMachineDefinition.Builder builder) {
+        commonMachine(builder);
+        builder.capability(SfxMachineCapability.HAS_GUI)
+                .capability(SfxMachineCapability.HAS_VISUAL_EFFECTS)
+                .policyRef(SfxMachinePolicyRef.of("display", "floating-text-projector"))
+                .effect(SfxMachineEffect.marker("hologram:open-editor", SfxMachinePhase.BEFORE_OPERATION_RESOLVE))
+                .effect(SfxMachineEffect.marker("hologram:update-text", SfxMachinePhase.ON_COMPLETE))
+                .effect(SfxMachineEffect.marker("hologram:sync-display", SfxMachinePhase.AFTER_TICK));
+    }
+
+    private static void blockPlacer(SfxMachineDefinition.Builder builder) {
+        commonMachine(builder);
+        builder.capability(SfxMachineCapability.MUTATES_WORLD)
+                .capability(SfxMachineCapability.USES_VANILLA_BLOCK_INVENTORY)
+                .inputProvider(SfxMachineInputProvider.vanillaBlockInventory("dispenser inventory"))
+                .outputProvider(SfxMachineOutputProvider.worldDrop("rollback/drop if placement fails"))
+                .policyRef(SfxMachinePolicyRef.of("world", "dispenser-placement-transaction"))
+                .effect(SfxMachineEffect.marker("placer:resolve-target", SfxMachinePhase.BEFORE_OPERATION_RESOLVE))
+                .effect(SfxMachineEffect.marker("placer:consume-input", SfxMachinePhase.BEFORE_INPUT))
+                .effect(SfxMachineEffect.marker("placer:place-block", SfxMachinePhase.ON_COMPLETE))
+                .effect(SfxMachineEffect.marker("placer:rollback-on-fail", SfxMachinePhase.ON_ERROR));
+    }
+
+    private static void industrialMiner(SfxMachineDefinition.Builder builder) {
+        commonMachine(builder);
+        builder.capability(SfxMachineCapability.USES_MULTIBLOCK)
+                .capability(SfxMachineCapability.MUTATES_WORLD)
+                .capability(SfxMachineCapability.HAS_OUTPUT)
+                .capability(SfxMachineCapability.USES_FUEL_BUFFER)
+                .policyRef(SfxMachinePolicyRef.of("multiblock", "industrial-miner-structure"))
+                .policyRef(SfxMachinePolicyRef.of("inventory", "miner-output-transaction"))
+                .effect(SfxMachineEffect.marker("miner:validate-structure", SfxMachinePhase.BEFORE_OPERATION_RESOLVE))
+                .effect(SfxMachineEffect.marker("miner:consume-fuel", SfxMachinePhase.BEFORE_INPUT))
+                .effect(SfxMachineEffect.marker("miner:animate-piston", SfxMachinePhase.BEFORE_PROGRESS))
+                .effect(SfxMachineEffect.marker("miner:extract-ore", SfxMachinePhase.ON_COMPLETE))
+                .effect(SfxMachineEffect.marker("miner:commit-output", SfxMachinePhase.AFTER_OUTPUT))
+                .effect(SfxMachineEffect.marker("miner:stop-on-error", SfxMachinePhase.ON_ERROR));
     }
 
     public static Set<SfxMachineCapability> legacyCapabilities(String machineId) {

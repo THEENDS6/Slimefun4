@@ -34,14 +34,43 @@ public final class SfxMachineFrameworkCatalog {
                 if (candidate == null || !candidate.supports().test(item.id())) {
                     continue;
                 }
+                SfxMachineDefinition computed = SfxMachineSpecialProfiles.apply(new SfxMachineDefinition(item.id(), item.id(), candidate.category(), List.of(), List.of(), -1, 1));
                 if (engine.definition(item.id()).isEmpty()) {
-                    engine.registerDefinitionIfAbsent(SfxMachineSpecialProfiles.apply(new SfxMachineDefinition(item.id(), item.id(), candidate.category(), List.of(), List.of(), -1, 1)));
+                    engine.registerDefinitionIfAbsent(computed);
                     registered++;
+                } else {
+                    engine.enrichDefinition(item.id(), existing -> mergeFrameworkMetadata(existing, computed));
                 }
                 break;
             }
         }
         return registered;
+    }
+
+    private static SfxMachineDefinition mergeFrameworkMetadata(SfxMachineDefinition existing, SfxMachineDefinition computed) {
+        if (existing == null) {
+            return computed;
+        }
+        if (computed == null) {
+            return existing;
+        }
+        SfxMachineDefinition.Builder builder = existing.toBuilder();
+        if (existing.category() == SfxMachineCategory.SPECIAL && computed.category() != SfxMachineCategory.SPECIAL) {
+            builder.category(computed.category());
+        }
+        builder.capabilities(computed.capabilities());
+        if (existing.inputSlots().isEmpty() && !computed.inputSlots().isEmpty()) {
+            builder.inputSlots(computed.inputSlots()).inputProvider(computed.inputProvider());
+        }
+        if (existing.outputSlots().isEmpty() && !computed.outputSlots().isEmpty()) {
+            builder.outputSlots(computed.outputSlots()).outputProvider(computed.outputProvider());
+        }
+        if (existing.statusSlot() < 0 && computed.statusSlot() >= 0) {
+            builder.statusSlot(computed.statusSlot());
+        }
+        builder.policyRefs(computed.policyRefs());
+        builder.effects(computed.effects());
+        return builder.build();
     }
 
     public static Collection<SfxMachineDefinition> definitionsFor(Collection<String> ids, SfxMachineCategory category) {

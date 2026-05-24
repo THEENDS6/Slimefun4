@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import cc.theends6.sfx.internal.inventory.SfxTransferResult;
+import cc.theends6.sfx.internal.inventory.SfxTransferTransaction;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Map;
@@ -1295,8 +1297,16 @@ final class SfxAreaElectricMachineProviders {
         if (slot == null) {
             return;
         }
-        SfxElectricStack current = state.output(slot);
-        state.output(slot, current == null ? output : current.copyWithAmount(current.amount() + output.amount()));
+        SfxElectricOutputEndpoint endpoint = new SfxElectricOutputEndpoint(items, state, slot);
+        SfxTransferResult result = new SfxTransferTransaction().commit(
+                output.toItemStack(items),
+                output.amount(),
+                List.of(new SfxTransferTransaction.Target(endpoint, output.amount())),
+                true
+        );
+        if (result.inserted() != output.amount()) {
+            return;
+        }
     }
 
     private static Integer findOutputSlot(SfxItems items, SfxElectricStack[] outputs, SfxElectricStack output) {

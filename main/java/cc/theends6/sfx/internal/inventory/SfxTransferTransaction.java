@@ -6,7 +6,10 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 public final class SfxTransferTransaction {
-    public record Target(SfxStorageEndpoint endpoint, int amount) {
+    public record Target(SfxStorageEndpoint endpoint, int amount, boolean singleSlot) {
+        public Target(SfxStorageEndpoint endpoint, int amount) {
+            this(endpoint, amount, false);
+        }
     }
 
     public SfxTransferResult commit(ItemStack template, int planned, List<Target> targets, boolean smartFill) {
@@ -16,6 +19,9 @@ public final class SfxTransferTransaction {
         ItemStack unit = template.clone();
         unit.setAmount(1);
         int inserted = 0;
+        if (targets == null || targets.isEmpty()) {
+            return SfxTransferResult.success(planned, 0, planned);
+        }
         for (Target target : targets) {
             if (target == null || target.endpoint() == null || target.amount() <= 0) {
                 continue;
@@ -25,7 +31,9 @@ public final class SfxTransferTransaction {
             }
             ItemStack part = unit.clone();
             part.setAmount(target.amount());
-            ItemStack remainder = target.endpoint().insert(part, smartFill);
+            ItemStack remainder = target.singleSlot()
+                    ? target.endpoint().insertSingleSlot(part, smartFill)
+                    : target.endpoint().insert(part, smartFill);
             inserted += target.amount() - (remainder == null || remainder.getType() == Material.AIR ? 0 : remainder.getAmount());
         }
         return SfxTransferResult.success(planned, inserted, planned - inserted);
