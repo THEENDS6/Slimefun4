@@ -648,8 +648,8 @@ public final class SfxAndroidService implements Listener {
         if (type == null) {
             return false;
         }
-        from.setType(Material.AIR, false);
-        to.setType(Material.PLAYER_HEAD, false);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instance.typeId(), from, Material.AIR, false, "android", "moveAndroid:clear-from");
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instance.typeId(), to, Material.PLAYER_HEAD, false, "android", "moveAndroid:place-to");
         applyAndroidBlockAppearance(to, instance.typeId(), state.rotation());
         blockData.unregisterAt(from.getLocation());
         UUID newId = blockData.registerSingleBlock(instance.typeId(), to.getLocation(), Material.PLAYER_HEAD, instance.ownerId());
@@ -676,7 +676,7 @@ public final class SfxAndroidService implements Listener {
             return false;
         }
         playBlockBreakEffect(target);
-        target.setType(Material.AIR, true);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, typeId, target, Material.AIR, true, "android", "dig");
         state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         return true;
     }
@@ -833,7 +833,7 @@ public final class SfxAndroidService implements Listener {
         if (isBottomLayerLog(log, bottomLogs)) {
             replantAfterChop(log, logType);
         } else {
-            log.setType(Material.AIR, true);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, "sf:android", log, Material.AIR, true, "android", "chopTree");
         }
         state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         return true;
@@ -990,7 +990,7 @@ public final class SfxAndroidService implements Listener {
     private void replantAfterChop(Block block, Material logType) {
         Material sapling = saplingForLog(logType);
         if (sapling == null) {
-            block.setType(Material.AIR, true);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, "sf:android", block, Material.AIR, true, "android", "replantAfterChop:clear");
             return;
         }
         replantSaplingAt(block, sapling);
@@ -999,9 +999,9 @@ public final class SfxAndroidService implements Listener {
     private void replantSaplingAt(Block block, Material sapling) {
         Material soil = block.getRelative(BlockFace.DOWN).getType();
         if (canPlantSaplingOn(sapling, soil)) {
-            block.setType(sapling, true);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, "sf:android", block, sapling, true, "android", "replantSaplingAt");
         } else {
-            block.setType(Material.AIR, true);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, "sf:android", block, Material.AIR, true, "android", "replantAfterChop:clear");
             block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.25, 0.5), new ItemStack(sapling));
         }
     }
@@ -2397,7 +2397,7 @@ public final class SfxAndroidService implements Listener {
         if (block == null || typeId == null) {
             return;
         }
-        block.setType(Material.PLAYER_HEAD, false);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, typeId, block, Material.PLAYER_HEAD, false, "android", "applyHeadRotation");
         applyRotation(block, rotation);
         SfxItemDefinition definition = itemRegistry.item(typeId).orElse(null);
         if (definition != null && block.getState() instanceof Skull skull) {

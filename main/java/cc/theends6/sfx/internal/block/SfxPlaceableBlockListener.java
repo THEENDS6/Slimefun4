@@ -83,6 +83,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxRuntime runtime;
     private final SfxMachineRuntimeEngine machineRuntime;
     private final SfxBlockLifecycleRouter lifecycleRouter;
+    private final SfxBlockPlacementRouter placementRouter;
 
     public SfxPlaceableBlockListener(
             SfxItems items,
@@ -138,164 +139,30 @@ public final class SfxPlaceableBlockListener implements Listener {
                 this.hologramProjectorService,
                 this.machineRuntime,
                 LOGGER);
+        this.placementRouter = new SfxBlockPlacementRouter(
+                this.items,
+                this.blockData,
+                this.basicMachines,
+                this.electricMachines,
+                this.configurableMachines,
+                this.energyService,
+                this.cargoService,
+                this.decorationService,
+                this.gpsService,
+                this.ancientAltarService,
+                this.androidService,
+                this.spawnerService,
+                this.blockPlacerService,
+                this.infusedHopperService,
+                this.hologramProjectorService,
+                this.runtime,
+                this.machineRuntime,
+                LOGGER);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
-        items.readMarker(event.getItemInHand()).ifPresent(marker -> {
-            if (!isPlaceableMarker(marker.itemId(), marker.flags())) {
-                if (marker.flags().contains("placeable-block")) {
-                    event.setCancelled(true);
-                }
-                return;
-            }
-            if (SfxAndroidType.isAndroidItem(marker.itemId()) && shouldRedirectAndroidPlacement(event)) {
-                redirectAndroidPlacement(event, marker.itemId());
-                return;
-            }
-            if (cargoService.supportsType(marker.itemId()) && !cargoService.canPlace(marker.itemId(), event)) {
-                event.setCancelled(true);
-                return;
-            }
-            if (blockData.findAnchor(event.getBlockPlaced().getLocation()).isPresent()) {
-                return;
-            }
-            SfxBlockPlacementContext context = new SfxBlockPlacementContext(
-                    marker.itemId(),
-                    event.getBlockPlaced().getLocation(),
-                    event.getBlockPlaced().getType(),
-                    event.getPlayer().getUniqueId(),
-                    event.getPlayer(),
-                    event.getItemInHand());
-            SfxBlockPlacementTransaction transaction = new SfxBlockPlacementTransaction(
-                    blockData,
-                    new SfxDelegatingBlockBehavior(marker.itemId(), this::initializePlacedDomain),
-                    LOGGER);
-            SfxResult<java.util.UUID> result = transaction.commit(context);
-            if (!result.success()) {
-                event.setCancelled(true);
-                result.cause().ifPresentOrElse(
-                        cause -> LOGGER.log(Level.WARNING, "Failed to initialize SFX block placement for " + marker.itemId()
-                                + " at " + event.getBlockPlaced().getLocation(), cause),
-                        () -> LOGGER.warning("Failed to initialize SFX block placement for " + marker.itemId()
-                                + " at " + event.getBlockPlaced().getLocation() + ": " + result.message()));
-            }
-        });
-    }
-
-    private void initializePlacedDomain(SfxBlockPlacementContext context, java.util.UUID instanceId) {
-        String typeId = context.typeId();
-        if (decorationService.supportsType(typeId)) {
-            decorationService.handlePlaced(instanceId, typeId);
-        }
-        if (gpsService.supportsType(typeId)) {
-            gpsService.handlePlaced(instanceId, typeId);
-        }
-        if (ancientAltarService.supportsType(typeId)) {
-            ancientAltarService.handlePlaced(instanceId, typeId);
-        }
-        if (androidService.supportsType(typeId)) {
-            androidService.handlePlaced(instanceId, typeId, context.player(), context.location().getBlock());
-        }
-        if (spawnerService.supportsType(typeId)) {
-            spawnerService.handlePlaced(instanceId, typeId, context.itemInHand());
-        }
-        if (blockPlacerService.supportsType(typeId)) {
-            blockPlacerService.handlePlaced(instanceId, typeId);
-        }
-        if (infusedHopperService.supportsType(typeId)) {
-            infusedHopperService.handlePlaced(instanceId, typeId);
-        }
-        if (hologramProjectorService.supportsType(typeId)) {
-            hologramProjectorService.handlePlaced(instanceId, typeId);
-        }
-        machineRuntime.recordState(instanceId, typeId, context.location(), SfxMachineStatus.IDLE);
-    }
-
-    private boolean shouldRedirectAndroidPlacement(BlockPlaceEvent event) {
-        return event.getBlockPlaced() != null && event.getBlockPlaced().getType() == Material.PLAYER_WALL_HEAD;
-    }
-
-    private boolean sameBlock(Block first, Block second) {
-        return first != null && second != null
-                && first.getWorld().equals(second.getWorld())
-                && first.getX() == second.getX()
-                && first.getY() == second.getY()
-                && first.getZ() == second.getZ();
-    }
-
-    private void redirectAndroidPlacement(BlockPlaceEvent event, String itemId) {
-        Block target = event.getBlockPlaced();
-        event.setCancelled(true);
-        if (target == null || blockData.findAnchor(target.getLocation()).isPresent()) {
-            return;
-        }
-        ItemStack refund = singleRefundItem(event.getItemInHand());
-        boolean consumed = consumeManualPlacementItem(event);
-        runtime.executeAtLater(target.getLocation(), 1L, () -> {
-            if (!target.getType().isAir() || blockData.findAnchor(target.getLocation()).isPresent()) {
-                refundManualPlacementItem(event.getPlayer(), refund, consumed);
-                return;
-            }
-            boolean placed = SfxProgrammaticPlacementTransactions.place(
-                    blockData,
-                    itemId,
-                    target,
-                    Material.PLAYER_HEAD,
-                    event.getPlayer().getUniqueId(),
-                    event.getItemInHand(),
-                    (context, instanceId) -> {
-                        androidService.handlePlaced(instanceId, itemId, event.getPlayer(), target);
-                        machineRuntime.recordState(instanceId, itemId, target.getLocation(), SfxMachineStatus.IDLE);
-                    },
-                    LOGGER
-            ).isPresent();
-            if (!placed) {
-                refundManualPlacementItem(event.getPlayer(), refund, consumed);
-            }
-        });
-    }
-
-    private boolean consumeManualPlacementItem(BlockPlaceEvent event) {
-        if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
-            return false;
-        }
-        ItemStack stack = event.getItemInHand();
-        if (stack == null || stack.getType().isAir()) {
-            return false;
-        }
-        ItemStack remaining = stack.clone();
-        remaining.setAmount(remaining.getAmount() - 1);
-        if (remaining.getAmount() <= 0) {
-            remaining = null;
-        }
-        if (event.getHand() == EquipmentSlot.OFF_HAND) {
-            event.getPlayer().getInventory().setItemInOffHand(remaining);
-        } else {
-            event.getPlayer().getInventory().setItemInMainHand(remaining);
-        }
-        return true;
-    }
-
-    private ItemStack singleRefundItem(ItemStack source) {
-        if (source == null || source.getType().isAir()) {
-            return null;
-        }
-        ItemStack refund = source.clone();
-        refund.setAmount(1);
-        return refund;
-    }
-
-    private void refundManualPlacementItem(Player player, ItemStack refund, boolean consumed) {
-        if (!consumed || player == null || refund == null || refund.getType().isAir()) {
-            return;
-        }
-        java.util.Map<Integer, ItemStack> leftovers = player.getInventory().addItem(refund.clone());
-        for (ItemStack leftover : leftovers.values()) {
-            if (leftover != null && !leftover.getType().isAir()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), leftover);
-            }
-        }
+        placementRouter.handlePlace(event);
     }
 
     private boolean isSkullBlock(Material material) {
@@ -315,20 +182,10 @@ public final class SfxPlaceableBlockListener implements Listener {
         }
         String typeId = instance.typeId();
         event.setDropItems(false);
-        if (androidService.supportsType(typeId)) {
-            runFrameworkBreakPhase(event.getBlock(), instance.instanceId(), typeId);
-            androidService.destroyAnchoredBlock(event.getBlock(), instance.instanceId(), typeId);
-            return;
-        }
-        if (spawnerService.supportsType(typeId)) {
-            runFrameworkBreakPhase(event.getBlock(), instance.instanceId(), typeId);
-            boolean containment = items.readMarker(event.getPlayer().getInventory().getItemInMainHand())
-                    .map(marker -> "sf:pickaxe_of_containment".equals(marker.itemId()))
-                    .orElse(false);
-            spawnerService.destroyAnchoredBlock(event.getBlock(), instance.instanceId(), typeId, containment);
-            return;
-        }
-        destroyAnchoredBlock(event.getBlock(), instance.instanceId(), typeId);
+        boolean containment = items.readMarker(event.getPlayer().getInventory().getItemInMainHand())
+                .map(marker -> "sf:pickaxe_of_containment".equals(marker.itemId()))
+                .orElse(false);
+        destroyAnchoredBlock(event.getBlock(), instance.instanceId(), typeId, new SfxBlockDestructionOptions(containment));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -352,7 +209,7 @@ public final class SfxPlaceableBlockListener implements Listener {
         event.setCancelled(true);
         if (instance == null) {
             blockData.unregisterAt(block.getLocation());
-            block.setType(Material.AIR, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, "sf:unknown", block, Material.AIR, false, "block-lifecycle", "entity-change:orphan");
             return;
         }
         if (!isWitherExplosion(event.getEntity())) {
@@ -362,7 +219,7 @@ public final class SfxPlaceableBlockListener implements Listener {
             return;
         }
         destroyAnchoredBlock(block, instance.instanceId(), instance.typeId());
-        block.setType(Material.AIR, false);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instance.typeId(), block, Material.AIR, false, "block-lifecycle", "entity-change:wither");
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -549,11 +406,11 @@ public final class SfxPlaceableBlockListener implements Listener {
             blocks.remove(block);
             if (instance == null) {
                 blockData.unregisterAt(block.getLocation());
-                block.setType(Material.AIR, false);
+                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, "sf:unknown", block, Material.AIR, false, "block-lifecycle", "explode:orphan");
                 continue;
             }
             destroyAnchoredBlock(block, instance.instanceId(), instance.typeId());
-            block.setType(Material.AIR, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instance.typeId(), block, Material.AIR, false, "block-lifecycle", "explode:destroy");
         }
     }
 
@@ -664,28 +521,11 @@ public final class SfxPlaceableBlockListener implements Listener {
         lifecycleRouter.destroyAnchoredBlock(block, instanceId, typeId);
     }
 
-
-    private boolean isPlaceableMarker(String itemId, java.util.List<String> flags) {
-        if (basicMachines.supportsType(itemId)
-                || electricMachines.supportsType(itemId)
-                || configurableMachines.supportsType(itemId)
-                || energyService.supportsType(itemId)
-                || cargoService.supportsType(itemId)
-                || gpsService.supportsType(itemId)
-                || decorationService.supportsType(itemId)
-                || ancientAltarService.supportsType(itemId)
-                || androidService.supportsType(itemId)
-                || spawnerService.supportsType(itemId)
-                || blockPlacerService.supportsType(itemId)
-                || infusedHopperService.supportsType(itemId)
-                || hologramProjectorService.supportsType(itemId)) {
-            return true;
-        }
-        
-        
-        
-        return flags.contains("placeable-block") && GENERIC_ANCHORED_BLOCKS.contains(itemId);
+    private void destroyAnchoredBlock(Block block, java.util.UUID instanceId, String typeId, SfxBlockDestructionOptions options) {
+        lifecycleRouter.destroyAnchoredBlock(block, instanceId, typeId, options);
     }
+
+
 
 
 

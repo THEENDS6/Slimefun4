@@ -48,6 +48,7 @@ public final class SfxBlockLifecycleRouter {
     private final SfxHologramProjectorService hologramProjectorService;
     private final SfxMachineRuntimeEngine machineRuntime;
     private final Logger logger;
+    private final SfxBlockLifecycleRegistry lifecycleRegistry = new SfxBlockLifecycleRegistry();
 
     public SfxBlockLifecycleRouter(
             SfxItems items,
@@ -85,38 +86,72 @@ public final class SfxBlockLifecycleRouter {
         this.hologramProjectorService = hologramProjectorService;
         this.machineRuntime = machineRuntime;
         this.logger = logger == null ? Logger.getLogger("SlimeFunX") : logger;
+        registerDomainHandlers();
+    }
+
+    private void registerDomainHandlers() {
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return basicMachines.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { basicMachines.destroyAnchoredBlock(block, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return electricMachines.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { electricMachines.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return configurableMachines.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { configurableMachines.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return energyService.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { energyService.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return cargoService.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { cargoService.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return gpsService.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { gpsService.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return decorationService.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { decorationService.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return ancientAltarService.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { ancientAltarService.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return androidService.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { androidService.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return spawnerService.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { spawnerService.destroyAnchoredBlock(block, instanceId, typeId, options != null && options.containmentPickup()); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return blockPlacerService.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { blockPlacerService.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return infusedHopperService.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { infusedHopperService.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) { return hologramProjectorService.supportsType(typeId); }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { hologramProjectorService.destroyAnchoredBlock(block, instanceId, typeId); }
+        });
     }
 
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {
+        destroyAnchoredBlock(block, instanceId, typeId, SfxBlockDestructionOptions.NONE);
+    }
+
+    public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) {
         runFrameworkBreakPhase(block, instanceId, typeId);
         if (typeId == null) return;
-        if (basicMachines.supportsType(typeId)) {
-            basicMachines.destroyAnchoredBlock(block, typeId);
-        } else if (electricMachines.supportsType(typeId)) {
-            electricMachines.destroyAnchoredBlock(block, instanceId, typeId);
-        } else if (configurableMachines.supportsType(typeId)) {
-            configurableMachines.destroyAnchoredBlock(block, instanceId, typeId);
-        } else if (energyService.supportsType(typeId)) {
-            energyService.destroyAnchoredBlock(block, instanceId, typeId);
-        } else if (cargoService.supportsType(typeId)) {
-            cargoService.destroyAnchoredBlock(block, instanceId, typeId);
-        } else if (gpsService.supportsType(typeId)) {
-            gpsService.destroyAnchoredBlock(block, instanceId, typeId);
-        } else if (decorationService.supportsType(typeId)) {
-            decorationService.destroyAnchoredBlock(block, instanceId, typeId);
-        } else if (ancientAltarService.supportsType(typeId)) {
-            ancientAltarService.destroyAnchoredBlock(block, instanceId, typeId);
-        } else if (androidService.supportsType(typeId)) {
-            androidService.destroyAnchoredBlock(block, instanceId, typeId);
-        } else if (spawnerService.supportsType(typeId)) {
-            spawnerService.destroyAnchoredBlock(block, instanceId, typeId, false);
-        } else if (blockPlacerService.supportsType(typeId)) {
-            blockPlacerService.destroyAnchoredBlock(block, instanceId, typeId);
-        } else if (infusedHopperService.supportsType(typeId)) {
-            infusedHopperService.destroyAnchoredBlock(block, instanceId, typeId);
-        } else if (hologramProjectorService.supportsType(typeId)) {
-            hologramProjectorService.destroyAnchoredBlock(block, instanceId, typeId);
-        } else {
+        if (!lifecycleRegistry.destroyFirst(block, instanceId, typeId, options)) {
             commitGenericDestruction(block, instanceId, typeId);
         }
     }

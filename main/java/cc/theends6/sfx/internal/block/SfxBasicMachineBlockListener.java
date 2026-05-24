@@ -682,7 +682,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             addLiquidLevel(anchorKey, token, block, water);
         } else if (block.getType() == (water ? Material.LAVA : Material.WATER)) {
             Levelled levelled = (Levelled) block.getBlockData();
-            block.setType(levelled.getLevel() == 0 || levelled.getLevel() == 8 ? Material.OBSIDIAN : Material.STONE, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instanceTypeAt(block.getLocation()), block, levelled.getLevel() == 0 || levelled.getLevel() == 8 ? Material.OBSIDIAN : Material.STONE, false, "basic", "generateLiquid:solidify");
             playSound(block.getLocation(), Sound.BLOCK_LAVA_EXTINGUISH, 1.0f, 1.0f);
             clearActiveCrucible(anchorKey, false);
             setInstanceState(block.getRelative(BlockFace.DOWN), SfxBlockLifecycleState.IDLE, "crucible:idle");
@@ -713,7 +713,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         if (block.getType().isAir()) {
-            block.setType(water ? Material.WATER : Material.LAVA, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instanceTypeAt(block.getLocation()), block, water ? Material.WATER : Material.LAVA, false, "basic", "placeLiquid");
         } else if (water && block.getBlockData() instanceof Waterlogged waterlogged) {
             waterlogged.setWaterlogged(true);
             block.setBlockData(waterlogged, false);
@@ -1446,7 +1446,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
         Block block = process.outputLocation().getBlock();
         if (block.getType() == Material.WATER || block.getType() == Material.LAVA) {
-            block.setType(Material.AIR, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instanceTypeAt(block.getRelative(BlockFace.DOWN).getLocation()), block, Material.AIR, false, "basic", "clearActiveCrucible:clear-output");
             return;
         }
         BlockData data = block.getBlockData();

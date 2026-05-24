@@ -285,7 +285,7 @@ public final class SfxIndustrialMinerService implements Listener {
             Block furnace = task.structure().blastFurnace();
             furnace.getWorld().playEffect(furnace.getLocation(), Effect.STEP_SOUND, ore.getType());
             furnace.getWorld().playSound(furnace.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, SoundCategory.BLOCKS, 0.2F, 1.0F);
-            ore.setType(Material.AIR, true);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, frameworkInstance == null ? "sf:industrial_miner" : frameworkInstance.typeId(), ore, Material.AIR, true, "industrial-miner", "extract-ore");
             task.fuelRemaining(task.fuelRemaining() - 1);
             task.oresMined(task.oresMined() + 1);
             if (frameworkInstance != null) {
@@ -408,7 +408,7 @@ public final class SfxIndustrialMinerService implements Listener {
             Location particleLoc = task.structure().blastFurnace().getLocation().clone();
             block.getWorld().spawnParticle(Particle.SMOKE, particleLoc, 20, 0.7D, 0.7D, 0.7D, 0.0D);
             if (block.getType() == Material.MOVING_PISTON) {
-                block.getRelative(BlockFace.UP).setType(Material.AIR, false);
+                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, frameworkInstance == null ? "sf:industrial_miner" : frameworkInstance.typeId(), block.getRelative(BlockFace.UP), Material.AIR, false, "industrial-miner", "clear-above");
                 return;
             }
             if (block.getType() != Material.PISTON || !(block.getBlockData() instanceof Piston piston)) {
@@ -431,7 +431,7 @@ public final class SfxIndustrialMinerService implements Listener {
                 head.setFacing(BlockFace.UP);
                 above.setBlockData(head, false);
             } else if (above.getType() == Material.PISTON_HEAD) {
-                above.setType(Material.AIR, false);
+                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, frameworkInstance == null ? "sf:industrial_miner" : frameworkInstance.typeId(), above, Material.AIR, false, "industrial-miner", "clear-above");
             }
             block.getWorld().playSound(block.getLocation(), extended ? Sound.BLOCK_PISTON_EXTEND : Sound.BLOCK_PISTON_CONTRACT, SoundCategory.BLOCKS, 0.1F, 1.0F);
         } catch (RuntimeException exception) {

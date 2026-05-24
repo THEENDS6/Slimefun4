@@ -875,7 +875,7 @@ public final class ManualMachineService {
         Block fireBlock = definition.centerBlock(clickedBlock).getRelative(BlockFace.DOWN);
         Material type = fireBlock.getType();
         if (type == Material.FIRE || type == Material.SOUL_FIRE) {
-            fireBlock.setType(Material.AIR, false);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(null, definition.id(), fireBlock, Material.AIR, false, "manual-machine", "consume-fire");
         }
     }
 

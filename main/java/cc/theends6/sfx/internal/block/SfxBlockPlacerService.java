@@ -198,7 +198,7 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
         if (!material.isBlock() || UNSAFE_VANILLA_PLACEMENTS.contains(material) || material.name().endsWith("_SPAWN_EGG")) {
             return false;
         }
-        target.setType(material, true);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, BLOCK_PLACER, target, material, true, "placer", "place-block");
         applyCustomName(stack, target);
         return true;
     }
