@@ -21,6 +21,7 @@ import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
 import cc.theends6.sfx.internal.core.SfxAuditReport;
 import cc.theends6.sfx.internal.core.SfxAuditSink;
 import cc.theends6.sfx.internal.core.SfxListenerRegistrar;
+import cc.theends6.sfx.internal.core.SfxModuleManager;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationService;
@@ -70,6 +71,7 @@ import java.io.File;
 import java.util.Objects;
 import java.lang.reflect.Method;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SlimeFunXPlugin extends JavaPlugin {
@@ -102,6 +104,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     SfxHologramProjectorService hologramProjectorService;
     SfxIndustrialMinerService industrialMinerService;
     SfxListenerRegistrar listenerRegistrar;
+    SfxModuleManager moduleManager;
     SfxMachineRuntimeEngine machineRuntime;
     SfxMachinePhaseLedger machinePhaseLedger;
     Object packetEventsApi;
@@ -167,22 +170,30 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     }
 
     public synchronized void reloadAllContent() {
+        if (api != null) {
+            api.menus().closeAll();
+        }
+        if (moduleManager != null) {
+            moduleManager.disableAllReverse();
+            moduleManager = null;
+        }
+        HandlerList.unregisterAll(this);
+        if (machineRuntime != null) {
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.clearDefaultRuntime(machineRuntime);
+            machineRuntime.clear();
+        }
+
         reloadConfig();
         syncBundledLanguages();
         localization.reload();
         legacyItemBehaviorConfig.reload();
-        api.menus().closeAll();
-        if (backpackListener != null) {
-            backpackListener.shutdown();
+        if (researchRegistry != null) {
+            researchRegistry.clear();
         }
         bootstrapContent();
-        if (ancientAltarService != null) {
-            ancientAltarService.reloadRecipes();
-            ancientAltarService.rebuildIndex();
-        }
-        if (hologramProjectorService != null) {
-            hologramProjectorService.rebuildIndex();
-        }
+        SfxPluginRuntimeModule.initialize(this);
+        SfxPluginServices services = SfxPluginServiceModule.create(this);
+        SfxPluginStartupModule.start(this, services);
     }
 
     void bootstrapContent() {
@@ -279,8 +290,8 @@ public final class SlimeFunXPlugin extends JavaPlugin {
             cause = invocationTargetException.getTargetException();
         }
         getLogger().severe("==================================================");
-        getLogger().severe("SlimeFunX failed to start: PacketEvents is missing or incompatible.");
-        getLogger().severe("Install a PacketEvents build compatible with this Paper/Folia server.");
+        getLogger().severe("SlimeFunX failed to start: required dependency PacketEvents is missing or incompatible.");
+        getLogger().severe("Install PacketEvents 2.12.1+ compatible with this Paper/Folia server before enabling SlimeFunX.");
         getLogger().severe("SFX uses PacketEvents for virtual floating text, packet displays and altar visuals.");
         getLogger().severe("Cause: " + cause.getClass().getSimpleName() + ": " + String.valueOf(cause.getMessage()));
         getLogger().severe("==================================================");

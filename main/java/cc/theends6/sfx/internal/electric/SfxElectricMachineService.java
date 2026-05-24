@@ -136,6 +136,12 @@ public final class SfxElectricMachineService implements Listener {
         this.autoCrafterMenuRenderer = new SfxAutoCrafterMenuRenderer(items, localization, profiles);
         this.recipeProcessor = new SfxElectricRecipeProcessor(items);
         bootstrapLoadedStates();
+    }
+
+    public synchronized void start() {
+        if (running) {
+            return;
+        }
         running = true;
         scheduleTick();
         scheduleFlush();

@@ -13,6 +13,9 @@ final class SfxPluginRuntimeModule {
 
     static void initialize(SlimeFunXPlugin plugin) {
         plugin.machineRuntime = new SfxMachineRuntimeEngine();
+        if (plugin.api != null) {
+            plugin.api.bindMachineRuntime(plugin.machineRuntime);
+        }
         SfxWorldMutationBridge.bindDefaultRuntime(plugin.machineRuntime);
         plugin.machinePhaseLedger = new SfxMachinePhaseLedger();
         plugin.machineRuntime.registerPhaseObserver(plugin.machinePhaseLedger);

@@ -394,9 +394,9 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (plugin instanceof SlimeFunXPlugin sfxPlugin) {
-            if (args.length >= 2 && args[1].equalsIgnoreCase("all")) {
+            if (args.length >= 2 && (args[1].equalsIgnoreCase("runtime") || args[1].equalsIgnoreCase("all"))) {
                 sfxPlugin.reloadAllContent();
-                sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success-all", "<green>SFX fully reloaded: registries, recipes, researches, and menus were refreshed.</green>")));
+                sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success-all", "<green>SFX runtime reloaded: listeners, services, machine framework, registries, recipes, researches, and menus were rebuilt.</green>")));
                 return;
             }
             plugin.reloadConfig();
@@ -418,7 +418,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Text.mm(tr("command.help.line.backpack", "<gray>/{label} backpack <list|open|give> ...</gray> <dark_gray>- manage backpacks</dark_gray>").replace("{label}", label)));
         sender.sendMessage(Text.mm(tr("command.help.line.inspect", "<gray>/{label} inspect</gray> <dark_gray>- inspect the SFX item in your main hand</dark_gray>").replace("{label}", label)));
         sender.sendMessage(Text.mm(tr("command.help.line.list", "<gray>/{label} list [page]</gray> <dark_gray>- list visible SFX items</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.reload", "<gray>/{label} reload [all]</gray> <dark_gray>- reload SFX configuration</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.reload", "<gray>/{label} reload [config|runtime]</gray> <dark_gray>- reload config or rebuild the SFX runtime</dark_gray>").replace("{label}", label)));
     }
 
     @Override

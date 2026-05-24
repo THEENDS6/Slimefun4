@@ -57,6 +57,7 @@ final class SfxPluginServiceModule {
         plugin.blockPersistenceListener = new SfxBlockPersistenceListener(plugin, plugin.api.runtime(), plugin.blockDataService, plugin.gpsService);
         plugin.radiationService = new SfxRadiationService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.itemRegistry(), plugin.playerDataService);
         plugin.listenerRegistrar = new SfxListenerRegistrar(plugin);
-        return new SfxPluginServices(manualMachineService, placeableBlockListener, frameworkStats);
+        plugin.moduleManager = SfxPluginLifecycleWiring.create(plugin);
+        return new SfxPluginServices(manualMachineService, placeableBlockListener, frameworkStats, plugin.moduleManager);
     }
 }

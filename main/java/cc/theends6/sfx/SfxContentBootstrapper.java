@@ -20,6 +20,9 @@ final class SfxContentBootstrapper {
         DefaultSfxItemRegistry itemRegistry = (DefaultSfxItemRegistry) api.itemRegistry();
         itemRegistry.clear();
         api.internalManualMachines().clear();
+        if (researchRegistry != null) {
+            researchRegistry.clear();
+        }
 
         BaseContentBootstrap.register(itemRegistry, api.internalManualMachines());
         SfxYamlContentLoader yamlContentLoader = new SfxYamlContentLoader(plugin, itemRegistry);

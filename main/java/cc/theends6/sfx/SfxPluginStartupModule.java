@@ -12,13 +12,23 @@ final class SfxPluginStartupModule {
     }
 
     static void start(SlimeFunXPlugin plugin, SfxPluginServices services) {
+        if (!services.frameworkStats().valid()) {
+            plugin.getLogger().severe("SlimeFunX machine framework validation failed: "
+                    + services.frameworkStats().unboundDeclaredEffects()
+                    + " declared effect hooks are unbound: "
+                    + plugin.machineRuntime.unboundDeclaredEffectNames());
+            plugin.getServer().getPluginManager().disablePlugin(plugin);
+            return;
+        }
         SfxPluginListenerWiring.register(plugin, services.manualMachineService(), services.placeableBlockListener());
-        plugin.decorationService.start();
-        plugin.ancientAltarService.start();
-        plugin.infusedHopperService.start();
-        plugin.hologramProjectorService.rebuildIndex();
-        plugin.radiationService.start();
-        plugin.androidService.start();
+        SfxPluginLifecycleWiring.registerListenerLifecycle(plugin);
+        try {
+            services.moduleManager().enableAll();
+        } catch (Exception exception) {
+            plugin.getLogger().severe("Failed to start SFX service lifecycle: " + exception.getMessage());
+            plugin.getServer().getPluginManager().disablePlugin(plugin);
+            return;
+        }
         registerCommand(plugin);
         logStartupSummary(plugin, services.frameworkStats());
     }
@@ -38,9 +48,9 @@ final class SfxPluginStartupModule {
                 + plugin.machineRuntime.capabilityDeclarationCount() + " capabilities, "
                 + plugin.machineRuntime.policyRefCount() + " policy refs, "
                 + plugin.machineRuntime.effectCount() + " phase effects, "
-                + plugin.machineRuntime.effectHookCount() + " bound effect hooks (" + frameworkStats.builtinEffectHooks() + " built-in defaults, " + frameworkStats.domainEffectHooks() + " domain hooks, " + frameworkStats.genericEffectHooks() + " generic fallbacks), "
+                + plugin.machineRuntime.effectHookCount() + " bound effect hooks (" + frameworkStats.builtinEffectHooks() + " built-in defaults, " + frameworkStats.domainEffectHooks() + " domain hooks, no generic fallbacks), "
                 + plugin.machineRuntime.phaseObserverCount() + " phase observers, "
-                + plugin.machineRuntime.unboundDeclaredEffectNames().size() + " unbound declared effects. "
+                + frameworkStats.unboundDeclaredEffects() + " unbound declared effects. "
                 + "Loaded " + plugin.blockDataService.anchorCount() + " block anchors and "
                 + plugin.blockDataService.instanceCount() + " block instances.");
     }

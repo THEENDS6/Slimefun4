@@ -5,6 +5,7 @@ import cc.theends6.sfx.api.guide.SfxGuide;
 import cc.theends6.sfx.api.item.SfxItemRegistry;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.machine.SfxManualMachineRegistry;
+import cc.theends6.sfx.api.machine.SfxMachineRuntime;
 import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.guide.DefaultSfxGuide;
@@ -12,6 +13,8 @@ import cc.theends6.sfx.internal.guide.PermissionGuideAccessPolicy;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.item.DefaultSfxItems;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
+import cc.theends6.sfx.internal.machine.DefaultSfxMachineRuntimeApi;
+import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.menu.DefaultSfxMenus;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.research.SfxResearchService;
@@ -26,6 +29,7 @@ public final class SfxApiImpl implements SfxApi {
     private final DefaultSfxMenus menus;
     private final DefaultSfxGuide guide;
     private final DefaultManualMachineRegistry manualMachines;
+    private final DefaultSfxMachineRuntimeApi machineRuntime;
 
     private SfxApiImpl(
             SfxRuntime runtime,
@@ -33,7 +37,8 @@ public final class SfxApiImpl implements SfxApi {
             DefaultSfxItems items,
             DefaultSfxMenus menus,
             DefaultSfxGuide guide,
-            DefaultManualMachineRegistry manualMachines
+            DefaultManualMachineRegistry manualMachines,
+            DefaultSfxMachineRuntimeApi machineRuntime
     ) {
         this.runtime = runtime;
         this.itemRegistry = itemRegistry;
@@ -41,6 +46,7 @@ public final class SfxApiImpl implements SfxApi {
         this.menus = menus;
         this.guide = guide;
         this.manualMachines = manualMachines;
+        this.machineRuntime = machineRuntime;
     }
 
     public static SfxApiImpl bootstrap(JavaPlugin plugin, SfxLocalization localization, SfxPlayerDataService profiles, SfxResearchService researches) {
@@ -50,7 +56,7 @@ public final class SfxApiImpl implements SfxApi {
         DefaultSfxItems items = new DefaultSfxItems(plugin, itemRegistry, localization);
         DefaultSfxMenus menus = new DefaultSfxMenus(runtime);
         DefaultSfxGuide guide = new DefaultSfxGuide(plugin, runtime, itemRegistry, items, menus, new PermissionGuideAccessPolicy(), manualMachines, localization, profiles, researches);
-        return new SfxApiImpl(runtime, itemRegistry, items, menus, guide, manualMachines);
+        return new SfxApiImpl(runtime, itemRegistry, items, menus, guide, manualMachines, new DefaultSfxMachineRuntimeApi());
     }
 
     @Override
@@ -81,6 +87,15 @@ public final class SfxApiImpl implements SfxApi {
     @Override
     public SfxManualMachineRegistry manualMachines() {
         return manualMachines;
+    }
+
+    @Override
+    public SfxMachineRuntime machineRuntime() {
+        return machineRuntime;
+    }
+
+    public void bindMachineRuntime(SfxMachineRuntimeEngine engine) {
+        machineRuntime.bind(engine);
     }
 
     public DefaultManualMachineRegistry internalManualMachines() {

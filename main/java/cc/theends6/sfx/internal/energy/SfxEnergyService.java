@@ -131,7 +131,14 @@ public final class SfxEnergyService implements Listener {
                 new SfxEnergyConnectivityPolicy(RANGE));
         bootstrapLoadedStates();
         topology.rebuild();
+    }
+
+    public synchronized void start() {
+        if (running) {
+            return;
+        }
         running = true;
+        topology.rebuild();
         scheduleTick();
         scheduleFlush();
     }

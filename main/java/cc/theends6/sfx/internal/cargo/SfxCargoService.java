@@ -121,7 +121,7 @@ public final class SfxCargoService implements Listener {
     private volatile long cargoStateRevision;
     private final Map<UUID, UUID> visualizers = new ConcurrentHashMap<>();
     private final Map<UUID, CargoTransferStats> managerStats = new ConcurrentHashMap<>();
-    private volatile boolean running = true;
+    private volatile boolean running;
 
     public SfxCargoService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxVirtualContainerService virtualContainers, SfxFloatingTextDisplayService floatingText, SfxElectricMachineService electricMachines, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -136,6 +136,14 @@ public final class SfxCargoService implements Listener {
         registerFrameworkEffects();
         this.topology = new SfxTopologyService(blockData, new SfxCargoTopologyPolicy(definitions), new SfxCargoConnectivityPolicy(RANGE));
         bootstrapLoadedStates();
+        topology.rebuild();
+    }
+
+    public synchronized void start() {
+        if (running) {
+            return;
+        }
+        running = true;
         topology.rebuild();
         scheduleTopologyRefresh();
         scheduleTick();
