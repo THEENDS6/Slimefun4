@@ -103,7 +103,7 @@ public final class SfxCargoService implements Listener {
 
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
-    private final SfxItems items;
+    final SfxItems items;
     private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
     private final SfxVirtualContainerService virtualContainers;
@@ -116,7 +116,7 @@ public final class SfxCargoService implements Listener {
     private final Map<UUID, SfxCargoNodeState> states = new ConcurrentHashMap<>();
     private final Set<UUID> dirtyStates = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Inventory> openMenus = new ConcurrentHashMap<>();
-    private final Map<String, Map<UUID, Integer>> distributionDebt = new ConcurrentHashMap<>();
+    final Map<String, Map<UUID, Integer>> distributionDebt = new ConcurrentHashMap<>();
     private final Map<UUID, SfxCargoRuntimeNetwork> runtimeNetworks = new ConcurrentHashMap<>();
     private volatile long cargoStateRevision;
     private final Map<UUID, UUID> visualizers = new ConcurrentHashMap<>();
@@ -827,177 +827,8 @@ public final class SfxCargoService implements Listener {
     }
 
     private List<SfxCargoOutputMove> planOutputMoves(SfxCargoNodeRef input, ItemStack stack, List<SfxCargoNodeRef> outputs, SfxCargoDistributionMode mode, SfxCargoEndpoint source) {
-        if (isEmpty(stack)) {
-            return List.of();
-        }
-        List<SfxCargoNodeRef> candidates = new ArrayList<>();
-        SfxReservationLedger reservations = new SfxReservationLedger();
-        for (SfxCargoNodeRef output : outputs) {
-            if (output.state().channel != input.state().channel) {
-                continue;
-            }
-            if (!acceptsOutputFilter(output.state(), output.definition(), stack)) {
-                continue;
-            }
-            SfxCargoEndpoint endpoint = output.endpoint();
-            if (endpoint == null || endpoint.sameStorage(source)) {
-                continue;
-            }
-            if (availableCapacityFor(output.withEndpoint(endpoint), input, stack, reservations) <= 0) {
-                continue;
-            }
-            candidates.add(output.withEndpoint(endpoint));
-        }
-        if (candidates.isEmpty()) {
-            return List.of();
-        }
-        candidates.sort(Comparator.comparingInt((SfxCargoNodeRef ref) -> ref.priority()).reversed().thenComparing(ref -> ref.instance().anchorKey(), this::compareAnchorKeys));
-        List<SfxCargoOutputMove> moves = new ArrayList<>();
-        int remaining = stack.getAmount();
-        int index = 0;
-        while (index < candidates.size() && remaining > 0) {
-            int priority = candidates.get(index).priority();
-            List<SfxCargoNodeRef> group = new ArrayList<>();
-            while (index < candidates.size() && candidates.get(index).priority() == priority) {
-                group.add(candidates.get(index++));
-            }
-            int before = remaining;
-            if (mode == SfxCargoDistributionMode.EVEN) {
-                remaining = planEvenMoves(input, priority, group, stack, remaining, moves, reservations);
-            } else if (mode == SfxCargoDistributionMode.ROUND_ROBIN) {
-                remaining = planRoundRobinMoves(input, group, stack, remaining, moves, reservations);
-            } else {
-                remaining = planSequentialMoves(input, group, stack, remaining, moves, reservations);
-            }
-            if (input.definition().type() == SfxCargoComponentType.INPUT_NODE && !moves.isEmpty()) {
-                break;
-            }
-            if (remaining == before && !group.isEmpty()) {
-                break;
-            }
-        }
-        return moves;
+        return SfxCargoTransferPlanner.planOutputMoves(this, input, stack, outputs, mode, source);
     }
-
-    private int availableCapacityFor(SfxCargoNodeRef output, SfxCargoNodeRef input, ItemStack stack, SfxReservationLedger reservations) {
-        if (output == null || output.endpoint() == null) {
-            return 0;
-        }
-        int capacity = input.definition().type() == SfxCargoComponentType.INPUT_NODE
-                ? output.endpoint().capacityForSingleSlot(stack, input.state().smartFill)
-                : output.endpoint().capacityFor(stack, input.state().smartFill);
-        SfxStorageKey key = output.endpoint().storageKey();
-        return reservations.available(key == null ? null : key.value(), capacity);
-    }
-
-    private void reserveCapacity(SfxCargoEndpoint endpoint, int amount, SfxReservationLedger reservations) {
-        if (endpoint == null || amount <= 0) {
-            return;
-        }
-        SfxStorageKey key = endpoint.storageKey();
-        if (key != null) {
-            reservations.reserve(key.value(), amount);
-        }
-    }
-
-    private int planSequentialMoves(SfxCargoNodeRef input, List<SfxCargoNodeRef> group, ItemStack stack, int remaining, List<SfxCargoOutputMove> moves, SfxReservationLedger reservations) {
-        for (SfxCargoNodeRef output : group) {
-            if (remaining <= 0) {
-                break;
-            }
-            int amount = Math.min(remaining, availableCapacityFor(output, input, stack, reservations));
-            if (amount <= 0) {
-                continue;
-            }
-            moves.add(new SfxCargoOutputMove(output.endpoint(), amount));
-            reserveCapacity(output.endpoint(), amount, reservations);
-            remaining -= amount;
-            if (input.definition().type() == SfxCargoComponentType.INPUT_NODE) {
-                break;
-            }
-        }
-        return remaining;
-    }
-
-    private int planRoundRobinMoves(SfxCargoNodeRef input, List<SfxCargoNodeRef> group, ItemStack stack, int remaining, List<SfxCargoOutputMove> moves, SfxReservationLedger reservations) {
-        if (group.isEmpty() || remaining <= 0) {
-            return remaining;
-        }
-        int start = input.state().roundRobinCursor % group.size();
-        boolean movedAny = false;
-        for (int i = 0; i < group.size() && remaining > 0; i++) {
-            SfxCargoNodeRef output = group.get((start + i) % group.size());
-            int amount = Math.min(remaining, availableCapacityFor(output, input, stack, reservations));
-            if (amount <= 0) {
-                continue;
-            }
-            moves.add(new SfxCargoOutputMove(output.endpoint(), amount));
-            reserveCapacity(output.endpoint(), amount, reservations);
-            remaining -= amount;
-            movedAny = true;
-            input.state().roundRobinCursor = (start + i + 1) % group.size();
-            if (input.definition().type() == SfxCargoComponentType.INPUT_NODE) {
-                break;
-            }
-        }
-        if (movedAny) {
-            persistState(input.instance().instanceId(), input.state());
-        }
-        return remaining;
-    }
-
-    private int planEvenMoves(SfxCargoNodeRef input, int priority, List<SfxCargoNodeRef> group, ItemStack stack, int remaining, List<SfxCargoOutputMove> moves, SfxReservationLedger reservations) {
-        if (group.isEmpty() || remaining <= 0) {
-            return remaining;
-        }
-        String key = input.instance().instanceId() + ":" + input.state().channel + ":" + priority + ":" + SfxCargoItemKey.of(items, stack).key();
-        Map<UUID, Integer> debts = distributionDebt.computeIfAbsent(key, ignored -> new ConcurrentHashMap<>());
-        group.sort(Comparator.comparingInt((SfxCargoNodeRef ref) -> debts.getOrDefault(ref.instance().instanceId(), 0)).reversed()
-                .thenComparing(ref -> ref.instance().anchorKey(), this::compareAnchorKeys));
-        int originalRemaining = remaining;
-        Map<UUID, Integer> movedByNode = new HashMap<>();
-        while (remaining > 0) {
-            List<SfxCargoNodeRef> eligible = group.stream()
-                    .filter(ref -> availableCapacityFor(ref, input, stack, reservations) > 0)
-                    .toList();
-            if (eligible.isEmpty()) {
-                break;
-            }
-            int base = Math.max(1, (int) Math.ceil(remaining / (double) eligible.size()));
-            boolean any = false;
-            for (SfxCargoNodeRef output : eligible) {
-                if (remaining <= 0) {
-                    break;
-                }
-                int capacity = availableCapacityFor(output, input, stack, reservations);
-                int amount = Math.min(Math.min(base, remaining), capacity);
-                if (amount <= 0) {
-                    continue;
-                }
-                moves.add(new SfxCargoOutputMove(output.endpoint(), amount));
-                reserveCapacity(output.endpoint(), amount, reservations);
-                movedByNode.merge(output.instance().instanceId(), amount, Integer::sum);
-                remaining -= amount;
-                any = true;
-            }
-            if (!any) {
-                break;
-            }
-        }
-        int totalMoved = originalRemaining - remaining;
-        if (totalMoved > 0) {
-            int eligibleCount = Math.max(1, group.size());
-            int expected = totalMoved / eligibleCount;
-            for (SfxCargoNodeRef node : group) {
-                UUID id = node.instance().instanceId();
-                int debt = debts.getOrDefault(id, 0);
-                debt += expected - movedByNode.getOrDefault(id, 0);
-                debts.put(id, Math.max(-4096, Math.min(4096, debt)));
-            }
-        }
-        return remaining;
-    }
-
 
     private SfxCargoEndpoint resolveOutputEndpoint(SfxBlockInstanceRecord node, SfxCargoNodeState state, SfxVirtualContainer sourceContainer, Map<SfxCargoEndpointCacheKey, Optional<SfxCargoEndpoint>> endpointCache) {
         SfxCargoEndpoint endpoint = resolveEndpointAt(node, state.attachedFace, true, endpointCache);
@@ -1092,7 +923,7 @@ public final class SfxCargoService implements Listener {
         return acceptsFilter(state, stack);
     }
 
-    private boolean acceptsOutputFilter(SfxCargoNodeState state, SfxCargoComponentDefinition definition, ItemStack stack) {
+    boolean acceptsOutputFilter(SfxCargoNodeState state, SfxCargoComponentDefinition definition, ItemStack stack) {
         if (definition.type() != SfxCargoComponentType.ADVANCED_OUTPUT_NODE) {
             return true;
         }
@@ -1549,7 +1380,7 @@ public final class SfxCargoService implements Listener {
         return decoded;
     }
 
-    private void persistState(UUID instanceId, SfxCargoNodeState state) {
+    void persistState(UUID instanceId, SfxCargoNodeState state) {
         if (instanceId == null || state == null) {
             return;
         }
@@ -1603,7 +1434,7 @@ public final class SfxCargoService implements Listener {
         return world == null ? null : new Location(world, key.x(), key.y() - 1, key.z());
     }
 
-    private int compareAnchorKeys(SfxBlockAnchorKey left, SfxBlockAnchorKey right) {
+    int compareAnchorKeys(SfxBlockAnchorKey left, SfxBlockAnchorKey right) {
         int byWorld = left.worldId().compareTo(right.worldId());
         if (byWorld != 0) {
             return byWorld;
@@ -1631,7 +1462,7 @@ public final class SfxCargoService implements Listener {
         return copy;
     }
 
-    private boolean isEmpty(ItemStack stack) {
+    boolean isEmpty(ItemStack stack) {
         return stack == null || stack.getType() == Material.AIR || stack.getAmount() <= 0;
     }
 
