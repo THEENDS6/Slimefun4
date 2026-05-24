@@ -169,31 +169,37 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         return backpackListener;
     }
 
-    public synchronized void reloadAllContent() {
-        if (api != null) {
-            api.menus().closeAll();
-        }
-        if (moduleManager != null) {
-            moduleManager.disableAllReverse();
-            moduleManager = null;
-        }
-        HandlerList.unregisterAll(this);
-        if (machineRuntime != null) {
-            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.clearDefaultRuntime(machineRuntime);
-            machineRuntime.clear();
-        }
+    public synchronized boolean reloadAllContent() {
+        try {
+            if (api != null) {
+                api.menus().closeAll();
+            }
+            if (moduleManager != null) {
+                moduleManager.disableAllReverse();
+                moduleManager = null;
+            }
+            HandlerList.unregisterAll(this);
+            if (machineRuntime != null) {
+                cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.clearDefaultRuntime(machineRuntime);
+                machineRuntime.clear();
+            }
 
-        reloadConfig();
-        syncBundledLanguages();
-        localization.reload();
-        legacyItemBehaviorConfig.reload();
-        if (researchRegistry != null) {
-            researchRegistry.clear();
+            reloadConfig();
+            syncBundledLanguages();
+            localization.reload();
+            legacyItemBehaviorConfig.reload();
+            if (researchRegistry != null) {
+                researchRegistry.clear();
+            }
+            bootstrapContent();
+            SfxPluginRuntimeModule.initialize(this);
+            SfxPluginServices services = SfxPluginServiceModule.create(this);
+            return SfxPluginStartupModule.start(this, services);
+        } catch (RuntimeException exception) {
+            getLogger().severe("SFX runtime reload failed: " + exception.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return false;
         }
-        bootstrapContent();
-        SfxPluginRuntimeModule.initialize(this);
-        SfxPluginServices services = SfxPluginServiceModule.create(this);
-        SfxPluginStartupModule.start(this, services);
     }
 
     void bootstrapContent() {

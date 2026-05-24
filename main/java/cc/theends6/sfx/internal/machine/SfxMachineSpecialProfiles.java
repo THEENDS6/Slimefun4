@@ -67,39 +67,20 @@ public final class SfxMachineSpecialProfiles {
     }
 
     public static SfxMachineDefinition apply(SfxMachineDefinition definition) {
+        return apply(definition, null);
+    }
+
+    public static SfxMachineDefinition apply(SfxMachineDefinition definition, String declaredProfile) {
         if (definition == null || definition.id() == null) return definition;
         String id = definition.id().toLowerCase(Locale.ROOT);
         SfxMachineDefinition.Builder builder = definition.toBuilder();
-        Profile profile = LEGACY_PROFILES.get(id);
+        Profile profile = parseProfile(declaredProfile);
+        if (profile == null) {
+            profile = LEGACY_PROFILES.get(id);
+        }
 
         if (profile != null) {
-            switch (profile) {
-                case VANILLA_FURNACE -> vanillaFurnace(builder);
-                case HAND_INPUT_TRANSFORM -> handInputTransform(builder);
-                case AUTO_BREWER -> autoBrewer(builder);
-                case AUTO_CRAFTER -> autoCrafter(builder);
-                case GEO_EXTRACTOR -> geoExtractor(builder);
-                case FLUID_PUMP -> fluidPump(builder);
-                case ITEM_META_TRANSFORM -> itemMetaTransform(builder);
-                case PROXY_PANEL_REACTOR_ACCESS_PORT -> proxyPanel(builder, "reactor-access-port");
-                case FUEL_GENERATOR -> generator(builder, false);
-                case SOLAR_GENERATOR -> generator(builder, true);
-                case REACTOR -> reactor(builder);
-                case ASSEMBLER -> assembler(builder);
-                case DECORATION -> decoration(builder, id);
-                case GPS_DEVICE -> gpsDevice(builder);
-                case ANDROID_INTERFACE -> androidInterface(builder);
-                case ANDROID -> android(builder);
-                case ANCIENT_ALTAR -> ancientAltar(builder);
-                case CARGO_NODE -> cargoNode(builder);
-                case ENERGY_NODE -> energyNode(builder);
-                case CHARGING_BENCH -> chargingBench(builder);
-                case REINFORCED_SPAWNER -> reinforcedSpawner(builder);
-                case INFUSED_HOPPER -> infusedHopper(builder);
-                case HOLOGRAM_PROJECTOR -> hologramProjector(builder);
-                case BLOCK_PLACER -> blockPlacer(builder);
-                case INDUSTRIAL_MINER -> industrialMiner(builder);
-            }
+            applyProfile(builder, profile, id);
         } else if (definition.category() == SfxMachineCategory.ELECTRIC) {
             recipeMachine(builder);
             builder.capability(SfxMachineCapability.USES_ENERGY);
@@ -113,6 +94,48 @@ public final class SfxMachineSpecialProfiles {
             commonMachine(builder);
         }
         return builder.build();
+    }
+
+    private static Profile parseProfile(String declaredProfile) {
+        if (declaredProfile == null || declaredProfile.isBlank()) {
+            return null;
+        }
+        String normalized = declaredProfile.trim().replace('-', '_').replace(':', '_').toUpperCase(Locale.ROOT);
+        try {
+            return Profile.valueOf(normalized);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private static void applyProfile(SfxMachineDefinition.Builder builder, Profile profile, String id) {
+        switch (profile) {
+            case VANILLA_FURNACE -> vanillaFurnace(builder);
+            case HAND_INPUT_TRANSFORM -> handInputTransform(builder);
+            case AUTO_BREWER -> autoBrewer(builder);
+            case AUTO_CRAFTER -> autoCrafter(builder);
+            case GEO_EXTRACTOR -> geoExtractor(builder);
+            case FLUID_PUMP -> fluidPump(builder);
+            case ITEM_META_TRANSFORM -> itemMetaTransform(builder);
+            case PROXY_PANEL_REACTOR_ACCESS_PORT -> proxyPanel(builder, "reactor-access-port");
+            case FUEL_GENERATOR -> generator(builder, false);
+            case SOLAR_GENERATOR -> generator(builder, true);
+            case REACTOR -> reactor(builder);
+            case ASSEMBLER -> assembler(builder);
+            case DECORATION -> decoration(builder, id);
+            case GPS_DEVICE -> gpsDevice(builder);
+            case ANDROID_INTERFACE -> androidInterface(builder);
+            case ANDROID -> android(builder);
+            case ANCIENT_ALTAR -> ancientAltar(builder);
+            case CARGO_NODE -> cargoNode(builder);
+            case ENERGY_NODE -> energyNode(builder);
+            case CHARGING_BENCH -> chargingBench(builder);
+            case REINFORCED_SPAWNER -> reinforcedSpawner(builder);
+            case INFUSED_HOPPER -> infusedHopper(builder);
+            case HOLOGRAM_PROJECTOR -> hologramProjector(builder);
+            case BLOCK_PLACER -> blockPlacer(builder);
+            case INDUSTRIAL_MINER -> industrialMiner(builder);
+        }
     }
 
     private static void decoration(SfxMachineDefinition.Builder builder, String id) {

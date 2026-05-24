@@ -78,6 +78,26 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
     public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
         if (context == null) return SfxMachinePhaseResult.cont();
         context.put("hologram.framework.effect", effectName);
+        SfxBlockInstanceRecord instance = context.attachment("hologram.instance", SfxBlockInstanceRecord.class).orElse(null);
+        HologramState state = context.attachment("hologram.state", HologramState.class).orElse(instance == null ? DEFAULT_STATE : HologramState.decode(instance.stateBlob()));
+        if ("hologram:open-editor".equals(effectName)) {
+            Player player = context.attachment("hologram.player", Player.class).orElse(null);
+            if (player == null || instance == null) {
+                return SfxMachinePhaseResult.blocked(SfxMachineStatus.BLOCKED, "hologram editor context missing");
+            }
+            if (!canEdit(player, instance)) {
+                send(player, "machines.hologram-projector.not-owner", "<red>Only the owner can edit this Hologram Projector.</red>");
+                return SfxMachinePhaseResult.blocked(SfxMachineStatus.BLOCKED, "player cannot edit this hologram");
+            }
+            openEditor(player, instance.instanceId());
+            context.put("hologram.editor.opened", Boolean.TRUE);
+            return SfxMachinePhaseResult.cont();
+        }
+        if (("hologram:update-text".equals(effectName) || "hologram:sync-display".equals(effectName)) && instance != null) {
+            updateProjection(instance, state);
+            context.put("hologram.display.synced", Boolean.TRUE);
+            return SfxMachinePhaseResult.cont();
+        }
         context.put("hologram.framework.effect.handled", Boolean.TRUE);
         return SfxMachinePhaseResult.cont();
     }
@@ -175,12 +195,9 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
             return;
         }
         event.setCancelled(true);
-        machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), event.getClickedBlock().getLocation(), null, null, SfxMachineStatus.IDLE, frameworkAttributes(instance, HologramState.decode(instance.stateBlob())));
-        if (!canEdit(event.getPlayer(), instance)) {
-            send(event.getPlayer(), "machines.hologram-projector.not-owner", "<red>Only the owner can edit this Hologram Projector.</red>");
-            return;
-        }
-        openEditor(event.getPlayer(), instance.instanceId());
+        Map<String, Object> framework = frameworkAttributes(instance, HologramState.decode(instance.stateBlob()));
+        framework.put("hologram.player", event.getPlayer());
+        SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), event.getClickedBlock().getLocation(), null, null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -266,9 +283,9 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
         World world = Bukkit.getWorld(updated.anchorKey().worldId());
         Location location = world == null ? null : new Location(world, updated.anchorKey().x(), updated.anchorKey().y(), updated.anchorKey().z());
         Map<String, Object> framework = frameworkAttributes(updated, state);
-        machineRuntime.runPhase(updated.typeId(), SfxMachinePhase.ON_COMPLETE, updated.instanceId(), location, null, null, SfxMachineStatus.RUNNING, framework);
-        updateProjection(updated, state);
-        machineRuntime.runPhase(updated.typeId(), SfxMachinePhase.AFTER_TICK, updated.instanceId(), location, null, null, SfxMachineStatus.RUNNING, framework);
+        if (SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(updated.typeId(), SfxMachinePhase.ON_COMPLETE, updated.instanceId(), location, null, null, SfxMachineStatus.RUNNING, framework), framework, SfxMachinePhase.ON_COMPLETE.name())) {
+            machineRuntime.runPhase(updated.typeId(), SfxMachinePhase.AFTER_TICK, updated.instanceId(), location, null, null, SfxMachineStatus.RUNNING, framework);
+        }
     }
 
     private void updateProjection(SfxBlockInstanceRecord instance, HologramState state) {

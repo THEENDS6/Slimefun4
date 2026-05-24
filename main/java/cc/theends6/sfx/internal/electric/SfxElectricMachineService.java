@@ -274,7 +274,10 @@ public final class SfxElectricMachineService implements Listener {
         if (!definition.recipeProvider().hasWorldAction() && !definition.recipeProvider().hasSpecialTick()) {
             return null;
         }
-        machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, attributes);
+        SfxMachinePhaseResult before = machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, attributes);
+        if (!cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard.proceed(before, attributes, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.BLOCKED_OUTPUT, true);
+        }
         Object result = attributes.get("electric.specialResult");
         return result instanceof SfxElectricMachineTickResult tickResult ? tickResult : null;
     }
@@ -286,7 +289,8 @@ public final class SfxElectricMachineService implements Listener {
         if (status != null) {
             attributes.put("electric.renderStatus", status);
         }
-        machineRuntime.runPhase(definition.id(), SfxMachinePhase.AFTER_OUTPUT, instanceId, location, context, null, SfxElectricMachineFrameworkBridge.status(status == null ? SfxElectricMachineRenderStatus.IDLE : status), attributes);
+        SfxMachinePhaseResult afterOutput = machineRuntime.runPhase(definition.id(), SfxMachinePhase.AFTER_OUTPUT, instanceId, location, context, null, SfxElectricMachineFrameworkBridge.status(status == null ? SfxElectricMachineRenderStatus.IDLE : status), attributes);
+        cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard.proceed(afterOutput, attributes, SfxMachinePhase.AFTER_OUTPUT.name());
     }
 
     public boolean supportsType(String typeId) {

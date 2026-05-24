@@ -395,8 +395,10 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         }
         if (plugin instanceof SlimeFunXPlugin sfxPlugin) {
             if (args.length >= 2 && (args[1].equalsIgnoreCase("runtime") || args[1].equalsIgnoreCase("all"))) {
-                sfxPlugin.reloadAllContent();
-                sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success-all", "<green>SFX runtime reloaded: listeners, services, machine framework, registries, recipes, researches, and menus were rebuilt.</green>")));
+                boolean ok = sfxPlugin.reloadAllContent();
+                sender.sendMessage(Text.prefixed(plugin, ok
+                        ? tr("command.reload.success-all", "<green>SFX runtime reloaded: listeners, services, machine framework, registries, recipes, researches, and menus were rebuilt.</green>")
+                        : tr("command.reload.failed-all", "<red>SFX runtime reload failed. The plugin was disabled to avoid running with a partial service graph.</red>")));
                 return;
             }
             plugin.reloadConfig();

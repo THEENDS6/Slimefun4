@@ -11,14 +11,14 @@ final class SfxPluginStartupModule {
     private SfxPluginStartupModule() {
     }
 
-    static void start(SlimeFunXPlugin plugin, SfxPluginServices services) {
+    static boolean start(SlimeFunXPlugin plugin, SfxPluginServices services) {
         if (!services.frameworkStats().valid()) {
             plugin.getLogger().severe("SlimeFunX machine framework validation failed: "
                     + services.frameworkStats().unboundDeclaredEffects()
                     + " declared effect hooks are unbound: "
                     + plugin.machineRuntime.unboundDeclaredEffectNames());
             plugin.getServer().getPluginManager().disablePlugin(plugin);
-            return;
+            return false;
         }
         SfxPluginListenerWiring.register(plugin, services.manualMachineService(), services.placeableBlockListener());
         SfxPluginLifecycleWiring.registerListenerLifecycle(plugin);
@@ -27,10 +27,11 @@ final class SfxPluginStartupModule {
         } catch (Exception exception) {
             plugin.getLogger().severe("Failed to start SFX service lifecycle: " + exception.getMessage());
             plugin.getServer().getPluginManager().disablePlugin(plugin);
-            return;
+            return false;
         }
         registerCommand(plugin);
         logStartupSummary(plugin, services.frameworkStats());
+        return true;
     }
 
     private static void registerCommand(SlimeFunXPlugin plugin) {

@@ -57,12 +57,11 @@ public final class SfxFloatingTextDisplayService {
     private final SfxRuntime runtime;
     private final AtomicInteger entityIds = new AtomicInteger(2_000_000);
     private final Map<SfxFloatingTextKey, SfxFloatingTextDisplayState> states = new ConcurrentHashMap<>();
-    private volatile boolean running = true;
+    private volatile boolean running;
 
     public SfxFloatingTextDisplayService(JavaPlugin plugin, SfxRuntime runtime) {
         this.plugin = plugin;
         this.runtime = runtime;
-        scheduleResync();
     }
 
     public void update(SfxFloatingTextProjection projection) {
@@ -121,6 +120,14 @@ public final class SfxFloatingTextDisplayService {
             return;
         }
         runtime.executeForPlayerLater(player, Math.max(1L, delayTicks), () -> refreshViewer(player));
+    }
+
+    public synchronized void start() {
+        if (running) {
+            return;
+        }
+        running = true;
+        scheduleResync();
     }
 
     public void shutdown() {

@@ -24,7 +24,7 @@ public final class SfxBlockPersistenceListener implements Listener {
     private final List<SfxDirtyPersistenceService> dirtyServices;
     private final SfxFlushCoordinator flushCoordinator;
     private final long autosaveIntervalTicks;
-    private volatile boolean running = true;
+    private volatile boolean running;
 
     public SfxBlockPersistenceListener(JavaPlugin plugin, SfxRuntime runtime, SfxBlockDataService blockData, SfxDirtyPersistenceService... dirtyServices) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -36,7 +36,6 @@ public final class SfxBlockPersistenceListener implements Listener {
             this.flushCoordinator.register(service);
         }
         this.autosaveIntervalTicks = resolveAutosaveInterval(plugin);
-        scheduleAutosaveFlush();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -57,6 +56,14 @@ public final class SfxBlockPersistenceListener implements Listener {
         for (SfxDirtyPersistenceService service : dirtyServices) {
             service.requestChunkFlushAsync(chunk.getWorld(), chunk.getX(), chunk.getZ());
         }
+    }
+
+    public synchronized void start() {
+        if (running) {
+            return;
+        }
+        running = true;
+        scheduleAutosaveFlush();
     }
 
     public void shutdown() {

@@ -128,7 +128,6 @@ public final class SfxBasicMachineBlockListener implements Listener {
         this.machineRuntime.registerDefinitions(SfxBasicMachineFrameworkBridge.definitions());
         registerFrameworkEffects();
         bootstrapEnhancedFurnaces();
-        startEnhancedFurnaceTicker();
     }
 
     private void registerFrameworkEffects() {
@@ -810,7 +809,10 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
     }
 
-    private void startEnhancedFurnaceTicker() {
+    public synchronized void start() {
+        if (furnaceTickerRunning) {
+            return;
+        }
         furnaceTickerRunning = true;
         scheduleEnhancedFurnaceTick();
     }

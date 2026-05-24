@@ -1,7 +1,13 @@
 package cc.theends6.sfx.internal.core;
 
+import java.util.List;
+
 public interface SfxModule {
     String name();
+
+    default List<String> dependsOn() {
+        return List.of();
+    }
 
     default void load() throws Exception {
     }

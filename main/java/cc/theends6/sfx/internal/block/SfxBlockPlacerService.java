@@ -67,6 +67,39 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
     public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
         if (context == null) return SfxMachinePhaseResult.cont();
         context.put("placer.framework.effect", effectName);
+        Block dispenser = context.attachment("placer.dispenser", Block.class).orElse(null);
+        Block target = context.attachment("placer.target", Block.class).orElse(null);
+        ItemStack one = context.attachment("placer.item", ItemStack.class).orElse(null);
+        if ("placer:resolve-target".equals(effectName)) {
+            boolean valid = dispenser != null && dispenser.getType() == Material.DISPENSER && target != null && canReplace(target) && one != null && !one.getType().isAir();
+            context.put("placer.target.valid", valid);
+            return valid ? SfxMachinePhaseResult.cont() : SfxMachinePhaseResult.blocked(SfxMachineStatus.BLOCKED, "block placer target is invalid");
+        }
+        if ("placer:consume-input".equals(effectName)) {
+            ItemStack source = context.attachment("placer.sourceItem", ItemStack.class).orElse(one);
+            boolean consumed = dispenser != null && source != null && consumeOne(dispenser, source);
+            context.put("placer.input.consumed", consumed);
+            return consumed ? SfxMachinePhaseResult.cont() : SfxMachinePhaseResult.blocked(SfxMachineStatus.NO_INPUT, "block placer input could not be consumed");
+        }
+        if ("placer:place-block".equals(effectName)) {
+            UUID ownerId = context.attachment("placer.ownerId", UUID.class).orElse(null);
+            boolean placed = false;
+            if (target != null && one != null && canReplace(target)) {
+                target.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, one.getType());
+                placed = placeOne(one, target, ownerId);
+            }
+            context.put("placer.placed", placed);
+            return placed ? SfxMachinePhaseResult.cont() : SfxMachinePhaseResult.failed("block placer placement failed");
+        }
+        if ("placer:rollback-on-fail".equals(effectName)) {
+            Boolean placed = context.attachment("placer.placed", Boolean.class).orElse(Boolean.FALSE);
+            Boolean consumed = context.attachment("placer.input.consumed", Boolean.class).orElse(Boolean.FALSE);
+            if (!Boolean.TRUE.equals(placed) && Boolean.TRUE.equals(consumed) && dispenser != null && one != null) {
+                returnOne(dispenser, one);
+                context.put("placer.rollback.returned", Boolean.TRUE);
+            }
+            return SfxMachinePhaseResult.cont();
+        }
         context.put("placer.framework.effect.handled", Boolean.TRUE);
         return SfxMachinePhaseResult.cont();
     }
@@ -153,26 +186,21 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
         UUID ownerId = instance.ownerId();
         runtime.executeAtLater(target.getLocation(), 2L, () -> {
             java.util.Map<String, Object> framework = frameworkAttributes(instance, dispenserBlock, target, one);
+            framework.put("placer.sourceItem", dispensed);
+            framework.put("placer.ownerId", ownerId);
             SfxMachineTickContext tickContext = new SfxMachineTickContext(0L, 1L, false);
-            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework);
-            if (!canReplace(target)) {
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
                 machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_ERROR, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.ERROR, framework);
                 return;
             }
-            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_INPUT, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework);
-            if (!consumeOne(dispenserBlock, dispensed)) {
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_INPUT, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_INPUT.name())) {
                 machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_ERROR, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.ERROR, framework);
                 return;
             }
-            target.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, one.getType());
-            boolean placed = placeOne(one, target, ownerId);
-            framework.put("placer.placed", placed);
-            if (!placed) {
-                returnOne(dispenserBlock, one);
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework), framework, SfxMachinePhase.ON_COMPLETE.name())) {
                 machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_ERROR, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.ERROR, framework);
                 return;
             }
-            machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework);
             machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework);
         });
     }

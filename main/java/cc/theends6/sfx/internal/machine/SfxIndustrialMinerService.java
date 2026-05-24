@@ -93,6 +93,39 @@ public final class SfxIndustrialMinerService implements Listener {
     public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
         if (context == null) return SfxMachinePhaseResult.cont();
         context.put("miner.framework.effect", effectName);
+        MiningTask task = context.attachment("miner.task", MiningTask.class).orElse(null);
+        if ("miner:validate-structure".equals(effectName)) {
+            boolean valid = task != null && isStructureValid(task.structure());
+            context.put("miner.structure.valid", valid);
+            return valid ? SfxMachinePhaseResult.cont() : SfxMachinePhaseResult.blocked(SfxMachineStatus.BLOCKED, "industrial miner structure is invalid");
+        }
+        if ("miner:consume-fuel".equals(effectName)) {
+            if (task == null) {
+                return SfxMachinePhaseResult.blocked(SfxMachineStatus.NO_INPUT, "industrial miner task missing");
+            }
+            Inventory inventory = chestInventory(task);
+            if (inventory == null) {
+                return SfxMachinePhaseResult.blocked(SfxMachineStatus.BLOCKED, "industrial miner chest missing");
+            }
+            if (task.fuelRemaining() <= 0) {
+                int gained = consumeFuel(inventory, task.structure().profile());
+                task.fuelRemaining(gained);
+                context.put("miner.fuel.gained", gained);
+            }
+            return task.fuelRemaining() > 0 ? SfxMachinePhaseResult.cont() : SfxMachinePhaseResult.blocked(SfxMachineStatus.NO_INPUT, "industrial miner has no fuel");
+        }
+        if ("miner:animate-piston".equals(effectName)) {
+            context.put("miner.animation.controlled-by-framework", Boolean.TRUE);
+            return SfxMachinePhaseResult.cont();
+        }
+        if ("miner:extract-ore".equals(effectName) || "miner:commit-output".equals(effectName)) {
+            context.put("miner.output.committed", Boolean.TRUE);
+            return SfxMachinePhaseResult.cont();
+        }
+        if ("miner:stop-on-error".equals(effectName)) {
+            context.put("miner.stop-on-error", Boolean.TRUE);
+            return SfxMachinePhaseResult.cont();
+        }
         context.put("miner.framework.effect.handled", Boolean.TRUE);
         return SfxMachinePhaseResult.cont();
     }
@@ -138,7 +171,11 @@ public final class SfxIndustrialMinerService implements Listener {
         MiningTask task = new MiningTask(key, structure, player.getUniqueId());
         SfxBlockInstanceRecord frameworkInstance = minerInstance(task);
         if (frameworkInstance != null) {
-            machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, frameworkInstance.instanceId(), structure.blastFurnace().getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, frameworkAttributes(task, frameworkInstance));
+            Map<String, Object> framework = frameworkAttributes(task, frameworkInstance);
+            if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, frameworkInstance.instanceId(), structure.blastFurnace().getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+                send(player, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
+                return;
+            }
         }
         active.put(key, task);
         send(player, structure.profile().advanced() ? "machines.industrial-miner.started-advanced" : "machines.industrial-miner.started",
@@ -242,8 +279,9 @@ public final class SfxIndustrialMinerService implements Listener {
         Map<String, Object> framework = frameworkAttributes(task, frameworkInstance);
         SfxMachineTickContext tickContext = new SfxMachineTickContext(0L, 1L, false);
         try {
-            if (frameworkInstance != null) {
-                machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework);
+            if (frameworkInstance != null && !SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+                stop(task, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
+                return;
             }
             if (!isStructureValid(task.structure())) {
                 stop(task, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
@@ -254,8 +292,9 @@ public final class SfxIndustrialMinerService implements Listener {
                 stop(task, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
                 return;
             }
-            if (frameworkInstance != null) {
-                machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.BEFORE_INPUT, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework);
+            if (frameworkInstance != null && !SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.BEFORE_INPUT, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_INPUT.name())) {
+                stop(task, "machines.industrial-miner.no-fuel", "<red>Industrial Miner stopped: no fuel.</red>");
+                return;
             }
             if (task.fuelRemaining() <= 0) {
                 int gained = consumeFuel(inventory, task.structure().profile());
@@ -291,9 +330,10 @@ public final class SfxIndustrialMinerService implements Listener {
             task.fuelRemaining(task.fuelRemaining() - 1);
             task.oresMined(task.oresMined() + 1);
             if (frameworkInstance != null) {
-                machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.ON_COMPLETE, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework);
-                machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.AFTER_OUTPUT, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework);
-                machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.AFTER_TICK, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework);
+                if (SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.ON_COMPLETE, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework), framework, SfxMachinePhase.ON_COMPLETE.name())) {
+                    SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.AFTER_OUTPUT, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework), framework, SfxMachinePhase.AFTER_OUTPUT.name());
+                    machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.AFTER_TICK, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework);
+                }
             }
             runtime.executeAtLater(task.structure().blastFurnace().getLocation(), Math.max(1L, plugin.getConfig().getLong("legacy.industrial-miner.step-delay-ticks", 4L)), () -> runMiningCycle(task));
         } catch (RuntimeException exception) {

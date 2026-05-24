@@ -21,5 +21,7 @@ public interface SfxApi {
 
     SfxManualMachineRegistry manualMachines();
 
-    SfxMachineRuntime machineRuntime();
+    default SfxMachineRuntime machineRuntime() {
+        throw new UnsupportedOperationException("This SfxApi implementation does not expose the machine runtime API.");
+    }
 }

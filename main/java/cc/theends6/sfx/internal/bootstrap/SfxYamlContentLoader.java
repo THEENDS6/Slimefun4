@@ -206,6 +206,13 @@ public final class SfxYamlContentLoader {
         if (shouldImplicitlyBePlaceableLegacyBlock(id, categoryId, material, normalizedFlags)) {
             builder.flag("placeable-block");
         }
+        Object machine = entry.get("machine");
+        if (machine instanceof Map<?, ?> machineMap) {
+            String profile = optionalString(machineMap.get("profile"));
+            if (profile != null) {
+                builder.flag("machine-profile:" + profile.trim().replace(' ', '_').toLowerCase());
+            }
+        }
         Object itemFlags = entry.get("itemFlags");
         if (itemFlags instanceof List<?> values) {
             for (Object flag : values) {

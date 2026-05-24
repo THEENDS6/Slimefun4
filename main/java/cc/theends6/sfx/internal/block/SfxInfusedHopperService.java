@@ -59,6 +59,26 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
     public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
         if (context == null) return SfxMachinePhaseResult.cont();
         context.put("hopper.framework.effect", effectName);
+        Location location = context.attachment("hopper.location", Location.class).orElse(context.location());
+        if ("hopper:scan-items".equals(effectName)) {
+            if (location == null) {
+                return SfxMachinePhaseResult.blocked(SfxMachineStatus.BLOCKED, "infused hopper location missing");
+            }
+            TickResult result = tickOne(location, context.attachments());
+            context.put("hopper.tickResult", result);
+            context.put("hopper.validBlock", result.validBlock());
+            context.put("hopper.moved", result.movedItems());
+            return result.validBlock() ? SfxMachinePhaseResult.cont() : SfxMachinePhaseResult.failed("infused hopper block is invalid");
+        }
+        if ("hopper:teleport-item".equals(effectName)) {
+            TickResult result = context.attachment("hopper.tickResult", TickResult.class).orElse(null);
+            context.put("hopper.teleport.applied", result != null && result.movedItems());
+            return SfxMachinePhaseResult.cont();
+        }
+        if ("hopper:emit-particles".equals(effectName)) {
+            context.put("hopper.particles.emitted", context.attachment("hopper.moved", Boolean.class).orElse(Boolean.FALSE));
+            return SfxMachinePhaseResult.cont();
+        }
         context.put("hopper.framework.effect.handled", Boolean.TRUE);
         return SfxMachinePhaseResult.cont();
     }
@@ -158,11 +178,13 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
             runtime.executeAt(location, () -> {
                 Map<String, Object> framework = frameworkAttributes(instance, location, state);
                 SfxMachineTickContext tickContext = new SfxMachineTickContext(nowTick, baseIntervalTicks(), false);
-                machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), location, tickContext, null, SfxMachineStatus.IDLE, framework);
-                TickResult result = tickOne(location, framework);
-                framework.put("hopper.moved", result.movedItems());
-                machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_PROGRESS, instance.instanceId(), location, tickContext, null, result.movedItems() ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, framework);
-                if (result.movedItems()) {
+                if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), location, tickContext, null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
+                    TickResult result = framework.get("hopper.tickResult") instanceof TickResult tickResult ? tickResult : new TickResult(false, false);
+                    finishTick(anchor.key(), state, nowTick, result.validBlock(), result.movedItems());
+                    return;
+                }
+                TickResult result = framework.get("hopper.tickResult") instanceof TickResult tickResult ? tickResult : new TickResult(true, false);
+                if (SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_PROGRESS, instance.instanceId(), location, tickContext, null, result.movedItems() ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.AFTER_PROGRESS.name()) && result.movedItems()) {
                     machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), location, tickContext, null, SfxMachineStatus.RUNNING, framework);
                 }
                 machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, tickContext, null, result.movedItems() ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, framework);

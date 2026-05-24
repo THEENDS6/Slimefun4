@@ -92,12 +92,19 @@ public final class SfxTechnicalGadgetService implements Listener {
         this.rechargeableItems = new SfxRechargeableItemService(plugin, items);
         this.extensionsEnabled = plugin.getConfig().getBoolean("technical-gadgets.sfx-extensions.jetpacks-and-jetboots.enabled", true);
         this.tickCounter = 0L;
-        this.running = true;
-        scheduleTick();
+        this.running = false;
     }
 
     public SfxRechargeableItemService rechargeableItems() {
         return rechargeableItems;
+    }
+
+    public synchronized void start() {
+        if (running) {
+            return;
+        }
+        running = true;
+        scheduleTick();
     }
 
     public void shutdown() {

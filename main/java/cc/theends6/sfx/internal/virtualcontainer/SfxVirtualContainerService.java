@@ -74,12 +74,11 @@ public final class SfxVirtualContainerService implements Listener {
     private final Map<SfxBlockAnchorKey, SfxVirtualContainerKey> locationIndex = new ConcurrentHashMap<>();
     private final AtomicLong localTickClock = new AtomicLong();
     private volatile long registryRevision;
-    private volatile boolean running = true;
+    private volatile boolean running;
 
     public SfxVirtualContainerService(JavaPlugin plugin, SfxRuntime runtime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
-        scheduleExternalSync();
     }
 
     public Optional<SfxVirtualContainer> ensureRegistered(Location location) {
@@ -1000,6 +999,14 @@ public final class SfxVirtualContainerService implements Listener {
         containers.remove(container.key());
         unregisterIndex(container.key());
         registryRevision++;
+    }
+
+    public synchronized void start() {
+        if (running) {
+            return;
+        }
+        running = true;
+        scheduleExternalSync();
     }
 
     public void shutdown() {
