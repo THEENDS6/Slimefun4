@@ -709,14 +709,15 @@ public final class SfxCargoService implements Listener {
                     ? move.endpoint().insertSingleSlot(part, input.state.smartFill)
                     : move.endpoint().insert(part, input.state.smartFill);
             inserted += move.amount() - (isEmpty(remainder) ? 0 : remainder.getAmount());
-            if (!isEmpty(remainder)) {
-                source.insert(remainder, false);
-            }
         }
         if (inserted < planned) {
             ItemStack refund = template.clone();
             refund.setAmount(planned - inserted);
-            source.insert(refund, false);
+            ItemStack failedRefund = source.insert(refund, false);
+            if (!isEmpty(failedRefund)) {
+                plugin.getLogger().warning("Cargo refund could not be fully restored for input " + input.instance.instanceId()
+                        + "; lost remainder=" + failedRefund.getAmount() + " of " + failedRefund.getType());
+            }
         }
         return inserted;
     }
@@ -740,6 +741,7 @@ public final class SfxCargoService implements Listener {
             return List.of();
         }
         List<NodeRef> candidates = new ArrayList<>();
+        Map<String, Integer> reservations = new HashMap<>();
         for (NodeRef output : outputs) {
             if (output.state.channel != input.state.channel) {
                 continue;
@@ -751,10 +753,7 @@ public final class SfxCargoService implements Listener {
             if (endpoint == null || endpoint.sameStorage(source)) {
                 continue;
             }
-            int capacity = input.definition.type() == SfxCargoComponentType.INPUT_NODE
-                    ? endpoint.capacityForSingleSlot(stack, input.state.smartFill)
-                    : endpoint.capacityFor(stack, input.state.smartFill);
-            if (capacity <= 0) {
+            if (availableCapacityFor(output.withEndpoint(endpoint), input, stack, reservations) <= 0) {
                 continue;
             }
             candidates.add(output.withEndpoint(endpoint));
@@ -774,11 +773,11 @@ public final class SfxCargoService implements Listener {
             }
             int before = remaining;
             if (mode == SfxCargoDistributionMode.EVEN) {
-                remaining = planEvenMoves(input, priority, group, stack, remaining, moves);
+                remaining = planEvenMoves(input, priority, group, stack, remaining, moves, reservations);
             } else if (mode == SfxCargoDistributionMode.ROUND_ROBIN) {
-                remaining = planRoundRobinMoves(input, group, stack, remaining, moves);
+                remaining = planRoundRobinMoves(input, group, stack, remaining, moves, reservations);
             } else {
-                remaining = planSequentialMoves(input, group, stack, remaining, moves);
+                remaining = planSequentialMoves(input, group, stack, remaining, moves, reservations);
             }
             if (input.definition.type() == SfxCargoComponentType.INPUT_NODE && !moves.isEmpty()) {
                 break;
@@ -790,18 +789,39 @@ public final class SfxCargoService implements Listener {
         return moves;
     }
 
-    private int planSequentialMoves(NodeRef input, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves) {
+    private int availableCapacityFor(NodeRef output, NodeRef input, ItemStack stack, Map<String, Integer> reservations) {
+        if (output == null || output.endpoint == null) {
+            return 0;
+        }
+        int capacity = input.definition.type() == SfxCargoComponentType.INPUT_NODE
+                ? output.endpoint.capacityForSingleSlot(stack, input.state.smartFill)
+                : output.endpoint.capacityFor(stack, input.state.smartFill);
+        String key = output.endpoint.storageKey();
+        int reserved = key == null ? 0 : reservations.getOrDefault(key, 0);
+        return Math.max(0, capacity - reserved);
+    }
+
+    private void reserveCapacity(Endpoint endpoint, int amount, Map<String, Integer> reservations) {
+        if (endpoint == null || amount <= 0) {
+            return;
+        }
+        String key = endpoint.storageKey();
+        if (key != null) {
+            reservations.merge(key, amount, Integer::sum);
+        }
+    }
+
+    private int planSequentialMoves(NodeRef input, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves, Map<String, Integer> reservations) {
         for (NodeRef output : group) {
             if (remaining <= 0) {
                 break;
             }
-            int amount = Math.min(remaining, input.definition.type() == SfxCargoComponentType.INPUT_NODE
-                    ? output.endpoint.capacityForSingleSlot(stack, input.state.smartFill)
-                    : output.endpoint.capacityFor(stack, input.state.smartFill));
+            int amount = Math.min(remaining, availableCapacityFor(output, input, stack, reservations));
             if (amount <= 0) {
                 continue;
             }
             moves.add(new OutputMove(output.endpoint, amount));
+            reserveCapacity(output.endpoint, amount, reservations);
             remaining -= amount;
             if (input.definition.type() == SfxCargoComponentType.INPUT_NODE) {
                 break;
@@ -810,7 +830,7 @@ public final class SfxCargoService implements Listener {
         return remaining;
     }
 
-    private int planRoundRobinMoves(NodeRef input, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves) {
+    private int planRoundRobinMoves(NodeRef input, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves, Map<String, Integer> reservations) {
         if (group.isEmpty() || remaining <= 0) {
             return remaining;
         }
@@ -818,13 +838,12 @@ public final class SfxCargoService implements Listener {
         boolean movedAny = false;
         for (int i = 0; i < group.size() && remaining > 0; i++) {
             NodeRef output = group.get((start + i) % group.size());
-            int amount = Math.min(remaining, input.definition.type() == SfxCargoComponentType.INPUT_NODE
-                    ? output.endpoint.capacityForSingleSlot(stack, input.state.smartFill)
-                    : output.endpoint.capacityFor(stack, input.state.smartFill));
+            int amount = Math.min(remaining, availableCapacityFor(output, input, stack, reservations));
             if (amount <= 0) {
                 continue;
             }
             moves.add(new OutputMove(output.endpoint, amount));
+            reserveCapacity(output.endpoint, amount, reservations);
             remaining -= amount;
             movedAny = true;
             input.state.roundRobinCursor = (start + i + 1) % group.size();
@@ -838,7 +857,7 @@ public final class SfxCargoService implements Listener {
         return remaining;
     }
 
-    private int planEvenMoves(NodeRef input, int priority, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves) {
+    private int planEvenMoves(NodeRef input, int priority, List<NodeRef> group, ItemStack stack, int remaining, List<OutputMove> moves, Map<String, Integer> reservations) {
         if (group.isEmpty() || remaining <= 0) {
             return remaining;
         }
@@ -850,7 +869,7 @@ public final class SfxCargoService implements Listener {
         Map<UUID, Integer> movedByNode = new HashMap<>();
         while (remaining > 0) {
             List<NodeRef> eligible = group.stream()
-                    .filter(ref -> ref.endpoint.capacityFor(stack, input.state.smartFill) > movedByNode.getOrDefault(ref.instance.instanceId(), 0))
+                    .filter(ref -> availableCapacityFor(ref, input, stack, reservations) > 0)
                     .toList();
             if (eligible.isEmpty()) {
                 break;
@@ -861,13 +880,13 @@ public final class SfxCargoService implements Listener {
                 if (remaining <= 0) {
                     break;
                 }
-                int already = movedByNode.getOrDefault(output.instance.instanceId(), 0);
-                int capacity = output.endpoint.capacityFor(stack, input.state.smartFill) - already;
+                int capacity = availableCapacityFor(output, input, stack, reservations);
                 int amount = Math.min(Math.min(base, remaining), capacity);
                 if (amount <= 0) {
                     continue;
                 }
                 moves.add(new OutputMove(output.endpoint, amount));
+                reserveCapacity(output.endpoint, amount, reservations);
                 movedByNode.merge(output.instance.instanceId(), amount, Integer::sum);
                 remaining -= amount;
                 any = true;
@@ -940,7 +959,7 @@ public final class SfxCargoService implements Listener {
             return cached.orElse(null);
         }
         Endpoint endpoint = null;
-        SfxAnchorRecord anchor = blockData.findAnchor(target).orElse(null);
+        SfxAnchorRecord anchor = blockData.findAnchorFast(target).orElse(null);
         if (anchor != null) {
             SfxBlockInstanceRecord targetInstance = blockData.findInstance(anchor.instanceId()).orElse(null);
             if (targetInstance != null) {
@@ -953,9 +972,12 @@ public final class SfxCargoService implements Listener {
             }
         }
         if (endpoint == null) {
-            endpoint = virtualContainers.findRegistered(target)
-                    .map(this::containerEndpoint)
-                    .orElseGet(() -> virtualContainers.ensureRegistered(target).map(this::containerEndpoint).orElse(null));
+            Optional<SfxVirtualContainer> registered = virtualContainers.findRegistered(target);
+            if (registered.isPresent()) {
+                endpoint = containerEndpoint(registered.get());
+            } else if (runtime.isOwnedByCurrentRegion(target)) {
+                endpoint = virtualContainers.ensureRegistered(target).map(this::containerEndpoint).orElse(null);
+            }
         }
         endpointCache.put(key, Optional.ofNullable(endpoint));
         return endpoint;
@@ -1654,6 +1676,19 @@ public final class SfxCargoService implements Listener {
                 return container == other.container;
             }
             return electricMachineId != null && electricMachineId.equals(other.electricMachineId);
+        }
+
+        String storageKey() {
+            if (trash) {
+                return null;
+            }
+            if (container != null) {
+                return "container:" + container.key();
+            }
+            if (electricMachineId != null) {
+                return "electric:" + electricMachineId + ":" + electricInputTarget;
+            }
+            return null;
         }
 
         PlannedStack planFirst(Predicate<ItemStack> filter, int maxAmount) {

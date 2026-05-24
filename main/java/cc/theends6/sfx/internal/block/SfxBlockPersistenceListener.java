@@ -35,7 +35,7 @@ public final class SfxBlockPersistenceListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldSave(WorldSaveEvent event) {
-        requestAllDirtyFlushes();
+        flushAllDirtyBlocking();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -73,6 +73,16 @@ public final class SfxBlockPersistenceListener implements Listener {
     private void requestAllDirtyFlushes() {
         for (SfxDirtyPersistenceService service : dirtyServices) {
             service.requestDirtyFlushAsync();
+        }
+    }
+
+    private void flushAllDirtyBlocking() {
+        for (SfxDirtyPersistenceService service : dirtyServices) {
+            try {
+                service.flushAllBlocking();
+            } catch (RuntimeException exception) {
+                plugin.getLogger().warning("Failed to flush dirty SFX state during world save: " + exception.getMessage());
+            }
         }
     }
 

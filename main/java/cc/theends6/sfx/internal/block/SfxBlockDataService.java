@@ -236,7 +236,7 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
     }
 
     public void flushNow() {
-        requestDirtyFlushAsync();
+        flushAllBlocking();
     }
 
     @Override

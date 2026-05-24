@@ -370,11 +370,30 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         DefaultSfxRecipeRegistry recipeRegistry = new DefaultSfxRecipeRegistry();
         recipeYamlLoader.loadInto(recipeRegistry);
         DefaultSfxRecipeRegistry.AuditResult recipeAudit = recipeRegistry.apply(itemRegistry, api.internalManualMachines());
+        logRecipeAudit(recipeAudit);
         BaseContentBootstrap.syncManualMachineGuideContent(itemRegistry, api.internalManualMachines());
         SfxResearchYamlLoader researchYamlLoader = new SfxResearchYamlLoader(this);
         researchYamlLoader.ensureDefaultFiles(syncBundledResearchFiles());
         researchYamlLoader.loadInto(researchRegistry);
 
+    }
+
+
+    private void logRecipeAudit(DefaultSfxRecipeRegistry.AuditResult audit) {
+        if (audit == null) {
+            return;
+        }
+        getLogger().info(audit.summary());
+        if (audit.warnings().isEmpty()) {
+            return;
+        }
+        int shown = Math.min(20, audit.warnings().size());
+        for (int i = 0; i < shown; i++) {
+            getLogger().warning(audit.warnings().get(i));
+        }
+        if (audit.warnings().size() > shown) {
+            getLogger().warning("[SFX Recipe Import] " + (audit.warnings().size() - shown) + " additional warnings suppressed");
+        }
     }
 
     private boolean syncBundledRecipeFiles() {

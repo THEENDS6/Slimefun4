@@ -14,6 +14,8 @@ import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,6 +23,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.Wither;
 import org.bukkit.entity.WitherSkull;
 import org.bukkit.event.block.BlockBurnEvent;
@@ -52,6 +55,7 @@ import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 
 public final class SfxPlaceableBlockListener implements Listener {
+    private static final Logger LOGGER = Logger.getLogger("SlimeFunX");
     private static final BlockFace[] HORIZONTAL_FACES = {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST};
     private static final Set<String> GENERIC_ANCHORED_BLOCKS = Set.of(
             "sf:hardened_glass",
@@ -131,8 +135,9 @@ public final class SfxPlaceableBlockListener implements Listener {
             if (blockData.findAnchor(event.getBlockPlaced().getLocation()).isPresent()) {
                 return;
             }
+            java.util.UUID instanceId = null;
             try {
-                java.util.UUID instanceId = blockData.registerSingleBlock(
+                instanceId = blockData.registerSingleBlock(
                         marker.itemId(),
                         event.getBlockPlaced().getLocation(),
                         event.getBlockPlaced().getType(),
@@ -163,6 +168,11 @@ public final class SfxPlaceableBlockListener implements Listener {
                 }
             } catch (RuntimeException exception) {
                 event.setCancelled(true);
+                if (instanceId != null) {
+                    blockData.unregisterAt(event.getBlockPlaced().getLocation());
+                }
+                LOGGER.log(Level.WARNING, "Failed to initialize SFX block placement for " + marker.itemId()
+                        + " at " + event.getBlockPlaced().getLocation(), exception);
             }
         });
     }
@@ -185,24 +195,41 @@ public final class SfxPlaceableBlockListener implements Listener {
         if (target == null || blockData.findAnchor(target.getLocation()).isPresent()) {
             return;
         }
-        consumeManualPlacementItem(event);
+        ItemStack refund = singleRefundItem(event.getItemInHand());
+        boolean consumed = consumeManualPlacementItem(event);
         runtime.executeAtLater(target.getLocation(), 1L, () -> {
-            if (!target.getType().isAir() || blockData.findAnchor(target.getLocation()).isPresent()) {
-                return;
+            boolean placedWorldBlock = false;
+            java.util.UUID instanceId = null;
+            try {
+                if (!target.getType().isAir() || blockData.findAnchor(target.getLocation()).isPresent()) {
+                    refundManualPlacementItem(event.getPlayer(), refund, consumed);
+                    return;
+                }
+                target.setType(Material.PLAYER_HEAD, false);
+                placedWorldBlock = true;
+                instanceId = blockData.registerSingleBlock(itemId, target.getLocation(), target.getType(), event.getPlayer().getUniqueId());
+                androidService.handlePlaced(instanceId, itemId, event.getPlayer(), target);
+            } catch (RuntimeException exception) {
+                if (instanceId != null) {
+                    blockData.unregisterAt(target.getLocation());
+                }
+                if (placedWorldBlock && blockData.findAnchorFast(target.getLocation()).isEmpty()) {
+                    target.setType(Material.AIR, false);
+                }
+                refundManualPlacementItem(event.getPlayer(), refund, consumed);
+                LOGGER.log(Level.WARNING, "Failed to redirect android placement for " + itemId
+                        + " at " + target.getLocation(), exception);
             }
-            target.setType(Material.PLAYER_HEAD, false);
-            java.util.UUID instanceId = blockData.registerSingleBlock(itemId, target.getLocation(), target.getType(), event.getPlayer().getUniqueId());
-            androidService.handlePlaced(instanceId, itemId, event.getPlayer(), target);
         });
     }
 
-    private void consumeManualPlacementItem(BlockPlaceEvent event) {
+    private boolean consumeManualPlacementItem(BlockPlaceEvent event) {
         if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
-            return;
+            return false;
         }
         ItemStack stack = event.getItemInHand();
         if (stack == null || stack.getType().isAir()) {
-            return;
+            return false;
         }
         ItemStack remaining = stack.clone();
         remaining.setAmount(remaining.getAmount() - 1);
@@ -213,6 +240,28 @@ public final class SfxPlaceableBlockListener implements Listener {
             event.getPlayer().getInventory().setItemInOffHand(remaining);
         } else {
             event.getPlayer().getInventory().setItemInMainHand(remaining);
+        }
+        return true;
+    }
+
+    private ItemStack singleRefundItem(ItemStack source) {
+        if (source == null || source.getType().isAir()) {
+            return null;
+        }
+        ItemStack refund = source.clone();
+        refund.setAmount(1);
+        return refund;
+    }
+
+    private void refundManualPlacementItem(Player player, ItemStack refund, boolean consumed) {
+        if (!consumed || player == null || refund == null || refund.getType().isAir()) {
+            return;
+        }
+        java.util.Map<Integer, ItemStack> leftovers = player.getInventory().addItem(refund.clone());
+        for (ItemStack leftover : leftovers.values()) {
+            if (leftover != null && !leftover.getType().isAir()) {
+                player.getWorld().dropItemNaturally(player.getLocation(), leftover);
+            }
         }
     }
 
