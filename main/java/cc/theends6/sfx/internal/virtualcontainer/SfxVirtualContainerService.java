@@ -65,6 +65,13 @@ public final class SfxVirtualContainerService implements Listener {
         }
     }
 
+    private enum MemoryAccessStatus {
+        READY,
+        BUSY_WRONG_REGION,
+        BUSY_EXTERNAL_FINALIZATION,
+        UNAVAILABLE
+    }
+
     private static final long EXTERNAL_SYNC_INTERVAL = 10L;
 
     private final JavaPlugin plugin;
@@ -370,26 +377,42 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
 
-    private void reconcileForMemoryAccess(SfxVirtualContainer container) {
+    private MemoryAccessStatus reconcileForMemoryAccess(SfxVirtualContainer container) {
         if (container == null) {
-            return;
+            return MemoryAccessStatus.UNAVAILABLE;
+        }
+        if (container.externalFinalizationPending()) {
+            
+            
+            
+            runAtContainerLater(container, 1L, () -> inventoryFor(container).ifPresent(inventory -> reconcileBeforeAccess(container, inventory)));
+            return MemoryAccessStatus.BUSY_EXTERNAL_FINALIZATION;
         }
         if (!container.externalDirty()
                 && !container.mirrorDirty()
                 && !container.externalActive()
                 && !container.viewerActive()
                 && container.revision() != 0L) {
-            return;
+            return MemoryAccessStatus.READY;
         }
         Location location = primaryLocation(container);
         if (location == null) {
-            return;
+            return MemoryAccessStatus.UNAVAILABLE;
         }
         if (!owns(location)) {
             runtime.executeAt(location, () -> reconcileForMemoryAccess(container));
-            return;
+            return MemoryAccessStatus.BUSY_WRONG_REGION;
         }
-        inventoryFor(container).ifPresent(inventory -> reconcileBeforeAccess(container, inventory));
+        Optional<Inventory> inventory = inventoryFor(container);
+        if (inventory.isEmpty()) {
+            return MemoryAccessStatus.UNAVAILABLE;
+        }
+        reconcileBeforeAccess(container, inventory.get());
+        return container.externalFinalizationPending() ? MemoryAccessStatus.BUSY_EXTERNAL_FINALIZATION : MemoryAccessStatus.READY;
+    }
+
+    private boolean isMemoryReady(SfxVirtualContainer container) {
+        return reconcileForMemoryAccess(container) == MemoryAccessStatus.READY;
     }
 
     private void pushIfDirty(SfxVirtualContainer container) {
@@ -409,8 +432,7 @@ public final class SfxVirtualContainerService implements Listener {
 
 
     public synchronized PlannedStack planFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
-        reconcileForMemoryAccess(container);
-        if (container == null) {
+        if (!isMemoryReady(container)) {
             return new PlannedStack(null, List.of());
         }
         ItemStack[] mirror = container.rawMirror();
@@ -430,9 +452,8 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public synchronized List<PlannedStack> planBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
-        reconcileForMemoryAccess(container);
         List<PlannedStack> result = new ArrayList<>();
-        if (container == null || maxItems <= 0) {
+        if (maxItems <= 0 || !isMemoryReady(container)) {
             return result;
         }
         int remaining = Math.min(128, maxItems);
@@ -470,7 +491,7 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public synchronized boolean canRemovePlanned(SfxVirtualContainer container, List<SlotTake> takes) {
-        if (container == null || takes == null || takes.isEmpty()) {
+        if (takes == null || takes.isEmpty() || !isMemoryReady(container)) {
             return false;
         }
         ItemStack[] mirror = container.rawMirror();
@@ -503,8 +524,7 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public synchronized ItemStack peekFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
-        reconcileForMemoryAccess(container);
-        if (container == null) {
+        if (!isMemoryReady(container)) {
             return null;
         }
         ItemStack[] mirror = container.rawMirror();
@@ -521,9 +541,8 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public synchronized List<ItemStack> peekBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
-        reconcileForMemoryAccess(container);
         List<ItemStack> result = new ArrayList<>();
-        if (container == null || maxItems <= 0) {
+        if (maxItems <= 0 || !isMemoryReady(container)) {
             return result;
         }
         int remaining = Math.min(128, maxItems);
@@ -557,7 +576,7 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public synchronized int removeSimilar(SfxVirtualContainer container, ItemStack template, int amount) {
-        if (container == null || isEmpty(template) || amount <= 0) {
+        if (isEmpty(template) || amount <= 0 || !isMemoryReady(container)) {
             return 0;
         }
         int remaining = amount;
@@ -582,8 +601,7 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public synchronized ItemStack withdrawFirst(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxAmount) {
-        reconcileForMemoryAccess(container);
-        if (container == null) {
+        if (!isMemoryReady(container)) {
             return null;
         }
         ItemStack[] mirror = container.rawMirror();
@@ -606,9 +624,8 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public synchronized List<ItemStack> withdrawBatch(SfxVirtualContainer container, java.util.function.Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes) {
-        reconcileForMemoryAccess(container);
         List<ItemStack> result = new ArrayList<>();
-        if (container == null || maxItems <= 0) {
+        if (maxItems <= 0 || !isMemoryReady(container)) {
             return result;
         }
         int remaining = Math.min(128, maxItems);
@@ -644,12 +661,11 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public synchronized ItemStack insert(SfxVirtualContainer container, ItemStack input, boolean smartFill) {
-        reconcileForMemoryAccess(container);
-        if (container == null) {
-            return input;
-        }
         if (isEmpty(input)) {
             return null;
+        }
+        if (!isMemoryReady(container)) {
+            return input;
         }
         int originalAmount = input.getAmount();
         ItemStack remaining = input.clone();
@@ -676,12 +692,11 @@ public final class SfxVirtualContainerService implements Listener {
 
 
     public synchronized ItemStack insertSingleSlot(SfxVirtualContainer container, ItemStack input, boolean smartFill) {
-        reconcileForMemoryAccess(container);
-        if (container == null) {
-            return input;
-        }
         if (isEmpty(input)) {
             return null;
+        }
+        if (!isMemoryReady(container)) {
+            return input;
         }
         int originalAmount = input.getAmount();
         ItemStack remaining = input.clone();
@@ -700,8 +715,7 @@ public final class SfxVirtualContainerService implements Listener {
     }
 
     public synchronized int capacityFor(SfxVirtualContainer container, ItemStack probe, boolean smartFill) {
-        reconcileForMemoryAccess(container);
-        if (container == null || isEmpty(probe)) {
+        if (isEmpty(probe) || !isMemoryReady(container)) {
             return 0;
         }
         ItemStack[] mirror = container.rawMirror();
@@ -729,8 +743,7 @@ public final class SfxVirtualContainerService implements Listener {
 
 
     public synchronized int capacityForSingleSlot(SfxVirtualContainer container, ItemStack probe, boolean smartFill) {
-        reconcileForMemoryAccess(container);
-        if (container == null || isEmpty(probe)) {
+        if (isEmpty(probe) || !isMemoryReady(container)) {
             return 0;
         }
         ItemStack[] mirror = container.rawMirror();
@@ -1100,6 +1113,7 @@ public final class SfxVirtualContainerService implements Listener {
         }
         container.setContents(inventory.getContents());
         container.externalDirty(false);
+        container.externalFinalizationPending(false);
         container.mirrorDirty(false);
         container.lastWorldSyncTick(currentLocalTick());
     }
@@ -1117,6 +1131,7 @@ public final class SfxVirtualContainerService implements Listener {
         inventory.setContents(snapshot);
         container.mirrorDirty(false);
         container.externalDirty(false);
+        container.externalFinalizationPending(false);
         container.lastWorldSyncTick(currentLocalTick());
     }
 
