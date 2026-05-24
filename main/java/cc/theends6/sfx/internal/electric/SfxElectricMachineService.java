@@ -413,7 +413,6 @@ public final class SfxElectricMachineService implements Listener {
         supplementalEnergyThisSecond.clear();
         supplementalEnergyAveragePerTick.clear();
         supplementalEnergyWindow = -1L;
-        machineRuntime.clear();
     }
 
     private void bootstrapLoadedStates() {

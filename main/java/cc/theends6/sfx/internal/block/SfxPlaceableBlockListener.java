@@ -638,6 +638,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     }
 
     private void destroyAnchoredBlock(Block block, java.util.UUID instanceId, String typeId) {
+        machineRuntime.runPhase(typeId, cc.theends6.sfx.internal.machine.SfxMachinePhase.ON_BREAK, instanceId, block == null ? null : block.getLocation(), new cc.theends6.sfx.internal.machine.SfxMachineTickContext(0L, 1L, false), null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE);
         machineRuntime.forget(instanceId);
         if (basicMachines.supportsType(typeId)) {
             basicMachines.destroyAnchoredBlock(block, typeId);

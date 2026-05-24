@@ -16,7 +16,12 @@ public final class SfxMachineExecution implements AutoCloseable {
     SfxMachineExecution(SfxMachineRuntimeEngine engine, UUID instanceId, String machineId, Location location, SfxMachineTickContext context) {
         this.engine = engine; this.instanceId = instanceId; this.machineId = machineId; this.location = location == null ? null : location.clone(); this.context = context;
     }
-    public void status(SfxMachineStatus status) { if (status != null) this.status = status; }
+    public void status(SfxMachineStatus status) {
+        if (status != null) {
+            this.status = status;
+            engine.runStatusPhase(machineId, instanceId, location, context, null, this.status);
+        }
+    }
     public SfxMachineStatus status() { return status; }
     @Override public void close() {
         if (closed) return; closed = true; engine.finishTick(instanceId, machineId, location, context, status, System.nanoTime() - startedNanos);
