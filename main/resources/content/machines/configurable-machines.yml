@@ -1,8 +1,19 @@
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 machines:
   "sf:nuclear_reactor":
-    
     kind: REACTOR
     energy:
       capacity: 327680

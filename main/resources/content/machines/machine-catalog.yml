@@ -1,6 +1,17 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 machines:
   sf:enhanced_crafting_table:
     category: BASIC
@@ -536,15 +547,15 @@ machines:
   sf:hardened_glass:
     category: SPECIAL
     display-name: sf:hardened_glass
-    profile: decoration
+    profile: structural_decoration
   sf:wither_proof_obsidian:
     category: SPECIAL
     display-name: sf:wither_proof_obsidian
-    profile: decoration
+    profile: structural_decoration
   sf:wither_proof_glass:
     category: SPECIAL
     display-name: sf:wither_proof_glass
-    profile: decoration
+    profile: structural_decoration
   sf:rainbow_wool:
     category: SPECIAL
     display-name: sf:rainbow_wool
