@@ -1,6 +1,18 @@
-# 静态电力机器配方定义。
-# 这里只保存能稳定表达为数据的配方；原版炉子、自动合成、自动酿造、附魔/修复等动态 Bukkit 行为仍由 Java provider 计算。
-# inputs/outputs 支持 material 或 item；random-outputs 的 weight 会展开为等权抽取列表。
+# 电力机器配方定义。
+# 静态配方、材料/标签展开和随机输出写在这里；带 NBT、药水或附魔逻辑的动态配方仍由 Java 策略生成。
+#
+# 完整示例（复制后去掉注释即可启用）：
+# recipes:
+#   sf:example_machine:
+#     - key: example_recipe
+#       ticks: 10
+#       input:
+#         - material: COBBLESTONE
+#           amount: 1
+#       output:
+#         - material: STONE
+#           amount: 1
+
 providers:
   auto_drier:
     recipes:

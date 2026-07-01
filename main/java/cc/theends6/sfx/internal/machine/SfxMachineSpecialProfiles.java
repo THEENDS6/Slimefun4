@@ -1,11 +1,6 @@
 package cc.theends6.sfx.internal.machine;
 
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Built-in capability/policy/effect declarations for legacy Slimefun and SFX special machines.
@@ -20,68 +15,9 @@ public final class SfxMachineSpecialProfiles {
     private enum Profile {
         VANILLA_FURNACE, HAND_INPUT_TRANSFORM, AUTO_BREWER, AUTO_CRAFTER, GEO_EXTRACTOR, FLUID_PUMP,
         ITEM_META_TRANSFORM, PROXY_PANEL_REACTOR_ACCESS_PORT, FUEL_GENERATOR, SOLAR_GENERATOR, REACTOR,
-        ASSEMBLER, DECORATION, GPS_DEVICE, ANDROID_INTERFACE, ANDROID, ANCIENT_ALTAR, CARGO_NODE, ENERGY_NODE,
+        ASSEMBLER, DECORATION, STRUCTURAL_DECORATION, GPS_DEVICE, ANDROID_INTERFACE, ANDROID, ANCIENT_ALTAR, CARGO_NODE, ENERGY_NODE,
         CHARGING_BENCH, XP_COLLECTOR, GPS_TRANSMITTER, ELECTRIC_WORLD_ACTION, REINFORCED_SPAWNER, INFUSED_HOPPER,
         HOLOGRAM_PROJECTOR, BLOCK_PLACER, INDUSTRIAL_MINER
-    }
-
-    private static final Map<String, Profile> LEGACY_PROFILES = legacyProfiles();
-    private static final Set<String> STRUCTURAL_DECORATIONS = Set.of("sf:hardened_glass", "sf:wither_proof_obsidian", "sf:wither_proof_glass");
-    private static final Set<String> ELECTRIC_WORLD_ACTIONS = Set.of(
-            "sf:produce_collector",
-            "sf:auto_breeder",
-            "sf:animal_growth_accelerator",
-            "sf:crop_growth_accelerator",
-            "sf:crop_growth_accelerator_2",
-            "sf:tree_growth_accelerator",
-            "sf:iron_golem_assembler",
-            "sf:wither_assembler"
-    );
-    private static final Set<String> ELECTRIC_GPS_TRANSMITTERS = Set.of(
-            "sf:gps_transmitter",
-            "sf:gps_transmitter_2",
-            "sf:gps_transmitter_3",
-            "sf:gps_transmitter_4"
-    );
-
-    private static Map<String, Profile> legacyProfiles() {
-        Map<String, Profile> profiles = new LinkedHashMap<>();
-        register(profiles, Profile.VANILLA_FURNACE, "sf:carbonado_edged_furnace", "sf:enhanced_furnace", "sf:enhanced_furnace_10", "sf:enhanced_furnace_11", "sf:enhanced_furnace_2", "sf:enhanced_furnace_3", "sf:enhanced_furnace_4", "sf:enhanced_furnace_5", "sf:enhanced_furnace_6", "sf:enhanced_furnace_7", "sf:enhanced_furnace_8", "sf:enhanced_furnace_9", "sf:reinforced_furnace");
-        register(profiles, Profile.HAND_INPUT_TRANSFORM, "sf:composter", "sf:crucible");
-        register(profiles, Profile.AUTO_BREWER, "sf:auto_brewer", "sf:auto_brewer_2");
-        register(profiles, Profile.AUTO_CRAFTER, "sf:armor_auto_crafter", "sf:enhanced_auto_crafter", "sf:vanilla_auto_crafter");
-        register(profiles, Profile.GEO_EXTRACTOR, "sf:geo_miner", "sf:oil_pump");
-        register(profiles, Profile.FLUID_PUMP, "sf:fluid_pump");
-        register(profiles, Profile.ITEM_META_TRANSFORM, "sf:auto_anvil", "sf:auto_anvil_2", "sf:auto_disenchanter", "sf:auto_disenchanter_2", "sf:auto_enchanter", "sf:auto_enchanter_2", "sf:book_binder");
-        register(profiles, Profile.PROXY_PANEL_REACTOR_ACCESS_PORT, "sf:reactor_access_port");
-        register(profiles, Profile.FUEL_GENERATOR, "sf:bio_reactor", "sf:bio_reactor_2");
-        register(profiles, Profile.REACTOR, "sf:combustion_reactor", "sf:netherstar_reactor", "sf:nuclear_reactor", "sf:reactor_coolant_cell");
-        register(profiles, Profile.ASSEMBLER, "sf:iron_golem_assembler", "sf:wither_assembler");
-        register(profiles, Profile.DECORATION, "sf:gps_teleporter_pylon", "sf:hardened_glass", "sf:rainbow_boots", "sf:rainbow_chestplate", "sf:rainbow_clay", "sf:rainbow_clay_halloween", "sf:rainbow_clay_valentine", "sf:rainbow_clay_xmas", "sf:rainbow_concrete", "sf:rainbow_concrete_halloween", "sf:rainbow_concrete_valentine", "sf:rainbow_concrete_xmas", "sf:rainbow_glass", "sf:rainbow_glass_halloween", "sf:rainbow_glass_pane", "sf:rainbow_glass_pane_halloween", "sf:rainbow_glass_pane_valentine", "sf:rainbow_glass_pane_xmas", "sf:rainbow_glass_valentine", "sf:rainbow_glass_xmas", "sf:rainbow_glazed_terracotta", "sf:rainbow_glazed_terracotta_halloween", "sf:rainbow_glazed_terracotta_valentine", "sf:rainbow_glazed_terracotta_xmas", "sf:rainbow_helmet", "sf:rainbow_leather", "sf:rainbow_leggings", "sf:rainbow_wool", "sf:rainbow_wool_halloween", "sf:rainbow_wool_valentine", "sf:rainbow_wool_xmas", "sf:wither_proof_glass", "sf:wither_proof_obsidian");
-        register(profiles, Profile.GPS_DEVICE, "sf:gps_activation_device_personal", "sf:gps_activation_device_shared", "sf:gps_control_panel", "sf:gps_emergency_transmitter", "sf:gps_geo_scanner", "sf:gps_marker_tool", "sf:gps_teleportation_matrix", "sf:gps_transmitter", "sf:gps_transmitter_2", "sf:gps_transmitter_3", "sf:gps_transmitter_4");
-        register(profiles, Profile.ANDROID_INTERFACE, "sf:android_interface_fuel", "sf:android_interface_items");
-        register(profiles, Profile.ANDROID, "sf:android_memory_core", "sf:programmable_android", "sf:programmable_android_2", "sf:programmable_android_2_butcher", "sf:programmable_android_2_farmer", "sf:programmable_android_2_fisherman", "sf:programmable_android_3", "sf:programmable_android_3_butcher", "sf:programmable_android_3_fisherman", "sf:programmable_android_butcher", "sf:programmable_android_farmer", "sf:programmable_android_fisherman", "sf:programmable_android_miner", "sf:programmable_android_woodcutter");
-        register(profiles, Profile.ANCIENT_ALTAR, "sf:ancient_altar");
-        register(profiles, Profile.CARGO_NODE, "sf:cargo_manager", "sf:cargo_motor", "sf:cargo_node", "sf:cargo_node_input", "sf:cargo_node_input_advanced", "sf:cargo_node_output", "sf:cargo_node_output_advanced");
-        register(profiles, Profile.ENERGY_NODE, "sf:big_capacitor", "sf:carbonado_edged_capacitor", "sf:energized_capacitor", "sf:energy_connector", "sf:energy_regulator", "sf:large_capacitor", "sf:medium_capacitor", "sf:small_capacitor");
-        register(profiles, Profile.SOLAR_GENERATOR, "sf:solar_generator", "sf:solar_generator_2", "sf:solar_generator_3", "sf:solar_generator_4");
-        register(profiles, Profile.FUEL_GENERATOR, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:magnesium_generator");
-        register(profiles, Profile.CHARGING_BENCH, "sf:charging_bench");
-        register(profiles, Profile.XP_COLLECTOR, "sf:xp_collector");
-        register(profiles, Profile.REINFORCED_SPAWNER, "sf:reinforced_spawner");
-        register(profiles, Profile.INFUSED_HOPPER, "sf:infused_hopper");
-        register(profiles, Profile.HOLOGRAM_PROJECTOR, "sf:hologram_projector");
-        register(profiles, Profile.BLOCK_PLACER, "sf:block_placer");
-        register(profiles, Profile.INDUSTRIAL_MINER, "sf:advanced_industrial_miner", "sf:industrial_miner");
-        return Map.copyOf(profiles);
-    }
-
-    private static void register(Map<String, Profile> profiles, Profile profile, String... ids) {
-        for (String id : ids) {
-            if (id != null && !id.isBlank()) {
-                profiles.putIfAbsent(id.toLowerCase(Locale.ROOT), profile);
-            }
-        }
     }
 
     public static SfxMachineDefinition apply(SfxMachineDefinition definition) {
@@ -93,16 +29,6 @@ public final class SfxMachineSpecialProfiles {
         String id = definition.id().toLowerCase(Locale.ROOT);
         SfxMachineDefinition.Builder builder = definition.toBuilder();
         Profile profile = parseProfile(declaredProfile);
-        if (profile == null && definition.category() == SfxMachineCategory.ELECTRIC) {
-            if (ELECTRIC_WORLD_ACTIONS.contains(id)) {
-                profile = Profile.ELECTRIC_WORLD_ACTION;
-            } else if (ELECTRIC_GPS_TRANSMITTERS.contains(id)) {
-                profile = Profile.GPS_TRANSMITTER;
-            }
-        }
-        if (profile == null) {
-            profile = LEGACY_PROFILES.get(id);
-        }
 
         if (profile != null) {
             applyProfile(builder, profile, id);
@@ -147,7 +73,8 @@ public final class SfxMachineSpecialProfiles {
             case SOLAR_GENERATOR -> generator(builder, true);
             case REACTOR -> reactor(builder);
             case ASSEMBLER -> assembler(builder);
-            case DECORATION -> decoration(builder, id);
+            case DECORATION -> decoration(builder, false);
+            case STRUCTURAL_DECORATION -> decoration(builder, true);
             case GPS_DEVICE -> gpsDevice(builder);
             case ANDROID_INTERFACE -> androidInterface(builder);
             case ANDROID -> android(builder);
@@ -166,11 +93,11 @@ public final class SfxMachineSpecialProfiles {
         }
     }
 
-    private static void decoration(SfxMachineDefinition.Builder builder, String id) {
+    private static void decoration(SfxMachineDefinition.Builder builder, boolean structural) {
         commonMachine(builder);
         builder.capability(SfxMachineCapability.MUTATES_WORLD)
                 .capability(SfxMachineCapability.HAS_VISUAL_EFFECTS)
-                .policyRef(SfxMachinePolicyRef.of("block", STRUCTURAL_DECORATIONS.contains(id) ? "structural-decoration-protection" : "decoration-lifecycle"))
+                .policyRef(SfxMachinePolicyRef.of("block", structural ? "structural-decoration-protection" : "decoration-lifecycle"))
                 .effect(SfxMachineEffect.marker("decoration:sync-visual", SfxMachinePhase.ON_PLACE))
                 .effect(SfxMachineEffect.marker("decoration:animate-state", SfxMachinePhase.BEFORE_PROGRESS))
                 .effect(SfxMachineEffect.marker("decoration:sync-visual", SfxMachinePhase.AFTER_TICK))
@@ -503,8 +430,4 @@ public final class SfxMachineSpecialProfiles {
                 .effect(SfxMachineEffect.marker("miner:stop-on-error", SfxMachinePhase.ON_ERROR));
     }
 
-    public static Set<SfxMachineCapability> legacyCapabilities(String machineId) {
-        SfxMachineDefinition definition = apply(new SfxMachineDefinition(machineId, machineId, List.of(), List.of(), -1, 1));
-        return definition.capabilities().isEmpty() ? Set.of() : EnumSet.copyOf(definition.capabilities());
-    }
 }

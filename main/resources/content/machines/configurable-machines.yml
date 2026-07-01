@@ -1,8 +1,19 @@
 # 可配置机器定义。
-# 该文件描述材料、燃料、能量和特殊参数；复杂实体生成、安全校验和世界操作仍由 Java 执行。
+# 用于反应堆等结构复杂、仍需要专用控制器的机器，把速度、电力、材料和基础参数集中到 YAML。
+#
+# 完整示例（复制后去掉注释即可启用）：
+# machines:
+#   sf:example_configurable_machine:
+#     title: "Example Configurable Machine"
+#     head-material: FURNACE
+#     body-material: IRON_BLOCK
+#     speed: 1
+#     energy:
+#       capacity: 10000
+#       consumption-per-tick: 20
+
 machines:
   "sf:nuclear_reactor":
-    # kind 决定运行模型：REACTOR / ASSEMBLER / ACCESS_PORT。
     kind: REACTOR
     energy:
       capacity: 327680

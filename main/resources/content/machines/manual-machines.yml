@@ -1,6 +1,14 @@
-# 手动/多方块机器定义。
-# pattern 与 display-pattern 均为 3x3 竖向结构，自上到下、从左到右；empty 表示该位置不参与匹配。
-# trigger-face 是玩家点击方块到结构中心的相对方向；inventory-face 是结构中心到输入容器的相对方向。
+# 手动多方块机器定义。
+# 这里配置多方块结构展示、识别材料和手动机器入口；实际配方在 recipes/manual 相关文件中。
+#
+# 完整示例（复制后去掉注释即可启用）：
+# machines:
+#   sf:example_manual_machine:
+#     display-pattern:
+#       - [null, IRON_BLOCK, null]
+#       - [PISTON, CRAFTING_TABLE, PISTON]
+#       - [null, IRON_BLOCK, null]
+
 machines:
   sf:enhanced_crafting_table:
     name: '&eEnhanced Crafting Table'

@@ -1,6 +1,17 @@
-# 共享机器框架目录。
-# 这里声明所有“像机器一样”的方块/多方块/菜单/电网/货运/GPS/机器人入口，供运行时审计、UI策略和阶段钩子使用。
-# category 决定所属领域；profile 只选择框架能力/阶段钩子，不包含具体世界行为。
+# 共享机器目录。
+# 这里声明所有由统一框架识别的机器/方块入口；具体行为仍由对应服务或 profile 钩子执行。
+#
+# 完整示例（复制后去掉注释即可启用）：
+# machines:
+#   sf:example_machine:
+#     category: ELECTRIC
+#     display-name: sf:example_machine
+#     profile: auto_brewer
+#     input-slots: [19, 20]
+#     output-slots: [24, 25]
+#     status-slot: 22
+#     tick-interval: 1
+
 machines:
   sf:enhanced_crafting_table:
     category: BASIC
@@ -536,15 +547,15 @@ machines:
   sf:hardened_glass:
     category: SPECIAL
     display-name: sf:hardened_glass
-    profile: decoration
+    profile: structural_decoration
   sf:wither_proof_obsidian:
     category: SPECIAL
     display-name: sf:wither_proof_obsidian
-    profile: decoration
+    profile: structural_decoration
   sf:wither_proof_glass:
     category: SPECIAL
     display-name: sf:wither_proof_glass
-    profile: decoration
+    profile: structural_decoration
   sf:rainbow_wool:
     category: SPECIAL
     display-name: sf:rainbow_wool
