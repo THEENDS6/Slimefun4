@@ -1,4 +1,5 @@
 import java.nio.charset.StandardCharsets
+import java.nio.file.StandardCopyOption
 
 plugins {
     id 'java'
@@ -16,6 +17,9 @@ ext {
     paperRuntimeRconHost = '127.0.0.1'
     paperRuntimeRconPort = 25575
     paperRuntimeRconPassword = 'sfx-dev'
+    plugManXVersion = '3.0.4'
+    plugManXDownloadUrl = 'https://cdn.modrinth.com/data/yro4niHu/versions/hrMAp7Ww/PlugManX-3.0.4.jar'
+    plugManXJarName = 'PlugManX.jar'
     paper261RuntimeDirName = 'run-paper-26.1'
     paper261RuntimeJarName = 'paper-26.1.jar'
     foliaRuntimeJarName = 'folia-1.21.8-6.jar'
@@ -112,6 +116,24 @@ tasks.register('deployToPaperRuntime', Copy) {
     from(tasks.named('jar').flatMap { it.archiveFile })
     into(layout.projectDirectory.dir('run-paper-1.21.8/plugins'))
     rename { rootProject.ext.pluginJarName }
+}
+
+tasks.register('installPaperRuntimePlugManX') {
+    group = 'deployment'
+    description = 'Downloads PlugManX into run-paper-1.21.8/plugins for local Paper hot-reload testing.'
+    dependsOn 'prepareRuntimeDirs'
+    outputs.file(layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.plugManXJarName}"))
+    doLast {
+        def target = layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.plugManXJarName}").asFile
+        if (target.exists() && target.length() > 0) {
+            logger.lifecycle("PlugManX already installed: ${target}")
+            return
+        }
+        new URL(rootProject.ext.plugManXDownloadUrl).withInputStream { input ->
+            target.withOutputStream { output -> output << input }
+        }
+        logger.lifecycle("Installed PlugManX ${rootProject.ext.plugManXVersion}: ${target}")
+    }
 }
 
 def configurePaperTestServerProperties = {
@@ -226,7 +248,7 @@ tasks.register('reloadPaperRuntime') {
         try {
             sendPaperRconCommand('sfx reload runtime')
             logger.lifecycle('Requested SFX runtime reload on Paper 1.21.8.')
-        } catch (ConnectException exception) {
+        } catch (IOException exception) {
             throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled yet. Start it with runPaper after ensurePaperRuntimeTestConfig.', exception)
         }
     }
@@ -236,6 +258,25 @@ tasks.register('stageAndReloadPaperRuntime') {
     group = 'application'
     description = 'Stages the jar for the next restart and reloads the current SFX runtime/config over RCON. Bytecode changes still require restart or an external plugin loader.'
     dependsOn 'stagePaperRuntimeUpdate', 'reloadPaperRuntime'
+}
+
+tasks.register('plugmanReloadPaperRuntime') {
+    group = 'application'
+    description = 'Builds SlimeFunX, unloads it with PlugManX, replaces the Paper 1.21.8 plugin jar, then loads it again.'
+    dependsOn 'ensurePaperRuntimeTestConfig', 'installPaperRuntimePlugManX', 'jar'
+    doLast {
+        try {
+            sendPaperRconCommand('plugman unload SlimeFunX')
+            def builtJar = tasks.named('jar').get().archiveFile.get().asFile
+            def targetJar = layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.pluginJarName}").asFile
+            java.nio.file.Files.copy(builtJar.toPath(), targetJar.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            logger.lifecycle("Copied ${builtJar.name} to ${targetJar}")
+            sendPaperRconCommand('plugman load SlimeFunX')
+            logger.lifecycle('Requested PlugManX unload/load for SlimeFunX on Paper 1.21.8.')
+        } catch (IOException exception) {
+            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled. Start it with runPaper first.', exception)
+        }
+    }
 }
 
 tasks.named('reloadPaperRuntime') {

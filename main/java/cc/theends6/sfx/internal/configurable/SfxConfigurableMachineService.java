@@ -16,6 +16,7 @@ import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
+import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
 import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
@@ -351,9 +352,6 @@ public final class SfxConfigurableMachineService implements Listener {
         if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxConfigurableMachineHolder holder)) {
             return;
         }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
-            return;
-        }
         SfxBlockInstanceRecord host = blockData.findInstance(holder.hostInstanceId()).orElse(null);
         SfxConfigurableMachineDefinition definition = host == null ? null : definitions.get(host.typeId());
         if (host != null && definition != null) {
@@ -363,7 +361,10 @@ public final class SfxConfigurableMachineService implements Listener {
             event.setCancelled(true);
             return;
         }
-        boolean topSlot = event.getRawSlot() < event.getView().getTopInventory().getSize();
+        boolean topSlot = event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize();
+        if (topSlot && SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
+            return;
+        }
         if (event.isShiftClick() && !topSlot) {
             int[] targetSlots = editableInputSlots(holder.panelType());
             if (moveShiftClickedStack(event.getView().getTopInventory(), event.getCurrentItem(), targetSlots, definition)) {
@@ -383,9 +384,12 @@ public final class SfxConfigurableMachineService implements Listener {
                 return;
             }
             if (contains(editableOutputSlots(holder.panelType()), raw)) {
-                if (!isTakingFromOutput(event)) {
+                if (!SfxMachineMenuTransactions.isTakingFromOutput(event)) {
                     event.setCancelled(true);
                     return;
+                }
+                if (SfxMachineMenuTransactions.dropFromTopSlot(event, event.getView().getTopInventory(), raw, player)) {
+                    event.setCancelled(true);
                 }
                 runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
                 return;
@@ -399,6 +403,14 @@ public final class SfxConfigurableMachineService implements Listener {
                 event.setCancelled(true);
                 return;
             }
+            if (SfxMachineMenuTransactions.dropFromTopSlot(event, event.getView().getTopInventory(), raw, player)) {
+                event.setCancelled(true);
+                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
+                return;
+            }
+        }
+        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
+            return;
         }
         runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
     }
@@ -1745,14 +1757,6 @@ public final class SfxConfigurableMachineService implements Listener {
             return stack != null && stack.isSfxItem() && definition.coolantItemId().equals(stack.itemId());
         }
         return false;
-    }
-
-    private boolean isTakingFromOutput(InventoryClickEvent event) {
-        ItemStack current = event.getCurrentItem();
-        ItemStack cursor = event.getCursor();
-        boolean currentItem = current != null && !current.getType().isAir();
-        boolean cursorEmpty = cursor == null || cursor.getType().isAir();
-        return currentItem && (cursorEmpty || event.isShiftClick());
     }
 
     private boolean contains(int[] values, int value) {

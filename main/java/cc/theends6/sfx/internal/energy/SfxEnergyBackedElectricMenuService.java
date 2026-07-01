@@ -5,19 +5,19 @@ import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
 import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
+import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.util.SfxInventorySlots;
 import cc.theends6.sfx.internal.util.Text;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -26,7 +26,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-final class SfxEnergyMachineService implements Listener {
+final class SfxEnergyBackedElectricMenuService implements Listener {
     private static final int INVENTORY_SIZE = 45;
     private static final int[] INPUT_SLOTS = {19, 20};
     private static final int[] OUTPUT_SLOTS = {24, 25};
@@ -37,14 +37,14 @@ final class SfxEnergyMachineService implements Listener {
     private final Map<UUID, SfxEnergyGeneratorSession> sessionsByViewer = new ConcurrentHashMap<>();
     private final Map<UUID, SfxEnergyGeneratorSession> sessionsByInstance = new ConcurrentHashMap<>();
 
-    SfxEnergyMachineService(SfxEnergyService energy, SfxRechargeableItemService rechargeableItems) {
+    SfxEnergyBackedElectricMenuService(SfxEnergyService energy, SfxRechargeableItemService rechargeableItems) {
         this.energy = energy;
         this.rechargeableItems = rechargeableItems;
         this.renderer = new SfxEnergyGeneratorMenuRenderer(energy.plugin, energy.items, energy.localization, rechargeableItems);
     }
 
     void open(Player player, SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition) {
-        SfxMachineLegacyHookBridge.menuOpen(energy.machineRuntime, definition.id(), instance.instanceId(), energy.toLocation(instance.anchorKey()), "energy-machine", "SfxEnergyMachineService.open");
+        SfxMachineLegacyHookBridge.menuOpen(energy.machineRuntime, definition.id(), instance.instanceId(), energy.toLocation(instance.anchorKey()), "electric-energy-menu", "SfxEnergyBackedElectricMenuService.open");
         SfxEnergyGeneratorSession existing = sessionsByInstance.get(instance.instanceId());
         if (existing != null && !existing.viewerId().equals(player.getUniqueId())) {
             player.sendMessage(Text.prefixed(energy.plugin, energy.localization.text("machines.busy", "<red>This machine is already open.</red>")));
@@ -99,7 +99,7 @@ final class SfxEnergyMachineService implements Listener {
     private void handleClick(InventoryClickEvent event, SfxEnergyGeneratorHolder holder, Player player) {
         SfxEnergyComponentDefinition clickDefinition = energy.definitionFor(holder.instanceId());
         if (clickDefinition != null) {
-            SfxMachineLegacyHookBridge.menuClick(energy.machineRuntime, clickDefinition.id(), holder.instanceId(), null, "energy-machine", "SfxEnergyMachineService.handleClick");
+            SfxMachineLegacyHookBridge.menuClick(energy.machineRuntime, clickDefinition.id(), holder.instanceId(), null, "electric-energy-menu", "SfxEnergyBackedElectricMenuService.handleClick");
         }
         traceChargingBench(clickDefinition, "click action=" + event.getAction()
                 + " click=" + event.getClick()
@@ -130,7 +130,7 @@ final class SfxEnergyMachineService implements Listener {
             handleStorageSlotClick(event, holder, player, clickDefinition);
             return;
         }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
+        if (SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             traceChargingBench(clickDefinition, "dangerous-click cancelled action=" + event.getAction() + " click=" + event.getClick());
             return;
         }
@@ -144,8 +144,8 @@ final class SfxEnergyMachineService implements Listener {
 
     private void handleStorageSlotClick(InventoryClickEvent event, SfxEnergyGeneratorHolder holder, Player player, SfxEnergyComponentDefinition definition) {
         event.setCancelled(true);
-        if (event.getClick() == ClickType.MIDDLE || event.getAction() == InventoryAction.CLONE_STACK) {
-            traceChargingBench(definition, "clone-click cancelled raw=" + event.getRawSlot());
+        if (SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
+            traceChargingBench(definition, "unsupported-click cancelled raw=" + event.getRawSlot());
             return;
         }
         Inventory topInventory = event.getView().getTopInventory();
@@ -155,7 +155,7 @@ final class SfxEnergyMachineService implements Listener {
         syncTopInventoryToState(holder.instanceId(), topInventory);
 
         if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-            if (moveTopSlotToPlayer(topInventory, rawSlot, player)) {
+            if (SfxMachineMenuTransactions.moveTopSlotToPlayer(topInventory, rawSlot, player)) {
                 commitTopInventory(holder.instanceId(), topInventory);
                 traceChargingBench(definition, (inputSlot ? "shift-input-take" : "shift-output-take") + " accepted raw=" + rawSlot);
             } else {
@@ -163,9 +163,14 @@ final class SfxEnergyMachineService implements Listener {
             }
             return;
         }
+        if (SfxMachineMenuTransactions.dropFromTopSlot(event, topInventory, rawSlot, player)) {
+            commitTopInventory(holder.instanceId(), topInventory);
+            traceChargingBench(definition, (inputSlot ? "drop-input" : "drop-output") + " accepted raw=" + rawSlot);
+            return;
+        }
 
         if (outputSlot) {
-            if (takeFromSlotToCursor(event, topInventory, rawSlot)) {
+            if (SfxMachineMenuTransactions.takeFromSlotToCursor(event, topInventory, rawSlot)) {
                 commitTopInventory(holder.instanceId(), topInventory);
             } else {
                 traceChargingBench(definition, "output-click cancelled raw=" + rawSlot + " current=" + describe(topInventory.getItem(rawSlot)) + " cursor=" + describe(event.getCursor()));
@@ -176,7 +181,7 @@ final class SfxEnergyMachineService implements Listener {
         if (!inputSlot) {
             return;
         }
-        if (handleInputSlotCursorTransaction(event, topInventory, rawSlot, definition)) {
+        if (SfxMachineMenuTransactions.handleInputSlotCursorTransaction(event, topInventory, rawSlot, stack -> isValidInputStack(definition, stack))) {
             commitTopInventory(holder.instanceId(), topInventory);
         } else {
             traceChargingBench(definition, "input-click cancelled raw=" + rawSlot + " current=" + describe(topInventory.getItem(rawSlot)) + " cursor=" + describe(event.getCursor()));
@@ -220,7 +225,7 @@ final class SfxEnergyMachineService implements Listener {
     private void handleClose(InventoryCloseEvent event, SfxEnergyGeneratorHolder holder) {
         SfxEnergyComponentDefinition closeDefinition = energy.definitionFor(holder.instanceId());
         if (closeDefinition != null) {
-            SfxMachineLegacyHookBridge.menuClose(energy.machineRuntime, closeDefinition.id(), holder.instanceId(), null, "energy-machine", "SfxEnergyMachineService.handleClose");
+            SfxMachineLegacyHookBridge.menuClose(energy.machineRuntime, closeDefinition.id(), holder.instanceId(), null, "electric-energy-menu", "SfxEnergyBackedElectricMenuService.handleClose");
         }
         SfxEnergyGeneratorSession session = sessionsByInstance.remove(holder.instanceId());
         if (session == null) {
@@ -387,107 +392,6 @@ final class SfxEnergyMachineService implements Listener {
         if (session != null) {
             render(session, instance, definition, session.inventory(), state);
         }
-    }
-
-    private boolean moveTopSlotToPlayer(Inventory topInventory, int rawSlot, Player player) {
-        ItemStack current = topInventory.getItem(rawSlot);
-        if (SfxInventoryPolicy.isEmpty(current)) {
-            return false;
-        }
-        ItemStack moving = current.clone();
-        Map<Integer, ItemStack> leftovers = player.getInventory().addItem(moving);
-        int leftoverAmount = leftovers.values().stream()
-                .filter(stack -> !SfxInventoryPolicy.isEmpty(stack))
-                .mapToInt(ItemStack::getAmount)
-                .sum();
-        int moved = current.getAmount() - leftoverAmount;
-        if (moved <= 0) {
-            return false;
-        }
-        if (leftoverAmount <= 0) {
-            topInventory.setItem(rawSlot, null);
-        } else {
-            ItemStack remaining = current.clone();
-            remaining.setAmount(leftoverAmount);
-            topInventory.setItem(rawSlot, remaining);
-        }
-        return true;
-    }
-
-    private boolean takeFromSlotToCursor(InventoryClickEvent event, Inventory topInventory, int rawSlot) {
-        ItemStack current = topInventory.getItem(rawSlot);
-        if (SfxInventoryPolicy.isEmpty(current) || !SfxInventoryPolicy.isEmpty(event.getCursor())) {
-            return false;
-        }
-        int amount;
-        if (event.getAction() == InventoryAction.PICKUP_HALF) {
-            amount = (current.getAmount() + 1) / 2;
-        } else if (event.getAction() == InventoryAction.PICKUP_ONE) {
-            amount = 1;
-        } else if (event.getAction() == InventoryAction.PICKUP_ALL || event.getAction() == InventoryAction.PICKUP_SOME) {
-            amount = current.getAmount();
-        } else {
-            return false;
-        }
-        ItemStack cursor = current.clone();
-        cursor.setAmount(amount);
-        int remainingAmount = current.getAmount() - amount;
-        if (remainingAmount <= 0) {
-            topInventory.setItem(rawSlot, null);
-        } else {
-            ItemStack remaining = current.clone();
-            remaining.setAmount(remainingAmount);
-            topInventory.setItem(rawSlot, remaining);
-        }
-        event.setCursor(cursor);
-        return true;
-    }
-
-    private boolean handleInputSlotCursorTransaction(InventoryClickEvent event, Inventory topInventory, int rawSlot, SfxEnergyComponentDefinition definition) {
-        InventoryAction action = event.getAction();
-        ItemStack current = topInventory.getItem(rawSlot);
-        ItemStack cursor = event.getCursor();
-        if (SfxInventoryPolicy.isEmpty(cursor)) {
-            return takeFromSlotToCursor(event, topInventory, rawSlot);
-        }
-        if (!isValidInputStack(definition, cursor)) {
-            return false;
-        }
-        if (action == InventoryAction.SWAP_WITH_CURSOR) {
-            if (!SfxInventoryPolicy.isEmpty(current) && !isValidInputStack(definition, current)) {
-                return false;
-            }
-            topInventory.setItem(rawSlot, cursor.clone());
-            event.setCursor(SfxInventoryPolicy.isEmpty(current) ? null : current.clone());
-            return true;
-        }
-        if (action != InventoryAction.PLACE_ALL && action != InventoryAction.PLACE_ONE && action != InventoryAction.PLACE_SOME) {
-            return false;
-        }
-        if (!SfxInventoryPolicy.isEmpty(current) && !current.isSimilar(cursor)) {
-            return false;
-        }
-        int room = SfxInventoryPolicy.isEmpty(current) ? cursor.getMaxStackSize() : current.getMaxStackSize() - current.getAmount();
-        if (room <= 0) {
-            return false;
-        }
-        int requested = action == InventoryAction.PLACE_ONE ? 1 : cursor.getAmount();
-        int moved = Math.min(room, requested);
-        ItemStack updated = SfxInventoryPolicy.isEmpty(current) ? cursor.clone() : current.clone();
-        updated.setAmount((SfxInventoryPolicy.isEmpty(current) ? 0 : current.getAmount()) + moved);
-        if (!isValidInputStack(definition, updated)) {
-            return false;
-        }
-        topInventory.setItem(rawSlot, updated);
-        int cursorRemaining = cursor.getAmount() - moved;
-        if (cursorRemaining <= 0) {
-            event.setCursor(null);
-        } else {
-            ItemStack remainingCursor = cursor.clone();
-            remainingCursor.setAmount(cursorRemaining);
-            event.setCursor(remainingCursor);
-        }
-        return true;
     }
 
     private boolean moveShiftClickedStackToInputs(Inventory topInventory, ItemStack current, SfxEnergyComponentDefinition definition) {
