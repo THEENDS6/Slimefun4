@@ -66,6 +66,7 @@ import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.radiation.SfxRadiationService;
 import cc.theends6.sfx.internal.technical.SfxTechnicalGadgetService;
 import cc.theends6.sfx.internal.research.SfxResearchYamlLoader;
+import cc.theends6.sfx.internal.template.SfxTemplatePrecompiler;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.io.File;
 import java.time.LocalDateTime;
@@ -207,6 +208,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
             syncBundledLanguages();
             localization.reload();
             legacyItemBehaviorConfig.reload();
+            compileContentTemplates();
             if (researchRegistry != null) {
                 researchRegistry.clear();
             }
@@ -223,6 +225,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     void bootstrapContent() {
         SfxContentBootstrapper.bootstrap(this, api, researchRegistry);
+    }
+
+    public cc.theends6.sfx.internal.template.SfxTemplateCompileReport compileContentTemplates() {
+        return SfxTemplatePrecompiler.compile(this, syncBundledRecipeFiles());
     }
 
     boolean syncBundledRecipeFiles() {

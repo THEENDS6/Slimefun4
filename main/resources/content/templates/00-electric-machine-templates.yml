@@ -1,0 +1,50 @@
+# SFX 模板预编译器示例：这里放可复用模板，不直接作为运行时产物。
+# 规则要点：
+# - @istemplate / @it 表示模板节点，不导出。
+# - @copyfrom / @cf 从目标节点复制后再用本节点字段覆盖。
+# - @mergeinto / @mi 把当前节点内容合并到目标路径。
+# - @isoutput / @io 表示这个节点独立导出为完整显式 YAML。
+
+@project:
+  default-progress-material: FLINT_AND_STEEL
+  standard-menu-style: STANDARD
+
+templates:
+  ui:
+    standard-electric-machine:
+      @it: true
+      menu-style: ${standard-menu-style}
+      slots:
+        input: [19, 20]
+        output: [24, 25]
+      ui:
+        title-color: red
+        status-slot: 22
+        border:
+          material: GRAY_STAINED_GLASS_PANE
+          name: " "
+          lore:
+            - "不可移动"
+  energy:
+    electric-consumer:
+      @istemplate: true
+      energy:
+        capacity: 1280
+        consumption-per-tick: 4
+    electric-furnace-base:
+      @copyfrom: templates.energy.electric-consumer
+      @istemplate: true
+      progress-material: ${default-progress-material}
+  machines:
+    standard-electric-machine:
+      @copyfrom: templates.ui.standard-electric-machine
+      @istemplate: true
+      speed: 1
+      progress-material: ${default-progress-material}
+    electric-furnace:
+      @copyfrom: templates.machines.standard-electric-machine
+      @istemplate: true
+      title: "Electric Furnace"
+      energy:
+        capacity: 1280
+        consumption-per-tick: 4

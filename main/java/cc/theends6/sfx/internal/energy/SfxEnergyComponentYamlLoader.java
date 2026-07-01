@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.energy;
 
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ final class SfxEnergyComponentYamlLoader {
         if (!file.isFile()) {
             return Map.of();
         }
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("components");
         if (root == null) {
             plugin.getLogger().warning("No components section in " + RESOURCE_PATH + "; energy components will use Java defaults.");

@@ -11,6 +11,7 @@ import cc.theends6.sfx.internal.playerdata.SfxBackpackRecord;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
 import cc.theends6.sfx.internal.research.SfxResearchDefinition;
 import cc.theends6.sfx.internal.research.SfxResearchService;
+import cc.theends6.sfx.internal.template.SfxTemplateCompileReport;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.Text;
 import java.time.Instant;
@@ -68,6 +69,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             case "inspect" -> inspectItem(sender);
             case "list" -> listItems(sender, args.length >= 2 ? parsePositive(args[1], 1) - 1 : 0);
             case "reload" -> reload(sender, args);
+            case "template", "templates" -> handleTemplate(sender, args);
             default -> sendHelp(sender, label);
         }
         return true;
@@ -410,6 +412,31 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success", "<green>SFX configuration and language files were reloaded.</green>")));
     }
 
+    private void handleTemplate(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("sfx.command.reload")) {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload", "<red>You do not have permission to reload SFX.</red>")));
+            return;
+        }
+        if (args.length < 2 || !args[1].equalsIgnoreCase("compile")) {
+            sender.sendMessage(Text.prefixed(plugin, "<red>Usage: /sfx template compile</red>"));
+            return;
+        }
+        SlimeFunXPlugin sfx = sfxPlugin();
+        if (sfx == null) {
+            sender.sendMessage("SFX plugin context unavailable.");
+            return;
+        }
+        try {
+            SfxTemplateCompileReport report = sfx.compileContentTemplates();
+            sender.sendMessage(Text.prefixed(plugin, "<green>SFX templates compiled: " + report.sourceFiles() + " source file(s), " + report.outputFiles() + " output file(s).</green>"));
+            for (String warning : report.warnings()) {
+                sender.sendMessage(Text.prefixed(plugin, "<yellow>[template] " + warning + "</yellow>"));
+            }
+        } catch (RuntimeException ex) {
+            sender.sendMessage(Text.prefixed(plugin, "<red>SFX template compile failed: " + ex.getMessage() + "</red>"));
+        }
+    }
+
     private void sendHelp(CommandSender sender, String label) {
         sender.sendMessage(Text.mm(tr("command.help.header", "<green>SFX Commands</green>")));
         sender.sendMessage(Text.mm(tr("command.help.line.guide", "<gray>/{label} guide</gray> <dark_gray>- open the survival guide</dark_gray>").replace("{label}", label)));
@@ -421,6 +448,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Text.mm(tr("command.help.line.inspect", "<gray>/{label} inspect</gray> <dark_gray>- inspect the SFX item in your main hand</dark_gray>").replace("{label}", label)));
         sender.sendMessage(Text.mm(tr("command.help.line.list", "<gray>/{label} list [page]</gray> <dark_gray>- list visible SFX items</dark_gray>").replace("{label}", label)));
         sender.sendMessage(Text.mm(tr("command.help.line.reload", "<gray>/{label} reload [config|runtime]</gray> <dark_gray>- reload config or rebuild the SFX runtime</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm("<gray>/" + label + " template compile</gray> <dark_gray>- compile content templates</dark_gray>"));
     }
 
     @Override
