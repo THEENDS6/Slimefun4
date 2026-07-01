@@ -31,6 +31,19 @@ public final class SfxPlayerDataService {
         repository.initialize();
     }
 
+    public void preloadOnlinePlayers() {
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            preload(player);
+        }
+    }
+
+    public void preload(Player player) {
+        if (player == null) {
+            return;
+        }
+        profiles.computeIfAbsent(player.getUniqueId(), ignored -> loadAsync(player.getUniqueId(), player.getName()));
+    }
+
     public void request(Player player, Consumer<SfxPlayerProfile> callback) {
         UUID uuid = player.getUniqueId();
         CompletableFuture<SfxPlayerProfile> future = profiles.computeIfAbsent(uuid, ignored -> loadAsync(uuid, player.getName()));
@@ -52,6 +65,14 @@ public final class SfxPlayerDataService {
             return Optional.empty();
         }
         return Optional.ofNullable(future.getNow(null));
+    }
+
+    public Optional<SfxPlayerProfile> findOrRequest(Player player) {
+        Optional<SfxPlayerProfile> profile = find(player.getUniqueId());
+        if (profile.isEmpty()) {
+            preload(player);
+        }
+        return profile;
     }
 
     public void saveAsync(SfxPlayerProfile profile) {

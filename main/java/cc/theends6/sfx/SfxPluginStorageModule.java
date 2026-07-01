@@ -23,6 +23,7 @@ final class SfxPluginStorageModule {
         try {
             plugin.playerDataService = new SfxPlayerDataService(plugin, runtime, new SqliteSfxPlayerDataRepository(plugin, plugin.playerDataFile()));
             plugin.playerDataService.initialize();
+            plugin.playerDataService.preloadOnlinePlayers();
             plugin.blockDataService = new SfxBlockDataService(plugin, runtime, new SqliteSfxBlockDataRepository(plugin, plugin.blockDataFile()));
             plugin.blockDataService.initialize();
         } catch (Exception exception) {

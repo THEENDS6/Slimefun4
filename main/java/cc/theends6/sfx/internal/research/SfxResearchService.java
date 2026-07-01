@@ -92,6 +92,10 @@ public final class SfxResearchService {
         return profiles.find(uuid);
     }
 
+    public Optional<SfxPlayerProfile> findProfile(Player player) {
+        return profiles.findOrRequest(player);
+    }
+
     public enum UnlockResult {
         PROFILE_NOT_LOADED,
         ALREADY_UNLOCKED,
