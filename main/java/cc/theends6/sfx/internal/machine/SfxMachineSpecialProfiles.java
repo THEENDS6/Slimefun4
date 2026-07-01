@@ -21,11 +21,28 @@ public final class SfxMachineSpecialProfiles {
         VANILLA_FURNACE, HAND_INPUT_TRANSFORM, AUTO_BREWER, AUTO_CRAFTER, GEO_EXTRACTOR, FLUID_PUMP,
         ITEM_META_TRANSFORM, PROXY_PANEL_REACTOR_ACCESS_PORT, FUEL_GENERATOR, SOLAR_GENERATOR, REACTOR,
         ASSEMBLER, DECORATION, GPS_DEVICE, ANDROID_INTERFACE, ANDROID, ANCIENT_ALTAR, CARGO_NODE, ENERGY_NODE,
-        CHARGING_BENCH, XP_COLLECTOR, REINFORCED_SPAWNER, INFUSED_HOPPER, HOLOGRAM_PROJECTOR, BLOCK_PLACER, INDUSTRIAL_MINER
+        CHARGING_BENCH, XP_COLLECTOR, GPS_TRANSMITTER, ELECTRIC_WORLD_ACTION, REINFORCED_SPAWNER, INFUSED_HOPPER,
+        HOLOGRAM_PROJECTOR, BLOCK_PLACER, INDUSTRIAL_MINER
     }
 
     private static final Map<String, Profile> LEGACY_PROFILES = legacyProfiles();
     private static final Set<String> STRUCTURAL_DECORATIONS = Set.of("sf:hardened_glass", "sf:wither_proof_obsidian", "sf:wither_proof_glass");
+    private static final Set<String> ELECTRIC_WORLD_ACTIONS = Set.of(
+            "sf:produce_collector",
+            "sf:auto_breeder",
+            "sf:animal_growth_accelerator",
+            "sf:crop_growth_accelerator",
+            "sf:crop_growth_accelerator_2",
+            "sf:tree_growth_accelerator",
+            "sf:iron_golem_assembler",
+            "sf:wither_assembler"
+    );
+    private static final Set<String> ELECTRIC_GPS_TRANSMITTERS = Set.of(
+            "sf:gps_transmitter",
+            "sf:gps_transmitter_2",
+            "sf:gps_transmitter_3",
+            "sf:gps_transmitter_4"
+    );
 
     private static Map<String, Profile> legacyProfiles() {
         Map<String, Profile> profiles = new LinkedHashMap<>();
@@ -76,6 +93,13 @@ public final class SfxMachineSpecialProfiles {
         String id = definition.id().toLowerCase(Locale.ROOT);
         SfxMachineDefinition.Builder builder = definition.toBuilder();
         Profile profile = parseProfile(declaredProfile);
+        if (profile == null && definition.category() == SfxMachineCategory.ELECTRIC) {
+            if (ELECTRIC_WORLD_ACTIONS.contains(id)) {
+                profile = Profile.ELECTRIC_WORLD_ACTION;
+            } else if (ELECTRIC_GPS_TRANSMITTERS.contains(id)) {
+                profile = Profile.GPS_TRANSMITTER;
+            }
+        }
         if (profile == null) {
             profile = LEGACY_PROFILES.get(id);
         }
@@ -132,6 +156,8 @@ public final class SfxMachineSpecialProfiles {
             case ENERGY_NODE -> energyNode(builder);
             case CHARGING_BENCH -> chargingBench(builder);
             case XP_COLLECTOR -> xpCollector(builder);
+            case GPS_TRANSMITTER -> gpsTransmitter(builder);
+            case ELECTRIC_WORLD_ACTION -> electricWorldAction(builder);
             case REINFORCED_SPAWNER -> reinforcedSpawner(builder);
             case INFUSED_HOPPER -> infusedHopper(builder);
             case HOLOGRAM_PROJECTOR -> hologramProjector(builder);
@@ -393,7 +419,27 @@ public final class SfxMachineSpecialProfiles {
                 .capability(SfxMachineCapability.MUTATES_WORLD)
                 .capability(SfxMachineCapability.HAS_VISUAL_EFFECTS)
                 .policyRef(SfxMachinePolicyRef.of("world", "nearby-experience-collection"))
-                .effect(SfxMachineEffect.marker("xp:collect-orbs", SfxMachinePhase.BEFORE_OPERATION_RESOLVE));
+                .effect(SfxMachineEffect.marker("electric:special-tick", SfxMachinePhase.BEFORE_OPERATION_RESOLVE));
+    }
+
+    private static void gpsTransmitter(SfxMachineDefinition.Builder builder) {
+        commonMachine(builder);
+        builder.capability(SfxMachineCapability.USES_ENERGY)
+                .capability(SfxMachineCapability.USES_GPS)
+                .policyRef(SfxMachinePolicyRef.of("gps", "transmitter-energy-service"))
+                .effect(SfxMachineEffect.marker("electric:special-tick", SfxMachinePhase.BEFORE_OPERATION_RESOLVE));
+    }
+
+    private static void electricWorldAction(SfxMachineDefinition.Builder builder) {
+        commonMachine(builder);
+        builder.capability(SfxMachineCapability.HAS_GUI)
+                .capability(SfxMachineCapability.HAS_INPUT)
+                .capability(SfxMachineCapability.USES_ENERGY)
+                .capability(SfxMachineCapability.USES_PROGRESS)
+                .capability(SfxMachineCapability.MUTATES_WORLD)
+                .capability(SfxMachineCapability.HAS_VISUAL_EFFECTS)
+                .policyRef(SfxMachinePolicyRef.of("world", "electric-world-action-provider"))
+                .effect(SfxMachineEffect.marker("electric:world-action", SfxMachinePhase.BEFORE_OPERATION_RESOLVE));
     }
 
 
