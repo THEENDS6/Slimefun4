@@ -17,6 +17,8 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -109,7 +111,7 @@ final class SfxEnergyMachineService implements Listener {
             event.setCancelled(true);
             return;
         }
-        boolean topSlot = event.getRawSlot() < event.getView().getTopInventory().getSize();
+        boolean topSlot = event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize();
         if (event.isShiftClick() && !topSlot) {
             if (moveShiftClickedStackToInputs(event.getView().getTopInventory(), event.getCurrentItem(), clickDefinition)) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getAmount() <= 0) {
@@ -124,17 +126,12 @@ final class SfxEnergyMachineService implements Listener {
             }
             return;
         }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
-            traceChargingBench(clickDefinition, "dangerous-click cancelled action=" + event.getAction() + " click=" + event.getClick());
+        if (topSlot && (contains(INPUT_SLOTS, event.getRawSlot()) || contains(OUTPUT_SLOTS, event.getRawSlot()))) {
+            handleStorageSlotClick(event, holder, player, clickDefinition);
             return;
         }
-        if (topSlot && contains(OUTPUT_SLOTS, event.getRawSlot())) {
-            if (!isTakingFromOutput(event)) {
-                event.setCancelled(true);
-                traceChargingBench(clickDefinition, "output-click cancelled raw=" + event.getRawSlot() + " current=" + describe(event.getCurrentItem()) + " cursor=" + describe(event.getCursor()));
-                return;
-            }
-            energy.runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
+            traceChargingBench(clickDefinition, "dangerous-click cancelled action=" + event.getAction() + " click=" + event.getClick());
             return;
         }
         if (topSlot && !contains(INPUT_SLOTS, event.getRawSlot())) {
@@ -142,15 +139,48 @@ final class SfxEnergyMachineService implements Listener {
             traceChargingBench(clickDefinition, "non-editable-slot cancelled raw=" + event.getRawSlot());
             return;
         }
-        if (topSlot && clickDefinition.isCharger()) {
-            ItemStack cursor = event.getCursor();
-            if (cursor != null && !cursor.getType().isAir() && !isValidChargingBenchInput(cursor)) {
-                event.setCancelled(true);
-                traceChargingBench(clickDefinition, "invalid-cursor cancelled raw=" + event.getRawSlot() + " cursor=" + describe(cursor));
-                return;
-            }
-        }
         energy.runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+    }
+
+    private void handleStorageSlotClick(InventoryClickEvent event, SfxEnergyGeneratorHolder holder, Player player, SfxEnergyComponentDefinition definition) {
+        event.setCancelled(true);
+        if (event.getClick() == ClickType.MIDDLE || event.getAction() == InventoryAction.CLONE_STACK) {
+            traceChargingBench(definition, "clone-click cancelled raw=" + event.getRawSlot());
+            return;
+        }
+        Inventory topInventory = event.getView().getTopInventory();
+        int rawSlot = event.getRawSlot();
+        boolean inputSlot = contains(INPUT_SLOTS, rawSlot);
+        boolean outputSlot = contains(OUTPUT_SLOTS, rawSlot);
+        syncTopInventoryToState(holder.instanceId(), topInventory);
+
+        if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+            if (moveTopSlotToPlayer(topInventory, rawSlot, player)) {
+                commitTopInventory(holder.instanceId(), topInventory);
+                traceChargingBench(definition, (inputSlot ? "shift-input-take" : "shift-output-take") + " accepted raw=" + rawSlot);
+            } else {
+                traceChargingBench(definition, (inputSlot ? "shift-input-take" : "shift-output-take") + " rejected raw=" + rawSlot);
+            }
+            return;
+        }
+
+        if (outputSlot) {
+            if (takeFromSlotToCursor(event, topInventory, rawSlot)) {
+                commitTopInventory(holder.instanceId(), topInventory);
+            } else {
+                traceChargingBench(definition, "output-click cancelled raw=" + rawSlot + " current=" + describe(topInventory.getItem(rawSlot)) + " cursor=" + describe(event.getCursor()));
+            }
+            return;
+        }
+
+        if (!inputSlot) {
+            return;
+        }
+        if (handleInputSlotCursorTransaction(event, topInventory, rawSlot, definition)) {
+            commitTopInventory(holder.instanceId(), topInventory);
+        } else {
+            traceChargingBench(definition, "input-click cancelled raw=" + rawSlot + " current=" + describe(topInventory.getItem(rawSlot)) + " cursor=" + describe(event.getCursor()));
+        }
     }
 
     private void handleDrag(InventoryDragEvent event, SfxEnergyGeneratorHolder holder, Player player) {
@@ -329,8 +359,143 @@ final class SfxEnergyMachineService implements Listener {
         }
     }
 
+    private void syncTopInventoryToState(UUID instanceId, Inventory inventory) {
+        SfxBlockInstanceRecord instance = energy.blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxEnergyNodeState state = energy.currentState(instanceId, instance);
+        syncInventoryToState(inventory, state);
+        energy.markDirty(instanceId);
+        energy.markActive(instanceId);
+    }
+
+    private void commitTopInventory(UUID instanceId, Inventory inventory) {
+        SfxBlockInstanceRecord instance = energy.blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            return;
+        }
+        SfxEnergyComponentDefinition definition = energy.definitions.get(instance.typeId());
+        if (definition == null) {
+            return;
+        }
+        SfxEnergyNodeState state = energy.currentState(instanceId, instance);
+        syncInventoryToState(inventory, state);
+        energy.markDirty(instanceId);
+        energy.markActive(instanceId);
+        SfxEnergyGeneratorSession session = sessionsByInstance.get(instanceId);
+        if (session != null) {
+            render(session, instance, definition, session.inventory(), state);
+        }
+    }
+
+    private boolean moveTopSlotToPlayer(Inventory topInventory, int rawSlot, Player player) {
+        ItemStack current = topInventory.getItem(rawSlot);
+        if (SfxInventoryPolicy.isEmpty(current)) {
+            return false;
+        }
+        ItemStack moving = current.clone();
+        Map<Integer, ItemStack> leftovers = player.getInventory().addItem(moving);
+        int leftoverAmount = leftovers.values().stream()
+                .filter(stack -> !SfxInventoryPolicy.isEmpty(stack))
+                .mapToInt(ItemStack::getAmount)
+                .sum();
+        int moved = current.getAmount() - leftoverAmount;
+        if (moved <= 0) {
+            return false;
+        }
+        if (leftoverAmount <= 0) {
+            topInventory.setItem(rawSlot, null);
+        } else {
+            ItemStack remaining = current.clone();
+            remaining.setAmount(leftoverAmount);
+            topInventory.setItem(rawSlot, remaining);
+        }
+        return true;
+    }
+
+    private boolean takeFromSlotToCursor(InventoryClickEvent event, Inventory topInventory, int rawSlot) {
+        ItemStack current = topInventory.getItem(rawSlot);
+        if (SfxInventoryPolicy.isEmpty(current) || !SfxInventoryPolicy.isEmpty(event.getCursor())) {
+            return false;
+        }
+        int amount;
+        if (event.getAction() == InventoryAction.PICKUP_HALF) {
+            amount = (current.getAmount() + 1) / 2;
+        } else if (event.getAction() == InventoryAction.PICKUP_ONE) {
+            amount = 1;
+        } else if (event.getAction() == InventoryAction.PICKUP_ALL || event.getAction() == InventoryAction.PICKUP_SOME) {
+            amount = current.getAmount();
+        } else {
+            return false;
+        }
+        ItemStack cursor = current.clone();
+        cursor.setAmount(amount);
+        int remainingAmount = current.getAmount() - amount;
+        if (remainingAmount <= 0) {
+            topInventory.setItem(rawSlot, null);
+        } else {
+            ItemStack remaining = current.clone();
+            remaining.setAmount(remainingAmount);
+            topInventory.setItem(rawSlot, remaining);
+        }
+        event.setCursor(cursor);
+        return true;
+    }
+
+    private boolean handleInputSlotCursorTransaction(InventoryClickEvent event, Inventory topInventory, int rawSlot, SfxEnergyComponentDefinition definition) {
+        InventoryAction action = event.getAction();
+        ItemStack current = topInventory.getItem(rawSlot);
+        ItemStack cursor = event.getCursor();
+        if (SfxInventoryPolicy.isEmpty(cursor)) {
+            return takeFromSlotToCursor(event, topInventory, rawSlot);
+        }
+        if (!isValidInputStack(definition, cursor)) {
+            return false;
+        }
+        if (action == InventoryAction.SWAP_WITH_CURSOR) {
+            if (!SfxInventoryPolicy.isEmpty(current) && !isValidInputStack(definition, current)) {
+                return false;
+            }
+            topInventory.setItem(rawSlot, cursor.clone());
+            event.setCursor(SfxInventoryPolicy.isEmpty(current) ? null : current.clone());
+            return true;
+        }
+        if (action != InventoryAction.PLACE_ALL && action != InventoryAction.PLACE_ONE && action != InventoryAction.PLACE_SOME) {
+            return false;
+        }
+        if (!SfxInventoryPolicy.isEmpty(current) && !current.isSimilar(cursor)) {
+            return false;
+        }
+        int room = SfxInventoryPolicy.isEmpty(current) ? cursor.getMaxStackSize() : current.getMaxStackSize() - current.getAmount();
+        if (room <= 0) {
+            return false;
+        }
+        int requested = action == InventoryAction.PLACE_ONE ? 1 : cursor.getAmount();
+        int moved = Math.min(room, requested);
+        ItemStack updated = SfxInventoryPolicy.isEmpty(current) ? cursor.clone() : current.clone();
+        updated.setAmount((SfxInventoryPolicy.isEmpty(current) ? 0 : current.getAmount()) + moved);
+        if (!isValidInputStack(definition, updated)) {
+            return false;
+        }
+        topInventory.setItem(rawSlot, updated);
+        int cursorRemaining = cursor.getAmount() - moved;
+        if (cursorRemaining <= 0) {
+            event.setCursor(null);
+        } else {
+            ItemStack remainingCursor = cursor.clone();
+            remainingCursor.setAmount(cursorRemaining);
+            event.setCursor(remainingCursor);
+        }
+        return true;
+    }
+
     private boolean moveShiftClickedStackToInputs(Inventory topInventory, ItemStack current, SfxEnergyComponentDefinition definition) {
         return SfxInventorySlots.moveStackToSlots(topInventory, INPUT_SLOTS, current, (slot, stack) -> !definition.isCharger() || isValidChargingBenchInput(stack));
+    }
+
+    private boolean isValidInputStack(SfxEnergyComponentDefinition definition, ItemStack item) {
+        return definition == null || !definition.isCharger() || isValidChargingBenchInput(item);
     }
 
     private boolean isValidChargingBenchInput(ItemStack item) {
@@ -358,14 +523,6 @@ final class SfxEnergyMachineService implements Listener {
             return "empty";
         }
         return stack.toItemStack(energy.items).getType().name() + "*" + stack.amount() + (stack.isSfxItem() ? "[" + stack.itemId() + "]" : "");
-    }
-
-    private boolean isTakingFromOutput(InventoryClickEvent event) {
-        ItemStack current = event.getCurrentItem();
-        ItemStack cursor = event.getCursor();
-        boolean currentItem = current != null && !current.getType().isAir();
-        boolean cursorEmpty = cursor == null || cursor.getType().isAir();
-        return currentItem && (cursorEmpty || event.isShiftClick());
     }
 
     private boolean contains(int[] slots, int value) {
