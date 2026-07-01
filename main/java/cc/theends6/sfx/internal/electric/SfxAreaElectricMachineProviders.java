@@ -71,7 +71,7 @@ final class SfxAreaElectricMachineProviders {
     private static final double XP_COLLECTOR_ABSORB_RANGE = 1.0D;
     private static final double XP_COLLECTOR_ATTRACT_SPEED = 0.18D;
     private static final int XP_PER_FLASK = 10;
-    private static final int XP_FLASK_ENERGY_COST = 1000;
+    private static final int DEFAULT_XP_FLASK_ENERGY_COST = 4096;
     private static final int FLUID_PUMP_WORK_TICKS = 10;
     private static final int FLUID_SOURCE_SEARCH_LIMIT = 42;
     private static final int DEFAULT_FLUID_POOL_CHECK_INTERVAL_TICKS = 200;
@@ -314,7 +314,8 @@ final class SfxAreaElectricMachineProviders {
             @Override
             public SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, SfxMachineTickContext context) {
                 boolean useBalance = useSfxBalance(plugin, "xp-collector");
-                FlushResult initialFlush = flushKnowledgeFlasks(items, definition, state, useBalance);
+                int flaskEnergyCost = xpFlaskEnergyCost(plugin);
+                FlushResult initialFlush = flushKnowledgeFlasks(items, definition, state, useBalance, flaskEnergyCost);
                 boolean changed = initialFlush.changed();
                 int consumedEnergy = initialFlush.consumedEnergy();
                 int supplementalEnergy = initialFlush.consumedEnergy();
@@ -324,7 +325,7 @@ final class SfxAreaElectricMachineProviders {
                     state.activeBaseTicks(ACTION_WORK_TICKS);
                     return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.OUTPUT_FULL, consumedEnergy, supplementalEnergy, changed, true);
                 }
-                if (useBalance && state.specialData() >= XP_PER_FLASK && state.storedEnergy() < XP_FLASK_ENERGY_COST) {
+                if (useBalance && state.specialData() >= XP_PER_FLASK && state.storedEnergy() < flaskEnergyCost) {
                     state.activeRecipeKey("sf:xp_collector");
                     state.activeBaseTicks(ACTION_WORK_TICKS);
                     return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_POWER, consumedEnergy, supplementalEnergy, changed, true);
@@ -348,15 +349,26 @@ final class SfxAreaElectricMachineProviders {
                 consumedEnergy += baseEnergy;
                 changed = true;
                 if (useBalance) {
-                    attractExperience(location);
+                    for (int tick = 0; tick < progressTicks; tick++) {
+                        attractExperience(location);
+                        int collected = absorbCloseExperience(location);
+                        if (collected > 0) {
+                            state.specialData(state.specialData() + collected);
+                            changed = true;
+                        }
+                        FlushResult flush = flushKnowledgeFlasks(items, definition, state, true, flaskEnergyCost);
+                        consumedEnergy += flush.consumedEnergy();
+                        supplementalEnergy += flush.consumedEnergy();
+                        changed = changed || flush.changed();
+                    }
                 }
                 while (nextProgress >= ACTION_WORK_TICKS) {
                     nextProgress -= ACTION_WORK_TICKS;
-                    int collected = useBalance ? absorbCloseExperience(location) : collectAllNearbyExperience(location);
+                    int collected = useBalance ? 0 : collectAllNearbyExperience(location);
                     if (collected > 0) {
                         state.specialData(state.specialData() + collected);
                     }
-                    FlushResult flush = flushKnowledgeFlasks(items, definition, state, useBalance);
+                    FlushResult flush = flushKnowledgeFlasks(items, definition, state, useBalance, flaskEnergyCost);
                     consumedEnergy += flush.consumedEnergy();
                     supplementalEnergy += flush.consumedEnergy();
                     changed = changed || flush.changed() || collected > 0;
@@ -1207,23 +1219,27 @@ final class SfxAreaElectricMachineProviders {
         return orbs;
     }
 
-    private static FlushResult flushKnowledgeFlasks(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, boolean chargePerFlask) {
+    private static FlushResult flushKnowledgeFlasks(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, boolean chargePerFlask, int energyCost) {
         boolean changed = false;
         int consumedEnergy = 0;
         SfxElectricStack flask = SfxElectricStack.sfx("sf:filled_flask_of_knowledge", 1);
         while (state.specialData() >= XP_PER_FLASK && canFitOutput(items, definition, state, flask)) {
-            if (chargePerFlask && state.storedEnergy() < XP_FLASK_ENERGY_COST) {
+            if (chargePerFlask && state.storedEnergy() < energyCost) {
                 break;
             }
             if (chargePerFlask) {
-                state.storedEnergy(state.storedEnergy() - XP_FLASK_ENERGY_COST);
-                consumedEnergy += XP_FLASK_ENERGY_COST;
+                state.storedEnergy(state.storedEnergy() - energyCost);
+                consumedEnergy += energyCost;
             }
             pushOutput(items, definition, state, flask);
             state.specialData(state.specialData() - XP_PER_FLASK);
             changed = true;
         }
         return new FlushResult(changed, consumedEnergy);
+    }
+
+    private static int xpFlaskEnergyCost(JavaPlugin plugin) {
+        return Math.max(0, plugin.getConfig().getInt("electric-machines.sfx-balance.xp-collector.flask-energy-cost", DEFAULT_XP_FLASK_ENERGY_COST));
     }
 
     private static int firstInputSlot(SfxElectricMachineState state, boolean organicFood) {
@@ -1336,7 +1352,14 @@ final class SfxAreaElectricMachineProviders {
     }
 
     private static boolean useSfxBalance(JavaPlugin plugin, String key) {
-        return plugin == null || plugin.getConfig().getBoolean("electric-machines.sfx-balance." + key, true);
+        if (plugin == null) {
+            return true;
+        }
+        String path = "electric-machines.sfx-balance." + key;
+        if (plugin.getConfig().isConfigurationSection(path)) {
+            return plugin.getConfig().getBoolean(path + ".enabled", true);
+        }
+        return plugin.getConfig().getBoolean(path, true);
     }
 
 

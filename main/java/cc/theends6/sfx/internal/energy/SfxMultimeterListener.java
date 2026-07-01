@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -232,7 +233,7 @@ public final class SfxMultimeterListener implements Listener {
 
     private String itemName(String typeId) {
         Component name = localization.itemName(typeId, Component.text(typeId));
-        return Text.toLegacy(name);
+        return PlainTextComponentSerializer.plainText().serialize(name);
     }
 
     private String localizedType(String typeKey) {

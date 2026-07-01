@@ -68,13 +68,18 @@ import cc.theends6.sfx.internal.technical.SfxTechnicalGadgetService;
 import cc.theends6.sfx.internal.research.SfxResearchYamlLoader;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.lang.reflect.Method;
+import net.kyori.adventure.text.Component;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SlimeFunXPlugin extends JavaPlugin {
+    private static final DateTimeFormatter OP_LIFECYCLE_TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     SfxApiImpl api;
     SfxLocalization localization;
@@ -129,19 +134,33 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         SfxPluginBootstrap.enable(this);
+        notifyOnlineOps("启用");
     }
 
     
 
     @Override
     public void onDisable() {
-        SfxPluginBootstrap.disable(this);
+        try {
+            SfxPluginBootstrap.disable(this);
+        } finally {
+            notifyOnlineOps("禁用");
+        }
     }
 
     
 
     public SfxApi api() {
         return api;
+    }
+
+    private void notifyOnlineOps(String state) {
+        Component message = Component.text("[" + LocalDateTime.now().format(OP_LIFECYCLE_TIME) + "] SlimeFunX已经" + state);
+        for (Player player : getServer().getOnlinePlayers()) {
+            if (player.isOp()) {
+                player.sendMessage(message);
+            }
+        }
     }
 
     public SfxLocalization localization() {

@@ -36,13 +36,13 @@ diagnostics:
   validation:
     # 统一验证日志开关。默认关闭，需要排查时再单独打开下面的项目。
     # 所有日志都带 [SFX-VALIDATION] 前缀，后续可以统一搜索、移除或替换。
-    enabled: false
+    enabled: true
     teleport: false
     backpack: false
     christmas-present: false
     talisman: false
     infused-hopper: false
-    charging-bench: false
+    charging-bench: true
     # 机器/电力 YAML 加载链路诊断。
     machine-yaml: false
 
@@ -181,7 +181,9 @@ electric-machines:
     auto-breeder: true
     animal-growth-accelerator: true
     produce-collector: true
-    xp-collector: true
+    xp-collector:
+      enabled: true
+      flask-energy-cost: 4096
 
   # SFX extensions for electric machines.
   sfx-extensions:
