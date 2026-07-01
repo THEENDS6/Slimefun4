@@ -70,11 +70,12 @@ final class SfxEnergyComponentYamlLoader {
         int capacity = intValue(energy, section, "capacity", 0);
         int generation = intValue(energy, section, "generation-per-tick", 0);
         int consumption = intValue(energy, section, "consumption-per-tick", 0);
+        int energyPerTick = type == SfxEnergyComponentType.CHARGER ? consumption : generation;
         int burnRate = Math.max(1, intValue(energy, section, "burn-rate", 10));
         boolean vanillaFuel = section.getBoolean("vanilla-fuel", false);
         Material progressMaterial = parseMaterial(section.getString("progress-material", "REDSTONE"));
         List<SfxEnergyComponentDefinition.FuelRule> fuels = parseFuelRules(section);
-        return new SfxEnergyComponentDefinition(id, type, capacity, generation, consumption, burnRate, vanillaFuel, progressMaterial, fuels);
+        return new SfxEnergyComponentDefinition(id, type, capacity, energyPerTick, 0, burnRate, vanillaFuel, progressMaterial, fuels);
     }
 
     private int intValue(ConfigurationSection preferred, ConfigurationSection fallback, String path, int defaultValue) {
