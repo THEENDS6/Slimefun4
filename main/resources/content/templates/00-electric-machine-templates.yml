@@ -1,0 +1,50 @@
+
+
+
+
+
+
+
+@project:
+  default-progress-material: FLINT_AND_STEEL
+  standard-menu-style: STANDARD
+
+templates:
+  ui:
+    standard-electric-machine:
+      @it: true
+      menu-style: ${standard-menu-style}
+      slots:
+        input: [19, 20]
+        output: [24, 25]
+      ui:
+        title-color: red
+        status-slot: 22
+        border:
+          material: GRAY_STAINED_GLASS_PANE
+          name: " "
+          lore:
+            - "不可移动"
+  energy:
+    electric-consumer:
+      @istemplate: true
+      energy:
+        capacity: 1280
+        consumption-per-tick: 4
+    electric-furnace-base:
+      @copyfrom: templates.energy.electric-consumer
+      @istemplate: true
+      progress-material: ${default-progress-material}
+  machines:
+    standard-electric-machine:
+      @copyfrom: templates.ui.standard-electric-machine
+      @istemplate: true
+      speed: 1
+      progress-material: ${default-progress-material}
+    electric-furnace:
+      @copyfrom: templates.machines.standard-electric-machine
+      @istemplate: true
+      title: "Electric Furnace"
+      energy:
+        capacity: 1280
+        consumption-per-tick: 4

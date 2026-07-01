@@ -1,0 +1,40 @@
+
+
+
+machines:
+  "sf:electric_furnace":
+    @cf: templates.machines.electric-furnace
+    @io: true
+  "sf:electric_furnace_2":
+    @copyfrom: machines.sf:electric_furnace
+    @isoutput: true
+    title: "Electric Furnace - II"
+    speed: 2
+    energy:
+      capacity: 2560
+      consumption-per-tick: 6
+  "sf:electric_furnace_3":
+    @copyfrom: machines.sf:electric_furnace_2
+    @isoutput: true
+    title: "Electric Furnace - III"
+    speed: 4
+    energy:
+      capacity: 5120
+      consumption-per-tick: 10
+
+patches:
+  electric-furnace-common-output:
+    @mi: machines.sf:electric_furnace
+    slots:
+      input: [19, 20]
+      output: [24, 25]
+  electric-furnace-2-common-output:
+    @mergeinto: machines.sf:electric_furnace_2
+    slots:
+      input: [19, 20]
+      output: [24, 25]
+  electric-furnace-3-common-output:
+    @mergeinto: machines.sf:electric_furnace_3
+    slots:
+      input: [19, 20]
+      output: [24, 25]

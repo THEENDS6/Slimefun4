@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
+import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,7 +38,7 @@ final class SfxElectricMachineDefinitionConfig {
         if (!file.isFile()) {
             return new SfxElectricMachineDefinitionConfig(plugin, Map.of());
         }
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
             plugin.getLogger().warning("No machines section in " + RESOURCE_PATH + "; electric machines will use code defaults.");
