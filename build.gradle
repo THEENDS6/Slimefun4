@@ -223,7 +223,7 @@ def readRconPacket = { InputStream input ->
 def sendPaperRconCommand = { String commandText ->
     def socket = new Socket()
     socket.connect(new InetSocketAddress(rootProject.ext.paperRuntimeRconHost, rootProject.ext.paperRuntimeRconPort as int), 1500)
-    socket.soTimeout = 3000
+    socket.soTimeout = 20000
     socket.withCloseable {
         def input = it.getInputStream()
         def output = it.getOutputStream()
@@ -240,13 +240,46 @@ def sendPaperRconCommand = { String commandText ->
     }
 }
 
+def sendPaperRconCommandWithRetry = { String commandText, int attempts = 3, long delayMs = 1000L ->
+    IOException lastIo = null
+    for (int attempt = 1; attempt <= attempts; attempt++) {
+        try {
+            sendPaperRconCommand(commandText)
+            return
+        } catch (IOException exception) {
+            lastIo = exception
+            if (attempt < attempts) {
+                Thread.sleep(delayMs)
+            }
+        }
+    }
+    throw lastIo
+}
+
+tasks.register('paperRcon') {
+    group = 'application'
+    description = 'Sends an arbitrary command to the running Paper 1.21.8 test server over local RCON. Use -Pcmd="command".'
+    dependsOn 'ensurePaperRuntimeTestConfig'
+    doLast {
+        def commandText = project.findProperty('cmd')?.toString()
+        if (commandText == null || commandText.isBlank()) {
+            throw new GradleException('Missing command. Use: .\\gradlew.bat paperRcon -Pcmd="say test"')
+        }
+        try {
+            sendPaperRconCommandWithRetry(commandText)
+        } catch (IOException exception) {
+            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled yet. Start it with runPaper after ensurePaperRuntimeTestConfig.', exception)
+        }
+    }
+}
+
 tasks.register('reloadPaperRuntime') {
     group = 'application'
     description = 'Sends /sfx reload runtime to the running Paper 1.21.8 test server over local RCON.'
     dependsOn 'ensurePaperRuntimeTestConfig'
     doLast {
         try {
-            sendPaperRconCommand('sfx reload runtime')
+            sendPaperRconCommandWithRetry('sfx reload runtime')
             logger.lifecycle('Requested SFX runtime reload on Paper 1.21.8.')
         } catch (IOException exception) {
             throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled yet. Start it with runPaper after ensurePaperRuntimeTestConfig.', exception)
@@ -266,12 +299,13 @@ tasks.register('plugmanReloadPaperRuntime') {
     dependsOn 'ensurePaperRuntimeTestConfig', 'installPaperRuntimePlugManX', 'jar'
     doLast {
         try {
-            sendPaperRconCommand('plugman unload SlimeFunX')
+            sendPaperRconCommandWithRetry('plugman unload SlimeFunX')
             def builtJar = tasks.named('jar').get().archiveFile.get().asFile
             def targetJar = layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.pluginJarName}").asFile
             java.nio.file.Files.copy(builtJar.toPath(), targetJar.toPath(), StandardCopyOption.REPLACE_EXISTING)
             logger.lifecycle("Copied ${builtJar.name} to ${targetJar}")
-            sendPaperRconCommand('plugman load SlimeFunX')
+            Thread.sleep(1500L)
+            sendPaperRconCommandWithRetry('plugman load SlimeFunX', 5, 1500L)
             logger.lifecycle('Requested PlugManX unload/load for SlimeFunX on Paper 1.21.8.')
         } catch (IOException exception) {
             throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled. Start it with runPaper first.', exception)

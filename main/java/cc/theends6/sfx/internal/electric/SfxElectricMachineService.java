@@ -501,6 +501,10 @@ public final class SfxElectricMachineService implements Listener {
                 return;
             }
         }
+        if (topSlot && event.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+            runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+            return;
+        }
         if (topSlot && SfxMachineMenuTransactions.dropFromTopSlot(event, event.getView().getTopInventory(), event.getRawSlot(), player)) {
             event.setCancelled(true);
             runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
