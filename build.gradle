@@ -159,8 +159,44 @@ tasks.register('exportPluginArtifacts') {
     }
 }
 
+tasks.register('validateSfxMachineYaml') {
+    group = 'verification'
+    description = 'Validates machine YAML profile declarations against the Java profile registry.'
+    inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java'))
+    doLast {
+        def catalogFile = layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml').asFile
+        def profilesFile = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java').asFile
+        def enumMatcher = profilesFile.getText('UTF-8') =~ /private enum Profile\s*\{([\s\S]*?)\n\s*\}/
+        if (!enumMatcher.find()) {
+            throw new GradleException('Cannot locate SfxMachineSpecialProfiles.Profile enum.')
+        }
+        def validProfiles = enumMatcher.group(1)
+                .split(',')
+                .collect { it.replaceAll(/\s+/, '').trim() }
+                .findAll { it }
+                .toSet()
+        def declaredProfiles = []
+        catalogFile.eachLine('UTF-8') { line ->
+            def matcher = line =~ /^\s*profile:\s*([A-Za-z0-9_:-]+)\s*$/
+            if (matcher.matches()) {
+                declaredProfiles << matcher.group(1).trim().replace('-', '_').replace(':', '_').toUpperCase(Locale.ROOT)
+            }
+        }
+        def missing = declaredProfiles.findAll { !validProfiles.contains(it) }.unique().sort()
+        if (!missing.isEmpty()) {
+            throw new GradleException("Unknown machine YAML profile(s): ${missing.join(', ')}")
+        }
+        logger.lifecycle("Validated ${declaredProfiles.size()} machine YAML profile declaration(s).")
+    }
+}
+
 tasks.named('build') {
     finalizedBy 'exportPluginArtifacts'
+}
+
+tasks.named('check') {
+    dependsOn 'validateSfxMachineYaml'
 }
 
 tasks.register('prepareRuntimeDirs') {
