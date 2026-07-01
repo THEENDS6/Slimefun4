@@ -69,7 +69,7 @@ public final class SfxItemUseDispatcher implements Listener {
         }
 
         if (researches.researchForItem(itemId).isPresent()
-                && researches.findProfile(event.getPlayer().getUniqueId()).isEmpty()) {
+                && researches.findProfile(event.getPlayer()).isEmpty()) {
             SfxEventGuards.denyBlockAndItemUse(event);
             event.getPlayer().sendMessage(Text.prefixed(
                     org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(getClass()),
