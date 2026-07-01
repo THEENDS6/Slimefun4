@@ -1,0 +1,355 @@
+
+
+
+machines:
+  sf:enhanced_crafting_table:
+    name: '&eEnhanced Crafting Table'
+    icon: CRAFTING_TABLE
+    operation: SHAPED_3X3
+    trigger-face: SELF
+    inventory-face: DOWN
+    deployable: true
+    pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - CRAFTING_TABLE
+    - empty
+    - empty
+    - DISPENSER
+    - empty
+    display-pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - CRAFTING_TABLE
+    - empty
+    - empty
+    - DISPENSER
+    - empty
+  sf:grind_stone:
+    name: '&bGrind Stone'
+    icon: DISPENSER
+    operation: SINGLE_INPUT
+    trigger-face: SELF
+    inventory-face: DOWN
+    deployable: true
+    pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - OAK_FENCE
+    - empty
+    - empty
+    - DISPENSER
+    - empty
+    display-pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - OAK_FENCE
+    - empty
+    - empty
+    - DISPENSER
+    - empty
+  sf:compressor:
+    name: '&bCompressor'
+    icon: PISTON
+    operation: SINGLE_INPUT
+    trigger-face: SELF
+    inventory-face: DOWN
+    deployable: true
+    pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - NETHER_BRICK_FENCE
+    - empty
+    - PISTON
+    - DISPENSER
+    - PISTON
+    display-pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - NETHER_BRICK_FENCE
+    - empty
+    - PISTON
+    - DISPENSER
+    - PISTON
+  sf:ore_crusher:
+    name: '&bOre Crusher'
+    icon: DISPENSER
+    operation: SINGLE_INPUT
+    trigger-face: SELF
+    inventory-face: DOWN
+    deployable: true
+    pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - NETHER_BRICK_FENCE
+    - empty
+    - IRON_BARS
+    - DISPENSER
+    - IRON_BARS
+    display-pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - NETHER_BRICK_FENCE
+    - empty
+    - IRON_BARS
+    - DISPENSER
+    - IRON_BARS
+  sf:ore_washer:
+    name: '&6Ore Washer'
+    icon: CAULDRON
+    operation: SINGLE_INPUT
+    trigger-face: SELF
+    inventory-face: UP
+    deployable: true
+    pattern:
+    - empty
+    - DISPENSER
+    - empty
+    - empty
+    - OAK_FENCE
+    - empty
+    - empty
+    - CAULDRON
+    - empty
+    display-pattern:
+    - empty
+    - DISPENSER
+    - empty
+    - empty
+    - OAK_FENCE
+    - empty
+    - empty
+    - CAULDRON
+    - empty
+  sf:armor_forge:
+    name: '&6Armor Forge'
+    icon: ANVIL
+    operation: SHAPED_3X3
+    trigger-face: SELF
+    inventory-face: DOWN
+    deployable: true
+    pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - ANVIL
+    - empty
+    - empty
+    - DISPENSER
+    - empty
+    display-pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - ANVIL
+    - empty
+    - empty
+    - DISPENSER
+    - empty
+  sf:makeshift_smeltery:
+    name: '&eMakeshift Smeltery'
+    icon: BLAST_FURNACE
+    operation: SHAPELESS_INPUT
+    trigger-face: DOWN
+    inventory-face: SELF
+    deployable: true
+    pattern:
+    - empty
+    - OAK_FENCE
+    - empty
+    - BRICKS
+    - DISPENSER
+    - BRICKS
+    - empty
+    - empty
+    - empty
+    display-pattern:
+    - empty
+    - OAK_FENCE
+    - empty
+    - BRICKS
+    - DISPENSER
+    - BRICKS
+    - empty
+    - FLINT_AND_STEEL
+    - empty
+  sf:smeltery:
+    name: '&6Smeltery'
+    icon: FURNACE
+    operation: SHAPELESS_INPUT
+    trigger-face: DOWN
+    inventory-face: SELF
+    deployable: true
+    pattern:
+    - empty
+    - NETHER_BRICK_FENCE
+    - empty
+    - NETHER_BRICKS
+    - DISPENSER
+    - NETHER_BRICKS
+    - empty
+    - empty
+    - empty
+    display-pattern:
+    - empty
+    - NETHER_BRICK_FENCE
+    - empty
+    - NETHER_BRICKS
+    - DISPENSER
+    - NETHER_BRICKS
+    - empty
+    - FLINT_AND_STEEL
+    - empty
+  sf:pressure_chamber:
+    name: '&bPressure Chamber'
+    icon: GLASS
+    operation: SINGLE_INPUT
+    trigger-face: UP
+    inventory-face: UP
+    deployable: true
+    pattern:
+    - SMOOTH_STONE_SLAB
+    - DISPENSER
+    - SMOOTH_STONE_SLAB
+    - PISTON
+    - GLASS
+    - PISTON
+    - PISTON
+    - CAULDRON
+    - PISTON
+    display-pattern:
+    - SMOOTH_STONE_SLAB
+    - DISPENSER
+    - SMOOTH_STONE_SLAB
+    - PISTON
+    - GLASS
+    - PISTON
+    - PISTON
+    - CAULDRON
+    - PISTON
+  sf:magic_workbench:
+    name: '&6Magic Workbench'
+    icon: CRAFTING_TABLE
+    operation: SHAPED_3X3
+    trigger-face: SELF
+    inventory-face: SELF
+    deployable: true
+    pattern:
+    - empty
+    - empty
+    - empty
+    - BOOKSHELF
+    - CRAFTING_TABLE
+    - DISPENSER
+    - empty
+    - empty
+    - empty
+    display-pattern:
+    - empty
+    - empty
+    - empty
+    - BOOKSHELF
+    - CRAFTING_TABLE
+    - DISPENSER
+    - empty
+    - empty
+    - empty
+  sf:table_saw:
+    name: '&6Table Saw'
+    icon: STONECUTTER
+    operation: HAND_INPUT
+    trigger-face: SELF
+    inventory-face: SELF
+    deployable: true
+    pattern:
+    - empty
+    - empty
+    - empty
+    - SMOOTH_STONE_SLAB
+    - STONECUTTER
+    - SMOOTH_STONE_SLAB
+    - empty
+    - IRON_BLOCK
+    - empty
+    display-pattern:
+    - empty
+    - empty
+    - empty
+    - SMOOTH_STONE_SLAB
+    - STONECUTTER
+    - SMOOTH_STONE_SLAB
+    - empty
+    - IRON_BLOCK
+    - empty
+  sf:juicer:
+    name: '&aJuicer'
+    icon: GLASS_BOTTLE
+    operation: SINGLE_INPUT
+    trigger-face: SELF
+    inventory-face: DOWN
+    deployable: true
+    pattern:
+    - empty
+    - GLASS
+    - empty
+    - empty
+    - NETHER_BRICK_FENCE
+    - empty
+    - empty
+    - DISPENSER
+    - empty
+    display-pattern:
+    - empty
+    - GLASS
+    - empty
+    - empty
+    - NETHER_BRICK_FENCE
+    - empty
+    - empty
+    - DISPENSER
+    - empty
+  sf:automated_panning_machine:
+    name: '&eAutomated Panning Machine'
+    icon: BOWL
+    operation: HAND_INPUT
+    trigger-face: SELF
+    inventory-face: SELF
+    deployable: true
+    pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - OAK_TRAPDOOR
+    - empty
+    - empty
+    - CAULDRON
+    - empty
+    display-pattern:
+    - empty
+    - empty
+    - empty
+    - empty
+    - OAK_TRAPDOOR
+    - empty
+    - empty
+    - CAULDRON
+    - empty

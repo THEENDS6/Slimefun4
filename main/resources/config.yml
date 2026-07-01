@@ -43,6 +43,8 @@ diagnostics:
     talisman: false
     infused-hopper: false
     charging-bench: false
+    
+    machine-yaml: false
 
 guide:
   allow-right-click-open: true
@@ -104,6 +106,10 @@ options:
 
 
 machines:
+  framework:
+    
+    
+    allow-legacy-candidate-scan: false
   lazy-tick:
     enabled: true
     

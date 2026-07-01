@@ -17,7 +17,7 @@ import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
-import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
+import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -81,6 +81,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 public final class SfxAndroidService implements Listener {
     private static final String INTERFACE_FUEL = "sf:android_interface_fuel";
@@ -1095,7 +1096,7 @@ public final class SfxAndroidService implements Listener {
             event.setCancelled(true);
             return;
         }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
+        if (SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             return;
         }
         SfxBlockInstanceRecord clickInstance = blockData.findInstance(holder.instanceId()).orElse(null);
@@ -1124,7 +1125,7 @@ public final class SfxAndroidService implements Listener {
             return;
         }
         if (raw == FUEL_SLOT) {
-            syncMainInventoryLater(player, holder.instanceId(), top);
+            handleFuelSlotClick(event, player, holder, top);
             return;
         }
         if (isOutputSlot(raw)) {
@@ -1134,6 +1135,28 @@ public final class SfxAndroidService implements Listener {
         }
         event.setCancelled(true);
         handleMainButton(player, holder, top, raw);
+    }
+
+    private void handleFuelSlotClick(InventoryClickEvent event, Player player, SfxAndroidMenuHolder holder, Inventory top) {
+        event.setCancelled(true);
+        SfxBlockInstanceRecord instance = blockData.findInstance(holder.instanceId()).orElse(null);
+        SfxAndroidType type = instance == null ? null : SfxAndroidType.fromItemId(instance.typeId());
+        java.util.function.Predicate<ItemStack> fuelValidator = stack -> type != null && fuelValue(stack, type) > 0;
+        boolean changed;
+        if (event.isShiftClick()) {
+            changed = SfxMachineMenuTransactions.moveTopSlotToPlayer(top, FUEL_SLOT, player);
+        } else if (SfxMachineMenuTransactions.handleManagedHotbarOrOffhand(event, top, FUEL_SLOT, player, true, false, fuelValidator)) {
+            changed = true;
+        } else if (event.getClick() == ClickType.DROP || event.getClick() == ClickType.CONTROL_DROP) {
+            changed = SfxMachineMenuTransactions.dropFromTopSlot(event, top, FUEL_SLOT, player);
+        } else if (SfxMachineMenuTransactions.handleManagedDoubleClick(event, top, player, slot -> slot == FUEL_SLOT)) {
+            changed = true;
+        } else {
+            changed = SfxMachineMenuTransactions.handleInputSlotCursorTransaction(event, top, FUEL_SLOT, fuelValidator);
+        }
+        if (changed) {
+            syncMainInventoryLater(player, holder.instanceId(), top);
+        }
     }
 
     private void shiftFuelIntoAndroid(InventoryClickEvent event, SfxAndroidMenuHolder holder, Inventory top) {
@@ -1379,7 +1402,7 @@ public final class SfxAndroidService implements Listener {
         } else if (event.getClick().isShiftClick()) {
             moved = moveStackToPlayerInventory(player, stored);
         } else if (event.getClick() == ClickType.NUMBER_KEY || event.getClick() == ClickType.SWAP_OFFHAND) {
-            moved = 0;
+            moved = moveStackToCarrier(event, player, stored);
         } else {
             moved = moveStackToCursor(event, stored);
         }
@@ -1396,6 +1419,27 @@ public final class SfxAndroidService implements Listener {
         persist(instance.instanceId(), state, true);
         refreshMainStatus(top, state, !isFuelSlotDirty(holder.instanceId(), player.getUniqueId()));
         player.updateInventory();
+    }
+
+    private int moveStackToCarrier(InventoryClickEvent event, Player player, ItemStack stored) {
+        if (stored == null || stored.getType().isAir()) {
+            return 0;
+        }
+        ItemStack carrier = event.getClick() == ClickType.SWAP_OFFHAND
+                ? player.getInventory().getItemInOffHand()
+                : player.getInventory().getItem(event.getHotbarButton());
+        if (carrier != null && !carrier.getType().isAir()) {
+            return 0;
+        }
+        ItemStack moved = stored.clone();
+        if (event.getClick() == ClickType.SWAP_OFFHAND) {
+            player.getInventory().setItemInOffHand(moved);
+        } else if (event.getHotbarButton() >= 0) {
+            player.getInventory().setItem(event.getHotbarButton(), moved);
+        } else {
+            return 0;
+        }
+        return moved.getAmount();
     }
 
     private int moveStackToPlayerInventory(Player player, ItemStack stored) {
@@ -1420,7 +1464,10 @@ public final class SfxAndroidService implements Listener {
         }
         ItemStack dropped = stored.clone();
         dropped.setAmount(amount);
-        player.getWorld().dropItemNaturally(player.getLocation(), dropped);
+        Vector direction = player.getLocation().getDirection().normalize();
+        Location dropLocation = player.getEyeLocation().add(direction.clone().multiply(0.35D));
+        Item entity = player.getWorld().dropItem(dropLocation, dropped);
+        entity.setVelocity(direction.multiply(0.35D).add(new Vector(0.0D, 0.1D, 0.0D)));
         return amount;
     }
 

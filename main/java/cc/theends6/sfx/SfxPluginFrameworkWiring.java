@@ -3,6 +3,7 @@ package cc.theends6.sfx;
 import cc.theends6.sfx.internal.machine.SfxMachineBuiltinEffectHooks;
 import cc.theends6.sfx.internal.machine.SfxMachineCategory;
 import cc.theends6.sfx.internal.machine.SfxMachineDomainEffectHooks;
+import cc.theends6.sfx.internal.machine.SfxMachineCatalogYamlLoader;
 import cc.theends6.sfx.internal.machine.SfxMachineFrameworkCatalog;
 
 
@@ -11,6 +12,10 @@ final class SfxPluginFrameworkWiring {
     }
 
     static Stats wire(SlimeFunXPlugin plugin) {
+        SfxMachineCatalogYamlLoader catalogYamlLoader = new SfxMachineCatalogYamlLoader(plugin);
+        catalogYamlLoader.ensureDefaultFile(plugin.syncBundledRecipeFiles());
+        int yamlCatalogDefinitions = catalogYamlLoader.loadInto(plugin.machineRuntime);
+
         int domainEffectHooks = SfxMachineDomainEffectHooks.register(
                 plugin.machineRuntime,
                 plugin.gpsService,
@@ -24,27 +29,29 @@ final class SfxPluginFrameworkWiring {
                 plugin.blockPlacerService,
                 plugin.industrialMinerService,
                 plugin.decorationService);
-        int frameworkCatalogExtras = SfxMachineFrameworkCatalog.registerDefinitions(plugin.machineRuntime, plugin.api.itemRegistry().items(),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.BASIC, plugin.basicMachineBlockListener::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ELECTRIC, plugin.electricMachineService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.CONFIGURABLE, plugin.configurableMachineService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ENERGY, plugin.energyService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.CARGO, plugin.cargoService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.GPS, plugin.gpsService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ANDROID, plugin.androidService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.decorationService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.ancientAltarService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.spawnerService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.blockPlacerService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.infusedHopperService::supportsType),
-                SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.hologramProjectorService::supportsType));
+        int frameworkCatalogExtras = plugin.getConfig().getBoolean("machines.framework.allow-legacy-candidate-scan", false)
+                ? SfxMachineFrameworkCatalog.registerDefinitions(plugin.machineRuntime, plugin.api.itemRegistry().items(),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.BASIC, plugin.basicMachineBlockListener::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ELECTRIC, plugin.electricMachineService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.CONFIGURABLE, plugin.configurableMachineService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ENERGY, plugin.energyService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.CARGO, plugin.cargoService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.GPS, plugin.gpsService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.ANDROID, plugin.androidService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.decorationService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.ancientAltarService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.spawnerService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.blockPlacerService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.infusedHopperService::supportsType),
+                        SfxMachineFrameworkCatalog.Candidate.of(SfxMachineCategory.SPECIAL, plugin.hologramProjectorService::supportsType))
+                : 0;
         plugin.machineRuntime.ensureDefaultProcessors();
         int builtinEffectHooks = SfxMachineBuiltinEffectHooks.registerDefaults(plugin.machineRuntime);
         int unboundDeclaredEffects = plugin.machineRuntime.unboundDeclaredEffectNames().size();
-        return new Stats(domainEffectHooks, frameworkCatalogExtras, builtinEffectHooks, unboundDeclaredEffects);
+        return new Stats(yamlCatalogDefinitions, domainEffectHooks, frameworkCatalogExtras, builtinEffectHooks, unboundDeclaredEffects);
     }
 
-    record Stats(int domainEffectHooks, int frameworkCatalogExtras, int builtinEffectHooks, int unboundDeclaredEffects) {
+    record Stats(int yamlCatalogDefinitions, int domainEffectHooks, int frameworkCatalogExtras, int builtinEffectHooks, int unboundDeclaredEffects) {
         boolean valid() { return unboundDeclaredEffects == 0; }
     }
 }

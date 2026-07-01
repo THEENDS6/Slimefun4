@@ -1,0 +1,45 @@
+
+
+machines:
+  "sf:nuclear_reactor":
+    
+    kind: REACTOR
+    energy:
+      capacity: 327680
+      energy-per-action: 0
+      energy-per-tick: 500
+    reactor:
+      coolant-item: "sf:reactor_coolant_cell"
+      wither-aura: false
+      fuels:
+        - key: "sf:uranium"
+          amount: 1
+          seconds: 1200
+          output: {item: "sf:neptunium", amount: 1}
+        - key: "sf:neptunium"
+          amount: 1
+          seconds: 600
+          output: {item: "sf:plutonium", amount: 1}
+        - key: "sf:boosted_uranium"
+          amount: 1
+          seconds: 1500
+  "sf:netherstar_reactor":
+    kind: REACTOR
+    energy:
+      capacity: 655360
+      energy-per-action: 0
+      energy-per-tick: 2048
+    reactor:
+      coolant-item: "sf:nether_ice_coolant_cell"
+      wither-aura: true
+      fuels:
+        - key: "nether_star"
+          material: NETHER_STAR
+          amount: 1
+          seconds: 1800
+  "sf:reactor_access_port":
+    kind: ACCESS_PORT
+    energy:
+      capacity: 0
+      energy-per-action: 0
+      energy-per-tick: 0

@@ -20,7 +20,7 @@ final class SfxConfigurableMachineDefinition {
     private final List<ReactorFuel> fuels;
     private final boolean witherAura;
 
-    private SfxConfigurableMachineDefinition(
+    SfxConfigurableMachineDefinition(
             String id,
             SfxConfigurableMachineKind kind,
             int capacity,

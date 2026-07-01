@@ -15,7 +15,6 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextProjection;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
-import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
@@ -151,11 +150,16 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private void registerDefinitions() {
-        boolean sfxGeneratorBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
-        int netherStarEnergy = sfxGeneratorBalance ? 2048 : 1024;
-        register(SfxConfigurableMachineDefinition.nuclearReactor());
-        register(SfxConfigurableMachineDefinition.netherStarReactor(netherStarEnergy));
-        register(SfxConfigurableMachineDefinition.reactorAccessPort());
+        Map<String, SfxConfigurableMachineDefinition> yamlDefinitions = SfxConfigurableMachineDefinitions.load(plugin);
+        if (!yamlDefinitions.isEmpty()) {
+            yamlDefinitions.values().forEach(this::register);
+        } else {
+            boolean sfxGeneratorBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
+            int netherStarEnergy = sfxGeneratorBalance ? 2048 : 1024;
+            register(SfxConfigurableMachineDefinition.nuclearReactor());
+            register(SfxConfigurableMachineDefinition.netherStarReactor(netherStarEnergy));
+            register(SfxConfigurableMachineDefinition.reactorAccessPort());
+        }
         machineRuntime.registerDefinitions(SfxConfigurableMachineFrameworkBridge.definitions(definitions));
     }
 
@@ -365,6 +369,19 @@ public final class SfxConfigurableMachineService implements Listener {
             return;
         }
         boolean topSlot = event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize();
+        if (topSlot) {
+            int raw = event.getRawSlot();
+            boolean managedInput = contains(editableInputSlots(holder.panelType()), raw);
+            boolean managedOutput = contains(editableOutputSlots(holder.panelType()), raw);
+            if (SfxMachineMenuTransactions.handleManagedHotbarOrOffhand(event, event.getView().getTopInventory(), raw, player, managedInput, managedOutput, stack -> isValidInputItem(holder.panelType(), raw, stack, definition))) {
+                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
+                return;
+            }
+            if ((managedInput || managedOutput) && SfxMachineMenuTransactions.handleManagedDoubleClick(event, event.getView().getTopInventory(), player, slot -> contains(managedOutput ? editableOutputSlots(holder.panelType()) : editableInputSlots(holder.panelType()), slot))) {
+                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
+                return;
+            }
+        }
         if (topSlot && SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             return;
         }
@@ -411,8 +428,14 @@ public final class SfxConfigurableMachineService implements Listener {
                 runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
                 return;
             }
+            if (event.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+                SfxMachineMenuTransactions.moveTopSlotToPlayer(event.getView().getTopInventory(), raw, player);
+                event.setCancelled(true);
+                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
+                return;
+            }
         }
-        if (topSlot && SfxInventoryPolicy.cancelDangerousClick(event)) {
+        if (topSlot && SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             return;
         }
         runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));

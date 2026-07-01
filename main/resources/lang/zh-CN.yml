@@ -49,6 +49,10 @@ machines:
     updated: <green>全息文本已更新。</green>
     edit-cancelled: <gray>已取消全息编辑。</gray>
     not-owner: <red>只有所有者可以编辑这个全息投影仪。</red>
+  ignition-chamber-no-flint: <red>自动点火室中没有打火石。</red>
+  wrong-item: <red>这个物品不能被这台机器处理。</red>
+  busy: <red>这台机器正在工作。</red>
+  crucible-blocked: <red>坩埚上方空间被阻挡。</red>
 items:
   tome-of-knowledge-sharing:
     owner-line: '&7拥有者：&b{name}'
@@ -3118,6 +3122,10 @@ command:
     no-inspect: <red>你没有检查 SFX PDC 标记的权限。</red>
     no-list: <red>你没有查看 SFX 物品列表的权限。</red>
     no-reload: <red>你没有重载 SFX 的权限。</red>
+    no-research: <red>你没有管理研究的权限。</red>
+    no-backpack: <red>你没有管理背包的权限。</red>
+    players-only-backpack-open: 只有玩家可以直接打开背包。
+    players-only-backpack-give: 只有玩家可以接收背包物品。
   book:
     received: <green>已领取科技书。</green>
     received-cheat: <green>已领取作弊科技书。</green>
@@ -3150,6 +3158,7 @@ command:
   reload:
     success: <green>SFX 配置与语言文件已重载。</green>
     success-all: <green>SFX 已完整重载：注册表、配方与菜单已刷新。</green>
+    failed-all: <red>SFX 运行时重载失败。插件已被禁用，以避免在不完整服务图下运行。</red>
   help:
     header: <green>SFX 命令</green>
     line:
@@ -3161,6 +3170,30 @@ command:
       list: <gray>/{label} list [page]</gray> <dark_gray>- 打开已注册物品列表</dark_gray>
       reload: <gray>/{label} reload</gray> <dark_gray>- 重载配置</dark_gray>
       reload-all: <gray>/{label} reload all</gray> <dark_gray>- 重建注册表并重载配方</dark_gray>
+      research: <gray>/{label} research <player> <all|reset|id></gray> <dark_gray>- 管理研究</dark_gray>
+      backpack: <gray>/{label} backpack <list|open|give> ...</gray> <dark_gray>- 管理背包</dark_gray>
+  research:
+    usage: <red>用法：/slimefunx research <player|uuid> <all|reset|research-id></red>
+    success-all: <green>已为 {player} 解锁全部研究。</green>
+    success-reset: <green>已重置 {player} 的全部研究。</green>
+    unknown: <red>未知研究：{id}</red>
+    success-one: <green>已为 {player} 解锁研究 {id}。</green>
+    already: <yellow>{player} 已拥有研究 {id}。</yellow>
+  player:
+    unknown: <red>未知玩家或 UUID。</red>
+  backpack:
+    usage: <red>用法：/slimefunx backpack <list|open|give> <player|uuid> [id] [size]</red>
+    list:
+      header: <green>{player} 的背包</green>
+      empty: <gray>没有找到背包。</gray>
+      entry: <gray>- ID {id} | 大小 {size} | 更新 {updated}</gray>
+    open:
+      usage: <red>用法：/slimefunx backpack open <player|uuid> <id></red>
+    invalid-id: <red>无效的背包 ID。</red>
+    give:
+      usage: <red>用法：/slimefunx backpack give <player|uuid> <id> [size|tier]</red>
+      sent: '<green>已为 {player} 准备背包物品 #{id}。</green>'
+    invalid-size: <red>背包大小必须为 9/18/27/36/45/54 或 tier 1-6。</red>
 categories:
   sf.items:
     name: '&f物品'
@@ -3562,7 +3595,7 @@ electric-ui:
     fluid-pump: 空桶或玻璃瓶
     generic: 输入物品
   target-text:
-    produce: '没有可采集目标，或当前工具不可用于附近目标。'
+    produce: 没有可采集目标，或当前工具不可用于附近目标。
     auto-breeder: 范围内没有可繁殖动物。
     animal-growth: 范围内没有幼年动物。
     crop-growth: 范围内没有可生长作物。
@@ -3595,9 +3628,9 @@ electric-ui:
     disabled:
       name: <red>配方已停用</red>
     recipe:
-      current: '<gray>配方：</gray><white>{recipe}</white>'
+      current: <gray>配方：</gray><white>{recipe}</white>
       configure: <gray>潜行右键此机器并手持目标物品来配置。</gray>
-      clear: '<yellow>右键：清除配方</yellow>'
+      clear: <yellow>右键：清除配方</yellow>
       none: 无
       none-title: <yellow>未选择配方</yellow>
     container:
@@ -3610,9 +3643,9 @@ electric-ui:
       name: <yellow>上一个配方</yellow>
     next:
       name: <yellow>下一个配方</yellow>
-    page: '<gray>配方 {page} / {total}</gray>'
+    page: <gray>配方 {page} / {total}</gray>
     select-a-recipe: <yellow>手持目标物品并潜行右键来选择配方。</yellow>
-    recipe-selected: '<green>已选择配方：</green><white>{recipe}</white>'
+    recipe-selected: <green>已选择配方：</green><white>{recipe}</white>
     recipe-not-found: <red>没有找到该物品对应的自动合成配方。</red>
   auto-brewer:
     blaze:
@@ -3620,10 +3653,10 @@ electric-ui:
       name: <gold>烈焰粉</gold>
       missing-name: <red>缺少烈焰粉</red>
       missing-lore: <gray>放入烈焰粉后才能开始酿造。</gray>
-      consuming: '<gray>本次酿造已消耗：</gray><yellow>{fuel}</yellow><gray> tick</gray>'
-      fuel-left: '<gray>已储存烈焰粉：</gray><yellow>{fuel}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> tick</gray>'
-      powder: '<gray>槽内烈焰粉：</gray><yellow>{amount}</yellow>'
-      recipe-cost: '<gray>当前配方消耗：</gray><yellow>{fuel}</yellow><gray> tick，最多 </gray><yellow>{powders}</yellow><gray> 个烈焰粉</gray>'
+      consuming: <gray>本次酿造已消耗：</gray><yellow>{fuel}</yellow><gray> tick</gray>
+      fuel-left: <gray>已储存烈焰粉：</gray><yellow>{fuel}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> tick</gray>
+      powder: <gray>槽内烈焰粉：</gray><yellow>{amount}</yellow>
+      recipe-cost: <gray>当前配方消耗：</gray><yellow>{fuel}</yellow><gray> tick，最多 </gray><yellow>{powders}</yellow><gray> 个烈焰粉</gray>
     ingredient:
       frame: <blue>酿造材料</blue>
       missing-name: <red>缺少酿造材料</red>
@@ -3661,7 +3694,7 @@ electric-ui:
       lore: <gray>等待可处理目标。</gray>
     working:
       lore: <gray>机器正在处理，完成时会触发效果。</gray>
-    xp-progress: '<gray>经验库存：</gray><white>{current}</white><gray>/</gray><white>{total}</white>'
+    xp-progress: <gray>经验库存：</gray><white>{current}</white><gray>/</gray><white>{total}</white>
     xp-waiting:
       name: <gray>等待经验球中</gray>
       lore: <gray>范围内出现经验球后会自动收集。</gray>
@@ -3673,8 +3706,10 @@ energy:
     no-network: <red>未连接到任意电力机器</red>
     multi-regulator: <red>连接中存在多个能量调度器</red>
     shared-node-conflict: <red>电网连接冲突</red>
-    net-positive: <green>+{net} J/t</green><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity} J</gray>
-    net-negative: <red>{net} J/t</red><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity} J</gray>
+    net-positive: <green>+{net} J/t</green><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity}
+      J</gray>
+    net-negative: <red>{net} J/t</red><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity}
+      J</gray>
     classic-positive: <green>+{net} J ⚡</green>
     classic-negative: <red>{net} J ⚡</red>
     sfx-positive: <green>+{net_text} J/t</green><newline>{flow_line}<newline>{storage_line}
@@ -3683,8 +3718,8 @@ energy:
     fuel:
       oil: 石油桶
       fuel: 燃油桶
-    fuel-duration: '<gray>持续时间：</gray><aqua>{seconds}</aqua>'
-    fuel-total-energy: '<gray>总能量：</gray><aqua>{energy} J</aqua>'
+    fuel-duration: <gray>持续时间：</gray><aqua>{seconds}</aqua>
+    fuel-total-energy: <gray>总能量：</gray><aqua>{energy} J</aqua>
     active:
       name: <green>发电中</green>
       lore: <gray>正在将燃料转化为电力。</gray>
@@ -3720,181 +3755,177 @@ energy:
       single-item: <red>一次只能为一个物品充电。</red>
   messages:
     capacitor-status: <yellow>当前储能 {stored}/{capacity} J</yellow>
-    connected: '<green>已连接</green>'
-    disconnected: '<red>未连接</red>'
+    connected: <green>已连接</green>
+    disconnected: <red>未连接</red>
     regulator-status: <yellow>能源调度器已激活。</yellow>
     connector-status: <yellow>能源连接器已接入附近电网。</yellow>
-
 configurable-ui:
-  none: '无'
+  none: 无
   energy:
-    stored: '<gray>储能：{stored}/{capacity} J</gray>'
-    cost: '<gray>消耗：{cost} J</gray>'
-    cost-per-tick: '<gray>消耗：{cost} J/t</gray>'
+    stored: <gray>储能：{stored}/{capacity} J</gray>
+    cost: <gray>消耗：{cost} J</gray>
+    cost-per-tick: <gray>消耗：{cost} J/t</gray>
   assembler:
     enabled:
-      name: '<green>已启用：✔</green>'
+      name: <green>已启用：✔</green>
     disabled:
-      name: '<red>已启用：✘</red>'
-      lore: '<gray>该组装机已关闭。</gray>'
+      name: <red>已启用：✘</red>
+      lore: <gray>该组装机已关闭。</gray>
     toggle:
-      lore: '<gray>点击切换组装机启用状态。</gray>'
+      lore: <gray>点击切换组装机启用状态。</gray>
     offset:
-      name: '<yellow>生成偏移：{offset} 格</yellow>'
-      left: '<gray>左键：+0.1</gray>'
-      right: '<gray>右键：-0.1</gray>'
-      range: '<gray>范围：-10.0 到 10.0</gray>'
-      status: '<gray>生成偏移：{offset} 格</gray>'
+      name: <yellow>生成偏移：{offset} 格</yellow>
+      left: <gray>左键：+0.1</gray>
+      right: <gray>右键：-0.1</gray>
+      range: <gray>范围：-10.0 到 10.0</gray>
+      status: <gray>生成偏移：{offset} 格</gray>
     cooldown:
-      name: '<yellow>冷却：30 秒</yellow>'
-      remaining: '<gray>剩余：{time}</gray>'
+      name: <yellow>冷却：30 秒</yellow>
+      remaining: <gray>剩余：{time}</gray>
     paused:
-      name: '<yellow>暂停中</yellow>'
-      lore: '<gray>启用该组装机以继续工作。</gray>'
+      name: <yellow>暂停中</yellow>
+      lore: <gray>启用该组装机以继续工作。</gray>
     working:
-      lore: '<gray>正在组装实体结构。</gray>'
-    work-time: '<gray>工作时间：{time}</gray>'
+      lore: <gray>正在组装实体结构。</gray>
+    work-time: <gray>工作时间：{time}</gray>
     head-slot:
-      name: '<aqua>头部材料槽</aqua>'
+      name: <aqua>头部材料槽</aqua>
     body-slot:
-      name: '<aqua>身体材料槽</aqua>'
+      name: <aqua>身体材料槽</aqua>
     required:
-      lore: '<gray>需要：{amount}</gray>'
+      lore: <gray>需要：{amount}</gray>
     accepted:
-      lore: '<gray>可用材料：</gray>'
+      lore: <gray>可用材料：</gray>
   reactor:
     focus-electricity:
-      name: '<yellow>模式：发电优先</yellow>'
+      name: <yellow>模式：发电优先</yellow>
     focus-production:
-      name: '<yellow>模式：产物优先</yellow>'
+      name: <yellow>模式：产物优先</yellow>
     focus:
-      lore: '<gray>点击切换反应堆运行模式。</gray>'
+      lore: <gray>点击切换反应堆运行模式。</gray>
     progress:
-      name: '<yellow>反应堆进度</yellow>'
-      working: '<gray>反应堆正在运行。</gray>'
-      idle: '<gray>等待燃料和冷却剂。</gray>'
-      nuclear-fuel: '<gray>核燃料：{percent}%</gray>'
-      fuel: '<gray>燃料：{progress}</gray>'
-      coolant: '<gray>冷却剂：{percent}%</gray>'
-      output: '<gray>输出：{energy} J/t</gray>'
-      ticks: '<gray>进度 tick：{current}/{total}</gray>'
-      coolant-ticks: '<gray>冷却 tick：{current}/{total}</gray>'
-      byproduct: '<gray>副产物：{item}</gray>'
-      mode: '<gray>模式：{mode}</gray>'
-    mode-electricity: '发电优先'
-    mode-production: '产物优先'
+      name: <yellow>反应堆进度</yellow>
+      working: <gray>反应堆正在运行。</gray>
+      idle: <gray>等待燃料和冷却剂。</gray>
+      nuclear-fuel: <gray>核燃料：{percent}%</gray>
+      fuel: <gray>燃料：{progress}</gray>
+      coolant: <gray>冷却剂：{percent}%</gray>
+      output: <gray>输出：{energy} J/t</gray>
+      ticks: <gray>进度 tick：{current}/{total}</gray>
+      coolant-ticks: <gray>冷却 tick：{current}/{total}</gray>
+      byproduct: <gray>副产物：{item}</gray>
+      mode: <gray>模式：{mode}</gray>
+    mode-electricity: 发电优先
+    mode-production: 产物优先
     access-port:
       detected:
-        name: '<green>已检测到反应堆访问端口</green>'
-        lore: '<gray>点击打开反应堆访问端口。</gray>'
+        name: <green>已检测到反应堆访问端口</green>
+        lore: <gray>点击打开反应堆访问端口。</gray>
       missing:
-        name: '<red>未检测到反应堆访问端口</red>'
-        lore: '<gray>将访问端口放在反应堆上方 3 格处。</gray>'
+        name: <red>未检测到反应堆访问端口</red>
+        lore: <gray>将访问端口放在反应堆上方 3 格处。</gray>
     fuel-slots:
-      name: '<aqua>燃料槽</aqua>'
-      lore: '<gray>只能放入该反应堆可用的燃料。</gray>'
+      name: <aqua>燃料槽</aqua>
+      lore: <gray>只能放入该反应堆可用的燃料。</gray>
     coolant-slots:
-      name: '<aqua>冷却剂槽</aqua>'
-      lore: '<red>缺少冷却剂时反应堆会融毁。</red>'
+      name: <aqua>冷却剂槽</aqua>
+      lore: <red>缺少冷却剂时反应堆会融毁。</red>
     output-slot:
-      name: '<aqua>副产物槽</aqua>'
-      lore: '<gray>从这里取出反应堆副产物。</gray>'
-
+      name: <aqua>副产物槽</aqua>
+      lore: <gray>从这里取出反应堆副产物。</gray>
 tools:
   multimeter:
-    classic: '<gray>储存电量：<yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
-    unsupported: '<red>这个方块没有可读取的电量信息。</red>'
+    classic: <gray>储存电量：<yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>
+    unsupported: <red>这个方块没有可读取的电量信息。</red>
     types:
-      consumer: '用电器'
-      producer: '发电机'
-      generator: '发电机'
-      capacitor: '电容'
-      connector: '能量节点'
-      regulator: '能量调度器'
+      consumer: 用电器
+      producer: 发电机
+      generator: 发电机
+      capacitor: 电容
+      connector: 能量节点
+      regulator: 能量调度器
     enhanced:
-      title: '<yellow>万用表</yellow>'
-      machine: '<gray>机器：<white>{name}</white></gray>'
-      type: '<gray>类型：<white>{type}</white></gray>'
-      location: '<gray>位置：<white>{location}</white></gray>'
-      energy: '<gray>电量：{bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
-      generation: '<gray>发电：<green>{value}</green> J/t</gray>'
-      consumption: '<gray>耗电：<yellow>{value}</yellow> J/t</gray>'
-      connected: '<gray>连接：<green>已连接</green></gray>'
-      disconnected: '<gray>连接：<red>未连接</red></gray>'
-      auto-paused: '<gray>自动暂停：<yellow>已启用</yellow></gray>'
-      scheduler: '<gray>调度器：<white>{location}</white></gray>'
-      scheduler-missing: '<gray>调度器：<red>未连接</red></gray>'
-      grid-energy: '<gray>电网电量：{bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
-      grid-rates: '<gray>发电：<green>{generation}</green> J/t <dark_gray>|</dark_gray> 耗电：<yellow>{consumption}</yellow> J/t</gray>'
-      grid-members: '<gray>连接组件：<white>{members}</white> <dark_gray>(发电机:{generators}, 反应堆:{reactors}, 电容:{capacitors}, 节点:{connectors}, 用电器:{consumers})</dark_gray></gray>'
-      grid-auto-paused: '<gray>自动暂停发电机：<yellow>{amount}</yellow></gray>'
-
+      title: <yellow>万用表</yellow>
+      machine: <gray>机器：<white>{name}</white></gray>
+      type: <gray>类型：<white>{type}</white></gray>
+      location: <gray>位置：<white>{location}</white></gray>
+      energy: <gray>电量：{bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>
+      generation: <gray>发电：<green>{value}</green> J/t</gray>
+      consumption: <gray>耗电：<yellow>{value}</yellow> J/t</gray>
+      connected: <gray>连接：<green>已连接</green></gray>
+      disconnected: <gray>连接：<red>未连接</red></gray>
+      auto-paused: <gray>自动暂停：<yellow>已启用</yellow></gray>
+      scheduler: <gray>调度器：<white>{location}</white></gray>
+      scheduler-missing: <gray>调度器：<red>未连接</red></gray>
+      grid-energy: <gray>电网电量：{bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>
+      grid-rates: <gray>发电：<green>{generation}</green> J/t <dark_gray>|</dark_gray> 耗电：<yellow>{consumption}</yellow> J/t</gray>
+      grid-members: <gray>连接组件：<white>{members}</white> <dark_gray>(发电机:{generators}, 反应堆:{reactors}, 电容:{capacitors}, 节点:{connectors},
+        用电器:{consumers})</dark_gray></gray>
+      grid-auto-paused: <gray>自动暂停发电机：<yellow>{amount}</yellow></gray>
 machine-status:
   idle:
-    name: '<gray>闲置</gray>'
-    lore: '<gray>正在等待输入。</gray>'
+    name: <gray>闲置</gray>
+    lore: <gray>正在等待输入。</gray>
   working:
-    name: '<yellow>工作中</yellow>'
-    lore: '<gray>机器正在工作。</gray>'
+    name: <yellow>工作中</yellow>
+    lore: <gray>机器正在工作。</gray>
   no-power:
-    name: '<red>电力不足</red>'
-    lore: '<gray>为这台机器供电后才能继续。</gray>'
+    name: <red>电力不足</red>
+    lore: <gray>为这台机器供电后才能继续。</gray>
   paused:
-    name: '<yellow>暂停中</yellow>'
-    lore: '<gray>这台机器已暂停。</gray>'
+    name: <yellow>暂停中</yellow>
+    lore: <gray>这台机器已暂停。</gray>
   disabled:
-    name: '<gray>已禁用</gray>'
-    lore: '<gray>这台机器已被禁用。</gray>'
+    name: <gray>已禁用</gray>
+    lore: <gray>这台机器已被禁用。</gray>
   no-input:
-    name: '<gray>无输入</gray>'
-    lore: '<gray>正在等待输入。</gray>'
+    name: <gray>无输入</gray>
+    lore: <gray>正在等待输入。</gray>
   no-recipe:
-    name: '<gray>无配方</gray>'
-    lore: '<gray>当前输入没有匹配的配方。</gray>'
+    name: <gray>无配方</gray>
+    lore: <gray>当前输入没有匹配的配方。</gray>
   no-target:
-    name: '<red>无目标</red>'
-    lore: '<gray>没有找到有效目标。</gray>'
+    name: <red>无目标</red>
+    lore: <gray>没有找到有效目标。</gray>
   chunk-not-scanned:
-    name: '<red>未扫描的区域</red>'
-    lore: '<gray>这个区块还没有进行 GEO 扫描。</gray>'
+    name: <red>未扫描的区域</red>
+    lore: <gray>这个区块还没有进行 GEO 扫描。</gray>
   no-geo-resource:
-    name: '<gray>无可挖掘资源</gray>'
-    lore: '<gray>这个区块没有可用的 GEO 资源。</gray>'
+    name: <gray>无可挖掘资源</gray>
+    lore: <gray>这个区块没有可用的 GEO 资源。</gray>
   output-full:
-    name: '<red>输出已满</red>'
-    lore: '<gray>清理输出槽后才能继续。</gray>'
+    name: <red>输出已满</red>
+    lore: <gray>清理输出槽后才能继续。</gray>
   blocked-output:
-    name: '<red>输出阻塞</red>'
-    lore: '<gray>输出已满，清理空位后才能提交完成物品。</gray>'
+    name: <red>输出阻塞</red>
+    lore: <gray>输出已满，清理空位后才能提交完成物品。</gray>
   invalid-input:
-    name: '<red>无效输入</red>'
-    lore: '<gray>放入的物品不能在这里处理。</gray>'
+    name: <red>无效输入</red>
+    lore: <gray>放入的物品不能在这里处理。</gray>
   full:
-    name: '<green>已满</green>'
-    lore: '<gray>这台机器已满。</gray>'
+    name: <green>已满</green>
+    lore: <gray>这台机器已满。</gray>
   no-network:
-    name: '<red>未连接</red>'
-    lore: '<gray>这台机器未连接到能源网络。</gray>'
+    name: <red>未连接</red>
+    lore: <gray>这台机器未连接到能源网络。</gray>
   network-conflict:
-    name: '<red>网络冲突</red>'
-    lore: '<gray>请先解决调度器或共享节点冲突。</gray>'
+    name: <red>网络冲突</red>
+    lore: <gray>请先解决调度器或共享节点冲突。</gray>
   area-conflict:
-    name: '<red>工作区域冲突</red>'
-    lore: '<gray>同类型机器的工作区域不能重叠。</gray>'
+    name: <red>工作区域冲突</red>
+    lore: <gray>同类型机器的工作区域不能重叠。</gray>
   missing-resource:
-    name: '<red>缺少资源</red>'
-    lore: '<gray>补充缺少的资源后才能继续。</gray>'
-
+    name: <red>缺少资源</red>
+    lore: <gray>补充缺少的资源后才能继续。</gray>
 technical:
   jetpack:
     hover:
-      enabled: '<aqua>喷气背包：悬停已开启</aqua>'
-      disabled: '<gray>喷气背包：悬停已关闭</gray>'
+      enabled: <aqua>喷气背包：悬停已开启</aqua>
+      disabled: <gray>喷气背包：悬停已关闭</gray>
   jetboots:
     mode:
-      thrust: '<yellow>喷气鞋：推进模式</yellow>'
-      assist: '<aqua>喷气鞋：助力模式</aqua>'
-
+      thrust: <yellow>喷气鞋：推进模式</yellow>
+      assist: <aqua>喷气鞋：助力模式</aqua>
   auto-crafter:
     enabled:
       name: <green>已启用</green>
@@ -3903,16 +3934,15 @@ technical:
       name: <red>已停用</red>
     recipe:
       name: <yellow>已选择配方</yellow>
-      current: '<gray>配方：</gray><white>{recipe}</white>'
+      current: <gray>配方：</gray><white>{recipe}</white>
       configure: <gray>潜行右键此机器并手持目标物品来配置。</gray>
-      clear: '<yellow>右键：清除配方</yellow>'
+      clear: <yellow>右键：清除配方</yellow>
       none: 无
     container:
       name: <gold>连接容器</gold>
       lore: <gray>该机器使用正下方的容器。</gray>
-    recipe-selected: '<green>已选择配方：</green><white>{recipe}</white>'
+    recipe-selected: <green>已选择配方：</green><white>{recipe}</white>
     recipe-not-found: <red>没有找到该物品对应的自动合成配方。</red>
-
 cargo:
   status:
     no-nodes: '&c未找到运输节点'
@@ -4075,8 +4105,7 @@ cargo:
         lore:
         - '&7{recipe}'
         - '&e潜行右键并手持目标物品来配置。'
-      none: '无'
-
+      none: 无
 gps:
   ui:
     control-panel:
@@ -4136,7 +4165,7 @@ gps:
       title: '&3电梯'
       default-floor: '{y} 层'
       direction:
-        vertical: '上方或下方'
+        vertical: 上方或下方
       floor:
         name: '&b{name}'
         y: '&7高度：&f{y}'
@@ -4162,13 +4191,13 @@ gps:
       scan-required: '&4需要 GEO 扫描!'
       mining: '&7正在开采: &r{resource}'
       finished: '&7已完成'
-      resource-fallback: 'GEO 资源'
+      resource-fallback: GEO 资源
   resources:
-    oil: '石油'
-    salt: '盐'
-    uranium: '小块铀'
-    nether_ice: '下界玄冰'
-    unknown: 'GEO 资源'
+    oil: 石油
+    salt: 盐
+    uranium: 小块铀
+    nether_ice: 下界玄冰
+    unknown: GEO 资源
   messages:
     marker-enter-name: '&e请在聊天框中输入路径点名称。输入 &f取消&e 来取消。'
     chat-input-cancelled: '&c输入已取消。'
@@ -4194,109 +4223,108 @@ gps:
     waypoint-limit: '&c你已达到 GPS 路径点数量上限。'
     waypoint-created: '&a已创建路径点：&f{name}'
     scanner-hint: '&7在目标区块使用 GPS 地址扫描仪或便携地址扫描仪。'
-
 android:
   messages:
-    no_access: '<red>这个机器人属于其他玩家。</red>'
-    started: '<green>机器人已启动。</green>'
-    paused: '<yellow>机器人已暂停。</yellow>'
-    import_prompt: '<yellow>请在聊天栏粘贴机器人脚本码。输入 <white>cancel</white> 取消。</yellow>'
-    import_cancelled: '<yellow>已取消导入机器人脚本。</yellow>'
-    missing_android: '<red>这个机器人已经不存在。</red>'
-    imported: '<green>已导入机器人脚本。</green>'
+    no_access: <red>这个机器人属于其他玩家。</red>
+    started: <green>机器人已启动。</green>
+    paused: <yellow>机器人已暂停。</yellow>
+    import_prompt: <yellow>请在聊天栏粘贴机器人脚本码。输入 <white>cancel</white> 取消。</yellow>
+    import_cancelled: <yellow>已取消导入机器人脚本。</yellow>
+    missing_android: <red>这个机器人已经不存在。</red>
+    imported: <green>已导入机器人脚本。</green>
     invalid_script: '<red>无效的机器人脚本: {reason}</red>'
-    copy_script: '<aqua>[点击复制机器人脚本]</aqua>'
+    copy_script: <aqua>[点击复制机器人脚本]</aqua>
     export: '<green>机器人脚本导出:</green> '
     uploaded: '<green>已上传机器人脚本 #{id}。</green>'
     upload_failed: '<red>上传脚本失败: {reason}</red>'
     deleted: '<yellow>已删除机器人脚本 #{id}。</yellow>'
     downloaded: '<green>已下载机器人脚本 #{id}。</green>'
     script_library_error: '<red>脚本库错误: {reason}</red>'
-    upload_name_prompt: '<yellow>请在聊天栏输入脚本名称。输入 <white>cancel</white> 取消。</yellow>'
-    upload_cancelled: '<yellow>已取消上传机器人脚本。</yellow>'
-    invalid_script_name: '<red>无效的脚本名称，请使用 1-32 个可见字符。</red>'
-    edit_script_prompt: '<yellow>请输入新的脚本名称，或输入 <white>delete</white> 删除脚本，输入 <white>cancel</white> 取消。</yellow>'
-    edit_cancelled: '<yellow>已取消修改机器人脚本。</yellow>'
+    upload_name_prompt: <yellow>请在聊天栏输入脚本名称。输入 <white>cancel</white> 取消。</yellow>
+    upload_cancelled: <yellow>已取消上传机器人脚本。</yellow>
+    invalid_script_name: <red>无效的脚本名称，请使用 1-32 个可见字符。</red>
+    edit_script_prompt: <yellow>请输入新的脚本名称，或输入 <white>delete</white> 删除脚本，输入 <white>cancel</white> 取消。</yellow>
+    edit_cancelled: <yellow>已取消修改机器人脚本。</yellow>
     renamed: '<green>已重命名机器人脚本 #{id}。</green>'
-    edit_denied: '<red>你不能修改这个脚本。</red>'
+    edit_denied: <red>你不能修改这个脚本。</red>
   menu:
     common:
       back:
-        name: '<red>返回</red>'
+        name: <red>返回</red>
       previous:
-        name: '<yellow>上一页</yellow>'
+        name: <yellow>上一页</yellow>
       next:
-        name: '<yellow>下一页</yellow>'
+        name: <yellow>下一页</yellow>
     main:
-      title: '可编程机器人'
+      title: 可编程机器人
       start:
-        name: '<green>启动/继续</green>'
+        name: <green>启动/继续</green>
         lore:
-          - '<gray>启动或继续运行这个机器人。</gray>'
+        - <gray>启动或继续运行这个机器人。</gray>
       pause:
-        name: '<dark_red>暂停</dark_red>'
+        name: <dark_red>暂停</dark_red>
         lore:
-          - '<gray>停止执行，但保留当前状态。</gray>'
+        - <gray>停止执行，但保留当前状态。</gray>
       memory_core:
-        name: '<aqua>记忆核心</aqua>'
+        name: <aqua>记忆核心</aqua>
         lore:
-          - ''
-          - '<dark_gray>⇨ <gray>点击打开脚本编辑器</gray>'
+        - ''
+        - <dark_gray>⇨ <gray>点击打开脚本编辑器</gray>
       fuel_info:
-        name: '<yellow>燃料输入</yellow>'
+        name: <yellow>燃料输入</yellow>
         lore:
-          - '<gray>把兼容燃料放入 43 槽。</gray>'
-          - '<gray>剩余燃料: <white>{fuel}</white></gray>'
-          - '<gray>状态: <white>{state}</white></gray>'
+        - <gray>把兼容燃料放入 43 槽。</gray>
+        - '<gray>剩余燃料: <white>{fuel}</white></gray>'
+        - '<gray>状态: <white>{state}</white></gray>'
     editor:
-      title: '<dark_gray>机器人记忆核心</dark_gray>'
+      title: <dark_gray>机器人记忆核心</dark_gray>
       edit:
-        name: '<green>编辑脚本</green>'
+        name: <green>编辑脚本</green>
         lore:
-          - '<gray>用图形界面编辑当前脚本。</gray>'
+        - <gray>用图形界面编辑当前脚本。</gray>
       export:
-        name: '<aqua>导出脚本</aqua>'
+        name: <aqua>导出脚本</aqua>
         lore:
-          - '<gray>发送可点击复制的短码。</gray>'
+        - <gray>发送可点击复制的短码。</gray>
       import:
-        name: '<yellow>导入脚本</yellow>'
+        name: <yellow>导入脚本</yellow>
         lore:
-          - '<gray>在聊天栏粘贴短码或可读脚本。</gray>'
+        - <gray>在聊天栏粘贴短码或可读脚本。</gray>
       download:
-        name: '<gold>下载脚本</gold>'
+        name: <gold>下载脚本</gold>
         lore:
-          - '<gray>浏览公开/私有上传脚本。</gray>'
+        - <gray>浏览公开/私有上传脚本。</gray>
       upload:
-        name: '<blue>上传脚本</blue>'
+        name: <blue>上传脚本</blue>
         lore:
-          - '<gray>将当前脚本分享到服务器脚本库。</gray>'
+        - <gray>将当前脚本分享到服务器脚本库。</gray>
       back:
-        name: '<red>返回</red>'
+        name: <red>返回</red>
         lore:
-          - '<gray>返回机器人界面。</gray>'
+        - <gray>返回机器人界面。</gray>
     upload:
-      title: '<dark_gray>上传机器人脚本</dark_gray>'
+      title: <dark_gray>上传机器人脚本</dark_gray>
       public:
-        name: '<green>公开</green>'
+        name: <green>公开</green>
         lore:
-          - '<gray>所有人都可以看到。</gray>'
+        - <gray>所有人都可以看到。</gray>
       private:
-        name: '<yellow>私有</yellow>'
+        name: <yellow>私有</yellow>
         lore:
-          - '<gray>只有你自己可以看到。</gray>'
+        - <gray>只有你自己可以看到。</gray>
     script:
-      title: '<dark_gray>编辑机器人脚本</dark_gray>'
+      title: <dark_gray>编辑机器人脚本</dark_gray>
       start:
-        name: '<green>START</green>'
+        name: <green>START</green>
       repeat:
-        name: '<red>REPEAT</red>'
+        name: <red>REPEAT</red>
       add:
-        name: '<green>添加新指令</green>'
+        name: <green>添加新指令</green>
       edit_hint: '<gray>左键: 编辑 | 右键: 删除 | Shift+右键: 复制</gray>'
     instructions:
-      title: '<dark_gray>选择指令</dark_gray>'
+      title: <dark_gray>选择指令</dark_gray>
     downloader:
-      title: '<dark_gray>下载机器人脚本</dark_gray>'
+      title: <dark_gray>下载机器人脚本</dark_gray>
       entry:
         author: '<gray>作者: <white>{author}</white></gray>'
         length: '<gray>脚本长度: <white>{length}/54</white></gray>'
@@ -4306,74 +4334,98 @@ android:
         modify: '<yellow>右键: 改名，或输入 delete 删除</yellow>'
   instructions:
     wait:
-      name: '<yellow>等待</yellow>'
-      lore: ['<gray>等待一个机器人 tick。</gray>']
+      name: <yellow>等待</yellow>
+      lore:
+      - <gray>等待一个机器人 tick。</gray>
     turn_left:
-      name: '<yellow>左转</yellow>'
-      lore: ['<gray>向左旋转。</gray>']
+      name: <yellow>左转</yellow>
+      lore:
+      - <gray>向左旋转。</gray>
     turn_right:
-      name: '<yellow>右转</yellow>'
-      lore: ['<gray>向右旋转。</gray>']
+      name: <yellow>右转</yellow>
+      lore:
+      - <gray>向右旋转。</gray>
     go_forward:
-      name: '<yellow>前进</yellow>'
-      lore: ['<gray>向前移动一格。</gray>']
+      name: <yellow>前进</yellow>
+      lore:
+      - <gray>向前移动一格。</gray>
     go_up:
-      name: '<yellow>上升</yellow>'
-      lore: ['<gray>向上移动一格。</gray>']
+      name: <yellow>上升</yellow>
+      lore:
+      - <gray>向上移动一格。</gray>
     go_down:
-      name: '<yellow>下降</yellow>'
-      lore: ['<gray>向下移动一格。</gray>']
+      name: <yellow>下降</yellow>
+      lore:
+      - <gray>向下移动一格。</gray>
     interface_items:
-      name: '<yellow>物品接口</yellow>'
-      lore: ['<gray>把输出物品推入前方物品接口。</gray>']
+      name: <yellow>物品接口</yellow>
+      lore:
+      - <gray>把输出物品推入前方物品接口。</gray>
     interface_fuel:
-      name: '<yellow>燃料接口</yellow>'
-      lore: ['<gray>从前方燃料接口抽取燃料。</gray>']
+      name: <yellow>燃料接口</yellow>
+      lore:
+      - <gray>从前方燃料接口抽取燃料。</gray>
     dig_forward:
-      name: '<yellow>向前挖掘</yellow>'
-      lore: ['<gray>挖掘前方方块。</gray>']
+      name: <yellow>向前挖掘</yellow>
+      lore:
+      - <gray>挖掘前方方块。</gray>
     dig_up:
-      name: '<yellow>向上挖掘</yellow>'
-      lore: ['<gray>挖掘上方方块。</gray>']
+      name: <yellow>向上挖掘</yellow>
+      lore:
+      - <gray>挖掘上方方块。</gray>
     dig_down:
-      name: '<yellow>向下挖掘</yellow>'
-      lore: ['<gray>挖掘下方方块。</gray>']
+      name: <yellow>向下挖掘</yellow>
+      lore:
+      - <gray>挖掘下方方块。</gray>
     move_and_dig_forward:
-      name: '<yellow>向前挖掘并移动</yellow>'
-      lore: ['<gray>挖掘前方并移动到清出的方块。</gray>']
+      name: <yellow>向前挖掘并移动</yellow>
+      lore:
+      - <gray>挖掘前方并移动到清出的方块。</gray>
     move_and_dig_up:
-      name: '<yellow>向上挖掘并移动</yellow>'
-      lore: ['<gray>挖掘上方并向上移动。</gray>']
+      name: <yellow>向上挖掘并移动</yellow>
+      lore:
+      - <gray>挖掘上方并向上移动。</gray>
     move_and_dig_down:
-      name: '<yellow>向下挖掘并移动</yellow>'
-      lore: ['<gray>挖掘下方并向下移动。</gray>']
+      name: <yellow>向下挖掘并移动</yellow>
+      lore:
+      - <gray>挖掘下方并向下移动。</gray>
     farm_forward:
-      name: '<yellow>收割前方</yellow>'
-      lore: ['<gray>收割前方成熟作物。</gray>']
+      name: <yellow>收割前方</yellow>
+      lore:
+      - <gray>收割前方成熟作物。</gray>
     farm_down:
-      name: '<yellow>收割下方</yellow>'
-      lore: ['<gray>收割下方成熟作物。</gray>']
+      name: <yellow>收割下方</yellow>
+      lore:
+      - <gray>收割下方成熟作物。</gray>
     farm_exotic_forward:
-      name: '<yellow>收割前方异域作物</yellow>'
-      lore: ['<gray>高级农夫异域作物接口。</gray>']
+      name: <yellow>收割前方异域作物</yellow>
+      lore:
+      - <gray>高级农夫异域作物接口。</gray>
     farm_exotic_down:
-      name: '<yellow>收割下方异域作物</yellow>'
-      lore: ['<gray>高级农夫异域作物接口。</gray>']
+      name: <yellow>收割下方异域作物</yellow>
+      lore:
+      - <gray>高级农夫异域作物接口。</gray>
     chop_tree:
-      name: '<yellow>砍树</yellow>'
-      lore: ['<gray>砍伐前方树木的一段原木。</gray>']
+      name: <yellow>砍树</yellow>
+      lore:
+      - <gray>砍伐前方树木的一段原木。</gray>
     catch_fish:
-      name: '<yellow>钓鱼</yellow>'
-      lore: ['<gray>在下方水中尝试钓鱼。</gray>']
+      name: <yellow>钓鱼</yellow>
+      lore:
+      - <gray>在下方水中尝试钓鱼。</gray>
     attack_mobs_animals:
-      name: '<yellow>攻击怪物和动物</yellow>'
-      lore: ['<gray>攻击前方有效生物。</gray>']
+      name: <yellow>攻击怪物和动物</yellow>
+      lore:
+      - <gray>攻击前方有效生物。</gray>
     attack_mobs:
-      name: '<yellow>攻击怪物</yellow>'
-      lore: ['<gray>攻击前方怪物。</gray>']
+      name: <yellow>攻击怪物</yellow>
+      lore:
+      - <gray>攻击前方怪物。</gray>
     attack_animals:
-      name: '<yellow>攻击动物</yellow>'
-      lore: ['<gray>攻击前方动物。</gray>']
+      name: <yellow>攻击动物</yellow>
+      lore:
+      - <gray>攻击前方动物。</gray>
     attack_animals_adult:
-      name: '<yellow>攻击成年动物</yellow>'
-      lore: ['<gray>攻击前方成年动物。</gray>']
+      name: <yellow>攻击成年动物</yellow>
+      lore:
+      - <gray>攻击前方成年动物。</gray>

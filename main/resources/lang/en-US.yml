@@ -35,7 +35,7 @@ machines:
     already-running: <yellow>This Industrial Miner is already running.</yellow>
     no-fuel: '<red>Industrial Miner stopped: no fuel.</red>'
     chest-full: '<red>Industrial Miner stopped: chest is full.</red>'
-    finished: '<green>Industrial Miner finished. Mined {ores} ores.</green>'
+    finished: <green>Industrial Miner finished. Mined {ores} ores.</green>
     structure-changed: '<red>Industrial Miner stopped: structure changed.</red>'
     piston-no-space: '<red>Industrial Miner stopped: piston has no space above.</red>'
     piston-wrong-direction: '<red>Industrial Miner stopped: pistons must face upwards.</red>'
@@ -49,6 +49,10 @@ machines:
     updated: <green>Hologram updated.</green>
     edit-cancelled: <gray>Hologram edit cancelled.</gray>
     not-owner: <red>Only the owner can edit this Hologram Projector.</red>
+  ignition-chamber-no-flint: <red>自动点火室中没有打火石。</red>
+  wrong-item: <red>这个物品不能被这台机器处理。</red>
+  busy: <red>This machine is already working.</red>
+  crucible-blocked: <red>The space above the Crucible is blocked.</red>
 guide:
   errors:
     no-open: <red>You do not have permission to open this guide.</red>
@@ -3185,6 +3189,10 @@ command:
     no-inspect: <red>You do not have permission to inspect SFX item markers.</red>
     no-list: <red>You do not have permission to view the SFX item list.</red>
     no-reload: <red>You do not have permission to reload SFX.</red>
+    no-research: <red>You do not have permission to manage researches.</red>
+    no-backpack: <red>You do not have permission to manage backpacks.</red>
+    players-only-backpack-open: Only players can open backpacks directly.
+    players-only-backpack-give: Only players can receive backpack items.
   book:
     received: <green>Guide received.</green>
     received-cheat: <green>Cheat guide received.</green>
@@ -3217,7 +3225,7 @@ command:
   reload:
     success: <green>SFX configuration and language files were reloaded.</green>
     success-all: '<green>SFX runtime reloaded: listeners, services, registries, recipes, researches, and menus were rebuilt.</green>'
-    failed-all: '<red>SFX runtime reload failed. The plugin was disabled to avoid running with a partial service graph.</red>'
+    failed-all: <red>SFX runtime reload failed. The plugin was disabled to avoid running with a partial service graph.</red>
   help:
     header: <green>SFX Commands</green>
     line:
@@ -3229,6 +3237,30 @@ command:
       list: <gray>/{label} list [page]</gray> <dark_gray>- open the registered item list</dark_gray>
       reload: <gray>/{label} reload [config|runtime]</gray> <dark_gray>- reload config or rebuild the SFX runtime</dark_gray>
       reload-all: <gray>/{label} reload all</gray> <dark_gray>- rebuild listeners, services, registries, recipes, and menus</dark_gray>
+      research: <gray>/{label} research <player> <all|reset|id></gray> <dark_gray>- manage researches</dark_gray>
+      backpack: <gray>/{label} backpack <list|open|give> ...</gray> <dark_gray>- manage backpacks</dark_gray>
+  research:
+    usage: '<red>Usage: /slimefunx research <player|uuid> <all|reset|research-id></red>'
+    success-all: <green>Unlocked all researches for {player}.</green>
+    success-reset: <green>Reset all researches for {player}.</green>
+    unknown: '<red>Unknown research: {id}</red>'
+    success-one: <green>Unlocked research {id} for {player}.</green>
+    already: <yellow>{player} already had research {id}.</yellow>
+  player:
+    unknown: <red>Unknown player or UUID.</red>
+  backpack:
+    usage: '<red>Usage: /slimefunx backpack <list|open|give> <player|uuid> [id] [size]</red>'
+    list:
+      header: <green>Backpacks for {player}</green>
+      empty: <gray>No backpacks found.</gray>
+      entry: <gray>- ID {id} | size {size} | updated {updated}</gray>
+    open:
+      usage: '<red>Usage: /slimefunx backpack open <player|uuid> <id></red>'
+    invalid-id: <red>Invalid backpack id.</red>
+    give:
+      usage: '<red>Usage: /slimefunx backpack give <player|uuid> <id> [size|tier]</red>'
+      sent: '<green>Prepared backpack item for {player} #{id}.</green>'
+    invalid-size: <red>Use backpack size 9/18/27/36/45/54 or tier 1-6.</red>
 categories:
   sf.items:
     name: '&fItems'
@@ -3478,7 +3510,7 @@ electric-ui:
     fluid-pump: empty bucket or glass bottle
     generic: input item
   target-text:
-    produce: 'No collectable target for the current tool nearby.'
+    produce: No collectable target for the current tool nearby.
     auto-breeder: No breedable animals in range.
     animal-growth: No baby animals in range.
     crop-growth: No growable crops in range.
@@ -3526,7 +3558,7 @@ electric-ui:
       name: <yellow>Previous Recipe</yellow>
     next:
       name: <yellow>Next Recipe</yellow>
-    page: '<gray>Recipe {page} / {total}</gray>'
+    page: <gray>Recipe {page} / {total}</gray>
     select-a-recipe: <yellow>Sneak-right-click while holding a target item to select a recipe.</yellow>
     recipe-selected: '<green>Selected recipe: </green><white>{recipe}</white>'
     recipe-not-found: <red>No matching auto-crafter recipe was found for this item.</red>
@@ -3537,9 +3569,11 @@ electric-ui:
       missing-name: <red>No Blaze Powder</red>
       missing-lore: <gray>Add blaze powder before brewing.</gray>
       consuming: '<gray>Consumed by this brew: </gray><yellow>{fuel}</yellow><gray> tick(s)</gray>'
-      fuel-left: '<gray>Stored blaze powder: </gray><yellow>{fuel}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> tick(s)</gray>'
+      fuel-left: '<gray>Stored blaze powder: </gray><yellow>{fuel}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray>
+        tick(s)</gray>'
       powder: '<gray>Blaze powder in slot: </gray><yellow>{amount}</yellow>'
-      recipe-cost: '<gray>This recipe consumes: </gray><yellow>{fuel}</yellow><gray> tick(s), up to </gray><yellow>{powders}</yellow><gray> blaze powder</gray>'
+      recipe-cost: '<gray>This recipe consumes: </gray><yellow>{fuel}</yellow><gray> tick(s), up to </gray><yellow>{powders}</yellow><gray>
+        blaze powder</gray>'
     ingredient:
       frame: <blue>Brewing Ingredient</blue>
       missing-name: <red>No Ingredient</red>
@@ -3578,8 +3612,10 @@ energy:
     no-network: <red>Not connected to any electric machines</red>
     multi-regulator: <red>Multiple energy regulators in this connection</red>
     shared-node-conflict: <red>Energy network conflict</red>
-    net-positive: <green>+{net} J/t</green><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity} J</gray>
-    net-negative: <red>{net} J/t</red><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity} J</gray>
+    net-positive: <green>+{net} J/t</green><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity}
+      J</gray>
+    net-negative: <red>{net} J/t</red><newline><green>{supply} J/t</green><gray> | </gray><red>{consumption} J/t</red><newline><gray>{stored}/{capacity}
+      J</gray>
     classic-positive: <green>+{net} J ⚡</green>
     classic-negative: <red>{net} J ⚡</red>
     sfx-positive: <green>+{net_text} J/t</green><newline>{flow_line}<newline>{storage_line}
@@ -3625,13 +3661,12 @@ energy:
       single-item: <red>Only one item can be charged at a time.</red>
   messages:
     capacitor-status: <yellow>Stored {stored}/{capacity} J</yellow>
-    connected: '<green>Connected</green>'
-    disconnected: '<red>Not connected</red>'
+    connected: <green>Connected</green>
+    disconnected: <red>Not connected</red>
     regulator-status: <yellow>Energy regulator active.</yellow>
     connector-status: <yellow>Energy connector linked to nearby networks.</yellow>
-
 configurable-ui:
-  none: 'None'
+  none: None
   energy:
     stored: '<gray>Stored: {stored}/{capacity} J</gray>'
     cost: '<gray>Cost: {cost} J</gray>'
@@ -3641,9 +3676,9 @@ configurable-ui:
       name: '<green>Enabled: ✔</green>'
     disabled:
       name: '<red>Enabled: ✘</red>'
-      lore: '<gray>This assembler is disabled.</gray>'
+      lore: <gray>This assembler is disabled.</gray>
     toggle:
-      lore: '<gray>Click to toggle this assembler.</gray>'
+      lore: <gray>Click to toggle this assembler.</gray>
     offset:
       name: '<yellow>Offset: {offset} Block(s)</yellow>'
       left: '<gray>Left-click: +0.1</gray>'
@@ -3654,30 +3689,30 @@ configurable-ui:
       name: '<yellow>Cooldown: 30 Seconds</yellow>'
       remaining: '<gray>Remaining: {time}</gray>'
     paused:
-      name: '<yellow>Paused</yellow>'
-      lore: '<gray>Enable this assembler to continue.</gray>'
+      name: <yellow>Paused</yellow>
+      lore: <gray>Enable this assembler to continue.</gray>
     working:
-      lore: '<gray>Assembling entity structure.</gray>'
+      lore: <gray>Assembling entity structure.</gray>
     work-time: '<gray>Work time: {time}</gray>'
     head-slot:
-      name: '<aqua>Head Slot</aqua>'
+      name: <aqua>Head Slot</aqua>
     body-slot:
-      name: '<aqua>Body Slot</aqua>'
+      name: <aqua>Body Slot</aqua>
     required:
       lore: '<gray>Required: {amount}</gray>'
     accepted:
-      lore: '<gray>Accepted materials:</gray>'
+      lore: <gray>Accepted materials:</gray>
   reactor:
     focus-electricity:
       name: '<yellow>Focus: Electricity</yellow>'
     focus-production:
       name: '<yellow>Focus: Production</yellow>'
     focus:
-      lore: '<gray>Click to switch reactor focus.</gray>'
+      lore: <gray>Click to switch reactor focus.</gray>
     progress:
-      name: '<yellow>Reactor Progress</yellow>'
-      working: '<gray>Reactor is running.</gray>'
-      idle: '<gray>Waiting for fuel and coolant.</gray>'
+      name: <yellow>Reactor Progress</yellow>
+      working: <gray>Reactor is running.</gray>
+      idle: <gray>Waiting for fuel and coolant.</gray>
       nuclear-fuel: '<gray>Nuclear Fuel: {percent}%</gray>'
       fuel: '<gray>Fuel: {progress}</gray>'
       coolant: '<gray>Coolant: {percent}%</gray>'
@@ -3686,38 +3721,37 @@ configurable-ui:
       coolant-ticks: '<gray>Coolant ticks: {current}/{total}</gray>'
       byproduct: '<gray>Byproduct: {item}</gray>'
       mode: '<gray>Mode: {mode}</gray>'
-    mode-electricity: 'Electricity'
-    mode-production: 'Production'
+    mode-electricity: Electricity
+    mode-production: Production
     access-port:
       detected:
-        name: '<green>Access Port detected</green>'
-        lore: '<gray>Click to open the access port.</gray>'
+        name: <green>Access Port detected</green>
+        lore: <gray>Click to open the access port.</gray>
       missing:
-        name: '<red>No Access Port</red>'
-        lore: '<gray>Place this access port 3 blocks above a reactor.</gray>'
+        name: <red>No Access Port</red>
+        lore: <gray>Place this access port 3 blocks above a reactor.</gray>
     fuel-slots:
-      name: '<aqua>Fuel Slots</aqua>'
-      lore: '<gray>Insert valid reactor fuel here.</gray>'
+      name: <aqua>Fuel Slots</aqua>
+      lore: <gray>Insert valid reactor fuel here.</gray>
     coolant-slots:
-      name: '<aqua>Coolant Slots</aqua>'
-      lore: '<red>The reactor will melt down without coolant.</red>'
+      name: <aqua>Coolant Slots</aqua>
+      lore: <red>The reactor will melt down without coolant.</red>
     output-slot:
-      name: '<aqua>Byproduct Slot</aqua>'
-      lore: '<gray>Take reactor byproducts here.</gray>'
-
+      name: <aqua>Byproduct Slot</aqua>
+      lore: <gray>Take reactor byproducts here.</gray>
 tools:
   multimeter:
     classic: '<gray>Stored Energy: <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
-    unsupported: '<red>This block has no readable energy storage.</red>'
+    unsupported: <red>This block has no readable energy storage.</red>
     types:
-      consumer: 'Consumer'
-      producer: 'Producer'
-      generator: 'Generator'
-      capacitor: 'Capacitor'
-      connector: 'Energy Node'
-      regulator: 'Energy Regulator'
+      consumer: Consumer
+      producer: Producer
+      generator: Generator
+      capacitor: Capacitor
+      connector: Energy Node
+      regulator: Energy Regulator
     enhanced:
-      title: '<yellow>Multimeter</yellow>'
+      title: <yellow>Multimeter</yellow>
       machine: '<gray>Machine: <white>{name}</white></gray>'
       type: '<gray>Type: <white>{type}</white></gray>'
       location: '<gray>Location: <white>{location}</white></gray>'
@@ -3730,66 +3764,66 @@ tools:
       scheduler: '<gray>Scheduler: <white>{location}</white></gray>'
       scheduler-missing: '<gray>Scheduler: <red>not connected</red></gray>'
       grid-energy: '<gray>Grid energy: {bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>'
-      grid-rates: '<gray>Generation: <green>{generation}</green> J/t <dark_gray>|</dark_gray> Consumption: <yellow>{consumption}</yellow> J/t</gray>'
-      grid-members: '<gray>Connected components: <white>{members}</white> <dark_gray>(G:{generators}, R:{reactors}, C:{capacitors}, N:{connectors}, M:{consumers})</dark_gray></gray>'
+      grid-rates: '<gray>Generation: <green>{generation}</green> J/t <dark_gray>|</dark_gray> Consumption: <yellow>{consumption}</yellow>
+        J/t</gray>'
+      grid-members: '<gray>Connected components: <white>{members}</white> <dark_gray>(G:{generators}, R:{reactors}, C:{capacitors},
+        N:{connectors}, M:{consumers})</dark_gray></gray>'
       grid-auto-paused: '<gray>Auto-paused generators: <yellow>{amount}</yellow></gray>'
-
 machine-status:
   idle:
-    name: '<gray>Idle</gray>'
-    lore: '<gray>Waiting for input.</gray>'
+    name: <gray>Idle</gray>
+    lore: <gray>Waiting for input.</gray>
   working:
-    name: '<yellow>Working</yellow>'
-    lore: '<gray>The machine is working.</gray>'
+    name: <yellow>Working</yellow>
+    lore: <gray>The machine is working.</gray>
   no-power:
-    name: '<red>No Power</red>'
-    lore: '<gray>Charge this machine to continue.</gray>'
+    name: <red>No Power</red>
+    lore: <gray>Charge this machine to continue.</gray>
   paused:
-    name: '<yellow>Paused</yellow>'
-    lore: '<gray>This machine is paused.</gray>'
+    name: <yellow>Paused</yellow>
+    lore: <gray>This machine is paused.</gray>
   disabled:
-    name: '<gray>Disabled</gray>'
-    lore: '<gray>This machine is disabled.</gray>'
+    name: <gray>Disabled</gray>
+    lore: <gray>This machine is disabled.</gray>
   no-input:
-    name: '<gray>No Input</gray>'
-    lore: '<gray>Waiting for input.</gray>'
+    name: <gray>No Input</gray>
+    lore: <gray>Waiting for input.</gray>
   no-recipe:
-    name: '<gray>No Recipe</gray>'
-    lore: '<gray>The current input has no matching recipe.</gray>'
+    name: <gray>No Recipe</gray>
+    lore: <gray>The current input has no matching recipe.</gray>
   no-target:
-    name: '<red>No Target</red>'
-    lore: '<gray>No valid target was found.</gray>'
+    name: <red>No Target</red>
+    lore: <gray>No valid target was found.</gray>
   chunk-not-scanned:
-    name: '<red>Unscanned Area</red>'
-    lore: '<gray>This chunk has not been GEO-scanned yet.</gray>'
+    name: <red>Unscanned Area</red>
+    lore: <gray>This chunk has not been GEO-scanned yet.</gray>
   no-geo-resource:
-    name: '<gray>No Mineable Resource</gray>'
-    lore: '<gray>No usable GEO resource remains in this chunk.</gray>'
+    name: <gray>No Mineable Resource</gray>
+    lore: <gray>No usable GEO resource remains in this chunk.</gray>
   output-full:
-    name: '<red>Output Full</red>'
-    lore: '<gray>Free an output slot to continue.</gray>'
+    name: <red>Output Full</red>
+    lore: <gray>Free an output slot to continue.</gray>
   blocked-output:
-    name: '<red>Blocked</red>'
-    lore: '<gray>The output is full. Free a slot to commit the finished item.</gray>'
+    name: <red>Blocked</red>
+    lore: <gray>The output is full. Free a slot to commit the finished item.</gray>
   invalid-input:
-    name: '<red>Invalid Input</red>'
-    lore: '<gray>The inserted item cannot be processed here.</gray>'
+    name: <red>Invalid Input</red>
+    lore: <gray>The inserted item cannot be processed here.</gray>
   full:
-    name: '<green>Full</green>'
-    lore: '<gray>This machine is full.</gray>'
+    name: <green>Full</green>
+    lore: <gray>This machine is full.</gray>
   no-network:
-    name: '<red>Not Connected</red>'
-    lore: '<gray>This machine is not connected to an energy network.</gray>'
+    name: <red>Not Connected</red>
+    lore: <gray>This machine is not connected to an energy network.</gray>
   network-conflict:
-    name: '<red>Network Conflict</red>'
-    lore: '<gray>Resolve regulator or shared-node conflicts first.</gray>'
+    name: <red>Network Conflict</red>
+    lore: <gray>Resolve regulator or shared-node conflicts first.</gray>
   area-conflict:
-    name: '<red>Work Area Conflict</red>'
-    lore: '<gray>Machines of the same type cannot have overlapping work areas.</gray>'
+    name: <red>Work Area Conflict</red>
+    lore: <gray>Machines of the same type cannot have overlapping work areas.</gray>
   missing-resource:
-    name: '<red>Missing Resource</red>'
-    lore: '<gray>Add the missing resource to continue.</gray>'
-
+    name: <red>Missing Resource</red>
+    lore: <gray>Add the missing resource to continue.</gray>
 technical:
   jetpack:
     hover:
@@ -3799,7 +3833,6 @@ technical:
     mode:
       thrust: '<yellow>Jet Boots: Thrust Mode</yellow>'
       assist: '<aqua>Jet Boots: Assist Mode</aqua>'
-
   auto-crafter:
     enabled:
       name: <green>Enabled</green>
@@ -3817,7 +3850,6 @@ technical:
       lore: <gray>This machine uses the container directly below it.</gray>
     recipe-selected: '<green>Selected recipe: </green><white>{recipe}</white>'
     recipe-not-found: <red>No matching auto-crafter recipe was found for this item.</red>
-
 cargo:
   status:
     no-nodes: '&cNo Cargo Nodes found'
@@ -3981,8 +4013,7 @@ cargo:
         lore:
         - '&7{recipe}'
         - '&eSneak-right-click with target item to configure.'
-      none: 'None'
-
+      none: None
 gps:
   ui:
     control-panel:
@@ -4040,9 +4071,9 @@ gps:
         subtitle: '&7You moved away from the teleporter.'
     elevator:
       title: '&3Elevator'
-      default-floor: 'Floor {y}'
+      default-floor: Floor {y}
       direction:
-        vertical: 'above or below'
+        vertical: above or below
       floor:
         name: '&b{name}'
         y: '&7Y: &f{y}'
@@ -4068,13 +4099,13 @@ gps:
       scan-required: '&4GEO-Scan required!'
       mining: '&7Mining: &r{resource}'
       finished: '&7Finished'
-      resource-fallback: 'GEO Resource'
+      resource-fallback: GEO Resource
   resources:
-    oil: 'Oil'
-    salt: 'Salt'
-    uranium: 'Small Chunks of Uranium'
-    nether_ice: 'Nether Ice'
-    unknown: 'GEO Resource'
+    oil: Oil
+    salt: Salt
+    uranium: Small Chunks of Uranium
+    nether_ice: Nether Ice
+    unknown: GEO Resource
   messages:
     marker-enter-name: '&ePlease type the waypoint name in chat. Type &fcancel&e to cancel.'
     chat-input-cancelled: '&cInput cancelled.'
@@ -4100,109 +4131,109 @@ gps:
     waypoint-limit: '&cYou have reached the GPS waypoint limit.'
     waypoint-created: '&aWaypoint created: &f{name}'
     scanner-hint: '&7Use a GPS Geo-Scanner or Portable Geo-Scanner in the target chunk.'
-
 android:
   messages:
-    no_access: '<red>This Android belongs to another player.</red>'
-    started: '<green>Android started.</green>'
-    paused: '<yellow>Android paused.</yellow>'
-    import_prompt: '<yellow>Paste an Android script code in chat. Type <white>cancel</white> to abort.</yellow>'
-    import_cancelled: '<yellow>Android script import cancelled.</yellow>'
-    missing_android: '<red>That Android no longer exists.</red>'
-    imported: '<green>Imported Android script.</green>'
+    no_access: <red>This Android belongs to another player.</red>
+    started: <green>Android started.</green>
+    paused: <yellow>Android paused.</yellow>
+    import_prompt: <yellow>Paste an Android script code in chat. Type <white>cancel</white> to abort.</yellow>
+    import_cancelled: <yellow>Android script import cancelled.</yellow>
+    missing_android: <red>That Android no longer exists.</red>
+    imported: <green>Imported Android script.</green>
     invalid_script: '<red>Invalid Android script: {reason}</red>'
-    copy_script: '<aqua>[Click to copy Android script]</aqua>'
+    copy_script: <aqua>[Click to copy Android script]</aqua>
     export: '<green>Android script export:</green> '
     uploaded: '<green>Uploaded Android script #{id}.</green>'
     upload_failed: '<red>Failed to upload script: {reason}</red>'
     deleted: '<yellow>Deleted Android script #{id}.</yellow>'
     downloaded: '<green>Downloaded Android script #{id}.</green>'
     script_library_error: '<red>Script library error: {reason}</red>'
-    upload_name_prompt: '<yellow>Type a script name in chat. Type <white>cancel</white> to abort.</yellow>'
-    upload_cancelled: '<yellow>Android script upload cancelled.</yellow>'
-    invalid_script_name: '<red>Invalid script name. Use 1-32 visible characters.</red>'
-    edit_script_prompt: '<yellow>Type a new script name, or type <white>delete</white> to delete it. Type <white>cancel</white> to abort.</yellow>'
-    edit_cancelled: '<yellow>Android script edit cancelled.</yellow>'
+    upload_name_prompt: <yellow>Type a script name in chat. Type <white>cancel</white> to abort.</yellow>
+    upload_cancelled: <yellow>Android script upload cancelled.</yellow>
+    invalid_script_name: <red>Invalid script name. Use 1-32 visible characters.</red>
+    edit_script_prompt: <yellow>Type a new script name, or type <white>delete</white> to delete it. Type <white>cancel</white>
+      to abort.</yellow>
+    edit_cancelled: <yellow>Android script edit cancelled.</yellow>
     renamed: '<green>Renamed Android script #{id}.</green>'
-    edit_denied: '<red>You cannot modify that script.</red>'
+    edit_denied: <red>You cannot modify that script.</red>
   menu:
     common:
       back:
-        name: '<red>Back</red>'
+        name: <red>Back</red>
       previous:
-        name: '<yellow>Previous Page</yellow>'
+        name: <yellow>Previous Page</yellow>
       next:
-        name: '<yellow>Next Page</yellow>'
+        name: <yellow>Next Page</yellow>
     main:
-      title: 'Programmable Android'
+      title: Programmable Android
       start:
-        name: '<green>Start/Continue</green>'
+        name: <green>Start/Continue</green>
         lore:
-          - '<gray>Start or resume this Android.</gray>'
+        - <gray>Start or resume this Android.</gray>
       pause:
-        name: '<dark_red>Pause</dark_red>'
+        name: <dark_red>Pause</dark_red>
         lore:
-          - '<gray>Stop execution without clearing state.</gray>'
+        - <gray>Stop execution without clearing state.</gray>
       memory_core:
-        name: '<aqua>Memory Core</aqua>'
+        name: <aqua>Memory Core</aqua>
         lore:
-          - ''
-          - '<dark_gray>⇨ <gray>Click to open the Script Editor</gray>'
+        - ''
+        - <dark_gray>⇨ <gray>Click to open the Script Editor</gray>
       fuel_info:
-        name: '<yellow>Fuel Input</yellow>'
+        name: <yellow>Fuel Input</yellow>
         lore:
-          - '<gray>Put compatible fuel in slot 43.</gray>'
-          - '<gray>Remaining fuel: <white>{fuel}</white></gray>'
-          - '<gray>State: <white>{state}</white></gray>'
+        - <gray>Put compatible fuel in slot 43.</gray>
+        - '<gray>Remaining fuel: <white>{fuel}</white></gray>'
+        - '<gray>State: <white>{state}</white></gray>'
     editor:
-      title: '<dark_gray>Android Memory Core</dark_gray>'
+      title: <dark_gray>Android Memory Core</dark_gray>
       edit:
-        name: '<green>Edit Script</green>'
+        name: <green>Edit Script</green>
         lore:
-          - '<gray>Edit the current script graphically.</gray>'
+        - <gray>Edit the current script graphically.</gray>
       export:
-        name: '<aqua>Export Script</aqua>'
+        name: <aqua>Export Script</aqua>
         lore:
-          - '<gray>Send a click-to-copy short code.</gray>'
+        - <gray>Send a click-to-copy short code.</gray>
       import:
-        name: '<yellow>Import Script</yellow>'
+        name: <yellow>Import Script</yellow>
         lore:
-          - '<gray>Paste a short code or readable script in chat.</gray>'
+        - <gray>Paste a short code or readable script in chat.</gray>
       download:
-        name: '<gold>Download Scripts</gold>'
+        name: <gold>Download Scripts</gold>
         lore:
-          - '<gray>Browse public/private uploaded scripts.</gray>'
+        - <gray>Browse public/private uploaded scripts.</gray>
       upload:
-        name: '<blue>Upload Script</blue>'
+        name: <blue>Upload Script</blue>
         lore:
-          - '<gray>Share this script with this server.</gray>'
+        - <gray>Share this script with this server.</gray>
       back:
-        name: '<red>Back</red>'
+        name: <red>Back</red>
         lore:
-          - '<gray>Return to the Android.</gray>'
+        - <gray>Return to the Android.</gray>
     upload:
-      title: '<dark_gray>Upload Android Script</dark_gray>'
+      title: <dark_gray>Upload Android Script</dark_gray>
       public:
-        name: '<green>Public</green>'
+        name: <green>Public</green>
         lore:
-          - '<gray>Visible to everyone.</gray>'
+        - <gray>Visible to everyone.</gray>
       private:
-        name: '<yellow>Private</yellow>'
+        name: <yellow>Private</yellow>
         lore:
-          - '<gray>Only you can see it.</gray>'
+        - <gray>Only you can see it.</gray>
     script:
-      title: '<dark_gray>Edit Android Script</dark_gray>'
+      title: <dark_gray>Edit Android Script</dark_gray>
       start:
-        name: '<green>START</green>'
+        name: <green>START</green>
       repeat:
-        name: '<red>REPEAT</red>'
+        name: <red>REPEAT</red>
       add:
-        name: '<green>Add new Command</green>'
+        name: <green>Add new Command</green>
       edit_hint: '<gray>Left: edit | Right: delete | Shift-right: duplicate</gray>'
     instructions:
-      title: '<dark_gray>Select Instruction</dark_gray>'
+      title: <dark_gray>Select Instruction</dark_gray>
     downloader:
-      title: '<dark_gray>Download Android Scripts</dark_gray>'
+      title: <dark_gray>Download Android Scripts</dark_gray>
       entry:
         author: '<gray>Author: <white>{author}</white></gray>'
         length: '<gray>Length: <white>{length}/54</white></gray>'
@@ -4212,74 +4243,98 @@ android:
         modify: '<yellow>Right-click: rename, or type delete to remove</yellow>'
   instructions:
     wait:
-      name: '<yellow>Wait</yellow>'
-      lore: ['<gray>Do nothing for one Android tick.</gray>']
+      name: <yellow>Wait</yellow>
+      lore:
+      - <gray>Do nothing for one Android tick.</gray>
     turn_left:
-      name: '<yellow>Turn Left</yellow>'
-      lore: ['<gray>Rotate left.</gray>']
+      name: <yellow>Turn Left</yellow>
+      lore:
+      - <gray>Rotate left.</gray>
     turn_right:
-      name: '<yellow>Turn Right</yellow>'
-      lore: ['<gray>Rotate right.</gray>']
+      name: <yellow>Turn Right</yellow>
+      lore:
+      - <gray>Rotate right.</gray>
     go_forward:
-      name: '<yellow>Go Forward</yellow>'
-      lore: ['<gray>Move one block forward.</gray>']
+      name: <yellow>Go Forward</yellow>
+      lore:
+      - <gray>Move one block forward.</gray>
     go_up:
-      name: '<yellow>Go Up</yellow>'
-      lore: ['<gray>Move one block up.</gray>']
+      name: <yellow>Go Up</yellow>
+      lore:
+      - <gray>Move one block up.</gray>
     go_down:
-      name: '<yellow>Go Down</yellow>'
-      lore: ['<gray>Move one block down.</gray>']
+      name: <yellow>Go Down</yellow>
+      lore:
+      - <gray>Move one block down.</gray>
     interface_items:
-      name: '<yellow>Interface Items</yellow>'
-      lore: ['<gray>Push output into an item interface ahead.</gray>']
+      name: <yellow>Interface Items</yellow>
+      lore:
+      - <gray>Push output into an item interface ahead.</gray>
     interface_fuel:
-      name: '<yellow>Interface Fuel</yellow>'
-      lore: ['<gray>Pull fuel from a fuel interface ahead.</gray>']
+      name: <yellow>Interface Fuel</yellow>
+      lore:
+      - <gray>Pull fuel from a fuel interface ahead.</gray>
     dig_forward:
-      name: '<yellow>Dig Forward</yellow>'
-      lore: ['<gray>Mine the block ahead.</gray>']
+      name: <yellow>Dig Forward</yellow>
+      lore:
+      - <gray>Mine the block ahead.</gray>
     dig_up:
-      name: '<yellow>Dig Up</yellow>'
-      lore: ['<gray>Mine the block above.</gray>']
+      name: <yellow>Dig Up</yellow>
+      lore:
+      - <gray>Mine the block above.</gray>
     dig_down:
-      name: '<yellow>Dig Down</yellow>'
-      lore: ['<gray>Mine the block below.</gray>']
+      name: <yellow>Dig Down</yellow>
+      lore:
+      - <gray>Mine the block below.</gray>
     move_and_dig_forward:
-      name: '<yellow>Move & Dig Forward</yellow>'
-      lore: ['<gray>Mine ahead and move into the cleared block.</gray>']
+      name: <yellow>Move & Dig Forward</yellow>
+      lore:
+      - <gray>Mine ahead and move into the cleared block.</gray>
     move_and_dig_up:
-      name: '<yellow>Move & Dig Up</yellow>'
-      lore: ['<gray>Mine above and move up.</gray>']
+      name: <yellow>Move & Dig Up</yellow>
+      lore:
+      - <gray>Mine above and move up.</gray>
     move_and_dig_down:
-      name: '<yellow>Move & Dig Down</yellow>'
-      lore: ['<gray>Mine below and move down.</gray>']
+      name: <yellow>Move & Dig Down</yellow>
+      lore:
+      - <gray>Mine below and move down.</gray>
     farm_forward:
-      name: '<yellow>Farm Forward</yellow>'
-      lore: ['<gray>Harvest the mature crop ahead.</gray>']
+      name: <yellow>Farm Forward</yellow>
+      lore:
+      - <gray>Harvest the mature crop ahead.</gray>
     farm_down:
-      name: '<yellow>Farm Down</yellow>'
-      lore: ['<gray>Harvest the mature crop below.</gray>']
+      name: <yellow>Farm Down</yellow>
+      lore:
+      - <gray>Harvest the mature crop below.</gray>
     farm_exotic_forward:
-      name: '<yellow>Farm Exotic Forward</yellow>'
-      lore: ['<gray>Advanced farmer exotic crop hook.</gray>']
+      name: <yellow>Farm Exotic Forward</yellow>
+      lore:
+      - <gray>Advanced farmer exotic crop hook.</gray>
     farm_exotic_down:
-      name: '<yellow>Farm Exotic Down</yellow>'
-      lore: ['<gray>Advanced farmer exotic crop hook.</gray>']
+      name: <yellow>Farm Exotic Down</yellow>
+      lore:
+      - <gray>Advanced farmer exotic crop hook.</gray>
     chop_tree:
-      name: '<yellow>Chop Tree</yellow>'
-      lore: ['<gray>Cut one log from the tree ahead.</gray>']
+      name: <yellow>Chop Tree</yellow>
+      lore:
+      - <gray>Cut one log from the tree ahead.</gray>
     catch_fish:
-      name: '<yellow>Catch Fish</yellow>'
-      lore: ['<gray>Fish in water below.</gray>']
+      name: <yellow>Catch Fish</yellow>
+      lore:
+      - <gray>Fish in water below.</gray>
     attack_mobs_animals:
-      name: '<yellow>Attack Mobs & Animals</yellow>'
-      lore: ['<gray>Attack valid creatures ahead.</gray>']
+      name: <yellow>Attack Mobs & Animals</yellow>
+      lore:
+      - <gray>Attack valid creatures ahead.</gray>
     attack_mobs:
-      name: '<yellow>Attack Mobs</yellow>'
-      lore: ['<gray>Attack monsters ahead.</gray>']
+      name: <yellow>Attack Mobs</yellow>
+      lore:
+      - <gray>Attack monsters ahead.</gray>
     attack_animals:
-      name: '<yellow>Attack Animals</yellow>'
-      lore: ['<gray>Attack animals ahead.</gray>']
+      name: <yellow>Attack Animals</yellow>
+      lore:
+      - <gray>Attack animals ahead.</gray>
     attack_animals_adult:
-      name: '<yellow>Attack Adult Animals</yellow>'
-      lore: ['<gray>Attack adult animals ahead.</gray>']
+      name: <yellow>Attack Adult Animals</yellow>
+      lore:
+      - <gray>Attack adult animals ahead.</gray>

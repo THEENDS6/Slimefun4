@@ -30,7 +30,7 @@ import cc.theends6.sfx.internal.network.SfxNetworkReadiness;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
-import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
+import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.topology.SfxTopologyStatus;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
@@ -280,7 +280,7 @@ public final class SfxCargoService implements Listener {
         if (!(top.getHolder() instanceof SfxCargoSessionHolder holder)) {
             return;
         }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
+        if (SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             return;
         }
         SfxCargoComponentDefinition definition = typeDefinition(holder.type());
@@ -293,14 +293,40 @@ public final class SfxCargoService implements Listener {
 
         if (usesFilter(holder.type())) {
             if (event.getClickedInventory() == top && FILTER_SLOT_SET.contains(event.getRawSlot())) {
+                boolean changed = false;
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                    changed = SfxMachineMenuTransactions.moveTopSlotToPlayer(top, event.getRawSlot(), player);
+                } else if (SfxMachineMenuTransactions.handleManagedHotbarOrOffhand(event, top, event.getRawSlot(), player, true, false, stack -> true)) {
+                    changed = true;
+                } else if (event.getClick() == ClickType.DROP || event.getClick() == ClickType.CONTROL_DROP) {
+                    event.setCancelled(true);
+                    changed = SfxMachineMenuTransactions.dropFromTopSlot(event, top, event.getRawSlot(), player);
+                } else if (SfxMachineMenuTransactions.handleManagedDoubleClick(event, top, player, FILTER_SLOT_SET::contains)) {
+                    changed = true;
+                }
+                if (changed) {
+                    runtime.executeForPlayerLater(player, 1L, () -> saveFilterFromOpenMenu(holder.instanceId(), top));
+                    return;
+                }
                 runtime.executeForPlayerLater(player, 1L, () -> saveFilterFromOpenMenu(holder.instanceId(), top));
                 return;
             }
             if (event.getClickedInventory() != top) {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                    if (SfxMachineMenuTransactions.moveCurrentItemToTopSlots(event, top, FILTER_SLOT_SET::contains, stack -> true)) {
+                        runtime.executeForPlayerLater(player, 1L, () -> saveFilterFromOpenMenu(holder.instanceId(), top));
+                    }
+                    return;
+                }
                 runtime.executeForPlayerLater(player, 1L, () -> saveFilterFromOpenMenu(holder.instanceId(), top));
                 return;
             }
         } else if (event.getClickedInventory() != top) {
+            if (event.isShiftClick()) {
+                event.setCancelled(true);
+            }
             return;
         }
 

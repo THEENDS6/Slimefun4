@@ -987,6 +987,7 @@ items:
   flags:
   - legacy-sf
   - visual-glint
+  - guide-only
   lore:
   - ''
   - '&7Classic enhanced crafting recipe.'
@@ -1003,9 +1004,6 @@ items:
       - sf:gold_24k_block
       - sf:gold_24k_block
       - sf:gold_24k_block
-  flags:
-  - legacy-sf
-  - guide-only
 - id: sf:beef_jerky
   category: sf:food
   material: COOKED_BEEF

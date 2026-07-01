@@ -1,0 +1,1284 @@
+
+
+
+providers:
+  auto_drier:
+    recipes:
+    - id: sf:auto_drier:rotten_flesh
+      inputs:
+      - material: ROTTEN_FLESH
+        amount: 1
+      ticks: 6
+      outputs:
+      - material: LEATHER
+        amount: 1
+    - id: sf:auto_drier:wet_sponge
+      inputs:
+      - material: WET_SPONGE
+        amount: 1
+      ticks: 6
+      outputs:
+      - material: SPONGE
+        amount: 1
+    - id: sf:auto_drier:kelp
+      inputs:
+      - material: KELP
+        amount: 1
+      ticks: 6
+      outputs:
+      - material: DRIED_KELP
+        amount: 1
+    - id: sf:auto_drier:potion
+      inputs:
+      - material: POTION
+        amount: 1
+      ticks: 6
+      outputs:
+      - material: GLASS_BOTTLE
+        amount: 1
+    - id: sf:auto_drier:splash_potion
+      inputs:
+      - material: SPLASH_POTION
+        amount: 1
+      ticks: 6
+      outputs:
+      - material: GLASS_BOTTLE
+        amount: 1
+    - id: sf:auto_drier:lingering_potion
+      inputs:
+      - material: LINGERING_POTION
+        amount: 1
+      ticks: 6
+      outputs:
+      - material: GLASS_BOTTLE
+        amount: 1
+    - id: sf:auto_drier:water_bucket
+      inputs:
+      - material: WATER_BUCKET
+        amount: 1
+      ticks: 6
+      outputs:
+      - material: BUCKET
+        amount: 1
+    - id: sf:auto_drier:beef_jerky
+      inputs:
+      - material: COOKED_BEEF
+        amount: 1
+      ticks: 6
+      outputs:
+      - item: sf:beef_jerky
+        amount: 1
+    - id: sf:auto_drier:pork_jerky
+      inputs:
+      - material: COOKED_PORKCHOP
+        amount: 1
+      ticks: 6
+      outputs:
+      - item: sf:pork_jerky
+        amount: 1
+    - id: sf:auto_drier:chicken_jerky
+      inputs:
+      - material: COOKED_CHICKEN
+        amount: 1
+      ticks: 6
+      outputs:
+      - item: sf:chicken_jerky
+        amount: 1
+    - id: sf:auto_drier:mutton_jerky
+      inputs:
+      - material: COOKED_MUTTON
+        amount: 1
+      ticks: 6
+      outputs:
+      - item: sf:mutton_jerky
+        amount: 1
+    - id: sf:auto_drier:rabbit_jerky
+      inputs:
+      - material: COOKED_RABBIT
+        amount: 1
+      ticks: 6
+      outputs:
+      - item: sf:rabbit_jerky
+        amount: 1
+    - id: sf:auto_drier:cod_jerky
+      inputs:
+      - material: COOKED_COD
+        amount: 1
+      ticks: 6
+      outputs:
+      - item: sf:fish_jerky
+        amount: 1
+    - id: sf:auto_drier:salmon_jerky
+      inputs:
+      - material: COOKED_SALMON
+        amount: 1
+      ticks: 6
+      outputs:
+      - item: sf:fish_jerky
+        amount: 1
+    - id: sf:auto_drier:mud
+      inputs:
+      - material: MUD
+        amount: 1
+      ticks: 6
+      outputs:
+      - material: CLAY
+        amount: 1
+    - expand: tag
+      tag: SAPLINGS
+      id-prefix: sf:auto_drier:sapling
+      input-amount: 1
+      outputs:
+      - material: STICK
+        amount: 2
+      ticks: 6
+    - expand: tag
+      tag: LEAVES
+      id-prefix: sf:auto_drier:leaves
+      input-amount: 1
+      outputs:
+      - material: STICK
+        amount: 1
+      ticks: 6
+  electric_ingot_factory:
+    recipes:
+    - id: sf:electric_ingot_factory:iron
+      inputs:
+      - item: sf:iron_dust
+        amount: 1
+      ticks: 4
+      outputs:
+      - material: IRON_INGOT
+        amount: 1
+    - id: sf:electric_ingot_factory:gold
+      inputs:
+      - item: sf:gold_dust
+        amount: 1
+      ticks: 4
+      outputs:
+      - item: sf:gold_4k
+        amount: 1
+    - id: sf:electric_ingot_factory:tin
+      inputs:
+      - item: sf:tin_dust
+        amount: 1
+      ticks: 4
+      outputs:
+      - item: sf:tin_ingot
+        amount: 1
+    - id: sf:electric_ingot_factory:copper
+      inputs:
+      - item: sf:copper_dust
+        amount: 1
+      ticks: 4
+      outputs:
+      - item: sf:copper_ingot
+        amount: 1
+    - id: sf:electric_ingot_factory:silver
+      inputs:
+      - item: sf:silver_dust
+        amount: 1
+      ticks: 4
+      outputs:
+      - item: sf:silver_ingot
+        amount: 1
+    - id: sf:electric_ingot_factory:aluminum
+      inputs:
+      - item: sf:aluminum_dust
+        amount: 1
+      ticks: 4
+      outputs:
+      - item: sf:aluminum_ingot
+        amount: 1
+    - id: sf:electric_ingot_factory:lead
+      inputs:
+      - item: sf:lead_dust
+        amount: 1
+      ticks: 4
+      outputs:
+      - item: sf:lead_ingot
+        amount: 1
+    - id: sf:electric_ingot_factory:zinc
+      inputs:
+      - item: sf:zinc_dust
+        amount: 1
+      ticks: 4
+      outputs:
+      - item: sf:zinc_ingot
+        amount: 1
+    - id: sf:electric_ingot_factory:silicon
+      inputs:
+      - material: QUARTZ_BLOCK
+        amount: 1
+      ticks: 4
+      outputs:
+      - item: sf:silicon
+        amount: 1
+  carbon_press:
+    recipes:
+    - id: sf:carbon_press:charcoal
+      inputs:
+      - material: CHARCOAL
+        amount: 4
+      ticks: 15
+      outputs:
+      - material: COAL
+        amount: 1
+    - id: sf:carbon_press:coal
+      inputs:
+      - material: COAL
+        amount: 8
+      ticks: 20
+      outputs:
+      - item: sf:carbon
+        amount: 1
+    - id: sf:carbon_press:coal_block
+      inputs:
+      - material: COAL_BLOCK
+        amount: 8
+      ticks: 180
+      outputs:
+      - item: sf:carbon
+        amount: 9
+    - id: sf:carbon_press:compressed_carbon
+      inputs:
+      - item: sf:carbon
+        amount: 4
+      ticks: 30
+      outputs:
+      - item: sf:compressed_carbon
+        amount: 1
+    - id: sf:carbon_press:raw_carbonado
+      inputs:
+      - item: sf:carbon_chunk
+        amount: 1
+      - item: sf:synthetic_diamond
+        amount: 1
+      ticks: 60
+      outputs:
+      - item: sf:raw_carbonado
+        amount: 1
+    - id: sf:carbon_press:synthetic_diamond
+      inputs:
+      - item: sf:carbon_chunk
+        amount: 1
+      ticks: 60
+      outputs:
+      - item: sf:synthetic_diamond
+        amount: 1
+    - id: sf:carbon_press:carbonado
+      inputs:
+      - item: sf:raw_carbonado
+        amount: 1
+      ticks: 90
+      outputs:
+      - item: sf:carbonado
+        amount: 1
+  electric_press:
+    recipes:
+    - id: sf:electric_press:stone_chunk
+      inputs:
+      - item: sf:stone_chunk
+        amount: 3
+      ticks: 4
+      outputs:
+      - material: COBBLESTONE
+        amount: 1
+    - id: sf:electric_press:flint
+      inputs:
+      - material: FLINT
+        amount: 6
+      ticks: 4
+      outputs:
+      - material: COBBLESTONE
+        amount: 1
+    - id: sf:electric_press:glass
+      inputs:
+      - material: GLASS
+        amount: 1
+      ticks: 5
+      outputs:
+      - material: GLASS_PANE
+        amount: 3
+    - id: sf:electric_press:snowball
+      inputs:
+      - material: SNOWBALL
+        amount: 4
+      ticks: 4
+      outputs:
+      - material: SNOW_BLOCK
+        amount: 1
+    - id: sf:electric_press:magma_cream
+      inputs:
+      - material: MAGMA_CREAM
+        amount: 4
+      ticks: 4
+      outputs:
+      - material: MAGMA_BLOCK
+        amount: 1
+    - id: sf:electric_press:slime_ball
+      inputs:
+      - material: SLIME_BALL
+        amount: 9
+      ticks: 4
+      outputs:
+      - material: SLIME_BLOCK
+        amount: 1
+    - id: sf:electric_press:dried_kelp
+      inputs:
+      - material: DRIED_KELP
+        amount: 9
+      ticks: 3
+      outputs:
+      - material: DRIED_KELP_BLOCK
+        amount: 1
+    - id: sf:electric_press:bone_meal
+      inputs:
+      - material: BONE_MEAL
+        amount: 9
+      ticks: 3
+      outputs:
+      - material: BONE_BLOCK
+        amount: 1
+    - id: sf:electric_press:clay_ball
+      inputs:
+      - material: CLAY_BALL
+        amount: 4
+      ticks: 3
+      outputs:
+      - material: CLAY
+        amount: 1
+    - id: sf:electric_press:brick
+      inputs:
+      - material: BRICK
+        amount: 4
+      ticks: 3
+      outputs:
+      - material: BRICKS
+        amount: 1
+    - id: sf:electric_press:copper_wire
+      inputs:
+      - item: sf:copper_ingot
+        amount: 1
+      ticks: 6
+      outputs:
+      - item: sf:copper_wire
+        amount: 3
+    - id: sf:electric_press:steel_plate
+      inputs:
+      - item: sf:steel_ingot
+        amount: 8
+      ticks: 16
+      outputs:
+      - item: sf:steel_plate
+        amount: 1
+    - id: sf:electric_press:reinforced_plate
+      inputs:
+      - item: sf:reinforced_alloy_ingot
+        amount: 8
+      ticks: 18
+      outputs:
+      - item: sf:reinforced_plate
+        amount: 1
+    - id: sf:electric_press:magic_lump_1
+      inputs:
+      - material: NETHER_WART
+        amount: 1
+      ticks: 8
+      outputs:
+      - item: sf:magic_lump_1
+        amount: 2
+    - id: sf:electric_press:magic_lump_2
+      inputs:
+      - item: sf:magic_lump_1
+        amount: 4
+      ticks: 10
+      outputs:
+      - item: sf:magic_lump_2
+        amount: 1
+    - id: sf:electric_press:magic_lump_3
+      inputs:
+      - item: sf:magic_lump_2
+        amount: 4
+      ticks: 12
+      outputs:
+      - item: sf:magic_lump_3
+        amount: 1
+    - id: sf:electric_press:ender_lump_1
+      inputs:
+      - material: ENDER_EYE
+        amount: 1
+      ticks: 10
+      outputs:
+      - item: sf:ender_lump_1
+        amount: 2
+    - id: sf:electric_press:ender_lump_2
+      inputs:
+      - item: sf:ender_lump_1
+        amount: 4
+      ticks: 12
+      outputs:
+      - item: sf:ender_lump_2
+        amount: 1
+    - id: sf:electric_press:ender_lump_3
+      inputs:
+      - item: sf:ender_lump_2
+        amount: 4
+      ticks: 14
+      outputs:
+      - item: sf:ender_lump_3
+        amount: 1
+    - id: sf:electric_press:small_uranium
+      inputs:
+      - item: sf:tiny_uranium
+        amount: 9
+      ticks: 18
+      outputs:
+      - item: sf:small_uranium
+        amount: 1
+    - id: sf:electric_press:uranium
+      inputs:
+      - item: sf:small_uranium
+        amount: 4
+      ticks: 24
+      outputs:
+      - item: sf:uranium
+        amount: 1
+    - id: sf:electric_press:quartz
+      inputs:
+      - material: QUARTZ
+        amount: 4
+      ticks: 4
+      outputs:
+      - material: QUARTZ_BLOCK
+        amount: 1
+    - id: sf:electric_press:iron_nugget
+      inputs:
+      - material: IRON_NUGGET
+        amount: 9
+      ticks: 4
+      outputs:
+      - material: IRON_INGOT
+        amount: 1
+    - id: sf:electric_press:gold_nugget
+      inputs:
+      - material: GOLD_NUGGET
+        amount: 9
+      ticks: 4
+      outputs:
+      - material: GOLD_INGOT
+        amount: 1
+    - id: sf:electric_press:coal
+      inputs:
+      - material: COAL
+        amount: 9
+      ticks: 4
+      outputs:
+      - material: COAL_BLOCK
+        amount: 1
+    - id: sf:electric_press:sand
+      inputs:
+      - material: SAND
+        amount: 4
+      ticks: 4
+      outputs:
+      - material: SANDSTONE
+        amount: 1
+    - id: sf:electric_press:red_sand
+      inputs:
+      - material: RED_SAND
+        amount: 4
+      ticks: 4
+      outputs:
+      - material: RED_SANDSTONE
+        amount: 1
+    - id: sf:electric_press:iron_ingot
+      inputs:
+      - material: IRON_INGOT
+        amount: 9
+      ticks: 5
+      outputs:
+      - material: IRON_BLOCK
+        amount: 1
+    - id: sf:electric_press:gold_ingot
+      inputs:
+      - material: GOLD_INGOT
+        amount: 9
+      ticks: 5
+      outputs:
+      - material: GOLD_BLOCK
+        amount: 1
+    - id: sf:electric_press:redstone
+      inputs:
+      - material: REDSTONE
+        amount: 9
+      ticks: 6
+      outputs:
+      - material: REDSTONE_BLOCK
+        amount: 1
+    - id: sf:electric_press:lapis
+      inputs:
+      - material: LAPIS_LAZULI
+        amount: 9
+      ticks: 6
+      outputs:
+      - material: LAPIS_BLOCK
+        amount: 1
+    - id: sf:electric_press:emerald
+      inputs:
+      - material: EMERALD
+        amount: 9
+      ticks: 8
+      outputs:
+      - material: EMERALD_BLOCK
+        amount: 1
+    - id: sf:electric_press:diamond
+      inputs:
+      - material: DIAMOND
+        amount: 9
+      ticks: 8
+      outputs:
+      - material: DIAMOND_BLOCK
+        amount: 1
+    - id: sf:electric_press:netherite
+      inputs:
+      - material: NETHERITE_INGOT
+        amount: 9
+      ticks: 16
+      outputs:
+      - material: NETHERITE_BLOCK
+        amount: 1
+    - id: sf:electric_press:amethyst
+      inputs:
+      - material: AMETHYST_SHARD
+        amount: 4
+      ticks: 4
+      outputs:
+      - material: AMETHYST_BLOCK
+        amount: 1
+    - id: sf:electric_press:copper
+      inputs:
+      - material: COPPER_INGOT
+        amount: 9
+      ticks: 5
+      outputs:
+      - material: COPPER_BLOCK
+        amount: 1
+    - id: sf:electric_press:raw_iron
+      inputs:
+      - material: RAW_IRON
+        amount: 9
+      ticks: 5
+      outputs:
+      - material: RAW_IRON_BLOCK
+        amount: 1
+    - id: sf:electric_press:raw_gold
+      inputs:
+      - material: RAW_GOLD
+        amount: 9
+      ticks: 5
+      outputs:
+      - material: RAW_GOLD_BLOCK
+        amount: 1
+    - id: sf:electric_press:raw_copper
+      inputs:
+      - material: RAW_COPPER
+        amount: 9
+      ticks: 5
+      outputs:
+      - material: RAW_COPPER_BLOCK
+        amount: 1
+  electrified_crucible:
+    recipes:
+    - id: sf:crucible:cobblestone
+      inputs:
+      - material: BUCKET
+        amount: 1
+      - material: COBBLESTONE
+        amount: 16
+      ticks: 10
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+    - id: sf:crucible:netherrack
+      inputs:
+      - material: BUCKET
+        amount: 1
+      - material: NETHERRACK
+        amount: 16
+      ticks: 8
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+    - id: sf:crucible:stone
+      inputs:
+      - material: BUCKET
+        amount: 1
+      - material: STONE
+        amount: 12
+      ticks: 8
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+    - id: sf:crucible:terracotta
+      inputs:
+      - material: BUCKET
+        amount: 1
+      - material: TERRACOTTA
+        amount: 12
+      ticks: 8
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+    - id: sf:crucible:obsidian
+      inputs:
+      - material: BUCKET
+        amount: 1
+      - material: OBSIDIAN
+        amount: 1
+      ticks: 10
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+    - expand: materials
+      materials:
+      - WHITE_TERRACOTTA
+      - ORANGE_TERRACOTTA
+      - MAGENTA_TERRACOTTA
+      - LIGHT_BLUE_TERRACOTTA
+      - YELLOW_TERRACOTTA
+      - LIME_TERRACOTTA
+      - PINK_TERRACOTTA
+      - GRAY_TERRACOTTA
+      - LIGHT_GRAY_TERRACOTTA
+      - CYAN_TERRACOTTA
+      - PURPLE_TERRACOTTA
+      - BLUE_TERRACOTTA
+      - BROWN_TERRACOTTA
+      - GREEN_TERRACOTTA
+      - RED_TERRACOTTA
+      - BLACK_TERRACOTTA
+      id-prefix: sf:crucible:terracotta
+      input-prefix:
+      - material: BUCKET
+        amount: 1
+      input-amount: 12
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+      ticks: 8
+    - expand: tag
+      tag: LEAVES
+      id-prefix: sf:crucible:leaves
+      input-prefix:
+      - material: BUCKET
+        amount: 1
+      input-amount: 16
+      outputs:
+      - material: WATER_BUCKET
+        amount: 1
+      ticks: 10
+    - id: sf:crucible:blackstone
+      inputs:
+      - material: BUCKET
+        amount: 1
+      - material: BLACKSTONE
+        amount: 8
+      ticks: 10
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+    - id: sf:crucible:basalt
+      inputs:
+      - material: BUCKET
+        amount: 1
+      - material: BASALT
+        amount: 12
+      ticks: 10
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+    - id: sf:crucible:cobbled_deepslate
+      inputs:
+      - material: BUCKET
+        amount: 1
+      - material: COBBLED_DEEPSLATE
+        amount: 12
+      ticks: 10
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+    - id: sf:crucible:deepslate
+      inputs:
+      - material: BUCKET
+        amount: 1
+      - material: DEEPSLATE
+        amount: 10
+      ticks: 10
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+    - id: sf:crucible:tuff
+      inputs:
+      - material: BUCKET
+        amount: 1
+      - material: TUFF
+        amount: 8
+      ticks: 10
+      outputs:
+      - material: LAVA_BUCKET
+        amount: 1
+  freezer:
+    recipes:
+    - id: sf:freezer:ice
+      inputs:
+      - material: ICE
+        amount: 1
+      ticks: 4
+      outputs:
+      - material: PACKED_ICE
+        amount: 1
+    - id: sf:freezer:packed_ice
+      inputs:
+      - material: PACKED_ICE
+        amount: 1
+      ticks: 6
+      outputs:
+      - material: BLUE_ICE
+        amount: 1
+    - id: sf:freezer:water_bucket
+      inputs:
+      - material: WATER_BUCKET
+        amount: 1
+      ticks: 2
+      outputs:
+      - material: BUCKET
+        amount: 1
+      - material: ICE
+        amount: 1
+    - id: sf:freezer:lava_bucket
+      inputs:
+      - material: LAVA_BUCKET
+        amount: 1
+      ticks: 8
+      outputs:
+      - material: BUCKET
+        amount: 1
+      - material: OBSIDIAN
+        amount: 1
+    - id: sf:freezer:reactor_coolant_cell
+      inputs:
+      - material: BLUE_ICE
+        amount: 1
+      ticks: 8
+      outputs:
+      - item: sf:reactor_coolant_cell
+        amount: 1
+    - id: sf:freezer:snow_block
+      inputs:
+      - material: SNOW_BLOCK
+        amount: 2
+      ticks: 6
+      outputs:
+      - material: ICE
+        amount: 1
+    - id: sf:freezer:magma_cream
+      inputs:
+      - material: MAGMA_CREAM
+        amount: 1
+      ticks: 6
+      outputs:
+      - material: SLIME_BALL
+        amount: 1
+    - id: sf:freezer:magma_block
+      inputs:
+      - material: MAGMA_BLOCK
+        amount: 2
+      ticks: 6
+      outputs:
+      - material: SLIME_BLOCK
+        amount: 1
+  heated_pressure_chamber:
+    recipes:
+    - id: sf:heated_pressure_chamber:plastic_sheet
+      inputs:
+      - item: sf:bucket_of_oil
+        amount: 1
+      ticks: 45
+      outputs:
+      - material: BUCKET
+        amount: 1
+      - item: sf:plastic_sheet
+        amount: 8
+    - id: sf:heated_pressure_chamber:blistering_ingot
+      inputs:
+      - item: sf:gold_24k
+        amount: 1
+      - item: sf:uranium
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:blistering_ingot
+        amount: 1
+    - id: sf:heated_pressure_chamber:blistering_ingot_2
+      inputs:
+      - item: sf:blistering_ingot
+        amount: 1
+      - item: sf:carbonado
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:blistering_ingot_2
+        amount: 1
+    - id: sf:heated_pressure_chamber:blistering_ingot_3
+      inputs:
+      - item: sf:blistering_ingot_2
+        amount: 1
+      - material: NETHER_STAR
+        amount: 1
+      ticks: 60
+      outputs:
+      - item: sf:blistering_ingot_3
+        amount: 1
+    - id: sf:heated_pressure_chamber:boosted_uranium
+      inputs:
+      - item: sf:plutonium
+        amount: 1
+      - item: sf:uranium
+        amount: 1
+      ticks: 90
+      outputs:
+      - item: sf:boosted_uranium
+        amount: 1
+    - id: sf:heated_pressure_chamber:enriched_nether_ice
+      inputs:
+      - item: sf:nether_ice
+        amount: 1
+      - item: sf:plutonium
+        amount: 1
+      ticks: 60
+      outputs:
+      - item: sf:enriched_nether_ice
+        amount: 4
+    - id: sf:heated_pressure_chamber:nether_ice_coolant_cell
+      inputs:
+      - item: sf:enriched_nether_ice
+        amount: 1
+      ticks: 45
+      outputs:
+      - item: sf:nether_ice_coolant_cell
+        amount: 8
+    - id: sf:heated_pressure_chamber:magnesium_salt
+      inputs:
+      - item: sf:magnesium_dust
+        amount: 1
+      - item: sf:salt
+        amount: 1
+      ticks: 8
+      outputs:
+      - item: sf:magnesium_salt
+        amount: 1
+  food_fabricator:
+    recipes:
+    - id: sf:food_fabricator:minecraft:wheat
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: WHEAT
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_wheat
+        amount: 2
+    - id: sf:food_fabricator:minecraft:carrot
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: CARROT
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_carrot
+        amount: 2
+    - id: sf:food_fabricator:minecraft:potato
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: POTATO
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_potato
+        amount: 2
+    - id: sf:food_fabricator:minecraft:wheat_seeds
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: WHEAT_SEEDS
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_seeds
+        amount: 2
+    - id: sf:food_fabricator:minecraft:beetroot
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: BEETROOT
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_beetroot
+        amount: 2
+    - id: sf:food_fabricator:minecraft:melon_slice
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: MELON_SLICE
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_melon
+        amount: 2
+    - id: sf:food_fabricator:minecraft:apple
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: APPLE
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_apple
+        amount: 2
+    - id: sf:food_fabricator:minecraft:dried_kelp
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: DRIED_KELP
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_kelp
+        amount: 2
+    - id: sf:food_fabricator:minecraft:cocoa_beans
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: COCOA_BEANS
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_cocoa
+        amount: 2
+    - id: sf:food_fabricator:minecraft:sweet_berries
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: SWEET_BERRIES
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_sweet_berries
+        amount: 2
+    - id: sf:food_fabricator:minecraft:seagrass
+      inputs:
+      - item: sf:can
+        amount: 1
+      - material: SEAGRASS
+        amount: 1
+      ticks: 12
+      outputs:
+      - item: sf:organic_food_seagrass
+        amount: 2
+  food_composter:
+    recipes:
+    - id: sf:food_composter:wheat
+      inputs:
+      - item: sf:organic_food_wheat
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_wheat
+        amount: 2
+    - id: sf:food_composter:carrot
+      inputs:
+      - item: sf:organic_food_carrot
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_carrot
+        amount: 2
+    - id: sf:food_composter:potato
+      inputs:
+      - item: sf:organic_food_potato
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_potato
+        amount: 2
+    - id: sf:food_composter:seeds
+      inputs:
+      - item: sf:organic_food_seeds
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_seeds
+        amount: 2
+    - id: sf:food_composter:beetroot
+      inputs:
+      - item: sf:organic_food_beetroot
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_beetroot
+        amount: 2
+    - id: sf:food_composter:melon
+      inputs:
+      - item: sf:organic_food_melon
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_melon
+        amount: 2
+    - id: sf:food_composter:apple
+      inputs:
+      - item: sf:organic_food_apple
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_apple
+        amount: 2
+    - id: sf:food_composter:kelp
+      inputs:
+      - item: sf:organic_food_kelp
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_kelp
+        amount: 2
+    - id: sf:food_composter:cocoa
+      inputs:
+      - item: sf:organic_food_cocoa
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_cocoa
+        amount: 2
+    - id: sf:food_composter:sweet_berries
+      inputs:
+      - item: sf:organic_food_sweet_berries
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_sweet_berries
+        amount: 2
+    - id: sf:food_composter:seagrass
+      inputs:
+      - item: sf:organic_food_seagrass
+        amount: 1
+      ticks: 30
+      outputs:
+      - item: sf:fertilizer_seagrass
+        amount: 2
+  refinery:
+    recipes:
+    - id: sf:refinery:fuel
+      inputs:
+      - item: sf:bucket_of_oil
+        amount: 1
+      ticks: 40
+      outputs:
+      - item: sf:bucket_of_fuel
+        amount: 1
+  electric_gold_pan:
+    recipes:
+    - id: sf:electric_gold_pan:gravel
+      inputs:
+      - material: GRAVEL
+        amount: 1
+      ticks: 3
+      random-outputs:
+      - material: FLINT
+        amount: 1
+        weight: 40
+      - material: CLAY_BALL
+        amount: 1
+        weight: 20
+      - item: sf:sifted_ore
+        amount: 1
+        weight: 35
+      - material: IRON_NUGGET
+        amount: 1
+        weight: 5
+    - id: sf:electric_gold_pan:soul_sand
+      inputs:
+      - material: SOUL_SAND
+        amount: 1
+      ticks: 4
+      random-outputs:
+      - material: QUARTZ
+        amount: 1
+        weight: 50
+      - material: GOLD_NUGGET
+        amount: 1
+        weight: 25
+      - material: NETHER_WART
+        amount: 1
+        weight: 10
+      - material: BLAZE_POWDER
+        amount: 1
+        weight: 8
+      - material: GLOWSTONE_DUST
+        amount: 1
+        weight: 5
+      - material: GHAST_TEAR
+        amount: 1
+        weight: 2
+    - id: sf:electric_gold_pan:soul_soil
+      inputs:
+      - material: SOUL_SOIL
+        amount: 1
+      ticks: 4
+      random-outputs:
+      - material: QUARTZ
+        amount: 1
+        weight: 50
+      - material: GOLD_NUGGET
+        amount: 1
+        weight: 25
+      - material: NETHER_WART
+        amount: 1
+        weight: 10
+      - material: BLAZE_POWDER
+        amount: 1
+        weight: 8
+      - material: GLOWSTONE_DUST
+        amount: 1
+        weight: 5
+      - material: GHAST_TEAR
+        amount: 1
+        weight: 2
+  electric_dust_washer:
+    recipes:
+    - id: sf:electric_dust_washer:sifted_ore
+      inputs:
+      - item: sf:sifted_ore
+        amount: 1
+      ticks: 4
+      random-outputs:
+      - item: sf:iron_dust
+        amount: 1
+      - item: sf:gold_dust
+        amount: 1
+      - item: sf:copper_dust
+        amount: 1
+      - item: sf:tin_dust
+        amount: 1
+      - item: sf:zinc_dust
+        amount: 1
+      - item: sf:aluminum_dust
+        amount: 1
+      - item: sf:magnesium_dust
+        amount: 1
+      - item: sf:lead_dust
+        amount: 1
+      - item: sf:silver_dust
+        amount: 1
+    - id: sf:electric_dust_washer:pulverized_ore
+      inputs:
+      - item: sf:pulverized_ore
+        amount: 1
+      ticks: 4
+      outputs:
+      - item: sf:pure_ore_cluster
+        amount: 1
+    - id: sf:electric_dust_washer:sand
+      inputs:
+      - material: SAND
+        amount: 1
+      ticks: 4
+      outputs:
+      - item: sf:salt
+        amount: 1
+  electric_ingot_pulverizer:
+    recipes:
+    - id: sf:electric_ingot_pulverizer:iron
+      inputs:
+      - material: IRON_INGOT
+        amount: 1
+      ticks: 3
+      outputs:
+      - item: sf:iron_dust
+        amount: 1
+    - id: sf:electric_ingot_pulverizer:gold
+      inputs:
+      - material: GOLD_INGOT
+        amount: 1
+      ticks: 3
+      outputs:
+      - item: sf:gold_dust
+        amount: 1
+    - id: sf:electric_ingot_pulverizer:copper_vanilla
+      inputs:
+      - material: COPPER_INGOT
+        amount: 1
+      ticks: 3
+      outputs:
+      - item: sf:copper_dust
+        amount: 1
+    - id: sf:electric_ingot_pulverizer:tin
+      inputs:
+      - item: sf:tin_ingot
+        amount: 1
+      ticks: 3
+      outputs:
+      - item: sf:tin_dust
+        amount: 1
+    - id: sf:electric_ingot_pulverizer:copper
+      inputs:
+      - item: sf:copper_ingot
+        amount: 1
+      ticks: 3
+      outputs:
+      - item: sf:copper_dust
+        amount: 1
+    - id: sf:electric_ingot_pulverizer:silver
+      inputs:
+      - item: sf:silver_ingot
+        amount: 1
+      ticks: 3
+      outputs:
+      - item: sf:silver_dust
+        amount: 1
+    - id: sf:electric_ingot_pulverizer:aluminum
+      inputs:
+      - item: sf:aluminum_ingot
+        amount: 1
+      ticks: 3
+      outputs:
+      - item: sf:aluminum_dust
+        amount: 1
+    - id: sf:electric_ingot_pulverizer:lead
+      inputs:
+      - item: sf:lead_ingot
+        amount: 1
+      ticks: 3
+      outputs:
+      - item: sf:lead_dust
+        amount: 1
+    - id: sf:electric_ingot_pulverizer:zinc
+      inputs:
+      - item: sf:zinc_ingot
+        amount: 1
+      ticks: 3
+      outputs:
+      - item: sf:zinc_dust
+        amount: 1
+    - id: sf:electric_ingot_pulverizer:magnesium
+      inputs:
+      - item: sf:magnesium_ingot
+        amount: 1
+      ticks: 3
+      outputs:
+      - item: sf:magnesium_dust
+        amount: 1

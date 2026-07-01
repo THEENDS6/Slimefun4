@@ -6,6 +6,7 @@ import cc.theends6.sfx.internal.bootstrap.SfxYamlContentLoader;
 import cc.theends6.sfx.internal.core.SfxAuditReport;
 import cc.theends6.sfx.internal.core.SfxAuditSink;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
+import cc.theends6.sfx.internal.machine.SfxManualMachineYamlLoader;
 import cc.theends6.sfx.internal.recipe.DefaultSfxRecipeRegistry;
 import cc.theends6.sfx.internal.recipe.SfxRecipeYamlLoader;
 import cc.theends6.sfx.internal.research.SfxResearchRegistry;
@@ -28,6 +29,10 @@ final class SfxContentBootstrapper {
         SfxYamlContentLoader yamlContentLoader = new SfxYamlContentLoader(plugin, itemRegistry);
         yamlContentLoader.ensureDefaultFiles(plugin.syncBundledItemFiles());
         yamlContentLoader.registerAll();
+
+        SfxManualMachineYamlLoader manualMachineYamlLoader = new SfxManualMachineYamlLoader(plugin);
+        manualMachineYamlLoader.ensureDefaultFile(plugin.syncBundledRecipeFiles());
+        manualMachineYamlLoader.loadInto(api.internalManualMachines());
 
         SfxRecipeYamlLoader recipeYamlLoader = new SfxRecipeYamlLoader(plugin);
         recipeYamlLoader.ensureDefaultFiles(plugin.syncBundledRecipeFiles());
