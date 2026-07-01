@@ -12,7 +12,7 @@ softdepend: [ProtocolLib, ProtocolSupport, ViaVersion, ViaBackwards, ViaRewind, 
 commands:
   slimefunx:
     description: SlimeFunX main command
-    usage: /slimefunx <guide|cheatguide|book|give|research|backpack|inspect|list|reload [config|runtime]>
+    usage: /slimefunx <guide|cheatguide|book|give|research|backpack|inspect|list|reload [config|runtime|all]>
     aliases: [sfx, sf, x]
 
 permissions:

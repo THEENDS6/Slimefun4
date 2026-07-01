@@ -16,6 +16,7 @@ final class SfxPluginShutdown {
         } else {
             disableLegacyFallback(plugin);
         }
+        plugin.unregisterRuntimeHooks();
 
         if (plugin.playerDataService != null) {
             plugin.playerDataService.shutdown();
@@ -36,6 +37,7 @@ final class SfxPluginShutdown {
             plugin.packetEventsLoaded = false;
             plugin.packetEventsApi = null;
         }
+        plugin.clearRuntimeReferences();
     }
 
     private static void disableLegacyFallback(SlimeFunXPlugin plugin) {

@@ -179,6 +179,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
                 moduleManager = null;
             }
             HandlerList.unregisterAll(this);
+            cancelScheduledRuntimeTasks("runtime reload");
             if (machineRuntime != null) {
                 cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.clearDefaultRuntime(machineRuntime);
                 machineRuntime.clear();
@@ -229,6 +230,73 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     void syncBundledLanguages() {
         saveBundledLanguage("zh-CN");
         saveBundledLanguage("en-US");
+    }
+
+    void unregisterRuntimeHooks() {
+        HandlerList.unregisterAll(this);
+        cancelScheduledRuntimeTasks("plugin disable");
+    }
+
+    void clearRuntimeReferences() {
+        blockPersistenceListener = null;
+        backpackListener = null;
+        basicMachineBlockListener = null;
+        electricMachineService = null;
+        configurableMachineService = null;
+        energyService = null;
+        virtualContainerService = null;
+        cargoService = null;
+        decorationService = null;
+        gpsService = null;
+        androidService = null;
+        radiationService = null;
+        technicalGadgetService = null;
+        floatingTextDisplayService = null;
+        ancientAltarService = null;
+        spawnerService = null;
+        blockPlacerService = null;
+        infusedHopperService = null;
+        hologramProjectorService = null;
+        industrialMinerService = null;
+        listenerRegistrar = null;
+        moduleManager = null;
+        machineRuntime = null;
+        machinePhaseLedger = null;
+        researchService = null;
+        researchRegistry = null;
+        legacyItemBehaviorConfig = null;
+        localization = null;
+        api = null;
+        playerDataService = null;
+        blockDataService = null;
+    }
+
+    private void cancelScheduledRuntimeTasks(String reason) {
+        try {
+            getServer().getScheduler().cancelTasks(this);
+        } catch (Throwable throwable) {
+            getLogger().warning("Failed to cancel Bukkit scheduler tasks during " + reason + ": " + throwable.getMessage());
+        }
+        try {
+            getServer().getGlobalRegionScheduler().cancelTasks(this);
+        } catch (Throwable throwable) {
+            getLogger().warning("Failed to cancel global region tasks during " + reason + ": " + throwable.getMessage());
+        }
+        try {
+            Object regionScheduler = getServer().getRegionScheduler();
+            Method cancelTasks = regionScheduler.getClass().getMethod("cancelTasks", org.bukkit.plugin.Plugin.class);
+            cancelTasks.invoke(regionScheduler, this);
+        } catch (NoSuchMethodException ignored) {
+            
+            
+        } catch (Throwable throwable) {
+            getLogger().warning("Failed to cancel region scheduler tasks during " + reason + ": " + throwable.getMessage());
+        }
+        try {
+            getServer().getAsyncScheduler().cancelTasks(this);
+        } catch (Throwable throwable) {
+            getLogger().warning("Failed to cancel async scheduler tasks during " + reason + ": " + throwable.getMessage());
+        }
     }
 
     File playerDataFile() {
