@@ -21,7 +21,15 @@ final class SfxPluginPreflight {
         }
         if (plugin.packetEventsLoaded) {
             try {
-                plugin.invokePacketEventsApi("init");
+                if (plugin.packetEventsApiBoolean("isTerminated")) {
+                    throw new IllegalStateException("PacketEvents API is terminated");
+                }
+                if (!plugin.packetEventsApiBoolean("isLoaded")) {
+                    throw new IllegalStateException("PacketEvents API is not loaded");
+                }
+                if (!plugin.packetEventsApiBoolean("isInitialized")) {
+                    throw new IllegalStateException("PacketEvents API is not initialized");
+                }
             } catch (Throwable throwable) {
                 plugin.logPacketEventsStartupFailure(throwable);
                 plugin.getServer().getPluginManager().disablePlugin(plugin);
