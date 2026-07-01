@@ -176,14 +176,9 @@ tasks.register('stagePaperRuntimeUpdate', Copy) {
 }
 
 def readLittleEndianInt = { InputStream input ->
-    int b0 = input.read()
-    int b1 = input.read()
-    int b2 = input.read()
-    int b3 = input.read()
-    if ((b0 | b1 | b2 | b3) < 0) {
-        throw new EOFException('RCON connection closed while reading packet length')
-    }
-    (b0 & 0xff) | ((b1 & 0xff) << 8) | ((b2 & 0xff) << 16) | ((b3 & 0xff) << 24)
+    byte[] data = new byte[4]
+    new DataInputStream(input).readFully(data)
+    java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN).getInt()
 }
 
 def writeLittleEndianInt = { OutputStream output, int value ->
@@ -207,10 +202,8 @@ def sendRconPacket = { OutputStream output, int requestId, int type, String payl
 
 def readRconPacket = { InputStream input ->
     int length = readLittleEndianInt(input)
-    byte[] data = input.readNBytes(length)
-    if (data.length != length) {
-        throw new EOFException('RCON connection closed while reading packet body')
-    }
+    byte[] data = new byte[length]
+    new DataInputStream(input).readFully(data)
     def buffer = java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN)
     int requestId = buffer.getInt()
     int type = buffer.getInt()
@@ -221,31 +214,39 @@ def readRconPacket = { InputStream input ->
 }
 
 def sendPaperRconCommand = { String commandText ->
-    def socket = new Socket()
-    socket.connect(new InetSocketAddress(rootProject.ext.paperRuntimeRconHost, rootProject.ext.paperRuntimeRconPort as int), 1500)
-    socket.soTimeout = 20000
-    socket.withCloseable {
-        def input = it.getInputStream()
-        def output = it.getOutputStream()
-        sendRconPacket(output, 1001, 3, rootProject.ext.paperRuntimeRconPassword)
-        def auth = readRconPacket(input)
-        if (auth.id == -1) {
-            throw new GradleException('Paper RCON authentication failed. Check rcon.password in run-paper-1.21.8/server.properties.')
-        }
-        sendRconPacket(output, 1002, 2, commandText)
-        def response = readRconPacket(input)
-        if (response.payload != null && !response.payload.isBlank()) {
-            logger.lifecycle(response.payload.trim())
-        }
+    def output = new ByteArrayOutputStream()
+    def script = layout.projectDirectory.file('tools/paper-rcon.ps1').asFile
+    def result = exec {
+        executable = 'powershell.exe'
+        args = [
+                '-NoProfile',
+                '-ExecutionPolicy', 'Bypass',
+                '-File', script.absolutePath,
+                '-HostName', rootProject.ext.paperRuntimeRconHost,
+                '-Port', rootProject.ext.paperRuntimeRconPort.toString(),
+                '-Password', rootProject.ext.paperRuntimeRconPassword,
+                '-CommandText', commandText,
+                '-TimeoutMs', '5000'
+        ]
+        standardOutput = output
+        errorOutput = output
+        ignoreExitValue = true
     }
+    def responseText = output.toString(StandardCharsets.UTF_8.name()).trim()
+    if (responseText != null && !responseText.isBlank()) {
+        logger.lifecycle(responseText)
+    }
+    if (result.exitValue != 0) {
+        throw new IOException(responseText.isBlank() ? "RCON command failed: ${commandText}" : responseText)
+    }
+    responseText
 }
 
 def sendPaperRconCommandWithRetry = { String commandText, int attempts = 3, long delayMs = 1000L ->
     IOException lastIo = null
     for (int attempt = 1; attempt <= attempts; attempt++) {
         try {
-            sendPaperRconCommand(commandText)
-            return
+            return sendPaperRconCommand(commandText)
         } catch (IOException exception) {
             lastIo = exception
             if (attempt < attempts) {
@@ -254,6 +255,47 @@ def sendPaperRconCommandWithRetry = { String commandText, int attempts = 3, long
         }
     }
     throw lastIo
+}
+
+def readNewLogText = { logFile, offset ->
+    if (!logFile.exists() || logFile.length() <= offset) {
+        return ''
+    }
+    def stream = new RandomAccessFile(logFile, 'r')
+    stream.withCloseable {
+        it.seek(offset as long)
+        byte[] data = new byte[(int) Math.min(Integer.MAX_VALUE, it.length() - offset)]
+        it.readFully(data)
+        return new String(data, StandardCharsets.UTF_8)
+    }
+}
+
+def waitForLogMatch = { logFile, offset, needles, timeoutMs ->
+    long deadline = System.currentTimeMillis() + timeoutMs
+    while (System.currentTimeMillis() <= deadline) {
+        def text = readNewLogText(logFile, offset)
+        if (needles.any { text.contains(it) }) {
+            return true
+        }
+        Thread.sleep(250L)
+    }
+    false
+}
+
+def waitForSfxEnable = { logFile, offset, timeoutMs ->
+    long deadline = System.currentTimeMillis() + timeoutMs
+    while (System.currentTimeMillis() <= deadline) {
+        def text = readNewLogText(logFile, offset)
+        if (text.contains('[SlimeFunX] SlimeFunX failed to start:')
+                || text.contains('Cannot execute command') && text.contains('plugin is disabled')) {
+            return false
+        }
+        if (text.contains('[SlimeFunX] SFX enabled.')) {
+            return true
+        }
+        Thread.sleep(250L)
+    }
+    false
 }
 
 tasks.register('paperRcon') {
@@ -299,13 +341,25 @@ tasks.register('plugmanReloadPaperRuntime') {
     dependsOn 'ensurePaperRuntimeTestConfig', 'installPaperRuntimePlugManX', 'jar'
     doLast {
         try {
-            sendPaperRconCommandWithRetry('plugman unload SlimeFunX')
+            sendPaperRconCommandWithRetry('list')
+            def logFile = layout.projectDirectory.file('run-paper-1.21.8/logs/latest.log').asFile
+            long unloadLogOffset = logFile.exists() ? logFile.length() : 0L
+            def unloadResponse = sendPaperRconCommandWithRetry('plugman unload SlimeFunX')
+            if (!String.valueOf(unloadResponse).contains('SlimeFunX has been unloaded')
+                    && !String.valueOf(unloadResponse).contains('That is not a valid plugin')
+                    && !waitForLogMatch(logFile, unloadLogOffset, ['[SlimeFunX] Disabling SlimeFunX'], 10000L)) {
+                throw new GradleException('PlugManX unload command was sent, but SlimeFunX disable was not observed in latest.log.')
+            }
             def builtJar = tasks.named('jar').get().archiveFile.get().asFile
             def targetJar = layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.pluginJarName}").asFile
             java.nio.file.Files.copy(builtJar.toPath(), targetJar.toPath(), StandardCopyOption.REPLACE_EXISTING)
             logger.lifecycle("Copied ${builtJar.name} to ${targetJar}")
             Thread.sleep(1500L)
+            long loadLogOffset = logFile.exists() ? logFile.length() : 0L
             sendPaperRconCommandWithRetry('plugman load SlimeFunX', 5, 1500L)
+            if (!waitForSfxEnable(logFile, loadLogOffset, 20000L)) {
+                throw new GradleException('PlugManX load command was sent, but SlimeFunX enable was not observed in latest.log.')
+            }
             logger.lifecycle('Requested PlugManX unload/load for SlimeFunX on Paper 1.21.8.')
         } catch (IOException exception) {
             throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled. Start it with runPaper first.', exception)

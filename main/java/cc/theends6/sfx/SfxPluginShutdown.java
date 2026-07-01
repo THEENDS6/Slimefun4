@@ -29,11 +29,6 @@ final class SfxPluginShutdown {
             plugin.machineRuntime.clear();
         }
         if (plugin.packetEventsLoaded) {
-            try {
-                plugin.invokePacketEventsApi("terminate");
-            } catch (Throwable throwable) {
-                plugin.getLogger().warning("Failed to terminate PacketEvents cleanly: " + throwable.getMessage());
-            }
             plugin.packetEventsLoaded = false;
             plugin.packetEventsApi = null;
         }

@@ -115,11 +115,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     public void onLoad() {
         try {
             Class<?> packetEventsClass = Class.forName("com.github.retrooper.packetevents.PacketEvents", true, getClassLoader());
-            Class<?> builderClass = Class.forName("io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder", true, getClassLoader());
-            Object api = invokeSingleArgStaticReturning(builderClass, "build", this);
-            invokeSingleArgStatic(packetEventsClass, "setAPI", api);
             packetEventsApi = packetEventsClass.getMethod("getAPI").invoke(null);
-            invokePacketEventsApi("load");
+            if (packetEventsApi == null) {
+                throw new IllegalStateException("PacketEvents API is not initialized by the PacketEvents plugin");
+            }
             packetEventsLoaded = true;
         } catch (Throwable throwable) {
             packetEventsUnavailable = true;
@@ -326,6 +325,16 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         Method method = packetEventsApi.getClass().getMethod(methodName);
         forceAccessible(method);
         method.invoke(packetEventsApi);
+    }
+
+    boolean packetEventsApiBoolean(String methodName) throws Exception {
+        if (packetEventsApi == null) {
+            throw new IllegalStateException("PacketEvents API is not initialized");
+        }
+        Method method = packetEventsApi.getClass().getMethod(methodName);
+        forceAccessible(method);
+        Object result = method.invoke(packetEventsApi);
+        return result instanceof Boolean value && value;
     }
 
     Object invokeSingleArgStaticReturning(Class<?> target, String methodName, Object argument) throws Exception {
