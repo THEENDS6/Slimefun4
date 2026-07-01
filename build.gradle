@@ -1,3 +1,5 @@
+import java.nio.charset.StandardCharsets
+
 plugins {
     id 'java'
 }
@@ -11,6 +13,9 @@ ext {
     paperApiVersion = '1.21.8-R0.1-SNAPSHOT'
     pluginJarName = 'SlimeFunX.jar'
     paperRuntimeJarName = 'paper-1.21.8-60.jar'
+    paperRuntimeRconHost = '127.0.0.1'
+    paperRuntimeRconPort = 25575
+    paperRuntimeRconPassword = 'sfx-dev'
     paper261RuntimeDirName = 'run-paper-26.1'
     paper261RuntimeJarName = 'paper-26.1.jar'
     foliaRuntimeJarName = 'folia-1.21.8-6.jar'
@@ -107,6 +112,134 @@ tasks.register('deployToPaperRuntime', Copy) {
     from(tasks.named('jar').flatMap { it.archiveFile })
     into(layout.projectDirectory.dir('run-paper-1.21.8/plugins'))
     rename { rootProject.ext.pluginJarName }
+}
+
+def configurePaperTestServerProperties = {
+    def propertiesFile = layout.projectDirectory.file('run-paper-1.21.8/server.properties').asFile
+    propertiesFile.parentFile.mkdirs()
+    def properties = new Properties()
+    if (propertiesFile.exists()) {
+        propertiesFile.withInputStream { input -> properties.load(input) }
+    }
+    properties.setProperty('pause-when-empty-seconds', '-1')
+    properties.setProperty('player-idle-timeout', '0')
+    properties.setProperty('enable-rcon', 'true')
+    properties.setProperty('rcon.port', rootProject.ext.paperRuntimeRconPort.toString())
+    properties.setProperty('rcon.password', rootProject.ext.paperRuntimeRconPassword)
+    properties.setProperty('enable-command-block', 'true')
+    properties.setProperty('online-mode', 'false')
+    properties.setProperty('motd', 'SlimeFunX Paper 1.21.8')
+    propertiesFile.withOutputStream { output ->
+        properties.store(output, 'SlimeFunX Paper 1.21.8 test runtime')
+    }
+}
+
+tasks.register('ensurePaperRuntimeTestConfig') {
+    group = 'verification'
+    description = 'Keeps the Paper 1.21.8 test server alive when empty and enables local RCON for SFX reload commands.'
+    dependsOn 'prepareRuntimeDirs'
+    doLast {
+        configurePaperTestServerProperties()
+        logger.lifecycle("Paper 1.21.8 test config ready: pause-when-empty-seconds=-1, player-idle-timeout=0, RCON ${rootProject.ext.paperRuntimeRconHost}:${rootProject.ext.paperRuntimeRconPort}")
+    }
+}
+
+tasks.register('stagePaperRuntimeUpdate', Copy) {
+    group = 'deployment'
+    description = 'Builds SlimeFunX and stages the jar in run-paper-1.21.8/plugins/update for the next restart or external plugin loader.'
+    dependsOn 'ensurePaperRuntimeTestConfig', 'jar'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(layout.projectDirectory.dir('run-paper-1.21.8/plugins/update'))
+    rename { rootProject.ext.pluginJarName }
+}
+
+def readLittleEndianInt = { InputStream input ->
+    int b0 = input.read()
+    int b1 = input.read()
+    int b2 = input.read()
+    int b3 = input.read()
+    if ((b0 | b1 | b2 | b3) < 0) {
+        throw new EOFException('RCON connection closed while reading packet length')
+    }
+    (b0 & 0xff) | ((b1 & 0xff) << 8) | ((b2 & 0xff) << 16) | ((b3 & 0xff) << 24)
+}
+
+def writeLittleEndianInt = { OutputStream output, int value ->
+    output.write(value & 0xff)
+    output.write((value >>> 8) & 0xff)
+    output.write((value >>> 16) & 0xff)
+    output.write((value >>> 24) & 0xff)
+}
+
+def sendRconPacket = { OutputStream output, int requestId, int type, String payload ->
+    def body = new ByteArrayOutputStream()
+    writeLittleEndianInt(body, requestId)
+    writeLittleEndianInt(body, type)
+    body.write(payload.getBytes(StandardCharsets.UTF_8))
+    body.write(0)
+    body.write(0)
+    writeLittleEndianInt(output, body.size())
+    body.writeTo(output)
+    output.flush()
+}
+
+def readRconPacket = { InputStream input ->
+    int length = readLittleEndianInt(input)
+    byte[] data = input.readNBytes(length)
+    if (data.length != length) {
+        throw new EOFException('RCON connection closed while reading packet body')
+    }
+    def buffer = java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+    int requestId = buffer.getInt()
+    int type = buffer.getInt()
+    int payloadLength = Math.max(0, length - 10)
+    byte[] payload = new byte[payloadLength]
+    buffer.get(payload)
+    [id: requestId, type: type, payload: new String(payload, StandardCharsets.UTF_8)]
+}
+
+def sendPaperRconCommand = { String commandText ->
+    def socket = new Socket()
+    socket.connect(new InetSocketAddress(rootProject.ext.paperRuntimeRconHost, rootProject.ext.paperRuntimeRconPort as int), 1500)
+    socket.soTimeout = 3000
+    socket.withCloseable {
+        def input = it.getInputStream()
+        def output = it.getOutputStream()
+        sendRconPacket(output, 1001, 3, rootProject.ext.paperRuntimeRconPassword)
+        def auth = readRconPacket(input)
+        if (auth.id == -1) {
+            throw new GradleException('Paper RCON authentication failed. Check rcon.password in run-paper-1.21.8/server.properties.')
+        }
+        sendRconPacket(output, 1002, 2, commandText)
+        def response = readRconPacket(input)
+        if (response.payload != null && !response.payload.isBlank()) {
+            logger.lifecycle(response.payload.trim())
+        }
+    }
+}
+
+tasks.register('reloadPaperRuntime') {
+    group = 'application'
+    description = 'Sends /sfx reload runtime to the running Paper 1.21.8 test server over local RCON.'
+    dependsOn 'ensurePaperRuntimeTestConfig'
+    doLast {
+        try {
+            sendPaperRconCommand('sfx reload runtime')
+            logger.lifecycle('Requested SFX runtime reload on Paper 1.21.8.')
+        } catch (ConnectException exception) {
+            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled yet. Start it with runPaper after ensurePaperRuntimeTestConfig.', exception)
+        }
+    }
+}
+
+tasks.register('stageAndReloadPaperRuntime') {
+    group = 'application'
+    description = 'Stages the jar for the next restart and reloads the current SFX runtime/config over RCON. Bytecode changes still require restart or an external plugin loader.'
+    dependsOn 'stagePaperRuntimeUpdate', 'reloadPaperRuntime'
+}
+
+tasks.named('reloadPaperRuntime') {
+    mustRunAfter 'stagePaperRuntimeUpdate'
 }
 
 tasks.register('preparePaper261Runtime') {
@@ -321,7 +454,7 @@ def preferredJava25Executable = {
 tasks.register('runPaper', Exec) {
     group = 'application'
     description = 'Builds the plugin, deploys it to the Paper runtime, and starts Paper 1.21.8.'
-    dependsOn 'deployToPaperRuntime'
+    dependsOn 'ensurePaperRuntimeTestConfig', 'deployToPaperRuntime'
     workingDir layout.projectDirectory.dir('run-paper-1.21.8').asFile
     executable preferredJavaExecutable()
     standardInput = System.in

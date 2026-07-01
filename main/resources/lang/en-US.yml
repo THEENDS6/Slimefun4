@@ -3216,7 +3216,8 @@ command:
       1: '<gray>Total: {count}</gray>'
   reload:
     success: <green>SFX configuration and language files were reloaded.</green>
-    success-all: '<green>SFX fully reloaded: registries, recipes, and menus were refreshed.</green>'
+    success-all: '<green>SFX runtime reloaded: listeners, services, registries, recipes, researches, and menus were rebuilt.</green>'
+    failed-all: '<red>SFX runtime reload failed. The plugin was disabled to avoid running with a partial service graph.</red>'
   help:
     header: <green>SFX Commands</green>
     line:
@@ -3226,8 +3227,8 @@ command:
       give: <gray>/{label} give <id> [amount]</gray> <dark_gray>- receive an SFX item directly</dark_gray>
       inspect: <gray>/{label} inspect</gray> <dark_gray>- inspect the held SFX marker</dark_gray>
       list: <gray>/{label} list [page]</gray> <dark_gray>- open the registered item list</dark_gray>
-      reload: <gray>/{label} reload</gray> <dark_gray>- reload config and localization</dark_gray>
-      reload-all: <gray>/{label} reload all</gray> <dark_gray>- rebuild registries and reload recipes</dark_gray>
+      reload: <gray>/{label} reload [config|runtime]</gray> <dark_gray>- reload config or rebuild the SFX runtime</dark_gray>
+      reload-all: <gray>/{label} reload all</gray> <dark_gray>- rebuild listeners, services, registries, recipes, and menus</dark_gray>
 categories:
   sf.items:
     name: '&fItems'
