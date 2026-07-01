@@ -36,13 +36,13 @@ diagnostics:
   validation:
     
     
-    enabled: true
+    enabled: false
     teleport: false
     backpack: false
     christmas-present: false
     talisman: false
     infused-hopper: false
-    charging-bench: true
+    charging-bench: false
     
     machine-yaml: false
 
