@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.block;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.machine.*;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.List;
@@ -244,11 +245,17 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
 
     private boolean teleportItemToHopper(Item item, Location pull) {
         Location target = pull.clone();
-        boolean teleported = item.teleport(target, PlayerTeleportEvent.TeleportCause.PLUGIN);
-        if (!teleported || !item.isValid()) {
-            return false;
-        }
-        item.setVelocity(new Vector(0.0D, 0.1D, 0.0D));
+        item.teleportAsync(target, PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept(teleported -> {
+            if (!teleported) {
+                return;
+            }
+            runtime.executeAt(target, () -> {
+                if (item.isValid()) {
+                    item.setVelocity(new Vector(0.0D, 0.1D, 0.0D));
+                    SfxValidationDiagnostics.log(plugin, "infused-hopper", "teleported item=" + item.getUniqueId() + " target=" + shortLocation(target));
+                }
+            });
+        });
         return true;
     }
 
@@ -271,6 +278,13 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
             configured = plugin.getConfig().getLong("legacy.infused-hopper.interval-ticks", 10L);
         }
         return Math.max(1L, configured);
+    }
+
+    private String shortLocation(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return "unknown";
+        }
+        return location.getWorld().getName() + ":" + location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ();
     }
 
     private void dropStoredContents(Block block) {

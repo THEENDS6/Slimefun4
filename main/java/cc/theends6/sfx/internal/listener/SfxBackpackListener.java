@@ -3,6 +3,7 @@ package cc.theends6.sfx.internal.listener;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.playerdata.SfxBackpackRecord;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
@@ -177,25 +178,30 @@ public final class SfxBackpackListener implements Listener {
         if (session == null || event.getView().getTopInventory() != session.inventory()) {
             return;
         }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
-            return;
-        }
-
         ItemStack current = event.getCurrentItem();
         ItemStack cursor = event.getCursor();
         ItemStack hotbarSwap = event.getHotbarButton() >= 0 ? player.getInventory().getItem(event.getHotbarButton()) : null;
+        ItemStack offhandSwap = event.getClick() == ClickType.SWAP_OFFHAND ? player.getInventory().getItemInOffHand() : null;
         boolean topSlot = event.getRawSlot() < session.inventory().getSize();
 
-        if (topSlot && (isBackpackItem(current) || isBackpackItem(cursor) || isBackpackItem(hotbarSwap))) {
+        if (topSlot && (isBackpackItem(current) || isBackpackItem(cursor) || isBackpackItem(hotbarSwap) || isBackpackItem(offhandSwap))) {
             event.setCancelled(true);
+            SfxValidationDiagnostics.log(plugin, "backpack", "blocked nested backpack topSlot=" + event.getRawSlot() + " click=" + event.getClick());
             return;
         }
         if (!topSlot && event.isShiftClick() && isBackpackItem(current)) {
             event.setCancelled(true);
+            SfxValidationDiagnostics.log(plugin, "backpack", "blocked shift nested backpack player=" + player.getName());
+            return;
+        }
+        if ("sf:cooler".equals(session.itemId()) && !topSlot && event.isShiftClick() && !isCoolerDrink(current)) {
+            event.setCancelled(true);
+            SfxValidationDiagnostics.log(plugin, "backpack", "blocked cooler shift item=" + (current == null ? "empty" : current.getType()));
             return;
         }
         if ("sf:cooler".equals(session.itemId()) && !isAllowedInCooler(current, cursor, topSlot, event.getClick())) {
             event.setCancelled(true);
+            SfxValidationDiagnostics.log(plugin, "backpack", "blocked cooler click=" + event.getClick() + " topSlot=" + topSlot);
         }
     }
 

@@ -4,6 +4,7 @@ import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.config.SfxTalismanBehaviorConfig;
+import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.util.SfxEnchantmentRules;
 import java.util.ArrayList;
@@ -207,10 +208,32 @@ public final class SfxTalismanListener implements Listener {
             Enchantment fortune = enchantment("fortune");
             if (fortune != null && fortune.canEnchantItem(item)
                     && (silkTouch == null || (!item.containsEnchantment(silkTouch) && !additions.containsKey(silkTouch)))) {
+                degradeWizardEnchantments(event.getEnchanter(), additions, fortune);
                 int min = config.wizardFortuneMin();
                 int max = config.wizardFortuneMax();
-                additions.put(fortune, ThreadLocalRandom.current().nextInt(min, max + 1));
+                int level = ThreadLocalRandom.current().nextInt(min, max + 1);
+                additions.put(fortune, level);
+                SfxValidationDiagnostics.log(plugin, "talisman", "wizard fortune=" + level + " player=" + event.getEnchanter().getName());
             }
+        }
+    }
+
+    private void degradeWizardEnchantments(Player player, Map<Enchantment, Integer> enchantments, Enchantment fortune) {
+        if (!config.wizardDegradeExistingEnchantments() || enchantments.isEmpty()) {
+            return;
+        }
+        int chance = config.wizardDegradeChance();
+        if (chance <= 0) {
+            return;
+        }
+        for (Map.Entry<Enchantment, Integer> entry : new ArrayList<>(enchantments.entrySet())) {
+            Enchantment enchantment = entry.getKey();
+            int level = entry.getValue() == null ? 0 : entry.getValue();
+            if (enchantment == null || enchantment.equals(fortune) || level <= 1 || ThreadLocalRandom.current().nextInt(100) >= chance) {
+                continue;
+            }
+            enchantments.put(enchantment, level - 1);
+            SfxValidationDiagnostics.log(plugin, "talisman", "wizard degraded=" + enchantment.getKey() + " " + level + "->" + (level - 1) + " player=" + player.getName());
         }
     }
 

@@ -38,6 +38,14 @@ public final class SfxTalismanBehaviorConfig {
         return Math.max(wizardFortuneMin(), yaml.getInt("talismans.wizard.fortune-max", 5));
     }
 
+    public boolean wizardDegradeExistingEnchantments() {
+        return yaml.getBoolean("talismans.wizard.degrade-existing-enchantments", true);
+    }
+
+    public int wizardDegradeChance() {
+        return clampPercent(yaml.getInt("talismans.wizard.degrade-chance", 40));
+    }
+
     public boolean hunterCopyEquipmentDrops() {
         return yaml.getBoolean("talismans.hunter.copy-equipment-drops", false);
     }

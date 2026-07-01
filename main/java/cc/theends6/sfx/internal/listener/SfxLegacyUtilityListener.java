@@ -5,6 +5,7 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
+import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.radiation.SfxRadiationService;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
@@ -23,7 +24,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Color;
 import org.bukkit.Effect;
+import org.bukkit.FireworkEffect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -38,6 +41,7 @@ import org.bukkit.entity.Arrow;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.PigZombie;
@@ -63,6 +67,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -142,6 +147,7 @@ public final class SfxLegacyUtilityListener implements Listener {
             case "sf:filled_flask_of_knowledge" -> useFilledKnowledgeFlask(event);
             case "sf:tome_of_knowledge_sharing" -> useKnowledgeTome(event);
             case "sf:scroll_of_dimensional_teleposition" -> useTelepositionScroll(event);
+            case "sf:christmas_present" -> useChristmasPresent(event);
             case "sf:staff_elemental_wind" -> useWindStaff(event);
             case "sf:staff_elemental_water" -> useWaterStaff(event);
             case "sf:staff_elemental_storm" -> useStormStaff(event);
@@ -497,9 +503,87 @@ public final class SfxLegacyUtilityListener implements Listener {
             if (yaw > 360.0F) {
                 yaw -= 360.0F;
             }
-            living.teleport(new Location(location.getWorld(), location.getX(), location.getY(), location.getZ(), yaw, location.getPitch()));
+            Location target = new Location(location.getWorld(), location.getX(), location.getY(), location.getZ(), yaw, location.getPitch());
+            living.teleportAsync(target).thenAccept(success -> {
+                if (success) {
+                    SfxValidationDiagnostics.log(plugin, "teleport", "teleposition-scroll entity=" + living.getUniqueId() + " target=" + shortLocation(target));
+                }
+            });
         }
         player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.6f, 0.7f);
+    }
+
+    private void useChristmasPresent(PlayerInteractEvent event) {
+        if (!behaviorConfig.christmasPresentEnabled()) {
+            return;
+        }
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null || event.getBlockFace() == null) {
+            denyItemUse(event);
+            return;
+        }
+
+        denyItemUse(event);
+        Player player = event.getPlayer();
+        ItemStack present = itemInHand(event);
+        if (present == null) {
+            return;
+        }
+
+        List<SfxLegacyItemBehaviorConfig.GiftEntry> gifts = behaviorConfig.christmasPresentGifts();
+        if (gifts.isEmpty()) {
+            return;
+        }
+
+        consumeOne(present, player);
+        for (int i = 0; i < behaviorConfig.christmasPresentFireworkCount(); i++) {
+            launchPresentFirework(player);
+        }
+
+        SfxLegacyItemBehaviorConfig.GiftEntry gift = gifts.get(ThreadLocalRandom.current().nextInt(gifts.size()));
+        ItemStack stack = createGift(gift);
+        if (stack == null || stack.getType().isAir()) {
+            SfxValidationDiagnostics.log(plugin, "christmas-present", "skipped invalid gift id=" + gift.id());
+            return;
+        }
+        Location dropLocation = event.getClickedBlock().getRelative(event.getBlockFace()).getLocation().add(0.5D, 0.5D, 0.5D);
+        runtime.executeAt(dropLocation, () -> {
+            Item dropped = dropLocation.getWorld().dropItem(dropLocation, stack);
+            dropped.setPickupDelay(0);
+            SfxValidationDiagnostics.log(plugin, "christmas-present", "gift=" + gift.id() + "*" + gift.amount() + " at=" + shortLocation(dropLocation));
+        });
+    }
+
+    private ItemStack createGift(SfxLegacyItemBehaviorConfig.GiftEntry gift) {
+        String id = gift.id();
+        ItemStack stack;
+        if (id.contains(":")) {
+            stack = items.create(id);
+        } else {
+            Material material = Material.matchMaterial(id);
+            stack = material == null ? null : new ItemStack(material);
+        }
+        if (stack != null) {
+            stack.setAmount(gift.amount());
+        }
+        return stack;
+    }
+
+    private void launchPresentFirework(Player player) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        Location location = player.getLocation().clone().add(random.nextInt(3) - 1, 0.0D, random.nextInt(3) - 1);
+        Firework firework = player.getWorld().spawn(location, Firework.class, spawned -> {
+            FireworkMeta meta = spawned.getFireworkMeta();
+            meta.setPower(random.nextInt(2) + 1);
+            meta.addEffect(FireworkEffect.builder()
+                    .withColor(random.nextBoolean() ? Color.RED : Color.GREEN)
+                    .with(random.nextBoolean() ? FireworkEffect.Type.BALL : FireworkEffect.Type.BALL_LARGE)
+                    .trail(random.nextBoolean())
+                    .flicker(random.nextBoolean())
+                    .build());
+            spawned.setFireworkMeta(meta);
+        });
+        firework.setShotAtAngle(false);
+        player.playSound(firework.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.0f);
     }
 
     private void handleInfusedMagnet(Player player, long tick) {
@@ -515,7 +599,12 @@ public final class SfxLegacyUtilityListener implements Listener {
         boolean found = false;
         for (Entity entity : player.getNearbyEntities(6.0, 6.0, 6.0)) {
             if (entity instanceof Item item && item.getPickupDelay() <= 0 && player.getLocation().distanceSquared(item.getLocation()) > 0.3) {
-                item.teleport(player.getLocation());
+                Location target = player.getLocation();
+                item.teleportAsync(target).thenAccept(success -> {
+                    if (success) {
+                        SfxValidationDiagnostics.log(plugin, "teleport", "infused-magnet item=" + item.getUniqueId() + " target=" + shortLocation(target));
+                    }
+                });
                 found = true;
             }
         }
@@ -556,22 +645,27 @@ public final class SfxLegacyUtilityListener implements Listener {
             }
         }
 
-        Vector velocity;
         if (player.getLocation().distanceSquared(target.toLocation(player.getWorld())) < 9.0 && target.getY() <= player.getLocation().getY()) {
-            velocity = target.clone().subtract(player.getLocation().toVector());
+            Vector velocity = target.clone().subtract(player.getLocation().toVector());
+            applyGrappleVelocity(player, state, target, velocity);
         } else {
             var location = player.getLocation().clone();
             location.setY(location.getY() + 0.5);
-            player.teleport(location);
             double gravity = -0.08;
             double distance = target.distance(location.toVector());
             double time = Math.max(1.0, distance);
             double vX = (1.0 + 0.08 * time) * (target.getX() - location.getX()) / time;
             double vY = (1.0 + 0.04 * time) * (target.getY() - location.getY()) / time - 0.5D * gravity * time;
             double vZ = (1.0 + 0.08 * time) * (target.getZ() - location.getZ()) / time;
-            velocity = new Vector(vX, vY, vZ);
+            Vector velocity = new Vector(vX, vY, vZ);
+            player.teleportAsync(location).thenRun(() -> runtime.executeForPlayer(player, () -> {
+                SfxValidationDiagnostics.log(plugin, "teleport", "grappling-hook player=" + player.getName() + " target=" + shortLocation(location));
+                applyGrappleVelocity(player, state, target, velocity);
+            }));
         }
+    }
 
+    private void applyGrappleVelocity(Player player, GrappleState state, Vector target, Vector velocity) {
         player.setVelocity(velocity);
         grapplingNoFallUntil.put(player.getUniqueId(), player.getWorld().getGameTime() + behaviorConfig.grapplingHookNoFallTicks());
         if (state.consumed()) {
@@ -843,5 +937,11 @@ public final class SfxLegacyUtilityListener implements Listener {
         SfxEventGuards.denyBlockAndItemUse(event);
     }
 
+    private String shortLocation(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return "unknown";
+        }
+        return location.getWorld().getName() + ":" + location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ();
+    }
 
 }

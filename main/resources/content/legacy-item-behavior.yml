@@ -102,6 +102,8 @@ talismans:
     consume: false
     fortune-min: 3
     fortune-max: 5
+    degrade-existing-enchantments: true
+    degrade-chance: 40
   caveman:
     chance: 50
     consume: false
@@ -110,3 +112,21 @@ talismans:
   wise:
     chance: 20
     consume: false
+
+seasonal:
+  christmas-present:
+    enabled: true
+    firework-count: 3
+    gifts:
+      - sf:christmas_hot_chocolate*1
+      - sf:christmas_chocolate_apple*4
+      - sf:christmas_caramel_apple*4
+      - sf:christmas_cake*4
+      - sf:christmas_cookie*8
+      - sf:christmas_present*1
+      - sf:christmas_egg_nog*1
+      - sf:christmas_milk*1
+      - sf:christmas_apple_cider*1
+      - sf:christmas_fruit_cake*4
+      - sf:christmas_apple_pie*4
+      - EMERALD*1

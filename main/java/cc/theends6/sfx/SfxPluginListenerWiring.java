@@ -47,6 +47,7 @@ final class SfxPluginListenerWiring {
         plugin.listenerRegistrar.register(plugin.electricMachineService);
         plugin.listenerRegistrar.register(plugin.configurableMachineService);
         plugin.listenerRegistrar.register(plugin.energyService);
+        plugin.listenerRegistrar.register(plugin.energyService.machineListener());
         plugin.listenerRegistrar.register(plugin.virtualContainerService);
         plugin.listenerRegistrar.register(plugin.cargoService);
         plugin.listenerRegistrar.register(plugin.decorationService);

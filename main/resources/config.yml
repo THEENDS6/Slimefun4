@@ -32,6 +32,18 @@ plugin-blocks:
 messages:
   prefix: '<dark_gray>[<green>SFX</green><dark_gray>] '
 
+diagnostics:
+  validation:
+    # 统一验证日志开关。默认关闭，需要排查时再单独打开下面的项目。
+    # 所有日志都带 [SFX-VALIDATION] 前缀，后续可以统一搜索、移除或替换。
+    enabled: false
+    teleport: false
+    backpack: false
+    christmas-present: false
+    talisman: false
+    infused-hopper: false
+    charging-bench: false
+
 guide:
   allow-right-click-open: true
   allow-left-click-open: false
