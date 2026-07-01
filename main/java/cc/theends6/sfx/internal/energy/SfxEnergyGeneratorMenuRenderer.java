@@ -52,6 +52,20 @@ final class SfxEnergyGeneratorMenuRenderer {
         }
     }
 
+    void renderStatusOnly(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status) {
+        fillInventoryFrame(inventory);
+        inventory.setItem(DISPLAY_SLOT, progressIcon(definition, state, status));
+    }
+
+    void renderStorageSlots(Inventory inventory, SfxEnergyNodeState state) {
+        for (int i = 0; i < INPUT_SLOTS.length; i++) {
+            inventory.setItem(INPUT_SLOTS[i], state.input(i) == null ? null : state.input(i).toItemStack(items));
+        }
+        for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
+            inventory.setItem(OUTPUT_SLOTS[i], state.output(i) == null ? null : state.output(i).toItemStack(items));
+        }
+    }
+
     private void fillInventoryFrame(Inventory inventory) {
         ItemStack filler = namedItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "), List.of());
         ItemStack inputBorder = namedItem(

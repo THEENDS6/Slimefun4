@@ -2,6 +2,8 @@ package cc.theends6.sfx.internal.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -122,6 +124,84 @@ public final class SfxLegacyItemBehaviorConfig {
 
     public int grapplingHookNoFallTicks() {
         return Math.max(0, yaml.getInt("gadgets.grappling-hook.no-fall-ticks", 60));
+    }
+
+    public boolean christmasPresentEnabled() {
+        return yaml.getBoolean("seasonal.christmas-present.enabled", true);
+    }
+
+    public int christmasPresentFireworkCount() {
+        return Math.max(0, yaml.getInt("seasonal.christmas-present.firework-count", 3));
+    }
+
+    public List<GiftEntry> christmasPresentGifts() {
+        List<?> raw = yaml.getList("seasonal.christmas-present.gifts", List.of(
+                "sf:christmas_hot_chocolate*1",
+                "sf:christmas_chocolate_apple*4",
+                "sf:christmas_caramel_apple*4",
+                "sf:christmas_cake*4",
+                "sf:christmas_cookie*8",
+                "sf:christmas_present*1",
+                "sf:christmas_egg_nog*1",
+                "sf:christmas_milk*1",
+                "sf:christmas_apple_cider*1",
+                "sf:christmas_fruit_cake*4",
+                "sf:christmas_apple_pie*4",
+                "EMERALD*1"
+        ));
+        List<GiftEntry> result = new ArrayList<>();
+        for (Object entry : raw) {
+            GiftEntry parsed = parseGiftEntry(entry);
+            if (parsed != null) {
+                result.add(parsed);
+            }
+        }
+        return result;
+    }
+
+    private GiftEntry parseGiftEntry(Object entry) {
+        if (entry instanceof String text) {
+            String trimmed = text.trim();
+            if (trimmed.isEmpty()) {
+                return null;
+            }
+            String id = trimmed;
+            int amount = 1;
+            int star = trimmed.lastIndexOf('*');
+            if (star >= 0) {
+                id = trimmed.substring(0, star).trim();
+                try {
+                    amount = Integer.parseInt(trimmed.substring(star + 1).trim());
+                } catch (NumberFormatException ignored) {
+                    amount = 1;
+                }
+            }
+            return GiftEntry.of(id, amount);
+        }
+        if (entry instanceof ConfigurationSection section) {
+            String id = section.getString("id", section.getString("material", ""));
+            return GiftEntry.of(id, section.getInt("amount", 1));
+        }
+        if (entry instanceof java.util.Map<?, ?> map) {
+            Object id = map.get("id");
+            if (id == null) {
+                id = map.get("material");
+            }
+            Object amount = map.get("amount");
+            int parsedAmount = amount instanceof Number number ? number.intValue() : 1;
+            return GiftEntry.of(id == null ? "" : id.toString(), parsedAmount);
+        }
+        return null;
+    }
+
+    public record GiftEntry(String id, int amount) {
+        static GiftEntry of(String id, int amount) {
+            String normalized = id == null ? "" : id.trim();
+            if (normalized.isBlank()) {
+                return null;
+            }
+            return new GiftEntry(normalized, Math.max(1, amount));
+        }
     }
 
     private File file() {

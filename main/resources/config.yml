@@ -32,6 +32,18 @@ plugin-blocks:
 messages:
   prefix: '<dark_gray>[<green>SFX</green><dark_gray>] '
 
+diagnostics:
+  validation:
+    
+    
+    enabled: false
+    teleport: false
+    backpack: false
+    christmas-present: false
+    talisman: false
+    infused-hopper: false
+    charging-bench: false
+
 guide:
   allow-right-click-open: true
   allow-left-click-open: false

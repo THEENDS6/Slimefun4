@@ -10,6 +10,7 @@ import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
+import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.network.SfxNetworkDomain;
@@ -21,14 +22,11 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
-import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
-import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxEventGuards;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
-import cc.theends6.sfx.internal.util.SfxInventorySlots;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayList;
@@ -41,7 +39,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -51,26 +48,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxEnergyService implements Listener {
     private static final int RANGE = 6;
-    private static final int INVENTORY_SIZE = 45;
-    private static final int DISPLAY_SLOT = 22;
     private static final int[] INPUT_SLOTS = {19, 20};
     private static final int[] OUTPUT_SLOTS = {24, 25};
-    private static final int[] BORDER = {0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 31, 36, 37, 38, 39, 40, 41, 42, 43, 44};
-    private static final int[] BORDER_IN = {9, 10, 11, 12, 18, 21, 27, 28, 29, 30};
-    private static final int[] BORDER_OUT = {14, 15, 16, 17, 23, 26, 32, 33, 34, 35};
     private static final long FLUSH_INTERVAL = 20L;
 
     final JavaPlugin plugin;
@@ -82,7 +67,7 @@ public final class SfxEnergyService implements Listener {
     final SfxConfigurableMachineService configurableMachines;
     private final SfxEnergyDisplayController displayController;
     private final SfxCapacitorAppearanceProjector capacitorProjector;
-    private final SfxEnergyGeneratorMenuRenderer generatorMenuRenderer;
+    private final SfxEnergyMachineService energyMachines;
     private final SfxRechargeableItemService rechargeableItems;
     final SfxMachineRuntimeEngine machineRuntime;
     private final SfxTopologyService topology;
@@ -92,8 +77,6 @@ public final class SfxEnergyService implements Listener {
     final Set<UUID> dirtyNodes = ConcurrentHashMap.newKeySet();
     private final Set<UUID> activeNodes = ConcurrentHashMap.newKeySet();
     final Set<UUID> autoPausedGenerators = ConcurrentHashMap.newKeySet();
-    private final Map<UUID, SfxEnergyGeneratorSession> sessionsByViewer = new ConcurrentHashMap<>();
-    private final Map<UUID, SfxEnergyGeneratorSession> sessionsByInstance = new ConcurrentHashMap<>();
     private final Map<UUID, EnergyRuntimeGrid> runtimeGrids = new ConcurrentHashMap<>();
     private volatile long nodeGridStatusTopologyRevision = Long.MIN_VALUE;
     private volatile SfxFuelBurnTimeBridge fuelBurnTimeBridge;
@@ -123,8 +106,8 @@ public final class SfxEnergyService implements Listener {
         registerFrameworkEffects();
         this.displayController = new SfxEnergyDisplayController(plugin, localization, Objects.requireNonNull(floatingTextDisplay, "floatingTextDisplay"));
         this.capacitorProjector = new SfxCapacitorAppearanceProjector(runtime, blockData, definitions);
-        this.generatorMenuRenderer = new SfxEnergyGeneratorMenuRenderer(plugin, items, localization, rechargeableItems);
         this.definitions.putAll(SfxEnergyDefinitions.create(plugin));
+        this.energyMachines = new SfxEnergyMachineService(this, rechargeableItems);
         this.topology = new SfxTopologyService(
                 blockData,
                 new SfxEnergyTopologyPolicy(definitions, electricMachines, configurableMachines),
@@ -143,6 +126,9 @@ public final class SfxEnergyService implements Listener {
         scheduleFlush();
     }
 
+    public Listener machineListener() {
+        return energyMachines;
+    }
 
     private void registerFrameworkEffects() {
         for (String effectName : java.util.List.of(
@@ -253,7 +239,7 @@ public final class SfxEnergyService implements Listener {
         }
         SfxEventGuards.denyBlockAndItemUse(event);
         if (definition.isFueledGenerator() || definition.isCharger()) {
-            runtime.executeForPlayer(event.getPlayer(), () -> openGenerator(event.getPlayer(), instance, definition));
+            runtime.executeForPlayer(event.getPlayer(), () -> energyMachines.open(event.getPlayer(), instance, definition));
             return;
         }
         if (definition.componentType() == SfxEnergyComponentType.REGULATOR) {
@@ -263,133 +249,11 @@ public final class SfxEnergyService implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxEnergyGeneratorHolder holder)) {
-            return;
-        }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
-            return;
-        }
-        SfxEnergyComponentDefinition clickDefinition = definitionFor(holder.instanceId());
-        if (clickDefinition != null) {
-            SfxMachineLegacyHookBridge.menuClick(machineRuntime, clickDefinition.id(), holder.instanceId(), null, "energy", "SfxEnergyService.onInventoryClick");
-        }
-        if (clickDefinition == null) {
-            event.setCancelled(true);
-            return;
-        }
-        boolean topSlot = event.getRawSlot() < event.getView().getTopInventory().getSize();
-        if (event.isShiftClick() && !topSlot) {
-            if (moveShiftClickedStackToInputs(event.getView().getTopInventory(), event.getCurrentItem(), clickDefinition)) {
-                if (event.getCurrentItem() != null && event.getCurrentItem().getAmount() <= 0) {
-                    event.setCurrentItem(null);
-                }
-                event.setCancelled(true);
-                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
-            } else {
-                event.setCancelled(true);
-            }
-            return;
-        }
-        if (topSlot && contains(OUTPUT_SLOTS, event.getRawSlot())) {
-            if (!isTakingFromOutput(event)) {
-                event.setCancelled(true);
-                return;
-            }
-            runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
-            return;
-        }
-        if (topSlot && !contains(INPUT_SLOTS, event.getRawSlot())) {
-            event.setCancelled(true);
-            return;
-        }
-        if (topSlot && clickDefinition.isCharger()) {
-            ItemStack cursor = event.getCursor();
-            if (cursor != null && !cursor.getType().isAir() && !isValidChargingBenchInput(cursor)) {
-                event.setCancelled(true);
-                return;
-            }
-        }
-        runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onInventoryDrag(InventoryDragEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxEnergyGeneratorHolder holder)) {
-            return;
-        }
-        int topSize = event.getView().getTopInventory().getSize();
-        boolean touchesTop = event.getRawSlots().stream().anyMatch(slot -> slot < topSize);
-        if (!touchesTop) {
-            return;
-        }
-        SfxEnergyComponentDefinition dragDefinition = definitionFor(holder.instanceId());
-        if (dragDefinition == null) {
-            event.setCancelled(true);
-            return;
-        }
-        boolean onlyEditable = event.getRawSlots().stream()
-                .filter(slot -> slot < topSize)
-                .allMatch(slot -> contains(INPUT_SLOTS, slot));
-        if (!onlyEditable) {
-            event.setCancelled(true);
-            return;
-        }
-        if (dragDefinition.isCharger()) {
-            boolean valid = event.getNewItems().entrySet().stream()
-                    .filter(entry -> entry.getKey() < topSize)
-                    .allMatch(entry -> contains(INPUT_SLOTS, entry.getKey()) && isValidChargingBenchInput(entry.getValue()));
-            if (!valid) {
-                event.setCancelled(true);
-                return;
-            }
-        }
-        runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
-    }
-
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof SfxEnergyGeneratorHolder holder)) {
-            return;
-        }
-        SfxEnergyComponentDefinition closeDefinition = definitionFor(holder.instanceId());
-        if (closeDefinition != null) {
-            SfxMachineLegacyHookBridge.menuClose(machineRuntime, closeDefinition.id(), holder.instanceId(), null, "energy", "SfxEnergyService.onInventoryClose");
-        }
-        SfxEnergyGeneratorSession session = sessionsByInstance.remove(holder.instanceId());
-        if (session == null) {
-            return;
-        }
-        sessionsByViewer.remove(session.viewerId());
-        syncSessionState(session);
-        activeNodes.add(holder.instanceId());
-    }
-
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        SfxEnergyGeneratorSession session = sessionsByViewer.remove(event.getPlayer().getUniqueId());
-        if (session == null) {
-            return;
-        }
-        sessionsByInstance.remove(session.instanceId());
-        syncSessionState(session);
-        activeNodes.add(session.instanceId());
-    }
-
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {
         if (block == null || instanceId == null || typeId == null || !definitions.containsKey(typeId)) {
             return;
         }
-        SfxEnergyGeneratorSession session = sessionsByInstance.remove(instanceId);
-        if (session != null) {
-            sessionsByViewer.remove(session.viewerId());
-            syncSessionState(session);
-            Player viewer = plugin.getServer().getPlayer(session.viewerId());
-            if (viewer != null) {
-                runtime.executeForPlayer(viewer, viewer::closeInventory);
-            }
-        }
+        energyMachines.closeAndSync(instanceId);
 
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         SfxEnergyNodeState state = nodeStates.get(instanceId);
@@ -427,17 +291,9 @@ public final class SfxEnergyService implements Listener {
 
     public void shutdown() {
         running = false;
-        for (SfxEnergyGeneratorSession session : List.copyOf(sessionsByViewer.values())) {
-            syncSessionState(session);
-            Player player = plugin.getServer().getPlayer(session.viewerId());
-            if (player != null) {
-                runtime.executeForPlayer(player, player::closeInventory);
-            }
-        }
+        energyMachines.shutdown();
         flushDirty();
         displayController.shutdown();
-        sessionsByViewer.clear();
-        sessionsByInstance.clear();
         runtimeGrids.clear();
         nodeStates.clear();
         nodeGridStatuses.clear();
@@ -486,7 +342,6 @@ public final class SfxEnergyService implements Listener {
     }
 
     private void tickAllRegulators() {
-        syncOpenSfxEnergyGeneratorSessionsToState();
         topology.rebuildIfStale();
         long topologyRevision = topology.revision();
         boolean topologyChanged = topologyRevision != nodeGridStatusTopologyRevision;
@@ -1001,6 +856,7 @@ public final class SfxEnergyService implements Listener {
             }
             ItemStack item = input.toItemStack(items);
             if (!rechargeableItems.isRechargeable(item)) {
+                traceChargingBench(charger.definition(), "tick non-rechargeable input slot=" + slot + " stack=" + describe(item) + " sfx=" + items.isSfxItem(item));
                 if (items.isSfxItem(item)) {
                     moveChargingBenchInputToOutput(charger, slot, input);
                 }
@@ -1009,7 +865,9 @@ public final class SfxEnergyService implements Listener {
             double currentCharge = rechargeableItems.charge(item);
             double capacity = rechargeableItems.capacity(item);
             if (currentCharge >= capacity) {
+                traceChargingBench(charger.definition(), "tick full input slot=" + slot + " stack=" + describe(item));
                 moveChargingBenchInputToOutput(charger, slot, SfxElectricStack.fromItemStack(items, item));
+                renderStorageSlots(charger.instance().instanceId(), state);
                 return;
             }
             double efficiency = chargingBenchEfficiency();
@@ -1027,6 +885,8 @@ public final class SfxEnergyService implements Listener {
             state.storedEnergy(state.storedEnergy() - actualSpend);
             state.input(slot, SfxElectricStack.fromItemStack(items, item));
             dirtyNodes.add(charger.instance().instanceId());
+            renderStorageSlots(charger.instance().instanceId(), state);
+            traceChargingBench(charger.definition(), "tick charged slot=" + slot + " spend=" + actualSpend + " stack=" + describe(item) + " stored=" + state.storedEnergy());
             return;
         }
     }
@@ -1046,6 +906,7 @@ public final class SfxEnergyService implements Listener {
         charger.state().input(inputSlot, null);
         pushOutput(charger.state(), outputSlot, stack);
         dirtyNodes.add(charger.instance().instanceId());
+        renderStorageSlots(charger.instance().instanceId(), charger.state());
     }
 
     int generate(SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
@@ -1122,7 +983,7 @@ public final class SfxEnergyService implements Listener {
         return definition.energyPerTick();
     }
 
-    private SfxEnergyFuelMatch findFuelMatch(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+    SfxEnergyFuelMatch findFuelMatch(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
         for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
             SfxElectricStack input = state.input(slot);
             if (input == null) {
@@ -1230,121 +1091,12 @@ public final class SfxEnergyService implements Listener {
         displayController.displayStatus(regulatorKey, status, supply, consumption, net, totalStored, totalCapacity);
     }
 
-    private void openGenerator(Player player, SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition) {
-        SfxMachineLegacyHookBridge.menuOpen(machineRuntime, definition.id(), instance.instanceId(), toLocation(instance.anchorKey()), "energy", "SfxEnergyService.openGenerator");
-        SfxEnergyGeneratorSession existing = sessionsByInstance.get(instance.instanceId());
-        if (existing != null && !existing.viewerId().equals(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed(plugin, localization.text("machines.busy", "<red>This machine is already open.</red>")));
-            return;
-        }
-        SfxEnergyGeneratorSession previous = sessionsByViewer.remove(player.getUniqueId());
-        if (previous != null) {
-            sessionsByInstance.remove(previous.instanceId());
-            syncSessionState(previous);
-        }
-
-        SfxEnergyNodeState state = currentState(instance.instanceId(), instance);
-        Component title = localization.itemName(definition.id(), Component.text(definition.id()));
-        Inventory inventory = plugin.getServer().createInventory(new SfxEnergyGeneratorHolder(instance.instanceId()), INVENTORY_SIZE, title);
-        SfxEnergyGeneratorSession session = new SfxEnergyGeneratorSession(player.getUniqueId(), instance.instanceId(), inventory);
-        sessionsByViewer.put(player.getUniqueId(), session);
-        sessionsByInstance.put(instance.instanceId(), session);
-        activeNodes.add(instance.instanceId());
-        render(session, instance, definition, inventory, state);
-        player.openInventory(inventory);
-    }
-
-    private void refreshSession(UUID instanceId) {
-        SfxEnergyGeneratorSession session = sessionsByInstance.get(instanceId);
-        if (session == null) {
-            return;
-        }
-        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
-        if (instance == null) {
-            return;
-        }
-        SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
-        if (definition == null) {
-            return;
-        }
-        SfxEnergyNodeState state = currentState(instanceId, instance);
-        syncInventoryToState(session.inventory(), state);
-        dirtyNodes.add(instanceId);
-        activeNodes.add(instanceId);
-        render(session, instance, definition, session.inventory(), state);
-    }
-
     void refreshOpenSfxEnergyGeneratorSessions() {
-        for (SfxEnergyGeneratorSession session : List.copyOf(sessionsByInstance.values())) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(session.instanceId()).orElse(null);
-            if (instance == null) {
-                continue;
-            }
-            SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
-            if (definition == null) {
-                continue;
-            }
-            SfxEnergyNodeState state = currentState(instance.instanceId(), instance);
-            render(session, instance, definition, session.inventory(), state);
-        }
+        energyMachines.refreshOpenSessions();
     }
 
-    private void syncOpenSfxEnergyGeneratorSessionsToState() {
-        for (SfxEnergyGeneratorSession session : List.copyOf(sessionsByInstance.values())) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(session.instanceId()).orElse(null);
-            if (instance == null) {
-                continue;
-            }
-            SfxEnergyNodeState state = currentState(session.instanceId(), instance);
-            syncInventoryToState(session.inventory(), state);
-            dirtyNodes.add(session.instanceId());
-        }
-    }
-
-    private void syncSessionState(SfxEnergyGeneratorSession session) {
-        SfxBlockInstanceRecord instance = blockData.findInstance(session.instanceId()).orElse(null);
-        if (instance == null) {
-            return;
-        }
-        SfxEnergyNodeState state = currentState(session.instanceId(), instance);
-        syncInventoryToState(session.inventory(), state);
-        dirtyNodes.add(session.instanceId());
-    }
-
-    private SfxMachineStatusKey generatorRenderStatus(SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
-        SfxEnergyGridStatus gridStatus = nodeGridStatuses.get(instance.instanceId());
-        if (gridStatus == SfxEnergyGridStatus.SHARED_NODE_CONFLICT || gridStatus == SfxEnergyGridStatus.MULTIPLE_REGULATORS) {
-            return SfxMachineStatusKey.NETWORK_CONFLICT;
-        }
-        boolean connected = gridStatus == SfxEnergyGridStatus.ONLINE;
-        SfxEnergyFuelMatch fuelMatch = definition.isSolarGenerator() ? null : findFuelMatch(definition, state);
-        boolean hasFuelLoaded = definition.isSolarGenerator() || state.hasActiveFuel() || fuelMatch != null;
-        if (!connected && hasFuelLoaded) {
-            return SfxMachineStatusKey.NO_NETWORK;
-        }
-        if (state.hasPendingOutput() && findOutputSlot(state, state.pendingOutput()) == null) {
-            return SfxMachineStatusKey.OUTPUT_FULL;
-        }
-        if (!state.hasActiveFuel() && fuelMatch != null && fuelMatch.output() != null && findOutputSlot(state, fuelMatch.output()) == null) {
-            return SfxMachineStatusKey.OUTPUT_FULL;
-        }
-        if (!state.hasActiveFuel()) {
-            return SfxMachineStatusKey.IDLE;
-        }
-        return SfxMachineStatusKey.WORKING;
-    }
-
-    private void render(SfxEnergyGeneratorSession session, SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state) {
-        generatorMenuRenderer.render(definition, inventory, state, generatorRenderStatus(instance, definition, state));
-    }
-
-    private void syncInventoryToState(Inventory inventory, SfxEnergyNodeState state) {
-        for (int i = 0; i < INPUT_SLOTS.length; i++) {
-            state.input(i, SfxElectricStack.fromItemStack(items, inventory.getItem(INPUT_SLOTS[i])));
-        }
-        for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
-            state.output(i, SfxElectricStack.fromItemStack(items, inventory.getItem(OUTPUT_SLOTS[i])));
-        }
+    private void renderStorageSlots(UUID instanceId, SfxEnergyNodeState state) {
+        energyMachines.renderStorageSlots(instanceId, state);
     }
 
     SfxEnergyNodeState currentState(UUID instanceId, SfxBlockInstanceRecord instance) {
@@ -1362,7 +1114,7 @@ public final class SfxEnergyService implements Listener {
         return consumed;
     }
 
-    private Integer findOutputSlot(SfxEnergyNodeState state, SfxElectricStack output) {
+    Integer findOutputSlot(SfxEnergyNodeState state, SfxElectricStack output) {
         for (int slot = 0; slot < OUTPUT_SLOTS.length; slot++) {
             SfxElectricStack current = state.output(slot);
             if (current != null && output.canMerge(current, items)) {
@@ -1386,37 +1138,37 @@ public final class SfxEnergyService implements Listener {
         state.output(slot, current.copyWithAmount(current.amount() + output.amount()));
     }
 
-    private boolean moveShiftClickedStackToInputs(Inventory topInventory, ItemStack current, SfxEnergyComponentDefinition definition) {
-        return SfxInventorySlots.moveStackToSlots(topInventory, INPUT_SLOTS, current, (slot, stack) -> !definition.isCharger() || isValidChargingBenchInput(stack));
-    }
-
-    private boolean isValidChargingBenchInput(ItemStack item) {
-        if (item == null || item.getType().isAir()) {
-            return true;
-        }
-        return !rechargeableItems.isRechargeable(item) || item.getAmount() == 1;
-    }
-
-    private boolean isTakingFromOutput(InventoryClickEvent event) {
-        ItemStack current = event.getCurrentItem();
-        ItemStack cursor = event.getCursor();
-        boolean currentItem = current != null && !current.getType().isAir();
-        boolean cursorEmpty = cursor == null || cursor.getType().isAir();
-        return currentItem && (cursorEmpty || event.isShiftClick());
-    }
-
-    private SfxEnergyComponentDefinition definitionFor(UUID instanceId) {
+    SfxEnergyComponentDefinition definitionFor(UUID instanceId) {
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         return instance == null ? null : definitions.get(instance.typeId());
     }
 
-    private boolean contains(int[] slots, int value) {
-        for (int slot : slots) {
-            if (slot == value) {
-                return true;
-            }
+    void markActive(UUID instanceId) {
+        activeNodes.add(instanceId);
+    }
+
+    void markDirty(UUID instanceId) {
+        dirtyNodes.add(instanceId);
+    }
+
+    private void traceChargingBench(SfxEnergyComponentDefinition definition, String message) {
+        if (definition != null && definition.isCharger()) {
+            SfxValidationDiagnostics.log(plugin, "charging-bench", message);
         }
-        return false;
+    }
+
+    private String describe(ItemStack stack) {
+        if (stack == null || stack.getType().isAir()) {
+            return "empty";
+        }
+        return stack.getType().name() + "*" + stack.getAmount() + items.readMarker(stack).map(marker -> "[" + marker.itemId() + "]").orElse("");
+    }
+
+    private String describe(SfxElectricStack stack) {
+        if (stack == null) {
+            return "empty";
+        }
+        return stack.toItemStack(items).getType().name() + "*" + stack.amount() + (stack.isSfxItem() ? "[" + stack.itemId() + "]" : "");
     }
 
 
