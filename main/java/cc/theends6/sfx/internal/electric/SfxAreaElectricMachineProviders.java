@@ -4,6 +4,7 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -311,7 +312,7 @@ final class SfxAreaElectricMachineProviders {
     static SfxElectricRecipeProvider expCollector() {
         return new SpecialProvider() {
             @Override
-            public SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+            public SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, SfxMachineTickContext context) {
                 boolean useBalance = useSfxBalance(plugin, "xp-collector");
                 FlushResult initialFlush = flushKnowledgeFlasks(items, definition, state, useBalance);
                 boolean changed = initialFlush.changed();
@@ -335,15 +336,22 @@ final class SfxAreaElectricMachineProviders {
                     return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_POWER, consumedEnergy, supplementalEnergy, changed, true);
                 }
 
-                state.storedEnergy(state.storedEnergy() - definition.energyConsumptionPerTick());
-                int nextProgress = state.progressWork() + 1;
-                consumedEnergy += definition.energyConsumptionPerTick();
+                int elapsedTicks = Math.max(1, context == null ? 1 : context.elapsedTicksInt());
+                int energyPerTick = Math.max(1, definition.energyConsumptionPerTick());
+                int progressTicks = Math.min(elapsedTicks, state.storedEnergy() / energyPerTick);
+                if (progressTicks <= 0) {
+                    return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_POWER, consumedEnergy, supplementalEnergy, changed, true);
+                }
+                int baseEnergy = progressTicks * energyPerTick;
+                state.storedEnergy(state.storedEnergy() - baseEnergy);
+                int nextProgress = state.progressWork() + progressTicks;
+                consumedEnergy += baseEnergy;
                 changed = true;
                 if (useBalance) {
                     attractExperience(location);
                 }
-                if (nextProgress >= ACTION_WORK_TICKS) {
-                    state.progressWork(0);
+                while (nextProgress >= ACTION_WORK_TICKS) {
+                    nextProgress -= ACTION_WORK_TICKS;
                     int collected = useBalance ? absorbCloseExperience(location) : collectAllNearbyExperience(location);
                     if (collected > 0) {
                         state.specialData(state.specialData() + collected);
@@ -352,9 +360,8 @@ final class SfxAreaElectricMachineProviders {
                     consumedEnergy += flush.consumedEnergy();
                     supplementalEnergy += flush.consumedEnergy();
                     changed = changed || flush.changed() || collected > 0;
-                } else {
-                    state.progressWork(nextProgress);
                 }
+                state.progressWork(nextProgress);
 
                 if (state.specialData() >= XP_PER_FLASK && !canFitOutput(items, definition, state, flask)) {
                     return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.OUTPUT_FULL, consumedEnergy, supplementalEnergy, true, true);
