@@ -36,13 +36,13 @@ diagnostics:
   validation:
     
     
-    enabled: false
+    enabled: true
     teleport: false
     backpack: false
     christmas-present: false
     talisman: false
     infused-hopper: false
-    charging-bench: false
+    charging-bench: true
     
     machine-yaml: false
 
@@ -181,7 +181,9 @@ electric-machines:
     auto-breeder: true
     animal-growth-accelerator: true
     produce-collector: true
-    xp-collector: true
+    xp-collector:
+      enabled: true
+      flask-energy-cost: 4096
 
   
   sfx-extensions:

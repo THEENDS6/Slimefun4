@@ -193,12 +193,16 @@ public final class SfxLocalization {
     }
 
     private List<String> xpCollectorLore(List<String> values) {
-        boolean enabled = plugin.getConfig().getBoolean("electric-machines.sfx-balance.xp-collector", true);
+        String configPath = "electric-machines.sfx-balance.xp-collector";
+        boolean enabled = plugin.getConfig().isConfigurationSection(configPath)
+                ? plugin.getConfig().getBoolean(configPath + ".enabled", true)
+                : plugin.getConfig().getBoolean(configPath, true);
         if (!enabled || values.isEmpty()) {
             return values;
         }
         boolean zh = language().toLowerCase(Locale.ROOT).startsWith("zh");
-        String perFlask = zh ? "&8⇨ &e⚡ &71000 J/学识之瓶" : "&8⇨ &e⚡&71000 J/Knowledge Flask";
+        int energyCost = Math.max(0, plugin.getConfig().getInt(configPath + ".flask-energy-cost", 4096));
+        String perFlask = zh ? "&8⇨ &e⚡ &7" + energyCost + " J/学识之瓶" : "&8⇨ &e⚡&7" + energyCost + " J/Knowledge Flask";
         if (values.contains(perFlask)) {
             return values;
         }

@@ -876,17 +876,36 @@ public final class SfxEnergyService implements Listener {
             }
             double missing = capacity - currentCharge;
             int spendLimit = Math.max(1, charger.definition().energyPerTick());
-            int actualSpend = Math.min(spendLimit, state.storedEnergy());
+            int storedBefore = state.storedEnergy();
+            int actualSpend = Math.min(spendLimit, storedBefore);
             actualSpend = Math.min(actualSpend, (int) Math.max(1, Math.ceil(missing / efficiency)));
             if (actualSpend <= 0) {
+                traceChargingBench(charger.definition(), "tick no-spend slot=" + slot
+                        + " stored=" + storedBefore
+                        + " energyPerTick=" + charger.definition().energyPerTick()
+                        + " efficiency=" + efficiency
+                        + " charge=" + currentCharge + "/" + capacity
+                        + " missing=" + missing
+                        + " stack=" + describe(item));
                 return;
             }
             rechargeableItems.addCharge(item, actualSpend * efficiency);
+            double chargeAfter = rechargeableItems.charge(item);
             state.storedEnergy(state.storedEnergy() - actualSpend);
             state.input(slot, SfxElectricStack.fromItemStack(items, item));
             dirtyNodes.add(charger.instance().instanceId());
             renderStorageSlots(charger.instance().instanceId(), state);
-            traceChargingBench(charger.definition(), "tick charged slot=" + slot + " spend=" + actualSpend + " stack=" + describe(item) + " stored=" + state.storedEnergy());
+            traceChargingBench(charger.definition(), "tick charged slot=" + slot
+                    + " spend=" + actualSpend
+                    + " delivered=" + (actualSpend * efficiency)
+                    + " storedBefore=" + storedBefore
+                    + " storedAfter=" + state.storedEnergy()
+                    + " energyPerTick=" + charger.definition().energyPerTick()
+                    + " efficiency=" + efficiency
+                    + " chargeBefore=" + currentCharge
+                    + " chargeAfter=" + chargeAfter
+                    + " capacity=" + capacity
+                    + " stack=" + describe(item));
             return;
         }
     }
@@ -1151,7 +1170,7 @@ public final class SfxEnergyService implements Listener {
         dirtyNodes.add(instanceId);
     }
 
-    private void traceChargingBench(SfxEnergyComponentDefinition definition, String message) {
+    void traceChargingBench(SfxEnergyComponentDefinition definition, String message) {
         if (definition != null && definition.isCharger()) {
             SfxValidationDiagnostics.log(plugin, "charging-bench", message);
         }

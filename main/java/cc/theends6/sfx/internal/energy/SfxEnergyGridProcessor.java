@@ -183,9 +183,19 @@ final class SfxEnergyGridProcessor {
             }
             int accepted = Math.max(0, Math.min(available, charger.definition().capacity() - charger.state().storedEnergy()));
             if (accepted > 0) {
+                int availableBefore = available;
+                int storedBefore = charger.state().storedEnergy();
                 charger.state().storedEnergy(charger.state().storedEnergy() + accepted);
                 service.dirtyNodes.add(charger.instance().instanceId());
                 available -= accepted;
+                service.traceChargingBench(charger.definition(), "grid accepted"
+                        + " accepted=" + accepted
+                        + " availableBefore=" + availableBefore
+                        + " availableAfter=" + available
+                        + " storedBefore=" + storedBefore
+                        + " storedAfter=" + charger.state().storedEnergy()
+                        + " capacity=" + charger.definition().capacity()
+                        + " energyPerTick=" + charger.definition().energyPerTick());
             }
         }
 
