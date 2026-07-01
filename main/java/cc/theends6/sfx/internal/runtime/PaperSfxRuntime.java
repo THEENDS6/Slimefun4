@@ -30,6 +30,9 @@ public final class PaperSfxRuntime implements SfxRuntime {
     public void executeForPlayer(Player player, Runnable task) {
         Objects.requireNonNull(player, "player");
         Objects.requireNonNull(task, "task");
+        if (!plugin.isEnabled()) {
+            return;
+        }
         player.getScheduler().run(plugin, scheduledTask -> task.run(), null);
     }
 
@@ -37,6 +40,9 @@ public final class PaperSfxRuntime implements SfxRuntime {
     public void executeForPlayerLater(Player player, long delayTicks, Runnable task) {
         Objects.requireNonNull(player, "player");
         Objects.requireNonNull(task, "task");
+        if (!plugin.isEnabled()) {
+            return;
+        }
         player.getScheduler().runDelayed(plugin, scheduledTask -> task.run(), null, Math.max(1L, delayTicks));
     }
 
@@ -45,6 +51,9 @@ public final class PaperSfxRuntime implements SfxRuntime {
         Objects.requireNonNull(location, "location");
         Objects.requireNonNull(location.getWorld(), "location.world");
         Objects.requireNonNull(task, "task");
+        if (!plugin.isEnabled()) {
+            return;
+        }
         plugin.getServer().getRegionScheduler().run(plugin, location, scheduledTask -> task.run());
     }
 
@@ -53,24 +62,36 @@ public final class PaperSfxRuntime implements SfxRuntime {
         Objects.requireNonNull(location, "location");
         Objects.requireNonNull(location.getWorld(), "location.world");
         Objects.requireNonNull(task, "task");
+        if (!plugin.isEnabled()) {
+            return;
+        }
         plugin.getServer().getRegionScheduler().runDelayed(plugin, location, scheduledTask -> task.run(), Math.max(1L, delayTicks));
     }
 
     @Override
     public void executeGlobal(Runnable task) {
         Objects.requireNonNull(task, "task");
+        if (!plugin.isEnabled()) {
+            return;
+        }
         plugin.getServer().getGlobalRegionScheduler().run(plugin, scheduledTask -> task.run());
     }
 
     @Override
     public void executeGlobalLater(long delayTicks, Runnable task) {
         Objects.requireNonNull(task, "task");
+        if (!plugin.isEnabled()) {
+            return;
+        }
         plugin.getServer().getGlobalRegionScheduler().runDelayed(plugin, scheduledTask -> task.run(), Math.max(1L, delayTicks));
     }
 
     @Override
     public void executeAsync(Runnable task) {
         Objects.requireNonNull(task, "task");
+        if (!plugin.isEnabled()) {
+            return;
+        }
         plugin.getServer().getAsyncScheduler().runNow(plugin, scheduledTask -> task.run());
     }
 
@@ -79,6 +100,9 @@ public final class PaperSfxRuntime implements SfxRuntime {
         Objects.requireNonNull(location, "location");
         Objects.requireNonNull(location.getWorld(), "location.world");
         Objects.requireNonNull(supplier, "supplier");
+        if (!plugin.isEnabled()) {
+            throw new IllegalStateException("Plugin is disabled");
+        }
         if (isOwnedByCurrentRegion(location)) {
             return supplier.get();
         }
@@ -107,6 +131,9 @@ public final class PaperSfxRuntime implements SfxRuntime {
         Objects.requireNonNull(location, "location");
         Objects.requireNonNull(location.getWorld(), "location.world");
         Objects.requireNonNull(supplier, "supplier");
+        if (!plugin.isEnabled()) {
+            return CompletableFuture.failedFuture(new IllegalStateException("Plugin is disabled"));
+        }
         if (isOwnedByCurrentRegion(location)) {
             try {
                 return CompletableFuture.completedFuture(supplier.get());

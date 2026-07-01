@@ -262,6 +262,9 @@ public final class SfxRecipeYamlLoader {
 
     private void syncBundledFile(String resourcePath, boolean overwriteExisting) {
         File target = new File(plugin.getDataFolder(), resourcePath);
+        if (!overwriteExisting && target.exists()) {
+            return;
+        }
         File parent = target.getParentFile();
         if (parent != null && !parent.exists() && !parent.mkdirs()) {
             logger.warning("Failed to create parent directory for " + target.getPath());
