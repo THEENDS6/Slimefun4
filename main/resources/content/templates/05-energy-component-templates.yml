@@ -1,0 +1,23 @@
+# 能量组件基础模板。
+# 独立文件用于避免新增组件示例依赖旧运行时中已经存在的机器模板文件。
+
+templates:
+  energy:
+    passive-component:
+      @it: true
+      energy:
+        capacity: 0
+        generation-per-tick: 0
+        consumption-per-tick: 0
+        burn-rate: 10
+      vanilla-fuel: false
+      progress-material: REDSTONE
+      fuels: []
+    charger:
+      @copyfrom: templates.energy.passive-component
+      @it: true
+      type: CHARGER
+      progress-material: GOLDEN_PICKAXE
+      energy:
+        capacity: ${capacity}
+        consumption-per-tick: ${consumption}

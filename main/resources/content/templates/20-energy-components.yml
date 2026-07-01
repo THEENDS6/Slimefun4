@@ -1,0 +1,11 @@
+# 充电台作为能量组件模板化示例。
+# 这验证 compiled 产物按目标文件过滤，不会被电力机器定义 loader 误合并。
+
+components:
+  @outputtarget: content/machines/energy-components.yml
+  "sf:charging_bench":
+    @copyfrom: templates.energy.charger
+    @isoutput: true
+    @define:
+      capacity: 2560
+      consumption: 100

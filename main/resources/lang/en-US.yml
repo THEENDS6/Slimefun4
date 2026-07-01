@@ -3226,6 +3226,12 @@ command:
     success: <green>SFX configuration and language files were reloaded.</green>
     success-all: '<green>SFX runtime reloaded: listeners, services, registries, recipes, researches, and menus were rebuilt.</green>'
     failed-all: <red>SFX runtime reload failed. The plugin was disabled to avoid running with a partial service graph.</red>
+  template:
+    usage: '<red>Usage: /sfx template <compile|reload></red>'
+    compile-success: '<green>SFX templates compiled: {sources} source file(s), {outputs} output file(s). Use /sfx reload runtime to apply runtime changes.</green>'
+    reload-success: <green>SFX templates compiled and runtime content was rebuilt.</green>
+    compile-failed: '<red>SFX template compile failed: {message}</red>'
+    warning: '<yellow>[template] {warning}</yellow>'
   help:
     header: <green>SFX Commands</green>
     line:
@@ -3237,6 +3243,7 @@ command:
       list: <gray>/{label} list [page]</gray> <dark_gray>- open the registered item list</dark_gray>
       reload: <gray>/{label} reload [config|runtime]</gray> <dark_gray>- reload config or rebuild the SFX runtime</dark_gray>
       reload-all: <gray>/{label} reload all</gray> <dark_gray>- rebuild listeners, services, registries, recipes, and menus</dark_gray>
+      template: <gray>/{label} template <compile|reload></gray> <dark_gray>- compile templates or compile and rebuild runtime content</dark_gray>
       research: <gray>/{label} research <player> <all|reset|id></gray> <dark_gray>- manage researches</dark_gray>
       backpack: <gray>/{label} backpack <list|open|give> ...</gray> <dark_gray>- manage backpacks</dark_gray>
   research:

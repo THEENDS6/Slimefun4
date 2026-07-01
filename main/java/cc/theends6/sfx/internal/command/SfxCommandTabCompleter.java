@@ -35,7 +35,7 @@ final class SfxCommandTabCompleter {
             return filter(List.of("config", "runtime", "all"), args[1]);
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("template") || args[0].equalsIgnoreCase("templates"))) {
-            return filter(List.of("compile"), args[1]);
+            return filter(List.of("compile", "reload"), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("research")) {
             return filter(knownPlayerNames(), args[1]);
