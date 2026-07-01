@@ -164,7 +164,8 @@ public final class SfxElectricMachineService implements Listener {
                 "fluid:locate-source",
                 "fluid:remove-source-and-update",
                 "meta:validate-input",
-                "meta:apply-transform"
+                "meta:apply-transform",
+                "xp:collect-orbs"
         )) {
             machineRuntime.registerEffectHook(effectName, context -> frameworkElectricEffect(effectName, context));
         }
@@ -178,7 +179,7 @@ public final class SfxElectricMachineService implements Listener {
         }
         phaseContext.put("electric.framework.effect", effectName);
         switch (effectName) {
-            case "brew:validate-potions", "crafting:simulate", "gps:check-signal-and-scan", "fluid:locate-source", "meta:validate-input" -> {
+            case "brew:validate-potions", "crafting:simulate", "gps:check-signal-and-scan", "fluid:locate-source", "meta:validate-input", "xp:collect-orbs" -> {
                 if (definition.recipeProvider().hasWorldAction() || definition.recipeProvider().hasSpecialTick()) {
                     return frameworkRunSpecialOperation(phaseContext, effectName);
                 }

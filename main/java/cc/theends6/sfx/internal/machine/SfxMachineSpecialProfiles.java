@@ -21,7 +21,7 @@ public final class SfxMachineSpecialProfiles {
         VANILLA_FURNACE, HAND_INPUT_TRANSFORM, AUTO_BREWER, AUTO_CRAFTER, GEO_EXTRACTOR, FLUID_PUMP,
         ITEM_META_TRANSFORM, PROXY_PANEL_REACTOR_ACCESS_PORT, FUEL_GENERATOR, SOLAR_GENERATOR, REACTOR,
         ASSEMBLER, DECORATION, GPS_DEVICE, ANDROID_INTERFACE, ANDROID, ANCIENT_ALTAR, CARGO_NODE, ENERGY_NODE,
-        CHARGING_BENCH, REINFORCED_SPAWNER, INFUSED_HOPPER, HOLOGRAM_PROJECTOR, BLOCK_PLACER, INDUSTRIAL_MINER
+        CHARGING_BENCH, XP_COLLECTOR, REINFORCED_SPAWNER, INFUSED_HOPPER, HOLOGRAM_PROJECTOR, BLOCK_PLACER, INDUSTRIAL_MINER
     }
 
     private static final Map<String, Profile> LEGACY_PROFILES = legacyProfiles();
@@ -50,6 +50,7 @@ public final class SfxMachineSpecialProfiles {
         register(profiles, Profile.SOLAR_GENERATOR, "sf:solar_generator", "sf:solar_generator_2", "sf:solar_generator_3", "sf:solar_generator_4");
         register(profiles, Profile.FUEL_GENERATOR, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:magnesium_generator");
         register(profiles, Profile.CHARGING_BENCH, "sf:charging_bench");
+        register(profiles, Profile.XP_COLLECTOR, "sf:xp_collector");
         register(profiles, Profile.REINFORCED_SPAWNER, "sf:reinforced_spawner");
         register(profiles, Profile.INFUSED_HOPPER, "sf:infused_hopper");
         register(profiles, Profile.HOLOGRAM_PROJECTOR, "sf:hologram_projector");
@@ -130,6 +131,7 @@ public final class SfxMachineSpecialProfiles {
             case CARGO_NODE -> cargoNode(builder);
             case ENERGY_NODE -> energyNode(builder);
             case CHARGING_BENCH -> chargingBench(builder);
+            case XP_COLLECTOR -> xpCollector(builder);
             case REINFORCED_SPAWNER -> reinforcedSpawner(builder);
             case INFUSED_HOPPER -> infusedHopper(builder);
             case HOLOGRAM_PROJECTOR -> hologramProjector(builder);
@@ -381,6 +383,17 @@ public final class SfxMachineSpecialProfiles {
                 .capability(SfxMachineCapability.ITEM_META_TRANSFORM)
                 .policyRef(SfxMachinePolicyRef.of("charge", "rechargeable-item-bridge"))
                 .effect(SfxMachineEffect.marker("charge:write-item-energy", SfxMachinePhase.AFTER_PROGRESS));
+    }
+
+    private static void xpCollector(SfxMachineDefinition.Builder builder) {
+        commonMachine(builder);
+        builder.capability(SfxMachineCapability.HAS_GUI)
+                .capability(SfxMachineCapability.HAS_OUTPUT)
+                .capability(SfxMachineCapability.USES_ENERGY)
+                .capability(SfxMachineCapability.MUTATES_WORLD)
+                .capability(SfxMachineCapability.HAS_VISUAL_EFFECTS)
+                .policyRef(SfxMachinePolicyRef.of("world", "nearby-experience-collection"))
+                .effect(SfxMachineEffect.marker("xp:collect-orbs", SfxMachinePhase.BEFORE_OPERATION_RESOLVE));
     }
 
 
