@@ -14,6 +14,10 @@ final class SfxEnergyDefinitions {
     }
 
     static Map<String, SfxEnergyComponentDefinition> create(JavaPlugin plugin) {
+        Map<String, SfxEnergyComponentDefinition> yamlDefinitions = new SfxEnergyComponentYamlLoader(plugin).load();
+        if (!yamlDefinitions.isEmpty()) {
+            return yamlDefinitions;
+        }
         Map<String, SfxEnergyComponentDefinition> definitions = new LinkedHashMap<>();
         boolean useSfxBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
         int tier2BurnRate = useSfxBalance ? 15 : 10;

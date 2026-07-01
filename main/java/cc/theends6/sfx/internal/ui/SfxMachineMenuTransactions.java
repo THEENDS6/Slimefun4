@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.ui;
 
 import org.bukkit.GameMode;
 import java.util.Map;
+import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -21,11 +22,7 @@ public final class SfxMachineMenuTransactions {
         }
         ClickType click = event.getClick();
         InventoryAction action = event.getAction();
-        return click == ClickType.NUMBER_KEY
-                || click == ClickType.DOUBLE_CLICK
-                || click == ClickType.SWAP_OFFHAND
-                || action == InventoryAction.COLLECT_TO_CURSOR
-                || action == InventoryAction.HOTBAR_SWAP;
+        return action == InventoryAction.UNKNOWN;
     }
 
     public static boolean cancelUnsupportedManagedClick(InventoryClickEvent event) {
@@ -49,7 +46,10 @@ public final class SfxMachineMenuTransactions {
         return !SfxInventoryPolicy.isEmpty(current) && (SfxInventoryPolicy.isEmpty(cursor)
                 || event.isShiftClick()
                 || event.getClick() == ClickType.DROP
-                || event.getClick() == ClickType.CONTROL_DROP);
+                || event.getClick() == ClickType.CONTROL_DROP
+                || event.getClick() == ClickType.NUMBER_KEY
+                || event.getClick() == ClickType.SWAP_OFFHAND
+                || event.getClick() == ClickType.DOUBLE_CLICK);
     }
 
     public static boolean moveTopSlotToPlayer(Inventory topInventory, int rawSlot, Player player) {
@@ -74,6 +74,47 @@ public final class SfxMachineMenuTransactions {
             remaining.setAmount(leftoverAmount);
             topInventory.setItem(rawSlot, remaining);
         }
+        return true;
+    }
+
+    public static boolean moveCurrentItemToTopSlots(InventoryClickEvent event, Inventory topInventory, IntPredicate allowedTopSlot, Predicate<ItemStack> validator) {
+        ItemStack current = event.getCurrentItem();
+        if (SfxInventoryPolicy.isEmpty(current)) {
+            return false;
+        }
+        Predicate<ItemStack> safeValidator = validator == null ? ignored -> true : validator;
+        if (!safeValidator.test(current)) {
+            return false;
+        }
+        ItemStack remaining = current.clone();
+        for (int slot = 0; slot < topInventory.getSize() && !SfxInventoryPolicy.isEmpty(remaining); slot++) {
+            if (allowedTopSlot != null && !allowedTopSlot.test(slot)) {
+                continue;
+            }
+            ItemStack target = topInventory.getItem(slot);
+            if (!SfxInventoryPolicy.isEmpty(target) && !target.isSimilar(remaining)) {
+                continue;
+            }
+            int currentAmount = SfxInventoryPolicy.isEmpty(target) ? 0 : target.getAmount();
+            int max = SfxInventoryPolicy.isEmpty(target) ? Math.min(remaining.getMaxStackSize(), topInventory.getMaxStackSize()) : target.getMaxStackSize();
+            int room = max - currentAmount;
+            if (room <= 0) {
+                continue;
+            }
+            int moved = Math.min(room, remaining.getAmount());
+            ItemStack updated = SfxInventoryPolicy.isEmpty(target) ? remaining.clone() : target.clone();
+            updated.setAmount(currentAmount + moved);
+            if (!safeValidator.test(updated)) {
+                continue;
+            }
+            topInventory.setItem(slot, updated);
+            remaining.setAmount(remaining.getAmount() - moved);
+        }
+        int remainingAmount = SfxInventoryPolicy.isEmpty(remaining) ? 0 : remaining.getAmount();
+        if (remainingAmount >= current.getAmount()) {
+            return false;
+        }
+        event.setCurrentItem(remainingAmount <= 0 ? null : remaining);
         return true;
     }
 
@@ -179,5 +220,99 @@ public final class SfxMachineMenuTransactions {
             event.setCursor(remainingCursor);
         }
         return true;
+    }
+
+    public static boolean handleManagedHotbarOrOffhand(InventoryClickEvent event, Inventory topInventory, int rawSlot, Player player, boolean inputSlot, boolean outputSlot, Predicate<ItemStack> inputValidator) {
+        ClickType click = event.getClick();
+        if (click != ClickType.NUMBER_KEY && click != ClickType.SWAP_OFFHAND) {
+            return false;
+        }
+        event.setCancelled(true);
+        if (click == ClickType.NUMBER_KEY && event.getHotbarButton() < 0) {
+            return true;
+        }
+        ItemStack current = topInventory.getItem(rawSlot);
+        ItemStack carrier = click == ClickType.SWAP_OFFHAND
+                ? player.getInventory().getItemInOffHand()
+                : player.getInventory().getItem(event.getHotbarButton());
+        Predicate<ItemStack> safeValidator = inputValidator == null ? ignored -> true : inputValidator;
+        if (outputSlot) {
+            if (SfxInventoryPolicy.isEmpty(current) || !SfxInventoryPolicy.isEmpty(carrier)) {
+                return true;
+            }
+            writeCarrier(player, event, current.clone());
+            topInventory.setItem(rawSlot, null);
+            return true;
+        }
+        if (!inputSlot) {
+            return true;
+        }
+        if (!SfxInventoryPolicy.isEmpty(carrier) && !safeValidator.test(carrier)) {
+            return true;
+        }
+        if (!SfxInventoryPolicy.isEmpty(current) && !safeValidator.test(current)) {
+            return true;
+        }
+        topInventory.setItem(rawSlot, SfxInventoryPolicy.isEmpty(carrier) ? null : carrier.clone());
+        writeCarrier(player, event, SfxInventoryPolicy.isEmpty(current) ? null : current.clone());
+        return true;
+    }
+
+    public static boolean handleManagedDoubleClick(InventoryClickEvent event, Inventory topInventory, Player player, IntPredicate allowedTopSlot) {
+        if (event.getClick() != ClickType.DOUBLE_CLICK && event.getAction() != InventoryAction.COLLECT_TO_CURSOR) {
+            return false;
+        }
+        event.setCancelled(true);
+        ItemStack cursor = event.getCursor();
+        ItemStack target = SfxInventoryPolicy.isEmpty(cursor) ? event.getCurrentItem() : cursor;
+        if (SfxInventoryPolicy.isEmpty(target)) {
+            return true;
+        }
+        ItemStack collected = target.clone();
+        int amount = SfxInventoryPolicy.isEmpty(cursor) ? 0 : cursor.getAmount();
+        collected.setAmount(amount);
+        int max = collected.getMaxStackSize();
+        for (int slot = 0; slot < topInventory.getSize() && amount < max; slot++) {
+            if (allowedTopSlot == null || !allowedTopSlot.test(slot)) {
+                continue;
+            }
+            amount = collectFromSlot(topInventory, slot, collected, amount, max);
+        }
+        Inventory playerInventory = player.getInventory();
+        for (int slot = 0; slot < playerInventory.getSize() && amount < max; slot++) {
+            amount = collectFromSlot(playerInventory, slot, collected, amount, max);
+        }
+        if (amount <= 0) {
+            event.setCursor(null);
+        } else {
+            collected.setAmount(amount);
+            event.setCursor(collected);
+        }
+        return true;
+    }
+
+    private static int collectFromSlot(Inventory inventory, int slot, ItemStack target, int amount, int max) {
+        ItemStack stack = inventory.getItem(slot);
+        if (SfxInventoryPolicy.isEmpty(stack) || !stack.isSimilar(target) || amount >= max) {
+            return amount;
+        }
+        int moved = Math.min(stack.getAmount(), max - amount);
+        int remaining = stack.getAmount() - moved;
+        if (remaining <= 0) {
+            inventory.setItem(slot, null);
+        } else {
+            ItemStack rest = stack.clone();
+            rest.setAmount(remaining);
+            inventory.setItem(slot, rest);
+        }
+        return amount + moved;
+    }
+
+    private static void writeCarrier(Player player, InventoryClickEvent event, ItemStack value) {
+        if (event.getClick() == ClickType.SWAP_OFFHAND) {
+            player.getInventory().setItemInOffHand(value);
+        } else if (event.getHotbarButton() >= 0) {
+            player.getInventory().setItem(event.getHotbarButton(), value);
+        }
     }
 }

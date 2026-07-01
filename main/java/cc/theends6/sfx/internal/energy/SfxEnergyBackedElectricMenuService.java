@@ -4,7 +4,6 @@ import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
-import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
@@ -147,15 +146,25 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
 
     private void handleStorageSlotClick(InventoryClickEvent event, SfxEnergyGeneratorHolder holder, Player player, SfxEnergyComponentDefinition definition) {
         event.setCancelled(true);
-        if (SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
-            traceChargingBench(definition, "unsupported-click cancelled raw=" + event.getRawSlot());
-            return;
-        }
         Inventory topInventory = event.getView().getTopInventory();
         int rawSlot = event.getRawSlot();
         boolean inputSlot = contains(INPUT_SLOTS, rawSlot);
         boolean outputSlot = contains(OUTPUT_SLOTS, rawSlot);
         syncTopInventoryToState(holder.instanceId(), topInventory);
+        if (SfxMachineMenuTransactions.handleManagedHotbarOrOffhand(event, topInventory, rawSlot, player, inputSlot, outputSlot, stack -> isValidInputStack(definition, stack))) {
+            commitTopInventory(holder.instanceId(), topInventory);
+            traceChargingBench(definition, "hotbar/offhand transaction handled raw=" + rawSlot);
+            return;
+        }
+        if ((inputSlot || outputSlot) && SfxMachineMenuTransactions.handleManagedDoubleClick(event, topInventory, player, slot -> contains(outputSlot ? OUTPUT_SLOTS : INPUT_SLOTS, slot))) {
+            commitTopInventory(holder.instanceId(), topInventory);
+            traceChargingBench(definition, "double-click collect handled raw=" + rawSlot);
+            return;
+        }
+        if (SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
+            traceChargingBench(definition, "unsupported-click cancelled raw=" + event.getRawSlot());
+            return;
+        }
 
         if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
             if (SfxMachineMenuTransactions.moveTopSlotToPlayer(topInventory, rawSlot, player)) {

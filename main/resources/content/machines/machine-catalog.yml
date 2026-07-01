@@ -1,0 +1,675 @@
+# 共享机器框架目录。
+# 这里声明所有“像机器一样”的方块/多方块/菜单/电网/货运/GPS/机器人入口，供运行时审计、UI策略和阶段钩子使用。
+# category 决定所属领域；profile 只选择框架能力/阶段钩子，不包含具体世界行为。
+machines:
+  sf:enhanced_crafting_table:
+    category: BASIC
+    display-name: sf:enhanced_crafting_table
+  sf:grind_stone:
+    category: BASIC
+    display-name: sf:grind_stone
+  sf:compressor:
+    category: BASIC
+    display-name: sf:compressor
+  sf:ore_crusher:
+    category: BASIC
+    display-name: sf:ore_crusher
+  sf:ore_washer:
+    category: BASIC
+    display-name: sf:ore_washer
+  sf:armor_forge:
+    category: BASIC
+    display-name: sf:armor_forge
+  sf:makeshift_smeltery:
+    category: BASIC
+    display-name: sf:makeshift_smeltery
+  sf:smeltery:
+    category: BASIC
+    display-name: sf:smeltery
+  sf:pressure_chamber:
+    category: BASIC
+    display-name: sf:pressure_chamber
+  sf:magic_workbench:
+    category: BASIC
+    display-name: sf:magic_workbench
+  sf:table_saw:
+    category: BASIC
+    display-name: sf:table_saw
+    profile: hand_input_transform
+  sf:juicer:
+    category: BASIC
+    display-name: sf:juicer
+  sf:automated_panning_machine:
+    category: BASIC
+    display-name: sf:automated_panning_machine
+    profile: hand_input_transform
+  sf:composter:
+    category: BASIC
+    display-name: sf:composter
+  sf:crucible:
+    category: BASIC
+    display-name: sf:crucible
+  sf:output_chest:
+    category: BASIC
+    display-name: sf:output_chest
+  sf:ignition_chamber:
+    category: BASIC
+    display-name: sf:ignition_chamber
+  sf:enhanced_furnace:
+    category: BASIC
+    display-name: sf:enhanced_furnace
+  sf:enhanced_furnace_2:
+    category: BASIC
+    display-name: sf:enhanced_furnace_2
+  sf:enhanced_furnace_3:
+    category: BASIC
+    display-name: sf:enhanced_furnace_3
+  sf:enhanced_furnace_4:
+    category: BASIC
+    display-name: sf:enhanced_furnace_4
+  sf:enhanced_furnace_5:
+    category: BASIC
+    display-name: sf:enhanced_furnace_5
+  sf:enhanced_furnace_6:
+    category: BASIC
+    display-name: sf:enhanced_furnace_6
+  sf:enhanced_furnace_7:
+    category: BASIC
+    display-name: sf:enhanced_furnace_7
+  sf:enhanced_furnace_8:
+    category: BASIC
+    display-name: sf:enhanced_furnace_8
+  sf:enhanced_furnace_9:
+    category: BASIC
+    display-name: sf:enhanced_furnace_9
+  sf:enhanced_furnace_10:
+    category: BASIC
+    display-name: sf:enhanced_furnace_10
+  sf:enhanced_furnace_11:
+    category: BASIC
+    display-name: sf:enhanced_furnace_11
+  sf:reinforced_furnace:
+    category: BASIC
+    display-name: sf:reinforced_furnace
+  sf:carbonado_edged_furnace:
+    category: BASIC
+    display-name: sf:carbonado_edged_furnace
+  sf:electric_furnace:
+    category: ELECTRIC
+    display-name: sf:electric_furnace
+  sf:electric_furnace_2:
+    category: ELECTRIC
+    display-name: sf:electric_furnace_2
+  sf:electric_furnace_3:
+    category: ELECTRIC
+    display-name: sf:electric_furnace_3
+  sf:electric_ore_grinder:
+    category: ELECTRIC
+    display-name: sf:electric_ore_grinder
+  sf:electric_ore_grinder_2:
+    category: ELECTRIC
+    display-name: sf:electric_ore_grinder_2
+  sf:electric_ore_grinder_3:
+    category: ELECTRIC
+    display-name: sf:electric_ore_grinder_3
+  sf:auto_drier:
+    category: ELECTRIC
+    display-name: sf:auto_drier
+  sf:auto_brewer:
+    category: ELECTRIC
+    display-name: sf:auto_brewer
+    profile: auto_brewer
+  sf:auto_brewer_2:
+    category: ELECTRIC
+    display-name: sf:auto_brewer_2
+    profile: auto_brewer
+  sf:vanilla_auto_crafter:
+    category: ELECTRIC
+    display-name: sf:vanilla_auto_crafter
+    profile: auto_crafter
+  sf:enhanced_auto_crafter:
+    category: ELECTRIC
+    display-name: sf:enhanced_auto_crafter
+    profile: auto_crafter
+  sf:armor_auto_crafter:
+    category: ELECTRIC
+    display-name: sf:armor_auto_crafter
+    profile: auto_crafter
+  sf:electric_ingot_factory:
+    category: ELECTRIC
+    display-name: sf:electric_ingot_factory
+  sf:electric_ingot_factory_2:
+    category: ELECTRIC
+    display-name: sf:electric_ingot_factory_2
+  sf:electric_ingot_factory_3:
+    category: ELECTRIC
+    display-name: sf:electric_ingot_factory_3
+  sf:carbon_press:
+    category: ELECTRIC
+    display-name: sf:carbon_press
+  sf:carbon_press_2:
+    category: ELECTRIC
+    display-name: sf:carbon_press_2
+  sf:carbon_press_3:
+    category: ELECTRIC
+    display-name: sf:carbon_press_3
+  sf:electric_press:
+    category: ELECTRIC
+    display-name: sf:electric_press
+  sf:electric_press_2:
+    category: ELECTRIC
+    display-name: sf:electric_press_2
+  sf:electrified_crucible:
+    category: ELECTRIC
+    display-name: sf:electrified_crucible
+  sf:electrified_crucible_2:
+    category: ELECTRIC
+    display-name: sf:electrified_crucible_2
+  sf:electrified_crucible_3:
+    category: ELECTRIC
+    display-name: sf:electrified_crucible_3
+  sf:freezer:
+    category: ELECTRIC
+    display-name: sf:freezer
+  sf:freezer_2:
+    category: ELECTRIC
+    display-name: sf:freezer_2
+  sf:freezer_3:
+    category: ELECTRIC
+    display-name: sf:freezer_3
+  sf:heated_pressure_chamber:
+    category: ELECTRIC
+    display-name: sf:heated_pressure_chamber
+  sf:heated_pressure_chamber_2:
+    category: ELECTRIC
+    display-name: sf:heated_pressure_chamber_2
+  sf:food_fabricator:
+    category: ELECTRIC
+    display-name: sf:food_fabricator
+  sf:food_fabricator_2:
+    category: ELECTRIC
+    display-name: sf:food_fabricator_2
+  sf:food_composter:
+    category: ELECTRIC
+    display-name: sf:food_composter
+  sf:food_composter_2:
+    category: ELECTRIC
+    display-name: sf:food_composter_2
+  sf:refinery:
+    category: ELECTRIC
+    display-name: sf:refinery
+  sf:electric_ingot_pulverizer:
+    category: ELECTRIC
+    display-name: sf:electric_ingot_pulverizer
+  sf:electric_smeltery:
+    category: ELECTRIC
+    display-name: sf:electric_smeltery
+  sf:electric_smeltery_2:
+    category: ELECTRIC
+    display-name: sf:electric_smeltery_2
+  sf:auto_enchanter:
+    category: ELECTRIC
+    display-name: sf:auto_enchanter
+    profile: item_meta_transform
+  sf:auto_enchanter_2:
+    category: ELECTRIC
+    display-name: sf:auto_enchanter_2
+    profile: item_meta_transform
+  sf:auto_disenchanter:
+    category: ELECTRIC
+    display-name: sf:auto_disenchanter
+    profile: item_meta_transform
+  sf:auto_disenchanter_2:
+    category: ELECTRIC
+    display-name: sf:auto_disenchanter_2
+    profile: item_meta_transform
+  sf:book_binder:
+    category: ELECTRIC
+    display-name: sf:book_binder
+    profile: item_meta_transform
+  sf:auto_anvil:
+    category: ELECTRIC
+    display-name: sf:auto_anvil
+    profile: item_meta_transform
+  sf:auto_anvil_2:
+    category: ELECTRIC
+    display-name: sf:auto_anvil_2
+    profile: item_meta_transform
+  sf:produce_collector:
+    category: ELECTRIC
+    display-name: sf:produce_collector
+    profile: electric_world_action
+  sf:auto_breeder:
+    category: ELECTRIC
+    display-name: sf:auto_breeder
+    profile: electric_world_action
+  sf:animal_growth_accelerator:
+    category: ELECTRIC
+    display-name: sf:animal_growth_accelerator
+    profile: electric_world_action
+  sf:crop_growth_accelerator:
+    category: ELECTRIC
+    display-name: sf:crop_growth_accelerator
+    profile: electric_world_action
+  sf:crop_growth_accelerator_2:
+    category: ELECTRIC
+    display-name: sf:crop_growth_accelerator_2
+    profile: electric_world_action
+  sf:tree_growth_accelerator:
+    category: ELECTRIC
+    display-name: sf:tree_growth_accelerator
+    profile: electric_world_action
+  sf:xp_collector:
+    category: ELECTRIC
+    display-name: sf:xp_collector
+    profile: xp_collector
+  sf:gps_transmitter:
+    category: ELECTRIC
+    display-name: sf:gps_transmitter
+    profile: gps_transmitter
+  sf:gps_transmitter_2:
+    category: ELECTRIC
+    display-name: sf:gps_transmitter_2
+    profile: gps_transmitter
+  sf:gps_transmitter_3:
+    category: ELECTRIC
+    display-name: sf:gps_transmitter_3
+    profile: gps_transmitter
+  sf:gps_transmitter_4:
+    category: ELECTRIC
+    display-name: sf:gps_transmitter_4
+    profile: gps_transmitter
+  sf:geo_miner:
+    category: ELECTRIC
+    display-name: sf:geo_miner
+    profile: geo_extractor
+  sf:oil_pump:
+    category: ELECTRIC
+    display-name: sf:oil_pump
+    profile: geo_extractor
+  sf:fluid_pump:
+    category: ELECTRIC
+    display-name: sf:fluid_pump
+    profile: fluid_pump
+  sf:iron_golem_assembler:
+    category: ELECTRIC
+    display-name: sf:iron_golem_assembler
+    profile: assembler
+  sf:wither_assembler:
+    category: ELECTRIC
+    display-name: sf:wither_assembler
+    profile: assembler
+  sf:electric_gold_pan:
+    category: ELECTRIC
+    display-name: sf:electric_gold_pan
+  sf:electric_gold_pan_2:
+    category: ELECTRIC
+    display-name: sf:electric_gold_pan_2
+  sf:electric_gold_pan_3:
+    category: ELECTRIC
+    display-name: sf:electric_gold_pan_3
+  sf:electric_dust_washer:
+    category: ELECTRIC
+    display-name: sf:electric_dust_washer
+  sf:electric_dust_washer_2:
+    category: ELECTRIC
+    display-name: sf:electric_dust_washer_2
+  sf:electric_dust_washer_3:
+    category: ELECTRIC
+    display-name: sf:electric_dust_washer_3
+  sf:nuclear_reactor:
+    category: CONFIGURABLE
+    display-name: sf:nuclear_reactor
+    profile: reactor
+  sf:netherstar_reactor:
+    category: CONFIGURABLE
+    display-name: sf:netherstar_reactor
+    profile: reactor
+  sf:reactor_access_port:
+    category: CONFIGURABLE
+    display-name: sf:reactor_access_port
+    profile: proxy_panel_reactor_access_port
+  sf:energy_regulator:
+    category: ENERGY
+    display-name: sf:energy_regulator
+    profile: energy_node
+  sf:energy_connector:
+    category: ENERGY
+    display-name: sf:energy_connector
+    profile: energy_node
+  sf:charging_bench:
+    category: ENERGY
+    display-name: sf:charging_bench
+    profile: charging_bench
+  sf:small_capacitor:
+    category: ENERGY
+    display-name: sf:small_capacitor
+    profile: energy_node
+  sf:medium_capacitor:
+    category: ENERGY
+    display-name: sf:medium_capacitor
+    profile: energy_node
+  sf:big_capacitor:
+    category: ENERGY
+    display-name: sf:big_capacitor
+    profile: energy_node
+  sf:large_capacitor:
+    category: ENERGY
+    display-name: sf:large_capacitor
+    profile: energy_node
+  sf:carbonado_edged_capacitor:
+    category: ENERGY
+    display-name: sf:carbonado_edged_capacitor
+    profile: energy_node
+  sf:energized_capacitor:
+    category: ENERGY
+    display-name: sf:energized_capacitor
+    profile: energy_node
+  sf:solar_generator:
+    category: ENERGY
+    display-name: sf:solar_generator
+    profile: solar_generator
+  sf:solar_generator_2:
+    category: ENERGY
+    display-name: sf:solar_generator_2
+    profile: solar_generator
+  sf:solar_generator_3:
+    category: ENERGY
+    display-name: sf:solar_generator_3
+    profile: solar_generator
+  sf:solar_generator_4:
+    category: ENERGY
+    display-name: sf:solar_generator_4
+    profile: solar_generator
+  sf:coal_generator:
+    category: ENERGY
+    display-name: sf:coal_generator
+    profile: fuel_generator
+  sf:coal_generator_2:
+    category: ENERGY
+    display-name: sf:coal_generator_2
+    profile: fuel_generator
+  sf:lava_generator:
+    category: ENERGY
+    display-name: sf:lava_generator
+    profile: fuel_generator
+  sf:lava_generator_2:
+    category: ENERGY
+    display-name: sf:lava_generator_2
+    profile: fuel_generator
+  sf:combustion_reactor:
+    category: ENERGY
+    display-name: sf:combustion_reactor
+    profile: energy_node
+  sf:magnesium_generator:
+    category: ENERGY
+    display-name: sf:magnesium_generator
+    profile: fuel_generator
+  sf:bio_reactor:
+    category: ENERGY
+    display-name: sf:bio_reactor
+    profile: energy_node
+  sf:bio_reactor_2:
+    category: ENERGY
+    display-name: sf:bio_reactor_2
+    profile: energy_node
+  sf:cargo_manager:
+    category: CARGO
+    display-name: sf:cargo_manager
+    profile: cargo_node
+  sf:cargo_node:
+    category: CARGO
+    display-name: sf:cargo_node
+    profile: cargo_node
+  sf:cargo_node_input:
+    category: CARGO
+    display-name: sf:cargo_node_input
+    profile: cargo_node
+  sf:cargo_node_input_advanced:
+    category: CARGO
+    display-name: sf:cargo_node_input_advanced
+    profile: cargo_node
+  sf:cargo_node_output:
+    category: CARGO
+    display-name: sf:cargo_node_output
+    profile: cargo_node
+  sf:cargo_node_output_advanced:
+    category: CARGO
+    display-name: sf:cargo_node_output_advanced
+    profile: cargo_node
+  sf:trash_can_block:
+    category: CARGO
+    display-name: sf:trash_can_block
+    profile: cargo_node
+  sf:gps_control_panel:
+    category: GPS
+    display-name: sf:gps_control_panel
+    profile: gps_device
+  sf:gps_geo_scanner:
+    category: GPS
+    display-name: sf:gps_geo_scanner
+    profile: gps_device
+  sf:gps_teleporter_pylon:
+    category: GPS
+    display-name: sf:gps_teleporter_pylon
+    profile: gps_device
+  sf:gps_teleportation_matrix:
+    category: GPS
+    display-name: sf:gps_teleportation_matrix
+    profile: gps_device
+  sf:gps_activation_device_shared:
+    category: GPS
+    display-name: sf:gps_activation_device_shared
+    profile: gps_device
+  sf:gps_activation_device_personal:
+    category: GPS
+    display-name: sf:gps_activation_device_personal
+    profile: gps_device
+  sf:elevator_plate:
+    category: GPS
+    display-name: sf:elevator_plate
+    profile: gps_device
+  sf:programmable_android:
+    category: ANDROID
+    display-name: sf:programmable_android
+    profile: android
+  sf:programmable_android_farmer:
+    category: ANDROID
+    display-name: sf:programmable_android_farmer
+    profile: android
+  sf:programmable_android_miner:
+    category: ANDROID
+    display-name: sf:programmable_android_miner
+    profile: android
+  sf:programmable_android_woodcutter:
+    category: ANDROID
+    display-name: sf:programmable_android_woodcutter
+    profile: android
+  sf:programmable_android_butcher:
+    category: ANDROID
+    display-name: sf:programmable_android_butcher
+    profile: android
+  sf:programmable_android_fisherman:
+    category: ANDROID
+    display-name: sf:programmable_android_fisherman
+    profile: android
+  sf:programmable_android_2:
+    category: ANDROID
+    display-name: sf:programmable_android_2
+    profile: android
+  sf:programmable_android_2_fisherman:
+    category: ANDROID
+    display-name: sf:programmable_android_2_fisherman
+    profile: android
+  sf:programmable_android_2_farmer:
+    category: ANDROID
+    display-name: sf:programmable_android_2_farmer
+    profile: android
+  sf:programmable_android_2_butcher:
+    category: ANDROID
+    display-name: sf:programmable_android_2_butcher
+    profile: android
+  sf:programmable_android_3:
+    category: ANDROID
+    display-name: sf:programmable_android_3
+    profile: android
+  sf:programmable_android_3_fisherman:
+    category: ANDROID
+    display-name: sf:programmable_android_3_fisherman
+    profile: android
+  sf:programmable_android_3_butcher:
+    category: ANDROID
+    display-name: sf:programmable_android_3_butcher
+    profile: android
+  sf:android_interface_fuel:
+    category: ANDROID
+    display-name: sf:android_interface_fuel
+    profile: android_interface
+  sf:android_interface_items:
+    category: ANDROID
+    display-name: sf:android_interface_items
+    profile: android_interface
+  sf:android_memory_core:
+    category: ANDROID
+    display-name: sf:android_memory_core
+    profile: android
+  sf:hardened_glass:
+    category: SPECIAL
+    display-name: sf:hardened_glass
+    profile: decoration
+  sf:wither_proof_obsidian:
+    category: SPECIAL
+    display-name: sf:wither_proof_obsidian
+    profile: decoration
+  sf:wither_proof_glass:
+    category: SPECIAL
+    display-name: sf:wither_proof_glass
+    profile: decoration
+  sf:rainbow_wool:
+    category: SPECIAL
+    display-name: sf:rainbow_wool
+    profile: decoration
+  sf:rainbow_glass:
+    category: SPECIAL
+    display-name: sf:rainbow_glass
+    profile: decoration
+  sf:rainbow_clay:
+    category: SPECIAL
+    display-name: sf:rainbow_clay
+    profile: decoration
+  sf:rainbow_glass_pane:
+    category: SPECIAL
+    display-name: sf:rainbow_glass_pane
+    profile: decoration
+  sf:rainbow_concrete:
+    category: SPECIAL
+    display-name: sf:rainbow_concrete
+    profile: decoration
+  sf:rainbow_glazed_terracotta:
+    category: SPECIAL
+    display-name: sf:rainbow_glazed_terracotta
+    profile: decoration
+  sf:rainbow_wool_xmas:
+    category: SPECIAL
+    display-name: sf:rainbow_wool_xmas
+    profile: decoration
+  sf:rainbow_glass_xmas:
+    category: SPECIAL
+    display-name: sf:rainbow_glass_xmas
+    profile: decoration
+  sf:rainbow_clay_xmas:
+    category: SPECIAL
+    display-name: sf:rainbow_clay_xmas
+    profile: decoration
+  sf:rainbow_glass_pane_xmas:
+    category: SPECIAL
+    display-name: sf:rainbow_glass_pane_xmas
+    profile: decoration
+  sf:rainbow_concrete_xmas:
+    category: SPECIAL
+    display-name: sf:rainbow_concrete_xmas
+    profile: decoration
+  sf:rainbow_glazed_terracotta_xmas:
+    category: SPECIAL
+    display-name: sf:rainbow_glazed_terracotta_xmas
+    profile: decoration
+  sf:rainbow_wool_valentine:
+    category: SPECIAL
+    display-name: sf:rainbow_wool_valentine
+    profile: decoration
+  sf:rainbow_glass_valentine:
+    category: SPECIAL
+    display-name: sf:rainbow_glass_valentine
+    profile: decoration
+  sf:rainbow_clay_valentine:
+    category: SPECIAL
+    display-name: sf:rainbow_clay_valentine
+    profile: decoration
+  sf:rainbow_glass_pane_valentine:
+    category: SPECIAL
+    display-name: sf:rainbow_glass_pane_valentine
+    profile: decoration
+  sf:rainbow_concrete_valentine:
+    category: SPECIAL
+    display-name: sf:rainbow_concrete_valentine
+    profile: decoration
+  sf:rainbow_glazed_terracotta_valentine:
+    category: SPECIAL
+    display-name: sf:rainbow_glazed_terracotta_valentine
+    profile: decoration
+  sf:rainbow_wool_halloween:
+    category: SPECIAL
+    display-name: sf:rainbow_wool_halloween
+    profile: decoration
+  sf:rainbow_glass_halloween:
+    category: SPECIAL
+    display-name: sf:rainbow_glass_halloween
+    profile: decoration
+  sf:rainbow_clay_halloween:
+    category: SPECIAL
+    display-name: sf:rainbow_clay_halloween
+    profile: decoration
+  sf:rainbow_glass_pane_halloween:
+    category: SPECIAL
+    display-name: sf:rainbow_glass_pane_halloween
+    profile: decoration
+  sf:rainbow_concrete_halloween:
+    category: SPECIAL
+    display-name: sf:rainbow_concrete_halloween
+    profile: decoration
+  sf:rainbow_glazed_terracotta_halloween:
+    category: SPECIAL
+    display-name: sf:rainbow_glazed_terracotta_halloween
+    profile: decoration
+  sf:ancient_altar:
+    category: SPECIAL
+    display-name: sf:ancient_altar
+    profile: ancient_altar
+  sf:ancient_pedestal:
+    category: SPECIAL
+    display-name: sf:ancient_pedestal
+    profile: ancient_altar
+  sf:reinforced_spawner:
+    category: SPECIAL
+    display-name: sf:reinforced_spawner
+    profile: reinforced_spawner
+  sf:infused_hopper:
+    category: SPECIAL
+    display-name: sf:infused_hopper
+    profile: infused_hopper
+  sf:hologram_projector:
+    category: SPECIAL
+    display-name: sf:hologram_projector
+    profile: hologram_projector
+  sf:block_placer:
+    category: SPECIAL
+    display-name: sf:block_placer
+    profile: block_placer
+  sf:advanced_industrial_miner:
+    category: SPECIAL
+    display-name: sf:advanced_industrial_miner
+    profile: industrial_miner
+  sf:industrial_miner:
+    category: SPECIAL
+    display-name: sf:industrial_miner
+    profile: industrial_miner

@@ -1,0 +1,509 @@
+# 电力系统组件定义。
+# 该文件只描述电网节点、储能、耗电、发电和燃料；机器运行/UI 不应写在这里。
+# capacity/generation/consumption 均为插件内部能量单位。
+components:
+  "sf:energy_regulator":
+    # type 决定此方块在电网中的角色。
+    type: REGULATOR
+    energy:
+      capacity: 0
+      generation-per-tick: 0
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: REDSTONE
+    fuels: []
+  "sf:energy_connector":
+    # type 决定此方块在电网中的角色。
+    type: CONNECTOR
+    energy:
+      capacity: 0
+      generation-per-tick: 0
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: REDSTONE
+    fuels: []
+  "sf:charging_bench":
+    # type 决定此方块在电网中的角色。
+    type: CHARGER
+    energy:
+      capacity: 2560
+      generation-per-tick: 0
+      consumption-per-tick: 100
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: GOLDEN_PICKAXE
+    fuels: []
+  "sf:small_capacitor":
+    # type 决定此方块在电网中的角色。
+    type: CAPACITOR
+    energy:
+      capacity: 2560
+      generation-per-tick: 0
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: REDSTONE
+    fuels: []
+  "sf:medium_capacitor":
+    # type 决定此方块在电网中的角色。
+    type: CAPACITOR
+    energy:
+      capacity: 10240
+      generation-per-tick: 0
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: REDSTONE
+    fuels: []
+  "sf:big_capacitor":
+    # type 决定此方块在电网中的角色。
+    type: CAPACITOR
+    energy:
+      capacity: 20480
+      generation-per-tick: 0
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: REDSTONE
+    fuels: []
+  "sf:large_capacitor":
+    # type 决定此方块在电网中的角色。
+    type: CAPACITOR
+    energy:
+      capacity: 163840
+      generation-per-tick: 0
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: REDSTONE
+    fuels: []
+  "sf:carbonado_edged_capacitor":
+    # type 决定此方块在电网中的角色。
+    type: CAPACITOR
+    energy:
+      capacity: 1310720
+      generation-per-tick: 0
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: REDSTONE
+    fuels: []
+  "sf:energized_capacitor":
+    # type 决定此方块在电网中的角色。
+    type: CAPACITOR
+    energy:
+      capacity: 10485760
+      generation-per-tick: 0
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: REDSTONE
+    fuels: []
+  "sf:solar_generator":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 0
+      generation-per-tick: 4
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: DAYLIGHT_DETECTOR
+    fuels: []
+  "sf:solar_generator_2":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 0
+      generation-per-tick: 16
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: DAYLIGHT_DETECTOR
+    fuels: []
+  "sf:solar_generator_3":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 0
+      generation-per-tick: 64
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: DAYLIGHT_DETECTOR
+    fuels: []
+  "sf:solar_generator_4":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 0
+      generation-per-tick: 256
+      consumption-per-tick: 128
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: DAYLIGHT_DETECTOR
+    fuels: []
+  "sf:coal_generator":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 1280
+      generation-per-tick: 16
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: true
+    progress-material: FLINT_AND_STEEL
+    fuels: []
+  "sf:coal_generator_2":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 5120
+      generation-per-tick: 30
+      consumption-per-tick: 0
+      burn-rate: 15
+    vanilla-fuel: true
+    progress-material: FLINT_AND_STEEL
+    fuels: []
+  "sf:lava_generator":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 10240
+      generation-per-tick: 20
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: FLINT_AND_STEEL
+    fuels:
+      - key: lava
+        input: {material: LAVA_BUCKET, amount: 1}
+        output: {material: BUCKET, amount: 1}
+        seconds: 80
+  "sf:lava_generator_2":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 20480
+      generation-per-tick: 40
+      consumption-per-tick: 0
+      burn-rate: 15
+    vanilla-fuel: false
+    progress-material: FLINT_AND_STEEL
+    fuels:
+      - key: lava
+        input: {material: LAVA_BUCKET, amount: 1}
+        output: {material: BUCKET, amount: 1}
+        seconds: 80
+  "sf:combustion_reactor":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 20480
+      generation-per-tick: 64
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: FLINT_AND_STEEL
+    fuels:
+      - key: oil
+        input: {item: "sf:bucket_of_oil", amount: 1}
+        output: {material: BUCKET, amount: 1}
+        seconds: 40
+      - key: fuel
+        input: {item: "sf:bucket_of_fuel", amount: 1}
+        output: {material: BUCKET, amount: 1}
+        seconds: 120
+  "sf:magnesium_generator":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 2560
+      generation-per-tick: 36
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: FLINT_AND_STEEL
+    fuels:
+      - key: magnesium
+        input: {item: "sf:magnesium_salt", amount: 1}
+        seconds: 20
+  "sf:bio_reactor":
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 2560
+      generation-per-tick: 8
+      consumption-per-tick: 0
+      burn-rate: 10
+    vanilla-fuel: false
+    progress-material: GOLDEN_HOE
+    fuels:
+      - key: rotten_flesh
+        input: {material: ROTTEN_FLESH, amount: 1}
+        seconds: 8
+      - key: spider_eye
+        input: {material: SPIDER_EYE, amount: 1}
+        seconds: 8
+      - key: bone
+        input: {material: BONE, amount: 1}
+        seconds: 8
+      - key: string
+        input: {material: STRING, amount: 1}
+        seconds: 8
+      - key: apple
+        input: {material: APPLE, amount: 1}
+        seconds: 12
+      - key: melon_slice
+        input: {material: MELON_SLICE, amount: 1}
+        seconds: 12
+      - key: melon
+        input: {material: MELON, amount: 1}
+        seconds: 108
+      - key: pumpkin
+        input: {material: PUMPKIN, amount: 1}
+        seconds: 12
+      - key: pumpkin_seeds
+        input: {material: PUMPKIN_SEEDS, amount: 1}
+        seconds: 12
+      - key: melon_seeds
+        input: {material: MELON_SEEDS, amount: 1}
+        seconds: 12
+      - key: wheat
+        input: {material: WHEAT, amount: 1}
+        seconds: 12
+      - key: wheat_seeds
+        input: {material: WHEAT_SEEDS, amount: 1}
+        seconds: 12
+      - key: carrot
+        input: {material: CARROT, amount: 1}
+        seconds: 12
+      - key: potato
+        input: {material: POTATO, amount: 1}
+        seconds: 12
+      - key: sugar_cane
+        input: {material: SUGAR_CANE, amount: 1}
+        seconds: 12
+      - key: nether_wart
+        input: {material: NETHER_WART, amount: 1}
+        seconds: 12
+      - key: red_mushroom
+        input: {material: RED_MUSHROOM, amount: 1}
+        seconds: 8
+      - key: brown_mushroom
+        input: {material: BROWN_MUSHROOM, amount: 1}
+        seconds: 8
+      - key: kelp
+        input: {material: KELP, amount: 1}
+        seconds: 12
+      - key: dried_kelp
+        input: {material: DRIED_KELP, amount: 1}
+        seconds: 4
+      - key: cactus
+        input: {material: CACTUS, amount: 1}
+        seconds: 12
+      - key: cocoa_beans
+        input: {material: COCOA_BEANS, amount: 1}
+        seconds: 12
+      - key: sweet_berries
+        input: {material: SWEET_BERRIES, amount: 1}
+        seconds: 8
+      - key: bamboo
+        input: {material: BAMBOO, amount: 1}
+        seconds: 4
+      - key: beetroot
+        input: {material: BEETROOT, amount: 1}
+        seconds: 12
+      - key: beetroot_seeds
+        input: {material: BEETROOT_SEEDS, amount: 1}
+        seconds: 12
+      - key: honeycomb
+        input: {material: HONEYCOMB, amount: 1}
+        seconds: 16
+      - key: honeycomb_block
+        input: {material: HONEYCOMB_BLOCK, amount: 1}
+        seconds: 160
+      - key: shroomlight
+        input: {material: SHROOMLIGHT, amount: 1}
+        seconds: 16
+      - key: crimson_fungus
+        input: {material: CRIMSON_FUNGUS, amount: 1}
+        seconds: 8
+      - key: warped_fungus
+        input: {material: WARPED_FUNGUS, amount: 1}
+        seconds: 8
+      - key: glow_berries
+        input: {material: GLOW_BERRIES, amount: 1}
+        seconds: 8
+      - key: small_dripleaf
+        input: {material: SMALL_DRIPLEAF, amount: 1}
+        seconds: 12
+      - key: big_dripleaf
+        input: {material: BIG_DRIPLEAF, amount: 1}
+        seconds: 12
+      - key: glow_lichen
+        input: {material: GLOW_LICHEN, amount: 1}
+        seconds: 8
+      - key: spore_blossom
+        input: {material: SPORE_BLOSSOM, amount: 1}
+        seconds: 80
+      - key: strange_nether_goo
+        input: {item: "sf:strange_nether_goo", amount: 1}
+        seconds: 64
+    tag-fuels:
+      - prefix: small_flower
+        tag: SMALL_FLOWERS
+        seconds: 4
+      - prefix: leaf
+        tag: LEAVES
+        seconds: 4
+      - prefix: sapling
+        tag: SAPLINGS
+        seconds: 4
+      - prefix: coral
+        tag: CORALS
+        seconds: 8
+      - prefix: coral_block
+        tag: CORAL_BLOCKS
+        seconds: 8
+  "sf:bio_reactor_2":
+    enabled-when-config-true: energy.generator-balance.use-sfx-balance
+    # type 决定此方块在电网中的角色。
+    type: GENERATOR
+    energy:
+      capacity: 5120
+      generation-per-tick: 20
+      consumption-per-tick: 0
+      burn-rate: 15
+    vanilla-fuel: false
+    progress-material: GOLDEN_HOE
+    fuels:
+      - key: rotten_flesh
+        input: {material: ROTTEN_FLESH, amount: 1}
+        seconds: 8
+      - key: spider_eye
+        input: {material: SPIDER_EYE, amount: 1}
+        seconds: 8
+      - key: bone
+        input: {material: BONE, amount: 1}
+        seconds: 8
+      - key: string
+        input: {material: STRING, amount: 1}
+        seconds: 8
+      - key: apple
+        input: {material: APPLE, amount: 1}
+        seconds: 12
+      - key: melon_slice
+        input: {material: MELON_SLICE, amount: 1}
+        seconds: 12
+      - key: melon
+        input: {material: MELON, amount: 1}
+        seconds: 108
+      - key: pumpkin
+        input: {material: PUMPKIN, amount: 1}
+        seconds: 12
+      - key: pumpkin_seeds
+        input: {material: PUMPKIN_SEEDS, amount: 1}
+        seconds: 12
+      - key: melon_seeds
+        input: {material: MELON_SEEDS, amount: 1}
+        seconds: 12
+      - key: wheat
+        input: {material: WHEAT, amount: 1}
+        seconds: 12
+      - key: wheat_seeds
+        input: {material: WHEAT_SEEDS, amount: 1}
+        seconds: 12
+      - key: carrot
+        input: {material: CARROT, amount: 1}
+        seconds: 12
+      - key: potato
+        input: {material: POTATO, amount: 1}
+        seconds: 12
+      - key: sugar_cane
+        input: {material: SUGAR_CANE, amount: 1}
+        seconds: 12
+      - key: nether_wart
+        input: {material: NETHER_WART, amount: 1}
+        seconds: 12
+      - key: red_mushroom
+        input: {material: RED_MUSHROOM, amount: 1}
+        seconds: 8
+      - key: brown_mushroom
+        input: {material: BROWN_MUSHROOM, amount: 1}
+        seconds: 8
+      - key: kelp
+        input: {material: KELP, amount: 1}
+        seconds: 12
+      - key: dried_kelp
+        input: {material: DRIED_KELP, amount: 1}
+        seconds: 4
+      - key: cactus
+        input: {material: CACTUS, amount: 1}
+        seconds: 12
+      - key: cocoa_beans
+        input: {material: COCOA_BEANS, amount: 1}
+        seconds: 12
+      - key: sweet_berries
+        input: {material: SWEET_BERRIES, amount: 1}
+        seconds: 8
+      - key: bamboo
+        input: {material: BAMBOO, amount: 1}
+        seconds: 4
+      - key: beetroot
+        input: {material: BEETROOT, amount: 1}
+        seconds: 12
+      - key: beetroot_seeds
+        input: {material: BEETROOT_SEEDS, amount: 1}
+        seconds: 12
+      - key: honeycomb
+        input: {material: HONEYCOMB, amount: 1}
+        seconds: 16
+      - key: honeycomb_block
+        input: {material: HONEYCOMB_BLOCK, amount: 1}
+        seconds: 160
+      - key: shroomlight
+        input: {material: SHROOMLIGHT, amount: 1}
+        seconds: 16
+      - key: crimson_fungus
+        input: {material: CRIMSON_FUNGUS, amount: 1}
+        seconds: 8
+      - key: warped_fungus
+        input: {material: WARPED_FUNGUS, amount: 1}
+        seconds: 8
+      - key: glow_berries
+        input: {material: GLOW_BERRIES, amount: 1}
+        seconds: 8
+      - key: small_dripleaf
+        input: {material: SMALL_DRIPLEAF, amount: 1}
+        seconds: 12
+      - key: big_dripleaf
+        input: {material: BIG_DRIPLEAF, amount: 1}
+        seconds: 12
+      - key: glow_lichen
+        input: {material: GLOW_LICHEN, amount: 1}
+        seconds: 8
+      - key: spore_blossom
+        input: {material: SPORE_BLOSSOM, amount: 1}
+        seconds: 80
+      - key: strange_nether_goo
+        input: {item: "sf:strange_nether_goo", amount: 1}
+        seconds: 64
+    tag-fuels:
+      - prefix: small_flower
+        tag: SMALL_FLOWERS
+        seconds: 4
+      - prefix: leaf
+        tag: LEAVES
+        seconds: 4
+      - prefix: sapling
+        tag: SAPLINGS
+        seconds: 4
+      - prefix: coral
+        tag: CORALS
+        seconds: 8
+      - prefix: coral_block
+        tag: CORAL_BLOCKS
+        seconds: 8

@@ -1,0 +1,1005 @@
+# 电力机器数据定义。
+# 这些项只描述机器元数据、UI槽位、速度和电力参数；真实世界动作和复杂配方桥接仍由 Java 策略实现。
+# id 使用 SlimeFunX 内部物品 id；修改后重启或热加载插件生效。
+machines:
+  "sf:electric_furnace":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Furnace"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 1280
+      consumption-per-tick: 4
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_furnace_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Furnace - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 2
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 2560
+      consumption-per-tick: 6
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_furnace_3":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Furnace - III"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 4
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 10
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_ore_grinder":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Ore Grinder"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 2560
+      consumption-per-tick: 12
+    progress-material: IRON_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_ore_grinder_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Ore Grinder - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 4
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 30
+    progress-material: IRON_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_ore_grinder_3":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Ore Grinder - III"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 10
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20480
+      consumption-per-tick: 90
+    progress-material: IRON_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:auto_drier":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Drier"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 25600
+      consumption-per-tick: 10
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:auto_brewer":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Brewer"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 12
+    progress-material: BREWING_STAND
+    menu-style: AUTO_BREWER
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [10, 16, 37, 39, 41, 43]
+      output: []
+  "sf:auto_brewer_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Brewer II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 5
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20480
+      consumption-per-tick: 50
+    progress-material: BREWING_STAND
+    menu-style: AUTO_BREWER
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [10, 16, 37, 39, 41, 43]
+      output: []
+  # 旧版自动酿造机变体；仅在 electric-machines.sfx-extensions.auto-brewer.enabled=false 时按相同机器 id 应用。
+  "sf:auto_brewer#legacy":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Brewer"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 12
+    progress-material: FISHING_ROD
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:vanilla_auto_crafter":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto-Crafter (Vanilla)"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 32
+    progress-material: CRAFTING_TABLE
+    menu-style: AUTO_CRAFTER
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: []
+      output: []
+  "sf:enhanced_auto_crafter":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto-Crafter (Enhanced)"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 32
+    progress-material: CRAFTING_TABLE
+    menu-style: AUTO_CRAFTER
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: []
+      output: []
+  "sf:armor_auto_crafter":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto-Crafter (Armor Forge)"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 64
+    progress-material: ANVIL
+    menu-style: AUTO_CRAFTER
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: []
+      output: []
+  "sf:electric_ingot_factory":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Ingot Factory"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 8
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_ingot_factory_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Ingot Factory - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 2
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20480
+      consumption-per-tick: 14
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_ingot_factory_3":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Ingot Factory - III"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 8
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 81920
+      consumption-per-tick: 40
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:carbon_press":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Carbon Press"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 25600
+      consumption-per-tick: 20
+    progress-material: DIAMOND_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:carbon_press_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Carbon Press - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 3
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 81920
+      consumption-per-tick: 50
+    progress-material: DIAMOND_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:carbon_press_3":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Carbon Press - III"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 15
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 327680
+      consumption-per-tick: 180
+    progress-material: DIAMOND_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_press":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Press"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 25600
+      consumption-per-tick: 16
+    progress-material: IRON_HOE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_press_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Press - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 3
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 51200
+      consumption-per-tick: 40
+    progress-material: IRON_HOE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electrified_crucible":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electrified Crucible"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20480
+      consumption-per-tick: 72
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electrified_crucible_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electrified Crucible - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 2
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 40960
+      consumption-per-tick: 120
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electrified_crucible_3":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electrified Crucible - III"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 4
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 81920
+      consumption-per-tick: 180
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:freezer":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Freezer"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 18
+    progress-material: GOLDEN_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:freezer_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Freezer - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 2
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 30
+    progress-material: GOLDEN_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:freezer_3":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Freezer - III"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 3
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 42
+    progress-material: GOLDEN_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:heated_pressure_chamber":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Heated Pressure Chamber"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20480
+      consumption-per-tick: 10
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:heated_pressure_chamber_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Heated Pressure Chamber - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 5
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 81920
+      consumption-per-tick: 44
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:food_fabricator":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Food Fabricator"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 14
+    progress-material: GOLDEN_HOE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:food_fabricator_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Food Fabricator - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 6
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 48
+    progress-material: GOLDEN_HOE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:food_composter":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Food Composter"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 16
+    progress-material: GOLDEN_HOE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:food_composter_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Food Composter - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 10
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 52
+    progress-material: GOLDEN_HOE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:refinery":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Refinery"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 32
+    progress-material: PISTON
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_ingot_pulverizer":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Ingot Pulverizer"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 14
+    progress-material: IRON_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_smeltery":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Smeltery"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 20
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [10, 11, 19, 20, 28, 29]
+      output: [24, 25]
+  "sf:electric_smeltery_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Smeltery - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 3
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 40
+    progress-material: FLINT_AND_STEEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [10, 11, 19, 20, 28, 29]
+      output: [24, 25]
+  "sf:auto_enchanter":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Enchanter"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 2560
+      consumption-per-tick: 18
+    progress-material: GOLDEN_CHESTPLATE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:auto_enchanter_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Enchanter - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 3
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20560
+      consumption-per-tick: 48
+    progress-material: GOLDEN_CHESTPLATE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:auto_disenchanter":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Disenchanter"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 2560
+      consumption-per-tick: 18
+    progress-material: DIAMOND_CHESTPLATE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:auto_disenchanter_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Disenchanter - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 3
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20560
+      consumption-per-tick: 48
+    progress-material: DIAMOND_CHESTPLATE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:book_binder":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Book Binder"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 2560
+      consumption-per-tick: 16
+    progress-material: IRON_CHESTPLATE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:auto_anvil":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Anvil"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 2560
+      consumption-per-tick: 24
+    progress-material: IRON_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:auto_anvil_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Anvil - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 2560
+      consumption-per-tick: 32
+    progress-material: IRON_PICKAXE
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:produce_collector":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Produce Collector"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 32
+    progress-material: BUCKET
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:auto_breeder":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Auto Breeder"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20480
+      consumption-per-tick: 60
+    progress-material: WHEAT
+    menu-style: SIMPLE_IO
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [10, 11, 12, 13, 14, 15, 16]
+      output: []
+  "sf:animal_growth_accelerator":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Animal Growth Accelerator"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20480
+      consumption-per-tick: 14
+    progress-material: WHEAT
+    menu-style: SIMPLE_IO
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [10, 11, 12, 13, 14, 15, 16]
+      output: []
+  "sf:crop_growth_accelerator":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Crop Growth Accelerator"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 40960
+      consumption-per-tick: 100
+    progress-material: BONE_MEAL
+    menu-style: SIMPLE_IO
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [10, 11, 12, 13, 14, 15, 16]
+      output: []
+  "sf:crop_growth_accelerator_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Crop Growth Accelerator - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 40960
+      consumption-per-tick: 120
+    progress-material: BONE_MEAL
+    menu-style: SIMPLE_IO
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [10, 11, 12, 13, 14, 15, 16]
+      output: []
+  "sf:tree_growth_accelerator":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Tree Growth Accelerator"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 40960
+      consumption-per-tick: 96
+    progress-material: OAK_SAPLING
+    menu-style: SIMPLE_IO
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [10, 11, 12, 13, 14, 15, 16]
+      output: []
+  "sf:xp_collector":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "EXP Collector"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20480
+      consumption-per-tick: 20
+    progress-material: EXPERIENCE_BOTTLE
+    menu-style: SIMPLE_IO
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: []
+      output: [10, 11, 12, 13, 14, 15, 16]
+  "sf:gps_transmitter":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "GPS Transmitter"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 320
+      consumption-per-tick: 2
+    progress-material: COMPASS
+    menu-style: NONE
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: []
+      output: []
+  "sf:gps_transmitter_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Advanced GPS Transmitter"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 1280
+      consumption-per-tick: 6
+    progress-material: COMPASS
+    menu-style: NONE
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: []
+      output: []
+  "sf:gps_transmitter_3":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Carbonado GPS Transmitter"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 22
+    progress-material: COMPASS
+    menu-style: NONE
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: []
+      output: []
+  "sf:gps_transmitter_4":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Energized GPS Transmitter"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20480
+      consumption-per-tick: 92
+    progress-material: COMPASS
+    menu-style: NONE
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: []
+      output: []
+  "sf:geo_miner":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "GEO Miner"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 512
+      consumption-per-tick: 48
+    progress-material: DIAMOND_PICKAXE
+    menu-style: GEO_MINER
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: []
+      output: [29, 30, 31, 32, 33, 38, 39, 40, 41, 42]
+  "sf:oil_pump":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Oil Pump"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 512
+      consumption-per-tick: 24
+    progress-material: BUCKET
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:fluid_pump":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Fluid Pump"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 512
+      consumption-per-tick: 8
+    progress-material: BUCKET
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:iron_golem_assembler":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Iron Golem Assembler"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 81920
+      consumption-per-tick: 75
+    progress-material: CARVED_PUMPKIN
+    menu-style: ASSEMBLER
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 28, 25, 34]
+      output: []
+    assembler:
+      head-material: CARVED_PUMPKIN
+      head-amount: 1
+      body-materials: [IRON_BLOCK]
+      body-amount: 4
+  "sf:wither_assembler":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Wither Assembler"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 81920
+      consumption-per-tick: 150
+    progress-material: WITHER_SKELETON_SKULL
+    menu-style: ASSEMBLER
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 28, 25, 34]
+      output: []
+    assembler:
+      head-material: WITHER_SKELETON_SKULL
+      head-amount: 3
+      body-materials: [SOUL_SAND, SOUL_SOIL]
+      body-amount: 4
+  "sf:electric_gold_pan":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Gold Pan"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 2560
+      consumption-per-tick: 2
+    progress-material: DIAMOND_SHOVEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_gold_pan_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Gold Pan - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 3
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 4
+    progress-material: DIAMOND_SHOVEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_gold_pan_3":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Gold Pan - III"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 10
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 14
+    progress-material: DIAMOND_SHOVEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_dust_washer":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Dust Washer"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 1
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 5120
+      consumption-per-tick: 6
+    progress-material: GOLDEN_SHOVEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_dust_washer_2":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Dust Washer - II"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 2
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 10240
+      consumption-per-tick: 10
+    progress-material: GOLDEN_SHOVEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]
+  "sf:electric_dust_washer_3":
+    # title 是菜单标题回退文本；玩家显示优先走语言文件/物品名。
+    title: "Electric Dust Washer - III"
+    # speed 是每个逻辑周期推进的工作量。
+    speed: 10
+    # energy.capacity 是机器内部缓冲；consumption-per-tick 是运行耗电。
+    energy:
+      capacity: 20480
+      consumption-per-tick: 30
+    progress-material: GOLDEN_SHOVEL
+    menu-style: STANDARD
+    slots:
+      # input/output 均为 GUI 原始槽位编号。
+      input: [19, 20]
+      output: [24, 25]

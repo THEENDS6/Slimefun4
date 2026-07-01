@@ -43,6 +43,8 @@ diagnostics:
     talisman: false
     infused-hopper: false
     charging-bench: false
+    # 机器/电力 YAML 加载链路诊断。
+    machine-yaml: false
 
 guide:
   allow-right-click-open: true
@@ -104,6 +106,10 @@ options:
 
 
 machines:
+  framework:
+    # 共享机器目录优先使用 content/machines/machine-catalog.yml。
+    # 仅在排查旧内容遗漏时打开 legacy candidate scan；默认关闭以避免用 Java 扫描掩盖 YAML 缺项。
+    allow-legacy-candidate-scan: false
   lazy-tick:
     enabled: true
     # Regular machines are processed lazily by default. elapsedTicks compensates

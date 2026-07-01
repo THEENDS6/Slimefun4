@@ -17,7 +17,6 @@ import cc.theends6.sfx.internal.gps.SfxGeoChunkKey;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
-import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
 import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
@@ -446,6 +445,19 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         boolean topSlot = event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize();
+        if (topSlot && clickDefinition.menuStyle() != SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+            boolean managedInput = contains(clickDefinition.inputSlots(), event.getRawSlot());
+            boolean managedOutput = contains(clickDefinition.outputSlots(), event.getRawSlot());
+            Predicate<ItemStack> validator = stack -> isValidMachineInput(clickDefinition, event.getRawSlot(), stack);
+            if (SfxMachineMenuTransactions.handleManagedHotbarOrOffhand(event, event.getView().getTopInventory(), event.getRawSlot(), player, managedInput, managedOutput, validator)) {
+                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+                return;
+            }
+            if ((managedInput || managedOutput) && SfxMachineMenuTransactions.handleManagedDoubleClick(event, event.getView().getTopInventory(), player, slot -> contains(managedOutput ? clickDefinition.outputSlots() : clickDefinition.inputSlots(), slot))) {
+                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+                return;
+            }
+        }
         if (clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
             event.setCancelled(true);
             if (topSlot) {
@@ -513,7 +525,7 @@ public final class SfxElectricMachineService implements Listener {
             runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
             return;
         }
-        if (topSlot && SfxInventoryPolicy.cancelDangerousClick(event)) {
+        if (topSlot && SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             return;
         }
         runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
@@ -1507,6 +1519,16 @@ public final class SfxElectricMachineService implements Listener {
             dirtyInstances.add(instanceId);
             activeInstances.add(instanceId);
         }
+    }
+
+    private boolean isValidMachineInput(SfxElectricMachineDefinition definition, int rawSlot, ItemStack item) {
+        if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) {
+            return isValidAssemblerInput(definition, rawSlot, item);
+        }
+        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+            return isValidAutoBrewerInput(rawSlot, item);
+        }
+        return true;
     }
 
     private boolean isValidAssemblerInput(SfxElectricMachineDefinition definition, int rawSlot, ItemStack item) {
