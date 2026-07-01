@@ -1,5 +1,6 @@
 package cc.theends6.sfx.internal.ui;
 
+import org.bukkit.GameMode;
 import java.util.Map;
 import java.util.function.Predicate;
 import org.bukkit.entity.Player;
@@ -8,6 +9,7 @@ import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 
 public final class SfxMachineMenuTransactions {
     private SfxMachineMenuTransactions() {
@@ -22,10 +24,8 @@ public final class SfxMachineMenuTransactions {
         return click == ClickType.NUMBER_KEY
                 || click == ClickType.DOUBLE_CLICK
                 || click == ClickType.SWAP_OFFHAND
-                || click == ClickType.MIDDLE
                 || action == InventoryAction.COLLECT_TO_CURSOR
-                || action == InventoryAction.HOTBAR_SWAP
-                || action == InventoryAction.CLONE_STACK;
+                || action == InventoryAction.HOTBAR_SWAP;
     }
 
     public static boolean cancelUnsupportedManagedClick(InventoryClickEvent event) {
@@ -34,6 +34,13 @@ public final class SfxMachineMenuTransactions {
             return true;
         }
         return false;
+    }
+
+    public static boolean isCreativeCloneClick(Player player, InventoryClickEvent event) {
+        if (player == null || event == null || player.getGameMode() != GameMode.CREATIVE) {
+            return false;
+        }
+        return event.getClick() == ClickType.MIDDLE || event.getAction() == InventoryAction.CLONE_STACK;
     }
 
     public static boolean isTakingFromOutput(InventoryClickEvent event) {
@@ -90,7 +97,10 @@ public final class SfxMachineMenuTransactions {
             remaining.setAmount(remainingAmount);
             topInventory.setItem(rawSlot, remaining);
         }
-        player.getWorld().dropItemNaturally(player.getLocation(), dropped);
+        Vector direction = player.getLocation().getDirection().normalize();
+        org.bukkit.Location dropLocation = player.getEyeLocation().add(direction.clone().multiply(0.35D));
+        org.bukkit.entity.Item entity = player.getWorld().dropItem(dropLocation, dropped);
+        entity.setVelocity(direction.multiply(0.35D).add(new Vector(0.0D, 0.1D, 0.0D)));
         return true;
     }
 

@@ -431,6 +431,9 @@ public final class SfxElectricMachineService implements Listener {
         if (!(event.getView().getTopInventory().getHolder() instanceof SfxElectricMachineHolder holder)) {
             return;
         }
+        if (SfxMachineMenuTransactions.isCreativeCloneClick(player, event)) {
+            return;
+        }
         SfxElectricMachineDefinition clickDefinition = definitionFor(holder.instanceId());
         if (clickDefinition != null) {
             SfxMachineLegacyHookBridge.menuClick(machineRuntime, clickDefinition.id(), holder.instanceId(), null, "electric", "SfxElectricMachineService.onInventoryClick");
@@ -503,7 +506,7 @@ public final class SfxElectricMachineService implements Listener {
             runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
             return;
         }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
+        if (topSlot && SfxInventoryPolicy.cancelDangerousClick(event)) {
             return;
         }
         runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));

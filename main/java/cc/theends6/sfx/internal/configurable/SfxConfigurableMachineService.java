@@ -352,6 +352,9 @@ public final class SfxConfigurableMachineService implements Listener {
         if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxConfigurableMachineHolder holder)) {
             return;
         }
+        if (SfxMachineMenuTransactions.isCreativeCloneClick(player, event)) {
+            return;
+        }
         SfxBlockInstanceRecord host = blockData.findInstance(holder.hostInstanceId()).orElse(null);
         SfxConfigurableMachineDefinition definition = host == null ? null : definitions.get(host.typeId());
         if (host != null && definition != null) {
@@ -409,7 +412,7 @@ public final class SfxConfigurableMachineService implements Listener {
                 return;
             }
         }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
+        if (topSlot && SfxInventoryPolicy.cancelDangerousClick(event)) {
             return;
         }
         runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
