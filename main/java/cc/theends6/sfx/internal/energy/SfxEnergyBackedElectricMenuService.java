@@ -72,6 +72,9 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
         if (!(event.getWhoClicked() instanceof Player player) || !(event.getView().getTopInventory().getHolder() instanceof SfxEnergyGeneratorHolder holder)) {
             return;
         }
+        if (SfxMachineMenuTransactions.isCreativeCloneClick(player, event)) {
+            return;
+        }
         handleClick(event, holder, player);
     }
 
@@ -119,7 +122,7 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
                 }
                 event.setCancelled(true);
                 traceChargingBench(clickDefinition, "shift-input accepted current=" + describe(event.getCurrentItem()));
-                energy.runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+                commitTopInventory(holder.instanceId(), event.getView().getTopInventory());
             } else {
                 event.setCancelled(true);
                 traceChargingBench(clickDefinition, "shift-input rejected current=" + describe(event.getCurrentItem()));
@@ -130,7 +133,7 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
             handleStorageSlotClick(event, holder, player, clickDefinition);
             return;
         }
-        if (SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
+        if (topSlot && SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             traceChargingBench(clickDefinition, "dangerous-click cancelled action=" + event.getAction() + " click=" + event.getClick());
             return;
         }
