@@ -3159,6 +3159,12 @@ command:
     success: <green>SFX 配置与语言文件已重载。</green>
     success-all: <green>SFX 已完整重载：注册表、配方与菜单已刷新。</green>
     failed-all: <red>SFX 运行时重载失败。插件已被禁用，以避免在不完整服务图下运行。</red>
+  template:
+    usage: '<red>用法: /sfx template <compile|reload></red>'
+    compile-success: '<green>SFX 模板已编译：{sources} 个源文件，{outputs} 个输出文件。使用 /sfx reload runtime 应用运行时变更。</green>'
+    reload-success: <green>SFX 模板已编译，运行时内容已重建。</green>
+    compile-failed: '<red>SFX 模板编译失败：{message}</red>'
+    warning: '<yellow>[template] {warning}</yellow>'
   help:
     header: <green>SFX 命令</green>
     line:
@@ -3170,6 +3176,7 @@ command:
       list: <gray>/{label} list [page]</gray> <dark_gray>- 打开已注册物品列表</dark_gray>
       reload: <gray>/{label} reload</gray> <dark_gray>- 重载配置</dark_gray>
       reload-all: <gray>/{label} reload all</gray> <dark_gray>- 重建注册表并重载配方</dark_gray>
+      template: <gray>/{label} template <compile|reload></gray> <dark_gray>- 编译模板或编译并重建运行时内容</dark_gray>
       research: <gray>/{label} research <player> <all|reset|id></gray> <dark_gray>- 管理研究</dark_gray>
       backpack: <gray>/{label} backpack <list|open|give> ...</gray> <dark_gray>- 管理背包</dark_gray>
   research:

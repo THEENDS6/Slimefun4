@@ -28,23 +28,55 @@ templates:
   energy:
     electric-consumer:
       @istemplate: true
-      energy:
+      @define:
         capacity: 1280
-        consumption-per-tick: 4
+        consumption: 4
+      energy:
+        capacity: ${capacity}
+        consumption-per-tick: ${consumption}
     electric-furnace-base:
       @copyfrom: templates.energy.electric-consumer
       @istemplate: true
       progress-material: ${default-progress-material}
+    passive-component:
+      @it: true
+      energy:
+        capacity: 0
+        generation-per-tick: 0
+        consumption-per-tick: 0
+        burn-rate: 10
+      vanilla-fuel: false
+      progress-material: REDSTONE
+      fuels: []
+    charger:
+      @copyfrom: templates.energy.passive-component
+      @it: true
+      type: CHARGER
+      progress-material: GOLDEN_PICKAXE
+      energy:
+        capacity: ${capacity}
+        consumption-per-tick: ${consumption}
   machines:
     standard-electric-machine:
       @copyfrom: templates.ui.standard-electric-machine
       @istemplate: true
+      @define:
+        machine-title: Electric Machine
+        level-suffix: ""
+        speed: 1
       speed: 1
       progress-material: ${default-progress-material}
     electric-furnace:
       @copyfrom: templates.machines.standard-electric-machine
       @istemplate: true
-      title: "Electric Furnace"
-      energy:
+      @define:
+        machine-title: Electric Furnace
+        level-suffix: ""
+        speed: 1
         capacity: 1280
-        consumption-per-tick: 4
+        consumption: 4
+      title: "${machine-title}${level-suffix}"
+      speed: ${speed}
+      energy:
+        capacity: ${capacity}
+        consumption-per-tick: ${consumption}

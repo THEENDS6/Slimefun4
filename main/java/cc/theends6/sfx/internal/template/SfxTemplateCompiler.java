@@ -22,10 +22,12 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 public final class SfxTemplateCompiler {
     private static final Pattern PLACEHOLDER = Pattern.compile("\\$\\{([^{}]+)}");
-    private static final Set<String> META_KEYS = Set.of("@istemplate", "@copyfrom", "@mergeinto", "@isoutput", "@define", "@project", "@global");
+    private static final Pattern EXACT_PLACEHOLDER = Pattern.compile("^\\$\\{([^{}]+)}$");
+    private static final Set<String> META_KEYS = Set.of("@istemplate", "@copyfrom", "@mergeinto", "@isoutput", "@outputtarget", "@define", "@project", "@global");
 
     private final Path sourceRoot;
     private final Path outputRoot;
+    private final Path publishedOutputRoot;
     private final Map<String, Object> globalVariables = new LinkedHashMap<>();
     private final Map<String, Object> projectVariables = new LinkedHashMap<>();
     private final Map<String, SourceNode> sourcesByPath = new LinkedHashMap<>();
@@ -34,8 +36,13 @@ public final class SfxTemplateCompiler {
     private final List<String> errors = new ArrayList<>();
 
     public SfxTemplateCompiler(Path sourceRoot, Path outputRoot) {
+        this(sourceRoot, outputRoot, outputRoot);
+    }
+
+    public SfxTemplateCompiler(Path sourceRoot, Path outputRoot, Path publishedOutputRoot) {
         this.sourceRoot = Objects.requireNonNull(sourceRoot, "sourceRoot");
         this.outputRoot = Objects.requireNonNull(outputRoot, "outputRoot");
+        this.publishedOutputRoot = Objects.requireNonNull(publishedOutputRoot, "publishedOutputRoot");
     }
 
     public SfxTemplateCompileReport compile() {
@@ -62,7 +69,7 @@ public final class SfxTemplateCompiler {
             List<OutputNode> outputs = collectOutputs(expanded);
             if (outputs.isEmpty()) {
                 pruneTemplatesAndMeta(expanded);
-                outputs.add(new OutputNode(List.of("all"), "$", expanded));
+                outputs.add(new OutputNode(List.of("all"), "$", null, expanded));
             }
             clearOutputDirectory();
             writeOutputs(outputs);
@@ -180,6 +187,7 @@ public final class SfxTemplateCompiler {
             case "@cf" -> "@copyfrom";
             case "@mi" -> "@mergeinto";
             case "@io" -> "@isoutput";
+            case "@ot" -> "@outputtarget";
             default -> META_KEYS.contains(normalized) ? normalized : key;
         };
     }
@@ -283,6 +291,7 @@ public final class SfxTemplateCompiler {
             payload.remove("@mergeinto");
             payload.remove("@istemplate");
             payload.remove("@isoutput");
+            payload.remove("@outputtarget");
             mergeInto((Map<String, Object>) targetMap, payload, originOf(directive.sourcePath()), directive.targetPath(), true);
         }
         removeMergeDirectiveNodes(root);
@@ -331,6 +340,9 @@ public final class SfxTemplateCompiler {
     private void resolveVariables(Object value, String path, ArrayDeque<Map<String, Object>> localScopes) {
         if (value instanceof Map<?, ?> rawMap) {
             Map<String, Object> map = (Map<String, Object>) rawMap;
+            if (truthy(map.get("@istemplate"))) {
+                return;
+            }
             Map<String, Object> defined = new LinkedHashMap<>();
             mergeVariables(defined, map.get("@define"));
             if (!defined.isEmpty()) {
@@ -361,7 +373,15 @@ public final class SfxTemplateCompiler {
         }
     }
 
-    private String resolveText(String text, String path, ArrayDeque<Map<String, Object>> localScopes) {
+    private Object resolveText(String text, String path, ArrayDeque<Map<String, Object>> localScopes) {
+        Matcher exact = EXACT_PLACEHOLDER.matcher(text);
+        if (exact.matches()) {
+            Object value = resolveVariable(exact.group(1), localScopes);
+            if (value == null) {
+                throw new SfxTemplateCompileException("Unresolved template variable ${" + exact.group(1) + "} at " + path);
+            }
+            return deepCopyValue(value);
+        }
         String result = text;
         for (int round = 0; round < 16; round++) {
             Matcher matcher = PLACEHOLDER.matcher(result);
@@ -424,12 +444,12 @@ public final class SfxTemplateCompiler {
     @SuppressWarnings("unchecked")
     private List<OutputNode> collectOutputs(Map<String, Object> root) {
         List<OutputNode> result = new ArrayList<>();
-        collectOutputs(root, "$", List.of(), result);
+        collectOutputs(root, "$", List.of(), null, result);
         return result;
     }
 
     @SuppressWarnings("unchecked")
-    private void collectOutputs(Object value, String path, List<String> keys, List<OutputNode> result) {
+    private void collectOutputs(Object value, String path, List<String> keys, String inheritedTarget, List<OutputNode> result) {
         if (!(value instanceof Map<?, ?> rawMap)) {
             return;
         }
@@ -437,8 +457,10 @@ public final class SfxTemplateCompiler {
         if (truthy(map.get("@istemplate"))) {
             return;
         }
+        String outputTarget = stringOrNull(map.get("@outputtarget"));
+        String activeTarget = outputTarget == null ? inheritedTarget : outputTarget;
         if (truthy(map.get("@isoutput"))) {
-            result.add(new OutputNode(keys, path, deepCopyMap(map)));
+            result.add(new OutputNode(keys, path, activeTarget, deepCopyMap(map)));
             return;
         }
         for (Map.Entry<String, Object> entry : map.entrySet()) {
@@ -447,7 +469,7 @@ public final class SfxTemplateCompiler {
             }
             List<String> childKeys = new ArrayList<>(keys);
             childKeys.add(entry.getKey());
-            collectOutputs(entry.getValue(), path.equals("$") ? entry.getKey() : path + "." + entry.getKey(), childKeys, result);
+            collectOutputs(entry.getValue(), path.equals("$") ? entry.getKey() : path + "." + entry.getKey(), childKeys, activeTarget, result);
         }
     }
 
@@ -456,7 +478,7 @@ public final class SfxTemplateCompiler {
         for (OutputNode output : outputs) {
             Map<String, Object> wrapped = wrapOutput(output.keys(), output.value());
             pruneTemplatesAndMeta(wrapped);
-            Path target = outputRoot.resolve(outputFileName(output.keys()));
+            Path target = outputRoot.resolve(outputDirectory(output.targetResource())).resolve(outputFileName(output.keys()));
             Files.createDirectories(target.getParent());
             YamlConfiguration yaml = new YamlConfiguration();
             for (Map.Entry<String, Object> entry : wrapped.entrySet()) {
@@ -504,15 +526,36 @@ public final class SfxTemplateCompiler {
         return String.join("/", safe) + ".yml";
     }
 
+    private String outputDirectory(String targetResource) {
+        if (targetResource == null || targetResource.isBlank()) {
+            return "_global";
+        }
+        String normalized = targetResource.replace('\\', '/');
+        if (normalized.endsWith(".yml")) {
+            normalized = normalized.substring(0, normalized.length() - 4);
+        } else if (normalized.endsWith(".yaml")) {
+            normalized = normalized.substring(0, normalized.length() - 5);
+        }
+        return normalized;
+    }
+
     private void writeManifest(List<Path> sources, List<OutputNode> outputs) throws IOException {
         YamlConfiguration manifest = new YamlConfiguration();
         manifest.set("compiler", "sfx-template-v1");
         manifest.set("compiled-at", Instant.now().toString());
         manifest.set("source-root", sourceRoot.toString());
-        manifest.set("output-root", outputRoot.toString());
+        manifest.set("output-root", publishedOutputRoot.toString());
         List<String> sourceNames = sources.stream().map(path -> sourceRoot.relativize(path).toString().replace('\\', '/')).toList();
         manifest.set("sources", sourceNames);
-        manifest.set("outputs", outputs.stream().map(output -> outputFileName(output.keys())).toList());
+        List<Map<String, Object>> outputEntries = new ArrayList<>();
+        for (OutputNode output : outputs) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("file", outputDirectory(output.targetResource()) + "/" + outputFileName(output.keys()));
+            entry.put("target", output.targetResource() == null ? "" : output.targetResource());
+            entry.put("source-path", output.path());
+            outputEntries.add(entry);
+        }
+        manifest.set("outputs", outputEntries);
         manifest.set("warnings", warnings);
         Files.writeString(outputRoot.resolve("_manifest.yml"), manifest.saveToString(), StandardCharsets.UTF_8);
     }
@@ -564,6 +607,17 @@ public final class SfxTemplateCompiler {
 
     private Object normalizeValue(Object value) {
         return value instanceof ConfigurationSection section ? sectionToPlainMap(section) : value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object deepCopyValue(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            return deepCopyMap((Map<String, Object>) map);
+        }
+        if (value instanceof List<?> list) {
+            return deepCopyList(list);
+        }
+        return value;
     }
 
     private Map<String, Object> sectionToPlainMap(ConfigurationSection section) {
@@ -666,6 +720,14 @@ public final class SfxTemplateCompiler {
         return value != null && Boolean.parseBoolean(String.valueOf(value));
     }
 
+    private String stringOrNull(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? null : text;
+    }
+
     private record SourceNode(String relativePath, Map<String, Object> root) {
     }
 
@@ -678,6 +740,6 @@ public final class SfxTemplateCompiler {
     private record MergeDirective(String sourcePath, String targetPath, Map<String, Object> payload) {
     }
 
-    private record OutputNode(List<String> keys, String path, Map<String, Object> value) {
+    private record OutputNode(List<String> keys, String path, String targetResource, Map<String, Object> value) {
     }
 }

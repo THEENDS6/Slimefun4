@@ -21,7 +21,7 @@ public final class SfxCompiledYamlResolver {
                 ? YamlConfiguration.loadConfiguration(baseFile)
                 : new YamlConfiguration();
         Map<String, Object> mergedMap = sectionToMap(base);
-        File compiledRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY);
+        File compiledRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY + "/" + compiledDirectory(resourcePath));
         if (!compiledRoot.isDirectory()) {
             return base;
         }
@@ -55,6 +55,17 @@ public final class SfxCompiledYamlResolver {
                 })
                 .sorted(Comparator.comparing(File::getPath))
                 .toList();
+    }
+
+    private static String compiledDirectory(String resourcePath) {
+        String normalized = resourcePath.replace('\\', '/');
+        if (normalized.endsWith(".yml")) {
+            return normalized.substring(0, normalized.length() - 4);
+        }
+        if (normalized.endsWith(".yaml")) {
+            return normalized.substring(0, normalized.length() - 5);
+        }
+        return normalized;
     }
 
     @SuppressWarnings("unchecked")

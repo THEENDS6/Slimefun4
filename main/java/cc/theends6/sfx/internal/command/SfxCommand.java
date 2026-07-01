@@ -417,23 +417,36 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload", "<red>You do not have permission to reload SFX.</red>")));
             return;
         }
-        if (args.length < 2 || !args[1].equalsIgnoreCase("compile")) {
-            sender.sendMessage(Text.prefixed(plugin, "<red>Usage: /sfx template compile</red>"));
-            return;
-        }
         SlimeFunXPlugin sfx = sfxPlugin();
         if (sfx == null) {
             sender.sendMessage("SFX plugin context unavailable.");
             return;
         }
+        if (args.length < 2) {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.template.usage", "<red>Usage: /sfx template <compile|reload></red>")));
+            return;
+        }
+        if (args[1].equalsIgnoreCase("reload")) {
+            boolean ok = sfx.reloadAllContent();
+            sender.sendMessage(Text.prefixed(plugin, ok
+                    ? tr("command.template.reload-success", "<green>SFX templates compiled and runtime content was rebuilt.</green>")
+                    : tr("command.reload.failed-all", "<red>SFX runtime reload failed. The plugin was disabled to avoid running with a partial service graph.</red>")));
+            return;
+        }
+        if (!args[1].equalsIgnoreCase("compile")) {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.template.usage", "<red>Usage: /sfx template <compile|reload></red>")));
+            return;
+        }
         try {
             SfxTemplateCompileReport report = sfx.compileContentTemplates();
-            sender.sendMessage(Text.prefixed(plugin, "<green>SFX templates compiled: " + report.sourceFiles() + " source file(s), " + report.outputFiles() + " output file(s).</green>"));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.template.compile-success", "<green>SFX templates compiled: {sources} source file(s), {outputs} output file(s). Use /sfx reload runtime to apply runtime changes.</green>")
+                    .replace("{sources}", Integer.toString(report.sourceFiles()))
+                    .replace("{outputs}", Integer.toString(report.outputFiles()))));
             for (String warning : report.warnings()) {
-                sender.sendMessage(Text.prefixed(plugin, "<yellow>[template] " + warning + "</yellow>"));
+                sender.sendMessage(Text.prefixed(plugin, tr("command.template.warning", "<yellow>[template] {warning}</yellow>").replace("{warning}", warning)));
             }
         } catch (RuntimeException ex) {
-            sender.sendMessage(Text.prefixed(plugin, "<red>SFX template compile failed: " + ex.getMessage() + "</red>"));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.template.compile-failed", "<red>SFX template compile failed: {message}</red>").replace("{message}", ex.getMessage())));
         }
     }
 
@@ -448,7 +461,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Text.mm(tr("command.help.line.inspect", "<gray>/{label} inspect</gray> <dark_gray>- inspect the SFX item in your main hand</dark_gray>").replace("{label}", label)));
         sender.sendMessage(Text.mm(tr("command.help.line.list", "<gray>/{label} list [page]</gray> <dark_gray>- list visible SFX items</dark_gray>").replace("{label}", label)));
         sender.sendMessage(Text.mm(tr("command.help.line.reload", "<gray>/{label} reload [config|runtime]</gray> <dark_gray>- reload config or rebuild the SFX runtime</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm("<gray>/" + label + " template compile</gray> <dark_gray>- compile content templates</dark_gray>"));
+        sender.sendMessage(Text.mm(tr("command.help.line.template", "<gray>/{label} template <compile|reload></gray> <dark_gray>- compile templates or compile and rebuild runtime content</dark_gray>").replace("{label}", label)));
     }
 
     @Override
