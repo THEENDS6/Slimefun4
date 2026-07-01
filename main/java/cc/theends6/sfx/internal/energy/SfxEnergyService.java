@@ -67,7 +67,7 @@ public final class SfxEnergyService implements Listener {
     final SfxConfigurableMachineService configurableMachines;
     private final SfxEnergyDisplayController displayController;
     private final SfxCapacitorAppearanceProjector capacitorProjector;
-    private final SfxEnergyMachineService energyMachines;
+    private final SfxEnergyBackedElectricMenuService electricEnergyMenus;
     private final SfxRechargeableItemService rechargeableItems;
     final SfxMachineRuntimeEngine machineRuntime;
     private final SfxTopologyService topology;
@@ -107,7 +107,7 @@ public final class SfxEnergyService implements Listener {
         this.displayController = new SfxEnergyDisplayController(plugin, localization, Objects.requireNonNull(floatingTextDisplay, "floatingTextDisplay"));
         this.capacitorProjector = new SfxCapacitorAppearanceProjector(runtime, blockData, definitions);
         this.definitions.putAll(SfxEnergyDefinitions.create(plugin));
-        this.energyMachines = new SfxEnergyMachineService(this, rechargeableItems);
+        this.electricEnergyMenus = new SfxEnergyBackedElectricMenuService(this, rechargeableItems);
         this.topology = new SfxTopologyService(
                 blockData,
                 new SfxEnergyTopologyPolicy(definitions, electricMachines, configurableMachines),
@@ -126,8 +126,8 @@ public final class SfxEnergyService implements Listener {
         scheduleFlush();
     }
 
-    public Listener machineListener() {
-        return energyMachines;
+    public Listener electricMenuListener() {
+        return electricEnergyMenus;
     }
 
     private void registerFrameworkEffects() {
@@ -239,7 +239,7 @@ public final class SfxEnergyService implements Listener {
         }
         SfxEventGuards.denyBlockAndItemUse(event);
         if (definition.isFueledGenerator() || definition.isCharger()) {
-            runtime.executeForPlayer(event.getPlayer(), () -> energyMachines.open(event.getPlayer(), instance, definition));
+            runtime.executeForPlayer(event.getPlayer(), () -> electricEnergyMenus.open(event.getPlayer(), instance, definition));
             return;
         }
         if (definition.componentType() == SfxEnergyComponentType.REGULATOR) {
@@ -253,7 +253,7 @@ public final class SfxEnergyService implements Listener {
         if (block == null || instanceId == null || typeId == null || !definitions.containsKey(typeId)) {
             return;
         }
-        energyMachines.closeAndSync(instanceId);
+        electricEnergyMenus.closeAndSync(instanceId);
 
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         SfxEnergyNodeState state = nodeStates.get(instanceId);
@@ -291,7 +291,7 @@ public final class SfxEnergyService implements Listener {
 
     public void shutdown() {
         running = false;
-        energyMachines.shutdown();
+        electricEnergyMenus.shutdown();
         flushDirty();
         displayController.shutdown();
         runtimeGrids.clear();
@@ -1092,11 +1092,11 @@ public final class SfxEnergyService implements Listener {
     }
 
     void refreshOpenSfxEnergyGeneratorSessions() {
-        energyMachines.refreshOpenSessions();
+        electricEnergyMenus.refreshOpenSessions();
     }
 
     private void renderStorageSlots(UUID instanceId, SfxEnergyNodeState state) {
-        energyMachines.renderStorageSlots(instanceId, state);
+        electricEnergyMenus.renderStorageSlots(instanceId, state);
     }
 
     SfxEnergyNodeState currentState(UUID instanceId, SfxBlockInstanceRecord instance) {

@@ -18,6 +18,7 @@ import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.ui.SfxInventoryPolicy;
+import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
 import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
@@ -430,9 +431,6 @@ public final class SfxElectricMachineService implements Listener {
         if (!(event.getView().getTopInventory().getHolder() instanceof SfxElectricMachineHolder holder)) {
             return;
         }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
-            return;
-        }
         SfxElectricMachineDefinition clickDefinition = definitionFor(holder.instanceId());
         if (clickDefinition != null) {
             SfxMachineLegacyHookBridge.menuClick(machineRuntime, clickDefinition.id(), holder.instanceId(), null, "electric", "SfxElectricMachineService.onInventoryClick");
@@ -441,13 +439,16 @@ public final class SfxElectricMachineService implements Listener {
             event.setCancelled(true);
             return;
         }
-        boolean topSlot = event.getRawSlot() < event.getView().getTopInventory().getSize();
+        boolean topSlot = event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize();
         if (clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
             event.setCancelled(true);
             if (topSlot) {
                 handleAutoCrafterButton(holder.instanceId(), event.getRawSlot(), event.getClick());
                 runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
             }
+            return;
+        }
+        if (topSlot && SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             return;
         }
         if (event.isShiftClick() && !topSlot) {
@@ -469,9 +470,12 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         if (topSlot && contains(clickDefinition.outputSlots(), event.getRawSlot())) {
-            if (!isTakingFromOutput(event)) {
+            if (!SfxMachineMenuTransactions.isTakingFromOutput(event)) {
                 event.setCancelled(true);
                 return;
+            }
+            if (SfxMachineMenuTransactions.dropFromTopSlot(event, event.getView().getTopInventory(), event.getRawSlot(), player)) {
+                event.setCancelled(true);
             }
             runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
             return;
@@ -493,6 +497,14 @@ public final class SfxElectricMachineService implements Listener {
                 event.setCancelled(true);
                 return;
             }
+        }
+        if (topSlot && SfxMachineMenuTransactions.dropFromTopSlot(event, event.getView().getTopInventory(), event.getRawSlot(), player)) {
+            event.setCancelled(true);
+            runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+            return;
+        }
+        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
+            return;
         }
         runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
     }
@@ -1349,14 +1361,6 @@ public final class SfxElectricMachineService implements Listener {
         
         session.markRendered(tickCounter, status);
         return true;
-    }
-
-    private boolean isTakingFromOutput(InventoryClickEvent event) {
-        ItemStack current = event.getCurrentItem();
-        ItemStack cursor = event.getCursor();
-        boolean currentItem = current != null && !current.getType().isAir();
-        boolean cursorEmpty = cursor == null || cursor.getType().isAir();
-        return currentItem && (cursorEmpty || event.isShiftClick());
     }
 
     private boolean contains(int[] slots, int value) {
