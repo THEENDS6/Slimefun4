@@ -2,6 +2,7 @@
 .idea/
 build/
 out/
+output/
 run-paper-1.21.8/
 run-paper-26.1/
 run-folia-1.21.8/

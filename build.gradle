@@ -1,5 +1,7 @@
 import java.nio.charset.StandardCharsets
 import java.nio.file.StandardCopyOption
+import java.util.concurrent.TimeUnit
+import org.gradle.api.tasks.bundling.Zip
 
 plugins {
     id 'java'
@@ -20,6 +22,7 @@ ext {
     plugManXVersion = '3.0.4'
     plugManXDownloadUrl = 'https://cdn.modrinth.com/data/yro4niHu/versions/hrMAp7Ww/PlugManX-3.0.4.jar'
     plugManXJarName = 'PlugManX.jar'
+    outputDirName = 'output'
     paper261RuntimeDirName = 'run-paper-26.1'
     paper261RuntimeJarName = 'paper-26.1.jar'
     foliaRuntimeJarName = 'folia-1.21.8-6.jar'
@@ -98,6 +101,68 @@ tasks.named('jar') {
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }
 
+def sameFileContent = { File left, File right ->
+    if (!left.exists() || !right.exists() || left.length() != right.length()) {
+        return false
+    }
+    left.withInputStream { leftStream ->
+        right.withInputStream { rightStream ->
+            byte[] leftBuffer = new byte[8192]
+            byte[] rightBuffer = new byte[8192]
+            int leftRead
+            while ((leftRead = leftStream.read(leftBuffer)) != -1) {
+                int rightRead = rightStream.read(rightBuffer)
+                if (leftRead != rightRead) {
+                    return false
+                }
+                for (int index = 0; index < leftRead; index++) {
+                    if (leftBuffer[index] != rightBuffer[index]) {
+                        return false
+                    }
+                }
+            }
+            return rightStream.read() == -1
+        }
+    }
+}
+
+tasks.register('sourcePackage', Zip) {
+    group = 'build'
+    description = 'Packages SlimeFunX source files into the output directory.'
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    from(layout.projectDirectory.dir('main')) {
+        into 'main'
+    }
+    from(layout.projectDirectory.file('build.gradle'))
+    from(layout.projectDirectory.file('README.md'))
+    from(layout.projectDirectory.file('LICENSE'))
+    destinationDirectory.set(layout.projectDirectory.dir(rootProject.ext.outputDirName))
+    archiveFileName.set('SlimeFunX-src.zip')
+}
+
+tasks.register('exportPluginArtifacts') {
+    group = 'build'
+    description = 'Copies SlimeFunX.jar and SlimeFunX-src.zip into the output directory.'
+    dependsOn 'jar', 'sourcePackage'
+    doLast {
+        def outputDir = layout.projectDirectory.dir(rootProject.ext.outputDirName).asFile
+        outputDir.mkdirs()
+        def sourceJar = tasks.named('jar').get().archiveFile.get().asFile
+        def targetJar = new File(outputDir, rootProject.ext.pluginJarName)
+        if (sameFileContent(sourceJar, targetJar)) {
+            logger.lifecycle("Export unchanged, keeping timestamp: ${targetJar.name}")
+        } else {
+            java.nio.file.Files.copy(sourceJar.toPath(), targetJar.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            logger.lifecycle("Exported plugin jar: ${targetJar}")
+        }
+    }
+}
+
+tasks.named('build') {
+    finalizedBy 'exportPluginArtifacts'
+}
+
 tasks.register('prepareRuntimeDirs') {
     group = 'application'
     description = 'Creates runtime plugin directories for Paper, Folia, and legacy Slimefun.'
@@ -113,6 +178,7 @@ tasks.register('deployToPaperRuntime', Copy) {
     group = 'deployment'
     description = 'Builds the plugin and copies it to run-paper-1.21.8/plugins.'
     dependsOn 'prepareRuntimeDirs', 'jar'
+    finalizedBy 'exportPluginArtifacts'
     from(tasks.named('jar').flatMap { it.archiveFile })
     into(layout.projectDirectory.dir('run-paper-1.21.8/plugins'))
     rename { rootProject.ext.pluginJarName }
@@ -580,14 +646,71 @@ def preferredJava25Executable = {
     java25 != null ? java25.absolutePath : 'java'
 }
 
-tasks.register('runPaper', Exec) {
+tasks.register('runPaper') {
     group = 'application'
     description = 'Builds the plugin, deploys it to the Paper runtime, and starts Paper 1.21.8.'
     dependsOn 'ensurePaperRuntimeTestConfig', 'deployToPaperRuntime'
-    workingDir layout.projectDirectory.dir('run-paper-1.21.8').asFile
-    executable preferredJavaExecutable()
-    standardInput = System.in
-    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui']
+    doLast {
+        def workingDirFile = layout.projectDirectory.dir('run-paper-1.21.8').asFile
+        def command = [preferredJavaExecutable()]
+        command.addAll(rootProject.ext.serverEncodingJvmArgs)
+        command.addAll(['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui'])
+
+        logger.lifecycle('Starting Paper 1.21.8 with heartbeat output to avoid idle timeout false positives.')
+
+        def process = new ProcessBuilder(command)
+                .directory(workingDirFile)
+                .redirectErrorStream(true)
+                .start()
+
+        def inputThread = Thread.startDaemon('runPaper-input-forwarder') {
+            def processInput = process.outputStream
+            try {
+                byte[] buffer = new byte[1024]
+                int read
+                while (process.isAlive() && (read = System.in.read(buffer)) != -1) {
+                    processInput.write(buffer, 0, read)
+                    processInput.flush()
+                }
+            } catch (IOException ignored) {
+                // Ignore stdin forwarding errors during shutdown.
+            } finally {
+                try {
+                    processInput.close()
+                } catch (IOException ignored) {
+                    // Ignore close failure during shutdown.
+                }
+            }
+        }
+
+        def forwardThread = Thread.startDaemon('runPaper-output-forwarder') {
+            process.inputStream.withReader(StandardCharsets.UTF_8.name()) { reader ->
+                String line
+                while ((line = reader.readLine()) != null) {
+                    println line
+                }
+            }
+        }
+
+        try {
+            while (process.isAlive()) {
+                if (!process.waitFor(30, TimeUnit.SECONDS)) {
+                    logger.lifecycle('[runPaper] still running...')
+                }
+            }
+            inputThread.join(1000)
+            forwardThread.join(1000)
+        } finally {
+            if (process.isAlive()) {
+                process.destroy()
+            }
+        }
+
+        def exitCode = process.exitValue()
+        if (exitCode != 0) {
+            throw new GradleException("Paper 1.21.8 exited with code ${exitCode}.")
+        }
+    }
 }
 
 tasks.register('runPaper261', Exec) {
