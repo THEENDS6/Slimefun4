@@ -53,8 +53,9 @@ public final class DefaultSfxRecipeRegistry {
                 continue;
             }
 
-            if (definition.runtimeEnabled() && !definition.runtimeMachineIds().isEmpty()) {
-                registerRuntime(definition, machines, audit);
+            List<String> runtimeMachineIds = runtimeMachineIds(definition, machines);
+            if (definition.runtimeEnabled() && !runtimeMachineIds.isEmpty()) {
+                registerRuntime(definition, machines, runtimeMachineIds, audit);
             }
 
             for (SfxRecipeOutputDefinition output : definition.allOutputs()) {
@@ -77,7 +78,11 @@ public final class DefaultSfxRecipeRegistry {
         List<String> errors = new ArrayList<>();
 
         if (definition.runtimeEnabled()) {
-            for (String machineId : definition.runtimeMachineIds()) {
+            List<String> runtimeMachineIds = runtimeMachineIds(definition, machines);
+            if (!definition.runtimeMachineTags().isEmpty() && runtimeMachineIds.isEmpty()) {
+                errors.add("runtime machine tags matched no machines " + definition.runtimeMachineTags());
+            }
+            for (String machineId : runtimeMachineIds) {
                 if (machines.machine(machineId).isEmpty()) {
                     errors.add("unknown runtime machine " + machineId);
                 }
@@ -99,8 +104,8 @@ public final class DefaultSfxRecipeRegistry {
         return errors;
     }
 
-    private void registerRuntime(SfxRecipeDefinition definition, DefaultManualMachineRegistry machines, Audit audit) {
-        if (definition.runtimeMachineIds().isEmpty()) {
+    private void registerRuntime(SfxRecipeDefinition definition, DefaultManualMachineRegistry machines, List<String> runtimeMachineIds, Audit audit) {
+        if (runtimeMachineIds.isEmpty()) {
             return;
         }
 
@@ -108,7 +113,7 @@ public final class DefaultSfxRecipeRegistry {
         List<ManualMachineOutput> fixedOutputs = toManualOutputs(definition.outputs());
         List<ManualMachineOutput> randomOutputs = toManualOutputs(definition.randomOutputs());
 
-        for (String machineId : definition.runtimeMachineIds()) {
+        for (String machineId : runtimeMachineIds) {
             ManualMachineRecipe recipe = switch (definition.operation()) {
                 case SHAPED -> ManualMachineRecipe.shaped(machineId, definition.inputs(), fixedOutputs, note);
                 case SHAPELESS -> definition.matchPriority() == null
@@ -126,6 +131,14 @@ public final class DefaultSfxRecipeRegistry {
                 audit.skipped(definition.id(), ex.getMessage());
             }
         }
+    }
+
+    private List<String> runtimeMachineIds(SfxRecipeDefinition definition, DefaultManualMachineRegistry machines) {
+        Set<String> result = new LinkedHashSet<>(definition.runtimeMachineIds());
+        if (!definition.runtimeMachineTags().isEmpty()) {
+            result.addAll(machines.machineIdsWithTags(definition.runtimeMachineTags()));
+        }
+        return List.copyOf(result);
     }
 
     private List<ManualMachineOutput> toManualOutputs(List<SfxRecipeOutputDefinition> outputs) {

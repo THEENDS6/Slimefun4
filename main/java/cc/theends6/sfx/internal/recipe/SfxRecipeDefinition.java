@@ -11,6 +11,7 @@ public final class SfxRecipeDefinition {
     private final String id;
     private final String recipeType;
     private final List<String> runtimeMachineIds;
+    private final List<String> runtimeMachineTags;
     private final SfxRecipeOperation operation;
     private final List<SfxRecipeSlot> inputs;
     private final List<SfxRecipeOutputDefinition> outputs;
@@ -30,6 +31,13 @@ public final class SfxRecipeDefinition {
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
                 .map(SfxItemDefinition::normalizeId)
+                .distinct()
+                .toList());
+        this.runtimeMachineTags = Collections.unmodifiableList(builder.runtimeMachineTags.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .map(SfxRecipeDefinition::normalizeTag)
                 .distinct()
                 .toList());
         this.operation = Objects.requireNonNull(builder.operation, "operation");
@@ -91,6 +99,10 @@ public final class SfxRecipeDefinition {
         return runtimeMachineIds;
     }
 
+    public List<String> runtimeMachineTags() {
+        return runtimeMachineTags;
+    }
+
     public SfxRecipeOperation operation() {
         return operation;
     }
@@ -143,6 +155,7 @@ public final class SfxRecipeDefinition {
         private final String recipeType;
         private final SfxRecipeOperation operation;
         private final List<String> runtimeMachineIds = new ArrayList<>();
+        private final List<String> runtimeMachineTags = new ArrayList<>();
         private final List<SfxRecipeSlot> inputs = new ArrayList<>();
         private final List<SfxRecipeOutputDefinition> outputs = new ArrayList<>();
         private final List<SfxRecipeOutputDefinition> randomOutputs = new ArrayList<>();
@@ -171,6 +184,14 @@ public final class SfxRecipeDefinition {
             this.runtimeMachineIds.clear();
             if (machineIds != null) {
                 this.runtimeMachineIds.addAll(machineIds);
+            }
+            return this;
+        }
+
+        public Builder runtimeMachineTags(List<String> tags) {
+            this.runtimeMachineTags.clear();
+            if (tags != null) {
+                this.runtimeMachineTags.addAll(tags);
             }
             return this;
         }
@@ -226,5 +247,9 @@ public final class SfxRecipeDefinition {
         public SfxRecipeDefinition build() {
             return new SfxRecipeDefinition(this);
         }
+    }
+
+    private static String normalizeTag(String raw) {
+        return raw.trim().replace('_', '-').toLowerCase(java.util.Locale.ROOT);
     }
 }

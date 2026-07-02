@@ -157,6 +157,7 @@ public final class SfxRecipeYamlLoader {
         } else {
             builder.runtimeMachineId(optionalString(entry.get("machine")));
         }
+        builder.runtimeMachineTags(stringList(entry.get("runtime-machine-tags")));
 
         builder.inputs(parseInputs(operation, entry));
         builder.outputs(parseOutputs(entry.get("outputs")));

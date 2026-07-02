@@ -4,9 +4,11 @@ import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.util.Text;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
@@ -79,7 +81,19 @@ public final class SfxManualMachineYamlLoader {
         BlockFace inventoryFace = parseFace(section.getString("inventory-face", "SELF"));
         ManualMachineOperation operation = ManualMachineOperation.valueOf(section.getString("operation", "SINGLE_INPUT").trim().replace('-', '_').toUpperCase(Locale.ROOT));
         boolean deployable = section.getBoolean("deployable", true);
-        return new ManualMachineDefinition(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable);
+        return new ManualMachineDefinition(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, stringSet(section.getList("tags")));
+    }
+
+    private Set<String> stringSet(List<?> raw) {
+        Set<String> result = new LinkedHashSet<>();
+        if (raw != null) {
+            for (Object value : raw) {
+                if (value != null && !String.valueOf(value).isBlank()) {
+                    result.add(String.valueOf(value).trim());
+                }
+            }
+        }
+        return result;
     }
 
     private Material[] parsePattern(List<?> raw) {

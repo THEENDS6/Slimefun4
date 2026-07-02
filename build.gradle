@@ -262,6 +262,15 @@ tasks.register('validateSfxCompiledContent') {
         if (recipeFiles.size() != 547) {
             violations << "compiled recipe file count expected 547, got ${recipeFiles.size()}"
         }
+        [
+                'content/recipes/recipes',
+                'content/machines/electric-machines/machines',
+                'content/machines/energy-components/components'
+        ].each { repeatedPath ->
+            if (new File(root, repeatedPath).exists()) {
+                violations << "compiled output path still contains repeated root section: ${repeatedPath}"
+            }
+        }
         def electricFiles = fileTree(new File(root, 'content/machines/electric-machines')) {
             include '**/*.yml'
         }.files
