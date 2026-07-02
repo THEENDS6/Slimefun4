@@ -62,6 +62,8 @@ public final class BaseContentBootstrap {
 
     private static void registerGuideItems(SfxItemRegistry registry) {
         registry.registerItem(SfxItemDefinition.builder("sfx:guide", Material.ENCHANTED_BOOK, Text.mm("<green>SFX Guide</green>"))
+                .nameKey("items.sfx.guide.name")
+                .loreKey("items.sfx.guide.lore")
                 .category("sfx:internal")
                 .kind(SfxItemKind.GUIDE)
                 .hidden(true)
@@ -69,6 +71,8 @@ public final class BaseContentBootstrap {
                 .build());
 
         registry.registerItem(SfxItemDefinition.builder("sfx:cheat_guide", Material.ENCHANTED_BOOK, Text.mm("<red>SFX Cheat Guide</red>"))
+                .nameKey("items.sfx.cheat_guide.name")
+                .loreKey("items.sfx.cheat_guide.lore")
                 .category("sfx:internal")
                 .kind(SfxItemKind.GUIDE)
                 .hidden(true)
@@ -90,6 +94,8 @@ public final class BaseContentBootstrap {
 
     private static SfxItemDefinition withAddedRecipe(SfxItemDefinition existing, SfxRecipe extra) {
         SfxItemDefinition.Builder builder = SfxItemDefinition.builder(existing.id(), existing.material(), existing.name())
+                .nameKey(existing.nameKey())
+                .loreKey(existing.loreKey())
                 .lore(existing.lore())
                 .category(existing.categoryId())
                 .order(existing.order())

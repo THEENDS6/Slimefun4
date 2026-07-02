@@ -3,70 +3,54 @@ items:
 - id: sf:portable_crafter
   category: sf:items
   material: PLAYER_HEAD
-  name: '&6Portable Crafter'
+  name-key: items.sf.portable_crafter.name
   priority: 1
   headTexture: 72ec4a4bd8a58f8361f8a0303e2199d33d624ea5f92f7cb3414fee95e2d861
-  lore:
-  - '&aA portable Crafting Table'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.portable_crafter.lore
   flags:
   - legacy-sf
 - id: sf:portable_dustbin
   category: sf:items
   material: PLAYER_HEAD
-  name: '&6Portable Dustbin'
+  name-key: items.sf.portable_dustbin.name
   priority: 2
   headTexture: 32d41042ce99147cc38cac9e46741576e7ee791283e6fac8d3292cae2935f1f
-  lore:
-  - '&fYour portable Item-Destroyer'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.portable_dustbin.lore
   flags:
   - legacy-sf
 - id: sf:ender_backpack
   category: sf:items
   material: PLAYER_HEAD
-  name: '&6Ender Backpack'
+  name-key: items.sf.ender_backpack.name
   priority: 3
   headTexture: 2a3b34862b9afb63cf8d5779966d3fba70af82b04e83f3eaf6449aeba
-  lore:
-  - '&aA portable Ender Chest'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.ender_backpack.lore
   flags:
   - legacy-sf
   - armor-ender
 - id: sf:magic_eye_of_ender
   category: sf:items
   material: ENDER_EYE
-  name: '&6&lMagic Eye of Ender'
+  name-key: items.sf.magic_eye_of_ender.name
   priority: 4
-  lore:
-  - '&4&lRequires full Ender Armor'
-  - ''
-  - '&eRight Click&7 to shoot an Ender Pearl'
+  lore-key: items.sf.magic_eye_of_ender.lore
   flags:
   - legacy-sf
   - visual-glint
 - id: sf:broken_spawner
   category: sf:items
   material: SPAWNER
-  name: '&cBroken Spawner'
+  name-key: items.sf.broken_spawner.name
   priority: 5
-  lore:
-  - '&7Type: &b<Type>'
-  - ''
-  - '&cFractured, must be repaired in an Ancient Altar'
+  lore-key: items.sf.broken_spawner.lore
   flags:
   - legacy-sf
 - id: sf:reinforced_spawner
   category: sf:items
   material: SPAWNER
-  name: '&bReinforced Spawner'
+  name-key: items.sf.reinforced_spawner.name
   priority: 463
-  lore:
-  - '&7Type: &b<Type>'
+  lore-key: items.sf.reinforced_spawner.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -75,102 +59,80 @@ items:
 - id: sf:infernal_bonemeal
   category: sf:items
   material: BONE_MEAL
-  name: '&4Infernal Bonemeal'
+  name-key: items.sf.infernal_bonemeal.name
   priority: 6
-  lore:
-  - ''
-  - '&cSpeeds up the Growth of'
-  - '&cNether Warts as well'
+  lore-key: items.sf.infernal_bonemeal.lore
   flags:
   - legacy-sf
 - id: sf:tape_measure
   category: sf:items
   material: PLAYER_HEAD
-  name: '&6Tape Measure'
+  name-key: items.sf.tape_measure.name
   priority: 7
   headTexture: 180d5c43a6cf5bb7769fd0c8240e1e70d2ae38ef9d78a1db401aca6a2cb36f65
-  lore:
-  - ''
-  - '&eCrouch & Right Click &7to set an anchor'
-  - '&eRight Click &7to measure'
+  lore-key: items.sf.tape_measure.lore
   flags:
   - legacy-sf
 - id: sf:gold_pan
   category: sf:gadgets
   material: BOWL
-  name: '&6Gold Pan'
+  name-key: items.sf.gold_pan.name
   priority: 8
-  lore:
-  - ''
-  - '&eRight Click&7 to collect resources'
-  - '&7from Gravel'
+  lore-key: items.sf.gold_pan.lore
   flags:
   - legacy-sf
 - id: sf:nether_gold_pan
   category: sf:gadgets
   material: BOWL
-  name: '&4Nether Gold Pan'
+  name-key: items.sf.nether_gold_pan.name
   priority: 9
-  lore:
-  - ''
-  - '&eRight Click&7 to collect resources'
-  - '&7from Soul Sand'
+  lore-key: items.sf.nether_gold_pan.lore
   flags:
   - legacy-sf
 - id: sf:parachute
   category: sf:gadgets
   material: LEATHER_CHESTPLATE
-  name: '&f&lParachute'
+  name-key: items.sf.parachute.name
   priority: 10
   colorRgb: 16383998
-  lore:
-  - ''
-  - '&eHold Space&7 to thrust'
+  lore-key: items.sf.parachute.lore
   flags:
   - legacy-sf
 - id: sf:grappling_hook
   category: sf:gadgets
   material: LEAD
-  name: '&6Grappling Hook'
+  name-key: items.sf.grappling_hook.name
   priority: 11
-  lore:
-  - ''
-  - '&eRight Click&7 to use'
+  lore-key: items.sf.grappling_hook.lore
   flags:
   - legacy-sf
 - id: sf:solar_helmet
   category: sf:gadgets
   material: IRON_HELMET
-  name: '&bSolar Helmet'
+  name-key: items.sf.solar_helmet.name
   priority: 12
-  lore:
-  - ''
-  - '&aCharges held Items and Armor'
+  lore-key: items.sf.solar_helmet.lore
   flags:
   - legacy-sf
 - id: sf:cloth
   category: sf:gadgets
   material: PAPER
-  name: '&bCloth'
+  name-key: items.sf.cloth.name
   priority: 13
   flags:
   - legacy-sf
 - id: sf:reinforced_cloth
   category: sf:gadgets
   material: PAPER
-  name: '&bReinforced Cloth'
+  name-key: items.sf.reinforced_cloth.name
   priority: 14
-  lore:
-  - ''
-  - '&fThis cloth has been reinforced'
-  - '&fwith &bLead &fto protect against'
-  - '&fradioactive substances'
+  lore-key: items.sf.reinforced_cloth.lore
   flags:
   - legacy-sf
 - id: sf:can
   category: sf:gadgets
   material: PLAYER_HEAD
-  name: '&fTin Can'
+  name-key: items.sf.can.name
   priority: 464
   headTexture: 94da97f080e395b842c4cc82a840823d4dbd8ca688a206853e5783e4bfdc012
   flags:
@@ -178,160 +140,104 @@ items:
 - id: sf:night_vision_goggles
   category: sf:gadgets
   material: LEATHER_HELMET
-  name: '&aNight Vision Goggles'
+  name-key: items.sf.night_vision_goggles.name
   priority: 15
   colorRgb: 1908001
-  lore:
-  - ''
-  - '&9+ Night Vision'
+  lore-key: items.sf.night_vision_goggles.lore
   flags:
   - legacy-sf
   - armor-night-vision
 - id: sf:elytra_cap
   category: sf:gadgets
   material: LEATHER_HELMET
-  name: '&5Elytra Cap'
+  name-key: items.sf.elytra_cap.name
   priority: 16
   colorRgb: 8991416
-  lore:
-  - ''
-  - '&7This helmet will protect you from'
-  - '&7crashing while flying with an elytra.'
+  lore-key: items.sf.elytra_cap.lore
   flags:
   - legacy-sf
   - armor-elytra-impact
 - id: sf:farmer_shoes
   category: sf:gadgets
   material: LEATHER_BOOTS
-  name: '&eFarmer Shoes'
+  name-key: items.sf.farmer_shoes.name
   priority: 17
   colorRgb: 16701501
-  lore:
-  - ''
-  - '&6Prevents you from trampling your Crops'
+  lore-key: items.sf.farmer_shoes.lore
   flags:
   - legacy-sf
   - armor-farmland-safe
 - id: sf:infused_magnet
   category: sf:gadgets
   material: PLAYER_HEAD
-  name: '&aInfused Magnet'
+  name-key: items.sf.infused_magnet.name
   priority: 18
   headTexture: aba8ebc4c6a81730947499bf7e1d5e73fed6c1bb2c051e96d35eb16d24610e7
-  lore:
-  - ''
-  - '&fMagical infused Magnets'
-  - '&fattract nearby Items'
-  - '&fas long as it is somewhere in'
-  - '&fyour Inventory'
-  - ''
-  - '&7Hold &eShift&7 to pick up nearby Items'
+  lore-key: items.sf.infused_magnet.lore
   flags:
   - legacy-sf
   - visual-glint
 - id: sf:rag
   category: sf:gadgets
   material: PAPER
-  name: '&cRag'
+  name-key: items.sf.rag.name
   priority: 19
-  lore:
-  - ''
-  - '&aLevel I - Medical Supply'
-  - ''
-  - '&fRestores 2 Hearts'
-  - '&fExtinguishes Fire'
-  - ''
-  - '&eRight Click&7 to use'
+  lore-key: items.sf.rag.lore
   flags:
   - legacy-sf
 - id: sf:bandage
   category: sf:gadgets
   material: PAPER
-  name: '&cBandage'
+  name-key: items.sf.bandage.name
   priority: 20
-  lore:
-  - ''
-  - '&aLevel II - Medical Supply'
-  - ''
-  - '&fRestores 4 Hearts'
-  - '&fExtinguishes Fire'
-  - ''
-  - '&eRight Click&7 to use'
+  lore-key: items.sf.bandage.lore
   flags:
   - legacy-sf
 - id: sf:splint
   category: sf:gadgets
   material: STICK
-  name: '&cSplint'
+  name-key: items.sf.splint.name
   priority: 21
-  lore:
-  - ''
-  - '&aLevel I - Medical Supply'
-  - ''
-  - '&fRestores 2 Hearts'
-  - ''
-  - '&eRight Click&7 to use'
+  lore-key: items.sf.splint.lore
   flags:
   - legacy-sf
 - id: sf:vitamins
   category: sf:gadgets
   material: NETHER_WART
-  name: '&cVitamins'
+  name-key: items.sf.vitamins.name
   priority: 22
-  lore:
-  - ''
-  - '&aLevel III - Medical Supply'
-  - ''
-  - '&fRestores 4 Hearts'
-  - '&fExtinguishes Fire'
-  - '&fCures Poison/Wither/Radiation'
-  - ''
-  - '&eRight Click&7 to use'
+  lore-key: items.sf.vitamins.lore
   flags:
   - legacy-sf
 - id: sf:medicine
   category: sf:gadgets
   material: POTION
-  name: '&cMedicine'
+  name-key: items.sf.medicine.name
   priority: 23
   colorRgb: 11546150
-  lore:
-  - ''
-  - '&aLevel III - Medical Supply'
-  - ''
-  - '&fRestores 4 Hearts'
-  - '&fExtinguishes Fire'
-  - '&fCures Poison/Wither/Radiation'
+  lore-key: items.sf.medicine.lore
   flags:
   - legacy-sf
 - id: sf:magical_zombie_pills
   category: sf:gadgets
   material: NETHER_WART
-  name: '&6Magical Zombie Pills'
+  name-key: items.sf.magical_zombie_pills.name
   priority: 24
-  lore:
-  - ''
-  - '&eRight Click &7a Zombified Villager'
-  - '&eor &7a Zombified Piglin to'
-  - '&7instantly cure it from its curse'
+  lore-key: items.sf.magical_zombie_pills.lore
   flags:
   - legacy-sf
 - id: sf:flask_of_knowledge
   category: sf:gadgets
   material: GLASS_BOTTLE
-  name: '&cFlask of Knowledge'
+  name-key: items.sf.flask_of_knowledge.name
   priority: 25
-  lore:
-  - ''
-  - '&fAllows you to store some of'
-  - '&fyour Experience in a Bottle'
-  - '&7Cost: &a1 Level'
+  lore-key: items.sf.flask_of_knowledge.lore
   flags:
   - legacy-sf
 - id: sf:filled_flask_of_knowledge
   category: sf:gadgets
   material: EXPERIENCE_BOTTLE
-  name: '&aFlask of Knowledge'
+  name-key: items.sf.filled_flask_of_knowledge.name
   priority: 26
   hidden: true
   flags:
@@ -339,641 +245,391 @@ items:
 - id: sf:small_backpack
   category: sf:backpacks
   material: PLAYER_HEAD
-  name: '&eSmall Backpack'
+  name-key: items.sf.small_backpack.name
   priority: 27
   headTexture: 40cb1e67b512ab2d4bf3d7ace0eaaf61c32cd4681ddc3987ceb326706a33fa
-  lore:
-  - ''
-  - '&7Size: &e9'
-  - '&7ID: <ID>'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.small_backpack.lore
   flags:
   - legacy-sf
 - id: sf:medium_backpack
   category: sf:backpacks
   material: PLAYER_HEAD
-  name: '&eBackpack'
+  name-key: items.sf.medium_backpack.name
   priority: 28
   headTexture: 40cb1e67b512ab2d4bf3d7ace0eaaf61c32cd4681ddc3987ceb326706a33fa
-  lore:
-  - ''
-  - '&7Size: &e18'
-  - '&7ID: <ID>'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.medium_backpack.lore
   flags:
   - legacy-sf
 - id: sf:large_backpack
   category: sf:backpacks
   material: PLAYER_HEAD
-  name: '&eLarge Backpack'
+  name-key: items.sf.large_backpack.name
   priority: 29
   headTexture: 40cb1e67b512ab2d4bf3d7ace0eaaf61c32cd4681ddc3987ceb326706a33fa
-  lore:
-  - ''
-  - '&7Size: &e27'
-  - '&7ID: <ID>'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.large_backpack.lore
   flags:
   - legacy-sf
 - id: sf:woven_backpack
   category: sf:backpacks
   material: PLAYER_HEAD
-  name: '&eWoven Backpack'
+  name-key: items.sf.woven_backpack.name
   priority: 30
   headTexture: 40cb1e67b512ab2d4bf3d7ace0eaaf61c32cd4681ddc3987ceb326706a33fa
-  lore:
-  - ''
-  - '&7Size: &e36'
-  - '&7ID: <ID>'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.woven_backpack.lore
   flags:
   - legacy-sf
 - id: sf:gilded_backpack
   category: sf:backpacks
   material: PLAYER_HEAD
-  name: '&eGilded Backpack'
+  name-key: items.sf.gilded_backpack.name
   priority: 31
   headTexture: 40cb1e67b512ab2d4bf3d7ace0eaaf61c32cd4681ddc3987ceb326706a33fa
-  lore:
-  - ''
-  - '&7Size: &e45'
-  - '&7ID: <ID>'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.gilded_backpack.lore
   flags:
   - legacy-sf
 - id: sf:radiant_backpack
   category: sf:backpacks
   material: PLAYER_HEAD
-  name: '&eRadiant Backpack'
+  name-key: items.sf.radiant_backpack.name
   priority: 32
   headTexture: 40cb1e67b512ab2d4bf3d7ace0eaaf61c32cd4681ddc3987ceb326706a33fa
-  lore:
-  - ''
-  - '&7Size: &e54 (Double chest)'
-  - '&7ID: <ID>'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.radiant_backpack.lore
   flags:
   - legacy-sf
 - id: sf:bound_backpack
   category: sf:backpacks
   material: PLAYER_HEAD
-  name: '&cSoulbound Backpack'
+  name-key: items.sf.bound_backpack.name
   priority: 33
   headTexture: 2a3b34862b9afb63cf8d5779966d3fba70af82b04e83f3eaf6449aeba
-  lore:
-  - ''
-  - '&7Size: &e36'
-  - '&7ID: <ID>'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.bound_backpack.lore
   flags:
   - legacy-sf
 - id: sf:cooler
   category: sf:backpacks
   material: PLAYER_HEAD
-  name: '&bCooler'
+  name-key: items.sf.cooler.name
   priority: 34
   headTexture: d4c1572584eb5de229de9f5a4f779d0aacbaffd33bcb33eb4536a6a2bc6a1
-  lore:
-  - '&fAllows you to store Juices/Smoothies'
-  - '&fand automatically consumes them when you are hungry'
-  - '&fand you have this in your Inventory'
-  - ''
-  - '&7Size: &e27'
-  - '&7ID: <ID>'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.cooler.lore
   flags:
   - legacy-sf
 - id: sf:restored_backpack
   category: sf:backpacks
   material: PLAYER_HEAD
-  name: '&eRestored Backpack'
+  name-key: items.sf.restored_backpack.name
   priority: 465
   hidden: true
   giveable: false
   headTexture: 9c3681bf8a2738232fb305597f7e2a34a3a5c1356705249e9a365b0bcd04705a
-  lore:
-  - ''
-  - '&7Retrieve your lost items'
-  - '&7ID: <ID>'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.restored_backpack.lore
   flags:
   - legacy-sf
 - id: sf:duralumin_jetpack
   category: sf:jetpacks
   material: LEATHER_CHESTPLATE
-  name: '&9Electric Jetpack &7- &eI'
+  name-key: items.sf.duralumin_jetpack.name
   priority: 35
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bDuralumin'
-  - '&8⇨ &e⚡&70 / 2000 J'
-  - '&8⇨ &7Thrust: &c0.10'
-  - '&8⇨ &7Height Limit: &b10 Blocks'
-  - ''
-  - '&eHold Space&7 to thrust'
+  lore-key: items.sf.duralumin_jetpack.lore
   flags:
   - legacy-sf
 - id: sf:solder_jetpack
   category: sf:jetpacks
   material: LEATHER_CHESTPLATE
-  name: '&9Electric Jetpack &7- &eII'
+  name-key: items.sf.solder_jetpack.name
   priority: 36
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bSolder'
-  - '&8⇨ &e⚡&70 / 4000 J'
-  - '&8⇨ &7Thrust: &c0.12'
-  - '&8⇨ &7Height Limit: &b15 Blocks'
-  - ''
-  - '&eHold Space&7 to thrust'
+  lore-key: items.sf.solder_jetpack.lore
   flags:
   - legacy-sf
 - id: sf:billon_jetpack
   category: sf:jetpacks
   material: LEATHER_CHESTPLATE
-  name: '&9Electric Jetpack &7- &eIII'
+  name-key: items.sf.billon_jetpack.name
   priority: 37
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bBillon'
-  - '&8⇨ &e⚡&70 / 6000 J'
-  - '&8⇨ &7Thrust: &c0.14'
-  - '&8⇨ &7Height Limit: &b20 Blocks'
-  - ''
-  - '&eHold Space&7 to thrust'
+  lore-key: items.sf.billon_jetpack.lore
   flags:
   - legacy-sf
 - id: sf:steel_jetpack
   category: sf:jetpacks
   material: LEATHER_CHESTPLATE
-  name: '&9Electric Jetpack &7- &eIV'
+  name-key: items.sf.steel_jetpack.name
   priority: 38
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bSteel'
-  - '&8⇨ &e⚡&70 / 10000 J'
-  - '&8⇨ &7Thrust: &c0.16'
-  - '&8⇨ &7Height Limit: &b25 Blocks'
-  - '&8⇨ &7Hover: &aDouble-tap Space'
-  - ''
-  - '&eHold Space&7 to thrust'
+  lore-key: items.sf.steel_jetpack.lore
   flags:
   - legacy-sf
 - id: sf:damascus_steel_jetpack
   category: sf:jetpacks
   material: LEATHER_CHESTPLATE
-  name: '&9Electric Jetpack &7- &eV'
+  name-key: items.sf.damascus_steel_jetpack.name
   priority: 39
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bDamascus Steel'
-  - '&8⇨ &e⚡&70 / 14000 J'
-  - '&8⇨ &7Thrust: &c0.18'
-  - '&8⇨ &7Height Limit: &b30 Blocks'
-  - '&8⇨ &7Hover: &aDouble-tap Space'
-  - ''
-  - '&eHold Space&7 to thrust'
+  lore-key: items.sf.damascus_steel_jetpack.lore
   flags:
   - legacy-sf
 - id: sf:reinforced_alloy_jetpack
   category: sf:jetpacks
   material: LEATHER_CHESTPLATE
-  name: '&9Electric Jetpack &7- &eVI'
+  name-key: items.sf.reinforced_alloy_jetpack.name
   priority: 40
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bReinforced Alloy'
-  - '&8⇨ &e⚡&70 / 22000 J'
-  - '&8⇨ &7Thrust: &c0.20'
-  - '&8⇨ &7Height Limit: &b50 Blocks'
-  - '&8⇨ &7Hover: &aDouble-tap Space'
-  - ''
-  - '&eHold Space&7 to thrust'
+  lore-key: items.sf.reinforced_alloy_jetpack.lore
   flags:
   - legacy-sf
 - id: sf:carbonado_jetpack
   category: sf:jetpacks
   material: LEATHER_CHESTPLATE
-  name: '&9Electric Jetpack &7- &eVII'
+  name-key: items.sf.carbonado_jetpack.name
   priority: 41
   colorRgb: 1908001
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bCarbonado'
-  - '&8⇨ &e⚡&70 / 30000 J'
-  - '&8⇨ &7Thrust: &c0.25'
-  - '&8⇨ &7Height Limit: &b100 Blocks'
-  - '&8⇨ &7Hover: &aDouble-tap Space'
-  - ''
-  - '&eHold Space&7 to thrust'
+  lore-key: items.sf.carbonado_jetpack.lore
   flags:
   - legacy-sf
 - id: sf:fuel_jetpack
   category: sf:jetpacks
   material: LEATHER_CHESTPLATE
-  name: '&6Fuel Jetpack'
+  name-key: items.sf.fuel_jetpack.name
   priority: 42
   colorRgb: 16755200
-  lore:
-  - ''
-  - '&8⇨ &6⛽&70 / 10000 Fuel'
-  - '&8⇨ &7Thrust: &c0.18'
-  - '&8⇨ &7Height Limit: &aNone'
-  - '&8⇨ &7Hover: &aDouble-tap Space'
-  - '&8⇨ &7Fuel Cost: &61/t'
-  - '&8⇨ &7Fuel Bucket: &62500 Fuel'
-  - ''
-  - '&eHold Space&7 to thrust'
+  lore-key: items.sf.fuel_jetpack.lore
   flags:
   - legacy-sf
 - id: sf:armored_jetpack
   category: sf:jetpacks
   material: IRON_CHESTPLATE
-  name: '&9Armored Jetpack'
+  name-key: items.sf.armored_jetpack.name
   priority: 43
-  lore:
-  - '&8⇨ &7Material: &bSteel'
-  - ''
-  - '&8⇨ &e⚡&70 / 10000 J'
-  - '&8⇨ &7Thrust: &c0.16'
-  - ''
-  - '&eHold Space&7 to thrust'
+  lore-key: items.sf.armored_jetpack.lore
   flags:
   - legacy-sf
 - id: sf:duralumin_jetboots
   category: sf:jetboots
   material: LEATHER_BOOTS
-  name: '&9Jet Boots &7- &eI'
+  name-key: items.sf.duralumin_jetboots.name
   priority: 43
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bDuralumin'
-  - '&8⇨ &e⚡&70 / 2000 J'
-  - '&8⇨ &7Thrust: &c0.10'
-  - '&8⇨ &7Air Jumps: &b1'
-  - ''
-  - '&eHold Shift&7 to dash'
-  - '&eDouble-tap Shift&7 to switch drive mode'
-  - '&ePress Space mid-air&7 to air jump'
+  lore-key: items.sf.duralumin_jetboots.lore
   flags:
   - legacy-sf
   - armor-no-fall
 - id: sf:solder_jetboots
   category: sf:jetboots
   material: LEATHER_BOOTS
-  name: '&9Jet Boots &7- &eII'
+  name-key: items.sf.solder_jetboots.name
   priority: 44
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bSolder'
-  - '&8⇨ &e⚡&70 / 4000 J'
-  - '&8⇨ &7Thrust: &c0.12'
-  - '&8⇨ &7Air Jumps: &b1'
-  - ''
-  - '&eHold Shift&7 to dash'
-  - '&eDouble-tap Shift&7 to switch drive mode'
-  - '&ePress Space mid-air&7 to air jump'
+  lore-key: items.sf.solder_jetboots.lore
   flags:
   - legacy-sf
   - armor-no-fall
 - id: sf:billon_jetboots
   category: sf:jetboots
   material: LEATHER_BOOTS
-  name: '&9Jet Boots &7- &eIII'
+  name-key: items.sf.billon_jetboots.name
   priority: 45
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bBillon'
-  - '&8⇨ &e⚡&70 / 6000 J'
-  - '&8⇨ &7Thrust: &c0.14'
-  - '&8⇨ &7Air Jumps: &b1'
-  - ''
-  - '&eHold Shift&7 to dash'
-  - '&eDouble-tap Shift&7 to switch drive mode'
-  - '&ePress Space mid-air&7 to air jump'
+  lore-key: items.sf.billon_jetboots.lore
   flags:
   - legacy-sf
   - armor-no-fall
 - id: sf:steel_jetboots
   category: sf:jetboots
   material: LEATHER_BOOTS
-  name: '&9Jet Boots &7- &eIV'
+  name-key: items.sf.steel_jetboots.name
   priority: 46
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bSteel'
-  - '&8⇨ &e⚡&70 / 10000 J'
-  - '&8⇨ &7Thrust: &c0.16'
-  - '&8⇨ &7Air Jumps: &b2'
-  - ''
-  - '&eHold Shift&7 to dash'
-  - '&eDouble-tap Shift&7 to switch drive mode'
-  - '&ePress Space mid-air&7 to air jump'
+  lore-key: items.sf.steel_jetboots.lore
   flags:
   - legacy-sf
   - armor-no-fall
 - id: sf:damascus_steel_jetboots
   category: sf:jetboots
   material: LEATHER_BOOTS
-  name: '&9Jet Boots &7- &eV'
+  name-key: items.sf.damascus_steel_jetboots.name
   priority: 47
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bDamascus Steel'
-  - '&8⇨ &e⚡&70 / 14000 J'
-  - '&8⇨ &7Thrust: &c0.18'
-  - '&8⇨ &7Air Jumps: &b2'
-  - ''
-  - '&eHold Shift&7 to dash'
-  - '&eDouble-tap Shift&7 to switch drive mode'
-  - '&ePress Space mid-air&7 to air jump'
+  lore-key: items.sf.damascus_steel_jetboots.lore
   flags:
   - legacy-sf
   - armor-no-fall
 - id: sf:reinforced_alloy_jetboots
   category: sf:jetboots
   material: LEATHER_BOOTS
-  name: '&9Jet Boots &7- &eVI'
+  name-key: items.sf.reinforced_alloy_jetboots.name
   priority: 48
   colorRgb: 10329495
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bReinforced Alloy'
-  - '&8⇨ &e⚡&70 / 22000 J'
-  - '&8⇨ &7Thrust: &c0.20'
-  - '&8⇨ &7Air Jumps: &b2'
-  - ''
-  - '&eHold Shift&7 to dash'
-  - '&eDouble-tap Shift&7 to switch drive mode'
-  - '&ePress Space mid-air&7 to air jump'
+  lore-key: items.sf.reinforced_alloy_jetboots.lore
   flags:
   - legacy-sf
   - armor-no-fall
 - id: sf:carbonado_jetboots
   category: sf:jetboots
   material: LEATHER_BOOTS
-  name: '&9Jet Boots &7- &eVII'
+  name-key: items.sf.carbonado_jetboots.name
   priority: 49
   colorRgb: 1908001
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bCarbonado'
-  - '&8⇨ &e⚡&70 / 30000 J'
-  - '&8⇨ &7Thrust: &c0.25'
-  - '&8⇨ &7Air Jumps: &b3'
-  - ''
-  - '&eHold Shift&7 to dash'
-  - '&eDouble-tap Shift&7 to switch drive mode'
-  - '&ePress Space mid-air&7 to air jump'
+  lore-key: items.sf.carbonado_jetboots.lore
   flags:
   - legacy-sf
   - armor-no-fall
 - id: sf:armored_jetboots
   category: sf:jetboots
   material: IRON_BOOTS
-  name: '&9Armored Jet Boots'
+  name-key: items.sf.armored_jetboots.name
   priority: 50
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bSteel'
-  - '&8⇨ &e⚡&70 / 10000 J'
-  - '&8⇨ &7Thrust: &c0.16'
-  - '&8⇨ &7Air Jumps: &b2'
-  - ''
-  - '&eHold Shift&7 to dash'
-  - '&eDouble-tap Shift&7 to switch drive mode'
-  - '&ePress Space mid-air&7 to air jump'
+  lore-key: items.sf.armored_jetboots.lore
   flags:
   - legacy-sf
   - armor-no-fall
 - id: sf:duralumin_multi_tool
   category: sf:multi_tools
   material: SHEARS
-  name: '&9Multi Tool &7- &eI'
+  name-key: items.sf.duralumin_multi_tool.name
   priority: 51
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bDuralumin'
-  - '&8⇨ &e⚡&70 / 2000 J'
-  - ''
-  - '&eRight Click&7 to use'
-  - '&eCrouch & Right Click&7 to switch modes'
+  lore-key: items.sf.duralumin_multi_tool.lore
   flags:
   - legacy-sf
 - id: sf:solder_multi_tool
   category: sf:multi_tools
   material: SHEARS
-  name: '&9Multi Tool &7- &eII'
+  name-key: items.sf.solder_multi_tool.name
   priority: 52
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bSolder'
-  - '&8⇨ &e⚡&70 / 3000 J'
-  - ''
-  - '&eRight Click&7 to use'
-  - '&eCrouch & Right Click&7 to switch modes'
+  lore-key: items.sf.solder_multi_tool.lore
   flags:
   - legacy-sf
 - id: sf:billon_multi_tool
   category: sf:multi_tools
   material: SHEARS
-  name: '&9Multi Tool &7- &eIII'
+  name-key: items.sf.billon_multi_tool.name
   priority: 53
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bBillon'
-  - '&8⇨ &e⚡&70 / 4000 J'
-  - ''
-  - '&eRight Click&7 to use'
-  - '&eCrouch & Right Click&7 to switch modes'
+  lore-key: items.sf.billon_multi_tool.lore
   flags:
   - legacy-sf
 - id: sf:steel_multi_tool
   category: sf:multi_tools
   material: SHEARS
-  name: '&9Multi Tool &7- &eIV'
+  name-key: items.sf.steel_multi_tool.name
   priority: 54
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bSteel'
-  - '&8⇨ &e⚡&70 / 10000 J'
-  - ''
-  - '&eRight Click&7 to use'
-  - '&eCrouch & Right Click&7 to switch modes'
+  lore-key: items.sf.steel_multi_tool.lore
   flags:
   - legacy-sf
 - id: sf:damascus_steel_multi_tool
   category: sf:multi_tools
   material: SHEARS
-  name: '&9Multi Tool &7- &eV'
+  name-key: items.sf.damascus_steel_multi_tool.name
   priority: 55
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bDamascus Steel'
-  - '&8⇨ &e⚡&70 / 6000 J'
-  - ''
-  - '&eRight Click&7 to use'
-  - '&eCrouch & Right Click&7 to switch modes'
+  lore-key: items.sf.damascus_steel_multi_tool.lore
   flags:
   - legacy-sf
 - id: sf:reinforced_alloy_multi_tool
   category: sf:multi_tools
   material: SHEARS
-  name: '&9Multi Tool &7- &eVI'
+  name-key: items.sf.reinforced_alloy_multi_tool.name
   priority: 56
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bReinforced Alloy'
-  - '&8⇨ &e⚡&70 / 7500 J'
-  - ''
-  - '&eRight Click&7 to use'
-  - '&eCrouch & Right Click&7 to switch modes'
+  lore-key: items.sf.reinforced_alloy_multi_tool.lore
   flags:
   - legacy-sf
 - id: sf:carbonado_multi_tool
   category: sf:multi_tools
   material: SHEARS
-  name: '&9Multi Tool &7- &eVII'
+  name-key: items.sf.carbonado_multi_tool.name
   priority: 57
-  lore:
-  - ''
-  - '&8⇨ &7Material: &bCarbonado'
-  - '&8⇨ &e⚡&70 / 10000 J'
-  - ''
-  - '&eRight Click&7 to use'
-  - '&eCrouch & Right Click&7 to switch modes'
+  lore-key: items.sf.carbonado_multi_tool.lore
   flags:
   - legacy-sf
 - id: sf:fortune_cookie
   category: sf:food
   material: COOKIE
-  name: '&6Fortune Cookie'
+  name-key: items.sf.fortune_cookie.name
   priority: 58
-  lore:
-  - ''
-  - '&aTells you stuff about your Future :o'
+  lore-key: items.sf.fortune_cookie.lore
   flags:
   - legacy-sf
 - id: sf:diet_cookie
   category: sf:food
   material: COOKIE
-  name: '&6Diet Cookie'
+  name-key: items.sf.diet_cookie.name
   priority: 59
-  lore:
-  - ''
-  - '&aA very &olightweight &acookie.'
+  lore-key: items.sf.diet_cookie.lore
   flags:
   - legacy-sf
 - id: sf:magic_sugar
   category: sf:food
   material: SUGAR
-  name: '&6Magic Sugar'
+  name-key: items.sf.magic_sugar.name
   priority: 60
-  lore:
-  - ''
-  - '&aFeel the Power of Hermes!'
+  lore-key: items.sf.magic_sugar.lore
   flags:
   - legacy-sf
 - id: sf:monster_jerky
   category: sf:food
   material: ROTTEN_FLESH
-  name: '&6Monster Jerky'
+  name-key: items.sf.monster_jerky.name
   priority: 61
-  lore:
-  - ''
-  - '&aNo longer hungry'
+  lore-key: items.sf.monster_jerky.lore
   flags:
   - legacy-sf
 - id: sf:apple_juice
   category: sf:food
   material: POTION
-  name: '&cApple Juice'
+  name-key: items.sf.apple_juice.name
   priority: 62
   colorRgb: 11546150
-  lore:
-  - ''
-  - '&7&oRestores &b&o3.0 &7&oHunger'
+  lore-key: items.sf.apple_juice.lore
   flags:
   - legacy-sf
 - id: sf:melon_juice
   category: sf:food
   material: POTION
-  name: '&cMelon Juice'
+  name-key: items.sf.melon_juice.name
   priority: 63
   colorRgb: 11546150
-  lore:
-  - ''
-  - '&7&oRestores &b&o3.0 &7&oHunger'
+  lore-key: items.sf.melon_juice.lore
   flags:
   - legacy-sf
 - id: sf:carrot_juice
   category: sf:food
   material: POTION
-  name: '&6Carrot Juice'
+  name-key: items.sf.carrot_juice.name
   priority: 64
   colorRgb: 16351261
-  lore:
-  - ''
-  - '&7&oRestores &b&o3.0 &7&oHunger'
+  lore-key: items.sf.carrot_juice.lore
   flags:
   - legacy-sf
 - id: sf:pumpkin_juice
   category: sf:food
   material: POTION
-  name: '&6Pumpkin Juice'
+  name-key: items.sf.pumpkin_juice.name
   priority: 65
   colorRgb: 16351261
-  lore:
-  - ''
-  - '&7&oRestores &b&o3.0 &7&oHunger'
+  lore-key: items.sf.pumpkin_juice.lore
   flags:
   - legacy-sf
 - id: sf:sweet_berry_juice
   category: sf:food
   material: POTION
-  name: '&cSweet Berry Juice'
+  name-key: items.sf.sweet_berry_juice.name
   priority: 66
   colorRgb: 11546150
-  lore:
-  - ''
-  - '&7&oRestores &b&o3.0 &7&oHunger'
+  lore-key: items.sf.sweet_berry_juice.lore
   flags:
   - legacy-sf
 - id: sf:glow_berry_juice
   category: sf:food
   material: POTION
-  name: '&6Glow Berry Juice'
+  name-key: items.sf.glow_berry_juice.name
   priority: 67
   colorRgb: 16351261
-  lore:
-  - ''
-  - '&7&oRestores &b&o3.0 &7&oHunger'
+  lore-key: items.sf.glow_berry_juice.lore
   flags:
   - legacy-sf
 - id: sf:golden_apple_juice
   category: sf:food
   material: POTION
-  name: '&bGolden Apple Juice'
+  name-key: items.sf.golden_apple_juice.name
   priority: 68
   colorRgb: 16701501
   flags:
@@ -981,243 +637,230 @@ items:
 - id: sf:enchanted_golden_apple
   category: sf:food
   material: ENCHANTED_GOLDEN_APPLE
-  name: '&dEnchanted Golden Apple'
+  name-key: items.sf.enchanted_golden_apple.name
   priority: 69
   giveable: false
   flags:
   - legacy-sf
   - visual-glint
   - guide-only
-  lore:
-  - ''
-  - '&7Classic enhanced crafting recipe.'
+  lore-key: items.sf.enchanted_golden_apple.lore
   recipes:
   - type: sf:enhanced_crafting_table
-    note: '<gray>Crafted in an Enhanced Crafting Table.</gray>'
+    note: <gray>Crafted in an Enhanced Crafting Table.</gray>
     matrix:
-      - sf:gold_24k_block
-      - sf:gold_24k_block
-      - sf:gold_24k_block
-      - sf:gold_24k_block
-      - APPLE
-      - sf:gold_24k_block
-      - sf:gold_24k_block
-      - sf:gold_24k_block
-      - sf:gold_24k_block
+    - type: sfx
+      id: sf:gold_24k_block
+      amount: 1
+    - type: sfx
+      id: sf:gold_24k_block
+      amount: 1
+    - type: sfx
+      id: sf:gold_24k_block
+      amount: 1
+    - type: sfx
+      id: sf:gold_24k_block
+      amount: 1
+    - type: vanilla
+      material: APPLE
+      amount: 1
+    - type: sfx
+      id: sf:gold_24k_block
+      amount: 1
+    - type: sfx
+      id: sf:gold_24k_block
+      amount: 1
+    - type: sfx
+      id: sf:gold_24k_block
+      amount: 1
+    - type: sfx
+      id: sf:gold_24k_block
+      amount: 1
 - id: sf:beef_jerky
   category: sf:food
   material: COOKED_BEEF
-  name: '&6Beef Jerky'
+  name-key: items.sf.beef_jerky.name
   priority: 69
-  lore:
-  - ''
-  - '&fExtra saturating!'
+  lore-key: items.sf.beef_jerky.lore
   flags:
   - legacy-sf
 - id: sf:pork_jerky
   category: sf:food
   material: COOKED_PORKCHOP
-  name: '&6Pork Jerky'
+  name-key: items.sf.pork_jerky.name
   priority: 70
-  lore:
-  - ''
-  - '&fExtra saturating!'
+  lore-key: items.sf.pork_jerky.lore
   flags:
   - legacy-sf
 - id: sf:chicken_jerky
   category: sf:food
   material: COOKED_CHICKEN
-  name: '&6Chicken Jerky'
+  name-key: items.sf.chicken_jerky.name
   priority: 71
-  lore:
-  - ''
-  - '&fExtra saturating!'
+  lore-key: items.sf.chicken_jerky.lore
   flags:
   - legacy-sf
 - id: sf:mutton_jerky
   category: sf:food
   material: COOKED_MUTTON
-  name: '&6Mutton Jerky'
+  name-key: items.sf.mutton_jerky.name
   priority: 72
-  lore:
-  - ''
-  - '&fExtra saturating!'
+  lore-key: items.sf.mutton_jerky.lore
   flags:
   - legacy-sf
 - id: sf:rabbit_jerky
   category: sf:food
   material: COOKED_RABBIT
-  name: '&6Rabbit Jerky'
+  name-key: items.sf.rabbit_jerky.name
   priority: 73
-  lore:
-  - ''
-  - '&fExtra saturating!'
+  lore-key: items.sf.rabbit_jerky.lore
   flags:
   - legacy-sf
 - id: sf:fish_jerky
   category: sf:food
   material: COOKED_COD
-  name: '&6Fish Jerky'
+  name-key: items.sf.fish_jerky.name
   priority: 74
-  lore:
-  - ''
-  - '&fExtra saturating!'
+  lore-key: items.sf.fish_jerky.lore
   flags:
   - legacy-sf
 - id: sf:kelp_cookie
   category: sf:food
   material: COOKIE
-  name: '&2Kelp Cookie'
+  name-key: items.sf.kelp_cookie.name
   priority: 75
   flags:
   - legacy-sf
 - id: sf:christmas_milk
   category: sf:christmas
   material: POTION
-  name: '&6Glass of Milk'
+  name-key: items.sf.christmas_milk.name
   priority: 76
   colorRgb: 16383998
-  lore:
-  - ''
-  - '&7&oRestores &b&o2.5 &7&oHunger'
+  lore-key: items.sf.christmas_milk.lore
   flags:
   - legacy-sf
 - id: sf:christmas_chocolate_milk
   category: sf:christmas
   material: POTION
-  name: '&6Chocolate Milk'
+  name-key: items.sf.christmas_chocolate_milk.name
   priority: 77
   colorRgb: 9321518
-  lore:
-  - ''
-  - '&7&oRestores &b&o6.0 &7&oHunger'
+  lore-key: items.sf.christmas_chocolate_milk.lore
   flags:
   - legacy-sf
 - id: sf:christmas_egg_nog
   category: sf:christmas
   material: POTION
-  name: '&aEgg Nog'
+  name-key: items.sf.christmas_egg_nog.name
   priority: 78
   colorRgb: 4673362
-  lore:
-  - ''
-  - '&7&oRestores &b&o3.5 &7&oHunger'
+  lore-key: items.sf.christmas_egg_nog.lore
   flags:
   - legacy-sf
 - id: sf:christmas_apple_cider
   category: sf:christmas
   material: POTION
-  name: '&cApple Cider'
+  name-key: items.sf.christmas_apple_cider.name
   priority: 79
   colorRgb: 11546150
-  lore:
-  - ''
-  - '&7&oRestores &b&o7.0 &7&oHunger'
+  lore-key: items.sf.christmas_apple_cider.lore
   flags:
   - legacy-sf
 - id: sf:christmas_cookie
   category: sf:christmas
   material: COOKIE
-  name: '&aC&ch&ar&ci&as&ct&am&ca&as &cC&ao&co&ak&ci&ae'
+  name-key: items.sf.christmas_cookie.name
   priority: 80
   flags:
   - legacy-sf
 - id: sf:christmas_fruit_cake
   category: sf:christmas
   material: PUMPKIN_PIE
-  name: '&aF&cr&au&ci&at &cC&aa&ck&ae'
+  name-key: items.sf.christmas_fruit_cake.name
   priority: 81
   flags:
   - legacy-sf
 - id: sf:christmas_apple_pie
   category: sf:christmas
   material: PUMPKIN_PIE
-  name: '&fApple Pie'
+  name-key: items.sf.christmas_apple_pie.name
   priority: 82
   flags:
   - legacy-sf
 - id: sf:christmas_hot_chocolate
   category: sf:christmas
   material: POTION
-  name: '&6Hot Chocolate'
+  name-key: items.sf.christmas_hot_chocolate.name
   priority: 83
   colorRgb: 9321518
-  lore:
-  - ''
-  - '&7&oRestores &b&o7.0 &7&oHunger'
+  lore-key: items.sf.christmas_hot_chocolate.lore
   flags:
   - legacy-sf
 - id: sf:christmas_cake
   category: sf:christmas
   material: PUMPKIN_PIE
-  name: '&aC&ch&ar&ci&as&ct&am&ca&as &cC&aa&ck&ae'
+  name-key: items.sf.christmas_cake.name
   priority: 84
   flags:
   - legacy-sf
 - id: sf:christmas_caramel
   category: sf:christmas
   material: BRICK
-  name: '&6Caramel'
+  name-key: items.sf.christmas_caramel.name
   priority: 85
   flags:
   - legacy-sf
 - id: sf:christmas_caramel_apple
   category: sf:christmas
   material: APPLE
-  name: '&6Caramel Apple'
+  name-key: items.sf.christmas_caramel_apple.name
   priority: 86
   flags:
   - legacy-sf
 - id: sf:christmas_chocolate_apple
   category: sf:christmas
   material: APPLE
-  name: '&6Chocolate Apple'
+  name-key: items.sf.christmas_chocolate_apple.name
   priority: 87
   flags:
   - legacy-sf
 - id: sf:christmas_present
   category: sf:christmas
   material: PLAYER_HEAD
-  name: '&aC&ch&ar&ci&as&ct&am&ca&as &cP&ar&ce&as&ce&an&ct'
+  name-key: items.sf.christmas_present.name
   priority: 88
   headTexture: 6cef9aa14e884773eac134a4ee8972063f466de678363cf7b1a21a85b7
-  lore:
-  - '&7From: &cTheBusyBiscuit'
-  - '&7To: &eYou'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.christmas_present.lore
   flags:
   - legacy-sf
 - id: sf:easter_egg
   category: sf:easter
   material: PLAYER_HEAD
-  name: '&fEaster Egg'
+  name-key: items.sf.easter_egg.name
   priority: 89
   headTexture: b2cd5df9d7f1fa8341fcce2f3c118e2f517e4d2d99df2c51d61d93ed7f83e13
-  lore:
-  - '&dHappy Easter! Have a surprise.'
-  - ''
-  - '&eRight Click&7 to open'
+  lore-key: items.sf.easter_egg.lore
   flags:
   - legacy-sf
 - id: sf:carrot_pie
   category: sf:easter
   material: PUMPKIN_PIE
-  name: '&6Carrot Pie'
+  name-key: items.sf.carrot_pie.name
   priority: 466
   flags:
   - legacy-sf
 - id: sf:easter_apple_pie
   category: sf:easter
   material: PUMPKIN_PIE
-  name: '&fApple Pie'
+  name-key: items.sf.easter_apple_pie.name
   priority: 90
   flags:
   - legacy-sf
 - id: sf:grandmas_walking_stick
   category: sf:weapons
   material: STICK
-  name: '&7Grandmas Walking Stick'
+  name-key: items.sf.grandmas_walking_stick.name
   priority: 91
   flags:
   - legacy-sf
@@ -1226,7 +869,7 @@ items:
 - id: sf:grandpas_walking_stick
   category: sf:weapons
   material: STICK
-  name: '&7Grandpas Walking Stick'
+  name-key: items.sf.grandpas_walking_stick.name
   priority: 92
   flags:
   - legacy-sf
@@ -1235,26 +878,17 @@ items:
 - id: sf:sword_of_beheading
   category: sf:weapons
   material: IRON_SWORD
-  name: '&6Sword of Beheading'
+  name-key: items.sf.sword_of_beheading.name
   priority: 93
-  lore:
-  - '&7Beheading II'
-  - ''
-  - '&fHas a chance to behead Mobs'
-  - '&f(even a higher chance for Wither Skeletons)'
+  lore-key: items.sf.sword_of_beheading.lore
   flags:
   - legacy-sf
 - id: sf:blade_of_vampires
   category: sf:weapons
   material: GOLDEN_SWORD
-  name: '&cBlade of Vampires'
+  name-key: items.sf.blade_of_vampires.name
   priority: 94
-  lore:
-  - '&7Life Steal I'
-  - ''
-  - '&fEverytime you attack something'
-  - '&fyou have a 45% chance to'
-  - '&frecover 2 Hearts of your Health'
+  lore-key: items.sf.blade_of_vampires.lore
   flags:
   - legacy-sf
   enchantments:
@@ -1264,106 +898,79 @@ items:
 - id: sf:seismic_axe
   category: sf:weapons
   material: IRON_AXE
-  name: '&aSeismic Axe'
+  name-key: items.sf.seismic_axe.name
   priority: 95
-  lore:
-  - ''
-  - '&7A portable Earthquake...'
-  - ''
-  - '&eRight Click&7 to use'
+  lore-key: items.sf.seismic_axe.lore
   flags:
   - legacy-sf
 - id: sf:explosive_bow
   category: sf:bows
   material: BOW
-  name: '&cExplosive Bow'
+  name-key: items.sf.explosive_bow.name
   priority: 96
-  lore:
-  - '&fAny Arrows fired using this Bow'
-  - '&fwill launch hit enemys into the air'
+  lore-key: items.sf.explosive_bow.lore
   flags:
   - legacy-sf
 - id: sf:icy_bow
   category: sf:bows
   material: BOW
-  name: '&bIcy Bow'
+  name-key: items.sf.icy_bow.name
   priority: 97
-  lore:
-  - '&fAny Arrows fired using this Bow'
-  - '&fwill prevent hit enemys from moving'
-  - '&ffor 2 seconds'
+  lore-key: items.sf.icy_bow.lore
   flags:
   - legacy-sf
 - id: sf:smelters_pickaxe
   category: sf:tools
   material: DIAMOND_PICKAXE
-  name: '&6Smelter''s Pickaxe'
+  name-key: items.sf.smelters_pickaxe.name
   priority: 98
-  lore:
-  - '&c&lAuto-Smelting'
-  - ''
-  - '&9Works with Fortune'
+  lore-key: items.sf.smelters_pickaxe.lore
   flags:
   - legacy-sf
 - id: sf:lumber_axe
   category: sf:tools
   material: DIAMOND_AXE
-  name: '&6Lumber Axe'
+  name-key: items.sf.lumber_axe.name
   priority: 99
-  lore:
-  - '&aCuts down the whole Tree...'
+  lore-key: items.sf.lumber_axe.lore
   flags:
   - legacy-sf
 - id: sf:pickaxe_of_containment
   category: sf:tools
   material: IRON_PICKAXE
-  name: '&cPickaxe of Containment'
+  name-key: items.sf.pickaxe_of_containment.name
   priority: 100
-  lore:
-  - ''
-  - '&9Can pickup Spawners'
+  lore-key: items.sf.pickaxe_of_containment.lore
   flags:
   - legacy-sf
 - id: sf:explosive_pickaxe
   category: sf:tools
   material: DIAMOND_PICKAXE
-  name: '&eExplosive Pickaxe'
+  name-key: items.sf.explosive_pickaxe.name
   priority: 101
-  lore:
-  - ''
-  - '&fAllows you to mine a good bit'
-  - '&fof Blocks at once...'
-  - ''
-  - '&9Works with Fortune'
+  lore-key: items.sf.explosive_pickaxe.lore
   flags:
   - legacy-sf
 - id: sf:explosive_shovel
   category: sf:tools
   material: DIAMOND_SHOVEL
-  name: '&eExplosive Shovel'
+  name-key: items.sf.explosive_shovel.name
   priority: 102
-  lore:
-  - ''
-  - '&fAllows you to mine a good bit'
-  - '&fof diggable Blocks at once...'
+  lore-key: items.sf.explosive_shovel.lore
   flags:
   - legacy-sf
 - id: sf:pickaxe_of_the_seeker
   category: sf:tools
   material: DIAMOND_PICKAXE
-  name: '&aPickaxe of the Seeker'
+  name-key: items.sf.pickaxe_of_the_seeker.name
   priority: 103
-  lore:
-  - '&fWill always point you to the nearest Ore'
-  - '&fbut might get damaged when doing it'
-  - ''
-  - '&eRight Click&7 to be pointed to the nearest Ore'
+  lore-key: items.sf.pickaxe_of_the_seeker.lore
   flags:
   - legacy-sf
 - id: sf:cobalt_pickaxe
   category: sf:tools
   material: IRON_PICKAXE
-  name: '&9Cobalt Pickaxe'
+  name-key: items.sf.cobalt_pickaxe.name
   priority: 104
   flags:
   - legacy-sf
@@ -1373,185 +980,141 @@ items:
 - id: sf:pickaxe_of_vein_mining
   category: sf:tools
   material: DIAMOND_PICKAXE
-  name: '&ePickaxe of Vein Mining'
+  name-key: items.sf.pickaxe_of_vein_mining.name
   priority: 105
-  lore:
-  - ''
-  - '&fThis Pickaxe will dig out'
-  - '&fwhole Veins of Ores...'
+  lore-key: items.sf.pickaxe_of_vein_mining.lore
   flags:
   - legacy-sf
 - id: sf:climbing_pick
   category: sf:tools
   material: IRON_PICKAXE
-  name: '&bClimbing Pick'
+  name-key: items.sf.climbing_pick.name
   priority: 106
-  lore:
-  - ''
-  - '&fAllows you to climb certain surfaces'
-  - '&fby right-clicking.'
-  - '&fEnchant this pick with Efficiency to'
-  - '&fclimb even faster!'
+  lore-key: items.sf.climbing_pick.lore
   flags:
   - legacy-sf
 - id: sf:glowstone_helmet
   category: sf:armor
   material: LEATHER_HELMET
-  name: '&e&lGlowstone Helmet'
+  name-key: items.sf.glowstone_helmet.name
   priority: 107
   colorRgb: 16701501
-  lore:
-  - ''
-  - '&aShining like the sun!'
-  - ''
-  - '&9+ Night Vision'
+  lore-key: items.sf.glowstone_helmet.lore
   flags:
   - legacy-sf
   - armor-night-vision
 - id: sf:glowstone_chestplate
   category: sf:armor
   material: LEATHER_CHESTPLATE
-  name: '&e&lGlowstone Chestplate'
+  name-key: items.sf.glowstone_chestplate.name
   priority: 108
   colorRgb: 16701501
-  lore:
-  - ''
-  - '&aShining like the sun!'
-  - ''
-  - '&9+ Night Vision'
+  lore-key: items.sf.glowstone_chestplate.lore
   flags:
   - legacy-sf
   - armor-night-vision
 - id: sf:glowstone_leggings
   category: sf:armor
   material: LEATHER_LEGGINGS
-  name: '&e&lGlowstone Leggings'
+  name-key: items.sf.glowstone_leggings.name
   priority: 109
   colorRgb: 16701501
-  lore:
-  - ''
-  - '&aShining like the sun!'
-  - ''
-  - '&9+ Night Vision'
+  lore-key: items.sf.glowstone_leggings.lore
   flags:
   - legacy-sf
   - armor-night-vision
 - id: sf:glowstone_boots
   category: sf:armor
   material: LEATHER_BOOTS
-  name: '&e&lGlowstone Boots'
+  name-key: items.sf.glowstone_boots.name
   priority: 110
   colorRgb: 16701501
-  lore:
-  - ''
-  - '&aShining like the sun!'
-  - ''
-  - '&9+ Night Vision'
+  lore-key: items.sf.glowstone_boots.lore
   flags:
   - legacy-sf
   - armor-night-vision
 - id: sf:rainbow_leather
   category: sf:armor
   material: RABBIT_HIDE
-  name: '&dRainbow Leather'
+  name-key: items.sf.rainbow_leather.name
   priority: 111
   colorRgb: 13061821
-  lore:
-  - ''
-  - '&fCan be used to craft rainbow armor'
+  lore-key: items.sf.rainbow_leather.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_helmet
   category: sf:armor
   material: LEATHER_HELMET
-  name: '&d&lRainbow Helmet'
+  name-key: items.sf.rainbow_helmet.name
   priority: 112
   colorRgb: 13061821
-  lore:
-  - ''
-  - '&dCycles through all Colors of the Rainbow!'
+  lore-key: items.sf.rainbow_helmet.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_chestplate
   category: sf:armor
   material: LEATHER_CHESTPLATE
-  name: '&d&lRainbow Chestplate'
+  name-key: items.sf.rainbow_chestplate.name
   priority: 113
   colorRgb: 13061821
-  lore:
-  - ''
-  - '&dCycles through all Colors of the Rainbow!'
+  lore-key: items.sf.rainbow_chestplate.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_leggings
   category: sf:armor
   material: LEATHER_LEGGINGS
-  name: '&d&lRainbow Leggings'
+  name-key: items.sf.rainbow_leggings.name
   priority: 114
   colorRgb: 13061821
-  lore:
-  - ''
-  - '&dCycles through all Colors of the Rainbow!'
+  lore-key: items.sf.rainbow_leggings.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_boots
   category: sf:armor
   material: LEATHER_BOOTS
-  name: '&d&lRainbow Boots'
+  name-key: items.sf.rainbow_boots.name
   priority: 115
   colorRgb: 13061821
-  lore:
-  - ''
-  - '&dCycles through all Colors of the Rainbow!'
+  lore-key: items.sf.rainbow_boots.lore
   flags:
   - legacy-sf
 - id: sf:ender_helmet
   category: sf:armor
   material: LEATHER_HELMET
-  name: '&5&lEnder Helmet'
+  name-key: items.sf.ender_helmet.name
   priority: 116
   colorRgb: 1841520
-  lore:
-  - ''
-  - '&aSometimes its here, sometimes there!'
+  lore-key: items.sf.ender_helmet.lore
   flags:
   - legacy-sf
   - armor-ender
 - id: sf:ender_chestplate
   category: sf:armor
   material: LEATHER_CHESTPLATE
-  name: '&5&lEnder Chestplate'
+  name-key: items.sf.ender_chestplate.name
   priority: 117
   colorRgb: 1841520
-  lore:
-  - ''
-  - '&aSometimes its here, sometimes there!'
+  lore-key: items.sf.ender_chestplate.lore
   flags:
   - legacy-sf
   - armor-ender
 - id: sf:ender_leggings
   category: sf:armor
   material: LEATHER_LEGGINGS
-  name: '&5&lEnder Leggings'
+  name-key: items.sf.ender_leggings.name
   priority: 118
   colorRgb: 1841520
-  lore:
-  - ''
-  - '&aSometimes its here, sometimes there!'
+  lore-key: items.sf.ender_leggings.lore
   flags:
   - legacy-sf
   - armor-ender
 - id: sf:ender_boots
   category: sf:armor
   material: LEATHER_BOOTS
-  name: '&5&lEnder Boots'
+  name-key: items.sf.ender_boots.name
   priority: 119
   colorRgb: 1841520
-  lore:
-  - ''
-  - '&aSometimes its here, sometimes there!'
-  - ''
-  - '&9+ No Enderpearl Damage'
+  lore-key: items.sf.ender_boots.lore
   flags:
   - legacy-sf
   - armor-ender-pearl-safe
@@ -1559,51 +1122,38 @@ items:
 - id: sf:slime_helmet
   category: sf:armor
   material: LEATHER_HELMET
-  name: '&a&lSlime Helmet'
+  name-key: items.sf.slime_helmet.name
   priority: 120
   colorRgb: 8439583
-  lore:
-  - ''
-  - '&aBouncy Feeling'
+  lore-key: items.sf.slime_helmet.lore
   flags:
   - legacy-sf
 - id: sf:slime_chestplate
   category: sf:armor
   material: LEATHER_CHESTPLATE
-  name: '&a&lSlime Chestplate'
+  name-key: items.sf.slime_chestplate.name
   priority: 121
   colorRgb: 8439583
-  lore:
-  - ''
-  - '&aBouncy Feeling'
+  lore-key: items.sf.slime_chestplate.lore
   flags:
   - legacy-sf
 - id: sf:slime_leggings
   category: sf:armor
   material: LEATHER_LEGGINGS
-  name: '&a&lSlime Leggings'
+  name-key: items.sf.slime_leggings.name
   priority: 122
   colorRgb: 8439583
-  lore:
-  - ''
-  - '&aBouncy Feeling'
-  - ''
-  - '&9+ Speed'
+  lore-key: items.sf.slime_leggings.lore
   flags:
   - legacy-sf
   - armor-speed
 - id: sf:slime_boots
   category: sf:armor
   material: LEATHER_BOOTS
-  name: '&a&lSlime Boots'
+  name-key: items.sf.slime_boots.name
   priority: 123
   colorRgb: 8439583
-  lore:
-  - ''
-  - '&aBouncy Feeling'
-  - ''
-  - '&9+ Jump Boost'
-  - '&9+ No Fall Damage'
+  lore-key: items.sf.slime_boots.lore
   flags:
   - legacy-sf
   - armor-jump
@@ -1611,7 +1161,7 @@ items:
 - id: sf:cactus_helmet
   category: sf:armor
   material: LEATHER_HELMET
-  name: '&2Cactus Helmet'
+  name-key: items.sf.cactus_helmet.name
   priority: 124
   colorRgb: 6192150
   flags:
@@ -1622,7 +1172,7 @@ items:
 - id: sf:cactus_chestplate
   category: sf:armor
   material: LEATHER_CHESTPLATE
-  name: '&2Cactus Chestplate'
+  name-key: items.sf.cactus_chestplate.name
   priority: 125
   colorRgb: 6192150
   flags:
@@ -1633,7 +1183,7 @@ items:
 - id: sf:cactus_leggings
   category: sf:armor
   material: LEATHER_LEGGINGS
-  name: '&2Cactus Leggings'
+  name-key: items.sf.cactus_leggings.name
   priority: 126
   colorRgb: 6192150
   flags:
@@ -1644,7 +1194,7 @@ items:
 - id: sf:cactus_boots
   category: sf:armor
   material: LEATHER_BOOTS
-  name: '&2Cactus Boots'
+  name-key: items.sf.cactus_boots.name
   priority: 127
   colorRgb: 6192150
   flags:
@@ -1655,7 +1205,7 @@ items:
 - id: sf:damascus_steel_helmet
   category: sf:armor
   material: IRON_HELMET
-  name: '&7Damascus Steel Helmet'
+  name-key: items.sf.damascus_steel_helmet.name
   priority: 128
   flags:
   - legacy-sf
@@ -1665,7 +1215,7 @@ items:
 - id: sf:damascus_steel_chestplate
   category: sf:armor
   material: IRON_CHESTPLATE
-  name: '&7Damascus Steel Chestplate'
+  name-key: items.sf.damascus_steel_chestplate.name
   priority: 129
   flags:
   - legacy-sf
@@ -1675,7 +1225,7 @@ items:
 - id: sf:damascus_steel_leggings
   category: sf:armor
   material: IRON_LEGGINGS
-  name: '&7Damascus Steel Leggings'
+  name-key: items.sf.damascus_steel_leggings.name
   priority: 130
   flags:
   - legacy-sf
@@ -1685,7 +1235,7 @@ items:
 - id: sf:damascus_steel_boots
   category: sf:armor
   material: IRON_BOOTS
-  name: '&7Damascus Steel Boots'
+  name-key: items.sf.damascus_steel_boots.name
   priority: 131
   flags:
   - legacy-sf
@@ -1695,7 +1245,7 @@ items:
 - id: sf:reinforced_alloy_helmet
   category: sf:armor
   material: IRON_HELMET
-  name: '&bReinforced Helmet'
+  name-key: items.sf.reinforced_alloy_helmet.name
   priority: 132
   flags:
   - legacy-sf
@@ -1705,7 +1255,7 @@ items:
 - id: sf:reinforced_alloy_chestplate
   category: sf:armor
   material: IRON_CHESTPLATE
-  name: '&bReinforced Chestplate'
+  name-key: items.sf.reinforced_alloy_chestplate.name
   priority: 133
   flags:
   - legacy-sf
@@ -1715,7 +1265,7 @@ items:
 - id: sf:reinforced_alloy_leggings
   category: sf:armor
   material: IRON_LEGGINGS
-  name: '&bReinforced Leggings'
+  name-key: items.sf.reinforced_alloy_leggings.name
   priority: 134
   flags:
   - legacy-sf
@@ -1725,7 +1275,7 @@ items:
 - id: sf:reinforced_alloy_boots
   category: sf:armor
   material: IRON_BOOTS
-  name: '&bReinforced Boots'
+  name-key: items.sf.reinforced_alloy_boots.name
   priority: 135
   flags:
   - legacy-sf
@@ -1735,12 +1285,10 @@ items:
 - id: sf:scuba_helmet
   category: sf:armor
   material: LEATHER_HELMET
-  name: '&cScuba Helmet'
+  name-key: items.sf.scuba_helmet.name
   priority: 136
   colorRgb: 16351261
-  lore:
-  - ''
-  - '&7Allows you to breathe underwater'
+  lore-key: items.sf.scuba_helmet.lore
   flags:
   - legacy-sf
   - armor-water-breathing
@@ -1748,12 +1296,10 @@ items:
 - id: sf:hazmat_chestplate
   category: sf:armor
   material: LEATHER_CHESTPLATE
-  name: '&cHazmat Suit'
+  name-key: items.sf.hazmat_chestplate.name
   priority: 467
   colorRgb: 16351261
-  lore:
-  - ''
-  - '&7Allows you to walk through fire and lava'
+  lore-key: items.sf.hazmat_chestplate.lore
   flags:
   - legacy-sf
   - armor-fire-resistance
@@ -1761,35 +1307,27 @@ items:
 - id: sf:hazmat_leggings
   category: sf:armor
   material: LEATHER_LEGGINGS
-  name: '&cHazmat Suit Leggings'
+  name-key: items.sf.hazmat_leggings.name
   priority: 137
   colorRgb: 16351261
-  lore:
-  - ''
-  - '&6Full set effects:'
-  - '&e- Radiation immunity'
-  - '&e- Bee Sting protection'
+  lore-key: items.sf.hazmat_leggings.lore
   flags:
   - legacy-sf
   - armor-hazmat
 - id: sf:hazmat_boots
   category: sf:armor
   material: LEATHER_BOOTS
-  name: '&cHazmat Boots'
+  name-key: items.sf.hazmat_boots.name
   priority: 138
   colorRgb: 1908001
-  lore:
-  - ''
-  - '&6Full set effects:'
-  - '&e- Radiation immunity'
-  - '&e- Bee Sting protection'
+  lore-key: items.sf.hazmat_boots.lore
   flags:
   - legacy-sf
   - armor-hazmat
 - id: sf:gilded_iron_helmet
   category: sf:armor
   material: GOLDEN_HELMET
-  name: '&6Gilded Iron Helmet'
+  name-key: items.sf.gilded_iron_helmet.name
   priority: 139
   flags:
   - legacy-sf
@@ -1799,7 +1337,7 @@ items:
 - id: sf:gilded_iron_chestplate
   category: sf:armor
   material: GOLDEN_CHESTPLATE
-  name: '&6Gilded Iron Chestplate'
+  name-key: items.sf.gilded_iron_chestplate.name
   priority: 140
   flags:
   - legacy-sf
@@ -1809,7 +1347,7 @@ items:
 - id: sf:gilded_iron_leggings
   category: sf:armor
   material: GOLDEN_LEGGINGS
-  name: '&6Gilded Iron Leggings'
+  name-key: items.sf.gilded_iron_leggings.name
   priority: 141
   flags:
   - legacy-sf
@@ -1819,7 +1357,7 @@ items:
 - id: sf:gilded_iron_boots
   category: sf:armor
   material: GOLDEN_BOOTS
-  name: '&6Gilded Iron Boots'
+  name-key: items.sf.gilded_iron_boots.name
   priority: 142
   flags:
   - legacy-sf
@@ -1829,7 +1367,7 @@ items:
 - id: sf:gold_12k_helmet
   category: sf:armor
   material: GOLDEN_HELMET
-  name: '&6Golden Helmet &7(12-Carat)'
+  name-key: items.sf.gold_12k_helmet.name
   priority: 143
   flags:
   - legacy-sf
@@ -1838,7 +1376,7 @@ items:
 - id: sf:gold_12k_chestplate
   category: sf:armor
   material: GOLDEN_CHESTPLATE
-  name: '&6Golden Chestplate &7(12-Carat)'
+  name-key: items.sf.gold_12k_chestplate.name
   priority: 144
   flags:
   - legacy-sf
@@ -1847,7 +1385,7 @@ items:
 - id: sf:gold_12k_leggings
   category: sf:armor
   material: GOLDEN_LEGGINGS
-  name: '&6Golden Leggings &7(12-Carat)'
+  name-key: items.sf.gold_12k_leggings.name
   priority: 145
   flags:
   - legacy-sf
@@ -1856,7 +1394,7 @@ items:
 - id: sf:gold_12k_boots
   category: sf:armor
   material: GOLDEN_BOOTS
-  name: '&6Golden Boots &7(12-Carat)'
+  name-key: items.sf.gold_12k_boots.name
   priority: 146
   flags:
   - legacy-sf
@@ -1865,12 +1403,9 @@ items:
 - id: sf:slime_steel_helmet
   category: sf:armor
   material: IRON_HELMET
-  name: '&a&lSlime Helmet'
+  name-key: items.sf.slime_steel_helmet.name
   priority: 147
-  lore:
-  - '&7Reinforced'
-  - ''
-  - '&aBouncy Feeling'
+  lore-key: items.sf.slime_steel_helmet.lore
   flags:
   - legacy-sf
   enchantments:
@@ -1879,12 +1414,9 @@ items:
 - id: sf:slime_steel_chestplate
   category: sf:armor
   material: IRON_CHESTPLATE
-  name: '&a&lSlime Chestplate'
+  name-key: items.sf.slime_steel_chestplate.name
   priority: 148
-  lore:
-  - '&7Reinforced'
-  - ''
-  - '&aBouncy Feeling'
+  lore-key: items.sf.slime_steel_chestplate.lore
   flags:
   - legacy-sf
   enchantments:
@@ -1893,14 +1425,9 @@ items:
 - id: sf:slime_steel_leggings
   category: sf:armor
   material: IRON_LEGGINGS
-  name: '&a&lSlime Leggings'
+  name-key: items.sf.slime_steel_leggings.name
   priority: 149
-  lore:
-  - '&7Reinforced'
-  - ''
-  - '&aBouncy Feeling'
-  - ''
-  - '&9+ Speed'
+  lore-key: items.sf.slime_steel_leggings.lore
   flags:
   - legacy-sf
   - armor-speed
@@ -1910,15 +1437,9 @@ items:
 - id: sf:slime_steel_boots
   category: sf:armor
   material: IRON_BOOTS
-  name: '&a&lSlime Boots'
+  name-key: items.sf.slime_steel_boots.name
   priority: 150
-  lore:
-  - '&7Reinforced'
-  - ''
-  - '&aBouncy Feeling'
-  - ''
-  - '&9+ Jump Boost'
-  - '&9+ No Fall Damage'
+  lore-key: items.sf.slime_steel_boots.lore
   flags:
   - legacy-sf
   - armor-jump
@@ -1929,15 +1450,10 @@ items:
 - id: sf:boots_of_the_stomper
   category: sf:armor
   material: LEATHER_BOOTS
-  name: '&bBoots of the Stomper'
+  name-key: items.sf.boots_of_the_stomper.name
   priority: 151
   colorRgb: 3847130
-  lore:
-  - ''
-  - '&9All Fall Damage you receive'
-  - '&9will be applied to nearby Mobs/Players'
-  - ''
-  - '&9+ No Fall Damage'
+  lore-key: items.sf.boots_of_the_stomper.lore
   flags:
   - legacy-sf
   - armor-no-fall
@@ -1945,11 +1461,9 @@ items:
 - id: sf:bee_helmet
   category: sf:armor
   material: GOLDEN_HELMET
-  name: '&e&lBee Helmet'
+  name-key: items.sf.bee_helmet.name
   priority: 152
-  lore:
-  - ''
-  - '&fBzzzzzzz'
+  lore-key: items.sf.bee_helmet.lore
   flags:
   - legacy-sf
   enchantments:
@@ -1958,14 +1472,9 @@ items:
 - id: sf:bee_wings
   category: sf:armor
   material: ELYTRA
-  name: '&e&lBee Wings'
+  name-key: items.sf.bee_wings.name
   priority: 153
-  lore:
-  - ''
-  - '&fBzzzzzzz'
-  - ''
-  - '&9Activates Slow falling'
-  - '&9when approaching the ground'
+  lore-key: items.sf.bee_wings.lore
   flags:
   - legacy-sf
   - armor-bee-wings
@@ -1975,11 +1484,9 @@ items:
 - id: sf:bee_leggings
   category: sf:armor
   material: GOLDEN_LEGGINGS
-  name: '&e&lBee Leggings'
+  name-key: items.sf.bee_leggings.name
   priority: 154
-  lore:
-  - ''
-  - '&fBzzzzzzz'
+  lore-key: items.sf.bee_leggings.lore
   flags:
   - legacy-sf
   enchantments:
@@ -1988,14 +1495,9 @@ items:
 - id: sf:bee_boots
   category: sf:armor
   material: GOLDEN_BOOTS
-  name: '&e&lBee Boots'
+  name-key: items.sf.bee_boots.name
   priority: 155
-  lore:
-  - ''
-  - '&fBzzzzzzz'
-  - ''
-  - '&9+ Jump Boost'
-  - '&9+ No Fall Damage'
+  lore-key: items.sf.bee_boots.lore
   flags:
   - legacy-sf
   - armor-jump
@@ -2006,129 +1508,110 @@ items:
 - id: sf:magic_lump_1
   category: sf:magical_components
   material: GOLD_NUGGET
-  name: '&6Magical Lump &7- &eI'
+  name-key: items.sf.magic_lump_1.name
   priority: 156
-  lore:
-  - ''
-  - '&cTier: I'
+  lore-key: items.sf.magic_lump_1.lore
   flags:
   - legacy-sf
 - id: sf:magic_lump_2
   category: sf:magical_components
   material: GOLD_NUGGET
-  name: '&6Magical Lump &7- &eII'
+  name-key: items.sf.magic_lump_2.name
   priority: 157
-  lore:
-  - ''
-  - '&cTier: II'
+  lore-key: items.sf.magic_lump_2.lore
   flags:
   - legacy-sf
 - id: sf:magic_lump_3
   category: sf:magical_components
   material: GOLD_NUGGET
-  name: '&6Magical Lump &7- &eIII'
+  name-key: items.sf.magic_lump_3.name
   priority: 158
-  lore:
-  - ''
-  - '&cTier: III'
+  lore-key: items.sf.magic_lump_3.lore
   flags:
   - legacy-sf
 - id: sf:ender_lump_1
   category: sf:magical_components
   material: GOLD_NUGGET
-  name: '&5Ender Lump &7- &eI'
+  name-key: items.sf.ender_lump_1.name
   priority: 159
-  lore:
-  - ''
-  - '&cTier: I'
+  lore-key: items.sf.ender_lump_1.lore
   flags:
   - legacy-sf
   - armor-ender
 - id: sf:ender_lump_2
   category: sf:magical_components
   material: GOLD_NUGGET
-  name: '&5Ender Lump &7- &eII'
+  name-key: items.sf.ender_lump_2.name
   priority: 160
-  lore:
-  - ''
-  - '&cTier: II'
+  lore-key: items.sf.ender_lump_2.lore
   flags:
   - legacy-sf
   - armor-ender
 - id: sf:ender_lump_3
   category: sf:magical_components
   material: GOLD_NUGGET
-  name: '&5Ender Lump &7- &eIII'
+  name-key: items.sf.ender_lump_3.name
   priority: 161
-  lore:
-  - ''
-  - '&cTier: III'
+  lore-key: items.sf.ender_lump_3.lore
   flags:
   - legacy-sf
   - armor-ender
 - id: sf:magical_book_cover
   category: sf:magical_components
   material: PAPER
-  name: '&6Magical Book Cover'
+  name-key: items.sf.magical_book_cover.name
   priority: 162
-  lore:
-  - ''
-  - '&aUsed for various Magic Books'
+  lore-key: items.sf.magical_book_cover.lore
   flags:
   - legacy-sf
 - id: sf:magical_glass
   category: sf:magical_components
   material: GLASS_PANE
-  name: '&6Magical Glass'
+  name-key: items.sf.magical_glass.name
   priority: 163
-  lore:
-  - ''
-  - '&aUsed for various Magical Gadgets'
+  lore-key: items.sf.magical_glass.lore
   flags:
   - legacy-sf
 - id: sf:synthetic_shulker_shell
   category: sf:magical_components
   material: SHULKER_SHELL
-  name: '&dSynthetic Shulker Shell'
+  name-key: items.sf.synthetic_shulker_shell.name
   priority: 164
-  lore:
-  - ''
-  - '&fThis item can be used in a'
-  - '&fworkbench like a normal Shulker Shell'
+  lore-key: items.sf.synthetic_shulker_shell.lore
   flags:
   - legacy-sf
 - id: sf:basic_circuit_board
   category: sf:technical_components
   material: ACTIVATOR_RAIL
-  name: '&bBasic Circuit Board'
+  name-key: items.sf.basic_circuit_board.name
   priority: 165
   flags:
   - legacy-sf
 - id: sf:advanced_circuit_board
   category: sf:technical_components
   material: POWERED_RAIL
-  name: '&bAdvanced Circuit Board'
+  name-key: items.sf.advanced_circuit_board.name
   priority: 166
   flags:
   - legacy-sf
 - id: sf:wheat_flour
   category: sf:technical_components
   material: SUGAR
-  name: '&fWheat Flour'
+  name-key: items.sf.wheat_flour.name
   priority: 167
   flags:
   - legacy-sf
 - id: sf:steel_plate
   category: sf:technical_components
   material: PAPER
-  name: '&7&lSteel Plate'
+  name-key: items.sf.steel_plate.name
   priority: 168
   flags:
   - legacy-sf
 - id: sf:battery
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&6Battery'
+  name-key: items.sf.battery.name
   priority: 169
   headTexture: 6e2dda6ef6185d4dd6ea8684e97d39ba8ab037e25f75cdea6bd29df8eb34ee
   flags:
@@ -2136,7 +1619,7 @@ items:
 - id: sf:carbon
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&eCarbon'
+  name-key: items.sf.carbon.name
   priority: 170
   headTexture: 8b3a095b6b81e6b9853a19324eedf0bb9349417258dd173b8eff87a087aa
   flags:
@@ -2144,7 +1627,7 @@ items:
 - id: sf:compressed_carbon
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&cCompressed Carbon'
+  name-key: items.sf.compressed_carbon.name
   priority: 171
   headTexture: 321d495165748d3116f99d6b5bd5d42eb8ba592bcdfad37fd95f9b6c04a3b
   flags:
@@ -2152,7 +1635,7 @@ items:
 - id: sf:carbon_chunk
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&4Carbon Chunk'
+  name-key: items.sf.carbon_chunk.name
   priority: 172
   headTexture: 321d495165748d3116f99d6b5bd5d42eb8ba592bcdfad37fd95f9b6c04a3b
   flags:
@@ -2160,14 +1643,14 @@ items:
 - id: sf:steel_thruster
   category: sf:technical_components
   material: BUCKET
-  name: '&7&lSteel Thruster'
+  name-key: items.sf.steel_thruster.name
   priority: 173
   flags:
   - legacy-sf
 - id: sf:power_crystal
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&c&lPower Crystal'
+  name-key: items.sf.power_crystal.name
   priority: 174
   headTexture: 53c1b036b6e03517b285a811bd85e73f5abfdacc1ddf90dff962e180934e3
   flags:
@@ -2175,28 +1658,28 @@ items:
 - id: sf:chain
   category: sf:technical_components
   material: STRING
-  name: '&bChain'
+  name-key: items.sf.chain.name
   priority: 175
   flags:
   - legacy-sf
 - id: sf:hook
   category: sf:technical_components
   material: FLINT
-  name: '&bHook'
+  name-key: items.sf.hook.name
   priority: 176
   flags:
   - legacy-sf
 - id: sf:sifted_ore
   category: sf:technical_components
   material: GUNPOWDER
-  name: '&6Sifted Ore'
+  name-key: items.sf.sifted_ore.name
   priority: 177
   flags:
   - legacy-sf
 - id: sf:stone_chunk
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&6Stone Chunk'
+  name-key: items.sf.stone_chunk.name
   priority: 178
   headTexture: ce8f5adb14d6c9f6b810d027543f1a8c1f417e2fed993c97bcd89c74f5e2e8
   flags:
@@ -2204,7 +1687,7 @@ items:
 - id: sf:lava_crystal
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&4Lava Crystal'
+  name-key: items.sf.lava_crystal.name
   priority: 179
   headTexture: a3ad8ee849edf04ed9a26ca3341f6033bd76dcc4231ed1ea63b7565751b27ac
   flags:
@@ -2212,14 +1695,14 @@ items:
 - id: sf:salt
   category: sf:technical_components
   material: SUGAR
-  name: '&fSalt'
+  name-key: items.sf.salt.name
   priority: 180
   flags:
   - legacy-sf
 - id: sf:cheese
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&fCheese'
+  name-key: items.sf.cheese.name
   priority: 181
   headTexture: 34febbc15d1d4cc62bedc5d7a2b6f0f46cd5b0696a884de75e289e35cbb53a0
   flags:
@@ -2227,7 +1710,7 @@ items:
 - id: sf:butter
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&fButter'
+  name-key: items.sf.butter.name
   priority: 182
   headTexture: b66b19f7d635d03473891df33017c549363209a8f6328a8542c213d08525e
   flags:
@@ -2235,88 +1718,77 @@ items:
 - id: sf:duct_tape
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&8Duct Tape'
+  name-key: items.sf.duct_tape.name
   priority: 183
   headTexture: b2faaceab6384fff5ed24bb44a4af2f584eb1382729ecd93a5369acfd6654
-  lore:
-  - ''
-  - '&fYou can repair Items using this'
-  - '&fin an Auto-Anvil'
+  lore-key: items.sf.duct_tape.lore
   flags:
   - legacy-sf
 - id: sf:heavy_cream
   category: sf:technical_components
   material: SNOWBALL
-  name: '&fHeavy Cream'
+  name-key: items.sf.heavy_cream.name
   priority: 184
   flags:
   - legacy-sf
 - id: sf:crushed_ore
   category: sf:technical_components
   material: GUNPOWDER
-  name: '&6Crushed Ore'
+  name-key: items.sf.crushed_ore.name
   priority: 185
   flags:
   - legacy-sf
 - id: sf:pulverized_ore
   category: sf:technical_components
   material: GUNPOWDER
-  name: '&6Pulverized Ore'
+  name-key: items.sf.pulverized_ore.name
   priority: 186
   flags:
   - legacy-sf
 - id: sf:pure_ore_cluster
   category: sf:technical_components
   material: GUNPOWDER
-  name: '&6Pure Ore Cluster'
+  name-key: items.sf.pure_ore_cluster.name
   priority: 187
   flags:
   - legacy-sf
 - id: sf:small_uranium
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&cSmall Chunk of Uranium'
+  name-key: items.sf.small_uranium.name
   priority: 188
   headTexture: c8b29afa6d6dc923e2e1324bf8192750f7bdbddc689632a2b6c18d9fe7a5e
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &eMODERATE'
-  - '&8⇨ &4Hazmat Suit required!'
+  lore-key: items.sf.small_uranium.lore
   flags:
   - legacy-sf
 - id: sf:tiny_uranium
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&cTiny Pile of Uranium'
+  name-key: items.sf.tiny_uranium.name
   priority: 189
   headTexture: c8b29afa6d6dc923e2e1324bf8192750f7bdbddc689632a2b6c18d9fe7a5e
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &eLOW'
+  lore-key: items.sf.tiny_uranium.lore
   flags:
   - legacy-sf
 - id: sf:solar_panel
   category: sf:technical_components
   material: DAYLIGHT_DETECTOR
-  name: '&9Photovoltaic Cell'
+  name-key: items.sf.solar_panel.name
   priority: 190
-  lore:
-  - ''
-  - '&7Important component for'
-  - '&7crafting a &bSolar Generator'
+  lore-key: items.sf.solar_panel.lore
   flags:
   - legacy-sf
 - id: sf:plastic_sheet
   category: sf:technical_components
   material: PAPER
-  name: '&fPlastic Sheet'
+  name-key: items.sf.plastic_sheet.name
   priority: 191
   flags:
   - legacy-sf
 - id: sf:magnet
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&cMagnet'
+  name-key: items.sf.magnet.name
   priority: 192
   headTexture: aba8ebc4c6a81730947499bf7e1d5e73fed6c1bb2c051e96d35eb16d24610e7
   flags:
@@ -2324,7 +1796,7 @@ items:
 - id: sf:necrotic_skull
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&cNecrotic Skull'
+  name-key: items.sf.necrotic_skull.name
   priority: 193
   headTexture: 7953b6c68448e7e6b6bf8fb273d7203acd8e1be19e81481ead51f45de59a8
   flags:
@@ -2333,26 +1805,22 @@ items:
 - id: sf:essence_of_afterlife
   category: sf:technical_components
   material: GUNPOWDER
-  name: '&4Essence of Afterlife'
+  name-key: items.sf.essence_of_afterlife.name
   priority: 194
   flags:
   - legacy-sf
 - id: sf:strange_nether_goo
   category: sf:technical_components
   material: PURPLE_DYE
-  name: '&5Strange Nether Goo'
+  name-key: items.sf.strange_nether_goo.name
   priority: 195
-  lore:
-  - ''
-  - '&fA strange bio matter that'
-  - '&fcan be acquired from'
-  - '&fbartering with Piglins'
+  lore-key: items.sf.strange_nether_goo.lore
   flags:
   - legacy-sf
 - id: sf:electro_magnet
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&cElectromagnet'
+  name-key: items.sf.electro_magnet.name
   priority: 196
   headTexture: aba8ebc4c6a81730947499bf7e1d5e73fed6c1bb2c051e96d35eb16d24610e7
   flags:
@@ -2360,7 +1828,7 @@ items:
 - id: sf:heating_coil
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&cHeating Coil'
+  name-key: items.sf.heating_coil.name
   priority: 197
   headTexture: 7e3bc4893ba41a3f73ee28174cdf4fef6b145e41fe6c82cb7be8d8e9771a5
   flags:
@@ -2368,7 +1836,7 @@ items:
 - id: sf:cooling_unit
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&bCooling Unit'
+  name-key: items.sf.cooling_unit.name
   priority: 198
   headTexture: 754bad86c99df780c889a1098f77648ead7385cc1ddb093da5a7d8c4c2ae54d
   flags:
@@ -2376,7 +1844,7 @@ items:
 - id: sf:electric_motor
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&cElectric Motor'
+  name-key: items.sf.electric_motor.name
   priority: 199
   headTexture: 8cbca012f67e54de9aee72ff424e056c2ae58de5eacc949ab2bcd9683cec
   flags:
@@ -2384,745 +1852,651 @@ items:
 - id: sf:cargo_motor
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&3Cargo Motor'
+  name-key: items.sf.cargo_motor.name
   priority: 200
   headTexture: 8e47f99abcd645a3ef1122c9d850a981979f431ba293255c1680e91ab117ed35
-  lore:
-  - ''
-  - '&7Important ingredient for items'
-  - '&7related to Cargo Management'
+  lore-key: items.sf.cargo_motor.lore
   flags:
   - legacy-sf
 - id: sf:scroll_of_dimensional_teleposition
   category: sf:technical_components
   material: PAPER
-  name: '&6Scroll of Dimensional Teleposition'
+  name-key: items.sf.scroll_of_dimensional_teleposition.name
   priority: 201
-  lore:
-  - ''
-  - '&cThis Scroll is capable of creating'
-  - '&ca temporary black Hole which pulls'
-  - '&cnearby Entities into itself and sends'
-  - '&cthem into another Dimension where'
-  - '&ceverything is turned around'
-  - ''
-  - '&fIn other words: Makes Entities turn by 180 Degrees'
+  lore-key: items.sf.scroll_of_dimensional_teleposition.lore
   flags:
   - legacy-sf
 - id: sf:tome_of_knowledge_sharing
   category: sf:technical_components
   material: ENCHANTED_BOOK
-  name: '&6Tome of Knowledge Sharing'
+  name-key: items.sf.tome_of_knowledge_sharing.name
   priority: 202
-  lore:
-  - '&7Owner: &bNone'
-  - ''
-  - '&eRight Click&7 to bind this Tome to yourself'
-  - ''
-  - ''
-  - '&eRight Click&7 to obtain all Researches by'
-  - '&7the previously assigned Owner'
+  lore-key: items.sf.tome_of_knowledge_sharing.lore
   flags:
   - legacy-sf
 - id: sf:hardened_glass
   category: sf:technical_components
   material: LIGHT_GRAY_STAINED_GLASS
-  name: '&7Hardened Glass'
+  name-key: items.sf.hardened_glass.name
   priority: 203
-  lore:
-  - ''
-  - '&fWithstands Explosions'
+  lore-key: items.sf.hardened_glass.lore
   flags:
   - legacy-sf
 - id: sf:wither_proof_obsidian
   category: sf:technical_components
   material: OBSIDIAN
-  name: '&5Wither-Proof Obsidian'
+  name-key: items.sf.wither_proof_obsidian.name
   priority: 204
-  lore:
-  - ''
-  - '&fWithstands Explosions'
-  - '&fWithstands Wither Bosses'
+  lore-key: items.sf.wither_proof_obsidian.lore
   flags:
   - legacy-sf
 - id: sf:wither_proof_glass
   category: sf:technical_components
   material: PURPLE_STAINED_GLASS
-  name: '&5Wither-Proof Glass'
+  name-key: items.sf.wither_proof_glass.name
   priority: 205
-  lore:
-  - ''
-  - '&fWithstands Explosions'
-  - '&fWithstands Wither Bosses'
+  lore-key: items.sf.wither_proof_glass.lore
   flags:
   - legacy-sf
 - id: sf:reinforced_plate
   category: sf:technical_components
   material: PAPER
-  name: '&7Reinforced Plate'
+  name-key: items.sf.reinforced_plate.name
   priority: 206
   flags:
   - legacy-sf
 - id: sf:ancient_pedestal
   category: sf:technical_components
   material: DISPENSER
-  name: '&dAncient Pedestal'
+  name-key: items.sf.ancient_pedestal.name
   priority: 207
-  lore:
-  - ''
-  - '&5Part of the Ancient Altar'
+  lore-key: items.sf.ancient_pedestal.lore
   flags:
   - legacy-sf
 - id: sf:ancient_altar
   category: sf:technical_components
   material: ENCHANTING_TABLE
-  name: '&dAncient Altar'
+  name-key: items.sf.ancient_altar.name
   priority: 208
-  lore:
-  - ''
-  - '&5Multi-Block Altar for'
-  - '&5magical Crafting Processes'
+  lore-key: items.sf.ancient_altar.lore
   flags:
   - legacy-sf
 - id: sf:copper_wire
   category: sf:technical_components
   material: STRING
-  name: '&6Copper Wire'
+  name-key: items.sf.copper_wire.name
   priority: 209
-  lore:
-  - ''
-  - '&6Crucial component in electric modules'
+  lore-key: items.sf.copper_wire.lore
   flags:
   - legacy-sf
 - id: sf:crafting_motor
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&6Crafting Motor'
+  name-key: items.sf.crafting_motor.name
   priority: 210
   headTexture: 1003620899f1afa271e8e521ecbee2977a06c8529d3f389e8cc04af06d8c7940
-  lore:
-  - ''
-  - '&7Important component of Auto-Crafters'
+  lore-key: items.sf.crafting_motor.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_wool
   category: sf:rainbow_blocks
   material: WHITE_WOOL
-  name: '&5Rainbow Wool'
+  name-key: items.sf.rainbow_wool.name
   priority: 211
-  lore:
-  - ''
-  - '&dCycles through all Colors of the Rainbow!'
+  lore-key: items.sf.rainbow_wool.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glass
   category: sf:rainbow_blocks
   material: WHITE_STAINED_GLASS
-  name: '&5Rainbow Glass'
+  name-key: items.sf.rainbow_glass.name
   priority: 212
-  lore:
-  - ''
-  - '&dCycles through all Colors of the Rainbow!'
+  lore-key: items.sf.rainbow_glass.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_clay
   category: sf:rainbow_blocks
   material: WHITE_TERRACOTTA
-  name: '&5Rainbow Clay'
+  name-key: items.sf.rainbow_clay.name
   priority: 213
-  lore:
-  - ''
-  - '&dCycles through all Colors of the Rainbow!'
+  lore-key: items.sf.rainbow_clay.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glass_pane
   category: sf:rainbow_blocks
   material: WHITE_STAINED_GLASS_PANE
-  name: '&5Rainbow Glass Pane'
+  name-key: items.sf.rainbow_glass_pane.name
   priority: 214
-  lore:
-  - ''
-  - '&dCycles through all Colors of the Rainbow!'
+  lore-key: items.sf.rainbow_glass_pane.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_concrete
   category: sf:rainbow_blocks
   material: WHITE_CONCRETE
-  name: '&5Rainbow Concrete'
+  name-key: items.sf.rainbow_concrete.name
   priority: 215
-  lore:
-  - ''
-  - '&dCycles through all Colors of the Rainbow!'
+  lore-key: items.sf.rainbow_concrete.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glazed_terracotta
   category: sf:rainbow_blocks
   material: WHITE_GLAZED_TERRACOTTA
-  name: '&5Rainbow Glazed Terracotta'
+  name-key: items.sf.rainbow_glazed_terracotta.name
   priority: 216
-  lore:
-  - ''
-  - '&dCycles through all Colors of the Rainbow!'
+  lore-key: items.sf.rainbow_glazed_terracotta.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_wool_xmas
   category: sf:seasonal
   material: WHITE_WOOL
-  name: '&5Rainbow Wool &7(Christmas)'
+  name-key: items.sf.rainbow_wool_xmas.name
   priority: 217
-  lore:
-  - ''
-  - '&2[Christmas Edition]'
+  lore-key: items.sf.rainbow_wool_xmas.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glass_xmas
   category: sf:seasonal
   material: WHITE_STAINED_GLASS
-  name: '&5Rainbow Glass &7(Christmas)'
+  name-key: items.sf.rainbow_glass_xmas.name
   priority: 218
-  lore:
-  - ''
-  - '&2[Christmas Edition]'
+  lore-key: items.sf.rainbow_glass_xmas.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_clay_xmas
   category: sf:seasonal
   material: WHITE_TERRACOTTA
-  name: '&5Rainbow Clay &7(Christmas)'
+  name-key: items.sf.rainbow_clay_xmas.name
   priority: 219
-  lore:
-  - ''
-  - '&2[Christmas Edition]'
+  lore-key: items.sf.rainbow_clay_xmas.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glass_pane_xmas
   category: sf:seasonal
   material: WHITE_STAINED_GLASS_PANE
-  name: '&5Rainbow Glass Pane &7(Christmas)'
+  name-key: items.sf.rainbow_glass_pane_xmas.name
   priority: 220
-  lore:
-  - ''
-  - '&2[Christmas Edition]'
+  lore-key: items.sf.rainbow_glass_pane_xmas.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_concrete_xmas
   category: sf:seasonal
   material: WHITE_CONCRETE
-  name: '&5Rainbow Concrete &7(Christmas)'
+  name-key: items.sf.rainbow_concrete_xmas.name
   priority: 221
-  lore:
-  - ''
-  - '&2[Christmas Edition]'
+  lore-key: items.sf.rainbow_concrete_xmas.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glazed_terracotta_xmas
   category: sf:seasonal
   material: WHITE_GLAZED_TERRACOTTA
-  name: '&5Rainbow Glazed Terracotta &7(Christmas)'
+  name-key: items.sf.rainbow_glazed_terracotta_xmas.name
   priority: 222
-  lore:
-  - ''
-  - '&2[Christmas Edition]'
+  lore-key: items.sf.rainbow_glazed_terracotta_xmas.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_wool_valentine
   category: sf:seasonal
   material: PINK_WOOL
-  name: '&5Rainbow Wool &7(Valentine''s Day)'
+  name-key: items.sf.rainbow_wool_valentine.name
   priority: 223
-  lore:
-  - ''
-  - '&5[&dValentine''s Day Edition&5]'
+  lore-key: items.sf.rainbow_wool_valentine.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glass_valentine
   category: sf:seasonal
   material: PINK_STAINED_GLASS
-  name: '&5Rainbow Glass &7(Valentine''s Day)'
+  name-key: items.sf.rainbow_glass_valentine.name
   priority: 224
-  lore:
-  - ''
-  - '&5[&dValentine''s Day Edition&5]'
+  lore-key: items.sf.rainbow_glass_valentine.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_clay_valentine
   category: sf:seasonal
   material: PINK_TERRACOTTA
-  name: '&5Rainbow Clay &7(Valentine''s Day)'
+  name-key: items.sf.rainbow_clay_valentine.name
   priority: 225
-  lore:
-  - ''
-  - '&5[&dValentine''s Day Edition&5]'
+  lore-key: items.sf.rainbow_clay_valentine.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glass_pane_valentine
   category: sf:seasonal
   material: PINK_STAINED_GLASS_PANE
-  name: '&5Rainbow Glass Pane &7(Valentine''s Day)'
+  name-key: items.sf.rainbow_glass_pane_valentine.name
   priority: 226
-  lore:
-  - ''
-  - '&5[&dValentine''s Day Edition&5]'
+  lore-key: items.sf.rainbow_glass_pane_valentine.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_concrete_valentine
   category: sf:seasonal
   material: PINK_CONCRETE
-  name: '&5Rainbow Concrete &7(Valentine''s Day)'
+  name-key: items.sf.rainbow_concrete_valentine.name
   priority: 227
-  lore:
-  - ''
-  - '&5[&dValentine''s Day Edition&5]'
+  lore-key: items.sf.rainbow_concrete_valentine.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glazed_terracotta_valentine
   category: sf:seasonal
   material: PINK_GLAZED_TERRACOTTA
-  name: '&5Rainbow Glazed Terracotta &7(Valentine''s Day)'
+  name-key: items.sf.rainbow_glazed_terracotta_valentine.name
   priority: 228
-  lore:
-  - ''
-  - '&5[&dValentine''s Day Edition&5]'
+  lore-key: items.sf.rainbow_glazed_terracotta_valentine.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_wool_halloween
   category: sf:seasonal
   material: ORANGE_WOOL
-  name: '&5Rainbow Wool &7(Halloween)'
+  name-key: items.sf.rainbow_wool_halloween.name
   priority: 229
-  lore:
-  - ''
-  - '&c[&6Halloween Edition&c]'
+  lore-key: items.sf.rainbow_wool_halloween.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glass_halloween
   category: sf:seasonal
   material: ORANGE_STAINED_GLASS
-  name: '&5Rainbow Glass &7(Halloween)'
+  name-key: items.sf.rainbow_glass_halloween.name
   priority: 230
-  lore:
-  - ''
-  - '&c[&6Halloween Edition&c]'
+  lore-key: items.sf.rainbow_glass_halloween.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_clay_halloween
   category: sf:seasonal
   material: ORANGE_TERRACOTTA
-  name: '&5Rainbow Clay &7(Halloween)'
+  name-key: items.sf.rainbow_clay_halloween.name
   priority: 231
-  lore:
-  - ''
-  - '&c[&6Halloween Edition&c]'
+  lore-key: items.sf.rainbow_clay_halloween.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glass_pane_halloween
   category: sf:seasonal
   material: ORANGE_STAINED_GLASS_PANE
-  name: '&5Rainbow Glass Pane &7(Halloween)'
+  name-key: items.sf.rainbow_glass_pane_halloween.name
   priority: 232
-  lore:
-  - ''
-  - '&c[&6Halloween Edition&c]'
+  lore-key: items.sf.rainbow_glass_pane_halloween.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_concrete_halloween
   category: sf:seasonal
   material: ORANGE_CONCRETE
-  name: '&5Rainbow Concrete &7(Halloween)'
+  name-key: items.sf.rainbow_concrete_halloween.name
   priority: 233
-  lore:
-  - ''
-  - '&c[&6Halloween Edition&c]'
+  lore-key: items.sf.rainbow_concrete_halloween.lore
   flags:
   - legacy-sf
 - id: sf:rainbow_glazed_terracotta_halloween
   category: sf:seasonal
   material: ORANGE_GLAZED_TERRACOTTA
-  name: '&5Rainbow Glazed Terracotta &7(Halloween)'
+  name-key: items.sf.rainbow_glazed_terracotta_halloween.name
   priority: 234
-  lore:
-  - ''
-  - '&c[&6Halloween Edition&c]'
+  lore-key: items.sf.rainbow_glazed_terracotta_halloween.lore
   flags:
   - legacy-sf
 - id: sf:copper_ingot
   category: sf:ingots
   material: BRICK
-  name: '&bCopper Ingot'
+  name-key: items.sf.copper_ingot.name
   priority: 235
   flags:
   - legacy-sf
 - id: sf:tin_ingot
   category: sf:ingots
   material: IRON_INGOT
-  name: '&bTin Ingot'
+  name-key: items.sf.tin_ingot.name
   priority: 236
   flags:
   - legacy-sf
 - id: sf:silver_ingot
   category: sf:ingots
   material: IRON_INGOT
-  name: '&bSilver Ingot'
+  name-key: items.sf.silver_ingot.name
   priority: 237
   flags:
   - legacy-sf
 - id: sf:aluminum_ingot
   category: sf:ingots
   material: IRON_INGOT
-  name: '&bAluminum Ingot'
+  name-key: items.sf.aluminum_ingot.name
   priority: 238
   flags:
   - legacy-sf
 - id: sf:lead_ingot
   category: sf:ingots
   material: IRON_INGOT
-  name: '&bLead Ingot'
+  name-key: items.sf.lead_ingot.name
   priority: 239
   flags:
   - legacy-sf
 - id: sf:zinc_ingot
   category: sf:ingots
   material: IRON_INGOT
-  name: '&bZinc Ingot'
+  name-key: items.sf.zinc_ingot.name
   priority: 240
   flags:
   - legacy-sf
 - id: sf:magnesium_ingot
   category: sf:ingots
   material: IRON_INGOT
-  name: '&bMagnesium Ingot'
+  name-key: items.sf.magnesium_ingot.name
   priority: 241
   flags:
   - legacy-sf
 - id: sf:steel_ingot
   category: sf:alloy_carbon_iron
   material: IRON_INGOT
-  name: '&bSteel Ingot'
+  name-key: items.sf.steel_ingot.name
   priority: 242
   flags:
   - legacy-sf
 - id: sf:bronze_ingot
   category: sf:alloy_copper_tin
   material: BRICK
-  name: '&bBronze Ingot'
+  name-key: items.sf.bronze_ingot.name
   priority: 243
   flags:
   - legacy-sf
 - id: sf:duralumin_ingot
   category: sf:alloy_copper_aluminum
   material: IRON_INGOT
-  name: '&bDuralumin Ingot'
+  name-key: items.sf.duralumin_ingot.name
   priority: 244
   flags:
   - legacy-sf
 - id: sf:billon_ingot
   category: sf:alloy_copper_silver
   material: IRON_INGOT
-  name: '&bBillon Ingot'
+  name-key: items.sf.billon_ingot.name
   priority: 245
   flags:
   - legacy-sf
 - id: sf:brass_ingot
   category: sf:alloy_copper_zinc
   material: GOLD_INGOT
-  name: '&bBrass Ingot'
+  name-key: items.sf.brass_ingot.name
   priority: 246
   flags:
   - legacy-sf
 - id: sf:aluminum_brass_ingot
   category: sf:alloy_aluminum_brass
   material: GOLD_INGOT
-  name: '&bAluminum Brass Ingot'
+  name-key: items.sf.aluminum_brass_ingot.name
   priority: 247
   flags:
   - legacy-sf
 - id: sf:aluminum_bronze_ingot
   category: sf:alloy_aluminum_bronze
   material: GOLD_INGOT
-  name: '&bAluminum Bronze Ingot'
+  name-key: items.sf.aluminum_bronze_ingot.name
   priority: 248
   flags:
   - legacy-sf
 - id: sf:corinthian_bronze_ingot
   category: sf:alloy_gold_silver_copper
   material: GOLD_INGOT
-  name: '&bCorinthian Bronze Ingot'
+  name-key: items.sf.corinthian_bronze_ingot.name
   priority: 249
   flags:
   - legacy-sf
 - id: sf:solder_ingot
   category: sf:alloy_lead_tin
   material: IRON_INGOT
-  name: '&bSolder Ingot'
+  name-key: items.sf.solder_ingot.name
   priority: 250
   flags:
   - legacy-sf
 - id: sf:damascus_steel_ingot
   category: sf:alloy_steel_iron_carbon
   material: IRON_INGOT
-  name: '&bDamascus Steel Ingot'
+  name-key: items.sf.damascus_steel_ingot.name
   priority: 251
   flags:
   - legacy-sf
 - id: sf:hardened_metal_ingot
   category: sf:alloy_damascus_steel_duralumin_compressed_carbon_aluminium_bronze
   material: IRON_INGOT
-  name: '&b&lHardened Metal'
+  name-key: items.sf.hardened_metal_ingot.name
   priority: 252
   flags:
   - legacy-sf
 - id: sf:reinforced_alloy_ingot
   category: sf:alloy_hardened_metal_corinthian_bronze_solder_billon_damascus_steel
   material: IRON_INGOT
-  name: '&b&lReinforced Alloy Ingot'
+  name-key: items.sf.reinforced_alloy_ingot.name
   priority: 253
   flags:
   - legacy-sf
 - id: sf:ferrosilicon
   category: sf:alloy_iron_silicon
   material: IRON_INGOT
-  name: '&bFerrosilicon'
+  name-key: items.sf.ferrosilicon.name
   priority: 254
   flags:
   - legacy-sf
 - id: sf:gilded_iron
   category: sf:alloy_iron_gold
   material: GOLD_INGOT
-  name: '&6&lGilded Iron'
+  name-key: items.sf.gilded_iron.name
   priority: 255
   flags:
   - legacy-sf
 - id: sf:redstone_alloy
   category: sf:alloy_redstone_ferrosilicon
   material: BRICK
-  name: '&cRedstone Alloy Ingot'
+  name-key: items.sf.redstone_alloy.name
   priority: 256
   flags:
   - legacy-sf
 - id: sf:nickel_ingot
   category: sf:alloy_iron_copper
   material: IRON_INGOT
-  name: '&bNickel Ingot'
+  name-key: items.sf.nickel_ingot.name
   priority: 257
   flags:
   - legacy-sf
 - id: sf:cobalt_ingot
   category: sf:alloy_nickel_iron_copper
   material: IRON_INGOT
-  name: '&9Cobalt Ingot'
+  name-key: items.sf.cobalt_ingot.name
   priority: 258
   flags:
   - legacy-sf
 - id: sf:gold_4k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(4-Carat)'
+  name-key: items.sf.gold_4k.name
   priority: 259
   flags:
   - legacy-sf
 - id: sf:gold_6k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(6-Carat)'
+  name-key: items.sf.gold_6k.name
   priority: 260
   flags:
   - legacy-sf
 - id: sf:gold_8k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(8-Carat)'
+  name-key: items.sf.gold_8k.name
   priority: 261
   flags:
   - legacy-sf
 - id: sf:gold_10k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(10-Carat)'
+  name-key: items.sf.gold_10k.name
   priority: 262
   flags:
   - legacy-sf
 - id: sf:gold_12k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(12-Carat)'
+  name-key: items.sf.gold_12k.name
   priority: 263
   flags:
   - legacy-sf
 - id: sf:gold_14k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(14-Carat)'
+  name-key: items.sf.gold_14k.name
   priority: 264
   flags:
   - legacy-sf
 - id: sf:gold_16k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(16-Carat)'
+  name-key: items.sf.gold_16k.name
   priority: 265
   flags:
   - legacy-sf
 - id: sf:gold_18k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(18-Carat)'
+  name-key: items.sf.gold_18k.name
   priority: 266
   flags:
   - legacy-sf
 - id: sf:gold_20k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(20-Carat)'
+  name-key: items.sf.gold_20k.name
   priority: 267
   flags:
   - legacy-sf
 - id: sf:gold_22k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(22-Carat)'
+  name-key: items.sf.gold_22k.name
   priority: 268
   flags:
   - legacy-sf
 - id: sf:gold_24k
   category: sf:gold
   material: GOLD_INGOT
-  name: '&fGold Ingot &7(24-Carat)'
+  name-key: items.sf.gold_24k.name
   priority: 269
   flags:
   - legacy-sf
 - id: sf:iron_dust
   category: sf:dusts
   material: GUNPOWDER
-  name: '&6Iron Dust'
+  name-key: items.sf.iron_dust.name
   priority: 270
   flags:
   - legacy-sf
 - id: sf:gold_dust
   category: sf:dusts
   material: GLOWSTONE_DUST
-  name: '&6Gold Dust'
+  name-key: items.sf.gold_dust.name
   priority: 271
   flags:
   - legacy-sf
 - id: sf:tin_dust
   category: sf:dusts
   material: SUGAR
-  name: '&6Tin Dust'
+  name-key: items.sf.tin_dust.name
   priority: 272
   flags:
   - legacy-sf
 - id: sf:copper_dust
   category: sf:dusts
   material: GLOWSTONE_DUST
-  name: '&6Copper Dust'
+  name-key: items.sf.copper_dust.name
   priority: 273
   flags:
   - legacy-sf
 - id: sf:silver_dust
   category: sf:dusts
   material: SUGAR
-  name: '&6Silver Dust'
+  name-key: items.sf.silver_dust.name
   priority: 274
   flags:
   - legacy-sf
 - id: sf:aluminum_dust
   category: sf:dusts
   material: SUGAR
-  name: '&6Aluminum Dust'
+  name-key: items.sf.aluminum_dust.name
   priority: 275
   flags:
   - legacy-sf
 - id: sf:lead_dust
   category: sf:dusts
   material: GUNPOWDER
-  name: '&6Lead Dust'
+  name-key: items.sf.lead_dust.name
   priority: 276
   flags:
   - legacy-sf
 - id: sf:zinc_dust
   category: sf:dusts
   material: SUGAR
-  name: '&6Zinc Dust'
+  name-key: items.sf.zinc_dust.name
   priority: 277
   flags:
   - legacy-sf
 - id: sf:magnesium_dust
   category: sf:dusts
   material: SUGAR
-  name: '&6Magnesium'
+  name-key: items.sf.magnesium_dust.name
   priority: 278
   flags:
   - legacy-sf
 - id: sf:sulfate
   category: sf:dusts
   material: GLOWSTONE_DUST
-  name: '&6Sulfate'
+  name-key: items.sf.sulfate.name
   priority: 279
   flags:
   - legacy-sf
 - id: sf:silicon
   category: sf:dusts
   material: FIREWORK_STAR
-  name: '&6Silicon'
+  name-key: items.sf.silicon.name
   priority: 280
   flags:
   - legacy-sf
 - id: sf:gold_24k_block
   category: sf:dusts
   material: GOLD_BLOCK
-  name: '&fGold Block &7(24-Carat)'
+  name-key: items.sf.gold_24k_block.name
   priority: 281
   flags:
   - legacy-sf
 - id: sf:synthetic_diamond
   category: sf:gems
   material: DIAMOND
-  name: '&bSynthetic Diamond'
+  name-key: items.sf.synthetic_diamond.name
   priority: 282
-  lore:
-  - ''
-  - '&fThis item can be used in a'
-  - '&fworkbench and acts like a normal Diamond'
+  lore-key: items.sf.synthetic_diamond.lore
   flags:
   - legacy-sf
 - id: sf:synthetic_emerald
   category: sf:gems
   material: EMERALD
-  name: '&bSynthetic Emerald'
+  name-key: items.sf.synthetic_emerald.name
   priority: 283
-  lore:
-  - ''
-  - '&fThis item can be used to'
-  - '&ftrade with Villagers'
+  lore-key: items.sf.synthetic_emerald.lore
   flags:
   - legacy-sf
 - id: sf:synthetic_sapphire
   category: sf:gems
   material: PLAYER_HEAD
-  name: '&bSynthetic Sapphire'
+  name-key: items.sf.synthetic_sapphire.name
   priority: 284
   headTexture: e35032f4d7d01de8ec99d89f8723012d4e74fa73022c4facf1b57c7ff6ff0
-  lore:
-  - ''
-  - '&fThis item can be used in a'
-  - '&fworkbench and acts like Lapis Lazuli'
+  lore-key: items.sf.synthetic_sapphire.lore
   flags:
   - legacy-sf
 - id: sf:carbonado
   category: sf:gems
   material: PLAYER_HEAD
-  name: '&b&lCarbonado'
+  name-key: items.sf.carbonado.name
   priority: 285
   headTexture: 12f4b1577f5160c6893172571c4a71d8b321cdceaa032c6e0e3b60e0b328fa
-  lore:
-  - ''
-  - '&7"Black Diamond"'
+  lore-key: items.sf.carbonado.lore
   flags:
   - legacy-sf
 - id: sf:raw_carbonado
   category: sf:gems
   material: PLAYER_HEAD
-  name: '&bRaw Carbonado'
+  name-key: items.sf.raw_carbonado.name
   priority: 286
   headTexture: eb49e6ec10771e899225aea73cd8cf03684f411d1415c7323c93cb9476230
   flags:
@@ -3130,55 +2504,43 @@ items:
 - id: sf:uranium
   category: sf:gems
   material: PLAYER_HEAD
-  name: '&4Uranium'
+  name-key: items.sf.uranium.name
   priority: 287
   headTexture: c8b29afa6d6dc923e2e1324bf8192750f7bdbddc689632a2b6c18d9fe7a5e
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &6HIGH'
-  - '&8⇨ &4Hazmat Suit required!'
+  lore-key: items.sf.uranium.lore
   flags:
   - legacy-sf
 - id: sf:neptunium
   category: sf:gems
   material: PLAYER_HEAD
-  name: '&aNeptunium'
+  name-key: items.sf.neptunium.name
   priority: 288
   headTexture: 4edea6bfd37e49de43f154fe6fca617d4129e61b95759a3d49a15935a1c2dcf0
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &6HIGH'
-  - '&8⇨ &4Hazmat Suit required!'
+  lore-key: items.sf.neptunium.lore
   flags:
   - legacy-sf
 - id: sf:plutonium
   category: sf:gems
   material: PLAYER_HEAD
-  name: '&7Plutonium'
+  name-key: items.sf.plutonium.name
   priority: 289
   headTexture: 25cf91b7388665a6d7c1b6026bdb2322c6d278997a44478677cbcc15f76124f
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &cVERY HIGH'
-  - '&8⇨ &4Hazmat Suit required!'
+  lore-key: items.sf.plutonium.lore
   flags:
   - legacy-sf
 - id: sf:boosted_uranium
   category: sf:gems
   material: PLAYER_HEAD
-  name: '&2Boosted Uranium'
+  name-key: items.sf.boosted_uranium.name
   priority: 290
   headTexture: 6837ca12f222f4787196a17b8ab656985f8404c50767adbcb6e7f14254fee
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &cVERY HIGH'
-  - '&8⇨ &4Hazmat Suit required!'
+  lore-key: items.sf.boosted_uranium.lore
   flags:
   - legacy-sf
 - id: sf:common_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&6Common Talisman'
+  name-key: items.sf.common_talisman.name
   priority: 291
   flags:
   - legacy-sf
@@ -3188,7 +2550,7 @@ items:
 - id: sf:ender_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman'
+  name-key: items.sf.ender_talisman.name
   priority: 468
   flags:
   - legacy-sf
@@ -3199,18 +2561,9 @@ items:
 - id: sf:anvil_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Anvil'
+  name-key: items.sf.anvil_talisman.name
   priority: 469
-  lore:
-  - ''
-  - '&fEach Talisman can prevent'
-  - '&f1 Tool from breaking, but will then'
-  - '&fbe consumed'
-  - ''
-  - '&4&lWARNING:'
-  - '&4This Talisman does not work on'
-  - '&4Tools which are too powerful'
-  - '&4due to their complexity'
+  lore-key: items.sf.anvil_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3219,14 +2572,9 @@ items:
 - id: sf:miner_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Miner'
+  name-key: items.sf.miner_talisman.name
   priority: 470
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it has'
-  - '&fa 20% chance of doubling'
-  - '&fall Ores you mine'
+  lore-key: items.sf.miner_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3235,14 +2583,9 @@ items:
 - id: sf:farmer_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Farmer'
+  name-key: items.sf.farmer_talisman.name
   priority: 471
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it has'
-  - '&fa 20% chance of doubling'
-  - '&fall crops you harvest'
+  lore-key: items.sf.farmer_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3251,14 +2594,9 @@ items:
 - id: sf:hunter_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Hunter'
+  name-key: items.sf.hunter_talisman.name
   priority: 472
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it has'
-  - '&fa 20% chance of doubling'
-  - '&fall Drops from Mobs you kill'
+  lore-key: items.sf.hunter_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3267,15 +2605,9 @@ items:
 - id: sf:lava_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Lava Walker'
+  name-key: items.sf.lava_talisman.name
   priority: 473
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it will'
-  - '&fgive you Fire Resistance'
-  - '&fas soon as you touch Lava'
-  - '&fbut will then be consumed'
+  lore-key: items.sf.lava_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3284,16 +2616,9 @@ items:
 - id: sf:water_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Water Breather'
+  name-key: items.sf.water_talisman.name
   priority: 474
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it will'
-  - '&fgive you the ability'
-  - '&fto breath underwater as'
-  - '&fsoon as you start drowning'
-  - '&fbut will then be consumed'
+  lore-key: items.sf.water_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3302,14 +2627,9 @@ items:
 - id: sf:angel_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Angel'
+  name-key: items.sf.angel_talisman.name
   priority: 475
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it has a'
-  - '&f75% chance to prevent you'
-  - '&ffrom taking Fall Damage'
+  lore-key: items.sf.angel_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3318,15 +2638,9 @@ items:
 - id: sf:fire_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Firefighter'
+  name-key: items.sf.fire_talisman.name
   priority: 476
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it will'
-  - '&fgive you Fire Resistance'
-  - '&fas soon as you start burning'
-  - '&fbut will then be consumed'
+  lore-key: items.sf.fire_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3335,14 +2649,9 @@ items:
 - id: sf:magician_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Magician'
+  name-key: items.sf.magician_talisman.name
   priority: 477
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it gives'
-  - '&fyou a 80% Luck Bonus on Enchanting'
-  - '&fYou will sometimes get an Extra Enchantment'
+  lore-key: items.sf.magician_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3351,14 +2660,9 @@ items:
 - id: sf:traveller_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Traveller'
+  name-key: items.sf.traveller_talisman.name
   priority: 478
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it gives'
-  - '&fyou a 60% Chance for a decent'
-  - '&fSpeed Buff when you start sprinting'
+  lore-key: items.sf.traveller_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3367,14 +2671,9 @@ items:
 - id: sf:warrior_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Warrior'
+  name-key: items.sf.warrior_talisman.name
   priority: 479
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it gives'
-  - '&fyou Strength III whenever you get hit'
-  - '&fbut will then be consumed'
+  lore-key: items.sf.warrior_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3383,15 +2682,9 @@ items:
 - id: sf:knight_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Knight'
+  name-key: items.sf.knight_talisman.name
   priority: 480
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it gives'
-  - '&fyou a 30% Chance for 5 Seconds of Regeneration'
-  - '&fwhenever You get hit'
-  - '&fbut will then be consumed'
+  lore-key: items.sf.knight_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3400,15 +2693,9 @@ items:
 - id: sf:whirlwind_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Whirlwind'
+  name-key: items.sf.whirlwind_talisman.name
   priority: 481
-  lore:
-  - ''
-  - '&fHaving this Talisman'
-  - '&fin your Inventory will reflect'
-  - '&f60% of any projectiles fired at you.'
-  - '&eOnly a thrown Trident can pierce'
-  - '&ethrough this layer of protection'
+  lore-key: items.sf.whirlwind_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3417,15 +2704,9 @@ items:
 - id: sf:wizard_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Wizard'
+  name-key: items.sf.wizard_talisman.name
   priority: 482
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your Inventory it allows you to'
-  - '&fobtain Fortune Level 4/5 however'
-  - '&fit also has a chance to lower the'
-  - '&fLevel of some Enchantments on your Item'
+  lore-key: items.sf.wizard_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3434,14 +2715,9 @@ items:
 - id: sf:caveman_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Caveman'
+  name-key: items.sf.caveman_talisman.name
   priority: 483
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your inventory it gives'
-  - '&fyou a 50% chance for a decent'
-  - '&fHaste buff when you mine any ore'
+  lore-key: items.sf.caveman_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3450,14 +2726,9 @@ items:
 - id: sf:wise_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&aTalisman of the Wise'
+  name-key: items.sf.wise_talisman.name
   priority: 484
-  lore:
-  - ''
-  - '&fWhile you have this Talisman'
-  - '&fin your inventory it gives'
-  - '&fyou a 20% chance of doubling'
-  - '&fany experience you obtain'
+  lore-key: items.sf.wise_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3466,14 +2737,9 @@ items:
 - id: sf:ender_anvil_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Anvil'
+  name-key: items.sf.ender_anvil_talisman.name
   priority: 849
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Anvil'
+  lore-key: items.sf.ender_anvil_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3483,14 +2749,9 @@ items:
 - id: sf:ender_miner_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Miner'
+  name-key: items.sf.ender_miner_talisman.name
   priority: 850
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Miner'
+  lore-key: items.sf.ender_miner_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3500,14 +2761,9 @@ items:
 - id: sf:ender_farmer_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Farmer'
+  name-key: items.sf.ender_farmer_talisman.name
   priority: 851
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Farmer'
+  lore-key: items.sf.ender_farmer_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3517,14 +2773,9 @@ items:
 - id: sf:ender_hunter_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Hunter'
+  name-key: items.sf.ender_hunter_talisman.name
   priority: 852
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Hunter'
+  lore-key: items.sf.ender_hunter_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3534,14 +2785,9 @@ items:
 - id: sf:ender_lava_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Lava Walker'
+  name-key: items.sf.ender_lava_talisman.name
   priority: 853
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Lava Walker'
+  lore-key: items.sf.ender_lava_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3551,14 +2797,9 @@ items:
 - id: sf:ender_water_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Water Breather'
+  name-key: items.sf.ender_water_talisman.name
   priority: 854
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Water Breather'
+  lore-key: items.sf.ender_water_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3568,14 +2809,9 @@ items:
 - id: sf:ender_angel_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Angel'
+  name-key: items.sf.ender_angel_talisman.name
   priority: 855
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Angel'
+  lore-key: items.sf.ender_angel_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3585,14 +2821,9 @@ items:
 - id: sf:ender_fire_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Firefighter'
+  name-key: items.sf.ender_fire_talisman.name
   priority: 856
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Firefighter'
+  lore-key: items.sf.ender_fire_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3602,14 +2833,9 @@ items:
 - id: sf:ender_magician_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Magician'
+  name-key: items.sf.ender_magician_talisman.name
   priority: 857
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Magician'
+  lore-key: items.sf.ender_magician_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3619,14 +2845,9 @@ items:
 - id: sf:ender_traveller_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Traveller'
+  name-key: items.sf.ender_traveller_talisman.name
   priority: 858
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Traveller'
+  lore-key: items.sf.ender_traveller_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3636,14 +2857,9 @@ items:
 - id: sf:ender_warrior_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Warrior'
+  name-key: items.sf.ender_warrior_talisman.name
   priority: 859
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Warrior'
+  lore-key: items.sf.ender_warrior_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3653,14 +2869,9 @@ items:
 - id: sf:ender_knight_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Knight'
+  name-key: items.sf.ender_knight_talisman.name
   priority: 860
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Knight'
+  lore-key: items.sf.ender_knight_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3670,14 +2881,9 @@ items:
 - id: sf:ender_whirlwind_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Whirlwind'
+  name-key: items.sf.ender_whirlwind_talisman.name
   priority: 861
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Whirlwind'
+  lore-key: items.sf.ender_whirlwind_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3687,14 +2893,9 @@ items:
 - id: sf:ender_wizard_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Wizard'
+  name-key: items.sf.ender_wizard_talisman.name
   priority: 862
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Wizard'
+  lore-key: items.sf.ender_wizard_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3704,14 +2905,9 @@ items:
 - id: sf:ender_caveman_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Caveman'
+  name-key: items.sf.ender_caveman_talisman.name
   priority: 863
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Caveman'
+  lore-key: items.sf.ender_caveman_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3721,14 +2917,9 @@ items:
 - id: sf:ender_wise_talisman
   category: sf:talisman
   material: EMERALD
-  name: '&5Ender Talisman of the Wise'
+  name-key: items.sf.ender_wise_talisman.name
   priority: 864
-  lore:
-  - '&7Ender Infused'
-  - ''
-  - '&7Works from your Ender Chest'
-  - '&7as the Tier II variant of'
-  - '&aTalisman of the Wise'
+  lore-key: items.sf.ender_wise_talisman.lore
   flags:
   - legacy-sf
   - talisman
@@ -3738,7 +2929,7 @@ items:
 - id: sf:staff_elemental
   category: sf:staves
   material: STICK
-  name: '&6Elemental Staff'
+  name-key: items.sf.staff_elemental.name
   priority: 292
   flags:
   - legacy-sf
@@ -3746,13 +2937,9 @@ items:
 - id: sf:staff_elemental_wind
   category: sf:staves
   material: STICK
-  name: '&6Elemental Staff &7- &b&oWind'
+  name-key: items.sf.staff_elemental_wind.name
   priority: 485
-  lore:
-  - ''
-  - '&7Element: &b&oWind'
-  - ''
-  - '&eRight Click&7 to launch yourself forward'
+  lore-key: items.sf.staff_elemental_wind.lore
   flags:
   - legacy-sf
   enchantments:
@@ -3760,11 +2947,9 @@ items:
 - id: sf:staff_elemental_fire
   category: sf:staves
   material: STICK
-  name: '&6Elemental Staff &7- &c&oFire'
+  name-key: items.sf.staff_elemental_fire.name
   priority: 486
-  lore:
-  - ''
-  - '&7Element: &c&oFire'
+  lore-key: items.sf.staff_elemental_fire.lore
   flags:
   - legacy-sf
   enchantments:
@@ -3772,13 +2957,9 @@ items:
 - id: sf:staff_elemental_water
   category: sf:staves
   material: STICK
-  name: '&6Elemental Staff &7- &1&oWater'
+  name-key: items.sf.staff_elemental_water.name
   priority: 487
-  lore:
-  - ''
-  - '&7Element: &1&oWater'
-  - ''
-  - '&eRight Click&7 to extinguish yourself'
+  lore-key: items.sf.staff_elemental_water.lore
   flags:
   - legacy-sf
   enchantments:
@@ -3786,14 +2967,9 @@ items:
 - id: sf:staff_elemental_storm
   category: sf:staves
   material: STICK
-  name: '&6Elemental Staff &7- &8&oStorm'
+  name-key: items.sf.staff_elemental_storm.name
   priority: 488
-  lore:
-  - ''
-  - '&7Element: &8&oStorm'
-  - ''
-  - '&eRight Click&7 to summon a lightning'
-  - '&e8 Uses &7left'
+  lore-key: items.sf.staff_elemental_storm.lore
   flags:
   - legacy-sf
   enchantments:
@@ -3801,177 +2977,129 @@ items:
 - id: sf:enhanced_crafting_table
   category: sf:multiblocks
   material: CRAFTING_TABLE
-  name: '&eEnhanced Crafting Table'
+  name-key: items.sf.enhanced_crafting_table.name
   priority: 293
-  lore:
-  - ''
-  - '&aA regular Crafting Table cannot'
-  - '&ahold this massive Amount of Power...'
+  lore-key: items.sf.enhanced_crafting_table.lore
   flags:
   - legacy-sf
 - id: sf:grind_stone
   category: sf:multiblocks
   material: DISPENSER
-  name: '&bGrind Stone'
+  name-key: items.sf.grind_stone.name
   priority: 294
-  lore:
-  - ''
-  - '&aGrinds items down into other items'
+  lore-key: items.sf.grind_stone.lore
   flags:
   - legacy-sf
 - id: sf:armor_forge
   category: sf:multiblocks
   material: ANVIL
-  name: '&6Armor Forge'
+  name-key: items.sf.armor_forge.name
   priority: 295
-  lore:
-  - ''
-  - '&aGives you the ability to create powerful armor'
+  lore-key: items.sf.armor_forge.lore
   flags:
   - legacy-sf
 - id: sf:makeshift_smeltery
   category: sf:multiblocks
   material: BLAST_FURNACE
-  name: '&eMakeshift Smeltery'
+  name-key: items.sf.makeshift_smeltery.name
   priority: 296
-  lore:
-  - ''
-  - '&fImprovised version of the Smeltery'
-  - '&fthat only allows you to'
-  - '&fsmelt dusts into ingots'
+  lore-key: items.sf.makeshift_smeltery.lore
   flags:
   - legacy-sf
 - id: sf:smeltery
   category: sf:multiblocks
   material: FURNACE
-  name: '&6Smeltery'
+  name-key: items.sf.smeltery.name
   priority: 297
-  lore:
-  - ''
-  - '&fA high-temperature furnace'
-  - '&fthat allows you to smelt dusts'
-  - '&finto ingots and create alloys.'
+  lore-key: items.sf.smeltery.lore
   flags:
   - legacy-sf
 - id: sf:ore_crusher
   category: sf:multiblocks
   material: DISPENSER
-  name: '&bOre Crusher'
+  name-key: items.sf.ore_crusher.name
   priority: 298
-  lore:
-  - ''
-  - '&aCrushes ores to double them'
+  lore-key: items.sf.ore_crusher.lore
   flags:
   - legacy-sf
 - id: sf:compressor
   category: sf:multiblocks
   material: PISTON
-  name: '&bCompressor'
+  name-key: items.sf.compressor.name
   priority: 489
-  lore:
-  - ''
-  - '&aCompresses Items'
+  lore-key: items.sf.compressor.lore
   flags:
   - legacy-sf
 - id: sf:pressure_chamber
   category: sf:multiblocks
   material: GLASS
-  name: '&bPressure Chamber'
+  name-key: items.sf.pressure_chamber.name
   priority: 299
-  lore:
-  - ''
-  - '&aCompresses Items even further'
+  lore-key: items.sf.pressure_chamber.lore
   flags:
   - legacy-sf
 - id: sf:magic_workbench
   category: sf:multiblocks
   material: CRAFTING_TABLE
-  name: '&6Magic Workbench'
+  name-key: items.sf.magic_workbench.name
   priority: 300
-  lore:
-  - ''
-  - '&dInfuses Items with magical Energy'
+  lore-key: items.sf.magic_workbench.lore
   flags:
   - legacy-sf
 - id: sf:ore_washer
   category: sf:multiblocks
   material: CAULDRON
-  name: '&6Ore Washer'
+  name-key: items.sf.ore_washer.name
   priority: 301
-  lore:
-  - ''
-  - '&aWashes Sifted Ore to filter Ores'
-  - '&aand gives you small Stone Chunks'
+  lore-key: items.sf.ore_washer.lore
   flags:
   - legacy-sf
 - id: sf:table_saw
   category: sf:multiblocks
   material: STONECUTTER
-  name: '&6Table Saw'
+  name-key: items.sf.table_saw.name
   priority: 302
-  lore:
-  - ''
-  - '&aAllows you to get 8 planks from 1 Log'
-  - '&a(Works with all log types)'
+  lore-key: items.sf.table_saw.lore
   flags:
   - legacy-sf
 - id: sf:juicer
   category: sf:multiblocks
   material: GLASS_BOTTLE
-  name: '&aJuicer'
+  name-key: items.sf.juicer.name
   priority: 303
-  lore:
-  - ''
-  - '&aAllows you to create delicious Juice'
+  lore-key: items.sf.juicer.lore
   flags:
   - legacy-sf
 - id: sf:automated_panning_machine
   category: sf:multiblocks
   material: BOWL
-  name: '&eAutomated Panning Machine'
+  name-key: items.sf.automated_panning_machine.name
   priority: 304
-  lore:
-  - ''
-  - '&fA MultiBlock Version of the Gold Pan'
-  - '&fand Nether Gold Pan combined in one machine.'
+  lore-key: items.sf.automated_panning_machine.lore
   flags:
   - legacy-sf
 - id: sf:industrial_miner
   category: sf:multiblocks
   material: GOLDEN_PICKAXE
-  name: '&bIndustrial Miner'
+  name-key: items.sf.industrial_miner.name
   priority: 305
-  lore:
-  - ''
-  - '&fThis Multiblock will mine any Ores'
-  - '&fin a 7x7 area underneath it.'
-  - '&fPlace coal or similar in its chest'
-  - '&fto fuel this machine.'
+  lore-key: items.sf.industrial_miner.lore
   flags:
   - legacy-sf
 - id: sf:advanced_industrial_miner
   category: sf:multiblocks
   material: DIAMOND_PICKAXE
-  name: '&cAdvanced Industrial Miner'
+  name-key: items.sf.advanced_industrial_miner.name
   priority: 306
-  lore:
-  - ''
-  - '&fThis Multiblock will mine any Ores'
-  - '&fin a 11x11 area underneath it.'
-  - '&fPlace a bucket of fuel or lava in'
-  - '&fits chest to fuel this machine.'
-  - ''
-  - '&a+ Silk Touch'
+  lore-key: items.sf.advanced_industrial_miner.lore
   flags:
   - legacy-sf
 - id: sf:composter
   category: sf:machines
   material: CAULDRON
-  name: '&aComposter'
+  name-key: items.sf.composter.name
   priority: 307
-  lore:
-  - ''
-  - '&aCan convert various Materials over Time...'
+  lore-key: items.sf.composter.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -3980,11 +3108,9 @@ items:
 - id: sf:crucible
   category: sf:machines
   material: CAULDRON
-  name: '&cCrucible'
+  name-key: items.sf.crucible.name
   priority: 308
-  lore:
-  - ''
-  - '&aUsed to smelt Items into Liquids'
+  lore-key: items.sf.crucible.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -3993,13 +3119,9 @@ items:
 - id: sf:output_chest
   category: sf:machines
   material: CHEST
-  name: '&4Item Output Chest'
+  name-key: items.sf.output_chest.name
   priority: 309
-  lore:
-  - ''
-  - '&cA basic machine will try to put'
-  - '&citems in this chest if it''s placed'
-  - '&cadjacent to the dispenser.'
+  lore-key: items.sf.output_chest.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4008,13 +3130,9 @@ items:
 - id: sf:ignition_chamber
   category: sf:machines
   material: DROPPER
-  name: '&4Automatic Ignition Chamber'
+  name-key: items.sf.ignition_chamber.name
   priority: 310
-  lore:
-  - ''
-  - '&fPrevents the Smeltery from using up fire.'
-  - '&fJust fill it up with "Flint and Steel"'
-  - '&fand place it adjacent to the Smeltery''s dispenser'
+  lore-key: items.sf.ignition_chamber.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4023,11 +3141,9 @@ items:
 - id: sf:hologram_projector
   category: sf:machines
   material: QUARTZ_SLAB
-  name: '&bHologram Projector'
+  name-key: items.sf.hologram_projector.name
   priority: 311
-  lore:
-  - ''
-  - '&fProjects an Editable Hologram'
+  lore-key: items.sf.hologram_projector.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4036,12 +3152,9 @@ items:
 - id: sf:block_placer
   category: sf:machines
   material: DISPENSER
-  name: '&aBlock Placer'
+  name-key: items.sf.block_placer.name
   priority: 312
-  lore:
-  - ''
-  - '&fAll Blocks in this Dispenser'
-  - '&fwill automatically get placed'
+  lore-key: items.sf.block_placer.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4050,12 +3163,9 @@ items:
 - id: sf:enhanced_furnace
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eI'
+  name-key: items.sf.enhanced_furnace.name
   priority: 313
-  lore:
-  - '&7Processing Speed: &e2x'
-  - '&7Fuel Efficiency: &e1x'
-  - '&7Fortune Level: &e1x'
+  lore-key: items.sf.enhanced_furnace.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4064,12 +3174,9 @@ items:
 - id: sf:enhanced_furnace_2
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eII'
+  name-key: items.sf.enhanced_furnace_2.name
   priority: 314
-  lore:
-  - '&7Processing Speed: &e2x'
-  - '&7Fuel Efficiency: &e1x'
-  - '&7Fortune Level: &e1x'
+  lore-key: items.sf.enhanced_furnace_2.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4078,12 +3185,9 @@ items:
 - id: sf:enhanced_furnace_3
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eIII'
+  name-key: items.sf.enhanced_furnace_3.name
   priority: 315
-  lore:
-  - '&7Processing Speed: &e3x'
-  - '&7Fuel Efficiency: &e2x'
-  - '&7Fortune Level: &e1x'
+  lore-key: items.sf.enhanced_furnace_3.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4092,12 +3196,9 @@ items:
 - id: sf:enhanced_furnace_4
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eIV'
+  name-key: items.sf.enhanced_furnace_4.name
   priority: 316
-  lore:
-  - '&7Processing Speed: &e3x'
-  - '&7Fuel Efficiency: &e3x'
-  - '&7Fortune Level: &e1x'
+  lore-key: items.sf.enhanced_furnace_4.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4106,12 +3207,9 @@ items:
 - id: sf:enhanced_furnace_5
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eV'
+  name-key: items.sf.enhanced_furnace_5.name
   priority: 317
-  lore:
-  - '&7Processing Speed: &e4x'
-  - '&7Fuel Efficiency: &e3x'
-  - '&7Fortune Level: &e1x'
+  lore-key: items.sf.enhanced_furnace_5.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4120,12 +3218,9 @@ items:
 - id: sf:enhanced_furnace_6
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eVI'
+  name-key: items.sf.enhanced_furnace_6.name
   priority: 318
-  lore:
-  - '&7Processing Speed: &e4x'
-  - '&7Fuel Efficiency: &e3x'
-  - '&7Fortune Level: &e2x'
+  lore-key: items.sf.enhanced_furnace_6.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4134,12 +3229,9 @@ items:
 - id: sf:enhanced_furnace_7
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eVII'
+  name-key: items.sf.enhanced_furnace_7.name
   priority: 319
-  lore:
-  - '&7Processing Speed: &e5x'
-  - '&7Fuel Efficiency: &e3x'
-  - '&7Fortune Level: &e2x'
+  lore-key: items.sf.enhanced_furnace_7.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4148,12 +3240,9 @@ items:
 - id: sf:enhanced_furnace_8
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eVIII'
+  name-key: items.sf.enhanced_furnace_8.name
   priority: 320
-  lore:
-  - '&7Processing Speed: &e5x'
-  - '&7Fuel Efficiency: &e4x'
-  - '&7Fortune Level: &e2x'
+  lore-key: items.sf.enhanced_furnace_8.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4162,12 +3251,9 @@ items:
 - id: sf:enhanced_furnace_9
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eIX'
+  name-key: items.sf.enhanced_furnace_9.name
   priority: 321
-  lore:
-  - '&7Processing Speed: &e6x'
-  - '&7Fuel Efficiency: &e4x'
-  - '&7Fortune Level: &e2x'
+  lore-key: items.sf.enhanced_furnace_9.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4176,12 +3262,9 @@ items:
 - id: sf:enhanced_furnace_10
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eX'
+  name-key: items.sf.enhanced_furnace_10.name
   priority: 322
-  lore:
-  - '&7Processing Speed: &e7x'
-  - '&7Fuel Efficiency: &e4x'
-  - '&7Fortune Level: &e2x'
+  lore-key: items.sf.enhanced_furnace_10.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4190,12 +3273,9 @@ items:
 - id: sf:enhanced_furnace_11
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Enhanced Furnace - &eXI'
+  name-key: items.sf.enhanced_furnace_11.name
   priority: 323
-  lore:
-  - '&7Processing Speed: &e8x'
-  - '&7Fuel Efficiency: &e4x'
-  - '&7Fortune Level: &e2x'
+  lore-key: items.sf.enhanced_furnace_11.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4204,12 +3284,9 @@ items:
 - id: sf:reinforced_furnace
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Advanced Furnace'
+  name-key: items.sf.reinforced_furnace.name
   priority: 324
-  lore:
-  - '&7Processing Speed: &e10x'
-  - '&7Fuel Efficiency: &e5x'
-  - '&7Fortune Level: &e3x'
+  lore-key: items.sf.reinforced_furnace.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4218,12 +3295,9 @@ items:
 - id: sf:carbonado_edged_furnace
   category: sf:enhanced_furnaces
   material: FURNACE
-  name: '&7Carbonado Edged Furnace'
+  name-key: items.sf.carbonado_edged_furnace.name
   priority: 325
-  lore:
-  - '&7Processing Speed: &e20x'
-  - '&7Fuel Efficiency: &e10x'
-  - '&7Fortune Level: &e3x'
+  lore-key: items.sf.carbonado_edged_furnace.lore
   flags:
   - legacy-sf
   - plugin-block
@@ -4232,7 +3306,7 @@ items:
 - id: sf:soulbound_sword
   category: sf:soulbound_items
   material: DIAMOND_SWORD
-  name: '&cSoulbound Sword'
+  name-key: items.sf.soulbound_sword.name
   priority: 326
   flags:
   - legacy-sf
@@ -4240,7 +3314,7 @@ items:
 - id: sf:soulbound_bow
   category: sf:soulbound_items
   material: BOW
-  name: '&cSoulbound Bow'
+  name-key: items.sf.soulbound_bow.name
   priority: 327
   flags:
   - legacy-sf
@@ -4248,7 +3322,7 @@ items:
 - id: sf:soulbound_pickaxe
   category: sf:soulbound_items
   material: DIAMOND_PICKAXE
-  name: '&cSoulbound Pickaxe'
+  name-key: items.sf.soulbound_pickaxe.name
   priority: 328
   flags:
   - legacy-sf
@@ -4256,7 +3330,7 @@ items:
 - id: sf:soulbound_axe
   category: sf:soulbound_items
   material: DIAMOND_AXE
-  name: '&cSoulbound Axe'
+  name-key: items.sf.soulbound_axe.name
   priority: 329
   flags:
   - legacy-sf
@@ -4264,7 +3338,7 @@ items:
 - id: sf:soulbound_shovel
   category: sf:soulbound_items
   material: DIAMOND_SHOVEL
-  name: '&cSoulbound Shovel'
+  name-key: items.sf.soulbound_shovel.name
   priority: 330
   flags:
   - legacy-sf
@@ -4272,7 +3346,7 @@ items:
 - id: sf:soulbound_hoe
   category: sf:soulbound_items
   material: DIAMOND_HOE
-  name: '&cSoulbound Hoe'
+  name-key: items.sf.soulbound_hoe.name
   priority: 331
   flags:
   - legacy-sf
@@ -4280,7 +3354,7 @@ items:
 - id: sf:soulbound_trident
   category: sf:soulbound_items
   material: TRIDENT
-  name: '&cSoulbound Trident'
+  name-key: items.sf.soulbound_trident.name
   priority: 332
   flags:
   - legacy-sf
@@ -4288,7 +3362,7 @@ items:
 - id: sf:soulbound_helmet
   category: sf:soulbound_items
   material: DIAMOND_HELMET
-  name: '&cSoulbound Helmet'
+  name-key: items.sf.soulbound_helmet.name
   priority: 333
   flags:
   - legacy-sf
@@ -4296,7 +3370,7 @@ items:
 - id: sf:soulbound_chestplate
   category: sf:soulbound_items
   material: DIAMOND_CHESTPLATE
-  name: '&cSoulbound Chestplate'
+  name-key: items.sf.soulbound_chestplate.name
   priority: 334
   flags:
   - legacy-sf
@@ -4304,7 +3378,7 @@ items:
 - id: sf:soulbound_leggings
   category: sf:soulbound_items
   material: DIAMOND_LEGGINGS
-  name: '&cSoulbound Leggings'
+  name-key: items.sf.soulbound_leggings.name
   priority: 335
   flags:
   - legacy-sf
@@ -4312,7 +3386,7 @@ items:
 - id: sf:soulbound_boots
   category: sf:soulbound_items
   material: DIAMOND_BOOTS
-  name: '&cSoulbound Boots'
+  name-key: items.sf.soulbound_boots.name
   priority: 336
   flags:
   - legacy-sf
@@ -4320,7 +3394,7 @@ items:
 - id: sf:blank_rune
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fBlank Rune'
+  name-key: items.sf.blank_rune.name
   priority: 337
   colorRgb: 1908001
   flags:
@@ -4328,7 +3402,7 @@ items:
 - id: sf:ancient_rune_air
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fAncient Rune Air'
+  name-key: items.sf.ancient_rune_air.name
   priority: 490
   colorRgb: 3847130
   flags:
@@ -4336,7 +3410,7 @@ items:
 - id: sf:ancient_rune_water
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fAncient Rune Water'
+  name-key: items.sf.ancient_rune_water.name
   priority: 491
   colorRgb: 3949738
   flags:
@@ -4344,7 +3418,7 @@ items:
 - id: sf:ancient_rune_fire
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fAncient Rune Fire'
+  name-key: items.sf.ancient_rune_fire.name
   priority: 492
   colorRgb: 11546150
   flags:
@@ -4352,14 +3426,14 @@ items:
 - id: sf:ancient_rune_earth
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fAncient Rune Earth'
+  name-key: items.sf.ancient_rune_earth.name
   priority: 493
   flags:
   - legacy-sf
 - id: sf:ancient_rune_ender
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fAncient Rune Ender'
+  name-key: items.sf.ancient_rune_ender.name
   priority: 494
   colorRgb: 8991416
   flags:
@@ -4367,7 +3441,7 @@ items:
 - id: sf:ancient_rune_rainbow
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fAncient Rune Rainbow'
+  name-key: items.sf.ancient_rune_rainbow.name
   priority: 495
   colorRgb: 13061821
   flags:
@@ -4375,14 +3449,14 @@ items:
 - id: sf:ancient_rune_lightning
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fAncient Rune Lightning'
+  name-key: items.sf.ancient_rune_lightning.name
   priority: 496
   flags:
   - legacy-sf
 - id: sf:ancient_rune_soulbound
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fAncient Rune Soulbound'
+  name-key: items.sf.ancient_rune_soulbound.name
   priority: 497
   flags:
   - legacy-sf
@@ -4390,796 +3464,549 @@ items:
 - id: sf:ancient_rune_enchantment
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fAncient Rune Enchantment'
+  name-key: items.sf.ancient_rune_enchantment.name
   priority: 498
   flags:
   - legacy-sf
 - id: sf:ancient_rune_villagers
   category: sf:runes
   material: FIREWORK_STAR
-  name: '&fAncient Rune Villagers'
+  name-key: items.sf.ancient_rune_villagers.name
   priority: 499
   flags:
   - legacy-sf
 - id: sf:solar_generator
   category: sf:electricity
   material: DAYLIGHT_DETECTOR
-  name: '&bSolar Generator'
+  name-key: items.sf.solar_generator.name
   priority: 338
-  lore:
-  - ''
-  - '&eBasic Generator'
-  - '&8⇨ &e⚡ &70 J Buffer'
-  - '&8⇨ &e⚡ &74 J/t'
+  lore-key: items.sf.solar_generator.lore
   flags:
   - legacy-sf
 - id: sf:solar_generator_2
   category: sf:electricity
   material: DAYLIGHT_DETECTOR
-  name: '&cAdvanced Solar Generator'
+  name-key: items.sf.solar_generator_2.name
   priority: 339
-  lore:
-  - ''
-  - '&aMedium Generator'
-  - '&8⇨ &e⚡ &70 J Buffer'
-  - '&8⇨ &e⚡ &716 J/t'
+  lore-key: items.sf.solar_generator_2.lore
   flags:
   - legacy-sf
 - id: sf:solar_generator_3
   category: sf:electricity
   material: DAYLIGHT_DETECTOR
-  name: '&4Carbonado Solar Generator'
+  name-key: items.sf.solar_generator_3.name
   priority: 340
-  lore:
-  - ''
-  - '&4End-Game Generator'
-  - '&8⇨ &e⚡ &70 J Buffer'
-  - '&8⇨ &e⚡ &764 J/t'
+  lore-key: items.sf.solar_generator_3.lore
   flags:
   - legacy-sf
 - id: sf:solar_generator_4
   category: sf:electricity
   material: DAYLIGHT_DETECTOR
-  name: '&eEnergized Solar Generator'
+  name-key: items.sf.solar_generator_4.name
   priority: 341
-  lore:
-  - ''
-  - '&9Works at Night'
-  - ''
-  - '&4End-Game Generator'
-  - '&8⇨ &e⚡ &70 J Buffer'
-  - '&8⇨ &e⚡ &7256 J/t (Day)'
-  - '&8⇨ &e⚡ &7128 J/t (Night)'
+  lore-key: items.sf.solar_generator_4.lore
   flags:
   - legacy-sf
 - id: sf:coal_generator
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&cCoal Generator'
+  name-key: items.sf.coal_generator.name
   priority: 342
   headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
-  lore:
-  - ''
-  - '&6Average Generator'
-  - '&8⇨ &e⚡ &71280 J Buffer'
-  - '&8⇨ &e⚡ &716 J/t'
+  lore-key: items.sf.coal_generator.lore
   flags:
   - legacy-sf
 - id: sf:coal_generator_2
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&cCoal Generator &7(&eII&7)'
+  name-key: items.sf.coal_generator_2.name
   priority: 343
   headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
-  lore:
-  - ''
-  - '&6Advanced Generator'
-  - '&8⇨ &e⚡ &75120 J Buffer'
-  - '&8⇨ &e⚡ &730 J/t'
+  lore-key: items.sf.coal_generator_2.lore
   flags:
   - legacy-sf
 - id: sf:lava_generator
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&4Lava Generator'
+  name-key: items.sf.lava_generator.name
   priority: 344
   headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
-  lore:
-  - ''
-  - '&6Average Generator'
-  - '&8⇨ &e⚡ &710240 J Buffer'
-  - '&8⇨ &e⚡ &720 J/t'
+  lore-key: items.sf.lava_generator.lore
   flags:
   - legacy-sf
 - id: sf:lava_generator_2
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&4Lava Generator &7(&eII&7)'
+  name-key: items.sf.lava_generator_2.name
   priority: 345
   headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
-  lore:
-  - ''
-  - '&6Advanced Generator'
-  - '&8⇨ &e⚡ &720480 J Buffer'
-  - '&8⇨ &e⚡ &740 J/t'
+  lore-key: items.sf.lava_generator_2.lore
   flags:
   - legacy-sf
 - id: sf:electric_furnace
   category: sf:electricity
   material: FURNACE
-  name: '&cElectric Furnace'
+  name-key: items.sf.electric_furnace.name
   priority: 346
-  lore:
-  - ''
-  - '&eBasic Machine'
-  - '&8⇨ &b⚡ &7Speed: &b1x'
-  - '&8⇨ &e⚡ &74 J/t'
+  lore-key: items.sf.electric_furnace.lore
   flags:
   - legacy-sf
 - id: sf:electric_furnace_2
   category: sf:electricity
   material: FURNACE
-  name: '&cElectric Furnace &7- &eII'
+  name-key: items.sf.electric_furnace_2.name
   priority: 347
-  lore:
-  - ''
-  - '&aMedium Machine'
-  - '&8⇨ &b⚡ &7Speed: &b2x'
-  - '&8⇨ &e⚡ &76 J/t'
+  lore-key: items.sf.electric_furnace_2.lore
   flags:
   - legacy-sf
 - id: sf:electric_furnace_3
   category: sf:electricity
   material: FURNACE
-  name: '&cElectric Furnace &7- &eIII'
+  name-key: items.sf.electric_furnace_3.name
   priority: 348
-  lore:
-  - ''
-  - '&aMedium Machine'
-  - '&8⇨ &b⚡ &7Speed: &b4x'
-  - '&8⇨ &e⚡ &710 J/t'
+  lore-key: items.sf.electric_furnace_3.lore
   flags:
   - legacy-sf
 - id: sf:electric_ore_grinder
   category: sf:electricity
   material: FURNACE
-  name: '&cElectric Ore Grinder'
+  name-key: items.sf.electric_ore_grinder.name
   priority: 349
-  lore:
-  - ''
-  - '&fWorks as an Ore Crusher and Grind Stone'
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &b⚡ &7Speed: &b1x'
-  - '&8⇨ &e⚡ &712 J/t'
+  lore-key: items.sf.electric_ore_grinder.lore
   flags:
   - legacy-sf
 - id: sf:electric_ore_grinder_2
   category: sf:electricity
   material: FURNACE
-  name: '&cElectric Ore Grinder &7(&eII&7)'
+  name-key: items.sf.electric_ore_grinder_2.name
   priority: 350
-  lore:
-  - ''
-  - '&fWorks as an Ore Crusher and Grind Stone'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡ &7Speed: &b4x'
-  - '&8⇨ &e⚡ &730 J/t'
+  lore-key: items.sf.electric_ore_grinder_2.lore
   flags:
   - legacy-sf
 - id: sf:electric_ore_grinder_3
   category: sf:electricity
   material: FURNACE
-  name: '&cElectric Ore Grinder &7(&eIII&7)'
+  name-key: items.sf.electric_ore_grinder_3.name
   priority: 351
-  lore:
-  - ''
-  - '&fWorks as an Ore Crusher and Grind Stone'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡ &7Speed: &b10x'
-  - '&8⇨ &e⚡ &790 J/t'
+  lore-key: items.sf.electric_ore_grinder_3.lore
   flags:
   - legacy-sf
 - id: sf:electric_ingot_pulverizer
   category: sf:electricity
   material: FURNACE
-  name: '&cElectric Ingot Pulverizer'
+  name-key: items.sf.electric_ingot_pulverizer.name
   priority: 352
-  lore:
-  - ''
-  - '&fPulverizes Ingots into Dust'
-  - ''
-  - '&aMedium Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&714 J/t'
+  lore-key: items.sf.electric_ingot_pulverizer.lore
   flags:
   - legacy-sf
 - id: sf:auto_drier
   category: sf:electricity
   material: SMOKER
-  name: '&6Auto Drier'
+  name-key: items.sf.auto_drier.name
   priority: 353
-  lore:
-  - ''
-  - '&aMedium Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&710 J/t'
+  lore-key: items.sf.auto_drier.lore
   flags:
   - legacy-sf
 - id: sf:auto_enchanter
   category: sf:electricity
   material: ENCHANTING_TABLE
-  name: '&5Auto Enchanter'
+  name-key: items.sf.auto_enchanter.name
   priority: 354
-  lore:
-  - ''
-  - '&aMedium Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&718 J/t'
+  lore-key: items.sf.auto_enchanter.lore
   flags:
   - legacy-sf
 - id: sf:auto_enchanter_2
   category: sf:electricity
   material: ENCHANTING_TABLE
-  name: '&5Auto Enchanter &7- &eII'
+  name-key: items.sf.auto_enchanter_2.name
   priority: 355
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b3x'
-  - '&8⇨ &e⚡&748 J/t'
+  lore-key: items.sf.auto_enchanter_2.lore
   flags:
   - legacy-sf
 - id: sf:auto_disenchanter
   category: sf:electricity
   material: ENCHANTING_TABLE
-  name: '&5Auto Disenchanter'
+  name-key: items.sf.auto_disenchanter.name
   priority: 356
-  lore:
-  - ''
-  - '&aMedium Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&718 J/t'
+  lore-key: items.sf.auto_disenchanter.lore
   flags:
   - legacy-sf
 - id: sf:auto_disenchanter_2
   category: sf:electricity
   material: ENCHANTING_TABLE
-  name: '&5Auto Disenchanter &7- &eII'
+  name-key: items.sf.auto_disenchanter_2.name
   priority: 357
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b3x'
-  - '&8⇨ &e⚡&748 J/t'
+  lore-key: items.sf.auto_disenchanter_2.lore
   flags:
   - legacy-sf
 - id: sf:auto_anvil
   category: sf:electricity
   material: IRON_BLOCK
-  name: '&7Auto Anvil'
+  name-key: items.sf.auto_anvil.name
   priority: 358
-  lore:
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &7Repair Factor: 10%'
-  - '&8⇨ &e⚡&724 J/t'
+  lore-key: items.sf.auto_anvil.lore
   flags:
   - legacy-sf
 - id: sf:auto_anvil_2
   category: sf:electricity
   material: IRON_BLOCK
-  name: '&7Auto Anvil Mk.II'
+  name-key: items.sf.auto_anvil_2.name
   priority: 359
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &7Repair Factor: 25%'
-  - '&8⇨ &e⚡&732 J/t'
+  lore-key: items.sf.auto_anvil_2.lore
   flags:
   - legacy-sf
 - id: sf:auto_brewer
   category: sf:electricity
   material: SMOKER
-  name: '&6Auto Brewer'
+  name-key: items.sf.auto_brewer.name
   priority: 360
-  lore:
-  - ''
-  - '&aMedium Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&712 J/t'
+  lore-key: items.sf.auto_brewer.lore
   flags:
   - legacy-sf
 - id: sf:auto_brewer_2
   category: sf:electricity
   material: SMOKER
-  name: '&6Auto Brewer &7(&eII&7)'
+  name-key: items.sf.auto_brewer_2.name
   priority: 361
-  lore:
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &b⚡&7Speed: &b5x'
-  - '&8⇨ &e⚡&750 J/t'
+  lore-key: items.sf.auto_brewer_2.lore
   flags:
   - legacy-sf
 - id: sf:book_binder
   category: sf:electricity
   material: BOOKSHELF
-  name: '&6Book Binder'
+  name-key: items.sf.book_binder.name
   priority: 361
-  lore:
-  - ''
-  - '&fBinds multiple enchanted books into one.'
-  - ''
-  - '&aMedium Machine'
-  - '&8⇨ &e⚡&716 J/t'
+  lore-key: items.sf.book_binder.lore
   flags:
   - legacy-sf
 - id: sf:bio_reactor
   category: sf:electricity
   material: LIME_TERRACOTTA
-  name: '&2Bio Reactor'
+  name-key: items.sf.bio_reactor.name
   priority: 362
-  lore:
-  - ''
-  - '&6Average Generator'
-  - '&8⇨ &e⚡ &72560 J Buffer'
-  - '&8⇨ &e⚡ &78 J/t'
+  lore-key: items.sf.bio_reactor.lore
   flags:
   - legacy-sf
 - id: sf:bio_reactor_2
   requires-sfx-generator-balance: true
   category: sf:electricity
   material: LIME_TERRACOTTA
-  name: '&2Bio Reactor &7- &eII'
+  name-key: items.sf.bio_reactor_2.name
   priority: 363
-  lore:
-  - ''
-  - '&6Advanced Generator'
-  - '&8⇨ &e⚡ &75120 J Buffer'
-  - '&8⇨ &e⚡ &720 J/t'
+  lore-key: items.sf.bio_reactor_2.lore
   flags:
   - legacy-sf
 - id: sf:multimeter
   category: sf:electricity
   material: CLOCK
-  name: '&eMultimeter'
+  name-key: items.sf.multimeter.name
   priority: 363
-  lore:
-  - ''
-  - '&fMeasures the Amount of stored'
-  - '&fEnergy in a Block'
+  lore-key: items.sf.multimeter.lore
   flags:
   - legacy-sf
 - id: sf:small_capacitor
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&aSmall Energy Capacitor'
+  name-key: items.sf.small_capacitor.name
   priority: 364
   headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
-  lore:
-  - '&7Range: &c6 blocks'
-  - ''
-  - '&eBasic Capacitor'
-  - '&8⇨ &e⚡&7128 J Capacity'
+  lore-key: items.sf.small_capacitor.lore
   flags:
   - legacy-sf
 - id: sf:medium_capacitor
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&aMedium Energy Capacitor'
+  name-key: items.sf.medium_capacitor.name
   priority: 365
   headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
-  lore:
-  - '&7Range: &c6 blocks'
-  - ''
-  - '&6Average Capacitor'
-  - '&8⇨ &e⚡&7512 J Capacity'
+  lore-key: items.sf.medium_capacitor.lore
   flags:
   - legacy-sf
 - id: sf:big_capacitor
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&aBig Energy Capacitor'
+  name-key: items.sf.big_capacitor.name
   priority: 366
   headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
-  lore:
-  - '&7Range: &c6 blocks'
-  - ''
-  - '&aMedium Capacitor'
-  - '&8⇨ &e⚡&71024 J Capacity'
+  lore-key: items.sf.big_capacitor.lore
   flags:
   - legacy-sf
 - id: sf:large_capacitor
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&aLarge Energy Capacitor'
+  name-key: items.sf.large_capacitor.name
   priority: 367
   headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
-  lore:
-  - '&7Range: &c6 blocks'
-  - ''
-  - '&2Good Capacitor'
-  - '&8⇨ &e⚡&78192 J Capacity'
+  lore-key: items.sf.large_capacitor.lore
   flags:
   - legacy-sf
 - id: sf:carbonado_edged_capacitor
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&aCarbonado Edged Energy Capacitor'
+  name-key: items.sf.carbonado_edged_capacitor.name
   priority: 368
   headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
-  lore:
-  - '&7Range: &c6 blocks'
-  - ''
-  - '&4End-Game Capacitor'
-  - '&8⇨ &e⚡&765536 J Capacity'
+  lore-key: items.sf.carbonado_edged_capacitor.lore
   flags:
   - legacy-sf
 - id: sf:energized_capacitor
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&aEnergized Energy Capacitor'
+  name-key: items.sf.energized_capacitor.name
   priority: 369
   headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
-  lore:
-  - '&7Range: &c6 blocks'
-  - ''
-  - '&4End-Game Capacitor'
-  - '&8⇨ &e⚡&7524288 J Capacity'
+  lore-key: items.sf.energized_capacitor.lore
   flags:
   - legacy-sf
 - id: sf:programmable_android
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&cProgrammable Android &7(Normal)'
+  name-key: items.sf.programmable_android.name
   priority: 370
   headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
-  lore:
-  - ''
-  - '&8⇨ &7Function: None'
-  - '&8⇨ &7Fuel Efficiency: 1.0x'
+  lore-key: items.sf.programmable_android.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_farmer
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&cProgrammable Android &7(Farmer)'
+  name-key: items.sf.programmable_android_farmer.name
   priority: 371
   headTexture: f9d33357e8418823bf783de92de80291b4ebd392aec8706698e06896d498f6
-  lore:
-  - ''
-  - '&8⇨ &7Function: Farming'
-  - '&8⇨ &7Fuel Efficiency: 1.0x'
+  lore-key: items.sf.programmable_android_farmer.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_miner
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&cProgrammable Android &7(Miner)'
+  name-key: items.sf.programmable_android_miner.name
   priority: 372
   headTexture: e638a28541ab3ae0a723d5578738e08758388ec4c33247bd4ca13482aef334
-  lore:
-  - ''
-  - '&8⇨ &7Function: Mining'
-  - '&8⇨ &7Fuel Efficiency: 1.0x'
+  lore-key: items.sf.programmable_android_miner.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_woodcutter
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&cProgrammable Android &7(Woodcutter)'
+  name-key: items.sf.programmable_android_woodcutter.name
   priority: 373
   headTexture: d32a814510142205169a1ad32f0a745f18e9cb6c66ee64eca2e65babdef9ff
-  lore:
-  - ''
-  - '&8⇨ &7Function: Woodcutting'
-  - '&8⇨ &7Fuel Efficiency: 1.0x'
+  lore-key: items.sf.programmable_android_woodcutter.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_butcher
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&cProgrammable Android &7(Butcher)'
+  name-key: items.sf.programmable_android_butcher.name
   priority: 374
   headTexture: 3b472df0ad9a3be88f2e5d5d422d02b116d64d8df1475ed32e546afc84b31
-  lore:
-  - ''
-  - '&8⇨ &7Function: Slaughtering'
-  - '&8⇨ &7Damage: 4'
-  - '&8⇨ &7Fuel Efficiency: 1.0x'
+  lore-key: items.sf.programmable_android_butcher.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_fisherman
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&cProgrammable Android &7(Fisherman)'
+  name-key: items.sf.programmable_android_fisherman.name
   priority: 375
   headTexture: 345e8733a73114333b98b3601751241722f4713e1a1a5d36fbb132493f1c7
-  lore:
-  - ''
-  - '&8⇨ &7Function: Fishing'
-  - '&8⇨ &7Success Rate: 10%'
-  - '&8⇨ &7Fuel Efficiency: 1.0x'
+  lore-key: items.sf.programmable_android_fisherman.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_2
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&cAdvanced Programmable Android &7(Normal)'
+  name-key: items.sf.programmable_android_2.name
   priority: 376
   headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
-  lore:
-  - ''
-  - '&8⇨ &7Function: None'
-  - '&8⇨ &7Fuel Efficiency: 1.5x'
+  lore-key: items.sf.programmable_android_2.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_2_fisherman
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&cAdvanced Programmable Android &7(Fisherman)'
+  name-key: items.sf.programmable_android_2_fisherman.name
   priority: 377
   headTexture: 345e8733a73114333b98b3601751241722f4713e1a1a5d36fbb132493f1c7
-  lore:
-  - ''
-  - '&8⇨ &7Function: Fishing'
-  - '&8⇨ &7Success Rate: 20%'
-  - '&8⇨ &7Fuel Efficiency: 1.5x'
+  lore-key: items.sf.programmable_android_2_fisherman.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_2_farmer
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&cAdvanced Programmable Android &7(Farmer)'
+  name-key: items.sf.programmable_android_2_farmer.name
   priority: 378
   headTexture: f9d33357e8418823bf783de92de80291b4ebd392aec8706698e06896d498f6
-  lore:
-  - ''
-  - '&8⇨ &7Function: Farming'
-  - '&8⇨ &7Fuel Efficiency: 1.5x'
-  - '&8⇨ &7Can also harvest Plants from ExoticGarden'
+  lore-key: items.sf.programmable_android_2_farmer.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_2_butcher
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&cAdvanced Programmable Android &7(Butcher)'
+  name-key: items.sf.programmable_android_2_butcher.name
   priority: 379
   headTexture: 3b472df0ad9a3be88f2e5d5d422d02b116d64d8df1475ed32e546afc84b31
-  lore:
-  - ''
-  - '&8⇨ &7Function: Slaughtering'
-  - '&8⇨ &7Damage: 8'
-  - '&8⇨ &7Fuel Efficiency: 1.5x'
+  lore-key: items.sf.programmable_android_2_butcher.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_3
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&eEmpowered Programmable Android &7(Normal)'
+  name-key: items.sf.programmable_android_3.name
   priority: 380
   headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
-  lore:
-  - ''
-  - '&8⇨ &7Function: None'
-  - '&8⇨ &7Fuel Efficiency: 3.0x'
+  lore-key: items.sf.programmable_android_3.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_3_fisherman
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&eEmpowered Programmable Android &7(Fisherman)'
+  name-key: items.sf.programmable_android_3_fisherman.name
   priority: 381
   headTexture: 345e8733a73114333b98b3601751241722f4713e1a1a5d36fbb132493f1c7
-  lore:
-  - ''
-  - '&8⇨ &7Function: Fishing'
-  - '&8⇨ &7Success Rate: 30%'
-  - '&8⇨ &7Fuel Efficiency: 8.0x'
+  lore-key: items.sf.programmable_android_3_fisherman.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:programmable_android_3_butcher
   category: sf:robots
   material: PLAYER_HEAD
-  name: '&eEmpowered Programmable Android &7(Butcher)'
+  name-key: items.sf.programmable_android_3_butcher.name
   priority: 382
   headTexture: 3b472df0ad9a3be88f2e5d5d422d02b116d64d8df1475ed32e546afc84b31
-  lore:
-  - ''
-  - '&8⇨ &7Function: Slaughtering'
-  - '&8⇨ &7Damage: 20'
-  - '&8⇨ &7Fuel Efficiency: 8.0x'
+  lore-key: items.sf.programmable_android_3_butcher.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:gps_transmitter
   category: sf:gps
   material: PLAYER_HEAD
-  name: '&bGPS Transmitter'
+  name-key: items.sf.gps_transmitter.name
   priority: 383
   headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
-  lore:
-  - ''
-  - '&8⇨ &e⚡&716 J Buffer'
-  - '&8⇨ &e⚡&72 J/t'
+  lore-key: items.sf.gps_transmitter.lore
   flags:
   - legacy-sf
 - id: sf:gps_transmitter_2
   category: sf:gps
   material: PLAYER_HEAD
-  name: '&cAdvanced GPS Transmitter'
+  name-key: items.sf.gps_transmitter_2.name
   priority: 384
   headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
-  lore:
-  - ''
-  - '&8⇨ &e⚡&764 J Buffer'
-  - '&8⇨ &e⚡&76 J/t'
+  lore-key: items.sf.gps_transmitter_2.lore
   flags:
   - legacy-sf
 - id: sf:gps_transmitter_3
   category: sf:gps
   material: PLAYER_HEAD
-  name: '&4Carbonado GPS Transmitter'
+  name-key: items.sf.gps_transmitter_3.name
   priority: 385
   headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
-  lore:
-  - ''
-  - '&8⇨ &e⚡&7256 J Buffer'
-  - '&8⇨ &e⚡&722 J/t'
+  lore-key: items.sf.gps_transmitter_3.lore
   flags:
   - legacy-sf
 - id: sf:gps_transmitter_4
   category: sf:gps
   material: PLAYER_HEAD
-  name: '&eEnergized GPS Transmitter'
+  name-key: items.sf.gps_transmitter_4.name
   priority: 386
   headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
-  lore:
-  - ''
-  - '&8⇨ &e⚡&71024 J Buffer'
-  - '&8⇨ &e⚡&792 J/t'
+  lore-key: items.sf.gps_transmitter_4.lore
   flags:
   - legacy-sf
 - id: sf:gps_marker_tool
   category: sf:gps
   material: REDSTONE_TORCH
-  name: '&bGPS Marker Tool'
+  name-key: items.sf.gps_marker_tool.name
   priority: 387
-  lore:
-  - ''
-  - '&fAllows you to set a Waypoint at'
-  - '&fthe Location you place this'
+  lore-key: items.sf.gps_marker_tool.lore
   flags:
   - legacy-sf
 - id: sf:gps_control_panel
   category: sf:gps
   material: PLAYER_HEAD
-  name: '&bGPS Control Panel'
+  name-key: items.sf.gps_control_panel.name
   priority: 388
   headTexture: ddcfba58faf1f64847884111822b64afa21d7fc62d4481f14f3f3bcb6330
-  lore:
-  - ''
-  - '&fAllows you to track your Satellites'
-  - '&fand manage your Waypoints'
+  lore-key: items.sf.gps_control_panel.lore
   flags:
   - legacy-sf
 - id: sf:gps_emergency_transmitter
   category: sf:gps
   material: PLAYER_HEAD
-  name: '&cGPS Emergency Transmitter'
+  name-key: items.sf.gps_emergency_transmitter.name
   priority: 389
   headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
-  lore:
-  - ''
-  - '&fCarrying this in your Inventory'
-  - '&fautomatically sets a Waypoint'
-  - '&fat your Location when you die.'
+  lore-key: items.sf.gps_emergency_transmitter.lore
   flags:
   - legacy-sf
 - id: sf:android_interface_fuel
   category: sf:robots
   material: DISPENSER
-  name: '&7Android Interface &c(Fuel)'
+  name-key: items.sf.android_interface_fuel.name
   priority: 390
-  lore:
-  - ''
-  - '&fItems stored in this Interface'
-  - '&fwill be inserted into an Android''s Fuel Slot'
-  - '&fwhen its Script tells them to do so'
+  lore-key: items.sf.android_interface_fuel.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:android_interface_items
   category: sf:robots
   material: DISPENSER
-  name: '&7Android Interface &9(Items)'
+  name-key: items.sf.android_interface_items.name
   priority: 391
-  lore:
-  - ''
-  - '&fItems stored in an Android''s Inventory'
-  - '&fwill be inserted into this Interface'
-  - '&fwhen its Script tells them to do so'
+  lore-key: items.sf.android_interface_items.lore
   flags:
   - legacy-sf
   - placeable-block
 - id: sf:gps_geo_scanner
   category: sf:gps
   material: PLAYER_HEAD
-  name: '&bGPS Geo-Scanner'
+  name-key: items.sf.gps_geo_scanner.name
   priority: 392
   headTexture: 2ad8cfeb387a56e3e5bcf85345d6a417b242293887db3ce3ba91fa409b254b86
-  lore:
-  - ''
-  - '&fScans a Chunk for natural Resources'
-  - '&fsuch as &8Oil'
+  lore-key: items.sf.gps_geo_scanner.lore
   flags:
   - legacy-sf
 - id: sf:portable_geo_scanner
   category: sf:gps
   material: CLOCK
-  name: '&bPortable Geo-Scanner'
+  name-key: items.sf.portable_geo_scanner.name
   priority: 393
-  lore:
-  - ''
-  - '&fScans a Chunk for natural Resources'
-  - ''
-  - '&eRight Click&7 to scan'
+  lore-key: items.sf.portable_geo_scanner.lore
   flags:
   - legacy-sf
 - id: sf:geo_miner
   category: sf:gps
   material: PLAYER_HEAD
-  name: '&6GEO Miner'
+  name-key: items.sf.geo_miner.name
   priority: 394
   headTexture: a37741f764dd3dd7adaeb43b63d3959eb70e5eb28f15d6b34cab34a1d1f60387
-  lore:
-  - ''
-  - '&eMines up resources from the chunk'
-  - '&eThese Resources cannot be mined with a pickaxe'
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&748 J/t'
-  - ''
-  - '&c&l! &cMake sure to Geo-Scan the Chunk first'
+  lore-key: items.sf.geo_miner.lore
   flags:
   - legacy-sf
 - id: sf:oil_pump
   category: sf:gps
   material: PLAYER_HEAD
-  name: '&4Oil Pump'
+  name-key: items.sf.oil_pump.name
   priority: 395
   headTexture: afe1a040a425e31a46d4f9a9b9806fa2f0c47ee84711cc1932fd8ab32b2d038
-  lore:
-  - ''
-  - '&7Pumps up Oil and fills it into Buckets'
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&724 J/t'
-  - ''
-  - '&c&l! &cMake sure to Geo-Scan the Chunk first'
+  lore-key: items.sf.oil_pump.lore
   flags:
   - legacy-sf
 - id: sf:bucket_of_oil
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&fBucket of Oil'
+  name-key: items.sf.bucket_of_oil.name
   priority: 500
   headTexture: 6ce04b41d19ec7927f982a63a94a3d79f78ecec33363051fde0831bfabdbd
   flags:
@@ -5187,7 +4014,7 @@ items:
 - id: sf:bucket_of_fuel
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&fBucket of Fuel'
+  name-key: items.sf.bucket_of_fuel.name
   priority: 501
   headTexture: a84ddca766725b8b97413f259c3f7668070f6ae55483a90c8e5525394f9c099
   flags:
@@ -5195,34 +4022,24 @@ items:
 - id: sf:refinery
   category: sf:electricity
   material: PISTON
-  name: '&cRefinery'
+  name-key: items.sf.refinery.name
   priority: 396
-  lore:
-  - ''
-  - '&fRefines Oil to create Fuel'
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&732 J/t'
+  lore-key: items.sf.refinery.lore
   flags:
   - legacy-sf
 - id: sf:combustion_reactor
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&cCombustion Reactor'
+  name-key: items.sf.combustion_reactor.name
   priority: 397
   headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
-  lore:
-  - ''
-  - '&6Advanced Generator'
-  - '&8⇨ &e⚡ &75120 J Buffer'
-  - '&8⇨ &e⚡ &724 J/t'
+  lore-key: items.sf.combustion_reactor.lore
   flags:
   - legacy-sf
 - id: sf:android_memory_core
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&bAndroid Memory Core'
+  name-key: items.sf.android_memory_core.name
   priority: 398
   headTexture: d78f2b7e5e75639ea7fb796c35d364c4df28b4243e66b76277aadcd6261337
   flags:
@@ -5230,90 +4047,57 @@ items:
 - id: sf:gps_teleporter_pylon
   category: sf:gps
   material: PURPLE_STAINED_GLASS
-  name: '&5GPS Teleporter Pylon'
+  name-key: items.sf.gps_teleporter_pylon.name
   priority: 399
-  lore:
-  - ''
-  - '&7Teleporter Component'
+  lore-key: items.sf.gps_teleporter_pylon.lore
   flags:
   - legacy-sf
 - id: sf:gps_teleportation_matrix
   category: sf:gps
   material: IRON_BLOCK
-  name: '&bGPS Teleporter Matrix'
+  name-key: items.sf.gps_teleportation_matrix.name
   priority: 400
-  lore:
-  - ''
-  - '&fThis is your Teleporter''s Main Component'
-  - '&fThis Matrix allows Players to choose from all'
-  - '&fWaypoints made by the Player who has placed'
-  - '&fthis Device.'
+  lore-key: items.sf.gps_teleportation_matrix.lore
   flags:
   - legacy-sf
 - id: sf:gps_activation_device_shared
   category: sf:gps
   material: STONE_PRESSURE_PLATE
-  name: '&fGPS Activation Device &3(Shared)'
+  name-key: items.sf.gps_activation_device_shared.name
   priority: 401
-  lore:
-  - ''
-  - '&fPlace this onto a Teleportation Matrix'
-  - '&fand step onto this Plate to activate'
-  - '&fthe Teleportation Process'
+  lore-key: items.sf.gps_activation_device_shared.lore
   flags:
   - legacy-sf
 - id: sf:gps_activation_device_personal
   category: sf:gps
   material: STONE_PRESSURE_PLATE
-  name: '&fGPS Activation Device &a(Personal)'
+  name-key: items.sf.gps_activation_device_personal.name
   priority: 402
-  lore:
-  - ''
-  - '&fPlace this onto a Teleportation Matrix'
-  - '&fand step onto this Plate to activate'
-  - '&fthe Teleportation Process'
-  - ''
-  - '&fThis Version only allows the Person who'
-  - '&fplaced this Device to use it'
+  lore-key: items.sf.gps_activation_device_personal.lore
   flags:
   - legacy-sf
 - id: sf:portable_teleporter
   category: sf:gps
   material: COMPASS
-  name: '&bPortable Teleporter'
+  name-key: items.sf.portable_teleporter.name
   priority: 403
-  lore:
-  - ''
-  - '&fThis device allows you to teleport'
-  - '&fto your waypoints from anywhere'
-  - ''
-  - '&8⇨ &e⚡&70 / 10000 J'
-  - ''
-  - '&eRight Click&7 to use'
+  lore-key: items.sf.portable_teleporter.lore
   flags:
   - legacy-sf
 - id: sf:elevator_plate
   category: sf:gps
   material: STONE_PRESSURE_PLATE
-  name: '&bElevator Plate'
+  name-key: items.sf.elevator_plate.name
   priority: 404
-  lore:
-  - ''
-  - '&fPlace an Elevator Plate on every floor'
-  - '&fand you will be able to teleport between them.'
-  - ''
-  - '&eRight Click this Block &7to name it'
+  lore-key: items.sf.elevator_plate.lore
   flags:
   - legacy-sf
 - id: sf:infused_hopper
   category: sf:gadgets
   material: HOPPER
-  name: '&5Infused Hopper'
+  name-key: items.sf.infused_hopper.name
   priority: 405
-  lore:
-  - ''
-  - '&fAutomatically picks up nearby Items in a 7x7x7'
-  - '&fRadius when placed.'
+  lore-key: items.sf.infused_hopper.lore
   flags:
   - legacy-sf
   - visual-glint
@@ -5323,254 +4107,175 @@ items:
 - id: sf:heated_pressure_chamber
   category: sf:electricity
   material: LIGHT_GRAY_STAINED_GLASS
-  name: '&cHeated Pressure Chamber'
+  name-key: items.sf.heated_pressure_chamber.name
   priority: 406
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&710 J/t'
+  lore-key: items.sf.heated_pressure_chamber.lore
   flags:
   - legacy-sf
 - id: sf:heated_pressure_chamber_2
   category: sf:electricity
   material: LIGHT_GRAY_STAINED_GLASS
-  name: '&cHeated Pressure Chamber &7- &eII'
+  name-key: items.sf.heated_pressure_chamber_2.name
   priority: 407
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b5x'
-  - '&8⇨ &e⚡&744 J/t'
+  lore-key: items.sf.heated_pressure_chamber_2.lore
   flags:
   - legacy-sf
 - id: sf:electric_smeltery
   category: sf:electricity
   material: FURNACE
-  name: '&cElectric Smeltery'
+  name-key: items.sf.electric_smeltery.name
   priority: 408
-  lore:
-  - ''
-  - '&4Alloys-Only, doesn''t smelt Dust into Ingots'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&720 J/t'
+  lore-key: items.sf.electric_smeltery.lore
   flags:
   - legacy-sf
 - id: sf:electric_smeltery_2
   category: sf:electricity
   material: FURNACE
-  name: '&cElectric Smeltery &7- &eII'
+  name-key: items.sf.electric_smeltery_2.name
   priority: 409
-  lore:
-  - ''
-  - '&4Alloys-Only, doesn''t smelt Dust into Ingots'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b3x'
-  - '&8⇨ &e⚡&740 J/t'
+  lore-key: items.sf.electric_smeltery_2.lore
   flags:
   - legacy-sf
 - id: sf:electric_press
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&eElectric Press'
+  name-key: items.sf.electric_press.name
   priority: 410
   headTexture: 8d5cf92bc79ec19f4106441affff1406a1367010dcafb197dd94cfca1a6de0fc
-  lore:
-  - ''
-  - '&aMedium Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&716 J/t'
+  lore-key: items.sf.electric_press.lore
   flags:
   - legacy-sf
 - id: sf:electric_press_2
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&eElectric Press &7- &eII'
+  name-key: items.sf.electric_press_2.name
   priority: 411
   headTexture: 8d5cf92bc79ec19f4106441affff1406a1367010dcafb197dd94cfca1a6de0fc
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b3x'
-  - '&8⇨ &e⚡&740 J/t'
+  lore-key: items.sf.electric_press_2.lore
   flags:
   - legacy-sf
 - id: sf:electrified_crucible
   category: sf:electricity
   material: RED_TERRACOTTA
-  name: '&cElectrified Crucible'
+  name-key: items.sf.electrified_crucible.name
   priority: 412
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&748 J/t'
+  lore-key: items.sf.electrified_crucible.lore
   flags:
   - legacy-sf
 - id: sf:electrified_crucible_2
   category: sf:electricity
   material: RED_TERRACOTTA
-  name: '&cElectrified Crucible &7- &eII'
+  name-key: items.sf.electrified_crucible_2.name
   priority: 413
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b2x'
-  - '&8⇨ &e⚡&780 J/t'
+  lore-key: items.sf.electrified_crucible_2.lore
   flags:
   - legacy-sf
 - id: sf:electrified_crucible_3
   category: sf:electricity
   material: RED_TERRACOTTA
-  name: '&cElectrified Crucible &7- &eIII'
+  name-key: items.sf.electrified_crucible_3.name
   priority: 414
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b4x'
-  - '&8⇨ &e⚡&7120 J/t'
+  lore-key: items.sf.electrified_crucible_3.lore
   flags:
   - legacy-sf
 - id: sf:carbon_press
   category: sf:electricity
   material: BLACK_STAINED_GLASS
-  name: '&cCarbon Press'
+  name-key: items.sf.carbon_press.name
   priority: 415
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&720 J/t'
+  lore-key: items.sf.carbon_press.lore
   flags:
   - legacy-sf
 - id: sf:carbon_press_2
   category: sf:electricity
   material: BLACK_STAINED_GLASS
-  name: '&cCarbon Press &7- &eII'
+  name-key: items.sf.carbon_press_2.name
   priority: 416
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b3x'
-  - '&8⇨ &e⚡&750 J/t'
+  lore-key: items.sf.carbon_press_2.lore
   flags:
   - legacy-sf
 - id: sf:carbon_press_3
   category: sf:electricity
   material: BLACK_STAINED_GLASS
-  name: '&cCarbon Press &7- &eIII'
+  name-key: items.sf.carbon_press_3.name
   priority: 417
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b15x'
-  - '&8⇨ &e⚡&7180 J/t'
+  lore-key: items.sf.carbon_press_3.lore
   flags:
   - legacy-sf
 - id: sf:blistering_ingot
   category: sf:ingots
   material: GOLD_INGOT
-  name: '&6Blistering Ingot &7(33%)'
+  name-key: items.sf.blistering_ingot.name
   priority: 418
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &6HIGH'
-  - '&8⇨ &4Hazmat Suit required!'
+  lore-key: items.sf.blistering_ingot.lore
   flags:
   - legacy-sf
 - id: sf:blistering_ingot_2
   category: sf:ingots
   material: GOLD_INGOT
-  name: '&6Blistering Ingot &7(66%)'
+  name-key: items.sf.blistering_ingot_2.name
   priority: 419
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &cVERY HIGH'
-  - '&8⇨ &4Hazmat Suit required!'
+  lore-key: items.sf.blistering_ingot_2.lore
   flags:
   - legacy-sf
 - id: sf:blistering_ingot_3
   category: sf:ingots
   material: GOLD_INGOT
-  name: '&6Blistering Ingot'
+  name-key: items.sf.blistering_ingot_3.name
   priority: 420
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &cVERY HIGH'
-  - '&8⇨ &4Hazmat Suit required!'
+  lore-key: items.sf.blistering_ingot_3.lore
   flags:
   - legacy-sf
 - id: sf:energy_regulator
   category: sf:technical_components
   material: PLAYER_HEAD
-  name: '&6Energy Regulator'
+  name-key: items.sf.energy_regulator.name
   priority: 421
   headTexture: d78f2b7e5e75639ea7fb796c35d364c4df28b4243e66b76277aadcd6261337
-  lore:
-  - ''
-  - '&fCore Component of an Energy Network'
+  lore-key: items.sf.energy_regulator.lore
   flags:
   - legacy-sf
 - id: sf:energy_connector
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&eEnergy Connector'
+  name-key: items.sf.energy_connector.name
   priority: 422
   headTexture: 1085e098756b995b00241644089c55a8f9acde35b9a37785d5e057a923613b
-  lore:
-  - '&7Range: &c6 blocks'
-  - ''
-  - '&fPlace this between machines'
-  - '&fand generators to connect them'
-  - '&fto your regulator.'
+  lore-key: items.sf.energy_connector.lore
   flags:
   - legacy-sf
 - id: sf:debug_fish
   category: sf:gadgets
   material: SALMON
-  name: '&3How much is the Fish?'
+  name-key: items.sf.debug_fish.name
   priority: 502
   hidden: true
   giveable: false
-  lore:
-  - ''
-  - '&eRight Click &fany Block to view it''s BlockData'
-  - '&eLeft Click &fto break a Block'
-  - '&eShift + Left Click &fany Block to erase it''s BlockData'
-  - '&eShift + Right Click &fto place a Placeholder Block'
+  lore-key: items.sf.debug_fish.lore
   flags:
   - legacy-sf
 - id: sf:nether_ice
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&eNether Ice'
+  name-key: items.sf.nether_ice.name
   priority: 423
   headTexture: 3ce2dad9baf7eaba7e80d4d0f9fac0aab01a76b12fb71c3d2af2a16fdd4c7383
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &eMODERATE'
-  - '&8⇨ &4Hazmat Suit required!'
+  lore-key: items.sf.nether_ice.lore
   flags:
   - legacy-sf
 - id: sf:enriched_nether_ice
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&eEnriched Nether Ice'
+  name-key: items.sf.enriched_nether_ice.name
   priority: 424
   headTexture: 7c818aa13aabc7294838d21caac057e97bd8c89641a0c0f8a55442ff4e27
-  lore:
-  - ''
-  - '&a⇨ &7 Radiation level: &cVERY HIGH'
-  - '&8⇨ &4Hazmat Suit required!'
+  lore-key: items.sf.enriched_nether_ice.lore
   flags:
   - legacy-sf
 - id: sf:nether_ice_coolant_cell
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&6Nether Ice Coolant Cell'
+  name-key: items.sf.nether_ice_coolant_cell.name
   priority: 425
   headTexture: 8d3cd412555f897016213e5d6c7431b448b9e5644e1b19ec51b5316f35840e0
   flags:
@@ -5578,482 +4283,368 @@ items:
 - id: sf:cargo_manager
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&6Cargo Manager'
+  name-key: items.sf.cargo_manager.name
   priority: 426
   headTexture: e510bc85362a130a6ff9d91ff11d6fa46d7d1912a3431f751558ef3c4d9c2
-  lore:
-  - ''
-  - '&fCore Component of an Item Transport Network'
+  lore-key: items.sf.cargo_manager.lore
   flags:
   - legacy-sf
 - id: sf:cargo_node
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&7Cargo Node &c(Connector)'
+  name-key: items.sf.cargo_node.name
   priority: 503
   headTexture: 07b7ef6fd7864865c31c1dc87bed24ab5973579f5c6638fecb8dedeb443ff0
-  lore:
-  - ''
-  - '&fCargo Connector Pipe'
+  lore-key: items.sf.cargo_node.lore
   flags:
   - legacy-sf
 - id: sf:cargo_node_input
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&7Cargo Node &c(Input)'
+  name-key: items.sf.cargo_node_input.name
   priority: 504
   headTexture: 16d1c1a69a3de9fec962a77bf3b2e376dd25c873a3d8f14f1dd345dae4c4
-  lore:
-  - ''
-  - '&fCargo Input Pipe'
+  lore-key: items.sf.cargo_node_input.lore
   flags:
   - legacy-sf
 - id: sf:cargo_node_input_advanced
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&6Advanced Cargo Node &c(Input)'
+  name-key: items.sf.cargo_node_input_advanced.name
   priority: 505
   headTexture: 16d1c1a69a3de9fec962a77bf3b2e376dd25c873a3d8f14f1dd345dae4c4
-  lore:
-  - ''
-  - '&fAdvanced Cargo Input Pipe'
+  lore-key: items.sf.cargo_node_input_advanced.lore
   flags:
   - legacy-sf
 - id: sf:cargo_node_output
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&7Cargo Node &c(Output)'
+  name-key: items.sf.cargo_node_output.name
   priority: 506
   headTexture: 55b21fd480c1c43bf3b9f842c869bdc3bc5acc2599bf2eb6b8a1c95dce978f
-  lore:
-  - ''
-  - '&fCargo Output Pipe'
+  lore-key: items.sf.cargo_node_output.lore
   flags:
   - legacy-sf
 - id: sf:cargo_node_output_advanced
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&6Advanced Cargo Node &c(Output)'
+  name-key: items.sf.cargo_node_output_advanced.name
   priority: 507
   headTexture: 55b21fd480c1c43bf3b9f842c869bdc3bc5acc2599bf2eb6b8a1c95dce978f
-  lore:
-  - ''
-  - '&fCargo Output Pipe'
+  lore-key: items.sf.cargo_node_output_advanced.lore
   flags:
   - legacy-sf
 - id: sf:auto_breeder
   category: sf:electricity
   material: HAY_BLOCK
-  name: '&eAuto-Breeder'
+  name-key: items.sf.auto_breeder.name
   priority: 427
-  lore:
-  - ''
-  - '&fRuns on &aOrganic Food'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &e⚡&71024 J Buffer'
-  - '&8⇨ &e⚡&760 J/Animal'
+  lore-key: items.sf.auto_breeder.lore
   flags:
   - legacy-sf
 - id: sf:produce_collector
   category: sf:electricity
   material: HAY_BLOCK
-  name: '&bProduce Collector'
+  name-key: items.sf.produce_collector.name
   priority: 428
-  lore:
-  - ''
-  - '&fThis machine allows you to'
-  - '&fcollect produce from nearby animals and hives.'
-  - '&7SFX: supports shears, bottles and brushes.'
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &e⚡&7512 J Buffer'
-  - '&8⇨ &e⚡&732 J/t'
+  lore-key: items.sf.produce_collector.lore
   flags:
   - legacy-sf
 - id: sf:organic_food
   hidden: true
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food.name
   priority: 507
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9未知'
+  lore-key: items.sf.organic_food.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_wheat
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_wheat.name
   priority: 508
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Wheat'
+  lore-key: items.sf.organic_food_wheat.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_carrot
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_carrot.name
   priority: 509
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Carrots'
+  lore-key: items.sf.organic_food_carrot.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_potato
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_potato.name
   priority: 510
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Potatoes'
+  lore-key: items.sf.organic_food_potato.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_seeds
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_seeds.name
   priority: 511
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Seeds'
+  lore-key: items.sf.organic_food_seeds.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_beetroot
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_beetroot.name
   priority: 512
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Beetroot'
+  lore-key: items.sf.organic_food_beetroot.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_melon
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_melon.name
   priority: 513
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Melon'
+  lore-key: items.sf.organic_food_melon.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_apple
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_apple.name
   priority: 514
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Apple'
+  lore-key: items.sf.organic_food_apple.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_sweet_berries
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_sweet_berries.name
   priority: 515
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Sweet Berries'
+  lore-key: items.sf.organic_food_sweet_berries.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_kelp
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_kelp.name
   priority: 516
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Dried Kelp'
+  lore-key: items.sf.organic_food_kelp.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_cocoa
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_cocoa.name
   priority: 517
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Cocoa Beans'
+  lore-key: items.sf.organic_food_cocoa.lore
   flags:
   - legacy-sf
 - id: sf:organic_food_seagrass
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Food'
+  name-key: items.sf.organic_food_seagrass.name
   priority: 518
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Seagrass'
+  lore-key: items.sf.organic_food_seagrass.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer
   hidden: true
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer.name
   priority: 519
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9未知'
+  lore-key: items.sf.fertilizer.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_wheat
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_wheat.name
   priority: 520
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Wheat'
+  lore-key: items.sf.fertilizer_wheat.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_carrot
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_carrot.name
   priority: 521
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Carrots'
+  lore-key: items.sf.fertilizer_carrot.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_potato
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_potato.name
   priority: 522
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Potatoes'
+  lore-key: items.sf.fertilizer_potato.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_seeds
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_seeds.name
   priority: 523
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Seeds'
+  lore-key: items.sf.fertilizer_seeds.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_beetroot
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_beetroot.name
   priority: 524
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Beetroot'
+  lore-key: items.sf.fertilizer_beetroot.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_melon
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_melon.name
   priority: 525
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Melon'
+  lore-key: items.sf.fertilizer_melon.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_apple
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_apple.name
   priority: 526
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Apple'
+  lore-key: items.sf.fertilizer_apple.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_sweet_berries
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_sweet_berries.name
   priority: 527
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Sweet Berries'
+  lore-key: items.sf.fertilizer_sweet_berries.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_kelp
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_kelp.name
   priority: 528
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Dried Kelp'
+  lore-key: items.sf.fertilizer_kelp.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_cocoa
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_cocoa.name
   priority: 529
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Cocoa beans'
+  lore-key: items.sf.fertilizer_cocoa.lore
   flags:
   - legacy-sf
 - id: sf:fertilizer_seagrass
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&aOrganic Fertilizer'
+  name-key: items.sf.fertilizer_seagrass.name
   priority: 530
   headTexture: b439e3f5acbee9be4c4259289d6d9f35c635ffa661114687b3ea6dda8c79
-  lore:
-  - '&7Content: &9Seagrass'
+  lore-key: items.sf.fertilizer_seagrass.lore
   flags:
   - legacy-sf
 - id: sf:animal_growth_accelerator
   category: sf:electricity
   material: HAY_BLOCK
-  name: '&bAnimal Growth Accelerator'
+  name-key: items.sf.animal_growth_accelerator.name
   priority: 429
-  lore:
-  - ''
-  - '&fRuns on &aOrganic Food'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &e⚡&71024 J Buffer'
-  - '&8⇨ &e⚡&728 J/t'
+  lore-key: items.sf.animal_growth_accelerator.lore
   flags:
   - legacy-sf
 - id: sf:crop_growth_accelerator
   category: sf:electricity
   material: LIME_TERRACOTTA
-  name: '&aCrop Growth Accelerator'
+  name-key: items.sf.crop_growth_accelerator.name
   priority: 430
-  lore:
-  - ''
-  - '&fRuns on &aOrganic Fertilizer'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &7Radius: &b7x7'
-  - '&8⇨ &7Speed: &a3/time'
-  - '&8⇨ &e⚡&71024 J Buffer'
-  - '&8⇨ &e⚡&750 J/t'
+  lore-key: items.sf.crop_growth_accelerator.lore
   flags:
   - legacy-sf
 - id: sf:crop_growth_accelerator_2
   category: sf:electricity
   material: LIME_TERRACOTTA
-  name: '&aCrop Growth Accelerator &7(&eII&7)'
+  name-key: items.sf.crop_growth_accelerator_2.name
   priority: 431
-  lore:
-  - ''
-  - '&fRuns on &aOrganic Fertilizer'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &7Radius: &b9x9'
-  - '&8⇨ &7Speed: &a4/time'
-  - '&8⇨ &e⚡&71024 J Buffer'
-  - '&8⇨ &e⚡&760 J/t'
+  lore-key: items.sf.crop_growth_accelerator_2.lore
   flags:
   - legacy-sf
 - id: sf:tree_growth_accelerator
   category: sf:electricity
   material: BROWN_TERRACOTTA
-  name: '&aTree Growth Accelerator'
+  name-key: items.sf.tree_growth_accelerator.name
   priority: 432
-  lore:
-  - ''
-  - '&fRuns on &aOrganic Fertilizer'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &7Radius: &b9x9'
-  - '&8⇨ &7Speed: &a4/time'
-  - '&8⇨ &e⚡&71024 J Buffer'
-  - '&8⇨ &e⚡&748 J/t'
+  lore-key: items.sf.tree_growth_accelerator.lore
   flags:
   - legacy-sf
 - id: sf:food_fabricator
   category: sf:electricity
   material: GREEN_STAINED_GLASS
-  name: '&cFood Fabricator'
+  name-key: items.sf.food_fabricator.name
   priority: 433
-  lore:
-  - ''
-  - '&fProduces &aOrganic Food'
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&7256 J Buffer'
-  - '&8⇨ &e⚡&714 J/t'
+  lore-key: items.sf.food_fabricator.lore
   flags:
   - legacy-sf
 - id: sf:food_fabricator_2
   category: sf:electricity
   material: GREEN_STAINED_GLASS
-  name: '&cFood Fabricator &7(&eII&7)'
+  name-key: items.sf.food_fabricator_2.name
   priority: 434
-  lore:
-  - ''
-  - '&fProduces &aOrganic Food'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b6x'
-  - '&8⇨ &e⚡&7512 J Buffer'
-  - '&8⇨ &e⚡&748 J/t'
+  lore-key: items.sf.food_fabricator_2.lore
   flags:
   - legacy-sf
 - id: sf:food_composter
   category: sf:electricity
   material: GREEN_TERRACOTTA
-  name: '&cFood Composter'
+  name-key: items.sf.food_composter.name
   priority: 435
-  lore:
-  - ''
-  - '&fProduces &aOrganic Fertilizer'
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&7256 J Buffer'
-  - '&8⇨ &e⚡&716 J/t'
+  lore-key: items.sf.food_composter.lore
   flags:
   - legacy-sf
 - id: sf:food_composter_2
   category: sf:electricity
   material: GREEN_TERRACOTTA
-  name: '&cFood Composter &7(&eII&7)'
+  name-key: items.sf.food_composter_2.name
   priority: 436
-  lore:
-  - ''
-  - '&fProduces &aOrganic Fertilizer'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b10x'
-  - '&8⇨ &e⚡&7512 J Buffer'
-  - '&8⇨ &e⚡&752 J/t'
+  lore-key: items.sf.food_composter_2.lore
   flags:
   - legacy-sf
 - id: sf:xp_collector
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&aEXP Collector'
+  name-key: items.sf.xp_collector.name
   priority: 531
   headTexture: 1762a15b04692a2e4b3fb3663bd4b78434dce1732b8eb1c7a9f7c0fbf6f
-  lore:
-  - ''
-  - '&fCollects nearby Exp and stores it'
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &e⚡&71024 J Buffer'
-  - '&8⇨ &e⚡&720 J/t'
+  lore-key: items.sf.xp_collector.lore
   flags:
   - legacy-sf
 - id: sf:reactor_coolant_cell
   category: sf:resources
   material: PLAYER_HEAD
-  name: '&bReactor Coolant Cell'
+  name-key: items.sf.reactor_coolant_cell.name
   priority: 532
   headTexture: de4073be40cb3deb310a0be959b4cac68e825372728fafb6c2973e4e7c33
   flags:
@@ -6061,329 +4652,204 @@ items:
 - id: sf:nuclear_reactor
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&2Nuclear Reactor'
+  name-key: items.sf.nuclear_reactor.name
   priority: 437
   headTexture: fa5de0bc2bfb5cc2d23eb72f96402ada479524dd0de404bc23b6dacee3ffd080
-  lore:
-  - ''
-  - '&fRequires Cooling!'
-  - '&8⇨ &bMust be surrounded by Water'
-  - '&8⇨ &bMust be supplied with Reactor Coolant Cells'
-  - ''
-  - '&4End-Game Generator'
-  - '&8⇨ &e⚡&716384 J Buffer'
-  - '&8⇨ &e⚡&7500 J/t'
+  lore-key: items.sf.nuclear_reactor.lore
   flags:
   - legacy-sf
 - id: sf:netherstar_reactor
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&fNether Star Reactor'
+  name-key: items.sf.netherstar_reactor.name
   priority: 533
   headTexture: a11ed1d1b25b624665ecdddc3d3a5dff0b9f35e3de77a12f516e60fe8501cc8d
-  lore:
-  - ''
-  - '&fRuns on Nether Stars'
-  - '&8⇨ &bMust be surrounded by Water'
-  - '&8⇨ &bMust be supplied with Nether Ice Coolant Cells'
-  - ''
-  - '&4End-Game Generator'
-  - '&8⇨ &e⚡&732768 J Buffer'
-  - '&8⇨ &e⚡&71024 J/t'
-  - '&8⇨ &4Causes nearby Entities to get Withered'
+  lore-key: items.sf.netherstar_reactor.lore
   flags:
   - legacy-sf
 - id: sf:reactor_access_port
   category: sf:cargo
   material: CYAN_TERRACOTTA
-  name: '&2Reactor Access Port'
+  name-key: items.sf.reactor_access_port.name
   priority: 438
-  lore:
-  - ''
-  - '&fAllows you to interact with a Reactor'
-  - '&fvia Cargo Nodes, can also be used'
-  - '&fas a Buffer'
-  - ''
-  - '&8⇨ &eMust be placed &a3 Blocks &eabove the Reactor'
+  lore-key: items.sf.reactor_access_port.lore
   flags:
   - legacy-sf
 - id: sf:freezer
   category: sf:electricity
   material: LIGHT_BLUE_STAINED_GLASS
-  name: '&bFreezer'
+  name-key: items.sf.freezer.name
   priority: 439
-  lore:
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&7256 J Buffer'
-  - '&8⇨ &e⚡&718 J/t'
+  lore-key: items.sf.freezer.lore
   flags:
   - legacy-sf
 - id: sf:freezer_2
   category: sf:electricity
   material: LIGHT_BLUE_STAINED_GLASS
-  name: '&bFreezer &7(&eII&7)'
+  name-key: items.sf.freezer_2.name
   priority: 440
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b2x'
-  - '&8⇨ &e⚡&7256 J Buffer'
-  - '&8⇨ &e⚡&730 J/t'
+  lore-key: items.sf.freezer_2.lore
   flags:
   - legacy-sf
 - id: sf:freezer_3
   category: sf:electricity
   material: LIGHT_BLUE_STAINED_GLASS
-  name: '&bFreezer &7(&eIII&7)'
+  name-key: items.sf.freezer_3.name
   priority: 441
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b3x'
-  - '&8⇨ &e⚡&7256 J Buffer'
-  - '&8⇨ &e⚡&742 J/t'
+  lore-key: items.sf.freezer_3.lore
   flags:
   - legacy-sf
 - id: sf:electric_gold_pan
   category: sf:electricity
   material: BROWN_TERRACOTTA
-  name: '&6Electric Gold Pan'
+  name-key: items.sf.electric_gold_pan.name
   priority: 442
-  lore:
-  - ''
-  - '&eBasic Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&72 J/t'
+  lore-key: items.sf.electric_gold_pan.lore
   flags:
   - legacy-sf
 - id: sf:electric_gold_pan_2
   category: sf:electricity
   material: BROWN_TERRACOTTA
-  name: '&6Electric Gold Pan &7(&eII&7)'
+  name-key: items.sf.electric_gold_pan_2.name
   priority: 443
-  lore:
-  - ''
-  - '&eBasic Machine'
-  - '&8⇨ &b⚡&7Speed: &b3x'
-  - '&8⇨ &e⚡&74 J/t'
+  lore-key: items.sf.electric_gold_pan_2.lore
   flags:
   - legacy-sf
 - id: sf:electric_gold_pan_3
   category: sf:electricity
   material: BROWN_TERRACOTTA
-  name: '&6Electric Gold Pan &7(&eIII&7)'
+  name-key: items.sf.electric_gold_pan_3.name
   priority: 444
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b10x'
-  - '&8⇨ &e⚡&714 J/t'
+  lore-key: items.sf.electric_gold_pan_3.lore
   flags:
   - legacy-sf
 - id: sf:electric_dust_washer
   category: sf:electricity
   material: BLUE_STAINED_GLASS
-  name: '&3Electric Dust Washer'
+  name-key: items.sf.electric_dust_washer.name
   priority: 445
-  lore:
-  - ''
-  - '&eBasic Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&76 J/t'
+  lore-key: items.sf.electric_dust_washer.lore
   flags:
   - legacy-sf
 - id: sf:electric_dust_washer_2
   category: sf:electricity
   material: BLUE_STAINED_GLASS
-  name: '&3Electric Dust Washer &7(&eII&7)'
+  name-key: items.sf.electric_dust_washer_2.name
   priority: 446
-  lore:
-  - ''
-  - '&eBasic Machine'
-  - '&8⇨ &b⚡&7Speed: &b2x'
-  - '&8⇨ &e⚡&710 J/t'
+  lore-key: items.sf.electric_dust_washer_2.lore
   flags:
   - legacy-sf
 - id: sf:electric_dust_washer_3
   category: sf:electricity
   material: BLUE_STAINED_GLASS
-  name: '&3Electric Dust Washer &7(&eIII&7)'
+  name-key: items.sf.electric_dust_washer_3.name
   priority: 447
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b10x'
-  - '&8⇨ &e⚡&730 J/t'
+  lore-key: items.sf.electric_dust_washer_3.lore
   flags:
   - legacy-sf
 - id: sf:electric_ingot_factory
   category: sf:electricity
   material: RED_TERRACOTTA
-  name: '&cElectric Ingot Factory'
+  name-key: items.sf.electric_ingot_factory.name
   priority: 448
-  lore:
-  - ''
-  - '&eBasic Machine'
-  - '&8⇨ &b⚡&7Speed: &b1x'
-  - '&8⇨ &e⚡&78 J/t'
+  lore-key: items.sf.electric_ingot_factory.lore
   flags:
   - legacy-sf
 - id: sf:electric_ingot_factory_2
   category: sf:electricity
   material: RED_TERRACOTTA
-  name: '&cElectric Ingot Factory &7(&eII&7)'
+  name-key: items.sf.electric_ingot_factory_2.name
   priority: 449
-  lore:
-  - ''
-  - '&eBasic Machine'
-  - '&8⇨ &b⚡&7Speed: &b2x'
-  - '&8⇨ &e⚡&714 J/t'
+  lore-key: items.sf.electric_ingot_factory_2.lore
   flags:
   - legacy-sf
 - id: sf:electric_ingot_factory_3
   category: sf:electricity
   material: RED_TERRACOTTA
-  name: '&cElectric Ingot Factory &7(&eIII&7)'
+  name-key: items.sf.electric_ingot_factory_3.name
   priority: 450
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &b⚡&7Speed: &b8x'
-  - '&8⇨ &e⚡&740 J/t'
+  lore-key: items.sf.electric_ingot_factory_3.lore
   flags:
   - legacy-sf
 - id: sf:fluid_pump
   category: sf:electricity
   material: BLUE_TERRACOTTA
-  name: '&9Fluid Pump'
+  name-key: items.sf.fluid_pump.name
   priority: 451
-  lore:
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &e⚡&732 J/Block'
+  lore-key: items.sf.fluid_pump.lore
   flags:
   - legacy-sf
 - id: sf:charging_bench
   category: sf:electricity
   material: CRAFTING_TABLE
-  name: '&6Charging Bench'
+  name-key: items.sf.charging_bench.name
   priority: 452
-  lore:
-  - ''
-  - '&fCharges Items such as Jetpacks'
-  - ''
-  - '&eBasic Machine'
-  - '&8⇨ &e⚡&72560 J Buffer'
-  - '&8⇨ &e⚡&7Energy Loss: &c80%'
+  lore-key: items.sf.charging_bench.lore
   flags:
   - legacy-sf
 - id: sf:vanilla_auto_crafter
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&2Auto-Crafter &8(Vanilla)'
+  name-key: items.sf.vanilla_auto_crafter.name
   priority: 453
   headTexture: 80a4334f6a61e40c0c63deb665fa7b581e6eb259f7a3207ced7a1ff8bdc8a9f9
-  lore:
-  - ''
-  - '&fPlace this machine on top of a'
-  - '&fchest or similar and make it craft'
-  - '&fanything that can be crafted using a'
-  - '&fnormal &eCrafting Table'
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &e⚡&75120 J Buffer'
-  - '&8⇨ &e⚡&732 J/t'
-  - '&8⇨ &e⚡&7Work Time: &b10 ticks'
+  lore-key: items.sf.vanilla_auto_crafter.lore
   flags:
   - legacy-sf
 - id: sf:enhanced_auto_crafter
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&2Auto-Crafter &8(Enhanced)'
+  name-key: items.sf.enhanced_auto_crafter.name
   priority: 454
   headTexture: 5038298306a5e28584df39e88896917c38d40a326226d8c83070723c95798b24
-  lore:
-  - ''
-  - '&fPlace this machine on top of a'
-  - '&fchest or similar and make it craft'
-  - '&fanything that can be crafted using an'
-  - '&eEnhanced Crafting Table'
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &e⚡&75120 J Buffer'
-  - '&8⇨ &e⚡&732 J/t'
-  - '&8⇨ &e⚡&7Work Time: &b10 ticks'
+  lore-key: items.sf.enhanced_auto_crafter.lore
   flags:
   - legacy-sf
 - id: sf:armor_auto_crafter
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&2Auto-Crafter &8(Armor Forge)'
+  name-key: items.sf.armor_auto_crafter.name
   priority: 455
   headTexture: 5cbd9f5ec1ed007259996491e69ff649a3106cf920227b1bb3a71ee7a89863f
-  lore:
-  - ''
-  - '&fPlace this machine on top of a'
-  - '&fchest or similar and make it craft'
-  - '&fanything that can be crafted using an'
-  - '&eArmor Forge'
-  - ''
-  - '&6Advanced Machine'
-  - '&8⇨ &e⚡&75120 J Buffer'
-  - '&8⇨ &e⚡&764 J/t'
-  - '&8⇨ &e⚡&7Work Time: &b10 ticks'
+  lore-key: items.sf.armor_auto_crafter.lore
   flags:
   - legacy-sf
 - id: sf:iron_golem_assembler
   category: sf:electricity
   material: IRON_BLOCK
-  name: '&6Iron Golem Assembler'
+  name-key: items.sf.iron_golem_assembler.name
   priority: 456
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &7Work Time: &b30 Seconds'
-  - '&8⇨ &e⚡&781920 J Buffer'
-  - '&8⇨ &e⚡&775 J/t'
+  lore-key: items.sf.iron_golem_assembler.lore
   flags:
   - legacy-sf
 - id: sf:wither_assembler
   category: sf:electricity
   material: OBSIDIAN
-  name: '&5Wither Assembler'
+  name-key: items.sf.wither_assembler.name
   priority: 457
-  lore:
-  - ''
-  - '&4End-Game Machine'
-  - '&8⇨ &7Work Time: &b30 Seconds'
-  - '&8⇨ &e⚡&781920 J Buffer'
-  - '&8⇨ &e⚡&7150 J/t'
+  lore-key: items.sf.wither_assembler.lore
   flags:
   - legacy-sf
 - id: sf:trash_can_block
   category: sf:cargo
   material: PLAYER_HEAD
-  name: '&3Trash Can'
+  name-key: items.sf.trash_can_block.name
   priority: 534
   headTexture: 32d41042ce99147cc38cac9e46741576e7ee791283e6fac8d3292cae2935f1f
-  lore:
-  - ''
-  - '&fWill destroy all Items put into it'
+  lore-key: items.sf.trash_can_block.lore
   flags:
   - legacy-sf
 - id: sf:elytra_scale
   category: sf:armor
   material: FEATHER
-  name: '&bElytra Scale'
+  name-key: items.sf.elytra_scale.name
   priority: 458
   flags:
   - legacy-sf
 - id: sf:infused_elytra
   category: sf:armor
   material: ELYTRA
-  name: '&5Infused Elytra'
+  name-key: items.sf.infused_elytra.name
   priority: 459
   flags:
   - legacy-sf
@@ -6392,7 +4858,7 @@ items:
 - id: sf:soulbound_elytra
   category: sf:armor
   material: ELYTRA
-  name: '&cSoulbound Elytra'
+  name-key: items.sf.soulbound_elytra.name
   priority: 460
   flags:
   - legacy-sf
@@ -6400,31 +4866,24 @@ items:
 - id: sf:magnesium_salt
   category: sf:resources
   material: SUGAR
-  name: '&cMagnesium Salt'
+  name-key: items.sf.magnesium_salt.name
   priority: 461
-  lore:
-  - ''
-  - '&7A special type of fuel that can be'
-  - '&7used in a Magnesium-powered Generator'
+  lore-key: items.sf.magnesium_salt.lore
   flags:
   - legacy-sf
 - id: sf:magnesium_generator
   category: sf:electricity
   material: PLAYER_HEAD
-  name: '&cMagnesium-powered Generator'
+  name-key: items.sf.magnesium_generator.name
   priority: 462
   headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
-  lore:
-  - ''
-  - '&aMedium Generator'
-  - '&8⇨ &e⚡ &72560 J Buffer'
-  - '&8⇨ &e⚡ &736 J/t'
+  lore-key: items.sf.magnesium_generator.lore
   flags:
   - legacy-sf
 - id: sf:birthday_cake
   category: sf:seasonal
   material: CAKE
-  name: '&bBirthday Cake'
+  name-key: items.sf.birthday_cake.name
   priority: 535
   flags:
   - legacy-sf

@@ -1,313 +1,312 @@
 categories:
 - id: sf:items
-  name: '&fItems'
+  name-key: categories.sf.items.name
   priority: 1000
   icon:
     material: PLAYER_HEAD
-    name: '&6Portable Crafter'
+    name-key: category-icons.sf.items.name
     headTexture: 72ec4a4bd8a58f8361f8a0303e2199d33d624ea5f92f7cb3414fee95e2d861
 - id: sf:gadgets
-  name: '&fGadgets'
+  name-key: categories.sf.gadgets.name
   priority: 1010
   icon:
     material: BOWL
-    name: '&6Gold Pan'
+    name-key: category-icons.sf.gadgets.name
 - id: sf:backpacks
-  name: '&fBackpacks'
+  name-key: categories.sf.backpacks.name
   priority: 1020
   icon:
     material: PLAYER_HEAD
-    name: '&eSmall Backpack'
+    name-key: category-icons.sf.backpacks.name
     headTexture: 40cb1e67b512ab2d4bf3d7ace0eaaf61c32cd4681ddc3987ceb326706a33fa
 - id: sf:jetpacks
-  name: '&fJetpacks'
+  name-key: categories.sf.jetpacks.name
   priority: 1030
   icon:
     material: LEATHER_CHESTPLATE
-    name: '&9Electric Jetpack &7- &eI'
+    name-key: category-icons.sf.jetpacks.name
     colorRgb: 10329495
 - id: sf:jetboots
-  name: '&fJetboots'
+  name-key: categories.sf.jetboots.name
   priority: 1040
   icon:
     material: LEATHER_BOOTS
-    name: '&9Jet Boots &7- &eI'
+    name-key: category-icons.sf.jetboots.name
     colorRgb: 10329495
 - id: sf:multi_tools
-  name: '&fMulti Tools'
+  name-key: categories.sf.multi_tools.name
   priority: 1050
   icon:
     material: SHEARS
-    name: '&9Multi Tool &7- &eI'
+    name-key: category-icons.sf.multi_tools.name
 - id: sf:food
-  name: '&fFood'
+  name-key: categories.sf.food.name
   priority: 1060
   icon:
     material: COOKIE
-    name: '&6Fortune Cookie'
+    name-key: category-icons.sf.food.name
 - id: sf:christmas
-  name: '&fChristmas'
+  name-key: categories.sf.christmas.name
   priority: 1070
   icon:
     material: POTION
-    name: '&6Glass of Milk'
+    name-key: category-icons.sf.christmas.name
     colorRgb: 16383998
 - id: sf:easter
-  name: '&fEaster'
+  name-key: categories.sf.easter.name
   priority: 1080
   icon:
     material: PLAYER_HEAD
-    name: '&fEaster Egg'
+    name-key: category-icons.sf.easter.name
     headTexture: b2cd5df9d7f1fa8341fcce2f3c118e2f517e4d2d99df2c51d61d93ed7f83e13
 - id: sf:weapons
-  name: '&fWeapons'
+  name-key: categories.sf.weapons.name
   priority: 1090
   icon:
     material: STICK
-    name: '&7Grandmas Walking Stick'
+    name-key: category-icons.sf.weapons.name
 - id: sf:bows
-  name: '&fBows'
+  name-key: categories.sf.bows.name
   priority: 1100
   icon:
     material: BOW
-    name: '&cExplosive Bow'
+    name-key: category-icons.sf.bows.name
 - id: sf:tools
-  name: '&fTools'
+  name-key: categories.sf.tools.name
   priority: 1110
   icon:
     material: DIAMOND_PICKAXE
-    name: '&6Smelter''s Pickaxe'
+    name-key: category-icons.sf.tools.name
 - id: sf:armor
-  name: '&fArmor'
+  name-key: categories.sf.armor.name
   priority: 1120
   icon:
     material: LEATHER_HELMET
-    name: '&e&lGlowstone Helmet'
+    name-key: category-icons.sf.armor.name
     colorRgb: 16701501
 - id: sf:magical_components
-  name: '&fMagical components'
+  name-key: categories.sf.magical_components.name
   priority: 1130
   icon:
     material: GOLD_NUGGET
-    name: '&6Magical Lump &7- &eI'
+    name-key: category-icons.sf.magical_components.name
 - id: sf:technical_components
-  name: '&fTechnical components'
+  name-key: categories.sf.technical_components.name
   priority: 1140
   icon:
     material: ACTIVATOR_RAIL
-    name: '&bBasic Circuit Board'
+    name-key: category-icons.sf.technical_components.name
 - id: sf:resources
-  name: '&fResources'
+  name-key: categories.sf.resources.name
   priority: 1145
   icon:
     material: BUCKET
-    name: '&fBucket of Oil'
+    name-key: category-icons.sf.resources.name
 - id: sf:rainbow_blocks
-  name: '&fRainbow blocks'
+  name-key: categories.sf.rainbow_blocks.name
   priority: 1150
   icon:
     material: WHITE_WOOL
-    name: '&5Rainbow Wool'
+    name-key: category-icons.sf.rainbow_blocks.name
 - id: sf:seasonal
-  name: '&fSeasonal'
+  name-key: categories.sf.seasonal.name
   priority: 1160
   icon:
     material: WHITE_WOOL
-    name: '&5Rainbow Wool &7(Christmas)'
+    name-key: category-icons.sf.seasonal.name
 - id: sf:ingots
-  name: '&fIngots'
+  name-key: categories.sf.ingots.name
   priority: 1170
   icon:
     material: BRICK
-    name: '&bCopper Ingot'
+    name-key: category-icons.sf.ingots.name
 - id: sf:alloy_carbon_iron
-  name: '&fAlloy (Carbon + Iron)'
+  name-key: categories.sf.alloy_carbon_iron.name
   priority: 1180
   icon:
     material: IRON_INGOT
-    name: '&bSteel Ingot'
+    name-key: category-icons.sf.alloy_carbon_iron.name
 - id: sf:alloy_copper_tin
-  name: '&fAlloy (Copper + Tin)'
+  name-key: categories.sf.alloy_copper_tin.name
   priority: 1190
   icon:
     material: BRICK
-    name: '&bBronze Ingot'
+    name-key: category-icons.sf.alloy_copper_tin.name
 - id: sf:alloy_copper_aluminum
-  name: '&fAlloy (Copper + Aluminum)'
+  name-key: categories.sf.alloy_copper_aluminum.name
   priority: 1200
   icon:
     material: IRON_INGOT
-    name: '&bDuralumin Ingot'
+    name-key: category-icons.sf.alloy_copper_aluminum.name
 - id: sf:alloy_copper_silver
-  name: '&fAlloy (Copper + Silver)'
+  name-key: categories.sf.alloy_copper_silver.name
   priority: 1210
   icon:
     material: IRON_INGOT
-    name: '&bBillon Ingot'
+    name-key: category-icons.sf.alloy_copper_silver.name
 - id: sf:alloy_copper_zinc
-  name: '&fAlloy (Copper + Zinc)'
+  name-key: categories.sf.alloy_copper_zinc.name
   priority: 1220
   icon:
     material: GOLD_INGOT
-    name: '&bBrass Ingot'
+    name-key: category-icons.sf.alloy_copper_zinc.name
 - id: sf:alloy_aluminum_brass
-  name: '&fAlloy (Aluminum + Brass)'
+  name-key: categories.sf.alloy_aluminum_brass.name
   priority: 1230
   icon:
     material: GOLD_INGOT
-    name: '&bAluminum Brass Ingot'
+    name-key: category-icons.sf.alloy_aluminum_brass.name
 - id: sf:alloy_aluminum_bronze
-  name: '&fAlloy (Aluminum + Bronze)'
+  name-key: categories.sf.alloy_aluminum_bronze.name
   priority: 1240
   icon:
     material: GOLD_INGOT
-    name: '&bAluminum Bronze Ingot'
+    name-key: category-icons.sf.alloy_aluminum_bronze.name
 - id: sf:alloy_gold_silver_copper
-  name: '&fAlloy (Gold + Silver + Copper)'
+  name-key: categories.sf.alloy_gold_silver_copper.name
   priority: 1250
   icon:
     material: GOLD_INGOT
-    name: '&bCorinthian Bronze Ingot'
+    name-key: category-icons.sf.alloy_gold_silver_copper.name
 - id: sf:alloy_lead_tin
-  name: '&fAlloy (Lead + Tin)'
+  name-key: categories.sf.alloy_lead_tin.name
   priority: 1260
   icon:
     material: IRON_INGOT
-    name: '&bSolder Ingot'
+    name-key: category-icons.sf.alloy_lead_tin.name
 - id: sf:alloy_steel_iron_carbon
-  name: '&fAlloy (Steel + Iron + Carbon)'
+  name-key: categories.sf.alloy_steel_iron_carbon.name
   priority: 1270
   icon:
     material: IRON_INGOT
-    name: '&bDamascus Steel Ingot'
+    name-key: category-icons.sf.alloy_steel_iron_carbon.name
 - id: sf:alloy_damascus_steel_duralumin_compressed_carbon_aluminium_bronze
-  name: '&fAlloy (Damascus Steel + Duralumin + Compressed Carbon + Aluminium Bronze)'
+  name-key: categories.sf.alloy_damascus_steel_duralumin_compressed_carbon_aluminium_bronze.name
   priority: 1280
   icon:
     material: IRON_INGOT
-    name: '&b&lHardened Metal'
+    name-key: category-icons.sf.alloy_damascus_steel_duralumin_compressed_carbon_aluminium_bronze.name
 - id: sf:alloy_hardened_metal_corinthian_bronze_solder_billon_damascus_steel
-  name: '&fAlloy (Hardened Metal + Corinthian Bronze + Solder + Billon + Damascus
-    Steel)'
+  name-key: categories.sf.alloy_hardened_metal_corinthian_bronze_solder_billon_damascus_steel.name
   priority: 1290
   icon:
     material: IRON_INGOT
-    name: '&b&lReinforced Alloy Ingot'
+    name-key: category-icons.sf.alloy_hardened_metal_corinthian_bronze_solder_billon_damascus_steel.name
 - id: sf:alloy_iron_silicon
-  name: '&fAlloy (Iron + Silicon)'
+  name-key: categories.sf.alloy_iron_silicon.name
   priority: 1300
   icon:
     material: IRON_INGOT
-    name: '&bFerrosilicon'
+    name-key: category-icons.sf.alloy_iron_silicon.name
 - id: sf:alloy_iron_gold
-  name: '&fAlloy (Iron + Gold)'
+  name-key: categories.sf.alloy_iron_gold.name
   priority: 1310
   icon:
     material: GOLD_INGOT
-    name: '&6&lGilded Iron'
+    name-key: category-icons.sf.alloy_iron_gold.name
 - id: sf:alloy_redstone_ferrosilicon
-  name: '&fAlloy (Redstone + Ferrosilicon)'
+  name-key: categories.sf.alloy_redstone_ferrosilicon.name
   priority: 1320
   icon:
     material: BRICK
-    name: '&cRedstone Alloy Ingot'
+    name-key: category-icons.sf.alloy_redstone_ferrosilicon.name
 - id: sf:alloy_iron_copper
-  name: '&fAlloy (Iron + Copper)'
+  name-key: categories.sf.alloy_iron_copper.name
   priority: 1330
   icon:
     material: IRON_INGOT
-    name: '&bNickel Ingot'
+    name-key: category-icons.sf.alloy_iron_copper.name
 - id: sf:alloy_nickel_iron_copper
-  name: '&fAlloy (Nickel + Iron + Copper)'
+  name-key: categories.sf.alloy_nickel_iron_copper.name
   priority: 1340
   icon:
     material: IRON_INGOT
-    name: '&9Cobalt Ingot'
+    name-key: category-icons.sf.alloy_nickel_iron_copper.name
 - id: sf:gold
-  name: '&fGold'
+  name-key: categories.sf.gold.name
   priority: 1350
   icon:
     material: GOLD_INGOT
-    name: '&fGold Ingot &7(4-Carat)'
+    name-key: category-icons.sf.gold.name
 - id: sf:dusts
-  name: '&fDusts'
+  name-key: categories.sf.dusts.name
   priority: 1360
   icon:
     material: GUNPOWDER
-    name: '&6Iron Dust'
+    name-key: category-icons.sf.dusts.name
 - id: sf:gems
-  name: '&fGems'
+  name-key: categories.sf.gems.name
   priority: 1370
   icon:
     material: DIAMOND
-    name: '&bSynthetic Diamond'
+    name-key: category-icons.sf.gems.name
 - id: sf:talisman
-  name: '&fTalisman'
+  name-key: categories.sf.talisman.name
   priority: 1380
   icon:
     material: EMERALD
-    name: '&6Common Talisman'
+    name-key: category-icons.sf.talisman.name
 - id: sf:staves
-  name: '&fStaves'
+  name-key: categories.sf.staves.name
   priority: 1390
   icon:
     material: STICK
-    name: '&6Elemental Staff'
+    name-key: category-icons.sf.staves.name
 - id: sf:multiblocks
-  name: '&fMultiblocks'
+  name-key: categories.sf.multiblocks.name
   priority: 1400
   icon:
     material: CRAFTING_TABLE
-    name: '&eEnhanced Crafting Table'
+    name-key: category-icons.sf.multiblocks.name
 - id: sf:machines
-  name: '&fMachines'
+  name-key: categories.sf.machines.name
   priority: 1410
   icon:
     material: CAULDRON
-    name: '&aComposter'
+    name-key: category-icons.sf.machines.name
 - id: sf:enhanced_furnaces
-  name: '&fEnhanced Furnaces'
+  name-key: categories.sf.enhanced_furnaces.name
   priority: 1420
   icon:
     material: FURNACE
-    name: '&7Enhanced Furnace - &eI'
+    name-key: category-icons.sf.enhanced_furnaces.name
 - id: sf:soulbound_items
-  name: '&fSoulbound Items'
+  name-key: categories.sf.soulbound_items.name
   priority: 1430
   icon:
     material: DIAMOND_SWORD
-    name: '&cSoulbound Sword'
+    name-key: category-icons.sf.soulbound_items.name
 - id: sf:runes
-  name: '&fRunes'
+  name-key: categories.sf.runes.name
   priority: 1440
   icon:
     material: FIREWORK_STAR
-    name: '&fBlank Rune'
+    name-key: category-icons.sf.runes.name
     colorRgb: 1908001
 - id: sf:electricity
-  name: '&fElectricity'
+  name-key: categories.sf.electricity.name
   priority: 1450
   icon:
     material: DAYLIGHT_DETECTOR
-    name: '&bSolar Generator'
+    name-key: category-icons.sf.electricity.name
 - id: sf:cargo
-  name: '&fCargo'
+  name-key: categories.sf.cargo.name
   priority: 1455
   icon:
     material: HOPPER
-    name: '&6Cargo Node'
+    name-key: category-icons.sf.cargo.name
 - id: sf:robots
-  name: '&fRobots'
+  name-key: categories.sf.robots.name
   priority: 1460
   icon:
     material: PLAYER_HEAD
-    name: '&cProgrammable Android &7(Normal)'
+    name-key: category-icons.sf.robots.name
     headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
 - id: sf:gps
-  name: '&fGPS'
+  name-key: categories.sf.gps.name
   priority: 1470
   icon:
     material: PLAYER_HEAD
-    name: '&bGPS Transmitter'
+    name-key: category-icons.sf.gps.name
     headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f
 items: []

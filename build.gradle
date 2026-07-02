@@ -267,7 +267,7 @@ tasks.register('validateSfxMachineYaml') {
         }
 
         def manualViolations = []
-        def manualRequired = ['name', 'icon', 'operation', 'trigger-face', 'inventory-face', 'deployable', 'pattern', 'display-pattern']
+        def manualRequired = ['name-key', 'icon', 'operation', 'trigger-face', 'inventory-face', 'deployable', 'pattern', 'display-pattern']
         def manualOperations = ['SHAPED_3X3', 'SHAPELESS_INPUT', 'SINGLE_INPUT', 'HAND_INPUT'] as Set
         def manualCount = 0
         def validateManualMachine = { machine ->
@@ -285,6 +285,9 @@ tasks.register('validateSfxMachineYaml') {
                 if (!manualOperations.contains(operation)) {
                     manualViolations << "manual machine ${machine.id} has unsupported operation ${machine.operation}"
                 }
+            }
+            if (machine.fields.contains('name')) {
+                manualViolations << "manual machine ${machine.id} uses literal name; use name-key"
             }
             if (machine.fields.contains('pattern') && machine.patternCount != 9) {
                 manualViolations << "manual machine ${machine.id} pattern expected 9 entries, got ${machine.patternCount}"
@@ -326,6 +329,12 @@ tasks.register('validateSfxMachineYaml') {
                 return
             }
             if ((line =~ /^    -\s*/).find()) {
+                def slotMatch = line =~ /^    -\s*(.*)$/
+                if (['pattern', 'display-pattern'].contains(currentManualMachine.section)
+                        && slotMatch.matches()
+                        && !slotMatch.group(1).startsWith('type:')) {
+                    manualViolations << "manual machine ${currentManualMachine.id} ${currentManualMachine.section} contains scalar slot shorthand: ${slotMatch.group(1)}"
+                }
                 if (currentManualMachine.section == 'pattern') {
                     currentManualMachine.patternCount++
                 } else if (currentManualMachine.section == 'display-pattern') {
@@ -709,10 +718,33 @@ tasks.register('validateSfxCompiledContent') {
             if (manualCompiledCount != 13) {
                 violations << "compiled manual machine entry count expected 13, got ${manualCompiledCount}"
             }
-            ['name:', 'icon:', 'operation:', 'trigger-face:', 'inventory-face:', 'deployable:', 'pattern:', 'display-pattern:'].each { token ->
+            ['name-key:', 'icon:', 'operation:', 'trigger-face:', 'inventory-face:', 'deployable:', 'pattern:', 'display-pattern:'].each { token ->
                 def count = (manualText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count
                 if (count < 13) {
                     violations << "compiled manual machines expected ${token} on every entry, got ${count}"
+                }
+            }
+            if ((manualText =~ /(?m)^    name:\s*/).find()) {
+                violations << "compiled manual machines must not contain literal name fields"
+            }
+            def manualPatternSlotTypeCount = (manualText =~ /(?m)^    - type:\s*/).count
+            if (manualPatternSlotTypeCount != manualCompiledCount * 18) {
+                violations << "compiled manual machine pattern slots expected explicit type on every slot, got ${manualPatternSlotTypeCount}"
+            }
+            def inManualPattern = false
+            manualText.readLines().each { line ->
+                if ((line =~ /^    (pattern|display-pattern):\s*$/).matches()) {
+                    inManualPattern = true
+                    return
+                }
+                if (inManualPattern && (line =~ /^    [A-Za-z0-9_-]+:/).matches()) {
+                    inManualPattern = false
+                }
+                if (inManualPattern) {
+                    def scalarSlot = line =~ /^    -\s*(.+?)\s*$/
+                    if (scalarSlot.matches() && !scalarSlot.group(1).startsWith('type:')) {
+                        violations << "compiled manual machine pattern contains scalar slot shorthand: ${scalarSlot.group(1)}"
+                    }
                 }
             }
         }
@@ -745,15 +777,18 @@ tasks.register('validateSfxCompiledContent') {
                 violations << "compiled item category count expected 50, got ${compiledCategoryCount}"
             }
             [
-                    'name'         : (categoryText =~ /(?m)^  name:\s*/).count,
+                    'name-key'     : (categoryText =~ /(?m)^  name-key:\s*/).count,
                     'priority/order': (categoryText =~ /(?m)^  (priority|order):\s*/).count,
                     'icon'         : (categoryText =~ /(?m)^  icon:\s*/).count,
                     'icon material': (categoryText =~ /(?m)^    material:\s*/).count,
-                    'icon name'    : (categoryText =~ /(?m)^    name:\s*/).count
+                    'icon name-key': (categoryText =~ /(?m)^    name-key:\s*/).count
             ].each { field, count ->
                 if (count != 50) {
                     violations << "compiled item categories expected ${field} on every entry, got ${count}"
                 }
+            }
+            if ((categoryText =~ /(?m)^  name:\s*/).find() || (categoryText =~ /(?m)^    name:\s*/).find()) {
+                violations << "compiled item categories must not contain literal name fields"
             }
         }
         def compiledItemFile = new File(root, 'content/items/20-legacy-items.yml')
@@ -768,12 +803,15 @@ tasks.register('validateSfxCompiledContent') {
             [
                     'category'      : (itemText =~ /(?m)^  category:\s*/).count,
                     'material'      : (itemText =~ /(?m)^  material:\s*/).count,
-                    'name'          : (itemText =~ /(?m)^  name:\s*/).count,
+                    'name-key'      : (itemText =~ /(?m)^  name-key:\s*/).count,
                     'priority/order': (itemText =~ /(?m)^  (priority|order|pos):\s*/).count
             ].each { field, count ->
                 if (count != 556) {
                     violations << "compiled items expected ${field} on every entry, got ${count}"
                 }
+            }
+            if ((itemText =~ /(?m)^  name:\s*/).find() || (itemText =~ /(?m)^  lore:\s*/).find()) {
+                violations << "compiled items must not contain literal name/lore fields"
             }
             def itemRecipeCount = (itemText =~ /(?m)^  recipes:\s*/).count
             def itemRecipeTypeCount = (itemText =~ /(?m)^  - type:\s*/).count
@@ -781,6 +819,27 @@ tasks.register('validateSfxCompiledContent') {
             def itemRecipeMatrixCount = (itemText =~ /(?m)^    matrix:\s*/).count
             if (itemRecipeTypeCount != itemRecipeCount || itemRecipeNoteCount != itemRecipeCount || itemRecipeMatrixCount != itemRecipeCount) {
                 violations << "compiled item guide recipes must explicitly include type/note/matrix on every entry: recipes=${itemRecipeCount}, type=${itemRecipeTypeCount}, note=${itemRecipeNoteCount}, matrix=${itemRecipeMatrixCount}"
+            }
+            def itemGuideMatrixSlotCount = (itemText =~ /(?m)^    - type:\s*/).count
+            def itemGuideMatrixAmountCount = (itemText =~ /(?m)^      amount:\s*/).count
+            if (itemGuideMatrixSlotCount != itemRecipeMatrixCount * 9 || itemGuideMatrixAmountCount != itemRecipeMatrixCount * 9) {
+                violations << "compiled item guide recipe matrices must contain explicit type/amount on every slot: matrices=${itemRecipeMatrixCount}, slots=${itemGuideMatrixSlotCount}, amounts=${itemGuideMatrixAmountCount}"
+            }
+            def inItemGuideMatrix = false
+            itemText.readLines().each { line ->
+                if ((line =~ /^    matrix:\s*$/).matches()) {
+                    inItemGuideMatrix = true
+                    return
+                }
+                if (inItemGuideMatrix && (line =~ /^  [A-Za-z0-9_-]+:/).find()) {
+                    inItemGuideMatrix = false
+                }
+                if (inItemGuideMatrix) {
+                    def scalarSlot = line =~ /^    -\s*(.+?)\s*$/
+                    if (scalarSlot.matches() && !scalarSlot.group(1).startsWith('type:')) {
+                        violations << "compiled item guide recipe matrix contains scalar slot shorthand: ${scalarSlot.group(1)}"
+                    }
+                }
             }
         }
         if (!new File(root, 'content/items/items.yml').isFile()) {

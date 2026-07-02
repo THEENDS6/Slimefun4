@@ -26,11 +26,11 @@ final class SfxContentBootstrapper {
         }
 
         BaseContentBootstrap.register(itemRegistry, api.internalManualMachines());
-        SfxYamlContentLoader yamlContentLoader = new SfxYamlContentLoader(plugin, itemRegistry);
+        SfxYamlContentLoader yamlContentLoader = new SfxYamlContentLoader(plugin, itemRegistry, plugin.localization);
         yamlContentLoader.ensureDefaultFiles(plugin.syncBundledItemFiles());
         yamlContentLoader.registerAll();
 
-        SfxManualMachineYamlLoader manualMachineYamlLoader = new SfxManualMachineYamlLoader(plugin);
+        SfxManualMachineYamlLoader manualMachineYamlLoader = new SfxManualMachineYamlLoader(plugin, plugin.localization);
         manualMachineYamlLoader.ensureDefaultFile(plugin.syncBundledRecipeFiles());
         manualMachineYamlLoader.loadInto(api.internalManualMachines());
 

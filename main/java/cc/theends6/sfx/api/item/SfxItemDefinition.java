@@ -15,7 +15,9 @@ public final class SfxItemDefinition {
     private final String id;
     private final Material material;
     private final Component name;
+    private final String nameKey;
     private final List<Component> lore;
+    private final String loreKey;
     private final String categoryId;
     private final int order;
     private final int version;
@@ -35,7 +37,9 @@ public final class SfxItemDefinition {
         this.id = normalizeId(builder.id);
         this.material = Objects.requireNonNull(builder.material, "material");
         this.name = Objects.requireNonNull(builder.name, "name");
+        this.nameKey = Objects.requireNonNull(builder.nameKey, "nameKey");
         this.lore = Collections.unmodifiableList(new ArrayList<>(builder.lore));
+        this.loreKey = builder.loreKey == null || builder.loreKey.isBlank() ? null : builder.loreKey.trim();
         this.categoryId = builder.categoryId == null ? null : SfxItemCategory.normalizeId(builder.categoryId);
         this.order = builder.order;
         this.version = Math.max(1, builder.version);
@@ -94,8 +98,16 @@ public final class SfxItemDefinition {
         return name;
     }
 
+    public String nameKey() {
+        return nameKey;
+    }
+
     public List<Component> lore() {
         return lore;
+    }
+
+    public String loreKey() {
+        return loreKey;
     }
 
     public String categoryId() {
@@ -158,7 +170,9 @@ public final class SfxItemDefinition {
         private final String id;
         private final Material material;
         private final Component name;
+        private String nameKey;
         private final List<Component> lore = new ArrayList<>();
+        private String loreKey;
         private String categoryId;
         private int order = DEFAULT_ORDER;
         private int version = 1;
@@ -178,11 +192,22 @@ public final class SfxItemDefinition {
             this.id = id;
             this.material = material;
             this.name = name;
+            this.nameKey = defaultNameKey(id);
+        }
+
+        public Builder nameKey(String nameKey) {
+            this.nameKey = nameKey;
+            return this;
         }
 
         public Builder lore(List<Component> lore) {
             this.lore.clear();
             this.lore.addAll(lore);
+            return this;
+        }
+
+        public Builder loreKey(String loreKey) {
+            this.loreKey = loreKey;
             return this;
         }
 
@@ -269,6 +294,10 @@ public final class SfxItemDefinition {
 
         public SfxItemDefinition build() {
             return new SfxItemDefinition(this);
+        }
+
+        private static String defaultNameKey(String id) {
+            return "items." + normalizeId(id).replace(':', '.').replace('/', '.') + ".name";
         }
     }
 }
