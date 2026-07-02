@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.configurable;
 
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -25,14 +26,7 @@ final class SfxConfigurableMachineDefinitions {
     static Map<String, SfxConfigurableMachineDefinition> load(JavaPlugin plugin) {
         ensureBundledFile(plugin);
         boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
-        File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
-        if (!file.isFile()) {
-            if (strict) {
-                throw new IllegalStateException("Configurable machine YAML missing: " + RESOURCE_PATH);
-            }
-            return Map.of();
-        }
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
             String message = "No machines section in " + RESOURCE_PATH + "; configurable machines will use Java defaults.";

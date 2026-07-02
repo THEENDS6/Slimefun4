@@ -91,6 +91,13 @@ public final class SfxTemplateCompiler {
                 outputs.add(machineCatalogOutput);
                 manifestSources.add(machineCatalogSource);
             }
+            for (ContentPassThroughSource source : contentPassThroughSources()) {
+                OutputNode output = compileYamlPassThroughOutput(source);
+                if (output != null) {
+                    outputs.add(output);
+                    manifestSources.add(source.path());
+                }
+            }
             sourceFileCount = manifestSources.size();
             clearOutputDirectory();
             writeOutputs(outputs);
@@ -838,6 +845,49 @@ public final class SfxTemplateCompiler {
         return new OutputNode(List.of(), "$.machines", "content/machines/machine-catalog.yml", wrapped, relativeSource(source), "catalog.yml");
     }
 
+    private List<ContentPassThroughSource> contentPassThroughSources() {
+        Path machines = sourceRoot.resolveSibling("machines");
+        return List.of(
+                new ContentPassThroughSource(machines.resolve("manual-machines.yml"), "content/machines/manual-machines.yml", "manual-machines.yml"),
+                new ContentPassThroughSource(machines.resolve("configurable-machines.yml"), "content/machines/configurable-machines.yml", "configurable-machines.yml")
+        );
+    }
+
+    private OutputNode compileYamlPassThroughOutput(ContentPassThroughSource source) throws IOException {
+        if (!Files.isRegularFile(source.path())) {
+            return null;
+        }
+        YamlConfiguration yaml = new YamlConfiguration();
+        try {
+            yaml.loadFromString(Files.readString(source.path(), StandardCharsets.UTF_8));
+        } catch (Exception ex) {
+            throw new SfxTemplateCompileException("Cannot load content source " + relativeSource(source.path()) + ": " + ex.getMessage(), ex);
+        }
+        Map<String, Object> root = plainSectionToMap(yaml);
+        if (root.isEmpty()) {
+            throw new SfxTemplateCompileException("Content source " + relativeSource(source.path()) + " is empty.");
+        }
+        return new OutputNode(List.of(), "$", source.targetResource(), root, relativeSource(source.path()), source.fileName());
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> plainSectionToMap(ConfigurationSection section) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (String key : section.getKeys(false)) {
+            Object value = section.get(key);
+            if (value instanceof ConfigurationSection child) {
+                map.put(key, plainSectionToMap(child));
+            } else if (value instanceof Map<?, ?> childMap) {
+                map.put(key, deepCopyMap((Map<String, Object>) childMap));
+            } else if (value instanceof List<?> list) {
+                map.put(key, deepCopyList(list));
+            } else {
+                map.put(key, value);
+            }
+        }
+        return map;
+    }
+
     private SfxMachineDefinition compileMachineCatalogDefinition(String id, ConfigurationSection section) {
         SfxMachineCategory category = SfxMachineCategory.valueOf(requiredCatalogString(section, "category").trim().replace('-', '_').toUpperCase(Locale.ROOT));
         Set<String> tags = Set.copyOf(strings(section.getList("tags")));
@@ -1342,6 +1392,9 @@ public final class SfxTemplateCompiler {
     }
 
     private record MergeDirective(String sourcePath, String targetPath, Map<String, Object> payload) {
+    }
+
+    private record ContentPassThroughSource(Path path, String targetResource, String fileName) {
     }
 
     private record OutputNode(List<String> keys, String path, String targetResource, Map<String, Object> value, String source, String relativeOutputFile) {
