@@ -1,5 +1,5 @@
 # 电炉 1-3 的模板化样板。
-# 这份文件只演示预编译器能力，暂时不迁移其他机器。
+# 文件名前缀数字用于控制模板编译顺序。
 
 machines:
   @ot: content/machines/electric-machines.yml
@@ -10,7 +10,7 @@ machines:
     @copyfrom: machines.sf:electric_furnace
     @isoutput: true
     @define:
-      level-suffix: " - II"
+      level-suffix: " <gray>-</gray> <yellow>II</yellow>"
       speed: 2
       capacity: 2560
       consumption: 6
@@ -18,24 +18,7 @@ machines:
     @copyfrom: machines.sf:electric_furnace_2
     @isoutput: true
     @define:
-      level-suffix: " - III"
+      level-suffix: " <gray>-</gray> <yellow>III</yellow>"
       speed: 4
       capacity: 5120
       consumption: 10
-
-patches:
-  electric-furnace-common-output:
-    @mi: machines.sf:electric_furnace
-    slots:
-      input: [19, 20]
-      output: [24, 25]
-  electric-furnace-2-common-output:
-    @mergeinto: machines.sf:electric_furnace_2
-    slots:
-      input: [19, 20]
-      output: [24, 25]
-  electric-furnace-3-common-output:
-    @mergeinto: machines.sf:electric_furnace_3
-    slots:
-      input: [19, 20]
-      output: [24, 25]

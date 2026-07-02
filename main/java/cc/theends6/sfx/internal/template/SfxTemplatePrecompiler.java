@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,8 +17,10 @@ public final class SfxTemplatePrecompiler {
             "content/templates/00-electric-machine-templates.yml",
             "content/templates/05-energy-component-templates.yml",
             "content/templates/10-electric-furnaces.yml",
-            "content/templates/11-electric-furnaces-v2.yml",
             "content/templates/20-energy-components.yml"
+    );
+    private static final List<String> REMOVED_BUNDLED_TEMPLATE_RESOURCES = List.of(
+            "content/templates/11-electric-furnaces-v2.yml"
     );
 
     private SfxTemplatePrecompiler() {
@@ -61,8 +64,25 @@ public final class SfxTemplatePrecompiler {
             } catch (IOException restoreEx) {
                 ex.addSuppressed(restoreEx);
             }
+            try {
+                publishInPlace(outputRoot, tempRoot);
+                deleteDirectory(backupRoot);
+            } catch (SfxTemplateCompileException fallbackEx) {
+                fallbackEx.addSuppressed(ex);
+                throw fallbackEx;
+            }
+        }
+    }
+
+    private static void publishInPlace(Path outputRoot, Path tempRoot) {
+        try {
+            Files.createDirectories(outputRoot);
+            deleteDirectoryContents(outputRoot);
+            copyDirectory(tempRoot, outputRoot);
             deleteDirectory(tempRoot);
-            throw new SfxTemplateCompileException("Failed to publish compiled SFX templates atomically: " + ex.getMessage(), ex);
+        } catch (IOException ex) {
+            deleteDirectory(tempRoot);
+            throw new SfxTemplateCompileException("Failed to publish compiled SFX templates in place: " + ex.getMessage(), ex);
         }
     }
 
@@ -71,7 +91,7 @@ public final class SfxTemplatePrecompiler {
             return;
         }
         try (var stream = Files.walk(root)) {
-            List<Path> paths = stream.sorted(java.util.Comparator.reverseOrder()).toList();
+            List<Path> paths = stream.sorted(Comparator.reverseOrder()).toList();
             for (Path path : paths) {
                 Files.deleteIfExists(path);
             }
@@ -80,7 +100,35 @@ public final class SfxTemplatePrecompiler {
         }
     }
 
+    private static void deleteDirectoryContents(Path root) throws IOException {
+        if (root == null || !Files.isDirectory(root)) {
+            return;
+        }
+        try (var stream = Files.list(root)) {
+            for (Path child : stream.toList()) {
+                deleteDirectory(child);
+            }
+        }
+    }
+
+    private static void copyDirectory(Path sourceRoot, Path targetRoot) throws IOException {
+        try (var stream = Files.walk(sourceRoot)) {
+            for (Path source : stream.sorted(Comparator.naturalOrder()).toList()) {
+                Path target = targetRoot.resolve(sourceRoot.relativize(source));
+                if (Files.isDirectory(source)) {
+                    Files.createDirectories(target);
+                } else {
+                    Files.createDirectories(target.getParent());
+                    Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+    }
+
     private static void ensureBundledTemplates(JavaPlugin plugin, boolean overwriteTemplates) {
+        for (String resource : REMOVED_BUNDLED_TEMPLATE_RESOURCES) {
+            deleteDirectory(new File(plugin.getDataFolder(), resource).toPath());
+        }
         for (String resource : BUNDLED_TEMPLATE_RESOURCES) {
             File target = new File(plugin.getDataFolder(), resource);
             if (target.isFile() && !overwriteTemplates) {

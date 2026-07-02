@@ -18,7 +18,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxLocalization {
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{([a-zA-Z0-9_.-]+)}");
-    private static final Pattern LEGACY_FORMAT = Pattern.compile("(?i).*[&§][0-9A-FK-OR].*");
 
     private final JavaPlugin plugin;
     private YamlConfiguration bundled;
@@ -348,7 +347,7 @@ public final class SfxLocalization {
         if (input == null) {
             return Component.empty();
         }
-        return LEGACY_FORMAT.matcher(input).matches() ? Text.legacy(input) : Text.mm(input);
+        return Text.renderFlexible(input);
     }
 
     private static String sanitize(String input) {

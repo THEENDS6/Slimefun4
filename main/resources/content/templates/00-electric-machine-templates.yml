@@ -71,11 +71,11 @@ templates:
       @istemplate: true
       @define:
         machine-title: Electric Furnace
-        level-suffix: ""
+        level-suffix: " <gray>-</gray> <yellow>I</yellow>"
         speed: 1
         capacity: 1280
         consumption: 4
-      title: "${machine-title}${level-suffix}"
+      title: "<gold>${machine-title}</gold>${level-suffix}"
       speed: ${speed}
       energy:
         capacity: ${capacity}
