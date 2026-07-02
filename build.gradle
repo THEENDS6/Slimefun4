@@ -92,10 +92,14 @@ processResources {
 }
 
 tasks.named('jar') {
+    dependsOn 'validateSfxTemplateCompile'
     archiveBaseName.set('SlimeFunX')
     archiveVersion.set('')
     from {
         configurations.shade.collect { zipTree(it) }
+    }
+    from(layout.buildDirectory.dir('sfx-template-compiled')) {
+        into 'content/compiled'
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
@@ -278,6 +282,50 @@ tasks.register('validateSfxCompiledContent') {
                     }
                 }
             }
+            def inUiSlots = false
+            def currentSlot = null
+            def currentRole = null
+            def currentStateIndex = false
+            def flushSlot = {
+                if (currentSlot != null && (currentRole == 'input' || currentRole == 'output') && !currentStateIndex) {
+                    violations << "${root.toPath().relativize(file.toPath())}: ui.slots.${currentSlot} ${currentRole} missing state-index"
+                }
+            }
+            text.readLines().each { line ->
+                if (!inUiSlots && line == '      slots:') {
+                    inUiSlots = true
+                    return
+                }
+                if (!inUiSlots) {
+                    return
+                }
+                def slotMatch = line =~ /^        '?([0-9]+)'?:\s*$/
+                if (slotMatch.matches()) {
+                    flushSlot()
+                    currentSlot = slotMatch[0][1]
+                    currentRole = null
+                    currentStateIndex = false
+                    return
+                }
+                if ((line =~ /^      [^ ]/).find()) {
+                    flushSlot()
+                    inUiSlots = false
+                    currentSlot = null
+                    currentRole = null
+                    currentStateIndex = false
+                    return
+                }
+                if (currentSlot != null) {
+                    def roleMatch = line =~ /^          role:\s*([A-Za-z0-9_-]+)\s*$/
+                    if (roleMatch.matches()) {
+                        currentRole = roleMatch[0][1].replace('_', '-').toLowerCase(Locale.ROOT)
+                    }
+                    if ((line =~ /^          state-index:\s*[0-9]+\s*$/).find()) {
+                        currentStateIndex = true
+                    }
+                }
+            }
+            flushSlot()
         }
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))

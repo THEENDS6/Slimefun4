@@ -35,14 +35,14 @@ final class SfxElectricMachineStatusIconRenderer {
     ItemStack render(UUID viewerId, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
         SfxElectricMachineRenderStatus effectiveStatus = effectiveStatus(definition, state, status);
         SfxMachineStatusKey statusKey = effectiveStatus.statusKey();
-        SfxElectricMachineStatusUiTemplate template = definition.ui().statusTemplate(statusTemplateKey(effectiveStatus));
+        SfxElectricMachineStatusUiTemplate template = definition.ui().requiredStatusTemplate(statusTemplateKey(effectiveStatus));
         SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(statusKey)
-                .material(template != null && template.material() != null ? template.material() : material(definition, effectiveStatus, statusKey))
+                .material(requireStatusMaterial(definition, effectiveStatus, template))
                 .energy(state.storedEnergy(), definition.energyCapacity());
 
-        Component nameOverride = template != null && templateName(template) != null
-                ? Text.renderFlexible(applyPlaceholders(templateName(template), statusPlaceholders(definition, state, recipe, effectiveStatus)))
-                : displayNameOverride(viewerId, definition, effectiveStatus);
+        Component nameOverride = templateName(template) == null
+                ? null
+                : Text.renderFlexible(applyPlaceholders(templateName(template), statusPlaceholders(definition, state, recipe, effectiveStatus)));
         if (nameOverride != null) {
             view.name(nameOverride);
         }
@@ -53,7 +53,7 @@ final class SfxElectricMachineStatusIconRenderer {
                 if (state.specialData() >= XP_PER_FLASK) {
                     current = XP_PER_FLASK;
                 }
-                view.progress(current, XP_PER_FLASK, -1, template == null ? cc.theends6.sfx.internal.ui.SfxDurabilityBarMode.AUTO : template.durabilityBarMode())
+                view.progress(current, XP_PER_FLASK, -1, template.durabilityBarMode())
                         .includeDefaultStatusLore(false)
                 .statusLore(localization.component(
                                 "electric-ui.simple-io.xp-progress",
@@ -63,7 +63,7 @@ final class SfxElectricMachineStatusIconRenderer {
                 int totalWork = totalWork(definition, state, recipe);
                 int currentWork = Math.min(totalWork, Math.max(0, state.progressWork()));
                 int remainingTicks = Math.max(0, (int) Math.ceil((totalWork - currentWork) / (double) Math.max(1, definition.speed())));
-                view.progress(currentWork, totalWork, remainingTicks, template == null ? cc.theends6.sfx.internal.ui.SfxDurabilityBarMode.AUTO : template.durabilityBarMode())
+                view.progress(currentWork, totalWork, remainingTicks, template.durabilityBarMode())
                         .includeDefaultStatusLore(false)
                 .statusLore(workingLore(definition));
             }
@@ -74,14 +74,12 @@ final class SfxElectricMachineStatusIconRenderer {
                 .statusLore(overrideLore);
             }
         }
-        if (template != null) {
-            view.includeDefaultStatusLore(template.includeDefaultLore());
-            List<String> templateLore = templateLore(template);
-            if (!templateLore.isEmpty()) {
-                view.overrideStatusLore(templateLore.stream()
-                        .map(line -> Text.renderFlexible(applyPlaceholders(line, statusPlaceholders(definition, state, recipe, effectiveStatus))))
-                        .toList());
-            }
+        view.includeDefaultStatusLore(template.includeDefaultLore());
+        List<String> templateLore = templateLore(template);
+        if (!templateLore.isEmpty()) {
+            view.overrideStatusLore(templateLore.stream()
+                    .map(line -> Text.renderFlexible(applyPlaceholders(line, statusPlaceholders(definition, state, recipe, effectiveStatus))))
+                    .toList());
         }
 
         if (definition.energyConsumptionPerTick() > 0) {
@@ -104,6 +102,13 @@ final class SfxElectricMachineStatusIconRenderer {
 
     private String statusTemplateKey(SfxElectricMachineRenderStatus status) {
         return status == null ? "idle" : status.name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
+    }
+
+    private Material requireStatusMaterial(SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status, SfxElectricMachineStatusUiTemplate template) {
+        if (template.material() == null) {
+            throw new IllegalStateException("Missing compiled status material for " + definition.id() + " status " + statusTemplateKey(status));
+        }
+        return template.material();
     }
 
     private String templateName(SfxElectricMachineStatusUiTemplate template) {
@@ -186,31 +191,6 @@ final class SfxElectricMachineStatusIconRenderer {
             return SfxElectricMachineRenderStatus.IDLE;
         }
         return status;
-    }
-
-    private Material material(SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status, SfxMachineStatusKey statusKey) {
-        if (status == SfxElectricMachineRenderStatus.WORKING) {
-            return definition.progressMaterial();
-        }
-        if (isAutoBrewer(definition)) {
-            return switch (status) {
-                case PAUSED -> Material.YELLOW_STAINED_GLASS_PANE;
-                case NO_POWER, NO_RECIPE, NO_BLAZE_FUEL -> Material.RED_STAINED_GLASS_PANE;
-                default -> Material.BLACK_STAINED_GLASS_PANE;
-            };
-        }
-        return SfxMachineStatusDefaults.material(statusKey);
-    }
-
-    private Component displayNameOverride(UUID viewerId, SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status) {
-        return switch (status) {
-            case WORKING -> isExtendedUiEnabled(viewerId) ? null : Component.text(" ");
-            case NO_BLAZE_FUEL -> localization.component("electric-ui.auto-brewer.blaze.missing-name", "<red>No Blaze Powder</red>");
-            case NO_BREWING_INGREDIENT -> localization.component("electric-ui.auto-brewer.ingredient.missing-name", "<red>No Ingredient</red>");
-            case NO_POTION -> localization.component("electric-ui.auto-brewer.potion.missing-name", "<red>No Potion</red>");
-            case PAUSED -> isAssembler(definition) ? localization.component("configurable-ui.assembler.paused.name", "<yellow>Paused</yellow>") : null;
-            default -> null;
-        };
     }
 
     private List<Component> statusLoreOverride(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineRenderStatus status) {
