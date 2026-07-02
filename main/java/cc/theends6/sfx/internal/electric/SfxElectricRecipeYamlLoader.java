@@ -111,15 +111,8 @@ final class SfxElectricRecipeYamlLoader {
     }
 
     private static SfxRecipeSlot parseInput(Object raw) {
-        if (raw instanceof String text) {
-            String value = text.trim();
-            if (value.contains(":")) {
-                return SfxRecipeSlot.sfx(value);
-            }
-            return SfxRecipeSlot.vanilla(parseMaterial(value));
-        }
         if (!(raw instanceof Map<?, ?> map)) {
-            throw new IllegalArgumentException("unsupported electric input: " + raw);
+            throw new IllegalArgumentException("electric recipe input must be an explicit map: " + raw);
         }
         int amount = integer(requiredValue(map, "amount"));
         Object item = map.get("item");
@@ -163,21 +156,8 @@ final class SfxElectricRecipeYamlLoader {
     }
 
     private static SfxElectricStack parseOutput(Object raw) {
-        if (raw instanceof String text) {
-            String value = text.trim();
-            int amount = 1;
-            if (value.contains("*")) {
-                String[] split = value.split("\\*", 2);
-                value = split[0].trim();
-                amount = integer(split[1]);
-            }
-            if (value.contains(":")) {
-                return SfxElectricStack.sfx(value, amount);
-            }
-            return SfxElectricStack.vanilla(parseMaterial(value), amount);
-        }
         if (!(raw instanceof Map<?, ?> map)) {
-            throw new IllegalArgumentException("unsupported electric output: " + raw);
+            throw new IllegalArgumentException("electric recipe output must be an explicit map: " + raw);
         }
         int amount = integer(requiredValue(map, "amount"));
         Object item = map.get("item");

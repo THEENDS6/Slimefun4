@@ -942,6 +942,15 @@ tasks.register('validateSfxCompiledContent') {
                     violations << "compiled electric recipes missing ${token}"
                 }
             }
+            def electricScalarSlot = electricRecipeText =~ /(?m)^\s+-\s+(?!id:|item:|material:)[A-Za-z0-9_:.-]+(?:\*[0-9]+)?\s*$/
+            if (electricScalarSlot.find()) {
+                violations << "compiled electric recipes contain scalar input/output shorthand: ${electricScalarSlot.group(0).trim()}"
+            }
+            def electricSlotCount = (electricRecipeText =~ /(?m)^\s+-\s+(item|material):\s*/).count
+            def electricAmountCount = (electricRecipeText =~ /(?m)^\s+amount:\s*/).count
+            if (electricSlotCount != electricAmountCount) {
+                violations << "compiled electric recipe slots must explicitly include amount: slots=${electricSlotCount}, amounts=${electricAmountCount}"
+            }
         }
         def electricFiles = fileTree(new File(root, 'content/machines/electric-machines')) {
             include '**/*.yml'
