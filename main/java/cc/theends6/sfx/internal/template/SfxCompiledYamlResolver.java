@@ -9,12 +9,16 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxCompiledYamlResolver {
     private static final String COMPILED_DIRECTORY = "content/compiled";
+    private static final Set<String> WARNED_LOCAL_COMPILED_ROOTS = ConcurrentHashMap.newKeySet();
 
     private SfxCompiledYamlResolver() {
     }
@@ -32,7 +36,7 @@ public final class SfxCompiledYamlResolver {
             mergeMap(mergedMap, sectionToMap(compiled));
         }
         File compiledRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY + "/" + compiledDirectory(resourcePath));
-        if (compiledRoot.isDirectory()) {
+        if (compiledRoot.isDirectory() && localCompiledIsCurrent(plugin)) {
             List<File> files = listYamlFiles(compiledRoot);
             hasCompiled = hasCompiled || !files.isEmpty();
             for (File file : files) {
@@ -61,7 +65,7 @@ public final class SfxCompiledYamlResolver {
         String normalizedPrefix = normalizeResource(resourcePrefix);
         List<YamlConfiguration> result = new ArrayList<>();
         File compiledRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY + "/" + normalizedPrefix);
-        if (compiledRoot.isDirectory()) {
+        if (compiledRoot.isDirectory() && localCompiledIsCurrent(plugin)) {
             for (File file : listYamlFiles(compiledRoot)) {
                 result.add(YamlConfiguration.loadConfiguration(file));
             }
@@ -84,15 +88,8 @@ public final class SfxCompiledYamlResolver {
     }
 
     private static List<BundledCompiledEntry> loadBundledCompiled(JavaPlugin plugin) {
-        InputStream manifestStream = plugin.getResource(COMPILED_DIRECTORY + "/_manifest.yml");
-        if (manifestStream == null) {
-            return List.of();
-        }
-        YamlConfiguration manifest;
-        try (InputStream stream = manifestStream; InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-            manifest = YamlConfiguration.loadConfiguration(reader);
-        } catch (Exception ex) {
-            plugin.getLogger().warning("Failed to read bundled SFX compiled manifest: " + ex.getMessage());
+        YamlConfiguration manifest = loadBundledManifest(plugin);
+        if (manifest == null) {
             return List.of();
         }
         List<BundledCompiledEntry> result = new ArrayList<>();
@@ -116,6 +113,60 @@ public final class SfxCompiledYamlResolver {
         }
         result.sort(Comparator.comparing(BundledCompiledEntry::file));
         return List.copyOf(result);
+    }
+
+    private static boolean localCompiledIsCurrent(JavaPlugin plugin) {
+        File localRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY);
+        if (!localRoot.isDirectory()) {
+            return false;
+        }
+        File manifestFile = new File(localRoot, "_manifest.yml");
+        if (!manifestFile.isFile()) {
+            warnLocalCompiledIgnored(plugin, "missing _manifest.yml");
+            return false;
+        }
+        YamlConfiguration localManifest;
+        try {
+            localManifest = YamlConfiguration.loadConfiguration(manifestFile);
+        } catch (Exception ex) {
+            warnLocalCompiledIgnored(plugin, "unreadable _manifest.yml: " + ex.getMessage());
+            return false;
+        }
+        YamlConfiguration bundledManifest = loadBundledManifest(plugin);
+        if (bundledManifest == null) {
+            return true;
+        }
+        for (String key : List.of("compiler", "compiler-version", "template-hash", "content-version")) {
+            String localValue = string(localManifest.get(key));
+            String bundledValue = string(bundledManifest.get(key));
+            if (!Objects.equals(localValue, bundledValue)) {
+                warnLocalCompiledIgnored(plugin, key + " mismatch (local=" + localValue + ", bundled=" + bundledValue + ")");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static YamlConfiguration loadBundledManifest(JavaPlugin plugin) {
+        InputStream manifestStream = plugin.getResource(COMPILED_DIRECTORY + "/_manifest.yml");
+        if (manifestStream == null) {
+            return null;
+        }
+        try (InputStream stream = manifestStream; InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+            return YamlConfiguration.loadConfiguration(reader);
+        } catch (Exception ex) {
+            plugin.getLogger().warning("Failed to read bundled SFX compiled manifest: " + ex.getMessage());
+            return null;
+        }
+    }
+
+    private static void warnLocalCompiledIgnored(JavaPlugin plugin, String reason) {
+        String root = new File(plugin.getDataFolder(), COMPILED_DIRECTORY).getAbsolutePath();
+        String key = root + "|" + reason;
+        if (WARNED_LOCAL_COMPILED_ROOTS.add(key)) {
+            plugin.getLogger().warning("Ignoring local SFX compiled content at " + root + ": " + reason
+                    + ". Recompile templates or remove the stale directory; bundled compiled content will be used when available.");
+        }
     }
 
     private static List<File> listYamlFiles(File root) {
