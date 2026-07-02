@@ -5,6 +5,11 @@ content:
   sync-bundled-items-on-startup: false
   sync-bundled-recipes-on-startup: false
   sync-bundled-researches-on-startup: false
+  runtime:
+    compiled-only: true
+    allow-java-ui-fallback: false
+    allow-java-recipe-fallback: false
+    allow-legacy-machine-scan: false
 
 storage:
   sqlite-file: 'data/player-data.db'

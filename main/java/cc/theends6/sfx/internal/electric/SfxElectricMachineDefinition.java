@@ -43,7 +43,7 @@ public record SfxElectricMachineDefinition(
             Material progressMaterial,
             SfxElectricRecipeProvider recipeProvider
     ) {
-        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, DEFAULT_INPUT_SLOTS, DEFAULT_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.STANDARD, functionTagsForLayout(SfxElectricMachineMenuStyle.STANDARD), SfxElectricMachineUiDefinition.UNDEFINED, null);
+        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, DEFAULT_INPUT_SLOTS, DEFAULT_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.STANDARD, Set.of(), SfxElectricMachineUiDefinition.UNDEFINED, null);
     }
 
     public SfxElectricMachineDefinition(
@@ -57,7 +57,7 @@ public record SfxElectricMachineDefinition(
             int[] inputSlots,
             int[] outputSlots
     ) {
-        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, SfxElectricMachineMenuStyle.STANDARD, functionTagsForLayout(SfxElectricMachineMenuStyle.STANDARD), SfxElectricMachineUiDefinition.UNDEFINED, null);
+        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, SfxElectricMachineMenuStyle.STANDARD, Set.of(), SfxElectricMachineUiDefinition.UNDEFINED, null);
     }
 
     public SfxElectricMachineDefinition(
@@ -72,7 +72,7 @@ public record SfxElectricMachineDefinition(
             int[] outputSlots,
             SfxElectricMachineMenuStyle menuStyle
     ) {
-        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, menuStyle, functionTagsForLayout(menuStyle), SfxElectricMachineUiDefinition.UNDEFINED, null);
+        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, menuStyle, Set.of(), SfxElectricMachineUiDefinition.UNDEFINED, null);
     }
 
     public SfxElectricMachineDefinition(
@@ -88,7 +88,7 @@ public record SfxElectricMachineDefinition(
             SfxElectricMachineMenuStyle menuStyle,
             SfxElectricAssemblerSpec assemblerSpec
     ) {
-        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, menuStyle, functionTagsForLayout(menuStyle), SfxElectricMachineUiDefinition.UNDEFINED, assemblerSpec);
+        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, menuStyle, Set.of(), SfxElectricMachineUiDefinition.UNDEFINED, assemblerSpec);
     }
 
     public SfxElectricMachineDefinition {
@@ -126,21 +126,6 @@ public record SfxElectricMachineDefinition(
 
     public boolean hasFunction(String function) {
         return function != null && functionTags.contains(normalizeFunctionTag(function));
-    }
-
-    private static Set<String> functionTagsForLayout(SfxElectricMachineMenuStyle layout) {
-        if (layout == null) {
-            return Set.of();
-        }
-        return switch (layout) {
-            case AUTO_CRAFTER -> Set.of("auto-crafter");
-            case AUTO_BREWER -> Set.of("auto-brewer");
-            case ASSEMBLER -> Set.of("assembler");
-            case GEO_MINER -> Set.of("geo-miner");
-            case SIMPLE_IO -> Set.of("simple-io");
-            case NONE -> Set.of("no-menu");
-            case STANDARD -> Set.of("standard-processing");
-        };
     }
 
     private static Set<String> normalizeFunctionTags(Set<String> raw) {

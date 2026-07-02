@@ -5,6 +5,7 @@ import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.ui.SfxDurabilityBarMode;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -66,20 +67,28 @@ final class SfxElectricMachineDefinitionConfig {
         if (entry == null) {
             throw new IllegalStateException("Missing compiled electric machine definition for " + fallback.id());
         }
-        String nameKey = entry.nameKey == null || entry.nameKey.isBlank() ? itemNameKey(fallback.id()) : entry.nameKey;
-        int speed = entry.speed == null ? fallback.speed() : entry.speed;
-        int energyCapacity = entry.energyCapacity == null ? fallback.energyCapacity() : entry.energyCapacity;
-        int energyConsumption = entry.energyConsumptionPerTick == null ? fallback.energyConsumptionPerTick() : entry.energyConsumptionPerTick;
-        Material progressMaterial = entry.progressMaterial == null ? fallback.progressMaterial() : entry.progressMaterial;
-        int[] inputSlots = entry.inputSlots == null ? fallback.inputSlots() : entry.inputSlots;
-        int[] outputSlots = entry.outputSlots == null ? fallback.outputSlots() : entry.outputSlots;
+        String nameKey = requireString(fallback.id(), "name-key", entry.nameKey);
+        int speed = requireInt(fallback.id(), "speed", entry.speed);
+        int energyCapacity = requireInt(fallback.id(), "energy.capacity", entry.energyCapacity);
+        int energyConsumption = requireInt(fallback.id(), "energy.consumption-per-tick", entry.energyConsumptionPerTick);
+        Material progressMaterial = requireValue(fallback.id(), "progress-material", entry.progressMaterial);
+        int[] inputSlots = requireSlotsFromUi(entry, "input");
+        int[] outputSlots = requireSlotsFromUi(entry, "output");
+        assertSameSlots(fallback.id(), "input", entry.inputSlots, inputSlots);
+        assertSameSlots(fallback.id(), "output", entry.outputSlots, outputSlots);
         SfxElectricMachineMenuStyle menuStyle = fallback.menuStyle();
-        Set<String> functionTags = entry.functionTags == null ? fallback.functionTags() : entry.functionTags;
+        Set<String> functionTags = requireFunctionTags(fallback.id(), entry);
         if (entry.ui == null) {
             throw new IllegalStateException("Missing compiled UI definition for electric machine " + fallback.id());
         }
         SfxElectricMachineUiDefinition ui = entry.ui;
-        SfxElectricAssemblerSpec assemblerSpec = entry.assemblerSpec == null ? fallback.assemblerSpec() : entry.assemblerSpec;
+        assertStatusSlot(fallback.id(), ui);
+        assertStatusTemplates(fallback.id(), ui);
+        assertRequiredUiItems(fallback.id(), functionTags, ui);
+        SfxElectricAssemblerSpec assemblerSpec = entry.assemblerSpec;
+        if (functionTags.contains("assembler") && assemblerSpec == null) {
+            throw new IllegalStateException("Missing compiled assembler spec for electric machine " + fallback.id());
+        }
         return new SfxElectricMachineDefinition(
                 fallback.id(),
                 nameKey,
@@ -104,6 +113,114 @@ final class SfxElectricMachineDefinitionConfig {
             }
         }
         return entries.get(fallback.id());
+    }
+
+    private static Set<String> requireFunctionTags(String machineId, Entry entry) {
+        if (entry.functionTags == null) {
+            throw new IllegalStateException("Missing compiled function tags for electric machine " + machineId);
+        }
+        return entry.functionTags;
+    }
+
+    private static String requireString(String machineId, String path, String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Missing compiled " + path + " for electric machine " + machineId);
+        }
+        return value;
+    }
+
+    private static int requireInt(String machineId, String path, Integer value) {
+        if (value == null) {
+            throw new IllegalStateException("Missing compiled " + path + " for electric machine " + machineId);
+        }
+        return value;
+    }
+
+    private static <T> T requireValue(String machineId, String path, T value) {
+        if (value == null) {
+            throw new IllegalStateException("Missing compiled " + path + " for electric machine " + machineId);
+        }
+        return value;
+    }
+
+    private static int[] requireSlotsFromUi(Entry entry, String role) {
+        if (entry.ui == null) {
+            throw new IllegalStateException("Missing compiled UI definition.");
+        }
+        if (entry.ui.slots().isEmpty() && entry.ui.inventorySize() > 0) {
+            throw new IllegalStateException("Compiled UI has no explicit slots.");
+        }
+        return entry.ui.stateSlots(role);
+    }
+
+    private static void assertSameSlots(String machineId, String role, int[] declared, int[] compiled) {
+        int[] safeDeclared = declared == null ? new int[0] : declared;
+        if (!Arrays.equals(safeDeclared, compiled)) {
+            throw new IllegalStateException("Compiled electric machine " + machineId + " has mismatched " + role
+                    + " slots: declared=" + Arrays.toString(safeDeclared) + ", ui.slots=" + Arrays.toString(compiled));
+        }
+    }
+
+    private static void assertStatusSlot(String machineId, SfxElectricMachineUiDefinition ui) {
+        if (ui.inventorySize() <= 0) {
+            return;
+        }
+        int statusSlot = ui.statusSlot();
+        if (statusSlot < 0 || statusSlot >= ui.inventorySize()) {
+            throw new IllegalStateException("Compiled electric machine " + machineId + " has invalid status slot " + statusSlot);
+        }
+        if (!ui.isRole(statusSlot, "status") && !ui.isRole(statusSlot, "button")) {
+            throw new IllegalStateException("Compiled electric machine " + machineId + " status slot " + statusSlot + " is not a status/button slot.");
+        }
+    }
+
+    private static void assertStatusTemplates(String machineId, SfxElectricMachineUiDefinition ui) {
+        if (ui.inventorySize() <= 0) {
+            return;
+        }
+        for (SfxElectricMachineRenderStatus status : SfxElectricMachineRenderStatus.values()) {
+            String key = status.name().toLowerCase(Locale.ROOT).replace('_', '-');
+            SfxElectricMachineStatusUiTemplate template = ui.statusTemplate(key);
+            if (template == null) {
+                throw new IllegalStateException("Compiled electric machine " + machineId + " missing status template " + key);
+            }
+            if (template.material() == null) {
+                throw new IllegalStateException("Compiled electric machine " + machineId + " status template " + key + " missing material");
+            }
+        }
+    }
+
+    private static void assertRequiredUiItems(String machineId, Set<String> functionTags, SfxElectricMachineUiDefinition ui) {
+        if (functionTags.contains("auto-crafter")) {
+            requireUiItems(machineId, ui,
+                    "auto-crafter.no-recipe",
+                    "auto-crafter.enabled",
+                    "auto-crafter.disabled",
+                    "auto-crafter.select",
+                    "auto-crafter.previous",
+                    "auto-crafter.next",
+                    "auto-crafter.container.missing",
+                    "auto-crafter.container.ok");
+        }
+        if (functionTags.contains("auto-brewer")) {
+            requireUiItems(machineId, ui, "auto-brewer.fuel.empty", "auto-brewer.fuel.stored");
+        }
+        if (functionTags.contains("assembler")) {
+            requireUiItems(machineId, ui,
+                    "assembler.enabled",
+                    "assembler.disabled",
+                    "assembler.offset",
+                    "assembler.head.display",
+                    "assembler.body.display");
+        }
+    }
+
+    private static void requireUiItems(String machineId, SfxElectricMachineUiDefinition ui, String... keys) {
+        for (String key : keys) {
+            if (ui.item(key, null) == null) {
+                throw new IllegalStateException("Compiled electric machine " + machineId + " missing UI item " + key);
+            }
+        }
     }
 
     private static void ensureBundledFile(JavaPlugin plugin) {
@@ -138,7 +255,7 @@ final class SfxElectricMachineDefinitionConfig {
             ConfigurationSection slots = section.getConfigurationSection("slots");
             ConfigurationSection energy = section.getConfigurationSection("energy");
             return new Entry(
-                    section.getString("name-key", itemNameKey(section.getName())),
+                    section.getString("name-key", null),
                     optionalInt(section, "speed"),
                     optionalInt(energy, "capacity", optionalInt(section, "energy-capacity")),
                     optionalInt(energy, "consumption-per-tick", optionalInt(section, "energy-consumption-per-tick")),
@@ -186,11 +303,6 @@ final class SfxElectricMachineDefinitionConfig {
         return Set.copyOf(result);
     }
 
-    private static String itemNameKey(String id) {
-        String baseId = id == null ? "" : id.split("#", 2)[0];
-        return "items." + baseId.replace(':', '.').toLowerCase(Locale.ROOT) + ".name";
-    }
-
     private static SfxElectricMachineUiDefinition parseUi(ConfigurationSection section) {
         if (section == null) {
             return null;
@@ -221,7 +333,50 @@ final class SfxElectricMachineDefinitionConfig {
                 }
             }
         }
-        return new SfxElectricMachineUiDefinition(inventorySize, statusSlot, frames, items, status);
+        Map<Integer, SfxElectricMachineUiSlot> slots = parseUiSlots(section.getConfigurationSection("slots"));
+        return new SfxElectricMachineUiDefinition(inventorySize, statusSlot, frames, items, status, slots);
+    }
+
+    private static Map<Integer, SfxElectricMachineUiSlot> parseUiSlots(ConfigurationSection section) {
+        if (section == null) {
+            return Map.of();
+        }
+        Map<Integer, SfxElectricMachineUiSlot> result = new LinkedHashMap<>();
+        for (String key : section.getKeys(false)) {
+            int slot;
+            try {
+                slot = Integer.parseInt(key);
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("ui.slots key must be numeric: " + key, ex);
+            }
+            ConfigurationSection slotSection = section.getConfigurationSection(key);
+            if (slotSection == null) {
+                throw new IllegalArgumentException("ui.slots." + key + " requires a map");
+            }
+            result.put(slot, parseUiSlot(slot, slotSection));
+        }
+        return result;
+    }
+
+    private static SfxElectricMachineUiSlot parseUiSlot(int slot, ConfigurationSection section) {
+        ConfigurationSection item = section.getConfigurationSection("item");
+        return new SfxElectricMachineUiSlot(
+                slot,
+                requiredString(section, "role"),
+                requiredString(section, "behavior"),
+                section.getString("accepts", null),
+                section.getString("action", null),
+                section.getString("item-source", null),
+                optionalInt(section, "state-index"),
+                item == null ? null : parseUiItem(item));
+    }
+
+    private static String requiredString(ConfigurationSection section, String path) {
+        String value = section.getString(path, null);
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return value;
     }
 
     private static SfxElectricMachineUiFrame parseUiFrame(Map<?, ?> map) {

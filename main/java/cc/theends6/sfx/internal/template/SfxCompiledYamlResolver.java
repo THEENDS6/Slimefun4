@@ -1,6 +1,10 @@
 package cc.theends6.sfx.internal.template;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,18 +25,78 @@ public final class SfxCompiledYamlResolver {
                 ? YamlConfiguration.loadConfiguration(baseFile)
                 : new YamlConfiguration();
         Map<String, Object> mergedMap = sectionToMap(base);
-        File compiledRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY + "/" + compiledDirectory(resourcePath));
-        if (!compiledRoot.isDirectory()) {
-            return base;
-        }
-        List<File> files = listYamlFiles(compiledRoot);
-        for (File file : files) {
-            YamlConfiguration compiled = YamlConfiguration.loadConfiguration(file);
+        List<YamlConfiguration> bundledCompiled = loadBundledCompiled(plugin, resourcePath);
+        boolean hasCompiled = !bundledCompiled.isEmpty();
+        for (YamlConfiguration compiled : bundledCompiled) {
             mergeMap(mergedMap, sectionToMap(compiled));
+        }
+        File compiledRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY + "/" + compiledDirectory(resourcePath));
+        if (compiledRoot.isDirectory()) {
+            List<File> files = listYamlFiles(compiledRoot);
+            hasCompiled = hasCompiled || !files.isEmpty();
+            for (File file : files) {
+                YamlConfiguration compiled = YamlConfiguration.loadConfiguration(file);
+                mergeMap(mergedMap, sectionToMap(compiled));
+            }
+        }
+        if (!hasCompiled && compiledOnly(plugin)) {
+            throw new IllegalStateException("Compiled-only content runtime is enabled, but no compiled content was found for " + resourcePath);
         }
         YamlConfiguration merged = new YamlConfiguration();
         applyMap(merged, mergedMap);
         return merged;
+    }
+
+    public static List<YamlConfiguration> loadBundledCompiledUnder(JavaPlugin plugin, String resourcePrefix) {
+        String normalizedPrefix = normalizeResource(resourcePrefix);
+        return loadBundledCompiled(plugin).stream()
+                .filter(entry -> normalizeResource(entry.target()).startsWith(normalizedPrefix)
+                        || normalizeResource(entry.file()).startsWith(normalizedPrefix))
+                .map(BundledCompiledEntry::yaml)
+                .toList();
+    }
+
+    private static List<YamlConfiguration> loadBundledCompiled(JavaPlugin plugin, String resourcePath) {
+        String normalizedTarget = normalizeResource(resourcePath);
+        return loadBundledCompiled(plugin).stream()
+                .filter(entry -> normalizeResource(entry.target()).equals(normalizedTarget))
+                .map(BundledCompiledEntry::yaml)
+                .toList();
+    }
+
+    private static List<BundledCompiledEntry> loadBundledCompiled(JavaPlugin plugin) {
+        InputStream manifestStream = plugin.getResource(COMPILED_DIRECTORY + "/_manifest.yml");
+        if (manifestStream == null) {
+            return List.of();
+        }
+        YamlConfiguration manifest;
+        try (InputStream stream = manifestStream; InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+            manifest = YamlConfiguration.loadConfiguration(reader);
+        } catch (Exception ex) {
+            plugin.getLogger().warning("Failed to read bundled SFX compiled manifest: " + ex.getMessage());
+            return List.of();
+        }
+        List<BundledCompiledEntry> result = new ArrayList<>();
+        for (Map<?, ?> output : manifest.getMapList("outputs")) {
+            String file = string(output.get("file"));
+            if (file == null) {
+                continue;
+            }
+            String target = string(output.get("target"));
+            String resource = COMPILED_DIRECTORY + "/" + normalizeResource(file);
+            try (InputStream stream = plugin.getResource(resource)) {
+                if (stream == null) {
+                    plugin.getLogger().warning("Bundled SFX compiled resource listed in manifest is missing: " + resource);
+                    continue;
+                }
+                YamlConfiguration yaml = YamlConfiguration.loadConfiguration(new InputStreamReader(stream, StandardCharsets.UTF_8));
+                result.add(new BundledCompiledEntry(file, target == null ? "" : target, yaml));
+            } catch (Exception ex) {
+                plugin.getLogger().warning("Failed to read bundled SFX compiled resource " + resource + ": " + ex.getMessage());
+            }
+        }
+        result.sort(Comparator.comparing(BundledCompiledEntry::file));
+        return List.copyOf(result);
     }
 
     private static List<File> listYamlFiles(File root) {
@@ -58,7 +122,7 @@ public final class SfxCompiledYamlResolver {
     }
 
     private static String compiledDirectory(String resourcePath) {
-        String normalized = resourcePath.replace('\\', '/');
+        String normalized = normalizeResource(resourcePath);
         if (normalized.endsWith(".yml")) {
             return normalized.substring(0, normalized.length() - 4);
         }
@@ -66,6 +130,29 @@ public final class SfxCompiledYamlResolver {
             return normalized.substring(0, normalized.length() - 5);
         }
         return normalized;
+    }
+
+    private static String normalizeResource(String resourcePath) {
+        if (resourcePath == null) {
+            return "";
+        }
+        String normalized = resourcePath.replace('\\', '/');
+        while (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+        return normalized;
+    }
+
+    private static String string(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? null : text;
+    }
+
+    private static boolean compiledOnly(JavaPlugin plugin) {
+        return plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
     }
 
     @SuppressWarnings("unchecked")
@@ -109,5 +196,8 @@ public final class SfxCompiledYamlResolver {
                 section.set(entry.getKey(), value);
             }
         }
+    }
+
+    private record BundledCompiledEntry(String file, String target, YamlConfiguration yaml) {
     }
 }

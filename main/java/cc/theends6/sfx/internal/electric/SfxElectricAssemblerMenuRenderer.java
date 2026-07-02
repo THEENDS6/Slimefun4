@@ -54,28 +54,16 @@ final class SfxElectricAssemblerMenuRenderer {
 
     private ItemStack enabledItem(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
         boolean enabled = state.enabled();
-        return definition.ui().item(enabled ? "assembler.enabled" : "assembler.disabled",
-                new SfxElectricMachineUiItem(enabled ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE,
-                        enabled ? "<green>Enabled</green>" : "<red>Disabled</red>",
-                        List.of("<gray>Click to toggle this assembler.</gray>")))
-                .toItemStack(localization, Map.of());
+        return definition.ui().requiredItem(enabled ? "assembler.enabled" : "assembler.disabled").toItemStack(localization, Map.of());
     }
 
     private ItemStack offsetItem(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
         double offset = SfxAreaElectricMachineProviders.assemblerOffsetTenths(state) / 10.0D;
-        return definition.ui().item("assembler.offset",
-                new SfxElectricMachineUiItem(Material.COMPASS, "<aqua>Spawn Offset</aqua>", List.of(
-                        "<gray>Offset: {offset} Block(s)</gray>",
-                        "<gray>Left-click: +0.1</gray>",
-                        "<gray>Right-click: -0.1</gray>",
-                        "<gray>Range: -10.0 to 10.0</gray>")))
-                .toItemStack(localization, Map.of("offset", offset));
+        return definition.ui().requiredItem("assembler.offset").toItemStack(localization, Map.of("offset", offset));
     }
 
     private ItemStack displayMaterial(SfxElectricMachineDefinition definition, String key, Material material, int amount, List<Material> acceptedMaterials) {
-        ItemStack stack = definition.ui().item(key,
-                new SfxElectricMachineUiItem(material, "<yellow>Required Material</yellow>", List.of("<gray>Required: {amount}</gray>")))
-                .toItemStack(material, localization, Map.of("amount", amount));
+        ItemStack stack = definition.ui().requiredItem(key).toItemStack(material, localization, Map.of("amount", amount));
         if (acceptedMaterials.size() > 1) {
             List<Component> lore = stack.lore() == null ? new ArrayList<>() : new ArrayList<>(stack.lore());
             lore.add(localization.component("configurable-ui.assembler.accepted.lore", "<gray>Accepted materials:</gray>"));

@@ -2,6 +2,8 @@ package cc.theends6.sfx.internal.template;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -540,11 +542,17 @@ public final class SfxTemplateCompiler {
         Object machineSlotsRaw = machine.get("slots");
         if (machineSlotsRaw instanceof Map<?, ?> rawMachineSlots) {
             Map<String, Object> machineSlots = (Map<String, Object>) rawMachineSlots;
-            for (Integer slot : ints(machineSlots.get("input"))) {
-                putSlot(slotDefinitions, inventorySize, slot, inputSlot("recipe-input", "any"));
+            List<Integer> inputSlots = ints(machineSlots.get("input"));
+            for (int index = 0; index < inputSlots.size(); index++) {
+                Map<String, Object> definition = inputSlot("recipe-input", "any");
+                definition.put("state-index", index);
+                putSlot(slotDefinitions, inventorySize, inputSlots.get(index), definition);
             }
-            for (Integer slot : ints(machineSlots.get("output"))) {
-                putSlot(slotDefinitions, inventorySize, slot, slot("output", "output-only"));
+            List<Integer> outputSlots = ints(machineSlots.get("output"));
+            for (int index = 0; index < outputSlots.size(); index++) {
+                Map<String, Object> definition = slot("output", "output-only");
+                definition.put("state-index", index);
+                putSlot(slotDefinitions, inventorySize, outputSlots.get(index), definition);
             }
         }
         int statusSlot = intValue(ui.get("status-slot"), -1);
@@ -618,6 +626,13 @@ public final class SfxTemplateCompiler {
 
     private void putSlot(Map<String, Object> slots, int inventorySize, int slot, Map<String, Object> definition) {
         if (slot >= 0 && slot < inventorySize) {
+            Object existing = slots.get(String.valueOf(slot));
+            if (existing instanceof Map<?, ?> existingMap
+                    && !definition.containsKey("state-index")
+                    && ("input".equals(definition.get("role")) || "output".equals(definition.get("role")))
+                    && existingMap.containsKey("state-index")) {
+                definition.put("state-index", existingMap.get("state-index"));
+            }
             slots.put(String.valueOf(slot), definition);
         }
     }
@@ -683,22 +698,80 @@ public final class SfxTemplateCompiler {
     private void writeManifest(List<Path> sources, List<OutputNode> outputs) throws IOException {
         YamlConfiguration manifest = new YamlConfiguration();
         manifest.set("compiler", "sfx-template-v1");
+        manifest.set("compiler-version", 2);
         manifest.set("compiled-at", Instant.now().toString());
         manifest.set("source-root", sourceRoot.toString());
         manifest.set("output-root", publishedOutputRoot.toString());
         List<String> sourceNames = sources.stream().map(path -> sourceRoot.relativize(path).toString().replace('\\', '/')).toList();
         manifest.set("sources", sourceNames);
+        List<Map<String, Object>> sourceEntries = new ArrayList<>();
+        List<String> sourceHashParts = new ArrayList<>();
+        for (Path source : sources) {
+            String relative = sourceRoot.relativize(source).toString().replace('\\', '/');
+            String hash = sha256(source);
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("path", relative);
+            entry.put("sha256", hash);
+            sourceEntries.add(entry);
+            sourceHashParts.add(relative + "\n" + hash);
+        }
+        String templateHash = sha256Strings(sourceHashParts);
+        manifest.set("template-hash", templateHash);
+        manifest.set("content-version", "template-" + templateHash.substring(0, Math.min(12, templateHash.length())));
+        manifest.set("source-files", sourceEntries);
         List<Map<String, Object>> outputEntries = new ArrayList<>();
         for (OutputNode output : outputs) {
             Map<String, Object> entry = new LinkedHashMap<>();
-            entry.put("file", outputDirectory(output.targetResource()) + "/" + outputFileName(output.keys()));
+            String file = outputDirectory(output.targetResource()) + "/" + outputFileName(output.keys());
+            entry.put("file", file);
             entry.put("target", output.targetResource() == null ? "" : output.targetResource());
             entry.put("source-path", output.path());
+            Path outputFile = outputRoot.resolve(file);
+            if (Files.isRegularFile(outputFile)) {
+                entry.put("sha256", sha256(outputFile));
+            }
             outputEntries.add(entry);
         }
         manifest.set("outputs", outputEntries);
         manifest.set("warnings", warnings);
         Files.writeString(outputRoot.resolve("_manifest.yml"), manifest.saveToString(), StandardCharsets.UTF_8);
+    }
+
+    private String sha256(Path file) throws IOException {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            try (var stream = Files.newInputStream(file)) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = stream.read(buffer)) != -1) {
+                    digest.update(buffer, 0, read);
+                }
+            }
+            return hex(digest.digest());
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 is not available", ex);
+        }
+    }
+
+    private String sha256Strings(List<String> values) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            for (String value : values) {
+                digest.update(value.getBytes(StandardCharsets.UTF_8));
+                digest.update((byte) 0);
+            }
+            return hex(digest.digest());
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 is not available", ex);
+        }
+    }
+
+    private String hex(byte[] bytes) {
+        StringBuilder builder = new StringBuilder(bytes.length * 2);
+        for (byte value : bytes) {
+            builder.append(String.format("%02x", value & 0xff));
+        }
+        return builder.toString();
     }
 
     private void writeSourceMap() throws IOException {

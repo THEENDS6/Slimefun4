@@ -4,12 +4,8 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.ui.SfxItemProgressBar;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import net.kyori.adventure.text.Component;
-import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -57,10 +53,8 @@ final class SfxAutoBrewerMenuRenderer {
         int stored = Math.max(0, Math.min(SfxAdvancedAutoBrewerRecipeProvider.MAX_BLAZE_FUEL_TICKS, state.specialData()));
         int recipeFuel = state.hasProgress() && state.activeBaseTicks() > 0 ? Math.max(1, state.activeBaseTicks()) : 0;
         int powders = recipeFuel <= 0 ? 0 : (recipeFuel + SfxAdvancedAutoBrewerRecipeProvider.BLAZE_FUEL_TICKS - 1) / SfxAdvancedAutoBrewerRecipeProvider.BLAZE_FUEL_TICKS;
-        SfxElectricMachineUiItem configured = definition.ui().item(stored <= 0 ? "auto-brewer.fuel.empty" : "auto-brewer.fuel.stored", null);
-        ItemStack stack = configured == null
-                ? new ItemStack(stored <= 0 ? Material.STONE : Material.MAGMA_BLOCK)
-                : configured.toItemStack(localization, Map.of(
+        ItemStack stack = definition.ui().requiredItem(stored <= 0 ? "auto-brewer.fuel.empty" : "auto-brewer.fuel.stored")
+                .toItemStack(localization, Map.of(
                 "fuel", stored,
                 "capacity", SfxAdvancedAutoBrewerRecipeProvider.MAX_BLAZE_FUEL_TICKS,
                 "recipe_fuel", recipeFuel,
