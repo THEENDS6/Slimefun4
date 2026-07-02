@@ -66,19 +66,20 @@ final class SfxElectricMachineDefinitionConfig {
         if (entry == null) {
             return fallback;
         }
-        String title = entry.title == null || entry.title.isBlank() ? fallback.title() : entry.title;
+        String nameKey = entry.nameKey == null || entry.nameKey.isBlank() ? itemNameKey(fallback.id()) : entry.nameKey;
         int speed = entry.speed == null ? fallback.speed() : entry.speed;
         int energyCapacity = entry.energyCapacity == null ? fallback.energyCapacity() : entry.energyCapacity;
         int energyConsumption = entry.energyConsumptionPerTick == null ? fallback.energyConsumptionPerTick() : entry.energyConsumptionPerTick;
         Material progressMaterial = entry.progressMaterial == null ? fallback.progressMaterial() : entry.progressMaterial;
         int[] inputSlots = entry.inputSlots == null ? fallback.inputSlots() : entry.inputSlots;
         int[] outputSlots = entry.outputSlots == null ? fallback.outputSlots() : entry.outputSlots;
-            SfxElectricMachineMenuStyle menuStyle = entry.menuStyle == null ? fallback.menuStyle() : entry.menuStyle;
+        SfxElectricMachineMenuStyle menuStyle = entry.uiLayout == null ? fallback.menuStyle() : entry.uiLayout;
+        Set<String> functionTags = entry.functionTags == null ? fallback.functionTags() : entry.functionTags;
         SfxElectricMachineUiDefinition ui = entry.ui == null ? fallback.ui() : entry.ui;
         SfxElectricAssemblerSpec assemblerSpec = entry.assemblerSpec == null ? fallback.assemblerSpec() : entry.assemblerSpec;
         return new SfxElectricMachineDefinition(
                 fallback.id(),
-                title,
+                nameKey,
                 speed,
                 energyCapacity,
                 energyConsumption,
@@ -87,6 +88,7 @@ final class SfxElectricMachineDefinitionConfig {
                 inputSlots,
                 outputSlots,
                 menuStyle,
+                functionTags,
                 ui,
                 assemblerSpec);
     }
@@ -118,14 +120,15 @@ final class SfxElectricMachineDefinitionConfig {
     }
 
     private record Entry(
-            String title,
+            String nameKey,
             Integer speed,
             Integer energyCapacity,
             Integer energyConsumptionPerTick,
             Material progressMaterial,
             int[] inputSlots,
             int[] outputSlots,
-            SfxElectricMachineMenuStyle menuStyle,
+            SfxElectricMachineMenuStyle uiLayout,
+            Set<String> functionTags,
             SfxElectricMachineUiDefinition ui,
             SfxElectricAssemblerSpec assemblerSpec
     ) {
@@ -133,15 +136,16 @@ final class SfxElectricMachineDefinitionConfig {
             ConfigurationSection slots = section.getConfigurationSection("slots");
             ConfigurationSection energy = section.getConfigurationSection("energy");
             return new Entry(
-                    section.getString("title"),
+                    section.getString("name-key", itemNameKey(section.getName())),
                     optionalInt(section, "speed"),
                     optionalInt(energy, "capacity", optionalInt(section, "energy-capacity")),
                     optionalInt(energy, "consumption-per-tick", optionalInt(section, "energy-consumption-per-tick")),
                     parseMaterial(section.getString("progress-material", null)),
                     parseSlots(slots == null ? section.getList("input-slots") : slots.getList("input")),
                     parseSlots(slots == null ? section.getList("output-slots") : slots.getList("output")),
-                    parseMenuStyle(section.getString("menu-style", null)),
-                    parseUi(section.getConfigurationSection("ui"), parseMenuStyle(section.getString("menu-style", null))),
+                    parseUiLayout(section),
+                    parseFunctionTags(section),
+                    parseUi(section.getConfigurationSection("ui"), parseUiLayout(section)),
                     parseAssembler(section.getConfigurationSection("assembler")));
         }
     }
@@ -173,6 +177,32 @@ final class SfxElectricMachineDefinitionConfig {
             return null;
         }
         return SfxElectricMachineMenuStyle.valueOf(raw.trim().replace('-', '_').toUpperCase(Locale.ROOT));
+    }
+
+    private static SfxElectricMachineMenuStyle parseUiLayout(ConfigurationSection section) {
+        String raw = section == null ? null : section.getString("ui.layout", null);
+        if (raw == null || raw.isBlank()) {
+            raw = section == null ? null : section.getString("menu-style", null);
+        }
+        return parseMenuStyle(raw);
+    }
+
+    private static Set<String> parseFunctionTags(ConfigurationSection section) {
+        if (section == null || !section.contains("functions")) {
+            return null;
+        }
+        Set<String> result = new LinkedHashSet<>();
+        for (Object raw : section.getList("functions", List.of())) {
+            if (raw != null && !String.valueOf(raw).isBlank()) {
+                result.add(String.valueOf(raw).trim().replace('_', '-').toLowerCase(Locale.ROOT));
+            }
+        }
+        return Set.copyOf(result);
+    }
+
+    private static String itemNameKey(String id) {
+        String baseId = id == null ? "" : id.split("#", 2)[0];
+        return "items." + baseId.replace(':', '.').toLowerCase(Locale.ROOT) + ".name";
     }
 
     private static SfxElectricMachineUiDefinition parseUi(ConfigurationSection section, SfxElectricMachineMenuStyle menuStyle) {

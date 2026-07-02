@@ -1,0 +1,314 @@
+# Electric machine template outputs for 20 electric processing machines.
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:electric_furnace":
+    @cf: templates.machines.standard-electric-ui-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_furnace.name
+      speed: 1
+      capacity: 1280
+      consumption: 4
+      progress-material: FLINT_AND_STEEL
+  "sf:electric_furnace_2":
+    @cf: templates.machines.standard-electric-ui-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_furnace_2.name
+      speed: 2
+      capacity: 2560
+      consumption: 6
+      progress-material: FLINT_AND_STEEL
+  "sf:electric_furnace_3":
+    @cf: templates.machines.standard-electric-ui-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_furnace_3.name
+      speed: 4
+      capacity: 5120
+      consumption: 10
+      progress-material: FLINT_AND_STEEL
+  "sf:electric_ore_grinder":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_ore_grinder.name
+      speed: 1
+      capacity: 2560
+      consumption: 12
+      progress-material: IRON_PICKAXE
+  "sf:electric_ore_grinder_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_ore_grinder_2.name
+      speed: 4
+      capacity: 10240
+      consumption: 30
+      progress-material: IRON_PICKAXE
+  "sf:electric_ore_grinder_3":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_ore_grinder_3.name
+      speed: 10
+      capacity: 20480
+      consumption: 90
+      progress-material: IRON_PICKAXE
+  "sf:auto_drier":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.auto_drier.name
+      speed: 1
+      capacity: 25600
+      consumption: 10
+      progress-material: FLINT_AND_STEEL
+  "sf:electric_ingot_factory":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_ingot_factory.name
+      speed: 1
+      capacity: 10240
+      consumption: 8
+      progress-material: FLINT_AND_STEEL
+  "sf:electric_ingot_factory_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_ingot_factory_2.name
+      speed: 2
+      capacity: 20480
+      consumption: 14
+      progress-material: FLINT_AND_STEEL
+  "sf:electric_ingot_factory_3":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_ingot_factory_3.name
+      speed: 8
+      capacity: 81920
+      consumption: 40
+      progress-material: FLINT_AND_STEEL
+  "sf:carbon_press":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.carbon_press.name
+      speed: 1
+      capacity: 25600
+      consumption: 20
+      progress-material: DIAMOND_PICKAXE
+  "sf:carbon_press_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.carbon_press_2.name
+      speed: 3
+      capacity: 81920
+      consumption: 50
+      progress-material: DIAMOND_PICKAXE
+  "sf:carbon_press_3":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.carbon_press_3.name
+      speed: 15
+      capacity: 327680
+      consumption: 180
+      progress-material: DIAMOND_PICKAXE
+  "sf:electric_press":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_press.name
+      speed: 1
+      capacity: 25600
+      consumption: 16
+      progress-material: IRON_HOE
+  "sf:electric_press_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_press_2.name
+      speed: 3
+      capacity: 51200
+      consumption: 40
+      progress-material: IRON_HOE
+  "sf:electrified_crucible":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electrified_crucible.name
+      speed: 1
+      capacity: 20480
+      consumption: 72
+      progress-material: FLINT_AND_STEEL
+  "sf:electrified_crucible_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electrified_crucible_2.name
+      speed: 2
+      capacity: 40960
+      consumption: 120
+      progress-material: FLINT_AND_STEEL
+  "sf:electrified_crucible_3":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electrified_crucible_3.name
+      speed: 4
+      capacity: 81920
+      consumption: 180
+      progress-material: FLINT_AND_STEEL
+  "sf:freezer":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.freezer.name
+      speed: 1
+      capacity: 5120
+      consumption: 18
+      progress-material: GOLDEN_PICKAXE
+  "sf:freezer_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.freezer_2.name
+      speed: 2
+      capacity: 5120
+      consumption: 30
+      progress-material: GOLDEN_PICKAXE
+  "sf:freezer_3":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.freezer_3.name
+      speed: 3
+      capacity: 5120
+      consumption: 42
+      progress-material: GOLDEN_PICKAXE
+  "sf:heated_pressure_chamber":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.heated_pressure_chamber.name
+      speed: 1
+      capacity: 20480
+      consumption: 10
+      progress-material: FLINT_AND_STEEL
+  "sf:heated_pressure_chamber_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.heated_pressure_chamber_2.name
+      speed: 5
+      capacity: 81920
+      consumption: 44
+      progress-material: FLINT_AND_STEEL
+  "sf:electric_ingot_pulverizer":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_ingot_pulverizer.name
+      speed: 1
+      capacity: 10240
+      consumption: 14
+      progress-material: IRON_PICKAXE
+  "sf:electric_smeltery":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_smeltery.name
+      speed: 1
+      capacity: 10240
+      consumption: 20
+      progress-material: FLINT_AND_STEEL
+      input-slots:
+      - 10
+      - 11
+      - 19
+      - 20
+      - 28
+      - 29
+  "sf:electric_smeltery_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_smeltery_2.name
+      speed: 3
+      capacity: 10240
+      consumption: 40
+      progress-material: FLINT_AND_STEEL
+      input-slots:
+      - 10
+      - 11
+      - 19
+      - 20
+      - 28
+      - 29
+  "sf:refinery":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.refinery.name
+      speed: 1
+      capacity: 5120
+      consumption: 32
+      progress-material: PISTON
+  "sf:electric_gold_pan":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_gold_pan.name
+      speed: 1
+      capacity: 2560
+      consumption: 2
+      progress-material: DIAMOND_SHOVEL
+  "sf:electric_gold_pan_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_gold_pan_2.name
+      speed: 3
+      capacity: 5120
+      consumption: 4
+      progress-material: DIAMOND_SHOVEL
+  "sf:electric_gold_pan_3":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_gold_pan_3.name
+      speed: 10
+      capacity: 10240
+      consumption: 14
+      progress-material: DIAMOND_SHOVEL
+  "sf:electric_dust_washer":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_dust_washer.name
+      speed: 1
+      capacity: 5120
+      consumption: 6
+      progress-material: GOLDEN_SHOVEL
+  "sf:electric_dust_washer_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_dust_washer_2.name
+      speed: 2
+      capacity: 10240
+      consumption: 10
+      progress-material: GOLDEN_SHOVEL
+  "sf:electric_dust_washer_3":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.electric_dust_washer_3.name
+      speed: 10
+      capacity: 20480
+      consumption: 30
+      progress-material: GOLDEN_SHOVEL

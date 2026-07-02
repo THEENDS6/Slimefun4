@@ -2,7 +2,9 @@ package cc.theends6.sfx.internal.machine;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public record SfxMachineDefinition(
@@ -13,6 +15,7 @@ public record SfxMachineDefinition(
         List<Integer> outputSlots,
         int statusSlot,
         int tickInterval,
+        Set<String> tags,
         Set<SfxMachineCapability> capabilities,
         SfxMachineInputProvider inputProvider,
         SfxMachineOutputProvider outputProvider,
@@ -25,6 +28,7 @@ public record SfxMachineDefinition(
 
     public SfxMachineDefinition(String id, String displayName, SfxMachineCategory category, List<Integer> inputSlots, List<Integer> outputSlots, int statusSlot, int tickInterval) {
         this(id, displayName, category, inputSlots, outputSlots, statusSlot, tickInterval,
+                Set.of(),
                 defaultCapabilities(category, inputSlots, outputSlots),
                 inputSlots == null || inputSlots.isEmpty() ? SfxMachineInputProvider.none() : SfxMachineInputProvider.guiSlots(inputSlots),
                 outputSlots == null || outputSlots.isEmpty() ? SfxMachineOutputProvider.none() : SfxMachineOutputProvider.guiSlots(outputSlots),
@@ -36,6 +40,7 @@ public record SfxMachineDefinition(
         outputSlots = outputSlots == null ? List.of() : List.copyOf(outputSlots);
         category = category == null ? SfxMachineCategory.SPECIAL : category;
         tickInterval = Math.max(1, tickInterval);
+        tags = normalizeTags(tags);
         capabilities = capabilities == null ? defaultCapabilities(category, inputSlots, outputSlots) : Set.copyOf(capabilities);
         inputProvider = inputProvider == null ? (inputSlots.isEmpty() ? SfxMachineInputProvider.none() : SfxMachineInputProvider.guiSlots(inputSlots)) : inputProvider;
         outputProvider = outputProvider == null ? (outputSlots.isEmpty() ? SfxMachineOutputProvider.none() : SfxMachineOutputProvider.guiSlots(outputSlots)) : outputProvider;
@@ -55,6 +60,7 @@ public record SfxMachineDefinition(
                 .outputSlots(outputSlots)
                 .statusSlot(statusSlot)
                 .tickInterval(tickInterval)
+                .tags(tags)
                 .capabilities(capabilities)
                 .inputProvider(inputProvider)
                 .outputProvider(outputProvider)
@@ -102,6 +108,7 @@ public record SfxMachineDefinition(
         private List<Integer> outputSlots = List.of();
         private int statusSlot = -1;
         private int tickInterval = 1;
+        private final Set<String> tags = new LinkedHashSet<>();
         private final EnumSet<SfxMachineCapability> capabilities = EnumSet.noneOf(SfxMachineCapability.class);
         private SfxMachineInputProvider inputProvider;
         private SfxMachineOutputProvider outputProvider;
@@ -115,6 +122,8 @@ public record SfxMachineDefinition(
         public Builder outputSlots(List<Integer> outputSlots) { this.outputSlots = outputSlots == null ? List.of() : List.copyOf(outputSlots); return this; }
         public Builder statusSlot(int statusSlot) { this.statusSlot = statusSlot; return this; }
         public Builder tickInterval(int tickInterval) { this.tickInterval = Math.max(1, tickInterval); return this; }
+        public Builder tag(String tag) { if (tag != null && !tag.isBlank()) this.tags.add(normalizeTag(tag)); return this; }
+        public Builder tags(Set<String> tags) { if (tags != null) tags.forEach(this::tag); return this; }
         public Builder capability(SfxMachineCapability capability) { if (capability != null) this.capabilities.add(capability); return this; }
         public Builder capabilities(Set<SfxMachineCapability> capabilities) { if (capabilities != null) this.capabilities.addAll(capabilities); return this; }
         public Builder inputProvider(SfxMachineInputProvider inputProvider) { this.inputProvider = inputProvider; return this; }
@@ -138,7 +147,24 @@ public record SfxMachineDefinition(
             Set<SfxMachineCapability> finalCapabilities = capabilities.isEmpty() ? defaultCapabilities(category, inputSlots, outputSlots) : Set.copyOf(capabilities);
             SfxMachineInputProvider finalInput = inputProvider == null ? (inputSlots.isEmpty() ? SfxMachineInputProvider.none() : SfxMachineInputProvider.guiSlots(inputSlots)) : inputProvider;
             SfxMachineOutputProvider finalOutput = outputProvider == null ? (outputSlots.isEmpty() ? SfxMachineOutputProvider.none() : SfxMachineOutputProvider.guiSlots(outputSlots)) : outputProvider;
-            return new SfxMachineDefinition(id, displayName, category, inputSlots, outputSlots, statusSlot, tickInterval, finalCapabilities, finalInput, finalOutput, policyRefs, effects);
+            return new SfxMachineDefinition(id, displayName, category, inputSlots, outputSlots, statusSlot, tickInterval, tags, finalCapabilities, finalInput, finalOutput, policyRefs, effects);
         }
+    }
+
+    private static Set<String> normalizeTags(Set<String> raw) {
+        if (raw == null || raw.isEmpty()) {
+            return Set.of();
+        }
+        Set<String> result = new LinkedHashSet<>();
+        for (String tag : raw) {
+            if (tag != null && !tag.isBlank()) {
+                result.add(normalizeTag(tag));
+            }
+        }
+        return Set.copyOf(result);
+    }
+
+    private static String normalizeTag(String raw) {
+        return raw.trim().replace('_', '-').toLowerCase(Locale.ROOT);
     }
 }

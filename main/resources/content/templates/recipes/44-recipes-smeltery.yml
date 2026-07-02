@@ -1,0 +1,716 @@
+recipes:
+  '@ot': content/recipes.yml
+  legacy:aluminum_brass_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:aluminum_brass_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 1
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:aluminum_dust
+    - sf:brass_ingot
+    - sf:aluminum_ingot
+    outputs:
+    - sf:aluminum_brass_ingot
+  legacy:aluminum_bronze_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:aluminum_bronze_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 2
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:aluminum_dust
+    - sf:bronze_ingot
+    - sf:aluminum_ingot
+    outputs:
+    - sf:aluminum_bronze_ingot
+  legacy:aluminum_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:aluminum_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 3
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:aluminum_dust
+    outputs:
+    - sf:aluminum_ingot
+  legacy:billon_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:billon_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 4
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:silver_dust
+    - sf:copper_dust
+    - sf:silver_ingot
+    outputs:
+    - sf:billon_ingot
+  legacy:brass_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:brass_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 5
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:copper_dust
+    - sf:zinc_dust
+    - sf:copper_ingot
+    outputs:
+    - sf:brass_ingot
+  legacy:bronze_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:bronze_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 6
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:copper_dust
+    - sf:tin_dust
+    - sf:copper_ingot
+    outputs:
+    - sf:bronze_ingot
+  legacy:christmas_caramel:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:christmas_caramel
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 7
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - SUGAR
+    - SUGAR
+    outputs:
+    - sf:christmas_caramel*4
+  legacy:christmas_hot_chocolate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:christmas_hot_chocolate
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 8
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:christmas_chocolate_milk
+    outputs:
+    - sf:christmas_hot_chocolate
+  legacy:cobalt_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:cobalt_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 9
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:iron_dust
+    - sf:copper_dust
+    - sf:nickel_ingot
+    outputs:
+    - sf:cobalt_ingot
+  legacy:copper_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:copper_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 10
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:copper_dust
+    outputs:
+    - sf:copper_ingot
+  legacy:corinthian_bronze_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:corinthian_bronze_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 11
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:silver_dust
+    - sf:gold_dust
+    - sf:copper_dust
+    - sf:bronze_ingot
+    outputs:
+    - sf:corinthian_bronze_ingot
+  legacy:damascus_steel_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:damascus_steel_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 12
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:steel_ingot
+    - sf:iron_dust
+    - sf:carbon
+    - IRON_INGOT
+    outputs:
+    - sf:damascus_steel_ingot
+  legacy:duralumin_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:duralumin_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 13
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:aluminum_dust
+    - sf:copper_dust
+    - sf:aluminum_ingot
+    outputs:
+    - sf:duralumin_ingot
+  legacy:ferrosilicon:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:ferrosilicon
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 14
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - IRON_INGOT
+    - sf:iron_dust
+    - sf:silicon
+    outputs:
+    - sf:ferrosilicon
+  legacy:gilded_iron:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gilded_iron
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 15
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_24k
+    - sf:iron_dust
+    outputs:
+    - sf:gilded_iron
+  legacy:gold_10k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_10k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 16
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    - sf:gold_8k
+    outputs:
+    - sf:gold_10k
+  legacy:gold_12k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_12k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 17
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    - sf:gold_10k
+    outputs:
+    - sf:gold_12k
+  legacy:gold_14k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_14k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 18
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    - sf:gold_12k
+    outputs:
+    - sf:gold_14k
+  legacy:gold_16k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_16k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 19
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    - sf:gold_14k
+    outputs:
+    - sf:gold_16k
+  legacy:gold_18k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_18k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 20
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    - sf:gold_16k
+    outputs:
+    - sf:gold_18k
+  legacy:gold_20k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_20k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 21
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    - sf:gold_18k
+    outputs:
+    - sf:gold_20k
+  legacy:gold_22k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_22k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 22
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    - sf:gold_20k
+    outputs:
+    - sf:gold_22k
+  legacy:gold_24k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_24k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 23
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    - sf:gold_22k
+    outputs:
+    - sf:gold_24k
+  legacy:gold_4k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_4k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 24
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    outputs:
+    - sf:gold_4k
+  legacy:gold_6k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_6k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 25
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    - sf:gold_4k
+    outputs:
+    - sf:gold_6k
+  legacy:gold_8k:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_8k
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 26
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:gold_dust
+    - sf:gold_6k
+    outputs:
+    - sf:gold_8k
+  legacy:hardened_metal_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:hardened_metal_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 27
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:damascus_steel_ingot
+    - sf:duralumin_ingot
+    - sf:compressed_carbon
+    - sf:aluminum_bronze_ingot
+    outputs:
+    - sf:hardened_metal_ingot
+  legacy:lead_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:lead_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 28
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:lead_dust
+    outputs:
+    - sf:lead_ingot
+  legacy:magnesium_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:magnesium_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 29
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:magnesium_dust
+    outputs:
+    - sf:magnesium_ingot
+  legacy:magnet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:magnet
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 30
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:nickel_ingot
+    - sf:aluminum_dust
+    - sf:iron_dust
+    - sf:cobalt_ingot
+    outputs:
+    - sf:magnet
+  legacy:nickel_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:nickel_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 31
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:iron_dust
+    - IRON_INGOT
+    - sf:copper_dust
+    outputs:
+    - sf:nickel_ingot
+  legacy:raw_carbonado:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:raw_carbonado
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 32
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:synthetic_diamond
+    - sf:carbon_chunk
+    - GLASS_PANE
+    outputs:
+    - sf:raw_carbonado
+  legacy:redstone_alloy:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:redstone_alloy
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 33
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - REDSTONE
+    - REDSTONE_BLOCK
+    - sf:ferrosilicon
+    - sf:hardened_metal_ingot
+    outputs:
+    - sf:redstone_alloy
+  legacy:silicon:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:silicon
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 34
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - QUARTZ_BLOCK
+    outputs:
+    - sf:silicon
+  legacy:silver_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:silver_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 35
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:silver_dust
+    outputs:
+    - sf:silver_ingot
+  legacy:solder_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:solder_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 36
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:lead_dust
+    - sf:tin_dust
+    - sf:lead_ingot
+    outputs:
+    - sf:solder_ingot
+  legacy:steel_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:steel_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 37
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:iron_dust
+    - sf:carbon
+    - IRON_INGOT
+    outputs:
+    - sf:steel_ingot
+  legacy:synthetic_emerald:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:synthetic_emerald
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 38
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:synthetic_sapphire
+    - sf:aluminum_dust
+    - sf:aluminum_ingot
+    - GLASS_PANE
+    outputs:
+    - sf:synthetic_emerald
+  legacy:synthetic_sapphire:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:synthetic_sapphire
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 39
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:aluminum_dust
+    - GLASS
+    - GLASS_PANE
+    - sf:aluminum_ingot
+    - LAPIS_LAZULI
+    outputs:
+    - sf:synthetic_sapphire
+  legacy:tin_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:tin_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 40
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:tin_dust
+    outputs:
+    - sf:tin_ingot
+  legacy:zinc_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:zinc_ingot
+    recipe-type: sf:smeltery
+    operation: shapeless
+    guide-order: 41
+    source: slimefun-rc37
+    runtime: true
+    runtime-machines:
+    - sf:makeshift_smeltery
+    - sf:smeltery
+    inputs:
+    - sf:zinc_dust
+    outputs:
+    - sf:zinc_ingot

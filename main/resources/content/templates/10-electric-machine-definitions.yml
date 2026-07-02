@@ -1,0 +1,269 @@
+# Shared electric machine definition templates. These compose machine parameters with optional UI fragments.
+templates:
+  machines:
+    electric-definition:
+      @it: true
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
+    standard-electric-definition:
+      @it: true
+      @cf: templates.ui.standard-electric-machine
+      @define:
+        ui-layout: STANDARD
+        functions:
+        - standard-processing
+        input-slots:
+        - 19
+        - 20
+        output-slots:
+        - 24
+        - 25
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
+    standard-electric-ui-definition:
+      @it: true
+      @cf: templates.machines.standard-electric-definition
+      @define:
+        ui-layout: STANDARD
+        functions:
+        - standard-processing
+        input-slots:
+        - 19
+        - 20
+        output-slots:
+        - 24
+        - 25
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
+    simple-io-definition:
+      @it: true
+      @cf: templates.ui.simple-io
+      @define:
+        ui-layout: SIMPLE_IO
+        functions:
+        - simple-io
+        input-slots:
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        output-slots: []
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
+    no-menu-definition:
+      @it: true
+      @define:
+        ui-layout: NONE
+        functions:
+        - no-menu
+        input-slots: []
+        output-slots: []
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
+    auto-brewer-definition:
+      @it: true
+      @cf: templates.ui.auto-brewer
+      @define:
+        ui-layout: AUTO_BREWER
+        functions:
+        - auto-brewer
+        input-slots:
+        - 10
+        - 16
+        - 37
+        - 39
+        - 41
+        - 43
+        output-slots: []
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
+    auto-crafter-definition:
+      @it: true
+      @cf: templates.ui.auto-crafter
+      @define:
+        ui-layout: AUTO_CRAFTER
+        functions:
+        - auto-crafter
+        input-slots: []
+        output-slots: []
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
+    geo-miner-definition:
+      @it: true
+      @cf: templates.ui.geo-miner
+      @define:
+        ui-layout: GEO_MINER
+        functions:
+        - geo-miner
+        input-slots: []
+        output-slots:
+        - 29
+        - 30
+        - 31
+        - 32
+        - 33
+        - 38
+        - 39
+        - 40
+        - 41
+        - 42
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
+    iron-golem-assembler-definition:
+      @it: true
+      @cf: templates.ui.iron-golem-assembler
+      @define:
+        ui-layout: ASSEMBLER
+        functions:
+        - assembler
+        input-slots:
+        - 19
+        - 28
+        - 25
+        - 34
+        output-slots: []
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
+    wither-assembler-definition:
+      @it: true
+      @cf: templates.ui.wither-assembler
+      @define:
+        ui-layout: ASSEMBLER
+        functions:
+        - assembler
+        input-slots:
+        - 19
+        - 28
+        - 25
+        - 34
+        output-slots: []
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
+    assembler-definition:
+      @it: true
+      @cf: templates.ui.assembler-base
+      @define:
+        ui-layout: ASSEMBLER
+        functions:
+        - assembler
+        input-slots:
+        - 19
+        - 28
+        - 25
+        - 34
+        output-slots: []
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      ui:
+        layout: "${ui-layout}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"

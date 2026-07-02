@@ -1,0 +1,1212 @@
+recipes:
+  '@ot': content/recipes.yml
+  custom:slime_steel_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:slime_steel_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 1
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - SLIME_BALL
+    - empty
+    - SLIME_BALL
+    - SLIME_BALL
+    - sf:steel_plate
+    - SLIME_BALL
+    outputs:
+    - sf:slime_steel_boots
+  custom:slime_steel_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:slime_steel_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 2
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - SLIME_BALL
+    - empty
+    - SLIME_BALL
+    - SLIME_BALL
+    - sf:steel_plate
+    - SLIME_BALL
+    - SLIME_BALL
+    - SLIME_BALL
+    - SLIME_BALL
+    outputs:
+    - sf:slime_steel_chestplate
+  custom:slime_steel_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:slime_steel_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 3
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - SLIME_BALL
+    - sf:steel_plate
+    - SLIME_BALL
+    - SLIME_BALL
+    - empty
+    - SLIME_BALL
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:slime_steel_helmet
+  custom:slime_steel_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:slime_steel_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 4
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - SLIME_BALL
+    - sf:steel_plate
+    - SLIME_BALL
+    - SLIME_BALL
+    - empty
+    - SLIME_BALL
+    - SLIME_BALL
+    - empty
+    - SLIME_BALL
+    outputs:
+    - sf:slime_steel_leggings
+  legacy:bee_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:bee_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 5
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - sf:gold_8k
+    - empty
+    - sf:gold_8k
+    - HONEY_BLOCK
+    - empty
+    - HONEY_BLOCK
+    outputs:
+    - sf:bee_boots
+  legacy:bee_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:bee_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 6
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:gold_8k
+    - HONEY_BLOCK
+    - sf:gold_8k
+    - HONEYCOMB_BLOCK
+    - empty
+    - HONEYCOMB_BLOCK
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:bee_helmet
+  legacy:bee_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:bee_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 7
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:gold_8k
+    - HONEY_BLOCK
+    - sf:gold_8k
+    - HONEYCOMB_BLOCK
+    - empty
+    - HONEYCOMB_BLOCK
+    - HONEYCOMB_BLOCK
+    - empty
+    - HONEYCOMB_BLOCK
+    outputs:
+    - sf:bee_leggings
+  legacy:bee_wings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:bee_wings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 8
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:gold_8k
+    - empty
+    - sf:gold_8k
+    - HONEYCOMB_BLOCK
+    - ELYTRA
+    - HONEYCOMB_BLOCK
+    - HONEY_BLOCK
+    - sf:gold_8k
+    - HONEY_BLOCK
+    outputs:
+    - sf:bee_wings
+  legacy:boots_of_the_stomper:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:boots_of_the_stomper
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - YELLOW_WOOL
+    - empty
+    - YELLOW_WOOL
+    - PISTON
+    - empty
+    - PISTON
+    outputs:
+    - sf:boots_of_the_stomper
+  legacy:elytra_cap:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:elytra_cap
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 10
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - SLIME_BALL
+    - SLIME_BALL
+    - SLIME_BALL
+    - sf:elytra_scale
+    - sf:elytra_scale
+    - sf:elytra_scale
+    - SLIME_BALL
+    - LEATHER_HELMET
+    - SLIME_BALL
+    outputs:
+    - sf:elytra_cap
+  legacy:ender_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:ender_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 11
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - sf:ender_lump_1
+    - empty
+    - sf:ender_lump_1
+    - OBSIDIAN
+    - empty
+    - OBSIDIAN
+    outputs:
+    - sf:ender_boots
+  legacy:ender_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:ender_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 12
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:ender_lump_1
+    - empty
+    - sf:ender_lump_1
+    - OBSIDIAN
+    - ENDER_EYE
+    - OBSIDIAN
+    - OBSIDIAN
+    - OBSIDIAN
+    - OBSIDIAN
+    outputs:
+    - sf:ender_chestplate
+  legacy:ender_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:ender_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 13
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:ender_lump_1
+    - ENDER_EYE
+    - sf:ender_lump_1
+    - OBSIDIAN
+    - empty
+    - OBSIDIAN
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:ender_helmet
+  legacy:ender_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:ender_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 14
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:ender_lump_1
+    - ENDER_EYE
+    - sf:ender_lump_1
+    - OBSIDIAN
+    - empty
+    - OBSIDIAN
+    - OBSIDIAN
+    - empty
+    - OBSIDIAN
+    outputs:
+    - sf:ender_leggings
+  legacy:farmer_shoes:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:farmer_shoes
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 15
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - HAY_BLOCK
+    - empty
+    - HAY_BLOCK
+    - HAY_BLOCK
+    - empty
+    - HAY_BLOCK
+    outputs:
+    - sf:farmer_shoes
+  legacy:hazmat_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:hazmat_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 16
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - ORANGE_WOOL
+    - empty
+    - ORANGE_WOOL
+    - sf:reinforced_cloth
+    - sf:reinforced_cloth
+    - sf:reinforced_cloth
+    - BLACK_WOOL
+    - sf:reinforced_cloth
+    - BLACK_WOOL
+    outputs:
+    - sf:hazmat_chestplate
+  legacy:hazmat_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:hazmat_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 17
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - BLACK_WOOL
+    - sf:reinforced_cloth
+    - BLACK_WOOL
+    - sf:reinforced_cloth
+    - empty
+    - sf:reinforced_cloth
+    - sf:reinforced_cloth
+    - empty
+    - sf:reinforced_cloth
+    outputs:
+    - sf:hazmat_leggings
+  legacy:night_vision_goggles:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:night_vision_goggles
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 18
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - COAL_BLOCK
+    - COAL_BLOCK
+    - COAL_BLOCK
+    - LIME_STAINED_GLASS_PANE
+    - COAL_BLOCK
+    - LIME_STAINED_GLASS_PANE
+    - COAL_BLOCK
+    - empty
+    - COAL_BLOCK
+    outputs:
+    - sf:night_vision_goggles
+  legacy:rainbow_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:rainbow_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 19
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    outputs:
+    - sf:rainbow_boots
+  legacy:rainbow_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:rainbow_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 20
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    outputs:
+    - sf:rainbow_chestplate
+  legacy:rainbow_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:rainbow_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 21
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    outputs:
+    - sf:rainbow_leggings
+  legacy:hazmat_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:hazmat_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 22
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:reinforced_cloth
+    - empty
+    - sf:reinforced_cloth
+    - sf:reinforced_cloth
+    - empty
+    - sf:reinforced_cloth
+    - BLACK_WOOL
+    - empty
+    - BLACK_WOOL
+    outputs:
+    - sf:hazmat_boots
+  legacy:scuba_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:scuba_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 23
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - ORANGE_WOOL
+    - sf:reinforced_cloth
+    - ORANGE_WOOL
+    - sf:reinforced_cloth
+    - GLASS_PANE
+    - sf:reinforced_cloth
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:scuba_helmet
+  legacy:slime_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:slime_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 24
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - SLIME_BALL
+    - empty
+    - SLIME_BALL
+    - IRON_INGOT
+    - empty
+    - IRON_INGOT
+    outputs:
+    - sf:slime_boots
+  legacy:slime_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:slime_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 25
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - SLIME_BALL
+    - empty
+    - SLIME_BALL
+    - IRON_INGOT
+    - SLIME_BALL
+    - IRON_INGOT
+    - IRON_INGOT
+    - SLIME_BALL
+    - IRON_INGOT
+    outputs:
+    - sf:slime_chestplate
+  legacy:slime_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:slime_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 26
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - SLIME_BALL
+    - IRON_INGOT
+    - SLIME_BALL
+    - IRON_INGOT
+    - empty
+    - IRON_INGOT
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:slime_helmet
+  legacy:slime_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:slime_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 27
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - SLIME_BALL
+    - IRON_INGOT
+    - SLIME_BALL
+    - IRON_INGOT
+    - empty
+    - IRON_INGOT
+    - IRON_INGOT
+    - empty
+    - IRON_INGOT
+    outputs:
+    - sf:slime_leggings
+  custom:cactus_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:cactus_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9901
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - CACTUS
+    - CACTUS
+    - CACTUS
+    - CACTUS
+    - empty
+    - CACTUS
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:cactus_helmet
+  custom:cactus_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:cactus_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9902
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - CACTUS
+    - empty
+    - CACTUS
+    - CACTUS
+    - CACTUS
+    - CACTUS
+    - CACTUS
+    - CACTUS
+    - CACTUS
+    outputs:
+    - sf:cactus_chestplate
+  custom:cactus_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:cactus_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9903
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - CACTUS
+    - CACTUS
+    - CACTUS
+    - CACTUS
+    - empty
+    - CACTUS
+    - CACTUS
+    - empty
+    - CACTUS
+    outputs:
+    - sf:cactus_leggings
+  custom:cactus_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:cactus_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9904
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - CACTUS
+    - empty
+    - CACTUS
+    - CACTUS
+    - empty
+    - CACTUS
+    outputs:
+    - sf:cactus_boots
+  custom:damascus_steel_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:damascus_steel_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9901
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - empty
+    - sf:damascus_steel_ingot
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:damascus_steel_helmet
+  custom:damascus_steel_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:damascus_steel_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9902
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:damascus_steel_ingot
+    - empty
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    outputs:
+    - sf:damascus_steel_chestplate
+  custom:damascus_steel_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:damascus_steel_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9903
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - empty
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - empty
+    - sf:damascus_steel_ingot
+    outputs:
+    - sf:damascus_steel_leggings
+  custom:damascus_steel_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:damascus_steel_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9904
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - sf:damascus_steel_ingot
+    - empty
+    - sf:damascus_steel_ingot
+    - sf:damascus_steel_ingot
+    - empty
+    - sf:damascus_steel_ingot
+    outputs:
+    - sf:damascus_steel_boots
+  custom:reinforced_alloy_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:reinforced_alloy_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9901
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - empty
+    - sf:reinforced_alloy_ingot
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:reinforced_alloy_helmet
+  custom:reinforced_alloy_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:reinforced_alloy_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9902
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:reinforced_alloy_ingot
+    - empty
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    outputs:
+    - sf:reinforced_alloy_chestplate
+  custom:reinforced_alloy_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:reinforced_alloy_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9903
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - empty
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - empty
+    - sf:reinforced_alloy_ingot
+    outputs:
+    - sf:reinforced_alloy_leggings
+  custom:reinforced_alloy_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:reinforced_alloy_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9904
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - sf:reinforced_alloy_ingot
+    - empty
+    - sf:reinforced_alloy_ingot
+    - sf:reinforced_alloy_ingot
+    - empty
+    - sf:reinforced_alloy_ingot
+    outputs:
+    - sf:reinforced_alloy_boots
+  custom:gilded_iron_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:gilded_iron_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9901
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - empty
+    - sf:gilded_iron
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:gilded_iron_helmet
+  custom:gilded_iron_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:gilded_iron_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9902
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:gilded_iron
+    - empty
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - sf:gilded_iron
+    outputs:
+    - sf:gilded_iron_chestplate
+  custom:gilded_iron_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:gilded_iron_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9903
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - empty
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - empty
+    - sf:gilded_iron
+    outputs:
+    - sf:gilded_iron_leggings
+  custom:gilded_iron_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:gilded_iron_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9904
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - sf:gilded_iron
+    - empty
+    - sf:gilded_iron
+    - sf:gilded_iron
+    - empty
+    - sf:gilded_iron
+    outputs:
+    - sf:gilded_iron_boots
+  custom:gold_12k_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:gold_12k_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9901
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:gold_12k
+    - sf:gold_12k
+    - sf:gold_12k
+    - sf:gold_12k
+    - empty
+    - sf:gold_12k
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:gold_12k_helmet
+  custom:gold_12k_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:gold_12k_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9902
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:gold_12k
+    - empty
+    - sf:gold_12k
+    - sf:gold_12k
+    - sf:gold_12k
+    - sf:gold_12k
+    - sf:gold_12k
+    - sf:gold_12k
+    - sf:gold_12k
+    outputs:
+    - sf:gold_12k_chestplate
+  custom:gold_12k_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:gold_12k_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9903
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:gold_12k
+    - sf:gold_12k
+    - sf:gold_12k
+    - sf:gold_12k
+    - empty
+    - sf:gold_12k
+    - sf:gold_12k
+    - empty
+    - sf:gold_12k
+    outputs:
+    - sf:gold_12k_leggings
+  custom:gold_12k_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:gold_12k_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9904
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - sf:gold_12k
+    - empty
+    - sf:gold_12k
+    - sf:gold_12k
+    - empty
+    - sf:gold_12k
+    outputs:
+    - sf:gold_12k_boots
+  custom:glowstone_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:glowstone_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9901
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - GLOWSTONE
+    - GLOWSTONE
+    - GLOWSTONE
+    - GLOWSTONE
+    - empty
+    - GLOWSTONE
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:glowstone_helmet
+  custom:glowstone_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:glowstone_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9902
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - GLOWSTONE
+    - empty
+    - GLOWSTONE
+    - GLOWSTONE
+    - GLOWSTONE
+    - GLOWSTONE
+    - GLOWSTONE
+    - GLOWSTONE
+    - GLOWSTONE
+    outputs:
+    - sf:glowstone_chestplate
+  custom:glowstone_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:glowstone_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9903
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - GLOWSTONE
+    - GLOWSTONE
+    - GLOWSTONE
+    - GLOWSTONE
+    - empty
+    - GLOWSTONE
+    - GLOWSTONE
+    - empty
+    - GLOWSTONE
+    outputs:
+    - sf:glowstone_leggings
+  custom:glowstone_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:glowstone_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9904
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - GLOWSTONE
+    - empty
+    - GLOWSTONE
+    - GLOWSTONE
+    - empty
+    - GLOWSTONE
+    outputs:
+    - sf:glowstone_boots
+  custom:rainbow_helmet:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:rainbow_helmet
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9901
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:rainbow_helmet
+  custom:rainbow_chestplate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:rainbow_chestplate
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9902
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    outputs:
+    - sf:rainbow_chestplate
+  custom:rainbow_leggings:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:rainbow_leggings
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9903
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    outputs:
+    - sf:rainbow_leggings
+  custom:rainbow_boots:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:rainbow_boots
+    recipe-type: sf:armor_forge
+    operation: shaped
+    guide-order: 9904
+    source: slimefunx-legacy
+    runtime: true
+    machine: sf:armor_forge
+    matrix:
+    - empty
+    - empty
+    - empty
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    - sf:rainbow_leather
+    - empty
+    - sf:rainbow_leather
+    outputs:
+    - sf:rainbow_boots

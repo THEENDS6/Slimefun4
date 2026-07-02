@@ -81,7 +81,8 @@ public final class SfxMachineCatalogYamlLoader {
                 .inputSlots(integerList(section.getList("input-slots")))
                 .outputSlots(integerList(section.getList("output-slots")))
                 .statusSlot(section.getInt("status-slot", -1))
-                .tickInterval(Math.max(1, section.getInt("tick-interval", 1)));
+                .tickInterval(Math.max(1, section.getInt("tick-interval", 1)))
+                .tags(stringSet(section.getList("tags")));
 
         Set<SfxMachineCapability> capabilities = parseCapabilities(section.getList("capabilities"));
         if (!capabilities.isEmpty()) {
@@ -105,7 +106,7 @@ public final class SfxMachineCatalogYamlLoader {
             return incoming;
         }
         SfxMachineDefinition.Builder builder = existing.toBuilder();
-        builder.displayName(incoming.displayName()).category(incoming.category()).capabilities(incoming.capabilities());
+        builder.displayName(incoming.displayName()).category(incoming.category()).tags(incoming.tags()).capabilities(incoming.capabilities());
         if (!incoming.inputSlots().isEmpty()) {
             builder.inputSlots(incoming.inputSlots()).inputProvider(incoming.inputProvider());
         }
@@ -149,6 +150,19 @@ public final class SfxMachineCatalogYamlLoader {
             }
         }
         return result;
+    }
+
+    private Set<String> stringSet(List<?> raw) {
+        if (raw == null || raw.isEmpty()) {
+            return Set.of();
+        }
+        Set<String> result = new java.util.LinkedHashSet<>();
+        for (Object value : raw) {
+            if (value != null && !String.valueOf(value).isBlank()) {
+                result.add(String.valueOf(value).trim());
+            }
+        }
+        return Set.copyOf(result);
     }
 
     private static String string(Object raw) {

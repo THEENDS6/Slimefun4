@@ -1,0 +1,5 @@
+templates:
+  recipes:
+    legacy-entry:
+      '@it': true
+      source: legacy

@@ -1,686 +1,1365 @@
-# 共享机器目录。
-# 这里声明所有由统一框架识别的机器/方块入口；具体行为仍由对应服务或 profile 钩子执行。
-#
-# 完整示例（复制后去掉注释即可启用）：
-# machines:
-#   sf:example_machine:
-#     category: ELECTRIC
-#     display-name: sf:example_machine
-#     profile: auto_brewer
-#     input-slots: [19, 20]
-#     output-slots: [24, 25]
-#     status-slot: 22
-#     tick-interval: 1
-
-machines:
   sf:enhanced_crafting_table:
     category: BASIC
     display-name: sf:enhanced_crafting_table
+    tags:
+    - machine
+    - basic
+    - manual
+    - enhanced-crafting
   sf:grind_stone:
     category: BASIC
     display-name: sf:grind_stone
+    tags:
+    - machine
+    - basic
+    - manual
   sf:compressor:
     category: BASIC
     display-name: sf:compressor
+    tags:
+    - machine
+    - basic
+    - manual
   sf:ore_crusher:
     category: BASIC
     display-name: sf:ore_crusher
+    tags:
+    - machine
+    - basic
+    - manual
   sf:ore_washer:
     category: BASIC
     display-name: sf:ore_washer
+    tags:
+    - machine
+    - basic
+    - manual
   sf:armor_forge:
     category: BASIC
     display-name: sf:armor_forge
+    tags:
+    - machine
+    - basic
+    - manual
+    - armor
   sf:makeshift_smeltery:
     category: BASIC
     display-name: sf:makeshift_smeltery
+    tags:
+    - machine
+    - basic
+    - manual
   sf:smeltery:
     category: BASIC
     display-name: sf:smeltery
+    tags:
+    - machine
+    - basic
+    - manual
   sf:pressure_chamber:
     category: BASIC
     display-name: sf:pressure_chamber
+    tags:
+    - machine
+    - basic
+    - manual
   sf:magic_workbench:
     category: BASIC
     display-name: sf:magic_workbench
+    tags:
+    - machine
+    - basic
+    - manual
+    - magic
   sf:table_saw:
     category: BASIC
     display-name: sf:table_saw
+    tags:
+    - machine
+    - basic
+    - hand-input-transform
+    - manual
     profile: hand_input_transform
   sf:juicer:
     category: BASIC
     display-name: sf:juicer
+    tags:
+    - machine
+    - basic
+    - manual
   sf:automated_panning_machine:
     category: BASIC
     display-name: sf:automated_panning_machine
+    tags:
+    - machine
+    - basic
+    - hand-input-transform
+    - manual
     profile: hand_input_transform
   sf:composter:
     category: BASIC
     display-name: sf:composter
+    tags:
+    - machine
+    - basic
+    - manual
   sf:crucible:
     category: BASIC
     display-name: sf:crucible
+    tags:
+    - machine
+    - basic
+    - manual
   sf:output_chest:
     category: BASIC
     display-name: sf:output_chest
+    tags:
+    - machine
+    - basic
+    - manual
   sf:ignition_chamber:
     category: BASIC
     display-name: sf:ignition_chamber
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace:
     category: BASIC
     display-name: sf:enhanced_furnace
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace_2:
     category: BASIC
     display-name: sf:enhanced_furnace_2
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace_3:
     category: BASIC
     display-name: sf:enhanced_furnace_3
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace_4:
     category: BASIC
     display-name: sf:enhanced_furnace_4
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace_5:
     category: BASIC
     display-name: sf:enhanced_furnace_5
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace_6:
     category: BASIC
     display-name: sf:enhanced_furnace_6
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace_7:
     category: BASIC
     display-name: sf:enhanced_furnace_7
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace_8:
     category: BASIC
     display-name: sf:enhanced_furnace_8
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace_9:
     category: BASIC
     display-name: sf:enhanced_furnace_9
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace_10:
     category: BASIC
     display-name: sf:enhanced_furnace_10
+    tags:
+    - machine
+    - basic
+    - manual
   sf:enhanced_furnace_11:
     category: BASIC
     display-name: sf:enhanced_furnace_11
+    tags:
+    - machine
+    - basic
+    - manual
   sf:reinforced_furnace:
     category: BASIC
     display-name: sf:reinforced_furnace
+    tags:
+    - machine
+    - basic
+    - manual
   sf:carbonado_edged_furnace:
     category: BASIC
     display-name: sf:carbonado_edged_furnace
+    tags:
+    - machine
+    - basic
+    - manual
   sf:electric_furnace:
     category: ELECTRIC
     display-name: sf:electric_furnace
+    tags:
+    - machine
+    - electric
   sf:electric_furnace_2:
     category: ELECTRIC
     display-name: sf:electric_furnace_2
+    tags:
+    - machine
+    - electric
   sf:electric_furnace_3:
     category: ELECTRIC
     display-name: sf:electric_furnace_3
+    tags:
+    - machine
+    - electric
   sf:electric_ore_grinder:
     category: ELECTRIC
     display-name: sf:electric_ore_grinder
+    tags:
+    - machine
+    - electric
   sf:electric_ore_grinder_2:
     category: ELECTRIC
     display-name: sf:electric_ore_grinder_2
+    tags:
+    - machine
+    - electric
   sf:electric_ore_grinder_3:
     category: ELECTRIC
     display-name: sf:electric_ore_grinder_3
+    tags:
+    - machine
+    - electric
   sf:auto_drier:
     category: ELECTRIC
     display-name: sf:auto_drier
+    tags:
+    - machine
+    - electric
   sf:auto_brewer:
     category: ELECTRIC
     display-name: sf:auto_brewer
+    tags:
+    - machine
+    - electric
+    - auto-brewer
     profile: auto_brewer
   sf:auto_brewer_2:
     category: ELECTRIC
     display-name: sf:auto_brewer_2
+    tags:
+    - machine
+    - electric
+    - auto-brewer
     profile: auto_brewer
   sf:vanilla_auto_crafter:
     category: ELECTRIC
     display-name: sf:vanilla_auto_crafter
+    tags:
+    - machine
+    - electric
+    - auto-crafter
     profile: auto_crafter
   sf:enhanced_auto_crafter:
     category: ELECTRIC
     display-name: sf:enhanced_auto_crafter
+    tags:
+    - machine
+    - electric
+    - auto-crafter
     profile: auto_crafter
   sf:armor_auto_crafter:
     category: ELECTRIC
     display-name: sf:armor_auto_crafter
+    tags:
+    - machine
+    - electric
+    - auto-crafter
     profile: auto_crafter
   sf:electric_ingot_factory:
     category: ELECTRIC
     display-name: sf:electric_ingot_factory
+    tags:
+    - machine
+    - electric
   sf:electric_ingot_factory_2:
     category: ELECTRIC
     display-name: sf:electric_ingot_factory_2
+    tags:
+    - machine
+    - electric
   sf:electric_ingot_factory_3:
     category: ELECTRIC
     display-name: sf:electric_ingot_factory_3
+    tags:
+    - machine
+    - electric
   sf:carbon_press:
     category: ELECTRIC
     display-name: sf:carbon_press
+    tags:
+    - machine
+    - electric
   sf:carbon_press_2:
     category: ELECTRIC
     display-name: sf:carbon_press_2
+    tags:
+    - machine
+    - electric
   sf:carbon_press_3:
     category: ELECTRIC
     display-name: sf:carbon_press_3
+    tags:
+    - machine
+    - electric
   sf:electric_press:
     category: ELECTRIC
     display-name: sf:electric_press
+    tags:
+    - machine
+    - electric
   sf:electric_press_2:
     category: ELECTRIC
     display-name: sf:electric_press_2
+    tags:
+    - machine
+    - electric
   sf:electrified_crucible:
     category: ELECTRIC
     display-name: sf:electrified_crucible
+    tags:
+    - machine
+    - electric
   sf:electrified_crucible_2:
     category: ELECTRIC
     display-name: sf:electrified_crucible_2
+    tags:
+    - machine
+    - electric
   sf:electrified_crucible_3:
     category: ELECTRIC
     display-name: sf:electrified_crucible_3
+    tags:
+    - machine
+    - electric
   sf:freezer:
     category: ELECTRIC
     display-name: sf:freezer
+    tags:
+    - machine
+    - electric
   sf:freezer_2:
     category: ELECTRIC
     display-name: sf:freezer_2
+    tags:
+    - machine
+    - electric
   sf:freezer_3:
     category: ELECTRIC
     display-name: sf:freezer_3
+    tags:
+    - machine
+    - electric
   sf:heated_pressure_chamber:
     category: ELECTRIC
     display-name: sf:heated_pressure_chamber
+    tags:
+    - machine
+    - electric
   sf:heated_pressure_chamber_2:
     category: ELECTRIC
     display-name: sf:heated_pressure_chamber_2
+    tags:
+    - machine
+    - electric
   sf:food_fabricator:
     category: ELECTRIC
     display-name: sf:food_fabricator
+    tags:
+    - machine
+    - electric
   sf:food_fabricator_2:
     category: ELECTRIC
     display-name: sf:food_fabricator_2
+    tags:
+    - machine
+    - electric
   sf:food_composter:
     category: ELECTRIC
     display-name: sf:food_composter
+    tags:
+    - machine
+    - electric
   sf:food_composter_2:
     category: ELECTRIC
     display-name: sf:food_composter_2
+    tags:
+    - machine
+    - electric
   sf:refinery:
     category: ELECTRIC
     display-name: sf:refinery
+    tags:
+    - machine
+    - electric
   sf:electric_ingot_pulverizer:
     category: ELECTRIC
     display-name: sf:electric_ingot_pulverizer
+    tags:
+    - machine
+    - electric
   sf:electric_smeltery:
     category: ELECTRIC
     display-name: sf:electric_smeltery
+    tags:
+    - machine
+    - electric
   sf:electric_smeltery_2:
     category: ELECTRIC
     display-name: sf:electric_smeltery_2
+    tags:
+    - machine
+    - electric
   sf:auto_enchanter:
     category: ELECTRIC
     display-name: sf:auto_enchanter
+    tags:
+    - machine
+    - electric
+    - item-meta-transform
     profile: item_meta_transform
   sf:auto_enchanter_2:
     category: ELECTRIC
     display-name: sf:auto_enchanter_2
+    tags:
+    - machine
+    - electric
+    - item-meta-transform
     profile: item_meta_transform
   sf:auto_disenchanter:
     category: ELECTRIC
     display-name: sf:auto_disenchanter
+    tags:
+    - machine
+    - electric
+    - item-meta-transform
     profile: item_meta_transform
   sf:auto_disenchanter_2:
     category: ELECTRIC
     display-name: sf:auto_disenchanter_2
+    tags:
+    - machine
+    - electric
+    - item-meta-transform
     profile: item_meta_transform
   sf:book_binder:
     category: ELECTRIC
     display-name: sf:book_binder
+    tags:
+    - machine
+    - electric
+    - item-meta-transform
     profile: item_meta_transform
   sf:auto_anvil:
     category: ELECTRIC
     display-name: sf:auto_anvil
+    tags:
+    - machine
+    - electric
+    - item-meta-transform
     profile: item_meta_transform
   sf:auto_anvil_2:
     category: ELECTRIC
     display-name: sf:auto_anvil_2
+    tags:
+    - machine
+    - electric
+    - item-meta-transform
     profile: item_meta_transform
   sf:produce_collector:
     category: ELECTRIC
     display-name: sf:produce_collector
+    tags:
+    - machine
+    - electric
+    - electric-world-action
     profile: electric_world_action
   sf:auto_breeder:
     category: ELECTRIC
     display-name: sf:auto_breeder
+    tags:
+    - machine
+    - electric
+    - electric-world-action
     profile: electric_world_action
   sf:animal_growth_accelerator:
     category: ELECTRIC
     display-name: sf:animal_growth_accelerator
+    tags:
+    - machine
+    - electric
+    - electric-world-action
     profile: electric_world_action
   sf:crop_growth_accelerator:
     category: ELECTRIC
     display-name: sf:crop_growth_accelerator
+    tags:
+    - machine
+    - electric
+    - electric-world-action
     profile: electric_world_action
   sf:crop_growth_accelerator_2:
     category: ELECTRIC
     display-name: sf:crop_growth_accelerator_2
+    tags:
+    - machine
+    - electric
+    - electric-world-action
     profile: electric_world_action
   sf:tree_growth_accelerator:
     category: ELECTRIC
     display-name: sf:tree_growth_accelerator
+    tags:
+    - machine
+    - electric
+    - electric-world-action
     profile: electric_world_action
   sf:xp_collector:
     category: ELECTRIC
     display-name: sf:xp_collector
+    tags:
+    - machine
+    - electric
+    - xp-collector
     profile: xp_collector
   sf:gps_transmitter:
     category: ELECTRIC
     display-name: sf:gps_transmitter
+    tags:
+    - machine
+    - electric
+    - gps-transmitter
+    - gps
     profile: gps_transmitter
   sf:gps_transmitter_2:
     category: ELECTRIC
     display-name: sf:gps_transmitter_2
+    tags:
+    - machine
+    - electric
+    - gps-transmitter
+    - gps
     profile: gps_transmitter
   sf:gps_transmitter_3:
     category: ELECTRIC
     display-name: sf:gps_transmitter_3
+    tags:
+    - machine
+    - electric
+    - gps-transmitter
+    - gps
     profile: gps_transmitter
   sf:gps_transmitter_4:
     category: ELECTRIC
     display-name: sf:gps_transmitter_4
+    tags:
+    - machine
+    - electric
+    - gps-transmitter
+    - gps
     profile: gps_transmitter
   sf:geo_miner:
     category: ELECTRIC
     display-name: sf:geo_miner
+    tags:
+    - machine
+    - electric
+    - geo-extractor
     profile: geo_extractor
   sf:oil_pump:
     category: ELECTRIC
     display-name: sf:oil_pump
+    tags:
+    - machine
+    - electric
+    - geo-extractor
     profile: geo_extractor
   sf:fluid_pump:
     category: ELECTRIC
     display-name: sf:fluid_pump
+    tags:
+    - machine
+    - electric
+    - fluid-pump
     profile: fluid_pump
   sf:iron_golem_assembler:
     category: ELECTRIC
     display-name: sf:iron_golem_assembler
+    tags:
+    - machine
+    - electric
+    - assembler
     profile: assembler
   sf:wither_assembler:
     category: ELECTRIC
     display-name: sf:wither_assembler
+    tags:
+    - machine
+    - electric
+    - assembler
     profile: assembler
   sf:electric_gold_pan:
     category: ELECTRIC
     display-name: sf:electric_gold_pan
+    tags:
+    - machine
+    - electric
   sf:electric_gold_pan_2:
     category: ELECTRIC
     display-name: sf:electric_gold_pan_2
+    tags:
+    - machine
+    - electric
   sf:electric_gold_pan_3:
     category: ELECTRIC
     display-name: sf:electric_gold_pan_3
+    tags:
+    - machine
+    - electric
   sf:electric_dust_washer:
     category: ELECTRIC
     display-name: sf:electric_dust_washer
+    tags:
+    - machine
+    - electric
   sf:electric_dust_washer_2:
     category: ELECTRIC
     display-name: sf:electric_dust_washer_2
+    tags:
+    - machine
+    - electric
   sf:electric_dust_washer_3:
     category: ELECTRIC
     display-name: sf:electric_dust_washer_3
+    tags:
+    - machine
+    - electric
   sf:nuclear_reactor:
     category: CONFIGURABLE
     display-name: sf:nuclear_reactor
+    tags:
+    - machine
+    - configurable
+    - reactor
     profile: reactor
   sf:netherstar_reactor:
     category: CONFIGURABLE
     display-name: sf:netherstar_reactor
+    tags:
+    - machine
+    - configurable
+    - reactor
     profile: reactor
   sf:reactor_access_port:
     category: CONFIGURABLE
     display-name: sf:reactor_access_port
+    tags:
+    - machine
+    - configurable
+    - proxy-panel-reactor-access-port
     profile: proxy_panel_reactor_access_port
   sf:energy_regulator:
     category: ENERGY
     display-name: sf:energy_regulator
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:energy_connector:
     category: ENERGY
     display-name: sf:energy_connector
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:charging_bench:
     category: ENERGY
     display-name: sf:charging_bench
+    tags:
+    - machine
+    - energy
+    - charging-bench
     profile: charging_bench
   sf:small_capacitor:
     category: ENERGY
     display-name: sf:small_capacitor
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:medium_capacitor:
     category: ENERGY
     display-name: sf:medium_capacitor
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:big_capacitor:
     category: ENERGY
     display-name: sf:big_capacitor
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:large_capacitor:
     category: ENERGY
     display-name: sf:large_capacitor
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:carbonado_edged_capacitor:
     category: ENERGY
     display-name: sf:carbonado_edged_capacitor
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:energized_capacitor:
     category: ENERGY
     display-name: sf:energized_capacitor
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:solar_generator:
     category: ENERGY
     display-name: sf:solar_generator
+    tags:
+    - machine
+    - energy
+    - solar-generator
     profile: solar_generator
   sf:solar_generator_2:
     category: ENERGY
     display-name: sf:solar_generator_2
+    tags:
+    - machine
+    - energy
+    - solar-generator
     profile: solar_generator
   sf:solar_generator_3:
     category: ENERGY
     display-name: sf:solar_generator_3
+    tags:
+    - machine
+    - energy
+    - solar-generator
     profile: solar_generator
   sf:solar_generator_4:
     category: ENERGY
     display-name: sf:solar_generator_4
+    tags:
+    - machine
+    - energy
+    - solar-generator
     profile: solar_generator
   sf:coal_generator:
     category: ENERGY
     display-name: sf:coal_generator
+    tags:
+    - machine
+    - energy
+    - fuel-generator
     profile: fuel_generator
   sf:coal_generator_2:
     category: ENERGY
     display-name: sf:coal_generator_2
+    tags:
+    - machine
+    - energy
+    - fuel-generator
     profile: fuel_generator
   sf:lava_generator:
     category: ENERGY
     display-name: sf:lava_generator
+    tags:
+    - machine
+    - energy
+    - fuel-generator
     profile: fuel_generator
   sf:lava_generator_2:
     category: ENERGY
     display-name: sf:lava_generator_2
+    tags:
+    - machine
+    - energy
+    - fuel-generator
     profile: fuel_generator
   sf:combustion_reactor:
     category: ENERGY
     display-name: sf:combustion_reactor
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:magnesium_generator:
     category: ENERGY
     display-name: sf:magnesium_generator
+    tags:
+    - machine
+    - energy
+    - fuel-generator
     profile: fuel_generator
   sf:bio_reactor:
     category: ENERGY
     display-name: sf:bio_reactor
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:bio_reactor_2:
     category: ENERGY
     display-name: sf:bio_reactor_2
+    tags:
+    - machine
+    - energy
+    - energy-node
     profile: energy_node
   sf:cargo_manager:
     category: CARGO
     display-name: sf:cargo_manager
+    tags:
+    - machine
+    - cargo
+    - cargo-node
     profile: cargo_node
   sf:cargo_node:
     category: CARGO
     display-name: sf:cargo_node
+    tags:
+    - machine
+    - cargo
+    - cargo-node
     profile: cargo_node
   sf:cargo_node_input:
     category: CARGO
     display-name: sf:cargo_node_input
+    tags:
+    - machine
+    - cargo
+    - cargo-node
     profile: cargo_node
   sf:cargo_node_input_advanced:
     category: CARGO
     display-name: sf:cargo_node_input_advanced
+    tags:
+    - machine
+    - cargo
+    - cargo-node
     profile: cargo_node
   sf:cargo_node_output:
     category: CARGO
     display-name: sf:cargo_node_output
+    tags:
+    - machine
+    - cargo
+    - cargo-node
     profile: cargo_node
   sf:cargo_node_output_advanced:
     category: CARGO
     display-name: sf:cargo_node_output_advanced
+    tags:
+    - machine
+    - cargo
+    - cargo-node
     profile: cargo_node
   sf:trash_can_block:
     category: CARGO
     display-name: sf:trash_can_block
+    tags:
+    - machine
+    - cargo
+    - cargo-node
     profile: cargo_node
   sf:gps_control_panel:
     category: GPS
     display-name: sf:gps_control_panel
+    tags:
+    - machine
+    - gps
+    - gps-device
     profile: gps_device
   sf:gps_geo_scanner:
     category: GPS
     display-name: sf:gps_geo_scanner
+    tags:
+    - machine
+    - gps
+    - gps-device
     profile: gps_device
   sf:gps_teleporter_pylon:
     category: GPS
     display-name: sf:gps_teleporter_pylon
+    tags:
+    - machine
+    - gps
+    - gps-device
     profile: gps_device
   sf:gps_teleportation_matrix:
     category: GPS
     display-name: sf:gps_teleportation_matrix
+    tags:
+    - machine
+    - gps
+    - gps-device
     profile: gps_device
   sf:gps_activation_device_shared:
     category: GPS
     display-name: sf:gps_activation_device_shared
+    tags:
+    - machine
+    - gps
+    - gps-device
     profile: gps_device
   sf:gps_activation_device_personal:
     category: GPS
     display-name: sf:gps_activation_device_personal
+    tags:
+    - machine
+    - gps
+    - gps-device
     profile: gps_device
   sf:elevator_plate:
     category: GPS
     display-name: sf:elevator_plate
+    tags:
+    - machine
+    - gps
+    - gps-device
     profile: gps_device
   sf:programmable_android:
     category: ANDROID
     display-name: sf:programmable_android
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_farmer:
     category: ANDROID
     display-name: sf:programmable_android_farmer
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_miner:
     category: ANDROID
     display-name: sf:programmable_android_miner
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_woodcutter:
     category: ANDROID
     display-name: sf:programmable_android_woodcutter
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_butcher:
     category: ANDROID
     display-name: sf:programmable_android_butcher
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_fisherman:
     category: ANDROID
     display-name: sf:programmable_android_fisherman
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_2:
     category: ANDROID
     display-name: sf:programmable_android_2
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_2_fisherman:
     category: ANDROID
     display-name: sf:programmable_android_2_fisherman
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_2_farmer:
     category: ANDROID
     display-name: sf:programmable_android_2_farmer
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_2_butcher:
     category: ANDROID
     display-name: sf:programmable_android_2_butcher
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_3:
     category: ANDROID
     display-name: sf:programmable_android_3
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_3_fisherman:
     category: ANDROID
     display-name: sf:programmable_android_3_fisherman
+    tags:
+    - machine
+    - android
     profile: android
   sf:programmable_android_3_butcher:
     category: ANDROID
     display-name: sf:programmable_android_3_butcher
+    tags:
+    - machine
+    - android
     profile: android
   sf:android_interface_fuel:
     category: ANDROID
     display-name: sf:android_interface_fuel
+    tags:
+    - machine
+    - android
+    - android-interface
     profile: android_interface
   sf:android_interface_items:
     category: ANDROID
     display-name: sf:android_interface_items
+    tags:
+    - machine
+    - android
+    - android-interface
     profile: android_interface
   sf:android_memory_core:
     category: ANDROID
     display-name: sf:android_memory_core
+    tags:
+    - machine
+    - android
     profile: android
   sf:hardened_glass:
     category: SPECIAL
     display-name: sf:hardened_glass
+    tags:
+    - machine
+    - special
+    - structural-decoration
     profile: structural_decoration
   sf:wither_proof_obsidian:
     category: SPECIAL
     display-name: sf:wither_proof_obsidian
+    tags:
+    - machine
+    - special
+    - structural-decoration
     profile: structural_decoration
   sf:wither_proof_glass:
     category: SPECIAL
     display-name: sf:wither_proof_glass
+    tags:
+    - machine
+    - special
+    - structural-decoration
     profile: structural_decoration
   sf:rainbow_wool:
     category: SPECIAL
     display-name: sf:rainbow_wool
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glass:
     category: SPECIAL
     display-name: sf:rainbow_glass
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_clay:
     category: SPECIAL
     display-name: sf:rainbow_clay
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glass_pane:
     category: SPECIAL
     display-name: sf:rainbow_glass_pane
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_concrete:
     category: SPECIAL
     display-name: sf:rainbow_concrete
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glazed_terracotta:
     category: SPECIAL
     display-name: sf:rainbow_glazed_terracotta
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_wool_xmas:
     category: SPECIAL
     display-name: sf:rainbow_wool_xmas
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glass_xmas:
     category: SPECIAL
     display-name: sf:rainbow_glass_xmas
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_clay_xmas:
     category: SPECIAL
     display-name: sf:rainbow_clay_xmas
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glass_pane_xmas:
     category: SPECIAL
     display-name: sf:rainbow_glass_pane_xmas
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_concrete_xmas:
     category: SPECIAL
     display-name: sf:rainbow_concrete_xmas
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glazed_terracotta_xmas:
     category: SPECIAL
     display-name: sf:rainbow_glazed_terracotta_xmas
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_wool_valentine:
     category: SPECIAL
     display-name: sf:rainbow_wool_valentine
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glass_valentine:
     category: SPECIAL
     display-name: sf:rainbow_glass_valentine
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_clay_valentine:
     category: SPECIAL
     display-name: sf:rainbow_clay_valentine
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glass_pane_valentine:
     category: SPECIAL
     display-name: sf:rainbow_glass_pane_valentine
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_concrete_valentine:
     category: SPECIAL
     display-name: sf:rainbow_concrete_valentine
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glazed_terracotta_valentine:
     category: SPECIAL
     display-name: sf:rainbow_glazed_terracotta_valentine
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_wool_halloween:
     category: SPECIAL
     display-name: sf:rainbow_wool_halloween
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glass_halloween:
     category: SPECIAL
     display-name: sf:rainbow_glass_halloween
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_clay_halloween:
     category: SPECIAL
     display-name: sf:rainbow_clay_halloween
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glass_pane_halloween:
     category: SPECIAL
     display-name: sf:rainbow_glass_pane_halloween
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_concrete_halloween:
     category: SPECIAL
     display-name: sf:rainbow_concrete_halloween
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:rainbow_glazed_terracotta_halloween:
     category: SPECIAL
     display-name: sf:rainbow_glazed_terracotta_halloween
+    tags:
+    - machine
+    - special
+    - decoration
     profile: decoration
   sf:ancient_altar:
     category: SPECIAL
     display-name: sf:ancient_altar
+    tags:
+    - machine
+    - special
+    - ancient-altar
     profile: ancient_altar
   sf:ancient_pedestal:
     category: SPECIAL
     display-name: sf:ancient_pedestal
+    tags:
+    - machine
+    - special
+    - ancient-altar
     profile: ancient_altar
   sf:reinforced_spawner:
     category: SPECIAL
     display-name: sf:reinforced_spawner
+    tags:
+    - machine
+    - special
+    - reinforced-spawner
     profile: reinforced_spawner
   sf:infused_hopper:
     category: SPECIAL
     display-name: sf:infused_hopper
+    tags:
+    - machine
+    - special
+    - infused-hopper
     profile: infused_hopper
   sf:hologram_projector:
     category: SPECIAL
     display-name: sf:hologram_projector
+    tags:
+    - machine
+    - special
+    - hologram-projector
     profile: hologram_projector
   sf:block_placer:
     category: SPECIAL
     display-name: sf:block_placer
+    tags:
+    - machine
+    - special
+    - block-placer
     profile: block_placer
   sf:advanced_industrial_miner:
     category: SPECIAL
     display-name: sf:advanced_industrial_miner
+    tags:
+    - machine
+    - special
+    - industrial-miner
     profile: industrial_miner
   sf:industrial_miner:
     category: SPECIAL
     display-name: sf:industrial_miner
+    tags:
+    - machine
+    - special
+    - industrial-miner
     profile: industrial_miner

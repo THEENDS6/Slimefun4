@@ -123,11 +123,11 @@ public final class SfxLocalization {
     }
 
     public List<String> list(String path) {
-        List<String> fromCustom = custom == null ? List.of() : custom.getStringList(path);
+        List<String> fromCustom = stringList(custom, path);
         if (!fromCustom.isEmpty()) {
             return postProcessList(path, fromCustom);
         }
-        List<String> fromBundled = bundled == null ? List.of() : bundled.getStringList(path);
+        List<String> fromBundled = stringList(bundled, path);
         if (!fromBundled.isEmpty()) {
             return postProcessList(path, fromBundled);
         }
@@ -342,7 +342,7 @@ public final class SfxLocalization {
         if (configuration == null) {
             return;
         }
-        ConfigurationSection section = configuration.getConfigurationSection(path);
+        ConfigurationSection section = section(configuration, path);
         if (section == null) {
             return;
         }
@@ -356,13 +356,13 @@ public final class SfxLocalization {
 
     private String lookup(String path) {
         if (custom != null) {
-            String value = custom.getString(path);
+            String value = string(custom, path);
             if (value != null) {
                 return value;
             }
         }
         if (bundled != null) {
-            String value = bundled.getString(path);
+            String value = string(bundled, path);
             if (value != null) {
                 return value;
             }
@@ -374,7 +374,7 @@ public final class SfxLocalization {
         if (configuration == null) {
             return List.of();
         }
-        ConfigurationSection section = configuration.getConfigurationSection(path);
+        ConfigurationSection section = section(configuration, path);
         if (section == null) {
             return List.of();
         }
@@ -388,6 +388,65 @@ public final class SfxLocalization {
             i++;
         }
         return values;
+    }
+
+    private static String string(YamlConfiguration configuration, String path) {
+        Object value = compoundPathValue(configuration, path);
+        return value instanceof String string ? string : null;
+    }
+
+    private static List<String> stringList(YamlConfiguration configuration, String path) {
+        Object value = compoundPathValue(configuration, path);
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        List<String> result = new ArrayList<>();
+        for (Object entry : list) {
+            if (entry != null) {
+                result.add(String.valueOf(entry));
+            }
+        }
+        return result;
+    }
+
+    private static ConfigurationSection section(YamlConfiguration configuration, String path) {
+        Object value = compoundPathValue(configuration, path);
+        return value instanceof ConfigurationSection section ? section : null;
+    }
+
+    private static Object compoundPathValue(YamlConfiguration configuration, String path) {
+        if (configuration == null || path == null || path.isBlank()) {
+            return null;
+        }
+        Object direct = configuration.get(path);
+        if (direct != null) {
+            return direct;
+        }
+        return compoundPathValue(configuration, path.split("\\."), 0);
+    }
+
+    private static Object compoundPathValue(ConfigurationSection section, String[] parts, int index) {
+        if (section == null || index >= parts.length) {
+            return section;
+        }
+        Map<String, Object> values = section.getValues(false);
+        for (int end = parts.length; end > index; end--) {
+            String key = String.join(".", java.util.Arrays.copyOfRange(parts, index, end));
+            Object value = values.get(key);
+            if (value == null) {
+                continue;
+            }
+            if (end == parts.length) {
+                return value;
+            }
+            if (value instanceof ConfigurationSection child) {
+                Object nested = compoundPathValue(child, parts, end);
+                if (nested != null) {
+                    return nested;
+                }
+            }
+        }
+        return null;
     }
 
     private static String applyPlaceholders(String input, Map<String, ?> placeholders) {
