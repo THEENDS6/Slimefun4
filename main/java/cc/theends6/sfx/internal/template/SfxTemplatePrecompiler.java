@@ -16,12 +16,29 @@ public final class SfxTemplatePrecompiler {
     private static final List<String> BUNDLED_TEMPLATE_RESOURCES = List.of(
             "content/templates/00-electric-machine-templates.yml",
             "content/templates/05-energy-component-templates.yml",
-            "content/templates/10-electric-furnaces.yml",
-            "content/templates/12-special-electric-ui.yml",
-            "content/templates/20-energy-components.yml"
+            "content/templates/10-electric-machine-definitions.yml",
+            "content/templates/12-electric-machine-ui.yml",
+            "content/templates/20-electric-processing-machines.yml",
+            "content/templates/21-electric-crafting-machines.yml",
+            "content/templates/22-electric-farming-machines.yml",
+            "content/templates/23-electric-utility-machines.yml",
+            "content/templates/24-electric-assemblers.yml",
+            "content/templates/30-energy-components.yml",
+            "content/templates/recipes/40-recipe-templates.yml",
+            "content/templates/recipes/41-recipes-enhanced.yml",
+            "content/templates/recipes/42-recipes-magic.yml",
+            "content/templates/recipes/43-recipes-altar.yml",
+            "content/templates/recipes/44-recipes-smeltery.yml",
+            "content/templates/recipes/45-recipes-armor.yml",
+            "content/templates/recipes/46-recipes-electric.yml",
+            "content/templates/recipes/47-recipes-special.yml"
     );
     private static final List<String> REMOVED_BUNDLED_TEMPLATE_RESOURCES = List.of(
-            "content/templates/11-electric-furnaces-v2.yml"
+            "content/templates/10-electric-furnaces.yml",
+            "content/templates/11-electric-furnaces-v2.yml",
+            "content/templates/12-special-electric-ui.yml",
+            "content/templates/20-energy-components.yml",
+            "content/templates/25-electric-misc-machines.yml"
     );
 
     private SfxTemplatePrecompiler() {

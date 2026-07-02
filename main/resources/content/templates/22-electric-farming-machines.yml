@@ -1,0 +1,139 @@
+
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:food_fabricator":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.food_fabricator.name
+      speed: 1
+      capacity: 5120
+      consumption: 14
+      progress-material: GOLDEN_HOE
+  "sf:food_fabricator_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.food_fabricator_2.name
+      speed: 6
+      capacity: 10240
+      consumption: 48
+      progress-material: GOLDEN_HOE
+  "sf:food_composter":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.food_composter.name
+      speed: 1
+      capacity: 5120
+      consumption: 16
+      progress-material: GOLDEN_HOE
+  "sf:food_composter_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.food_composter_2.name
+      speed: 10
+      capacity: 10240
+      consumption: 52
+      progress-material: GOLDEN_HOE
+  "sf:produce_collector":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @define:
+      name-key: items.sf.produce_collector.name
+      speed: 1
+      capacity: 10240
+      consumption: 32
+      progress-material: BUCKET
+  "sf:auto_breeder":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @define:
+      name-key: items.sf.auto_breeder.name
+      speed: 1
+      capacity: 20480
+      consumption: 60
+      progress-material: WHEAT
+  "sf:animal_growth_accelerator":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @define:
+      name-key: items.sf.animal_growth_accelerator.name
+      speed: 1
+      capacity: 20480
+      consumption: 14
+      progress-material: WHEAT
+  "sf:crop_growth_accelerator":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @define:
+      name-key: items.sf.crop_growth_accelerator.name
+      speed: 1
+      capacity: 40960
+      consumption: 100
+      progress-material: BONE_MEAL
+  "sf:crop_growth_accelerator_2":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @define:
+      name-key: items.sf.crop_growth_accelerator_2.name
+      speed: 1
+      capacity: 40960
+      consumption: 120
+      progress-material: BONE_MEAL
+  "sf:tree_growth_accelerator":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @define:
+      name-key: items.sf.tree_growth_accelerator.name
+      speed: 1
+      capacity: 40960
+      consumption: 96
+      progress-material: OAK_SAPLING
+  "sf:xp_collector":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @define:
+      name-key: items.sf.xp_collector.name
+      speed: 1
+      capacity: 20480
+      consumption: 20
+      progress-material: EXPERIENCE_BOTTLE
+      input-slots: []
+      output-slots:
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+    ui:
+      inventory-size: 27
+      status-slot: 4
+      frame:
+      - slots:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 17
+        - 18
+        - 19
+        - 20
+        - 21
+        - 22
+        - 23
+        - 24
+        - 25
+        - 26
+        item:
+          material: GRAY_STAINED_GLASS_PANE
+          name: " "
+          lore: []

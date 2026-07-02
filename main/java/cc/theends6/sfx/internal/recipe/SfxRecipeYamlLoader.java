@@ -44,18 +44,15 @@ public final class SfxRecipeYamlLoader {
     }
 
     public void loadInto(DefaultSfxRecipeRegistry registry) {
-        File recipeRoot = new File(plugin.getDataFolder(), "content/recipes");
-        if (!recipeRoot.isDirectory()) {
-            return;
-        }
-
         List<File> files = new ArrayList<>();
+        File recipeRoot = new File(plugin.getDataFolder(), "content/recipes");
         collectYaml(recipeRoot, files);
+        collectYaml(new File(plugin.getDataFolder(), "content/compiled/content/recipes"), files);
         files.sort(Comparator.comparing(File::getPath));
 
         for (File file : files) {
             YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
-            for (Map<?, ?> entry : yaml.getMapList("recipes")) {
+            for (Map<?, ?> entry : recipeEntries(yaml)) {
                 try {
                     if (!isFeatureEnabled(entry)) {
                         continue;
@@ -66,6 +63,33 @@ public final class SfxRecipeYamlLoader {
                 }
             }
         }
+    }
+
+    private List<Map<?, ?>> recipeEntries(YamlConfiguration yaml) {
+        Object raw = yaml.get("recipes");
+        if (raw instanceof List<?>) {
+            return yaml.getMapList("recipes");
+        }
+        if (raw instanceof org.bukkit.configuration.ConfigurationSection section) {
+            List<Map<?, ?>> result = new ArrayList<>();
+            for (String key : section.getKeys(false)) {
+                Object value = section.get(key);
+                if (value instanceof org.bukkit.configuration.ConfigurationSection child) {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    for (String childKey : child.getKeys(false)) {
+                        map.put(childKey, child.get(childKey));
+                    }
+                    map.putIfAbsent("id", key);
+                    result.add(map);
+                } else if (value instanceof Map<?, ?> map) {
+                    Map<Object, Object> copy = new LinkedHashMap<>(map);
+                    copy.putIfAbsent("id", key);
+                    result.add(copy);
+                }
+            }
+            return result;
+        }
+        return List.of();
     }
 
 

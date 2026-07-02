@@ -1,0 +1,34 @@
+
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:iron_golem_assembler":
+    @cf: templates.machines.iron-golem-assembler-definition
+    @io: true
+    @define:
+      name-key: items.sf.iron_golem_assembler.name
+      speed: 1
+      capacity: 81920
+      consumption: 75
+      progress-material: CARVED_PUMPKIN
+    assembler:
+      head-material: CARVED_PUMPKIN
+      head-amount: 1
+      body-materials:
+      - IRON_BLOCK
+      body-amount: 4
+  "sf:wither_assembler":
+    @cf: templates.machines.wither-assembler-definition
+    @io: true
+    @define:
+      name-key: items.sf.wither_assembler.name
+      speed: 1
+      capacity: 81920
+      consumption: 150
+      progress-material: WITHER_SKELETON_SKULL
+    assembler:
+      head-material: WITHER_SKELETON_SKULL
+      head-amount: 3
+      body-materials:
+      - SOUL_SAND
+      - SOUL_SOIL
+      body-amount: 4

@@ -399,7 +399,7 @@ public final class SfxElectricMachineService implements Listener {
         SfxBlockInstanceRecord instance = interaction.instance();
         SfxMachineLegacyHookBridge.interact(machineRuntime, instance.typeId(), instance.instanceId(), interaction.block().getLocation(), "electric", "SfxElectricMachineService.onInteract");
         SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
-        boolean autoCrafter = definition != null && definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER;
+        boolean autoCrafter = definition != null && definition.hasFunction("auto-crafter");
         boolean autoCrafterSelection = autoCrafter
                 && event.getPlayer().isSneaking()
                 && event.getItem() != null
@@ -445,7 +445,7 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         boolean topSlot = event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize();
-        if (topSlot && clickDefinition.menuStyle() != SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+        if (topSlot && !clickDefinition.hasFunction("auto-crafter")) {
             boolean managedInput = contains(clickDefinition.inputSlots(), event.getRawSlot());
             boolean managedOutput = contains(clickDefinition.outputSlots(), event.getRawSlot());
             Predicate<ItemStack> validator = stack -> isValidMachineInput(clickDefinition, event.getRawSlot(), stack);
@@ -458,7 +458,7 @@ public final class SfxElectricMachineService implements Listener {
                 return;
             }
         }
-        if (clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+        if (clickDefinition.hasFunction("auto-crafter")) {
             event.setCancelled(true);
             if (topSlot) {
                 handleAutoCrafterButton(holder.instanceId(), event.getRawSlot(), event.getClick());
@@ -481,7 +481,7 @@ public final class SfxElectricMachineService implements Listener {
             }
             return;
         }
-        if (topSlot && clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER && isAssemblerButton(clickDefinition, event.getRawSlot())) {
+        if (topSlot && clickDefinition.hasFunction("assembler") && isAssemblerButton(clickDefinition, event.getRawSlot())) {
             event.setCancelled(true);
             handleAssemblerButton(holder.instanceId(), event.getRawSlot(), event.getClick());
             runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
@@ -502,14 +502,14 @@ public final class SfxElectricMachineService implements Listener {
             event.setCancelled(true);
             return;
         }
-        if (topSlot && clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) {
+        if (topSlot && clickDefinition.hasFunction("assembler")) {
             ItemStack cursor = event.getCursor();
             if (cursor != null && !cursor.getType().isAir() && !isValidAssemblerInput(clickDefinition, event.getRawSlot(), cursor)) {
                 event.setCancelled(true);
                 return;
             }
         }
-        if (topSlot && clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+        if (topSlot && clickDefinition.hasFunction("auto-brewer")) {
             ItemStack cursor = event.getCursor();
             if (cursor != null && !cursor.getType().isAir() && !isValidAutoBrewerInput(event.getRawSlot(), cursor)) {
                 event.setCancelled(true);
@@ -550,16 +550,16 @@ public final class SfxElectricMachineService implements Listener {
             event.setCancelled(true);
             return;
         }
-        if (dragDefinition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+        if (dragDefinition.hasFunction("auto-crafter")) {
             event.setCancelled(true);
             return;
         }
         boolean valid = event.getRawSlots().stream()
                 .filter(slot -> slot < topSize)
                 .allMatch(slot -> contains(dragDefinition.inputSlots(), slot)
-                        && (dragDefinition.menuStyle() != SfxElectricMachineMenuStyle.ASSEMBLER
+                        && (!dragDefinition.hasFunction("assembler")
                         || isValidAssemblerInput(dragDefinition, slot, event.getNewItems().get(slot)))
-                        && (dragDefinition.menuStyle() != SfxElectricMachineMenuStyle.AUTO_BREWER
+                        && (!dragDefinition.hasFunction("auto-brewer")
                         || isValidAutoBrewerInput(slot, event.getNewItems().get(slot))));
         if (!valid) {
             event.setCancelled(true);
@@ -891,7 +891,7 @@ public final class SfxElectricMachineService implements Listener {
         }
 
         SfxElectricMachineState state = currentState(instance.instanceId(), instance);
-        Component title = localization.itemName(definition.id(), Text.renderFlexible(definition.title()));
+        Component title = localization.component(definition.nameKey(), definition.nameKey());
         Inventory inventory = plugin.getServer().createInventory(new SfxElectricMachineHolder(instance.instanceId()), definition.ui().inventorySize(), title);
         SfxElectricMachineSession session = new SfxElectricMachineSession(player.getUniqueId(), instance.instanceId(), inventory);
         sessionsByViewer.put(player.getUniqueId(), session);
@@ -939,7 +939,7 @@ public final class SfxElectricMachineService implements Listener {
         if (!state.enabled()) {
             return SfxElectricMachineRenderStatus.PAUSED;
         }
-        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+        if (definition.hasFunction("auto-crafter")) {
             if (state.progressWork() > 0) {
                 return SfxElectricMachineRenderStatus.WORKING;
             }
@@ -949,7 +949,7 @@ public final class SfxElectricMachineService implements Listener {
             return session != null && session.lastRenderedStatus() != null ? session.lastRenderedStatus() : SfxElectricMachineRenderStatus.IDLE;
         }
         if (state.hasProgress()) {
-            if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+            if (definition.hasFunction("auto-brewer")) {
                 int remainingWork = Math.max(0, state.activeBaseTicks() - state.progressWork());
                 int requiredFuel = Math.min(Math.max(1, definition.speed()), Math.max(1, remainingWork));
                 if (state.specialData() < requiredFuel) {
@@ -964,7 +964,7 @@ public final class SfxElectricMachineService implements Listener {
             }
             return SfxElectricMachineRenderStatus.IDLE;
         }
-        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+        if (definition.hasFunction("auto-brewer")) {
             return SfxElectricMachineRenderStatus.IDLE;
         }
         if (definition.inputSlots().length > 0 && !state.hasAnyInput()) {
@@ -1230,7 +1230,7 @@ public final class SfxElectricMachineService implements Listener {
         if (definition == null) {
             return;
         }
-        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+        if (definition.hasFunction("auto-crafter")) {
             return;
         }
         int[] inputSlots = definition.inputSlots();
@@ -1257,11 +1257,11 @@ public final class SfxElectricMachineService implements Listener {
                 simpleIoMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
             } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.GEO_MINER) {
                 geoMinerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
-            } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) {
+            } else if (definition.hasFunction("assembler")) {
                 assemblerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
-            } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+            } else if (definition.hasFunction("auto-brewer")) {
                 autoBrewerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
-            } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+            } else if (definition.hasFunction("auto-crafter")) {
                 SfxAutoCrafterRecipeChoice choice = definition.recipeProvider() instanceof SfxAutoCrafterRecipeProvider provider
                         ? provider.choiceForKey(plugin, state.activeRecipeKey())
                         : null;
@@ -1407,14 +1407,14 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private boolean moveShiftClickedStackToInputs(Inventory topInventory, ItemStack current, SfxElectricMachineDefinition definition) {
-        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER) {
+        if (definition.hasFunction("auto-crafter")) {
             return false;
         }
         return SfxInventorySlots.moveStackToSlots(topInventory, definition.inputSlots(), current, (slot, stack) -> {
-            if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) {
+            if (definition.hasFunction("assembler")) {
                 return isValidAssemblerInput(definition, slot, stack);
             }
-            if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+            if (definition.hasFunction("auto-brewer")) {
                 return isValidAutoBrewerInput(slot, stack);
             }
             return true;
@@ -1452,7 +1452,7 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private void openAutoCrafterSelection(Player player, SfxBlockInstanceRecord instance, SfxElectricMachineDefinition definition, List<SfxAutoCrafterRecipeChoice> choices, int index) {
-        Component title = localization.itemName(definition.id(), Text.renderFlexible(definition.title()));
+        Component title = localization.component(definition.nameKey(), definition.nameKey());
         Inventory inventory = plugin.getServer().createInventory(new SfxAutoCrafterSelectionHolder(instance.instanceId(), choices, index), 54, title);
         autoCrafterMenuRenderer.renderSelection(definition, inventory, choices, index);
         player.openInventory(inventory);
@@ -1522,10 +1522,10 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private boolean isValidMachineInput(SfxElectricMachineDefinition definition, int rawSlot, ItemStack item) {
-        if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) {
+        if (definition.hasFunction("assembler")) {
             return isValidAssemblerInput(definition, rawSlot, item);
         }
-        if (definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER) {
+        if (definition.hasFunction("auto-brewer")) {
             return isValidAutoBrewerInput(rawSlot, item);
         }
         return true;

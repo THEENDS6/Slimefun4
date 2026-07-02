@@ -3413,6 +3413,136 @@ categories:
     name: '&a&lTheBusyBiscuit''s Birthday'
   guide.sf.halloween:
     name: '&6&lHalloween'
+  sf.animal_growth_accelerator:
+    name: '&bAnimal Growth Accelerator'
+  sf.armor_auto_crafter:
+    name: '&2Auto-Crafter &8(Armor Forge)'
+  sf.auto_anvil:
+    name: '&7Auto Anvil'
+  sf.auto_anvil_2:
+    name: '&7Auto Anvil Mk.II'
+  sf.auto_breeder:
+    name: '&eAuto-Breeder'
+  sf.auto_brewer:
+    name: '&6Auto Brewer'
+  sf.auto_brewer_2:
+    name: '&6Auto Brewer &7(&eII&7)'
+  sf.auto_disenchanter:
+    name: '&5Auto Disenchanter'
+  sf.auto_disenchanter_2:
+    name: '&5Auto Disenchanter &7- &eII'
+  sf.auto_drier:
+    name: '&6Auto Drier'
+  sf.auto_enchanter:
+    name: '&5Auto Enchanter'
+  sf.auto_enchanter_2:
+    name: '&5Auto Enchanter &7- &eII'
+  sf.book_binder:
+    name: '&6Book Binder'
+  sf.carbon_press:
+    name: '&cCarbon Press'
+  sf.carbon_press_2:
+    name: '&cCarbon Press &7- &eII'
+  sf.carbon_press_3:
+    name: '&cCarbon Press &7- &eIII'
+  sf.crop_growth_accelerator:
+    name: '&aCrop Growth Accelerator'
+  sf.crop_growth_accelerator_2:
+    name: '&aCrop Growth Accelerator &7(&eII&7)'
+  sf.electric_dust_washer:
+    name: '&3Electric Dust Washer'
+  sf.electric_dust_washer_2:
+    name: '&3Electric Dust Washer &7(&eII&7)'
+  sf.electric_dust_washer_3:
+    name: '&3Electric Dust Washer &7(&eIII&7)'
+  sf.electric_furnace:
+    name: '&cElectric Furnace'
+  sf.electric_furnace_2:
+    name: '&cElectric Furnace &7- &eII'
+  sf.electric_furnace_3:
+    name: '&cElectric Furnace &7- &eIII'
+  sf.electric_gold_pan:
+    name: '&6Electric Gold Pan'
+  sf.electric_gold_pan_2:
+    name: '&6Electric Gold Pan &7(&eII&7)'
+  sf.electric_gold_pan_3:
+    name: '&6Electric Gold Pan &7(&eIII&7)'
+  sf.electric_ingot_factory:
+    name: '&cElectric Ingot Factory'
+  sf.electric_ingot_factory_2:
+    name: '&cElectric Ingot Factory &7(&eII&7)'
+  sf.electric_ingot_factory_3:
+    name: '&cElectric Ingot Factory &7(&eIII&7)'
+  sf.electric_ingot_pulverizer:
+    name: '&cElectric Ingot Pulverizer'
+  sf.electric_ore_grinder:
+    name: '&cElectric Ore Grinder'
+  sf.electric_ore_grinder_2:
+    name: '&cElectric Ore Grinder &7(&eII&7)'
+  sf.electric_ore_grinder_3:
+    name: '&cElectric Ore Grinder &7(&eIII&7)'
+  sf.electric_press:
+    name: '&eElectric Press'
+  sf.electric_press_2:
+    name: '&eElectric Press &7- &eII'
+  sf.electric_smeltery:
+    name: '&cElectric Smeltery'
+  sf.electric_smeltery_2:
+    name: '&cElectric Smeltery &7- &eII'
+  sf.electrified_crucible:
+    name: '&cElectrified Crucible'
+  sf.electrified_crucible_2:
+    name: '&cElectrified Crucible &7- &eII'
+  sf.electrified_crucible_3:
+    name: '&cElectrified Crucible &7- &eIII'
+  sf.enhanced_auto_crafter:
+    name: '&2Auto-Crafter &8(Enhanced)'
+  sf.fluid_pump:
+    name: '&9Fluid Pump'
+  sf.food_composter:
+    name: '&cFood Composter'
+  sf.food_composter_2:
+    name: '&cFood Composter &7(&eII&7)'
+  sf.food_fabricator:
+    name: '&cFood Fabricator'
+  sf.food_fabricator_2:
+    name: '&cFood Fabricator &7(&eII&7)'
+  sf.freezer:
+    name: '&bFreezer'
+  sf.freezer_2:
+    name: '&bFreezer &7(&eII&7)'
+  sf.freezer_3:
+    name: '&bFreezer &7(&eIII&7)'
+  sf.geo_miner:
+    name: '&6GEO Miner'
+  sf.gps_transmitter:
+    name: '&bGPS Transmitter'
+  sf.gps_transmitter_2:
+    name: '&cAdvanced GPS Transmitter'
+  sf.gps_transmitter_3:
+    name: '&4Carbonado GPS Transmitter'
+  sf.gps_transmitter_4:
+    name: '&eEnergized GPS Transmitter'
+  sf.heated_pressure_chamber:
+    name: '&cHeated Pressure Chamber'
+  sf.heated_pressure_chamber_2:
+    name: '&cHeated Pressure Chamber &7- &eII'
+  sf.iron_golem_assembler:
+    name: '&6Iron Golem Assembler'
+  sf.oil_pump:
+    name: '&4Oil Pump'
+  sf.produce_collector:
+    name: '&bProduce Collector'
+  sf.refinery:
+    name: '&cRefinery'
+  sf.tree_growth_accelerator:
+    name: '&aTree Growth Accelerator'
+  sf.vanilla_auto_crafter:
+    name: '&2Auto-Crafter &8(Vanilla)'
+  sf.wither_assembler:
+    name: '&5Wither Assembler'
+  sf.xp_collector:
+    name: '&aEXP Collector'
 recipes: {}
 materials:
   crafting_table: Crafting Table

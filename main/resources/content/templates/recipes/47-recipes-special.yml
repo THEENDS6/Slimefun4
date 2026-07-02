@@ -1,0 +1,620 @@
+recipes:
+  '@ot': content/recipes.yml
+  legacy:advanced_industrial_miner:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:advanced_industrial_miner
+    recipe-type: multiblock-structure
+    operation: shaped
+    guide-order: 1
+    source: slimefun-rc37
+    note: Multiblock structure.
+    matrix:
+    - empty
+    - empty
+    - empty
+    - PISTON
+    - CHEST
+    - PISTON
+    - DIAMOND_BLOCK
+    - BLAST_FURNACE
+    - DIAMOND_BLOCK
+    outputs:
+    - sf:advanced_industrial_miner
+  legacy:industrial_miner:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:industrial_miner
+    recipe-type: multiblock-structure
+    operation: shaped
+    guide-order: 2
+    source: slimefun-rc37
+    note: Multiblock structure.
+    matrix:
+    - empty
+    - empty
+    - empty
+    - PISTON
+    - CHEST
+    - PISTON
+    - IRON_BLOCK
+    - BLAST_FURNACE
+    - IRON_BLOCK
+    outputs:
+    - sf:industrial_miner
+  legacy:strange_nether_goo:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:strange_nether_goo
+    recipe-type: sf:barter_drop
+    operation: shaped
+    guide-order: 3
+    source: slimefun-rc37
+    note: Obtained from Piglin bartering.
+    matrix:
+    - empty
+    - empty
+    - empty
+    - empty
+    - PIGLIN_HEAD
+    - empty
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:strange_nether_goo
+  legacy:carbon:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:carbon
+    recipe-type: sf:compressor
+    operation: single
+    guide-order: 4
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:compressor
+    input:
+      type: vanilla
+      material: COAL
+      amount: 8
+    outputs:
+    - sf:carbon
+  legacy:compressed_carbon:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:compressed_carbon
+    recipe-type: sf:compressor
+    operation: single
+    guide-order: 5
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:compressor
+    input:
+      type: sfx
+      id: sf:carbon
+      amount: 4
+    outputs:
+    - sf:compressed_carbon
+  legacy:reinforced_plate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:reinforced_plate
+    recipe-type: sf:compressor
+    operation: single
+    guide-order: 6
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:compressor
+    input:
+      type: sfx
+      id: sf:reinforced_alloy_ingot
+      amount: 8
+    outputs:
+    - sf:reinforced_plate
+  legacy:steel_plate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:steel_plate
+    recipe-type: sf:compressor
+    operation: single
+    guide-order: 7
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:compressor
+    input:
+      type: sfx
+      id: sf:steel_ingot
+      amount: 8
+    outputs:
+    - sf:steel_plate
+  legacy:sifted_ore:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:sifted_ore
+    recipe-type: sf:gold_pan
+    operation: shaped
+    guide-order: 8
+    source: slimefun-rc37
+    matrix:
+    - GRAVEL
+    - empty
+    - empty
+    - empty
+    - empty
+    - empty
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:sifted_ore
+  legacy:ender_lump_1:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:ender_lump_1
+    recipe-type: sf:grind_stone
+    operation: single
+    guide-order: 9
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:grind_stone
+    input: ENDER_EYE
+    outputs:
+    - sf:ender_lump_1*2
+  legacy:magic_lump_1:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:magic_lump_1
+    recipe-type: sf:grind_stone
+    operation: single
+    guide-order: 10
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:grind_stone
+    input: NETHER_WART
+    outputs:
+    - sf:magic_lump_1*2
+  legacy:wheat_flour:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:wheat_flour
+    recipe-type: sf:grind_stone
+    operation: single
+    guide-order: 11
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:grind_stone
+    input: WHEAT
+    outputs:
+    - sf:wheat_flour
+  legacy:filled_flask_of_knowledge:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:filled_flask_of_knowledge
+    recipe-type: sf:interact
+    operation: shaped
+    guide-order: 12
+    source: slimefun-rc37
+    matrix:
+    - sf:flask_of_knowledge
+    - empty
+    - empty
+    - empty
+    - empty
+    - empty
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:filled_flask_of_knowledge
+  legacy:apple_juice:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:apple_juice
+    recipe-type: sf:juicer
+    operation: single
+    guide-order: 13
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:juicer
+    input: APPLE
+    outputs:
+    - sf:apple_juice
+  legacy:carrot_juice:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:carrot_juice
+    recipe-type: sf:juicer
+    operation: single
+    guide-order: 14
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:juicer
+    input: CARROT
+    outputs:
+    - sf:carrot_juice
+  legacy:glow_berry_juice:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:glow_berry_juice
+    recipe-type: sf:juicer
+    operation: single
+    guide-order: 15
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:juicer
+    input: GLOW_BERRIES
+    outputs:
+    - sf:glow_berry_juice
+  legacy:golden_apple_juice:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:golden_apple_juice
+    recipe-type: sf:juicer
+    operation: single
+    guide-order: 16
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:juicer
+    input: GOLDEN_APPLE
+    outputs:
+    - sf:golden_apple_juice
+  legacy:melon_juice:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:melon_juice
+    recipe-type: sf:juicer
+    operation: single
+    guide-order: 17
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:juicer
+    input: MELON_SLICE
+    outputs:
+    - sf:melon_juice
+  legacy:pumpkin_juice:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:pumpkin_juice
+    recipe-type: sf:juicer
+    operation: single
+    guide-order: 18
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:juicer
+    input: PUMPKIN
+    outputs:
+    - sf:pumpkin_juice
+  legacy:sweet_berry_juice:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:sweet_berry_juice
+    recipe-type: sf:juicer
+    operation: single
+    guide-order: 19
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:juicer
+    input: SWEET_BERRIES
+    outputs:
+    - sf:sweet_berry_juice
+  legacy:basic_circuit_board:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:basic_circuit_board
+    recipe-type: sf:mob_drop
+    operation: shaped
+    guide-order: 20
+    source: slimefun-rc37
+    note: Dropped by Iron Golems.
+    matrix:
+    - empty
+    - empty
+    - empty
+    - empty
+    - IRON_GOLEM_SPAWN_EGG
+    - empty
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:basic_circuit_board
+  legacy:crushed_ore:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:crushed_ore
+    recipe-type: sf:ore_crusher
+    operation: single
+    guide-order: 21
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_crusher
+    input: sf:sifted_ore
+    outputs:
+    - sf:crushed_ore
+  legacy:gold_dust:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_dust
+    recipe-type: sf:ore_crusher
+    operation: single
+    guide-order: 22
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_crusher
+    input: GOLD_ORE
+    outputs:
+    - sf:gold_dust
+  legacy:gold_dust_deepslate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:gold_dust_deepslate
+    recipe-type: sf:ore_crusher
+    operation: single
+    guide-order: 22
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_crusher
+    input: DEEPSLATE_GOLD_ORE
+    outputs:
+    - sf:gold_dust
+  legacy:iron_dust:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:iron_dust
+    recipe-type: sf:ore_crusher
+    operation: single
+    guide-order: 23
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_crusher
+    input: IRON_ORE
+    outputs:
+    - sf:iron_dust
+  legacy:iron_dust_deepslate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:iron_dust_deepslate
+    recipe-type: sf:ore_crusher
+    operation: single
+    guide-order: 23
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_crusher
+    input: DEEPSLATE_IRON_ORE
+    outputs:
+    - sf:iron_dust
+  legacy:pulverized_ore:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:pulverized_ore
+    recipe-type: sf:ore_crusher
+    operation: single
+    guide-order: 24
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_crusher
+    input: sf:crushed_ore
+    outputs:
+    - sf:pulverized_ore
+  legacy:sulfate:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:sulfate
+    recipe-type: sf:ore_crusher
+    operation: single
+    guide-order: 25
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_crusher
+    input:
+      type: vanilla
+      material: NETHERRACK
+      amount: 16
+    outputs:
+    - sf:sulfate
+  legacy:tiny_uranium:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:tiny_uranium
+    recipe-type: sf:ore_crusher
+    operation: single
+    guide-order: 26
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_crusher
+    input: sf:pure_ore_cluster
+    outputs:
+    - sf:tiny_uranium
+  legacy:aluminum_dust:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:aluminum_dust
+    recipe-type: sf:ore_washer
+    operation: single
+    guide-order: 27
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_washer
+    input: sf:sifted_ore
+    outputs:
+    - sf:aluminum_dust
+  legacy:copper_dust:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:copper_dust
+    recipe-type: sf:ore_washer
+    operation: single
+    guide-order: 28
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_washer
+    input: sf:sifted_ore
+    outputs:
+    - sf:copper_dust
+  legacy:lead_dust:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:lead_dust
+    recipe-type: sf:ore_washer
+    operation: single
+    guide-order: 29
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_washer
+    input: sf:sifted_ore
+    outputs:
+    - sf:lead_dust
+  legacy:magnesium_dust:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:magnesium_dust
+    recipe-type: sf:ore_washer
+    operation: single
+    guide-order: 30
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_washer
+    input: sf:sifted_ore
+    outputs:
+    - sf:magnesium_dust
+  legacy:pure_ore_cluster:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:pure_ore_cluster
+    recipe-type: sf:ore_washer
+    operation: single
+    guide-order: 31
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_washer
+    input: sf:pulverized_ore
+    outputs:
+    - sf:pure_ore_cluster
+  legacy:salt:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:salt
+    recipe-type: sf:ore_washer
+    operation: single
+    guide-order: 32
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_washer
+    input:
+      type: vanilla
+      material: SAND
+      amount: 2
+    outputs:
+    - sf:salt
+  legacy:silver_dust:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:silver_dust
+    recipe-type: sf:ore_washer
+    operation: single
+    guide-order: 33
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_washer
+    input: sf:sifted_ore
+    outputs:
+    - sf:silver_dust
+  legacy:stone_chunk:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:stone_chunk
+    recipe-type: sf:ore_washer
+    operation: single
+    guide-order: 34
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_washer
+    input: sf:sifted_ore
+    outputs:
+    - sf:stone_chunk
+  legacy:tin_dust:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:tin_dust
+    recipe-type: sf:ore_washer
+    operation: single
+    guide-order: 35
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_washer
+    input: sf:sifted_ore
+    outputs:
+    - sf:tin_dust
+  legacy:zinc_dust:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:zinc_dust
+    recipe-type: sf:ore_washer
+    operation: single
+    guide-order: 36
+    source: slimefun-rc37
+    runtime: true
+    machine: sf:ore_washer
+    input: sf:sifted_ore
+    outputs:
+    - sf:zinc_dust
+  legacy:bucket_of_fuel:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:bucket_of_fuel
+    recipe-type: sf:refinery
+    operation: shaped
+    guide-order: 37
+    source: slimefun-rc37
+    matrix:
+    - empty
+    - empty
+    - empty
+    - empty
+    - sf:bucket_of_oil
+    - empty
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:bucket_of_fuel
+  custom:broken_spawner:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:broken_spawner
+    recipe-type: sf:pickaxe_of_containment
+    operation: shaped
+    guide-order: 9991
+    source: slimefun-rc37
+    matrix:
+    - empty
+    - empty
+    - empty
+    - empty
+    - SPAWNER
+    - empty
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:broken_spawner
+  custom:bucket_of_oil:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: custom:bucket_of_oil
+    recipe-type: sf:oil_pump
+    operation: shaped
+    guide-order: 9992
+    source: slimefunx-legacy
+    matrix:
+    - empty
+    - empty
+    - empty
+    - empty
+    - BUCKET
+    - empty
+    - empty
+    - empty
+    - empty
+    outputs:
+    - sf:bucket_of_oil

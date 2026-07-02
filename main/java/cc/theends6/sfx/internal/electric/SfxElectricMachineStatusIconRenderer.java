@@ -300,15 +300,15 @@ final class SfxElectricMachineStatusIconRenderer {
     }
 
     private boolean isAssembler(SfxElectricMachineDefinition definition) {
-        return definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER;
+        return definition.hasFunction("assembler");
     }
 
     private boolean isAutoBrewer(SfxElectricMachineDefinition definition) {
-        return definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER;
+        return definition.hasFunction("auto-brewer");
     }
 
     private boolean isAutoCrafter(SfxElectricMachineDefinition definition) {
-        return definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER;
+        return definition.hasFunction("auto-crafter");
     }
 
     private int totalWork(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe) {
