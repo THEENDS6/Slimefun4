@@ -136,14 +136,14 @@ public final class SfxYamlContentLoader {
     }
 
     private SfxItemCategory parseCategory(Map<?, ?> entry) {
-        String id = string(entry.get("id"));
-        String name = string(orDefault(entry, "name", id));
-        int order = integer(orDefault(entry, entry.containsKey("priority") ? "priority" : "order", 900000));
+        String id = string(required(entry, "id"));
+        String name = string(required(entry, "name"));
+        int order = integer(requiredAny(entry, "priority", "order"));
         boolean hidden = Boolean.TRUE.equals(entry.get("hidden"));
         @SuppressWarnings("unchecked")
-        Map<String, Object> icon = (Map<String, Object>) entry.get("icon");
-        Material iconMaterial = parseMaterial(icon == null ? "BOOK" : string(orDefault(icon, "material", "BOOK")));
-        String iconName = icon == null ? name : string(orDefault(icon, "name", name));
+        Map<String, Object> icon = (Map<String, Object>) required(entry, "icon");
+        Material iconMaterial = parseMaterial(string(required(icon, "material")));
+        String iconName = string(required(icon, "name"));
         String headTexture = icon == null ? null : optionalString(icon.get("headTexture"));
         Integer colorRgb = null;
         if (icon != null) {
@@ -158,20 +158,12 @@ public final class SfxYamlContentLoader {
     }
 
     private SfxItemDefinition parseItem(Map<?, ?> entry) {
-        String id = string(entry.get("id"));
-        Material material = parseMaterial(string(entry.get("material")));
-        String categoryId = entry.containsKey("category") ? string(entry.get("category")) : null;
-        SfxItemDefinition.Builder builder = SfxItemDefinition.builder(id, material, Text.renderFlexible(string(orDefault(entry, "name", id))));
-        if (categoryId != null) {
-            builder.category(categoryId);
-        }
-        if (entry.containsKey("order")) {
-            builder.order(integer(entry.get("order")));
-        } else if (entry.containsKey("priority")) {
-            builder.order(integer(entry.get("priority")));
-        } else if (entry.containsKey("pos")) {
-            builder.order(integer(entry.get("pos")));
-        }
+        String id = string(required(entry, "id"));
+        Material material = parseMaterial(string(required(entry, "material")));
+        String categoryId = string(required(entry, "category"));
+        SfxItemDefinition.Builder builder = SfxItemDefinition.builder(id, material, Text.renderFlexible(string(required(entry, "name"))));
+        builder.category(categoryId);
+        builder.order(integer(requiredAny(entry, "order", "priority", "pos")));
         if (entry.containsKey("version")) {
             builder.version(integer(entry.get("version")));
         }
@@ -263,8 +255,8 @@ public final class SfxYamlContentLoader {
     }
 
     private SfxRecipe parseDisplayRecipe(Map<?, ?> entry) {
-        String type = string(orDefault(entry, "type", "multiblock-structure"));
-        String note = string(orDefault(entry, "note", "<gray>YAML recipe.</gray>"));
+        String type = string(required(entry, "type"));
+        String note = string(required(entry, "note"));
         List<SfxRecipeSlot> matrix = parseMatrix(entry.get("matrix"));
         return SfxRecipe.shaped(type, matrix, Text.mm(note));
     }
@@ -295,8 +287,8 @@ public final class SfxYamlContentLoader {
             return SfxRecipeSlot.vanilla(parseMaterial(normalized));
         }
         if (raw instanceof Map<?, ?> map) {
-            String type = string(orDefault(map, "type", map.containsKey("id") ? "sfx" : "vanilla"));
-            int amount = integer(orDefault(map, "amount", 1));
+            String type = string(required(map, "type"));
+            int amount = integer(required(map, "amount"));
             if (type.equalsIgnoreCase("sfx")) {
                 return SfxRecipeSlot.sfx(string(map.get("id")), amount);
             }
@@ -305,8 +297,22 @@ public final class SfxYamlContentLoader {
         throw new IllegalArgumentException("unsupported recipe slot: " + raw);
     }
 
-    private static Object orDefault(Map<?, ?> map, String key, Object defaultValue) {
-        return map.containsKey(key) ? map.get(key) : defaultValue;
+    private static Object required(Map<?, ?> map, String key) {
+        Object value = map.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException("required field missing: " + key);
+        }
+        return value;
+    }
+
+    private static Object requiredAny(Map<?, ?> map, String... keys) {
+        for (String key : keys) {
+            Object value = map.get(key);
+            if (value != null) {
+                return value;
+            }
+        }
+        throw new IllegalArgumentException("required field missing: " + String.join("/", keys));
     }
 
     private Material parseMaterial(String input) {

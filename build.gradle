@@ -706,18 +706,48 @@ tasks.register('validateSfxCompiledContent') {
         if (!compiledCategoryFile.isFile()) {
             violations << "compiled item category output missing content/items/10-legacy-categories.yml"
         } else {
-            compiledCategoryCount = (compiledCategoryFile.getText('UTF-8') =~ /(?m)^- id:\s*/).count
+            def categoryText = compiledCategoryFile.getText('UTF-8')
+            compiledCategoryCount = (categoryText =~ /(?m)^- id:\s*/).count
             if (compiledCategoryCount != 50) {
                 violations << "compiled item category count expected 50, got ${compiledCategoryCount}"
+            }
+            [
+                    'name'         : (categoryText =~ /(?m)^  name:\s*/).count,
+                    'priority/order': (categoryText =~ /(?m)^  (priority|order):\s*/).count,
+                    'icon'         : (categoryText =~ /(?m)^  icon:\s*/).count,
+                    'icon material': (categoryText =~ /(?m)^    material:\s*/).count,
+                    'icon name'    : (categoryText =~ /(?m)^    name:\s*/).count
+            ].each { field, count ->
+                if (count != 50) {
+                    violations << "compiled item categories expected ${field} on every entry, got ${count}"
+                }
             }
         }
         def compiledItemFile = new File(root, 'content/items/20-legacy-items.yml')
         if (!compiledItemFile.isFile()) {
             violations << "compiled item output missing content/items/20-legacy-items.yml"
         } else {
-            compiledItemCount = (compiledItemFile.getText('UTF-8') =~ /(?m)^- id:\s*/).count
+            def itemText = compiledItemFile.getText('UTF-8')
+            compiledItemCount = (itemText =~ /(?m)^- id:\s*/).count
             if (compiledItemCount != 556) {
                 violations << "compiled item count expected 556, got ${compiledItemCount}"
+            }
+            [
+                    'category'      : (itemText =~ /(?m)^  category:\s*/).count,
+                    'material'      : (itemText =~ /(?m)^  material:\s*/).count,
+                    'name'          : (itemText =~ /(?m)^  name:\s*/).count,
+                    'priority/order': (itemText =~ /(?m)^  (priority|order|pos):\s*/).count
+            ].each { field, count ->
+                if (count != 556) {
+                    violations << "compiled items expected ${field} on every entry, got ${count}"
+                }
+            }
+            def itemRecipeCount = (itemText =~ /(?m)^  recipes:\s*/).count
+            def itemRecipeTypeCount = (itemText =~ /(?m)^  - type:\s*/).count
+            def itemRecipeNoteCount = (itemText =~ /(?m)^    note:\s*/).count
+            def itemRecipeMatrixCount = (itemText =~ /(?m)^    matrix:\s*/).count
+            if (itemRecipeTypeCount != itemRecipeCount || itemRecipeNoteCount != itemRecipeCount || itemRecipeMatrixCount != itemRecipeCount) {
+                violations << "compiled item guide recipes must explicitly include type/note/matrix on every entry: recipes=${itemRecipeCount}, type=${itemRecipeTypeCount}, note=${itemRecipeNoteCount}, matrix=${itemRecipeMatrixCount}"
             }
         }
         if (!new File(root, 'content/items/items.yml').isFile()) {
