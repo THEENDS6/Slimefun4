@@ -22,8 +22,8 @@ public final class ItemBuilder {
         return new ItemBuilder(material);
     }
 
-    public ItemBuilder name(String miniMessage) {
-        this.name = Text.mm(miniMessage);
+    public ItemBuilder name(String text) {
+        this.name = Text.renderFlexible(text);
         return this;
     }
 

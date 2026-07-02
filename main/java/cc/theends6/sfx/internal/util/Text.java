@@ -12,7 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class Text {
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
     private static final LegacyComponentSerializer LEGACY_AMPERSAND = LegacyComponentSerializer.legacyAmpersand();
-    private static final Pattern LEGACY_FORMAT = Pattern.compile("(?i).*[&§][0-9A-FK-OR].*");
+    private static final Pattern LEGACY_FORMAT = Pattern.compile("(?i).*[&\\u00A7][0-9A-FK-OR].*");
 
     private Text() {
     }
@@ -29,7 +29,7 @@ public final class Text {
         if (input == null || input.isBlank()) {
             return Component.empty();
         }
-        return noItalic(LEGACY_AMPERSAND.deserialize(input));
+        return noItalic(LEGACY_AMPERSAND.deserialize(input.replace('\u00A7', '&')));
     }
 
     public static List<Component> legacyLore(String... lines) {
@@ -49,7 +49,7 @@ public final class Text {
             return result;
         }
         for (String line : lines) {
-            result.add(mm(line));
+            result.add(renderFlexible(line));
         }
         return result;
     }

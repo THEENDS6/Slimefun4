@@ -891,7 +891,7 @@ public final class SfxElectricMachineService implements Listener {
         }
 
         SfxElectricMachineState state = currentState(instance.instanceId(), instance);
-        Component title = localization.itemName(definition.id(), Component.text(definition.title()));
+        Component title = localization.itemName(definition.id(), Text.renderFlexible(definition.title()));
         Inventory inventory = plugin.getServer().createInventory(new SfxElectricMachineHolder(instance.instanceId()), definition.menuStyle().inventorySize(), title);
         SfxElectricMachineSession session = new SfxElectricMachineSession(player.getUniqueId(), instance.instanceId(), inventory);
         sessionsByViewer.put(player.getUniqueId(), session);
@@ -1452,7 +1452,7 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private void openAutoCrafterSelection(Player player, SfxBlockInstanceRecord instance, SfxElectricMachineDefinition definition, List<SfxAutoCrafterRecipeChoice> choices, int index) {
-        Component title = localization.itemName(definition.id(), Component.text(definition.title()));
+        Component title = localization.itemName(definition.id(), Text.renderFlexible(definition.title()));
         Inventory inventory = plugin.getServer().createInventory(new SfxAutoCrafterSelectionHolder(instance.instanceId(), choices, index), 54, title);
         autoCrafterMenuRenderer.renderSelection(definition, inventory, choices, index);
         player.openInventory(inventory);
