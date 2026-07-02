@@ -580,10 +580,24 @@ tasks.register('validateSfxCompiledContent') {
             }
             flushSlot()
         }
+        def energyFiles = fileTree(new File(root, 'content/machines/energy-components')) {
+            include '**/*.yml'
+        }.files
+        if (energyFiles.size() != 21) {
+            violations << "compiled energy component file count expected 21, got ${energyFiles.size()}"
+        }
+        energyFiles.each { file ->
+            def text = file.getText('UTF-8')
+            ['components:', 'type:', 'energy:', 'capacity:', 'generation-per-tick:', 'consumption-per-tick:', 'burn-rate:', 'vanilla-fuel:', 'progress-material:', 'fuels:'].each { token ->
+                if (!text.contains(token)) {
+                    violations << "${root.toPath().relativize(file.toPath())}: missing ${token}"
+                }
+            }
+        }
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s).")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s).")
     }
 }
 

@@ -29,14 +29,22 @@ final class SfxEnergyComponentYamlLoader {
 
     Map<String, SfxEnergyComponentDefinition> load() {
         ensureBundledFile();
+        boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
         File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
         if (!file.isFile()) {
+            if (strict) {
+                throw new IllegalStateException("Energy component YAML missing: " + RESOURCE_PATH);
+            }
             return Map.of();
         }
         YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("components");
         if (root == null) {
-            plugin.getLogger().warning("No components section in " + RESOURCE_PATH + "; energy components will use Java defaults.");
+            String message = "No components section in " + RESOURCE_PATH + "; energy components will use Java defaults.";
+            if (strict) {
+                throw new IllegalStateException(message);
+            }
+            plugin.getLogger().warning(message);
             return Map.of();
         }
         Map<String, SfxEnergyComponentDefinition> result = new LinkedHashMap<>();
@@ -49,6 +57,9 @@ final class SfxEnergyComponentYamlLoader {
                 SfxEnergyComponentDefinition definition = parse(id, section);
                 result.put(definition.id(), definition);
             } catch (RuntimeException ex) {
+                if (strict) {
+                    throw new IllegalStateException("Invalid energy component YAML entry " + id, ex);
+                }
                 plugin.getLogger().log(Level.WARNING, "Invalid energy component YAML entry " + id + "; skipping it.", ex);
             }
         }
@@ -66,37 +77,70 @@ final class SfxEnergyComponentYamlLoader {
     }
 
     private SfxEnergyComponentDefinition parse(String id, ConfigurationSection section) {
-        SfxEnergyComponentType type = SfxEnergyComponentType.valueOf(section.getString("type", "CONNECTOR").trim().replace('-', '_').toUpperCase(Locale.ROOT));
-        ConfigurationSection energy = section.getConfigurationSection("energy");
-        int capacity = intValue(energy, section, "capacity", 0);
-        int generation = intValue(energy, section, "generation-per-tick", 0);
-        int consumption = intValue(energy, section, "consumption-per-tick", 0);
+        SfxEnergyComponentType type = SfxEnergyComponentType.valueOf(requiredString(section, "type").trim().replace('-', '_').toUpperCase(Locale.ROOT));
+        ConfigurationSection energy = requiredSection(section, "energy");
+        int capacity = requiredInt(energy, "capacity");
+        int generation = requiredInt(energy, "generation-per-tick");
+        int consumption = requiredInt(energy, "consumption-per-tick");
         int energyPerTick = type == SfxEnergyComponentType.CHARGER ? consumption : generation;
-        int burnRate = Math.max(1, intValue(energy, section, "burn-rate", 10));
-        boolean vanillaFuel = section.getBoolean("vanilla-fuel", false);
-        Material progressMaterial = parseMaterial(section.getString("progress-material", "REDSTONE"));
+        int burnRate = Math.max(1, requiredInt(energy, "burn-rate"));
+        boolean vanillaFuel = requiredBoolean(section, "vanilla-fuel");
+        Material progressMaterial = parseMaterial(requiredString(section, "progress-material"));
+        requiredList(section, "fuels");
         List<SfxEnergyComponentDefinition.FuelRule> fuels = parseFuelRules(section);
         return new SfxEnergyComponentDefinition(id, type, capacity, energyPerTick, 0, burnRate, vanillaFuel, progressMaterial, fuels);
     }
 
-    private int intValue(ConfigurationSection preferred, ConfigurationSection fallback, String path, int defaultValue) {
-        if (preferred != null && preferred.contains(path)) {
-            return preferred.getInt(path);
+    private ConfigurationSection requiredSection(ConfigurationSection section, String path) {
+        ConfigurationSection value = section.getConfigurationSection(path);
+        if (value == null) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
         }
-        return fallback.getInt(path, defaultValue);
+        return value;
+    }
+
+    private String requiredString(ConfigurationSection section, String path) {
+        String value = section.getString(path, null);
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return value;
+    }
+
+    private int requiredInt(ConfigurationSection section, String path) {
+        if (!section.contains(path)) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return section.getInt(path);
+    }
+
+    private boolean requiredBoolean(ConfigurationSection section, String path) {
+        if (!section.contains(path)) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return section.getBoolean(path);
+    }
+
+    private List<?> requiredList(ConfigurationSection section, String path) {
+        List<?> value = section.getList(path);
+        if (value == null) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return value;
     }
 
     private List<SfxEnergyComponentDefinition.FuelRule> parseFuelRules(ConfigurationSection section) {
         List<SfxEnergyComponentDefinition.FuelRule> fuels = new ArrayList<>();
         for (Map<?, ?> raw : section.getMapList("fuels")) {
             Object keyRaw = raw.containsKey("key") ? raw.get("key") : raw.get("id");
-            String key = string(keyRaw);
+            String key = requiredString(raw, "key", keyRaw);
             SfxElectricStack input = parseStack(raw.get("input"));
             SfxElectricStack output = parseStack(raw.get("output"));
-            int seconds = integer(raw.containsKey("seconds") ? raw.get("seconds") : 0);
-            if (key != null && input != null && seconds > 0) {
-                fuels.add(new SfxEnergyComponentDefinition.FuelRule(key, input, output, seconds));
+            int seconds = integer(requiredValue(raw, "seconds"));
+            if (input == null || seconds <= 0) {
+                throw new IllegalArgumentException("fuel rule " + key + " requires input and positive seconds");
             }
+            fuels.add(new SfxEnergyComponentDefinition.FuelRule(key, input, output, seconds));
         }
         for (Map<?, ?> raw : section.getMapList("tag-fuels")) {
             String prefix = string(raw.get("prefix"));
@@ -126,7 +170,7 @@ final class SfxEnergyComponentYamlLoader {
         if (!(raw instanceof Map<?, ?> map)) {
             return null;
         }
-        int amount = Math.max(1, integer(map.containsKey("amount") ? map.get("amount") : 1));
+        int amount = Math.max(1, integer(requiredValue(map, "amount")));
         Object item = map.get("item");
         if (item != null) {
             return SfxElectricStack.sfx(String.valueOf(item), amount);
@@ -136,6 +180,21 @@ final class SfxEnergyComponentYamlLoader {
             return SfxElectricStack.vanilla(parseMaterial(String.valueOf(material)), amount);
         }
         return null;
+    }
+
+    private static Object requiredValue(Map<?, ?> map, String key) {
+        if (!map.containsKey(key) || map.get(key) == null) {
+            throw new IllegalArgumentException("map requires " + key);
+        }
+        return map.get(key);
+    }
+
+    private static String requiredString(Map<?, ?> map, String key, Object value) {
+        String text = string(value);
+        if (text == null || text.isBlank()) {
+            throw new IllegalArgumentException("map requires " + key);
+        }
+        return text;
     }
 
     @SuppressWarnings("unchecked")
