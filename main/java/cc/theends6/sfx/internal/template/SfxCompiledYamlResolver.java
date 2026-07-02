@@ -57,6 +57,24 @@ public final class SfxCompiledYamlResolver {
                 .toList();
     }
 
+    public static List<YamlConfiguration> loadCompiledUnder(JavaPlugin plugin, String resourcePrefix) {
+        String normalizedPrefix = normalizeResource(resourcePrefix);
+        List<YamlConfiguration> result = new ArrayList<>();
+        File compiledRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY + "/" + normalizedPrefix);
+        if (compiledRoot.isDirectory()) {
+            for (File file : listYamlFiles(compiledRoot)) {
+                result.add(YamlConfiguration.loadConfiguration(file));
+            }
+        }
+        if (result.isEmpty()) {
+            result.addAll(loadBundledCompiledUnder(plugin, normalizedPrefix));
+        }
+        if (result.isEmpty() && compiledOnly(plugin)) {
+            throw new IllegalStateException("Compiled-only content runtime is enabled, but no compiled content was found under " + resourcePrefix);
+        }
+        return List.copyOf(result);
+    }
+
     private static List<YamlConfiguration> loadBundledCompiled(JavaPlugin plugin, String resourcePath) {
         String normalizedTarget = normalizeResource(resourcePath);
         return loadBundledCompiled(plugin).stream()

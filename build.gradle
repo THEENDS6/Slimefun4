@@ -457,6 +457,10 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/configurable-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/electric-recipes.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/items.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/items/10-legacy-categories.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/items/20-legacy-items.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/researches/10-legacy-slimefun.yml'))
     outputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
     classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
     mainClass.set('cc.theends6.sfx.internal.template.SfxTemplateCompilerCli')
@@ -694,6 +698,39 @@ tasks.register('validateSfxCompiledContent') {
                 }
             }
         }
+        def compiledCategoryCount = 0
+        def compiledItemCount = 0
+        def compiledResearchCount = 0
+        def compiledCategoryFile = new File(root, 'content/items/10-legacy-categories.yml')
+        if (!compiledCategoryFile.isFile()) {
+            violations << "compiled item category output missing content/items/10-legacy-categories.yml"
+        } else {
+            compiledCategoryCount = (compiledCategoryFile.getText('UTF-8') =~ /(?m)^- id:\s*/).count
+            if (compiledCategoryCount != 50) {
+                violations << "compiled item category count expected 50, got ${compiledCategoryCount}"
+            }
+        }
+        def compiledItemFile = new File(root, 'content/items/20-legacy-items.yml')
+        if (!compiledItemFile.isFile()) {
+            violations << "compiled item output missing content/items/20-legacy-items.yml"
+        } else {
+            compiledItemCount = (compiledItemFile.getText('UTF-8') =~ /(?m)^- id:\s*/).count
+            if (compiledItemCount != 556) {
+                violations << "compiled item count expected 556, got ${compiledItemCount}"
+            }
+        }
+        if (!new File(root, 'content/items/items.yml').isFile()) {
+            violations << "compiled item override output missing content/items/items.yml"
+        }
+        def compiledResearchFile = new File(root, 'content/researches/10-legacy-slimefun.yml')
+        if (!compiledResearchFile.isFile()) {
+            violations << "compiled research output missing content/researches/10-legacy-slimefun.yml"
+        } else {
+            compiledResearchCount = (compiledResearchFile.getText('UTF-8') =~ /(?m)^- id:\s*/).count
+            if (compiledResearchCount != 258) {
+                violations << "compiled research count expected 258, got ${compiledResearchCount}"
+            }
+        }
         def electricRecipeCompiledFile = new File(root, 'content/machines/electric-recipes/electric-recipes.yml')
         def electricRecipeCompiledProviderCount = 0
         def electricRecipeCompiledEntryCount = 0
@@ -797,7 +834,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, and ${electricRecipeCompiledEntryCount} electric provider recipe entries.")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, and ${compiledResearchCount} researches.")
     }
 }
 

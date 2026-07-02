@@ -6,6 +6,7 @@ import cc.theends6.sfx.api.item.SfxItemRegistry;
 import cc.theends6.sfx.api.item.SfxRecipe;
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
+import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.Text;
 import java.io.File;
@@ -67,6 +68,13 @@ public final class SfxYamlContentLoader {
     }
 
     private void loadItems() {
+        if (plugin.getConfig().getBoolean("content.runtime.compiled-only", true)) {
+            int index = 0;
+            for (YamlConfiguration yaml : SfxCompiledYamlResolver.loadCompiledUnder(plugin, "content/items")) {
+                loadYaml(yaml, "compiled item content " + (++index));
+            }
+            return;
+        }
         List<File> files = new ArrayList<>();
         File directory = new File(plugin.getDataFolder(), ITEMS_DIRECTORY);
         if (directory.isDirectory()) {
@@ -81,33 +89,36 @@ public final class SfxYamlContentLoader {
         }
         files.sort(Comparator.comparing(File::getName));
         for (File file : files) {
-            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
-            for (Map<?, ?> entry : yaml.getMapList("categories")) {
-                try {
-                    SfxItemCategory category = parseCategory(entry);
-                    if (Boolean.TRUE.equals(entry.get("replace"))) {
-                        registry.replaceCategory(category);
-                    } else {
-                        registry.registerCategory(category);
-                    }
-                } catch (Exception ex) {
-                    logger.warning("Failed to load category from YAML " + file.getName() + ": " + ex.getMessage());
+            loadYaml(YamlConfiguration.loadConfiguration(file), file.getName());
+        }
+    }
+
+    private void loadYaml(YamlConfiguration yaml, String sourceName) {
+        for (Map<?, ?> entry : yaml.getMapList("categories")) {
+            try {
+                SfxItemCategory category = parseCategory(entry);
+                if (Boolean.TRUE.equals(entry.get("replace"))) {
+                    registry.replaceCategory(category);
+                } else {
+                    registry.registerCategory(category);
                 }
+            } catch (Exception ex) {
+                logger.warning("Failed to load category from YAML " + sourceName + ": " + ex.getMessage());
             }
-            for (Map<?, ?> entry : yaml.getMapList("items")) {
-                try {
-                    if (!isFeatureEnabled(entry)) {
-                        continue;
-                    }
-                    SfxItemDefinition item = parseItem(entry);
-                    if (Boolean.TRUE.equals(entry.get("replace"))) {
-                        registry.replaceItem(item);
-                    } else {
-                        registry.registerItem(item);
-                    }
-                } catch (Exception ex) {
-                    logger.warning("Failed to load item from YAML " + file.getName() + ": " + ex.getMessage());
+        }
+        for (Map<?, ?> entry : yaml.getMapList("items")) {
+            try {
+                if (!isFeatureEnabled(entry)) {
+                    continue;
                 }
+                SfxItemDefinition item = parseItem(entry);
+                if (Boolean.TRUE.equals(entry.get("replace"))) {
+                    registry.replaceItem(item);
+                } else {
+                    registry.registerItem(item);
+                }
+            } catch (Exception ex) {
+                logger.warning("Failed to load item from YAML " + sourceName + ": " + ex.getMessage());
             }
         }
     }
