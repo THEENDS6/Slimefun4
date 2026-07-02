@@ -596,6 +596,9 @@ tasks.register('validateSfxCompiledContent') {
             if (recipe.scalarSlot) {
                 violations << "${rel}: recipe ${recipe.key} contains scalar recipe slot/output shorthand"
             }
+            if (recipe.fields.contains('note')) {
+                violations << "${rel}: recipe ${recipe.key} contains literal note; use note-key"
+            }
         }
         int recipeEntryCount = 0
         recipeFiles.each { file ->
@@ -815,10 +818,13 @@ tasks.register('validateSfxCompiledContent') {
             }
             def itemRecipeCount = (itemText =~ /(?m)^  recipes:\s*/).count
             def itemRecipeTypeCount = (itemText =~ /(?m)^  - type:\s*/).count
-            def itemRecipeNoteCount = (itemText =~ /(?m)^    note:\s*/).count
+            def itemRecipeNoteCount = (itemText =~ /(?m)^    note-key:\s*/).count
             def itemRecipeMatrixCount = (itemText =~ /(?m)^    matrix:\s*/).count
             if (itemRecipeTypeCount != itemRecipeCount || itemRecipeNoteCount != itemRecipeCount || itemRecipeMatrixCount != itemRecipeCount) {
-                violations << "compiled item guide recipes must explicitly include type/note/matrix on every entry: recipes=${itemRecipeCount}, type=${itemRecipeTypeCount}, note=${itemRecipeNoteCount}, matrix=${itemRecipeMatrixCount}"
+                violations << "compiled item guide recipes must explicitly include type/note-key/matrix on every entry: recipes=${itemRecipeCount}, type=${itemRecipeTypeCount}, note-key=${itemRecipeNoteCount}, matrix=${itemRecipeMatrixCount}"
+            }
+            if ((itemText =~ /(?m)^    note:\s*/).find()) {
+                violations << "compiled item guide recipes must not contain literal note fields"
             }
             def itemGuideMatrixSlotCount = (itemText =~ /(?m)^    - type:\s*/).count
             def itemGuideMatrixAmountCount = (itemText =~ /(?m)^      amount:\s*/).count

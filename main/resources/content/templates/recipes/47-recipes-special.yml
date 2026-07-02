@@ -8,7 +8,7 @@ recipes:
     operation: shaped
     guide-order: 1
     source: slimefun-rc37
-    note: Multiblock structure.
+    note-key: recipe-notes.legacy.multiblock-structure
     matrix:
     - empty
     - empty
@@ -29,7 +29,7 @@ recipes:
     operation: shaped
     guide-order: 2
     source: slimefun-rc37
-    note: Multiblock structure.
+    note-key: recipe-notes.legacy.multiblock-structure
     matrix:
     - empty
     - empty
@@ -50,7 +50,7 @@ recipes:
     operation: shaped
     guide-order: 3
     source: slimefun-rc37
-    note: Obtained from Piglin bartering.
+    note-key: recipe-notes.legacy.piglin-bartering
     matrix:
     - empty
     - empty
@@ -305,7 +305,7 @@ recipes:
     operation: shaped
     guide-order: 20
     source: slimefun-rc37
-    note: Dropped by Iron Golems.
+    note-key: recipe-notes.legacy.iron-golem-drop
     matrix:
     - empty
     - empty

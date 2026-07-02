@@ -4194,6 +4194,13 @@ categories:
   sf.cargo:
     name: '&fCargo'
 recipes: {}
+recipe-notes:
+  display:
+    enchanted-golden-apple: <gray>Crafted in an Enhanced Crafting Table.</gray>
+  legacy:
+    multiblock-structure: Multiblock structure.
+    piglin-bartering: Obtained from Piglin bartering.
+    iron-golem-drop: Dropped by Iron Golems.
 materials:
   crafting_table: Crafting Table
   dispenser: Dispenser
