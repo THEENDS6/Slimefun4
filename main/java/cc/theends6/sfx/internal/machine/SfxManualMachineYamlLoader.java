@@ -44,15 +44,24 @@ public final class SfxManualMachineYamlLoader {
     }
 
     public int loadInto(DefaultManualMachineRegistry registry) {
+        boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
         File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
         if (!file.isFile()) {
-            plugin.getLogger().warning("Manual machine YAML missing: " + RESOURCE_PATH + "; no manual machines loaded.");
+            String message = "Manual machine YAML missing: " + RESOURCE_PATH + "; no manual machines loaded.";
+            if (strict) {
+                throw new IllegalStateException(message);
+            }
+            plugin.getLogger().warning(message);
             return 0;
         }
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
-            plugin.getLogger().warning("No machines section in " + RESOURCE_PATH + "; no manual machines loaded.");
+            String message = "No machines section in " + RESOURCE_PATH + "; no manual machines loaded.";
+            if (strict) {
+                throw new IllegalStateException(message);
+            }
+            plugin.getLogger().warning(message);
             return 0;
         }
         int loaded = 0;
@@ -65,6 +74,9 @@ public final class SfxManualMachineYamlLoader {
                 registry.registerMachine(parse(id, section));
                 loaded++;
             } catch (RuntimeException ex) {
+                if (strict) {
+                    throw new IllegalStateException("Invalid manual machine YAML entry " + id, ex);
+                }
                 plugin.getLogger().log(Level.WARNING, "Invalid manual machine YAML entry " + id + "; skipping it.", ex);
             }
         }
@@ -73,15 +85,30 @@ public final class SfxManualMachineYamlLoader {
     }
 
     private ManualMachineDefinition parse(String id, ConfigurationSection section) {
-        Component name = Text.renderFlexible(section.getString("name", id));
-        Material icon = parseMaterial(section.getString("icon", "CRAFTING_TABLE"));
+        Component name = Text.renderFlexible(requiredString(section, "name"));
+        Material icon = parseMaterial(requiredString(section, "icon"));
         Material[] pattern = parsePattern(section.getList("pattern"));
-        Material[] displayPattern = section.contains("display-pattern") ? parsePattern(section.getList("display-pattern")) : pattern;
-        BlockFace triggerFace = parseFace(section.getString("trigger-face", "SELF"));
-        BlockFace inventoryFace = parseFace(section.getString("inventory-face", "SELF"));
-        ManualMachineOperation operation = ManualMachineOperation.valueOf(section.getString("operation", "SINGLE_INPUT").trim().replace('-', '_').toUpperCase(Locale.ROOT));
-        boolean deployable = section.getBoolean("deployable", true);
+        Material[] displayPattern = parsePattern(section.getList("display-pattern"));
+        BlockFace triggerFace = parseFace(requiredString(section, "trigger-face"));
+        BlockFace inventoryFace = parseFace(requiredString(section, "inventory-face"));
+        ManualMachineOperation operation = ManualMachineOperation.valueOf(requiredString(section, "operation").trim().replace('-', '_').toUpperCase(Locale.ROOT));
+        boolean deployable = requiredBoolean(section, "deployable");
         return new ManualMachineDefinition(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, stringSet(section.getList("tags")));
+    }
+
+    private String requiredString(ConfigurationSection section, String path) {
+        String value = section.getString(path, null);
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("manual machine field is required: " + path);
+        }
+        return value;
+    }
+
+    private boolean requiredBoolean(ConfigurationSection section, String path) {
+        if (!section.contains(path)) {
+            throw new IllegalArgumentException("manual machine field is required: " + path);
+        }
+        return section.getBoolean(path);
     }
 
     private Set<String> stringSet(List<?> raw) {

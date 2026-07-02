@@ -45,12 +45,15 @@ public final class SfxRecipeYamlLoader {
     }
 
     public void loadInto(DefaultSfxRecipeRegistry registry) {
-        List<File> files = new ArrayList<>();
-        File recipeRoot = new File(plugin.getDataFolder(), "content/recipes");
-        collectYaml(recipeRoot, files);
-        files.sort(Comparator.comparing(File::getPath));
-        for (File file : files) {
-            loadYamlInto(registry, YamlConfiguration.loadConfiguration(file), file.getName());
+        boolean compiledOnly = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
+        if (!compiledOnly) {
+            List<File> files = new ArrayList<>();
+            File recipeRoot = new File(plugin.getDataFolder(), "content/recipes");
+            collectYaml(recipeRoot, files);
+            files.sort(Comparator.comparing(File::getPath));
+            for (File file : files) {
+                loadYamlInto(registry, YamlConfiguration.loadConfiguration(file), file.getName(), false);
+            }
         }
 
         List<File> compiledFiles = new ArrayList<>();
@@ -58,21 +61,21 @@ public final class SfxRecipeYamlLoader {
         compiledFiles.sort(Comparator.comparing(File::getPath));
         if (compiledFiles.isEmpty()) {
             List<YamlConfiguration> bundledCompiled = SfxCompiledYamlResolver.loadBundledCompiledUnder(plugin, "content/recipes");
-            if (bundledCompiled.isEmpty() && plugin.getConfig().getBoolean("content.runtime.compiled-only", true)) {
+            if (bundledCompiled.isEmpty() && compiledOnly) {
                 throw new IllegalStateException("Compiled-only content runtime is enabled, but no compiled recipes were found.");
             }
             int index = 0;
             for (YamlConfiguration yaml : bundledCompiled) {
-                loadYamlInto(registry, yaml, "bundled compiled recipe " + (++index));
+                loadYamlInto(registry, yaml, "bundled compiled recipe " + (++index), true);
             }
         } else {
             for (File file : compiledFiles) {
-                loadYamlInto(registry, YamlConfiguration.loadConfiguration(file), file.getName());
+                loadYamlInto(registry, YamlConfiguration.loadConfiguration(file), file.getName(), true);
             }
         }
     }
 
-    private void loadYamlInto(DefaultSfxRecipeRegistry registry, YamlConfiguration yaml, String sourceName) {
+    private void loadYamlInto(DefaultSfxRecipeRegistry registry, YamlConfiguration yaml, String sourceName, boolean strict) {
         for (Map<?, ?> entry : recipeEntries(yaml)) {
             try {
                 if (!isFeatureEnabled(entry)) {
@@ -80,6 +83,9 @@ public final class SfxRecipeYamlLoader {
                 }
                 registry.register(parseRecipe(entry));
             } catch (Exception ex) {
+                if (strict) {
+                    throw new IllegalStateException("Failed to load compiled recipe from YAML " + sourceName + ": " + ex.getMessage(), ex);
+                }
                 logger.warning("Failed to load recipe from YAML " + sourceName + ": " + ex.getMessage());
             }
         }
@@ -140,8 +146,8 @@ public final class SfxRecipeYamlLoader {
 
     private SfxRecipeDefinition parseRecipe(Map<?, ?> entry) {
         String id = string(entry.get("id"));
-        String recipeType = string(orDefault(entry, "recipe-type", orDefault(entry, "machine", "unknown")));
-        SfxRecipeOperation operation = SfxRecipeOperation.parse(string(orDefault(entry, "operation", "shaped")));
+        String recipeType = string(entry.get("recipe-type"));
+        SfxRecipeOperation operation = SfxRecipeOperation.parse(string(entry.get("operation")));
 
         SfxRecipeDefinition.Builder builder = SfxRecipeDefinition.builder(id, recipeType, operation)
                 .guideOrder(integer(orDefault(entry, "guide-order", 0)))

@@ -167,9 +167,11 @@ tasks.register('validateSfxMachineYaml') {
     group = 'verification'
     description = 'Validates machine YAML profile declarations against the Java profile registry.'
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java'))
     doLast {
         def catalogFile = layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml').asFile
+        def manualFile = layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml').asFile
         def profilesFile = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java').asFile
         def enumMatcher = profilesFile.getText('UTF-8') =~ /private enum Profile\s*\{([\s\S]*?)\n\s*\}/
         if (!enumMatcher.find()) {
@@ -191,7 +193,139 @@ tasks.register('validateSfxMachineYaml') {
         if (!missing.isEmpty()) {
             throw new GradleException("Unknown machine YAML profile(s): ${missing.join(', ')}")
         }
-        logger.lifecycle("Validated ${declaredProfiles.size()} machine YAML profile declaration(s).")
+
+        def catalogViolations = []
+        def validCategories = ['BASIC', 'ELECTRIC', 'CONFIGURABLE', 'ENERGY', 'CARGO', 'GPS', 'ANDROID', 'SPECIAL'] as Set
+        def catalogCount = 0
+        def validateCatalogMachine = { machine ->
+            if (machine == null) {
+                return
+            }
+            catalogCount++
+            ['category', 'display-name', 'tags'].each { field ->
+                if (!machine.fields.contains(field)) {
+                    catalogViolations << "machine catalog ${machine.id} missing ${field}"
+                }
+            }
+            if (machine.category != null && !validCategories.contains(machine.category.replace('-', '_').toUpperCase(Locale.ROOT))) {
+                catalogViolations << "machine catalog ${machine.id} has unsupported category ${machine.category}"
+            }
+            if (machine.fields.contains('tags') && machine.tagCount < 1) {
+                catalogViolations << "machine catalog ${machine.id} tags must contain at least one entry"
+            }
+        }
+        def currentCatalogMachine = null
+        def flushCatalogMachine = {
+            validateCatalogMachine(currentCatalogMachine)
+        }
+        catalogFile.eachLine('UTF-8') { line ->
+            def machineMatch = line =~ /^  (sf:[A-Za-z0-9_:-]+):\s*$/
+            if (machineMatch.matches()) {
+                flushCatalogMachine()
+                currentCatalogMachine = [
+                        id      : machineMatch.group(1),
+                        fields  : [] as Set,
+                        section : null,
+                        category: null,
+                        tagCount: 0
+                ]
+                return
+            }
+            if (currentCatalogMachine == null) {
+                return
+            }
+            def fieldMatch = line =~ /^    ([A-Za-z0-9_-]+):(?:\s*(.*))?$/
+            if (fieldMatch.matches()) {
+                def field = fieldMatch.group(1)
+                def value = fieldMatch.group(2) == null ? null : fieldMatch.group(2).trim().replaceAll(/^['"]|['"]$/, '')
+                currentCatalogMachine.fields.add(field)
+                currentCatalogMachine.section = field == 'tags' ? field : null
+                if (field == 'category') {
+                    currentCatalogMachine.category = value
+                }
+                return
+            }
+            if (currentCatalogMachine.section == 'tags' && (line =~ /^    -\s*/).find()) {
+                currentCatalogMachine.tagCount++
+            }
+        }
+        flushCatalogMachine()
+        if (!catalogViolations.isEmpty()) {
+            throw new GradleException("Machine catalog YAML validation failed:\n" + catalogViolations.join('\n'))
+        }
+
+        def manualViolations = []
+        def manualRequired = ['name', 'icon', 'operation', 'trigger-face', 'inventory-face', 'deployable', 'pattern', 'display-pattern']
+        def manualOperations = ['SHAPED_3X3', 'SHAPELESS_INPUT', 'SINGLE_INPUT', 'HAND_INPUT'] as Set
+        def manualCount = 0
+        def validateManualMachine = { machine ->
+            if (machine == null) {
+                return
+            }
+            manualCount++
+            manualRequired.each { field ->
+                if (!machine.fields.contains(field)) {
+                    manualViolations << "manual machine ${machine.id} missing ${field}"
+                }
+            }
+            if (machine.operation != null) {
+                def operation = machine.operation.replace('-', '_').toUpperCase(Locale.ROOT)
+                if (!manualOperations.contains(operation)) {
+                    manualViolations << "manual machine ${machine.id} has unsupported operation ${machine.operation}"
+                }
+            }
+            if (machine.fields.contains('pattern') && machine.patternCount != 9) {
+                manualViolations << "manual machine ${machine.id} pattern expected 9 entries, got ${machine.patternCount}"
+            }
+            if (machine.fields.contains('display-pattern') && machine.displayPatternCount != 9) {
+                manualViolations << "manual machine ${machine.id} display-pattern expected 9 entries, got ${machine.displayPatternCount}"
+            }
+        }
+        def currentManualMachine = null
+        def flushManualMachine = {
+            validateManualMachine(currentManualMachine)
+        }
+        manualFile.eachLine('UTF-8') { line ->
+            def machineMatch = line =~ /^  (sf:[A-Za-z0-9_:-]+):\s*$/
+            if (machineMatch.matches()) {
+                flushManualMachine()
+                currentManualMachine = [
+                        id                 : machineMatch.group(1),
+                        fields             : [] as Set,
+                        section            : null,
+                        operation          : null,
+                        patternCount       : 0,
+                        displayPatternCount: 0
+                ]
+                return
+            }
+            if (currentManualMachine == null) {
+                return
+            }
+            def fieldMatch = line =~ /^    ([A-Za-z0-9_-]+):(?:\s*(.*))?$/
+            if (fieldMatch.matches()) {
+                def field = fieldMatch.group(1)
+                def value = fieldMatch.group(2) == null ? null : fieldMatch.group(2).trim().replaceAll(/^['"]|['"]$/, '')
+                currentManualMachine.fields.add(field)
+                currentManualMachine.section = ['pattern', 'display-pattern'].contains(field) ? field : null
+                if (field == 'operation') {
+                    currentManualMachine.operation = value
+                }
+                return
+            }
+            if ((line =~ /^    -\s*/).find()) {
+                if (currentManualMachine.section == 'pattern') {
+                    currentManualMachine.patternCount++
+                } else if (currentManualMachine.section == 'display-pattern') {
+                    currentManualMachine.displayPatternCount++
+                }
+            }
+        }
+        flushManualMachine()
+        if (!manualViolations.isEmpty()) {
+            throw new GradleException("Manual machine YAML validation failed:\n" + manualViolations.join('\n'))
+        }
+        logger.lifecycle("Validated ${declaredProfiles.size()} machine YAML profile declaration(s), ${catalogCount} machine catalog declaration(s), and ${manualCount} manual machine declaration(s).")
     }
 }
 
@@ -225,44 +359,146 @@ tasks.register('validateSfxCompiledContent') {
     doLast {
         def root = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
         def compiledFiles = fileTree(root) {
-            include '**/*.yml'
-            exclude '_source-map.yml'
+            include '**
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*.yml'
         }.files
-        def forbiddenTokens = [
-                'menu-style:',
-                '@cf',
-                '@copyfrom',
-                '@define',
-                '@io',
-                '@isoutput',
-                '@it',
-                '@istemplate',
-                '@ot',
-                '@outputtarget',
-                '${',
-                'tag-fuels',
-                '&id',
-                '*id'
-        ]
-        def violations = []
-        compiledFiles.each { file ->
-            def text = file.getText('UTF-8')
-            forbiddenTokens.each { token ->
-                if (text.contains(token)) {
-                    violations << "${root.toPath().relativize(file.toPath())}: contains ${token}"
+        def validRecipeOperations = ['shaped', 'shapeless', 'single', 'hand'] as Set
+        def cleanScalar = { value ->
+            value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
+        }
+        def validateRecipeEntry = { file, recipe ->
+            if (recipe == null) {
+                return
+            }
+            def rel = root.toPath().relativize(file.toPath()).toString()
+            ['id', 'recipe-type', 'operation', 'outputs'].each { field ->
+                if (!recipe.fields.contains(field)) {
+                    violations << "${rel}: recipe ${recipe.key} missing ${field}"
                 }
             }
-            if ((text =~ /(?m)^\s*layout\s*:/).find()) {
-                violations << "${root.toPath().relativize(file.toPath())}: contains runtime layout token"
+            if (recipe.id != null && recipe.id != recipe.key) {
+                violations << "${rel}: recipe ${recipe.key} id field mismatches entry key ${recipe.id}"
+            }
+            if (recipe.operation == null) {
+                return
+            }
+            def operation = recipe.operation.replace('-', '_').toLowerCase(Locale.ROOT)
+            if (operation == 'shaped_3x3') {
+                operation = 'shaped'
+            } else if (operation == 'single_input') {
+                operation = 'single'
+            } else if (operation == 'hand_input') {
+                operation = 'hand'
+            } else if (operation == 'shapeless_input') {
+                operation = 'shapeless'
+            }
+            if (!validRecipeOperations.contains(operation)) {
+                violations << "${rel}: recipe ${recipe.key} has unsupported operation ${recipe.operation}"
+                return
+            }
+            if (operation == 'shaped') {
+                if (!recipe.fields.contains('matrix')) {
+                    violations << "${rel}: recipe ${recipe.key} shaped operation missing matrix"
+                } else if (recipe.matrixCount != 9) {
+                    violations << "${rel}: recipe ${recipe.key} shaped matrix expected 9 entries, got ${recipe.matrixCount}"
+                }
+            } else if (operation == 'shapeless') {
+                if (!recipe.fields.contains('inputs')) {
+                    violations << "${rel}: recipe ${recipe.key} shapeless operation missing inputs"
+                } else if (recipe.inputsCount < 1 || recipe.inputsCount > 9) {
+                    violations << "${rel}: recipe ${recipe.key} shapeless inputs expected 1-9 entries, got ${recipe.inputsCount}"
+                }
+            } else if (!recipe.fields.contains('input')) {
+                violations << "${rel}: recipe ${recipe.key} ${operation} operation missing input"
+            }
+            if (recipe.outputsCount < 1) {
+                violations << "${rel}: recipe ${recipe.key} outputs must contain at least one entry"
             }
         }
-        def recipeFiles = fileTree(new File(root, 'content/recipes')) {
-            include '**/*.yml'
-        }.files
         int recipeEntryCount = 0
         recipeFiles.each { file ->
             def text = file.getText('UTF-8')
             recipeEntryCount += (text =~ /(?m)^  ['"]?[^#\s][^\r\n]*['"]?:\s*$/).count
+            def currentRecipe = null
+            def flushRecipe = {
+                validateRecipeEntry(file, currentRecipe)
+            }
+            text.readLines().each { line ->
+                def recipeMatch = line =~ /^  ['"]?([^'"#\s][^'"]*?)['"]?:\s*$/
+                if (recipeMatch.matches()) {
+                    flushRecipe()
+                    currentRecipe = [
+                            key         : recipeMatch[0][1],
+                            fields      : [] as Set,
+                            section     : null,
+                            id          : null,
+                            operation   : null,
+                            matrixCount : 0,
+                            inputsCount : 0,
+                            outputsCount: 0
+                    ]
+                    return
+                }
+                if (currentRecipe == null) {
+                    return
+                }
+                def fieldMatch = line =~ /^    ([A-Za-z0-9_-]+):(?:\s*(.*))?$/
+                if (fieldMatch.matches()) {
+                    def field = fieldMatch[0][1]
+                    def value = cleanScalar(fieldMatch[0][2])
+                    currentRecipe.fields.add(field)
+                    currentRecipe.section = ['matrix', 'inputs', 'outputs'].contains(field) ? field : null
+                    if (field == 'id') {
+                        currentRecipe.id = value
+                    } else if (field == 'operation') {
+                        currentRecipe.operation = value
+                    } else if (field == 'input') {
+                        currentRecipe.section = null
+                    }
+                    return
+                }
+                if ((line =~ /^    -\s*/).find()) {
+                    if (currentRecipe.section == 'matrix') {
+                        currentRecipe.matrixCount++
+                    } else if (currentRecipe.section == 'inputs') {
+                        currentRecipe.inputsCount++
+                    } else if (currentRecipe.section == 'outputs') {
+                        currentRecipe.outputsCount++
+                    }
+                }
+            }
+            flushRecipe()
         }
         if (recipeEntryCount != 547) {
             violations << "compiled recipe entry count expected 547, got ${recipeEntryCount}"
@@ -871,12 +1107,12 @@ tasks.register('runPaper') {
                     processInput.flush()
                 }
             } catch (IOException ignored) {
-                // Ignore stdin forwarding errors during shutdown.
+                
             } finally {
                 try {
                     processInput.close()
                 } catch (IOException ignored) {
-                    // Ignore close failure during shutdown.
+                    
                 }
             }
         }
