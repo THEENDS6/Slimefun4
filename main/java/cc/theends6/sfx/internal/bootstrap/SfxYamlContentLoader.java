@@ -272,7 +272,8 @@ public final class SfxYamlContentLoader {
 
     private SfxRecipe parseDisplayRecipe(Map<?, ?> entry) {
         String type = string(required(entry, "type"));
-        String note = string(required(entry, "note"));
+        rejectLegacyText(entry, "note", "note-key");
+        String note = requiredLanguageString(string(required(entry, "note-key")));
         List<SfxRecipeSlot> matrix = parseMatrix(entry.get("matrix"));
         return SfxRecipe.shaped(type, matrix, Text.mm(note));
     }

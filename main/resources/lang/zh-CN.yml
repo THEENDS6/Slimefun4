@@ -4151,6 +4151,13 @@ guide:
       name: <gold>打火石</gold>
       lore: <gray>用于点燃这个多方块机器。</gray>
 recipes: {}
+recipe-notes:
+  display:
+    enchanted-golden-apple: <gray>Crafted in an Enhanced Crafting Table.</gray>
+  legacy:
+    multiblock-structure: Multiblock structure.
+    piglin-bartering: Obtained from Piglin bartering.
+    iron-golem-drop: Dropped by Iron Golems.
 materials:
   crafting_table: 工作台
   dispenser: 发射器

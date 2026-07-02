@@ -647,7 +647,7 @@ items:
   lore-key: items.sf.enchanted_golden_apple.lore
   recipes:
   - type: sf:enhanced_crafting_table
-    note: <gray>Crafted in an Enhanced Crafting Table.</gray>
+    note-key: recipe-notes.display.enchanted-golden-apple
     matrix:
     - type: sfx
       id: sf:gold_24k_block

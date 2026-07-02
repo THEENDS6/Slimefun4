@@ -34,7 +34,7 @@ final class SfxContentBootstrapper {
         manualMachineYamlLoader.ensureDefaultFile(plugin.syncBundledRecipeFiles());
         manualMachineYamlLoader.loadInto(api.internalManualMachines());
 
-        SfxRecipeYamlLoader recipeYamlLoader = new SfxRecipeYamlLoader(plugin);
+        SfxRecipeYamlLoader recipeYamlLoader = new SfxRecipeYamlLoader(plugin, plugin.localization);
         recipeYamlLoader.ensureDefaultFiles(plugin.syncBundledRecipeFiles());
         DefaultSfxRecipeRegistry recipeRegistry = new DefaultSfxRecipeRegistry();
         recipeYamlLoader.loadInto(recipeRegistry);

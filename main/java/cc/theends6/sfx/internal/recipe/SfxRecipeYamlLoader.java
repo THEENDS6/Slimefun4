@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.recipe;
 
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
+import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,10 +32,12 @@ public final class SfxRecipeYamlLoader {
     );
 
     private final JavaPlugin plugin;
+    private final SfxLocalization localization;
     private final Logger logger;
 
-    public SfxRecipeYamlLoader(JavaPlugin plugin) {
+    public SfxRecipeYamlLoader(JavaPlugin plugin, SfxLocalization localization) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
+        this.localization = Objects.requireNonNull(localization, "localization");
         this.logger = plugin.getLogger();
     }
 
@@ -154,7 +157,7 @@ public final class SfxRecipeYamlLoader {
                 .matchPriority(entry.containsKey("match-priority") ? integer(entry.get("match-priority")) : null)
                 .durationTicks(entry.containsKey("time") ? integer(entry.get("time")) : null)
                 .source(requiredString(entry, "source"))
-                .note(optionalString(entry.get("note")))
+                .note(optionalNote(entry))
                 .runtimeEnabled(requiredBoolean(entry, "runtime"));
 
         List<String> runtimeMachines = stringList(entry.get("runtime-machines"));
@@ -227,6 +230,20 @@ public final class SfxRecipeYamlLoader {
             return SfxRecipeSlot.vanilla(parseMaterial(requiredString(map, "material")), amount);
         }
         throw new IllegalArgumentException("unsupported recipe slot type: " + type);
+    }
+
+    private String optionalNote(Map<?, ?> entry) {
+        if (entry.containsKey("note")) {
+            throw new IllegalArgumentException("literal note is not allowed in compiled recipe content; use note-key");
+        }
+        String key = optionalString(entry.get("note-key"));
+        if (key == null) {
+            return null;
+        }
+        if (!localization.has(key)) {
+            throw new IllegalArgumentException("language key missing: " + key);
+        }
+        return localization.requiredText(key);
     }
 
     private List<SfxRecipeOutputDefinition> parseOutputs(Object raw, boolean random) {
