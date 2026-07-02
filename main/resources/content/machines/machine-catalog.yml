@@ -1,6 +1,9 @@
+machines:
   sf:enhanced_crafting_table:
     category: BASIC
     display-name: sf:enhanced_crafting_table
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -9,6 +12,8 @@
   sf:grind_stone:
     category: BASIC
     display-name: sf:grind_stone
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -16,6 +21,8 @@
   sf:compressor:
     category: BASIC
     display-name: sf:compressor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -23,6 +30,8 @@
   sf:ore_crusher:
     category: BASIC
     display-name: sf:ore_crusher
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -30,6 +39,8 @@
   sf:ore_washer:
     category: BASIC
     display-name: sf:ore_washer
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -37,6 +48,8 @@
   sf:armor_forge:
     category: BASIC
     display-name: sf:armor_forge
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -45,6 +58,8 @@
   sf:makeshift_smeltery:
     category: BASIC
     display-name: sf:makeshift_smeltery
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -52,6 +67,8 @@
   sf:smeltery:
     category: BASIC
     display-name: sf:smeltery
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -59,6 +76,8 @@
   sf:pressure_chamber:
     category: BASIC
     display-name: sf:pressure_chamber
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -66,6 +85,8 @@
   sf:magic_workbench:
     category: BASIC
     display-name: sf:magic_workbench
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -74,6 +95,8 @@
   sf:table_saw:
     category: BASIC
     display-name: sf:table_saw
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -83,6 +106,8 @@
   sf:juicer:
     category: BASIC
     display-name: sf:juicer
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -90,6 +115,8 @@
   sf:automated_panning_machine:
     category: BASIC
     display-name: sf:automated_panning_machine
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -99,6 +126,8 @@
   sf:composter:
     category: BASIC
     display-name: sf:composter
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -106,6 +135,8 @@
   sf:crucible:
     category: BASIC
     display-name: sf:crucible
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -113,6 +144,8 @@
   sf:output_chest:
     category: BASIC
     display-name: sf:output_chest
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -120,6 +153,8 @@
   sf:ignition_chamber:
     category: BASIC
     display-name: sf:ignition_chamber
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -127,6 +162,8 @@
   sf:enhanced_furnace:
     category: BASIC
     display-name: sf:enhanced_furnace
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -134,6 +171,8 @@
   sf:enhanced_furnace_2:
     category: BASIC
     display-name: sf:enhanced_furnace_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -141,6 +180,8 @@
   sf:enhanced_furnace_3:
     category: BASIC
     display-name: sf:enhanced_furnace_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -148,6 +189,8 @@
   sf:enhanced_furnace_4:
     category: BASIC
     display-name: sf:enhanced_furnace_4
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -155,6 +198,8 @@
   sf:enhanced_furnace_5:
     category: BASIC
     display-name: sf:enhanced_furnace_5
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -162,6 +207,8 @@
   sf:enhanced_furnace_6:
     category: BASIC
     display-name: sf:enhanced_furnace_6
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -169,6 +216,8 @@
   sf:enhanced_furnace_7:
     category: BASIC
     display-name: sf:enhanced_furnace_7
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -176,6 +225,8 @@
   sf:enhanced_furnace_8:
     category: BASIC
     display-name: sf:enhanced_furnace_8
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -183,6 +234,8 @@
   sf:enhanced_furnace_9:
     category: BASIC
     display-name: sf:enhanced_furnace_9
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -190,6 +243,8 @@
   sf:enhanced_furnace_10:
     category: BASIC
     display-name: sf:enhanced_furnace_10
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -197,6 +252,8 @@
   sf:enhanced_furnace_11:
     category: BASIC
     display-name: sf:enhanced_furnace_11
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -204,6 +261,8 @@
   sf:reinforced_furnace:
     category: BASIC
     display-name: sf:reinforced_furnace
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -211,6 +270,8 @@
   sf:carbonado_edged_furnace:
     category: BASIC
     display-name: sf:carbonado_edged_furnace
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - basic
@@ -218,48 +279,64 @@
   sf:electric_furnace:
     category: ELECTRIC
     display-name: sf:electric_furnace
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_furnace_2:
     category: ELECTRIC
     display-name: sf:electric_furnace_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_furnace_3:
     category: ELECTRIC
     display-name: sf:electric_furnace_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_ore_grinder:
     category: ELECTRIC
     display-name: sf:electric_ore_grinder
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_ore_grinder_2:
     category: ELECTRIC
     display-name: sf:electric_ore_grinder_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_ore_grinder_3:
     category: ELECTRIC
     display-name: sf:electric_ore_grinder_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:auto_drier:
     category: ELECTRIC
     display-name: sf:auto_drier
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:auto_brewer:
     category: ELECTRIC
     display-name: sf:auto_brewer
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -268,6 +345,8 @@
   sf:auto_brewer_2:
     category: ELECTRIC
     display-name: sf:auto_brewer_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -276,6 +355,8 @@
   sf:vanilla_auto_crafter:
     category: ELECTRIC
     display-name: sf:vanilla_auto_crafter
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -284,6 +365,8 @@
   sf:enhanced_auto_crafter:
     category: ELECTRIC
     display-name: sf:enhanced_auto_crafter
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -292,6 +375,8 @@
   sf:armor_auto_crafter:
     category: ELECTRIC
     display-name: sf:armor_auto_crafter
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -300,150 +385,200 @@
   sf:electric_ingot_factory:
     category: ELECTRIC
     display-name: sf:electric_ingot_factory
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_ingot_factory_2:
     category: ELECTRIC
     display-name: sf:electric_ingot_factory_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_ingot_factory_3:
     category: ELECTRIC
     display-name: sf:electric_ingot_factory_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:carbon_press:
     category: ELECTRIC
     display-name: sf:carbon_press
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:carbon_press_2:
     category: ELECTRIC
     display-name: sf:carbon_press_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:carbon_press_3:
     category: ELECTRIC
     display-name: sf:carbon_press_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_press:
     category: ELECTRIC
     display-name: sf:electric_press
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_press_2:
     category: ELECTRIC
     display-name: sf:electric_press_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electrified_crucible:
     category: ELECTRIC
     display-name: sf:electrified_crucible
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electrified_crucible_2:
     category: ELECTRIC
     display-name: sf:electrified_crucible_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electrified_crucible_3:
     category: ELECTRIC
     display-name: sf:electrified_crucible_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:freezer:
     category: ELECTRIC
     display-name: sf:freezer
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:freezer_2:
     category: ELECTRIC
     display-name: sf:freezer_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:freezer_3:
     category: ELECTRIC
     display-name: sf:freezer_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:heated_pressure_chamber:
     category: ELECTRIC
     display-name: sf:heated_pressure_chamber
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:heated_pressure_chamber_2:
     category: ELECTRIC
     display-name: sf:heated_pressure_chamber_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:food_fabricator:
     category: ELECTRIC
     display-name: sf:food_fabricator
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:food_fabricator_2:
     category: ELECTRIC
     display-name: sf:food_fabricator_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:food_composter:
     category: ELECTRIC
     display-name: sf:food_composter
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:food_composter_2:
     category: ELECTRIC
     display-name: sf:food_composter_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:refinery:
     category: ELECTRIC
     display-name: sf:refinery
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_ingot_pulverizer:
     category: ELECTRIC
     display-name: sf:electric_ingot_pulverizer
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_smeltery:
     category: ELECTRIC
     display-name: sf:electric_smeltery
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_smeltery_2:
     category: ELECTRIC
     display-name: sf:electric_smeltery_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:auto_enchanter:
     category: ELECTRIC
     display-name: sf:auto_enchanter
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -452,6 +587,8 @@
   sf:auto_enchanter_2:
     category: ELECTRIC
     display-name: sf:auto_enchanter_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -460,6 +597,8 @@
   sf:auto_disenchanter:
     category: ELECTRIC
     display-name: sf:auto_disenchanter
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -468,6 +607,8 @@
   sf:auto_disenchanter_2:
     category: ELECTRIC
     display-name: sf:auto_disenchanter_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -476,6 +617,8 @@
   sf:book_binder:
     category: ELECTRIC
     display-name: sf:book_binder
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -484,6 +627,8 @@
   sf:auto_anvil:
     category: ELECTRIC
     display-name: sf:auto_anvil
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -492,6 +637,8 @@
   sf:auto_anvil_2:
     category: ELECTRIC
     display-name: sf:auto_anvil_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -500,6 +647,8 @@
   sf:produce_collector:
     category: ELECTRIC
     display-name: sf:produce_collector
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -508,6 +657,8 @@
   sf:auto_breeder:
     category: ELECTRIC
     display-name: sf:auto_breeder
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -516,6 +667,8 @@
   sf:animal_growth_accelerator:
     category: ELECTRIC
     display-name: sf:animal_growth_accelerator
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -524,6 +677,8 @@
   sf:crop_growth_accelerator:
     category: ELECTRIC
     display-name: sf:crop_growth_accelerator
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -532,6 +687,8 @@
   sf:crop_growth_accelerator_2:
     category: ELECTRIC
     display-name: sf:crop_growth_accelerator_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -540,6 +697,8 @@
   sf:tree_growth_accelerator:
     category: ELECTRIC
     display-name: sf:tree_growth_accelerator
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -548,6 +707,8 @@
   sf:xp_collector:
     category: ELECTRIC
     display-name: sf:xp_collector
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -556,6 +717,8 @@
   sf:gps_transmitter:
     category: ELECTRIC
     display-name: sf:gps_transmitter
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -565,6 +728,8 @@
   sf:gps_transmitter_2:
     category: ELECTRIC
     display-name: sf:gps_transmitter_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -574,6 +739,8 @@
   sf:gps_transmitter_3:
     category: ELECTRIC
     display-name: sf:gps_transmitter_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -583,6 +750,8 @@
   sf:gps_transmitter_4:
     category: ELECTRIC
     display-name: sf:gps_transmitter_4
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -592,6 +761,8 @@
   sf:geo_miner:
     category: ELECTRIC
     display-name: sf:geo_miner
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -600,6 +771,8 @@
   sf:oil_pump:
     category: ELECTRIC
     display-name: sf:oil_pump
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -608,6 +781,8 @@
   sf:fluid_pump:
     category: ELECTRIC
     display-name: sf:fluid_pump
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -616,6 +791,8 @@
   sf:iron_golem_assembler:
     category: ELECTRIC
     display-name: sf:iron_golem_assembler
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -624,6 +801,8 @@
   sf:wither_assembler:
     category: ELECTRIC
     display-name: sf:wither_assembler
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
@@ -632,42 +811,56 @@
   sf:electric_gold_pan:
     category: ELECTRIC
     display-name: sf:electric_gold_pan
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_gold_pan_2:
     category: ELECTRIC
     display-name: sf:electric_gold_pan_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_gold_pan_3:
     category: ELECTRIC
     display-name: sf:electric_gold_pan_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_dust_washer:
     category: ELECTRIC
     display-name: sf:electric_dust_washer
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_dust_washer_2:
     category: ELECTRIC
     display-name: sf:electric_dust_washer_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:electric_dust_washer_3:
     category: ELECTRIC
     display-name: sf:electric_dust_washer_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - electric
   sf:nuclear_reactor:
     category: CONFIGURABLE
     display-name: sf:nuclear_reactor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - configurable
@@ -676,6 +869,8 @@
   sf:netherstar_reactor:
     category: CONFIGURABLE
     display-name: sf:netherstar_reactor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - configurable
@@ -684,6 +879,8 @@
   sf:reactor_access_port:
     category: CONFIGURABLE
     display-name: sf:reactor_access_port
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - configurable
@@ -692,6 +889,8 @@
   sf:energy_regulator:
     category: ENERGY
     display-name: sf:energy_regulator
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -700,6 +899,8 @@
   sf:energy_connector:
     category: ENERGY
     display-name: sf:energy_connector
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -708,6 +909,8 @@
   sf:charging_bench:
     category: ENERGY
     display-name: sf:charging_bench
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -716,6 +919,8 @@
   sf:small_capacitor:
     category: ENERGY
     display-name: sf:small_capacitor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -724,6 +929,8 @@
   sf:medium_capacitor:
     category: ENERGY
     display-name: sf:medium_capacitor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -732,6 +939,8 @@
   sf:big_capacitor:
     category: ENERGY
     display-name: sf:big_capacitor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -740,6 +949,8 @@
   sf:large_capacitor:
     category: ENERGY
     display-name: sf:large_capacitor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -748,6 +959,8 @@
   sf:carbonado_edged_capacitor:
     category: ENERGY
     display-name: sf:carbonado_edged_capacitor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -756,6 +969,8 @@
   sf:energized_capacitor:
     category: ENERGY
     display-name: sf:energized_capacitor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -764,6 +979,8 @@
   sf:solar_generator:
     category: ENERGY
     display-name: sf:solar_generator
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -772,6 +989,8 @@
   sf:solar_generator_2:
     category: ENERGY
     display-name: sf:solar_generator_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -780,6 +999,8 @@
   sf:solar_generator_3:
     category: ENERGY
     display-name: sf:solar_generator_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -788,6 +1009,8 @@
   sf:solar_generator_4:
     category: ENERGY
     display-name: sf:solar_generator_4
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -796,6 +1019,8 @@
   sf:coal_generator:
     category: ENERGY
     display-name: sf:coal_generator
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -804,6 +1029,8 @@
   sf:coal_generator_2:
     category: ENERGY
     display-name: sf:coal_generator_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -812,6 +1039,8 @@
   sf:lava_generator:
     category: ENERGY
     display-name: sf:lava_generator
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -820,6 +1049,8 @@
   sf:lava_generator_2:
     category: ENERGY
     display-name: sf:lava_generator_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -828,6 +1059,8 @@
   sf:combustion_reactor:
     category: ENERGY
     display-name: sf:combustion_reactor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -836,6 +1069,8 @@
   sf:magnesium_generator:
     category: ENERGY
     display-name: sf:magnesium_generator
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -844,6 +1079,8 @@
   sf:bio_reactor:
     category: ENERGY
     display-name: sf:bio_reactor
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -852,6 +1089,8 @@
   sf:bio_reactor_2:
     category: ENERGY
     display-name: sf:bio_reactor_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - energy
@@ -860,6 +1099,8 @@
   sf:cargo_manager:
     category: CARGO
     display-name: sf:cargo_manager
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - cargo
@@ -868,6 +1109,8 @@
   sf:cargo_node:
     category: CARGO
     display-name: sf:cargo_node
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - cargo
@@ -876,6 +1119,8 @@
   sf:cargo_node_input:
     category: CARGO
     display-name: sf:cargo_node_input
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - cargo
@@ -884,6 +1129,8 @@
   sf:cargo_node_input_advanced:
     category: CARGO
     display-name: sf:cargo_node_input_advanced
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - cargo
@@ -892,6 +1139,8 @@
   sf:cargo_node_output:
     category: CARGO
     display-name: sf:cargo_node_output
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - cargo
@@ -900,6 +1149,8 @@
   sf:cargo_node_output_advanced:
     category: CARGO
     display-name: sf:cargo_node_output_advanced
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - cargo
@@ -908,6 +1159,8 @@
   sf:trash_can_block:
     category: CARGO
     display-name: sf:trash_can_block
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - cargo
@@ -916,6 +1169,8 @@
   sf:gps_control_panel:
     category: GPS
     display-name: sf:gps_control_panel
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - gps
@@ -924,6 +1179,8 @@
   sf:gps_geo_scanner:
     category: GPS
     display-name: sf:gps_geo_scanner
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - gps
@@ -932,6 +1189,8 @@
   sf:gps_teleporter_pylon:
     category: GPS
     display-name: sf:gps_teleporter_pylon
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - gps
@@ -940,6 +1199,8 @@
   sf:gps_teleportation_matrix:
     category: GPS
     display-name: sf:gps_teleportation_matrix
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - gps
@@ -948,6 +1209,8 @@
   sf:gps_activation_device_shared:
     category: GPS
     display-name: sf:gps_activation_device_shared
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - gps
@@ -956,6 +1219,8 @@
   sf:gps_activation_device_personal:
     category: GPS
     display-name: sf:gps_activation_device_personal
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - gps
@@ -964,6 +1229,8 @@
   sf:elevator_plate:
     category: GPS
     display-name: sf:elevator_plate
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - gps
@@ -972,6 +1239,8 @@
   sf:programmable_android:
     category: ANDROID
     display-name: sf:programmable_android
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -979,6 +1248,8 @@
   sf:programmable_android_farmer:
     category: ANDROID
     display-name: sf:programmable_android_farmer
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -986,6 +1257,8 @@
   sf:programmable_android_miner:
     category: ANDROID
     display-name: sf:programmable_android_miner
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -993,6 +1266,8 @@
   sf:programmable_android_woodcutter:
     category: ANDROID
     display-name: sf:programmable_android_woodcutter
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1000,6 +1275,8 @@
   sf:programmable_android_butcher:
     category: ANDROID
     display-name: sf:programmable_android_butcher
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1007,6 +1284,8 @@
   sf:programmable_android_fisherman:
     category: ANDROID
     display-name: sf:programmable_android_fisherman
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1014,6 +1293,8 @@
   sf:programmable_android_2:
     category: ANDROID
     display-name: sf:programmable_android_2
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1021,6 +1302,8 @@
   sf:programmable_android_2_fisherman:
     category: ANDROID
     display-name: sf:programmable_android_2_fisherman
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1028,6 +1311,8 @@
   sf:programmable_android_2_farmer:
     category: ANDROID
     display-name: sf:programmable_android_2_farmer
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1035,6 +1320,8 @@
   sf:programmable_android_2_butcher:
     category: ANDROID
     display-name: sf:programmable_android_2_butcher
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1042,6 +1329,8 @@
   sf:programmable_android_3:
     category: ANDROID
     display-name: sf:programmable_android_3
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1049,6 +1338,8 @@
   sf:programmable_android_3_fisherman:
     category: ANDROID
     display-name: sf:programmable_android_3_fisherman
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1056,6 +1347,8 @@
   sf:programmable_android_3_butcher:
     category: ANDROID
     display-name: sf:programmable_android_3_butcher
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1063,6 +1356,8 @@
   sf:android_interface_fuel:
     category: ANDROID
     display-name: sf:android_interface_fuel
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1071,6 +1366,8 @@
   sf:android_interface_items:
     category: ANDROID
     display-name: sf:android_interface_items
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1079,6 +1376,8 @@
   sf:android_memory_core:
     category: ANDROID
     display-name: sf:android_memory_core
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - android
@@ -1086,6 +1385,8 @@
   sf:hardened_glass:
     category: SPECIAL
     display-name: sf:hardened_glass
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1094,6 +1395,8 @@
   sf:wither_proof_obsidian:
     category: SPECIAL
     display-name: sf:wither_proof_obsidian
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1102,6 +1405,8 @@
   sf:wither_proof_glass:
     category: SPECIAL
     display-name: sf:wither_proof_glass
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1110,6 +1415,8 @@
   sf:rainbow_wool:
     category: SPECIAL
     display-name: sf:rainbow_wool
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1118,6 +1425,8 @@
   sf:rainbow_glass:
     category: SPECIAL
     display-name: sf:rainbow_glass
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1126,6 +1435,8 @@
   sf:rainbow_clay:
     category: SPECIAL
     display-name: sf:rainbow_clay
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1134,6 +1445,8 @@
   sf:rainbow_glass_pane:
     category: SPECIAL
     display-name: sf:rainbow_glass_pane
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1142,6 +1455,8 @@
   sf:rainbow_concrete:
     category: SPECIAL
     display-name: sf:rainbow_concrete
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1150,6 +1465,8 @@
   sf:rainbow_glazed_terracotta:
     category: SPECIAL
     display-name: sf:rainbow_glazed_terracotta
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1158,6 +1475,8 @@
   sf:rainbow_wool_xmas:
     category: SPECIAL
     display-name: sf:rainbow_wool_xmas
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1166,6 +1485,8 @@
   sf:rainbow_glass_xmas:
     category: SPECIAL
     display-name: sf:rainbow_glass_xmas
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1174,6 +1495,8 @@
   sf:rainbow_clay_xmas:
     category: SPECIAL
     display-name: sf:rainbow_clay_xmas
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1182,6 +1505,8 @@
   sf:rainbow_glass_pane_xmas:
     category: SPECIAL
     display-name: sf:rainbow_glass_pane_xmas
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1190,6 +1515,8 @@
   sf:rainbow_concrete_xmas:
     category: SPECIAL
     display-name: sf:rainbow_concrete_xmas
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1198,6 +1525,8 @@
   sf:rainbow_glazed_terracotta_xmas:
     category: SPECIAL
     display-name: sf:rainbow_glazed_terracotta_xmas
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1206,6 +1535,8 @@
   sf:rainbow_wool_valentine:
     category: SPECIAL
     display-name: sf:rainbow_wool_valentine
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1214,6 +1545,8 @@
   sf:rainbow_glass_valentine:
     category: SPECIAL
     display-name: sf:rainbow_glass_valentine
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1222,6 +1555,8 @@
   sf:rainbow_clay_valentine:
     category: SPECIAL
     display-name: sf:rainbow_clay_valentine
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1230,6 +1565,8 @@
   sf:rainbow_glass_pane_valentine:
     category: SPECIAL
     display-name: sf:rainbow_glass_pane_valentine
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1238,6 +1575,8 @@
   sf:rainbow_concrete_valentine:
     category: SPECIAL
     display-name: sf:rainbow_concrete_valentine
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1246,6 +1585,8 @@
   sf:rainbow_glazed_terracotta_valentine:
     category: SPECIAL
     display-name: sf:rainbow_glazed_terracotta_valentine
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1254,6 +1595,8 @@
   sf:rainbow_wool_halloween:
     category: SPECIAL
     display-name: sf:rainbow_wool_halloween
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1262,6 +1605,8 @@
   sf:rainbow_glass_halloween:
     category: SPECIAL
     display-name: sf:rainbow_glass_halloween
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1270,6 +1615,8 @@
   sf:rainbow_clay_halloween:
     category: SPECIAL
     display-name: sf:rainbow_clay_halloween
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1278,6 +1625,8 @@
   sf:rainbow_glass_pane_halloween:
     category: SPECIAL
     display-name: sf:rainbow_glass_pane_halloween
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1286,6 +1635,8 @@
   sf:rainbow_concrete_halloween:
     category: SPECIAL
     display-name: sf:rainbow_concrete_halloween
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1294,6 +1645,8 @@
   sf:rainbow_glazed_terracotta_halloween:
     category: SPECIAL
     display-name: sf:rainbow_glazed_terracotta_halloween
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1302,6 +1655,8 @@
   sf:ancient_altar:
     category: SPECIAL
     display-name: sf:ancient_altar
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1310,6 +1665,8 @@
   sf:ancient_pedestal:
     category: SPECIAL
     display-name: sf:ancient_pedestal
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1318,6 +1675,8 @@
   sf:reinforced_spawner:
     category: SPECIAL
     display-name: sf:reinforced_spawner
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1326,6 +1685,8 @@
   sf:infused_hopper:
     category: SPECIAL
     display-name: sf:infused_hopper
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1334,6 +1695,8 @@
   sf:hologram_projector:
     category: SPECIAL
     display-name: sf:hologram_projector
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1342,6 +1705,8 @@
   sf:block_placer:
     category: SPECIAL
     display-name: sf:block_placer
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1350,6 +1715,8 @@
   sf:advanced_industrial_miner:
     category: SPECIAL
     display-name: sf:advanced_industrial_miner
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
@@ -1358,6 +1725,8 @@
   sf:industrial_miner:
     category: SPECIAL
     display-name: sf:industrial_miner
+    status-slot: -1
+    tick-interval: 1
     tags:
     - machine
     - special
