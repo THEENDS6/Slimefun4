@@ -24,14 +24,22 @@ final class SfxConfigurableMachineDefinitions {
 
     static Map<String, SfxConfigurableMachineDefinition> load(JavaPlugin plugin) {
         ensureBundledFile(plugin);
+        boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
         File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
         if (!file.isFile()) {
+            if (strict) {
+                throw new IllegalStateException("Configurable machine YAML missing: " + RESOURCE_PATH);
+            }
             return Map.of();
         }
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
-            plugin.getLogger().warning("No machines section in " + RESOURCE_PATH + "; configurable machines will use Java defaults.");
+            String message = "No machines section in " + RESOURCE_PATH + "; configurable machines will use Java defaults.";
+            if (strict) {
+                throw new IllegalStateException(message);
+            }
+            plugin.getLogger().warning(message);
             return Map.of();
         }
         Map<String, SfxConfigurableMachineDefinition> result = new LinkedHashMap<>();
@@ -44,6 +52,9 @@ final class SfxConfigurableMachineDefinitions {
                 SfxConfigurableMachineDefinition definition = parse(id, section);
                 result.put(definition.id(), definition);
             } catch (RuntimeException ex) {
+                if (strict) {
+                    throw new IllegalStateException("Invalid configurable machine YAML entry " + id, ex);
+                }
                 plugin.getLogger().log(Level.WARNING, "Invalid configurable machine YAML entry " + id + "; skipping it.", ex);
             }
         }
@@ -52,36 +63,42 @@ final class SfxConfigurableMachineDefinitions {
     }
 
     private static SfxConfigurableMachineDefinition parse(String id, ConfigurationSection section) {
-        SfxConfigurableMachineKind kind = SfxConfigurableMachineKind.valueOf(section.getString("kind", "ACCESS_PORT").trim().replace('-', '_').toUpperCase(Locale.ROOT));
-        ConfigurationSection energy = section.getConfigurationSection("energy");
+        SfxConfigurableMachineKind kind = SfxConfigurableMachineKind.valueOf(requiredString(section, "kind").trim().replace('-', '_').toUpperCase(Locale.ROOT));
+        ConfigurationSection energy = requiredSection(section, "energy");
         ConfigurationSection assembler = section.getConfigurationSection("assembler");
         ConfigurationSection reactor = section.getConfigurationSection("reactor");
+        if (kind == SfxConfigurableMachineKind.REACTOR) {
+            reactor = requiredSection(section, "reactor");
+        } else if (kind == SfxConfigurableMachineKind.ASSEMBLER) {
+            assembler = requiredSection(section, "assembler");
+        }
         return new SfxConfigurableMachineDefinition(
                 id,
                 kind,
-                intValue(energy, section, "capacity", 0),
-                intValue(energy, section, "energy-per-action", 0),
-                intValue(energy, section, "energy-per-tick", 0),
+                requiredInt(energy, "capacity"),
+                requiredInt(energy, "energy-per-action"),
+                requiredInt(energy, "energy-per-tick"),
                 parseMaterial(assembler == null ? null : assembler.getString("head-material", null)),
-                assembler == null ? 0 : assembler.getInt("head-amount", 0),
+                assembler == null ? 0 : requiredInt(assembler, "head-amount"),
                 parseMaterial(assembler == null ? null : assembler.getString("body-material", null)),
-                assembler == null ? 0 : assembler.getInt("body-amount", 0),
+                assembler == null ? 0 : requiredInt(assembler, "body-amount"),
                 parseEntityType(assembler == null ? null : assembler.getString("spawn-type", null)),
-                reactor == null ? null : reactor.getString("coolant-item", null),
+                reactor == null ? null : requiredString(reactor, "coolant-item"),
                 parseReactorFuels(reactor),
-                reactor != null && reactor.getBoolean("wither-aura", false));
+                reactor != null && requiredBoolean(reactor, "wither-aura"));
     }
 
     private static List<SfxConfigurableMachineDefinition.ReactorFuel> parseReactorFuels(ConfigurationSection reactor) {
         if (reactor == null) {
             return List.of();
         }
+        requiredList(reactor, "fuels");
         List<SfxConfigurableMachineDefinition.ReactorFuel> result = new ArrayList<>();
         for (Map<?, ?> raw : reactor.getMapList("fuels")) {
-            String key = string(raw.get("key"));
+            String key = requiredString(raw, "key");
             Material material = parseMaterial(string(raw.get("material")));
-            int amount = Math.max(1, integer(raw.containsKey("amount") ? raw.get("amount") : 1));
-            int seconds = Math.max(1, integer(raw.containsKey("seconds") ? raw.get("seconds") : 1));
+            int amount = Math.max(1, integer(requiredValue(raw, "amount")));
+            int seconds = Math.max(1, integer(requiredValue(raw, "seconds")));
             SfxElectricStack output = parseOutput(raw.get("output"));
             result.add(new SfxConfigurableMachineDefinition.ReactorFuel(key, material, amount, seconds, output));
         }
@@ -98,7 +115,7 @@ final class SfxConfigurableMachineDefinitions {
         if (!(raw instanceof Map<?, ?> map)) {
             return null;
         }
-        int amount = Math.max(1, integer(map.containsKey("amount") ? map.get("amount") : 1));
+        int amount = Math.max(1, integer(requiredValue(map, "amount")));
         Object item = map.get("item");
         if (item != null) {
             return SfxElectricStack.sfx(String.valueOf(item), amount);
@@ -110,11 +127,57 @@ final class SfxConfigurableMachineDefinitions {
         return null;
     }
 
-    private static int intValue(ConfigurationSection preferred, ConfigurationSection fallback, String path, int defaultValue) {
-        if (preferred != null && preferred.contains(path)) {
-            return preferred.getInt(path);
+    private static ConfigurationSection requiredSection(ConfigurationSection section, String path) {
+        ConfigurationSection value = section.getConfigurationSection(path);
+        if (value == null) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
         }
-        return fallback.getInt(path, defaultValue);
+        return value;
+    }
+
+    private static String requiredString(ConfigurationSection section, String path) {
+        String value = section.getString(path, null);
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return value;
+    }
+
+    private static int requiredInt(ConfigurationSection section, String path) {
+        if (!section.contains(path)) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return section.getInt(path);
+    }
+
+    private static boolean requiredBoolean(ConfigurationSection section, String path) {
+        if (!section.contains(path)) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return section.getBoolean(path);
+    }
+
+    private static List<?> requiredList(ConfigurationSection section, String path) {
+        List<?> value = section.getList(path);
+        if (value == null) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return value;
+    }
+
+    private static Object requiredValue(Map<?, ?> map, String key) {
+        if (!map.containsKey(key) || map.get(key) == null) {
+            throw new IllegalArgumentException("map requires " + key);
+        }
+        return map.get(key);
+    }
+
+    private static String requiredString(Map<?, ?> map, String key) {
+        String value = string(map.get(key));
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("map requires " + key);
+        }
+        return value;
     }
 
     private static Material parseMaterial(String raw) {
