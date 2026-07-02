@@ -639,6 +639,78 @@ public final class SfxTemplateCompiler {
         }
         applySpecialElectricUiSlots(machine, slotDefinitions, inventorySize);
         ui.put("slots", slotDefinitions);
+        completeElectricUiDefaults(ui);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void completeElectricUiDefaults(Map<String, Object> ui) {
+        Object framesRaw = ui.get("frame");
+        if (framesRaw instanceof List<?> frames) {
+            for (Object frameRaw : frames) {
+                if (frameRaw instanceof Map<?, ?> rawFrame) {
+                    Object itemRaw = ((Map<String, Object>) rawFrame).get("item");
+                    if (itemRaw instanceof Map<?, ?> rawItem) {
+                        completeUiItem((Map<String, Object>) rawItem);
+                    }
+                }
+            }
+        }
+        completeNestedUiItems(ui.get("items"));
+        Object slotsRaw = ui.get("slots");
+        if (slotsRaw instanceof Map<?, ?> slots) {
+            for (Object slotRaw : slots.values()) {
+                if (slotRaw instanceof Map<?, ?> rawSlot) {
+                    Object itemRaw = ((Map<String, Object>) rawSlot).get("item");
+                    if (itemRaw instanceof Map<?, ?> rawItem) {
+                        completeUiItem((Map<String, Object>) rawItem);
+                    }
+                }
+            }
+        }
+        Object statusRaw = ui.get("status");
+        if (statusRaw instanceof Map<?, ?> status) {
+            for (Object templateRaw : status.values()) {
+                if (templateRaw instanceof Map<?, ?> rawTemplate) {
+                    completeStatusTemplate((Map<String, Object>) rawTemplate);
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void completeNestedUiItems(Object raw) {
+        if (!(raw instanceof Map<?, ?> map)) {
+            return;
+        }
+        Map<String, Object> itemMap = (Map<String, Object>) map;
+        if (itemMap.containsKey("material")) {
+            completeUiItem(itemMap);
+            return;
+        }
+        for (Object value : itemMap.values()) {
+            completeNestedUiItems(value);
+        }
+    }
+
+    private void completeUiItem(Map<String, Object> item) {
+        if (!item.containsKey("name") && !item.containsKey("name-key")) {
+            item.put("name", " ");
+        }
+        if (!item.containsKey("lore") && !item.containsKey("lore-key")) {
+            item.put("lore", List.of());
+        }
+        item.putIfAbsent("glint", Boolean.FALSE);
+    }
+
+    private void completeStatusTemplate(Map<String, Object> template) {
+        if (!template.containsKey("name") && !template.containsKey("name-key")) {
+            template.put("name", " ");
+        }
+        if (!template.containsKey("lore") && !template.containsKey("lore-key")) {
+            template.put("lore", List.of());
+        }
+        template.putIfAbsent("include-default-lore", Boolean.TRUE);
+        template.putIfAbsent("durability-mode", "NONE");
     }
 
     private void applySpecialElectricUiSlots(Map<String, Object> machine, Map<String, Object> slots, int inventorySize) {
