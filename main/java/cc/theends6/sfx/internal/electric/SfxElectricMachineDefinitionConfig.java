@@ -76,7 +76,6 @@ final class SfxElectricMachineDefinitionConfig {
         int[] outputSlots = requireSlotsFromUi(entry, "output");
         assertSameSlots(fallback.id(), "input", entry.inputSlots, inputSlots);
         assertSameSlots(fallback.id(), "output", entry.outputSlots, outputSlots);
-        SfxElectricMachineMenuStyle menuStyle = fallback.menuStyle();
         Set<String> functionTags = requireFunctionTags(fallback.id(), entry);
         if (entry.ui == null) {
             throw new IllegalStateException("Missing compiled UI definition for electric machine " + fallback.id());
@@ -99,18 +98,16 @@ final class SfxElectricMachineDefinitionConfig {
                 fallback.recipeProvider(),
                 inputSlots,
                 outputSlots,
-                menuStyle,
+                fallback.compiledEntryId(),
                 functionTags,
                 ui,
                 assemblerSpec);
     }
 
     private Entry selectEntry(SfxElectricMachineDefinition fallback) {
-        if ("sf:auto_brewer".equals(fallback.id()) && fallback.menuStyle() == SfxElectricMachineMenuStyle.STANDARD) {
-            Entry legacy = entries.get("sf:auto_brewer#legacy");
-            if (legacy != null) {
-                return legacy;
-            }
+        Entry variant = entries.get(fallback.compiledEntryId());
+        if (variant != null) {
+            return variant;
         }
         return entries.get(fallback.id());
     }
