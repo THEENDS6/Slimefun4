@@ -154,6 +154,9 @@ public final class SfxConfigurableMachineService implements Listener {
         if (!yamlDefinitions.isEmpty()) {
             yamlDefinitions.values().forEach(this::register);
         } else {
+            if (plugin.getConfig().getBoolean("content.runtime.compiled-only", true)) {
+                throw new IllegalStateException("Compiled-only content runtime is enabled, but no configurable machine definitions were loaded.");
+            }
             boolean sfxGeneratorBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
             int netherStarEnergy = sfxGeneratorBalance ? 2048 : 1024;
             register(SfxConfigurableMachineDefinition.nuclearReactor());
