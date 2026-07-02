@@ -154,14 +154,8 @@ final class SfxEnergyComponentYamlLoader {
         if (raw == null) {
             return null;
         }
-        if (raw instanceof String value) {
-            if (value.startsWith("sf:")) {
-                return SfxElectricStack.sfx(value, 1);
-            }
-            return SfxElectricStack.vanilla(parseMaterial(value), 1);
-        }
         if (!(raw instanceof Map<?, ?> map)) {
-            return null;
+            throw new IllegalArgumentException("energy fuel stack must be an explicit map: " + raw);
         }
         int amount = Math.max(1, integer(requiredValue(map, "amount")));
         Object item = map.get("item");

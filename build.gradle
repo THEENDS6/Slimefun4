@@ -1068,6 +1068,15 @@ tasks.register('validateSfxCompiledContent') {
                     violations << "${root.toPath().relativize(file.toPath())}: missing ${token}"
                 }
             }
+            def energyScalarStack = text =~ /(?m)^\s+(input|output):\s+[A-Za-z0-9_:.-]+(?:\*[0-9]+)?\s*$/
+            if (energyScalarStack.find()) {
+                violations << "${root.toPath().relativize(file.toPath())}: energy fuel stack uses scalar shorthand: ${energyScalarStack.group(0).trim()}"
+            }
+            def energyFuelSlotCount = (text =~ /(?m)^\s+(item|material):\s*/).count
+            def energyFuelAmountCount = (text =~ /(?m)^\s+amount:\s*/).count
+            if (energyFuelSlotCount != energyFuelAmountCount) {
+                violations << "${root.toPath().relativize(file.toPath())}: energy fuel stacks must explicitly include amount: slots=${energyFuelSlotCount}, amounts=${energyFuelAmountCount}"
+            }
         }
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
