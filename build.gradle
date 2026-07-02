@@ -535,7 +535,7 @@ tasks.register('validateSfxCompiledContent') {
                 return
             }
             def rel = root.toPath().relativize(file.toPath()).toString()
-            ['id', 'recipe-type', 'operation', 'outputs'].each { field ->
+            ['id', 'source', 'recipe-type', 'operation', 'guide-order', 'runtime', 'outputs'].each { field ->
                 if (!recipe.fields.contains(field)) {
                     violations << "${rel}: recipe ${recipe.key} missing ${field}"
                 }
@@ -578,6 +578,15 @@ tasks.register('validateSfxCompiledContent') {
             if (recipe.outputsCount < 1) {
                 violations << "${rel}: recipe ${recipe.key} outputs must contain at least one entry"
             }
+            if (recipe.runtime == 'true'
+                    && !recipe.fields.contains('machine')
+                    && !recipe.fields.contains('runtime-machines')
+                    && !recipe.fields.contains('runtime-machine-tags')) {
+                violations << "${rel}: recipe ${recipe.key} runtime recipe missing machine/runtime-machines/runtime-machine-tags"
+            }
+            if (recipe.scalarSlot) {
+                violations << "${rel}: recipe ${recipe.key} contains scalar recipe slot/output shorthand"
+            }
         }
         int recipeEntryCount = 0
         recipeFiles.each { file ->
@@ -597,9 +606,11 @@ tasks.register('validateSfxCompiledContent') {
                             section     : null,
                             id          : null,
                             operation   : null,
+                            runtime     : null,
                             matrixCount : 0,
                             inputsCount : 0,
-                            outputsCount: 0
+                            outputsCount: 0,
+                            scalarSlot  : false
                     ]
                     return
                 }
@@ -616,12 +627,26 @@ tasks.register('validateSfxCompiledContent') {
                         currentRecipe.id = value
                     } else if (field == 'operation') {
                         currentRecipe.operation = value
+                    } else if (field == 'runtime') {
+                        currentRecipe.runtime = value == null ? null : value.toLowerCase(Locale.ROOT)
                     } else if (field == 'input') {
                         currentRecipe.section = null
+                        if (value != null && !value.isBlank()) {
+                            currentRecipe.scalarSlot = true
+                        }
+                    } else if (field == 'random-outputs') {
+                        currentRecipe.section = 'random-outputs'
                     }
                     return
                 }
-                if ((line =~ /^    -\s*/).find()) {
+                def listItemMatch = line =~ /^    -\s*(.*)$/
+                if (listItemMatch.matches()) {
+                    def itemText = listItemMatch[0][1] == null ? '' : listItemMatch[0][1].trim()
+                    if (['matrix', 'inputs', 'outputs', 'random-outputs'].contains(currentRecipe.section)
+                            && !itemText.isBlank()
+                            && !itemText.startsWith('type:')) {
+                        currentRecipe.scalarSlot = true
+                    }
                     if (currentRecipe.section == 'matrix') {
                         currentRecipe.matrixCount++
                     } else if (currentRecipe.section == 'inputs') {

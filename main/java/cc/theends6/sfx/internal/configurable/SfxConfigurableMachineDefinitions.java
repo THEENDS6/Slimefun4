@@ -29,7 +29,7 @@ final class SfxConfigurableMachineDefinitions {
         YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
-            String message = "No machines section in " + RESOURCE_PATH + "; configurable machines will use Java defaults.";
+            String message = "No machines section in " + RESOURCE_PATH + "; configurable machines were not loaded.";
             if (strict) {
                 throw new IllegalStateException(message);
             }

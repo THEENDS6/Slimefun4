@@ -150,12 +150,12 @@ public final class SfxRecipeYamlLoader {
         SfxRecipeOperation operation = SfxRecipeOperation.parse(string(entry.get("operation")));
 
         SfxRecipeDefinition.Builder builder = SfxRecipeDefinition.builder(id, recipeType, operation)
-                .guideOrder(integer(orDefault(entry, "guide-order", 0)))
+                .guideOrder(requiredInteger(entry, "guide-order"))
                 .matchPriority(entry.containsKey("match-priority") ? integer(entry.get("match-priority")) : null)
                 .durationTicks(entry.containsKey("time") ? integer(entry.get("time")) : null)
-                .source(optionalString(orDefault(entry, "source", "custom")))
+                .source(requiredString(entry, "source"))
                 .note(optionalString(entry.get("note")))
-                .runtimeEnabled(Boolean.TRUE.equals(orDefault(entry, "runtime", Boolean.FALSE)));
+                .runtimeEnabled(requiredBoolean(entry, "runtime"));
 
         List<String> runtimeMachines = stringList(entry.get("runtime-machines"));
         if (!runtimeMachines.isEmpty()) {
@@ -163,11 +163,18 @@ public final class SfxRecipeYamlLoader {
         } else {
             builder.runtimeMachineId(optionalString(entry.get("machine")));
         }
-        builder.runtimeMachineTags(stringList(entry.get("runtime-machine-tags")));
+        List<String> runtimeMachineTags = stringList(entry.get("runtime-machine-tags"));
+        builder.runtimeMachineTags(runtimeMachineTags);
+        if (Boolean.TRUE.equals(entry.get("runtime"))
+                && runtimeMachines.isEmpty()
+                && optionalString(entry.get("machine")) == null
+                && runtimeMachineTags.isEmpty()) {
+            throw new IllegalArgumentException("runtime recipe must declare machine, runtime-machines, or runtime-machine-tags");
+        }
 
         builder.inputs(parseInputs(operation, entry));
-        builder.outputs(parseOutputs(entry.get("outputs")));
-        builder.randomOutputs(parseOutputs(entry.get("random-outputs")));
+        builder.outputs(parseOutputs(entry.get("outputs"), false));
+        builder.randomOutputs(parseOutputs(entry.get("random-outputs"), true));
         return builder.build();
     }
 
@@ -202,65 +209,57 @@ public final class SfxRecipeYamlLoader {
     }
 
     private SfxRecipeSlot parseSlot(Object raw) {
-        if (raw == null) {
+        if (!(raw instanceof Map<?, ?> map)) {
+            throw new IllegalArgumentException("recipe slot must be an explicit map");
+        }
+        String type = requiredString(map, "type");
+        int amount = requiredInteger(map, "amount");
+        if (type.equalsIgnoreCase("empty")) {
             return SfxRecipeSlot.empty();
         }
-        if (raw instanceof String text) {
-            String normalized = text.trim();
-            if (normalized.isEmpty() || normalized.equalsIgnoreCase("air") || normalized.equalsIgnoreCase("empty")) {
-                return SfxRecipeSlot.empty();
-            }
-            if (normalized.contains(":")) {
-                return SfxRecipeSlot.sfx(normalized);
-            }
-            return SfxRecipeSlot.vanilla(parseMaterial(normalized));
+        if (amount <= 0) {
+            throw new IllegalArgumentException("recipe slot amount must be positive");
         }
-        if (raw instanceof Map<?, ?> map) {
-            String type = string(orDefault(map, "type", map.containsKey("id") ? "sfx" : "vanilla"));
-            int amount = integer(orDefault(map, "amount", 1));
-            if (type.equalsIgnoreCase("sfx")) {
-                return SfxRecipeSlot.sfx(string(map.get("id")), amount);
-            }
-            return SfxRecipeSlot.vanilla(parseMaterial(string(map.get("material"))), amount);
+        if (type.equalsIgnoreCase("sfx")) {
+            return SfxRecipeSlot.sfx(requiredString(map, "id"), amount);
         }
-        throw new IllegalArgumentException("unsupported recipe slot: " + raw);
+        if (type.equalsIgnoreCase("vanilla")) {
+            return SfxRecipeSlot.vanilla(parseMaterial(requiredString(map, "material")), amount);
+        }
+        throw new IllegalArgumentException("unsupported recipe slot type: " + type);
     }
 
-    private List<SfxRecipeOutputDefinition> parseOutputs(Object raw) {
+    private List<SfxRecipeOutputDefinition> parseOutputs(Object raw, boolean random) {
         List<SfxRecipeOutputDefinition> outputs = new ArrayList<>();
         if (!(raw instanceof List<?> entries)) {
             return outputs;
         }
         for (Object entry : entries) {
-            outputs.add(parseOutput(entry));
+            outputs.add(parseOutput(entry, random));
         }
         return outputs;
     }
 
-    private SfxRecipeOutputDefinition parseOutput(Object raw) {
-        if (raw instanceof String text) {
-            String trimmed = text.trim();
-            int amount = 1;
-            if (trimmed.contains("*")) {
-                String[] split = trimmed.split("\\*", 2);
-                trimmed = split[0].trim();
-                amount = integer(split[1]);
-            }
-            if (trimmed.contains(":")) {
-                return SfxRecipeOutputDefinition.sfx(trimmed, amount);
-            }
-            return SfxRecipeOutputDefinition.vanilla(parseMaterial(trimmed), amount);
+    private SfxRecipeOutputDefinition parseOutput(Object raw, boolean random) {
+        if (!(raw instanceof Map<?, ?> map)) {
+            throw new IllegalArgumentException("recipe output must be an explicit map");
         }
-        if (raw instanceof Map<?, ?> map) {
-            String type = string(orDefault(map, "type", map.containsKey("id") ? "sfx" : "vanilla"));
-            int amount = integer(orDefault(map, "amount", 1));
-            Double chance = map.containsKey("chance") ? Double.parseDouble(String.valueOf(map.get("chance"))) : null;
-            if (type.equalsIgnoreCase("sfx")) {
-                return SfxRecipeOutputDefinition.sfx(string(map.get("id")), amount, chance);
-            }
-            return SfxRecipeOutputDefinition.vanilla(parseMaterial(string(map.get("material"))), amount, chance);
+        String type = requiredString(map, "type");
+        int amount = requiredInteger(map, "amount");
+        if (amount <= 0) {
+            throw new IllegalArgumentException("recipe output amount must be positive");
         }
-        throw new IllegalArgumentException("unsupported recipe output: " + raw);
+        if (random && !map.containsKey("chance")) {
+            throw new IllegalArgumentException("random recipe output must declare chance");
+        }
+        Double chance = map.containsKey("chance") ? Double.parseDouble(String.valueOf(map.get("chance"))) : null;
+        if (type.equalsIgnoreCase("sfx")) {
+            return SfxRecipeOutputDefinition.sfx(requiredString(map, "id"), amount, chance);
+        }
+        if (type.equalsIgnoreCase("vanilla")) {
+            return SfxRecipeOutputDefinition.vanilla(parseMaterial(requiredString(map, "material")), amount, chance);
+        }
+        throw new IllegalArgumentException("unsupported recipe output type: " + type);
     }
 
     private Material parseMaterial(String input) {
@@ -271,8 +270,30 @@ public final class SfxRecipeYamlLoader {
         return material;
     }
 
-    private static Object orDefault(Map<?, ?> map, String key, Object defaultValue) {
-        return map.containsKey(key) ? map.get(key) : defaultValue;
+    private static String requiredString(Map<?, ?> map, String key) {
+        String value = optionalString(map.get(key));
+        if (value == null) {
+            throw new IllegalArgumentException("required string value missing: " + key);
+        }
+        return value;
+    }
+
+    private static int requiredInteger(Map<?, ?> map, String key) {
+        if (!map.containsKey(key) || map.get(key) == null) {
+            throw new IllegalArgumentException("required integer value missing: " + key);
+        }
+        return integer(map.get(key));
+    }
+
+    private static boolean requiredBoolean(Map<?, ?> map, String key) {
+        if (!map.containsKey(key) || map.get(key) == null) {
+            throw new IllegalArgumentException("required boolean value missing: " + key);
+        }
+        Object raw = map.get(key);
+        if (raw instanceof Boolean bool) {
+            return bool;
+        }
+        return Boolean.parseBoolean(String.valueOf(raw));
     }
 
     private static int integer(Object raw) {

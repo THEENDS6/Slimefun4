@@ -41,10 +41,6 @@ record SfxElectricMachineUiDefinition(
         this(inventorySize, statusSlot, frame, items, status, Map.of());
     }
 
-    SfxElectricMachineUiItem item(String key, SfxElectricMachineUiItem defaultItem) {
-        return items.getOrDefault(key, defaultItem);
-    }
-
     SfxElectricMachineUiItem requiredItem(String key) {
         SfxElectricMachineUiItem item = items.get(key);
         if (item == null) {

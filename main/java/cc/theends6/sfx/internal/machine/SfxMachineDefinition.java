@@ -29,7 +29,7 @@ public record SfxMachineDefinition(
     public SfxMachineDefinition(String id, String displayName, SfxMachineCategory category, List<Integer> inputSlots, List<Integer> outputSlots, int statusSlot, int tickInterval) {
         this(id, displayName, category, inputSlots, outputSlots, statusSlot, tickInterval,
                 Set.of(),
-                defaultCapabilities(category, inputSlots, outputSlots),
+                Set.of(),
                 inputSlots == null || inputSlots.isEmpty() ? SfxMachineInputProvider.none() : SfxMachineInputProvider.guiSlots(inputSlots),
                 outputSlots == null || outputSlots.isEmpty() ? SfxMachineOutputProvider.none() : SfxMachineOutputProvider.guiSlots(outputSlots),
                 List.of(), List.of());
@@ -41,7 +41,7 @@ public record SfxMachineDefinition(
         category = category == null ? SfxMachineCategory.SPECIAL : category;
         tickInterval = Math.max(1, tickInterval);
         tags = normalizeTags(tags);
-        capabilities = capabilities == null ? defaultCapabilities(category, inputSlots, outputSlots) : Set.copyOf(capabilities);
+        capabilities = capabilities == null ? Set.of() : Set.copyOf(capabilities);
         inputProvider = inputProvider == null ? (inputSlots.isEmpty() ? SfxMachineInputProvider.none() : SfxMachineInputProvider.guiSlots(inputSlots)) : inputProvider;
         outputProvider = outputProvider == null ? (outputSlots.isEmpty() ? SfxMachineOutputProvider.none() : SfxMachineOutputProvider.guiSlots(outputSlots)) : outputProvider;
         policyRefs = policyRefs == null ? List.of() : List.copyOf(policyRefs);
@@ -80,24 +80,6 @@ public record SfxMachineDefinition(
 
     public boolean hasCapability(SfxMachineCapability capability) {
         return capability != null && capabilities.contains(capability);
-    }
-
-    private static Set<SfxMachineCapability> defaultCapabilities(SfxMachineCategory category, List<Integer> inputSlots, List<Integer> outputSlots) {
-        EnumSet<SfxMachineCapability> set = EnumSet.noneOf(SfxMachineCapability.class);
-        if (category == SfxMachineCategory.ELECTRIC || category == SfxMachineCategory.CONFIGURABLE) {
-            set.add(SfxMachineCapability.HAS_GUI);
-            set.add(SfxMachineCapability.USES_ENERGY);
-        }
-        if (category == SfxMachineCategory.ENERGY) {
-            set.add(SfxMachineCapability.TOPOLOGY_NODE);
-        }
-        if (category == SfxMachineCategory.CARGO) {
-            set.add(SfxMachineCapability.TOPOLOGY_NODE);
-            set.add(SfxMachineCapability.STORAGE_ENDPOINT);
-        }
-        if (inputSlots != null && !inputSlots.isEmpty()) set.add(SfxMachineCapability.HAS_INPUT);
-        if (outputSlots != null && !outputSlots.isEmpty()) set.add(SfxMachineCapability.HAS_OUTPUT);
-        return Set.copyOf(set);
     }
 
     public static final class Builder {
@@ -144,7 +126,7 @@ public record SfxMachineDefinition(
         public Builder effects(List<SfxMachineEffect> effects) { if (effects != null) effects.forEach(this::effect); return this; }
 
         public SfxMachineDefinition build() {
-            Set<SfxMachineCapability> finalCapabilities = capabilities.isEmpty() ? defaultCapabilities(category, inputSlots, outputSlots) : Set.copyOf(capabilities);
+            Set<SfxMachineCapability> finalCapabilities = Set.copyOf(capabilities);
             SfxMachineInputProvider finalInput = inputProvider == null ? (inputSlots.isEmpty() ? SfxMachineInputProvider.none() : SfxMachineInputProvider.guiSlots(inputSlots)) : inputProvider;
             SfxMachineOutputProvider finalOutput = outputProvider == null ? (outputSlots.isEmpty() ? SfxMachineOutputProvider.none() : SfxMachineOutputProvider.guiSlots(outputSlots)) : outputProvider;
             return new SfxMachineDefinition(id, displayName, category, inputSlots, outputSlots, statusSlot, tickInterval, tags, finalCapabilities, finalInput, finalOutput, policyRefs, effects);
