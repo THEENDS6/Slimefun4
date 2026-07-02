@@ -478,6 +478,7 @@ public final class SfxTemplateCompiler {
         for (OutputNode output : outputs) {
             Map<String, Object> wrapped = wrapOutput(output.keys(), output.value());
             pruneTemplatesAndMeta(wrapped);
+            enrichCompiledOutput(wrapped);
             Path target = outputRoot.resolve(outputDirectory(output.targetResource())).resolve(outputFileName(output.keys()));
             Files.createDirectories(target.getParent());
             YamlConfiguration yaml = new YamlConfiguration();
@@ -486,6 +487,146 @@ public final class SfxTemplateCompiler {
             }
             Files.writeString(target, yaml.saveToString(), StandardCharsets.UTF_8);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void enrichCompiledOutput(Map<String, Object> wrapped) {
+        Object machinesRaw = wrapped.get("machines");
+        if (!(machinesRaw instanceof Map<?, ?> rawMachines)) {
+            return;
+        }
+        for (Object value : rawMachines.values()) {
+            if (value instanceof Map<?, ?> rawMachine) {
+                enrichElectricMachineUiSlots((Map<String, Object>) rawMachine);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void enrichElectricMachineUiSlots(Map<String, Object> machine) {
+        Object uiRaw = machine.get("ui");
+        if (!(uiRaw instanceof Map<?, ?> rawUi)) {
+            return;
+        }
+        Map<String, Object> ui = (Map<String, Object>) rawUi;
+        int inventorySize = intValue(ui.get("inventory-size"), 0);
+        if (inventorySize <= 0) {
+            ui.putIfAbsent("slots", new LinkedHashMap<String, Object>());
+            return;
+        }
+        Map<String, Object> slotDefinitions = new LinkedHashMap<>();
+        for (int slot = 0; slot < inventorySize; slot++) {
+            slotDefinitions.put(String.valueOf(slot), slot("empty", "locked"));
+        }
+        Object framesRaw = ui.get("frame");
+        if (framesRaw instanceof List<?> frames) {
+            for (Object frameRaw : frames) {
+                if (!(frameRaw instanceof Map<?, ?> rawFrame)) {
+                    continue;
+                }
+                Map<String, Object> frame = (Map<String, Object>) rawFrame;
+                Object item = deepCopyValue(frame.get("item"));
+                for (Integer slot : ints(frame.get("slots"))) {
+                    if (slot >= 0 && slot < inventorySize) {
+                        Map<String, Object> definition = slot("decoration", "locked");
+                        if (item != null) {
+                            definition.put("item", deepCopyValue(item));
+                        }
+                        slotDefinitions.put(String.valueOf(slot), definition);
+                    }
+                }
+            }
+        }
+        Object machineSlotsRaw = machine.get("slots");
+        if (machineSlotsRaw instanceof Map<?, ?> rawMachineSlots) {
+            Map<String, Object> machineSlots = (Map<String, Object>) rawMachineSlots;
+            for (Integer slot : ints(machineSlots.get("input"))) {
+                putSlot(slotDefinitions, inventorySize, slot, inputSlot("recipe-input", "any"));
+            }
+            for (Integer slot : ints(machineSlots.get("output"))) {
+                putSlot(slotDefinitions, inventorySize, slot, slot("output", "output-only"));
+            }
+        }
+        int statusSlot = intValue(ui.get("status-slot"), -1);
+        if (statusSlot >= 0) {
+            Map<String, Object> definition = slot("status", "status-display");
+            definition.put("item-source", "machine-status");
+            putSlot(slotDefinitions, inventorySize, statusSlot, definition);
+        }
+        applySpecialElectricUiSlots(machine, slotDefinitions, inventorySize);
+        ui.put("slots", slotDefinitions);
+    }
+
+    private void applySpecialElectricUiSlots(Map<String, Object> machine, Map<String, Object> slots, int inventorySize) {
+        Set<String> functions = Set.copyOf(strings(machine.get("functions")));
+        if (functions.contains("auto-crafter")) {
+            putSlot(slots, inventorySize, 11, slot("preview", "preview-only"));
+            putSlot(slots, inventorySize, 12, slot("preview", "preview-only"));
+            putSlot(slots, inventorySize, 13, slot("preview", "preview-only"));
+            putSlot(slots, inventorySize, 20, slot("preview", "preview-only"));
+            putSlot(slots, inventorySize, 21, slot("preview", "preview-only"));
+            putSlot(slots, inventorySize, 22, slot("preview", "preview-only"));
+            putSlot(slots, inventorySize, 29, slot("preview", "preview-only"));
+            putSlot(slots, inventorySize, 30, slot("preview", "preview-only"));
+            putSlot(slots, inventorySize, 31, slot("preview", "preview-only"));
+            putSlot(slots, inventorySize, 24, slot("preview", "preview-only"));
+            putButton(slots, inventorySize, 45, "auto-crafter-container", "auto-crafter.container");
+            putButton(slots, inventorySize, 46, "auto-crafter-previous", "auto-crafter.previous");
+            putButton(slots, inventorySize, 49, "auto-crafter-toggle-or-select", "auto-crafter.enabled");
+            putButton(slots, inventorySize, 52, "auto-crafter-next", "auto-crafter.next");
+        }
+        if (functions.contains("auto-brewer")) {
+            putSlot(slots, inventorySize, 10, inputSlot("fuel-input", "minecraft:blaze_powder"));
+            putSlot(slots, inventorySize, 16, inputSlot("input-filtered", "brewing-ingredient"));
+            for (int slot : List.of(37, 39, 41, 43)) {
+                putSlot(slots, inventorySize, slot, inputSlot("input-filtered", "potion-bottle"));
+            }
+            Map<String, Object> fuelDisplay = slot("fuel", "status-display");
+            fuelDisplay.put("item-source", "auto-brewer.fuel");
+            putSlot(slots, inventorySize, 22, fuelDisplay);
+        }
+        if (functions.contains("assembler")) {
+            putButton(slots, inventorySize, 13, "assembler-toggle", "assembler.enabled");
+            putButton(slots, inventorySize, 31, "assembler-offset", "assembler.offset");
+            putSlot(slots, inventorySize, 1, previewSlot("assembler.head.display"));
+            putSlot(slots, inventorySize, 7, previewSlot("assembler.body.display"));
+            putSlot(slots, inventorySize, 19, inputSlot("input-filtered", "assembler-head"));
+            putSlot(slots, inventorySize, 28, inputSlot("input-filtered", "assembler-head"));
+            putSlot(slots, inventorySize, 25, inputSlot("input-filtered", "assembler-body"));
+            putSlot(slots, inventorySize, 34, inputSlot("input-filtered", "assembler-body"));
+        }
+    }
+
+    private void putButton(Map<String, Object> slots, int inventorySize, int slot, String action, String itemSource) {
+        Map<String, Object> definition = slot("button", "button-click");
+        definition.put("action", action);
+        definition.put("item-source", itemSource);
+        putSlot(slots, inventorySize, slot, definition);
+    }
+
+    private Map<String, Object> previewSlot(String itemSource) {
+        Map<String, Object> definition = slot("preview", "preview-only");
+        definition.put("item-source", itemSource);
+        return definition;
+    }
+
+    private Map<String, Object> inputSlot(String behavior, String accepts) {
+        Map<String, Object> definition = slot("input", behavior);
+        definition.put("accepts", accepts);
+        return definition;
+    }
+
+    private void putSlot(Map<String, Object> slots, int inventorySize, int slot, Map<String, Object> definition) {
+        if (slot >= 0 && slot < inventorySize) {
+            slots.put(String.valueOf(slot), definition);
+        }
+    }
+
+    private Map<String, Object> slot(String role, String behavior) {
+        Map<String, Object> definition = new LinkedHashMap<>();
+        definition.put("role", role);
+        definition.put("behavior", behavior);
+        return definition;
     }
 
     private void clearOutputDirectory() throws IOException {
@@ -726,6 +867,53 @@ public final class SfxTemplateCompiler {
         }
         String text = String.valueOf(value).trim();
         return text.isEmpty() ? null : text;
+    }
+
+    private int intValue(Object value, int fallback) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value == null) {
+            return fallback;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value).trim());
+        } catch (NumberFormatException ignored) {
+            return fallback;
+        }
+    }
+
+    private List<Integer> ints(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        List<Integer> result = new ArrayList<>();
+        for (Object entry : list) {
+            if (entry instanceof Number number) {
+                result.add(number.intValue());
+            } else if (entry != null) {
+                try {
+                    result.add(Integer.parseInt(String.valueOf(entry).trim()));
+                } catch (NumberFormatException ignored) {
+                    
+                }
+            }
+        }
+        return result;
+    }
+
+    private List<String> strings(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        List<String> result = new ArrayList<>();
+        for (Object entry : list) {
+            String text = stringOrNull(entry);
+            if (text != null) {
+                result.add(text);
+            }
+        }
+        return result;
     }
 
     private record SourceNode(String relativePath, Map<String, Object> root) {
