@@ -236,7 +236,9 @@ tasks.register('validateSfxCompiledContent') {
                 '@ot',
                 '@outputtarget',
                 '${',
-                'tag-fuels'
+                'tag-fuels',
+                '&id',
+                '*id'
         ]
         def violations = []
         compiledFiles.each { file ->
@@ -264,9 +266,16 @@ tasks.register('validateSfxCompiledContent') {
         }
         electricFiles.each { file ->
             def text = file.getText('UTF-8')
-            ['name-key:', 'functions:', 'ui:', 'inventory-size:', 'status-slot:', 'frame:', 'items:', 'status:'].each { token ->
+            ['name-key:', 'functions:', 'ui:', 'inventory-size:', 'status-slot:', 'frame:', 'items:', 'status:', 'slots:'].each { token ->
                 if (!text.contains(token)) {
                     violations << "${root.toPath().relativize(file.toPath())}: missing ${token}"
+                }
+            }
+            if (!text.contains('inventory-size: 0')) {
+                ['role:', 'behavior:'].each { token ->
+                    if (!text.contains(token)) {
+                        violations << "${root.toPath().relativize(file.toPath())}: missing ${token}"
+                    }
                 }
             }
         }
