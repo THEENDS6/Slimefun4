@@ -46,8 +46,7 @@ public final class SfxLocalization {
     }
 
     public String text(String path, String fallback) {
-        String value = lookup(path);
-        return value == null ? fallback : value;
+        return requiredText(path);
     }
 
     public String requiredText(String path) {
@@ -72,40 +71,34 @@ public final class SfxLocalization {
     }
 
     public String text(String path, String fallback, Map<String, ?> placeholders) {
-        return applyPlaceholders(text(path, fallback), placeholders);
+        return applyPlaceholders(requiredText(path), placeholders);
     }
 
     public Component component(String path, String fallback) {
-        return render(text(path, fallback));
+        return render(requiredText(path));
     }
 
     public Component component(String path, String fallback, Map<String, ?> placeholders) {
-        return render(text(path, fallback, placeholders));
+        return render(applyPlaceholders(requiredText(path), placeholders));
     }
 
     public Component categoryName(String categoryId, Component fallback) {
         String path = "categories." + sanitize(categoryId) + ".name";
-        String value = lookup(path);
-        return value == null ? fallback : render(value);
+        return render(requiredText(path));
     }
 
     public Component itemName(String itemId, Component fallback) {
         String path = "items." + sanitize(itemId) + ".name";
-        String value = lookup(path);
-        return value == null ? fallback : render(value);
+        return render(requiredText(path));
     }
 
     public Component researchName(String researchId, Component fallback) {
         String path = "researches." + sanitize(researchId) + ".name";
-        String value = lookup(path);
-        return value == null ? fallback : render(value);
+        return render(requiredText(path));
     }
 
     public List<Component> itemLore(String itemId, List<Component> fallback) {
-        List<String> lines = list("items." + sanitize(itemId) + ".lore");
-        if (lines.isEmpty()) {
-            return fallback;
-        }
+        List<String> lines = requiredList("items." + sanitize(itemId) + ".lore");
         List<Component> localized = new ArrayList<>();
         for (String line : lines) {
             localized.add(render(line));
@@ -117,7 +110,7 @@ public final class SfxLocalization {
         String path = "recipes." + sanitize(itemId) + "." + index + ".note";
         String value = lookup(path);
         if (value == null) {
-            return fallback == null ? List.of() : List.of(fallback);
+            return List.of();
         }
         return List.of(render(value));
     }
