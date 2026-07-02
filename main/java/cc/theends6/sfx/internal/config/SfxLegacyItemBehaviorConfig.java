@@ -1,5 +1,6 @@
 package cc.theends6.sfx.internal.config;
 
+import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,8 +53,7 @@ public final class SfxLegacyItemBehaviorConfig {
     }
 
     public void reload() {
-        File file = file();
-        this.yaml = file.isFile() ? YamlConfiguration.loadConfiguration(file) : new YamlConfiguration();
+        this.yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         this.talismans = new SfxTalismanBehaviorConfig(yaml);
     }
 
