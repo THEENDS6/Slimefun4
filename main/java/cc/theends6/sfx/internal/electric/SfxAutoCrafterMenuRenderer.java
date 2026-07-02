@@ -2,14 +2,12 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
-import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
 import cc.theends6.sfx.internal.ui.SfxUiItems;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -21,15 +19,6 @@ final class SfxAutoCrafterMenuRenderer {
     static final int SELECT_SLOT = 49;
     static final int NEXT_SLOT = 52;
     static final int STATUS_SLOT = 53;
-    private static final int[] BACKGROUND = {
-            0, 1, 2, 3, 4, 5, 6, 7, 8,
-            9, 10, 14, 15, 16, 17,
-            18, 19, 23, 25, 26,
-            27, 28, 32, 33, 34, 35,
-            36, 37, 38, 39, 40, 41, 42, 43, 44
-    };
-    private static final int[] VIEW_BOTTOM_BACKGROUND = {46, 47, 48, 50, 51, 52};
-    private static final int[] SELECT_BOTTOM_BACKGROUND = {45, 47, 48, 50, 51, 53};
     private static final int[] INPUT_GRID = {11, 12, 13, 20, 21, 22, 29, 30, 31};
     private static final int OUTPUT_SLOT = 24;
 
@@ -45,34 +34,45 @@ final class SfxAutoCrafterMenuRenderer {
 
     void render(UUID viewerId, SfxElectricMachineDefinition definition, Inventory inventory, SfxElectricMachineState state, SfxElectricMachineRenderStatus status, SfxAutoCrafterRecipeChoice choice) {
         inventory.clear();
-        drawClassicBackground(inventory, VIEW_BOTTOM_BACKGROUND);
-        drawRecipePreview(inventory, choice);
-        inventory.setItem(CHEST_SLOT, chestItem(status));
-        inventory.setItem(ENABLE_SLOT, enabledItem(state.enabled(), state.activeRecipeKey()));
-        inventory.setItem(STATUS_SLOT, statusIcons.render(viewerId, definition, state, null, status));
+        drawConfiguredBackground(definition, inventory);
+        drawRecipePreview(definition, inventory, choice);
+        inventory.setItem(CHEST_SLOT, chestItem(definition, status));
+        inventory.setItem(ENABLE_SLOT, enabledItem(definition, state.enabled(), state.activeRecipeKey()));
+        inventory.setItem(definition.ui().statusSlot(), statusIcons.render(viewerId, definition, state, null, status));
     }
 
     void renderSelection(SfxElectricMachineDefinition definition, Inventory inventory, List<SfxAutoCrafterRecipeChoice> choices, int index) {
         inventory.clear();
-        drawClassicBackground(inventory, SELECT_BOTTOM_BACKGROUND);
+        drawConfiguredBackground(definition, inventory);
         SfxAutoCrafterRecipeChoice choice = choices.isEmpty() ? null : choices.get(Math.max(0, Math.min(index, choices.size() - 1)));
-        drawRecipePreview(inventory, choice);
-        inventory.setItem(PREVIOUS_SLOT, pageButton(Material.ARROW, "electric-ui.auto-crafter.previous.name", "<yellow>Previous Recipe</yellow>", index + 1, choices.size()));
-        inventory.setItem(SELECT_SLOT, selectItem(choice));
-        inventory.setItem(NEXT_SLOT, pageButton(Material.ARROW, "electric-ui.auto-crafter.next.name", "<yellow>Next Recipe</yellow>", index + 1, choices.size()));
+        drawRecipePreview(definition, inventory, choice);
+        inventory.setItem(PREVIOUS_SLOT, pageButton(definition, "auto-crafter.previous", index + 1, choices.size()));
+        inventory.setItem(SELECT_SLOT, selectItem(definition, choice));
+        inventory.setItem(NEXT_SLOT, pageButton(definition, "auto-crafter.next", index + 1, choices.size()));
     }
 
-    private void drawClassicBackground(Inventory inventory, int[] bottom) {
-        ItemStack background = SfxUiItems.named(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "), List.of());
-        SfxInventoryPainter.setSlots(inventory, background, BACKGROUND);
-        SfxInventoryPainter.setSlots(inventory, background, bottom);
+    private void drawConfiguredBackground(SfxElectricMachineDefinition definition, Inventory inventory) {
+        for (SfxElectricMachineUiFrame frame : definition.ui().frame()) {
+            for (int slot : frame.slots()) {
+                if (slot >= 0 && slot < inventory.getSize()) {
+                    inventory.setItem(slot, frame.item().toItemStack());
+                }
+            }
+        }
     }
 
     private void drawRecipePreview(Inventory inventory, SfxAutoCrafterRecipeChoice choice) {
+        drawRecipePreview(null, inventory, choice);
+    }
+
+    private void drawRecipePreview(SfxElectricMachineDefinition definition, Inventory inventory, SfxAutoCrafterRecipeChoice choice) {
         if (choice == null) {
-            inventory.setItem(OUTPUT_SLOT, SfxUiItems.named(Material.PAPER, localization.component("electric-ui.auto-crafter.recipe.none-title", "<yellow>No Recipe Selected</yellow>"), List.of(
+            SfxElectricMachineUiItem item = definition == null ? null : definition.ui().item("auto-crafter.no-recipe", null);
+            inventory.setItem(OUTPUT_SLOT, item == null
+                    ? SfxUiItems.named(org.bukkit.Material.PAPER, localization.component("electric-ui.auto-crafter.recipe.none-title", "<yellow>No Recipe Selected</yellow>"), List.of(
                     localization.component("electric-ui.auto-crafter.recipe.configure", "<gray>Sneak-right-click this machine while holding the target item to configure.</gray>")
-            )));
+            ))
+                    : item.toItemStack());
             return;
         }
         ItemStack[] inputs = choice.inputPreview();
@@ -82,21 +82,26 @@ final class SfxAutoCrafterMenuRenderer {
         inventory.setItem(OUTPUT_SLOT, cloneOrNull(choice.outputPreview()));
     }
 
-    private ItemStack enabledItem(boolean enabled, String recipeKey) {
-        Material material = enabled ? Material.BARRIER : Material.REDSTONE_TORCH;
+    private ItemStack enabledItem(SfxElectricMachineDefinition definition, boolean enabled, String recipeKey) {
+        String recipe = recipeKey == null || recipeKey.isBlank() ? localization.text("electric-ui.auto-crafter.recipe.none", "None") : recipeKey;
+        SfxElectricMachineUiItem item = definition.ui().item(enabled ? "auto-crafter.enabled" : "auto-crafter.disabled", null);
+        if (item != null) {
+            return item.toItemStack(Map.of("recipe", recipe));
+        }
+        org.bukkit.Material material = enabled ? org.bukkit.Material.BARRIER : org.bukkit.Material.REDSTONE_TORCH;
         String key = enabled ? "electric-ui.auto-crafter.enabled.name" : "electric-ui.auto-crafter.disabled.name";
         String fallback = enabled ? "<green>Recipe Enabled</green>" : "<red>Recipe Disabled</red>";
         return SfxUiItems.named(material, localization.component(key, fallback), List.of(
                 localization.component("electric-ui.auto-crafter.enabled.lore", "<yellow>Left-click: toggle recipe.</yellow>"),
                 localization.component("electric-ui.auto-crafter.recipe.clear", "<yellow>Right-click: clear recipe</yellow>"),
-                localization.component("electric-ui.auto-crafter.recipe.current", "<gray>Recipe: </gray><white>{recipe}</white>", Map.of("recipe", recipeKey == null || recipeKey.isBlank() ? localization.text("electric-ui.auto-crafter.recipe.none", "None") : recipeKey))
+                localization.component("electric-ui.auto-crafter.recipe.current", "<gray>Recipe: </gray><white>{recipe}</white>", Map.of("recipe", recipe))
         ));
     }
 
-    private ItemStack selectItem(SfxAutoCrafterRecipeChoice choice) {
-        ItemStack icon = choice == null ? new ItemStack(Material.CRAFTING_TABLE) : cloneOrNull(choice.outputPreview());
+    private ItemStack selectItem(SfxElectricMachineDefinition definition, SfxAutoCrafterRecipeChoice choice) {
+        ItemStack icon = choice == null ? definition.ui().item("auto-crafter.select", new SfxElectricMachineUiItem(org.bukkit.Material.CRAFTING_TABLE, "&a选择配方", List.of("&e点击选择这个配方。"))).toItemStack() : cloneOrNull(choice.outputPreview());
         if (icon == null || icon.getType().isAir()) {
-            icon = new ItemStack(Material.CRAFTING_TABLE);
+            icon = definition.ui().item("auto-crafter.select", new SfxElectricMachineUiItem(org.bukkit.Material.CRAFTING_TABLE, "&a选择配方", List.of("&e点击选择这个配方。"))).toItemStack();
         }
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
@@ -107,14 +112,17 @@ final class SfxAutoCrafterMenuRenderer {
         return icon;
     }
 
-    private ItemStack pageButton(Material material, String key, String fallback, int page, int total) {
-        return SfxUiItems.named(material, localization.component(key, fallback), List.of(
-                localization.component("electric-ui.auto-crafter.page", "<gray>Recipe {page} / {total}</gray>", Map.of("page", page, "total", Math.max(1, total)))
-        ));
+    private ItemStack pageButton(SfxElectricMachineDefinition definition, String key, int page, int total) {
+        return definition.ui().item(key, new SfxElectricMachineUiItem(org.bukkit.Material.ARROW, "&e配方", List.of("&7配方 {page} / {total}")))
+                .toItemStack(Map.of("page", page, "total", Math.max(1, total)));
     }
 
-    private ItemStack chestItem(SfxElectricMachineRenderStatus status) {
-        Material material = status == SfxElectricMachineRenderStatus.NO_TARGET ? Material.BARRIER : Material.CHEST;
+    private ItemStack chestItem(SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status) {
+        SfxElectricMachineUiItem configured = definition.ui().item(status == SfxElectricMachineRenderStatus.NO_TARGET ? "auto-crafter.container.missing" : "auto-crafter.container.ok", null);
+        if (configured != null) {
+            return configured.toItemStack();
+        }
+        org.bukkit.Material material = status == SfxElectricMachineRenderStatus.NO_TARGET ? org.bukkit.Material.BARRIER : org.bukkit.Material.CHEST;
         return SfxUiItems.named(material, localization.component("electric-ui.auto-crafter.container.name", "<gold>Attached Container</gold>"), List.of(
                 localization.component("electric-ui.auto-crafter.container.lore", "<gray>This machine uses the container directly below it.</gray>")
         ));

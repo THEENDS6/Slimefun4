@@ -17,6 +17,7 @@ public final class SfxTemplatePrecompiler {
             "content/templates/00-electric-machine-templates.yml",
             "content/templates/05-energy-component-templates.yml",
             "content/templates/10-electric-furnaces.yml",
+            "content/templates/12-special-electric-ui.yml",
             "content/templates/20-energy-components.yml"
     );
     private static final List<String> REMOVED_BUNDLED_TEMPLATE_RESOURCES = List.of(

@@ -3,8 +3,8 @@ package cc.theends6.sfx.internal.electric;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
-import cc.theends6.sfx.internal.ui.SfxUiItems;
 import cc.theends6.sfx.internal.util.SfxLocalization;
+import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,37 +16,23 @@ import org.bukkit.inventory.ItemStack;
 
 final class SfxElectricAssemblerMenuRenderer {
     static final int ENABLE_SLOT = 13;
-    static final int STATUS_SLOT = 22;
     static final int OFFSET_SLOT = 31;
     static final int[] HEAD_SLOTS = {19, 28};
     static final int[] BODY_SLOTS = {25, 34};
 
-    private static final int[] BACKGROUND_SLOTS = {
-            0, 2, 3, 4, 5, 6, 8,
-            12, 14,
-            21, 23,
-            30, 32,
-            39, 40, 41,
-            45, 46, 47, 48, 49, 50, 51, 52, 53
-    };
-    private static final int[] HEAD_FRAME = {9, 10, 11, 18, 20, 27, 29, 36, 37, 38};
-    private static final int[] BODY_FRAME = {15, 16, 17, 24, 26, 33, 35, 42, 43, 44};
-
     private final SfxItems items;
-    private final SfxLocalization localization;
     private final SfxElectricMachineStatusIconRenderer statusIcons;
 
     SfxElectricAssemblerMenuRenderer(SfxItems items, SfxLocalization localization, SfxPlayerDataService profiles) {
         this.items = items;
-        this.localization = localization;
         this.statusIcons = new SfxElectricMachineStatusIconRenderer(items, localization, profiles);
     }
 
     void render(UUID viewerId, SfxElectricMachineDefinition definition, Inventory inventory, SfxElectricMachineState state, SfxElectricMachineRenderStatus status) {
         fillFrame(inventory, definition);
-        inventory.setItem(ENABLE_SLOT, enabledItem(state));
-        inventory.setItem(STATUS_SLOT, statusIcons.render(viewerId, definition, state, null, status));
-        inventory.setItem(OFFSET_SLOT, offsetItem(state));
+        inventory.setItem(ENABLE_SLOT, enabledItem(definition, state));
+        inventory.setItem(definition.ui().statusSlot(), statusIcons.render(viewerId, definition, state, null, status));
+        inventory.setItem(OFFSET_SLOT, offsetItem(definition, state));
         int[] inputSlots = definition.inputSlots();
         for (int index = 0; index < inputSlots.length; index++) {
             inventory.setItem(inputSlots[index], state.input(index) == null ? null : state.input(index).toItemStack(items));
@@ -56,56 +42,47 @@ final class SfxElectricAssemblerMenuRenderer {
     private void fillFrame(Inventory inventory, SfxElectricMachineDefinition definition) {
         inventory.clear();
         SfxElectricAssemblerSpec spec = definition.assemblerSpec();
-        Material headPane = definition.id().equals("sf:iron_golem_assembler") ? Material.ORANGE_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE;
-        Material bodyPane = definition.id().equals("sf:iron_golem_assembler") ? Material.WHITE_STAINED_GLASS_PANE : Material.BROWN_STAINED_GLASS_PANE;
-        SfxInventoryPainter.setSlots(inventory, namedItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "), List.of()), BACKGROUND_SLOTS);
-        SfxInventoryPainter.setSlots(inventory, namedItem(headPane, localization.component("configurable-ui.assembler.head-slot.name", "<yellow>Head Material</yellow>"), List.of()), HEAD_FRAME);
-        SfxInventoryPainter.setSlots(inventory, namedItem(bodyPane, localization.component("configurable-ui.assembler.body-slot.name", "<gold>Body Material</gold>"), List.of()), BODY_FRAME);
+        for (SfxElectricMachineUiFrame frame : definition.ui().frame()) {
+            SfxInventoryPainter.setSlots(inventory, frame.item().toItemStack(), frame.slots());
+        }
         if (spec != null) {
-            inventory.setItem(1, displayMaterial(spec.headMaterial(), localization.component("configurable-ui.assembler.head-slot.name", "<yellow>Head Material</yellow>"), spec.headAmount(), List.of(spec.headMaterial())));
-            inventory.setItem(7, displayMaterial(spec.primaryBodyMaterial(), localization.component("configurable-ui.assembler.body-slot.name", "<gold>Body Material</gold>"), spec.bodyAmount(), new ArrayList<>(spec.bodyMaterials())));
+            inventory.setItem(1, displayMaterial(definition, "assembler.head.display", spec.headMaterial(), spec.headAmount(), List.of(spec.headMaterial())));
+            inventory.setItem(7, displayMaterial(definition, "assembler.body.display", spec.primaryBodyMaterial(), spec.bodyAmount(), new ArrayList<>(spec.bodyMaterials())));
         }
     }
 
-    private ItemStack enabledItem(SfxElectricMachineState state) {
+    private ItemStack enabledItem(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
         boolean enabled = state.enabled();
-        List<Component> lore = new ArrayList<>();
-        if (!enabled) {
-            lore.add(localization.component("configurable-ui.assembler.disabled.lore", "<gray>This assembler is disabled.</gray>"));
-        }
-        lore.add(localization.component("configurable-ui.assembler.toggle.lore", "<gray>Click to toggle this assembler.</gray>"));
-        return namedItem(
-                enabled ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE,
-                enabled
-                        ? localization.component("configurable-ui.assembler.enabled.name", "<green>Enabled</green>")
-                        : localization.component("configurable-ui.assembler.disabled.name", "<red>Disabled</red>"),
-                lore);
+        return definition.ui().item(enabled ? "assembler.enabled" : "assembler.disabled",
+                new SfxElectricMachineUiItem(enabled ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE,
+                        enabled ? "<green>Enabled</green>" : "<red>Disabled</red>",
+                        List.of("<gray>Click to toggle this assembler.</gray>")))
+                .toItemStack();
     }
 
-    private ItemStack offsetItem(SfxElectricMachineState state) {
+    private ItemStack offsetItem(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
         double offset = SfxAreaElectricMachineProviders.assemblerOffsetTenths(state) / 10.0D;
-        return namedItem(
-                Material.COMPASS,
-                localization.component("configurable-ui.assembler.offset.name", "<aqua>Spawn Offset</aqua>", Map.of("offset", offset)),
-                List.of(localization.component("configurable-ui.assembler.offset.status", "<gray>Offset: {offset} Block(s)</gray>", Map.of("offset", offset)),
-                        localization.component("configurable-ui.assembler.offset.left", "<gray>Left-click: +0.1</gray>"),
-                        localization.component("configurable-ui.assembler.offset.right", "<gray>Right-click: -0.1</gray>"),
-                        localization.component("configurable-ui.assembler.offset.range", "<gray>Range: -10.0 to 10.0</gray>")));
+        return definition.ui().item("assembler.offset",
+                new SfxElectricMachineUiItem(Material.COMPASS, "<aqua>Spawn Offset</aqua>", List.of(
+                        "<gray>Offset: {offset} Block(s)</gray>",
+                        "<gray>Left-click: +0.1</gray>",
+                        "<gray>Right-click: -0.1</gray>",
+                        "<gray>Range: -10.0 to 10.0</gray>")))
+                .toItemStack(Map.of("offset", offset));
     }
 
-    private ItemStack displayMaterial(Material material, Component name, int amount, List<Material> acceptedMaterials) {
-        List<Component> lore = new ArrayList<>();
-        lore.add(localization.component("configurable-ui.assembler.required.lore", "<gray>Required: {amount}</gray>", Map.of("amount", amount)));
+    private ItemStack displayMaterial(SfxElectricMachineDefinition definition, String key, Material material, int amount, List<Material> acceptedMaterials) {
+        ItemStack stack = definition.ui().item(key,
+                new SfxElectricMachineUiItem(material, "<yellow>Required Material</yellow>", List.of("<gray>Required: {amount}</gray>")))
+                .toItemStack(material, Map.of("amount", amount));
         if (acceptedMaterials.size() > 1) {
-            lore.add(localization.component("configurable-ui.assembler.accepted.lore", "<gray>Accepted materials are shown by Minecraft localization.</gray>"));
+            List<Component> lore = stack.lore() == null ? new ArrayList<>() : new ArrayList<>(stack.lore());
+            lore.add(Text.renderFlexible("&7可用材料："));
             for (Material accepted : acceptedMaterials) {
                 lore.add(Component.text(" - ").append(Component.translatable(accepted.translationKey())));
             }
+            stack.lore(lore);
         }
-        return namedItem(material, name, lore);
-    }
-
-    private ItemStack namedItem(Material material, Component name, List<Component> lore) {
-        return SfxUiItems.named(material, name, lore);
+        return stack;
     }
 }

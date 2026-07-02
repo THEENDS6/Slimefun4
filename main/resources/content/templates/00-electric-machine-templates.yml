@@ -18,6 +18,38 @@ templates:
       ui:
         inventory-size: 45
         status-slot: 22
+        status:
+          working:
+            material: ${default-progress-material}
+            name: " "
+            include-default-lore: false
+            durability-mode: AUTO
+            lore:
+              - "&7进度：&f{progress_current}&7/&f{progress_total} &8({progress_percent}%)"
+              - "&7剩余时间：&f{time_left}"
+              - ""
+              - "&7储能：&e{stored_energy}&7/&e{energy_capacity} J"
+              - "&7耗电：&e{energy_per_tick} J/t"
+          idle:
+            material: BLACK_STAINED_GLASS_PANE
+            name: "&7闲置"
+            lore:
+              - "&7等待输入。"
+          no-power:
+            material: RED_STAINED_GLASS_PANE
+            name: "&c无电力"
+            lore:
+              - "&7给机器供电后继续。"
+          output-full:
+            material: ORANGE_STAINED_GLASS_PANE
+            name: "&c输出已满"
+            lore:
+              - "&7清理输出槽后继续。"
+          no-recipe:
+            material: BLACK_STAINED_GLASS_PANE
+            name: "&7无配方"
+            lore:
+              - "&7当前输入没有匹配配方。"
         frame:
           - slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 31, 36, 37, 38, 39, 40, 41, 42, 43, 44]
             item:

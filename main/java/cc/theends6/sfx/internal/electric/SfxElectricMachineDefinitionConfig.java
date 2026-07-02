@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
+import cc.theends6.sfx.internal.ui.SfxDurabilityBarMode;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -190,7 +191,22 @@ final class SfxElectricMachineDefinitionConfig {
         if (frames.isEmpty() && section.isConfigurationSection("border")) {
             frames.add(new SfxElectricMachineUiFrame(parseSlots(section.getList("border.slots", List.of())), parseUiItem(section.getConfigurationSection("border"))));
         }
-        return new SfxElectricMachineUiDefinition(inventorySize, statusSlot, frames.isEmpty() ? base.frame() : frames);
+        Map<String, SfxElectricMachineUiItem> items = new LinkedHashMap<>(base.items());
+        ConfigurationSection itemSection = section.getConfigurationSection("items");
+        if (itemSection != null) {
+            collectUiItems(items, "", itemSection);
+        }
+        Map<String, SfxElectricMachineStatusUiTemplate> status = new LinkedHashMap<>(base.status());
+        ConfigurationSection statusSection = section.getConfigurationSection("status");
+        if (statusSection != null) {
+            for (String key : statusSection.getKeys(false)) {
+                ConfigurationSection statusEntry = statusSection.getConfigurationSection(key);
+                if (statusEntry != null) {
+                    status.put(key, parseStatusTemplate(statusEntry));
+                }
+            }
+        }
+        return new SfxElectricMachineUiDefinition(inventorySize, statusSlot, frames.isEmpty() ? base.frame() : frames, items, status);
     }
 
     private static SfxElectricMachineUiFrame parseUiFrame(Map<?, ?> map) {
@@ -209,14 +225,47 @@ final class SfxElectricMachineDefinitionConfig {
         return new SfxElectricMachineUiItem(
                 parseRequiredMaterial(section.getString("material", null)),
                 section.getString("name", " "),
-                section.getStringList("lore"));
+                section.getStringList("lore"),
+                section.getBoolean("glint", false));
+    }
+
+    private static void collectUiItems(Map<String, SfxElectricMachineUiItem> target, String prefix, ConfigurationSection section) {
+        for (String key : section.getKeys(false)) {
+            ConfigurationSection child = section.getConfigurationSection(key);
+            if (child == null) {
+                continue;
+            }
+            String path = prefix.isEmpty() ? key : prefix + "." + key;
+            if (child.contains("material")) {
+                target.put(path, parseUiItem(child));
+            } else {
+                collectUiItems(target, path, child);
+            }
+        }
     }
 
     private static SfxElectricMachineUiItem parseUiItem(Map<?, ?> map) {
         return new SfxElectricMachineUiItem(
                 parseRequiredMaterial(string(map.get("material"))),
                 stringOrDefault(map.get("name"), " "),
-                strings(map.get("lore")));
+                strings(map.get("lore")),
+                Boolean.parseBoolean(stringOrDefault(map.get("glint"), "false")));
+    }
+
+    private static SfxElectricMachineStatusUiTemplate parseStatusTemplate(ConfigurationSection section) {
+        return new SfxElectricMachineStatusUiTemplate(
+                parseMaterial(section.getString("material", null)),
+                section.getString("name", null),
+                section.getStringList("lore"),
+                section.getBoolean("include-default-lore", true),
+                parseDurabilityMode(section.getString("durability-mode", "NONE")));
+    }
+
+    private static SfxDurabilityBarMode parseDurabilityMode(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return SfxDurabilityBarMode.NONE;
+        }
+        return SfxDurabilityBarMode.valueOf(raw.trim().replace('-', '_').toUpperCase(Locale.ROOT));
     }
 
     private static Material parseRequiredMaterial(String raw) {

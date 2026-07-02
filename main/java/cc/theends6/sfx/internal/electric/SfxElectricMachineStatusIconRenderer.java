@@ -7,6 +7,7 @@ import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
 import cc.theends6.sfx.internal.util.SfxLocalization;
+import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,11 +35,14 @@ final class SfxElectricMachineStatusIconRenderer {
     ItemStack render(UUID viewerId, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
         SfxElectricMachineRenderStatus effectiveStatus = effectiveStatus(definition, state, status);
         SfxMachineStatusKey statusKey = effectiveStatus.statusKey();
+        SfxElectricMachineStatusUiTemplate template = definition.ui().statusTemplate(statusTemplateKey(effectiveStatus));
         SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(statusKey)
-                .material(material(definition, effectiveStatus, statusKey))
+                .material(template != null && template.material() != null ? template.material() : material(definition, effectiveStatus, statusKey))
                 .energy(state.storedEnergy(), definition.energyCapacity());
 
-        Component nameOverride = displayNameOverride(viewerId, definition, effectiveStatus);
+        Component nameOverride = template != null && template.name() != null
+                ? Text.renderFlexible(applyPlaceholders(template.name(), statusPlaceholders(definition, state, recipe, effectiveStatus)))
+                : displayNameOverride(viewerId, definition, effectiveStatus);
         if (nameOverride != null) {
             view.name(nameOverride);
         }
@@ -49,7 +53,7 @@ final class SfxElectricMachineStatusIconRenderer {
                 if (state.specialData() >= XP_PER_FLASK) {
                     current = XP_PER_FLASK;
                 }
-                view.progress(current, XP_PER_FLASK, -1, true)
+                view.progress(current, XP_PER_FLASK, -1, template == null ? cc.theends6.sfx.internal.ui.SfxDurabilityBarMode.AUTO : template.durabilityBarMode())
                         .includeDefaultStatusLore(false)
                 .statusLore(localization.component(
                                 "electric-ui.simple-io.xp-progress",
@@ -59,7 +63,7 @@ final class SfxElectricMachineStatusIconRenderer {
                 int totalWork = totalWork(definition, state, recipe);
                 int currentWork = Math.min(totalWork, Math.max(0, state.progressWork()));
                 int remainingTicks = Math.max(0, (int) Math.ceil((totalWork - currentWork) / (double) Math.max(1, definition.speed())));
-                view.progress(currentWork, totalWork, remainingTicks, true)
+                view.progress(currentWork, totalWork, remainingTicks, template == null ? cc.theends6.sfx.internal.ui.SfxDurabilityBarMode.AUTO : template.durabilityBarMode())
                         .includeDefaultStatusLore(false)
                 .statusLore(workingLore(definition));
             }
@@ -68,6 +72,14 @@ final class SfxElectricMachineStatusIconRenderer {
             if (!overrideLore.isEmpty()) {
                 view.includeDefaultStatusLore(false)
                 .statusLore(overrideLore);
+            }
+        }
+        if (template != null) {
+            view.includeDefaultStatusLore(template.includeDefaultLore());
+            if (!template.lore().isEmpty()) {
+                view.overrideStatusLore(template.lore().stream()
+                        .map(line -> Text.renderFlexible(applyPlaceholders(line, statusPlaceholders(definition, state, recipe, effectiveStatus))))
+                        .toList());
             }
         }
 
@@ -87,6 +99,37 @@ final class SfxElectricMachineStatusIconRenderer {
             }
         }
         return commonStatusIcons.render(view.build());
+    }
+
+    private String statusTemplateKey(SfxElectricMachineRenderStatus status) {
+        return status == null ? "idle" : status.name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
+    }
+
+    private Map<String, ?> statusPlaceholders(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
+        int total = totalWork(definition, state, recipe);
+        int current = Math.min(total, Math.max(0, state.progressWork()));
+        int remainingTicks = Math.max(0, (int) Math.ceil((total - current) / (double) Math.max(1, definition.speed())));
+        return Map.of(
+                "status", statusTemplateKey(status),
+                "progress_current", current,
+                "progress_total", total,
+                "progress_percent", Math.round((current * 100.0D / Math.max(1, total)) * 100.0D) / 100.0D,
+                "time_left", commonStatusIcons.formatTimeLeft(remainingTicks),
+                "stored_energy", state.storedEnergy(),
+                "energy_capacity", definition.energyCapacity(),
+                "energy_per_tick", definition.energyConsumptionPerTick(),
+                "speed", definition.speed());
+    }
+
+    private String applyPlaceholders(String text, Map<String, ?> placeholders) {
+        if (text == null || placeholders == null || placeholders.isEmpty()) {
+            return text;
+        }
+        String result = text;
+        for (Map.Entry<String, ?> entry : placeholders.entrySet()) {
+            result = result.replace("{" + entry.getKey() + "}", String.valueOf(entry.getValue()));
+        }
+        return result;
     }
 
     private SfxElectricMachineRenderStatus effectiveStatus(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineRenderStatus status) {
