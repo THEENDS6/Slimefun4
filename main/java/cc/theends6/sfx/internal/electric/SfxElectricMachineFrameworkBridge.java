@@ -19,7 +19,7 @@ final class SfxElectricMachineFrameworkBridge {
         return result;
     }
     static SfxMachineDefinition toFrameworkDefinition(SfxElectricMachineDefinition definition) {
-        int statusSlot = definition.menuStyle() == SfxElectricMachineMenuStyle.NONE ? -1 : 22;
+        int statusSlot = definition.ui().statusSlot();
         SfxMachineDefinition frameworkDefinition = new SfxMachineDefinition(definition.id(), definition.title(), SfxMachineCategory.ELECTRIC, ints(definition.inputSlots()), ints(definition.outputSlots()), statusSlot, 1);
         return cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(frameworkDefinition);
     }
@@ -36,8 +36,9 @@ final class SfxElectricMachineFrameworkBridge {
         };
     }
     static SfxMenuLayout layout(SfxElectricMachineDefinition definition, Predicate<ItemStack> inputPredicate) {
-        SfxMenuLayout.Builder builder = SfxMenuLayout.builder(definition.menuStyle().inventorySize()).slots(definition.inputSlots(), SfxSlotPolicy.input(inputPredicate)).slots(definition.outputSlots(), SfxSlotPolicy.output());
-        if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER) builder.slot(22, SfxSlotPolicy.button());
+        int statusSlot = definition.ui().statusSlot();
+        SfxMenuLayout.Builder builder = SfxMenuLayout.builder(definition.ui().inventorySize()).slots(definition.inputSlots(), SfxSlotPolicy.input(inputPredicate)).slots(definition.outputSlots(), SfxSlotPolicy.output());
+        if (definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER && statusSlot >= 0) builder.slot(statusSlot, SfxSlotPolicy.button());
         return builder.build();
     }
     private static List<Integer> ints(int[] values) {

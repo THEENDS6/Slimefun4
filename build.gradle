@@ -191,12 +191,35 @@ tasks.register('validateSfxMachineYaml') {
     }
 }
 
+tasks.register('validateSfxTemplateCompile', JavaExec) {
+    group = 'verification'
+    description = 'Compiles bundled SFX templates into build/sfx-template-compiled and fails on unresolved or invalid template output.'
+    dependsOn 'classes'
+    inputs.dir(layout.projectDirectory.dir('main/resources/content/templates'))
+    outputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.template.SfxTemplateCompilerCli')
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
+    doFirst {
+        def outputDir = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
+        delete(outputDir)
+        outputDir.mkdirs()
+        args = [
+                layout.projectDirectory.dir('main/resources/content/templates').asFile.absolutePath,
+                outputDir.absolutePath
+        ]
+    }
+}
+
 tasks.named('build') {
     finalizedBy 'exportPluginArtifacts'
 }
 
 tasks.named('check') {
     dependsOn 'validateSfxMachineYaml'
+    dependsOn 'validateSfxTemplateCompile'
 }
 
 tasks.register('prepareRuntimeDirs') {

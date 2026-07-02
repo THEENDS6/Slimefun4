@@ -15,6 +15,7 @@ public record SfxElectricMachineDefinition(
         int[] inputSlots,
         int[] outputSlots,
         SfxElectricMachineMenuStyle menuStyle,
+        SfxElectricMachineUiDefinition ui,
         SfxElectricAssemblerSpec assemblerSpec
 ) {
     private static final int[] DEFAULT_INPUT_SLOTS = {19, 20};
@@ -38,7 +39,7 @@ public record SfxElectricMachineDefinition(
             Material progressMaterial,
             SfxElectricRecipeProvider recipeProvider
     ) {
-        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, DEFAULT_INPUT_SLOTS, DEFAULT_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.STANDARD, null);
+        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, DEFAULT_INPUT_SLOTS, DEFAULT_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.STANDARD, SfxElectricMachineUiDefinition.STANDARD, null);
     }
 
     public SfxElectricMachineDefinition(
@@ -52,7 +53,7 @@ public record SfxElectricMachineDefinition(
             int[] inputSlots,
             int[] outputSlots
     ) {
-        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, SfxElectricMachineMenuStyle.STANDARD, null);
+        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, SfxElectricMachineMenuStyle.STANDARD, SfxElectricMachineUiDefinition.STANDARD, null);
     }
 
     public SfxElectricMachineDefinition(
@@ -67,7 +68,23 @@ public record SfxElectricMachineDefinition(
             int[] outputSlots,
             SfxElectricMachineMenuStyle menuStyle
     ) {
-        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, menuStyle, null);
+        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, menuStyle, SfxElectricMachineUiDefinition.forStyle(menuStyle), null);
+    }
+
+    public SfxElectricMachineDefinition(
+            String id,
+            String title,
+            int speed,
+            int energyCapacity,
+            int energyConsumptionPerTick,
+            Material progressMaterial,
+            SfxElectricRecipeProvider recipeProvider,
+            int[] inputSlots,
+            int[] outputSlots,
+            SfxElectricMachineMenuStyle menuStyle,
+            SfxElectricAssemblerSpec assemblerSpec
+    ) {
+        this(id, title, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, menuStyle, SfxElectricMachineUiDefinition.forStyle(menuStyle), assemblerSpec);
     }
 
     public SfxElectricMachineDefinition {
@@ -78,6 +95,7 @@ public record SfxElectricMachineDefinition(
         Objects.requireNonNull(inputSlots, "inputSlots");
         Objects.requireNonNull(outputSlots, "outputSlots");
         Objects.requireNonNull(menuStyle, "menuStyle");
+        ui = ui == null ? SfxElectricMachineUiDefinition.forStyle(menuStyle) : ui;
         if (inputSlots.length > SfxElectricMachineState.MAX_INPUTS) {
             throw new IllegalArgumentException("Electric machines support up to seven input slots.");
         }

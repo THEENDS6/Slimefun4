@@ -72,7 +72,8 @@ final class SfxElectricMachineDefinitionConfig {
         Material progressMaterial = entry.progressMaterial == null ? fallback.progressMaterial() : entry.progressMaterial;
         int[] inputSlots = entry.inputSlots == null ? fallback.inputSlots() : entry.inputSlots;
         int[] outputSlots = entry.outputSlots == null ? fallback.outputSlots() : entry.outputSlots;
-        SfxElectricMachineMenuStyle menuStyle = entry.menuStyle == null ? fallback.menuStyle() : entry.menuStyle;
+            SfxElectricMachineMenuStyle menuStyle = entry.menuStyle == null ? fallback.menuStyle() : entry.menuStyle;
+        SfxElectricMachineUiDefinition ui = entry.ui == null ? fallback.ui() : entry.ui;
         SfxElectricAssemblerSpec assemblerSpec = entry.assemblerSpec == null ? fallback.assemblerSpec() : entry.assemblerSpec;
         return new SfxElectricMachineDefinition(
                 fallback.id(),
@@ -85,6 +86,7 @@ final class SfxElectricMachineDefinitionConfig {
                 inputSlots,
                 outputSlots,
                 menuStyle,
+                ui,
                 assemblerSpec);
     }
 
@@ -123,6 +125,7 @@ final class SfxElectricMachineDefinitionConfig {
             int[] inputSlots,
             int[] outputSlots,
             SfxElectricMachineMenuStyle menuStyle,
+            SfxElectricMachineUiDefinition ui,
             SfxElectricAssemblerSpec assemblerSpec
     ) {
         static Entry parse(ConfigurationSection section) {
@@ -137,6 +140,7 @@ final class SfxElectricMachineDefinitionConfig {
                     parseSlots(slots == null ? section.getList("input-slots") : slots.getList("input")),
                     parseSlots(slots == null ? section.getList("output-slots") : slots.getList("output")),
                     parseMenuStyle(section.getString("menu-style", null)),
+                    parseUi(section.getConfigurationSection("ui"), parseMenuStyle(section.getString("menu-style", null))),
                     parseAssembler(section.getConfigurationSection("assembler")));
         }
     }
@@ -170,6 +174,59 @@ final class SfxElectricMachineDefinitionConfig {
         return SfxElectricMachineMenuStyle.valueOf(raw.trim().replace('-', '_').toUpperCase(Locale.ROOT));
     }
 
+    private static SfxElectricMachineUiDefinition parseUi(ConfigurationSection section, SfxElectricMachineMenuStyle menuStyle) {
+        if (section == null) {
+            return null;
+        }
+        SfxElectricMachineUiDefinition base = SfxElectricMachineUiDefinition.forStyle(menuStyle == null ? SfxElectricMachineMenuStyle.STANDARD : menuStyle);
+        int inventorySize = optionalInt(section, "inventory-size", base.inventorySize());
+        int statusSlot = optionalInt(section, "status-slot", base.statusSlot());
+        List<SfxElectricMachineUiFrame> frames = new ArrayList<>();
+        for (Object rawFrame : section.getList("frame", List.of())) {
+            if (rawFrame instanceof Map<?, ?> map) {
+                frames.add(parseUiFrame(map));
+            }
+        }
+        if (frames.isEmpty() && section.isConfigurationSection("border")) {
+            frames.add(new SfxElectricMachineUiFrame(parseSlots(section.getList("border.slots", List.of())), parseUiItem(section.getConfigurationSection("border"))));
+        }
+        return new SfxElectricMachineUiDefinition(inventorySize, statusSlot, frames.isEmpty() ? base.frame() : frames);
+    }
+
+    private static SfxElectricMachineUiFrame parseUiFrame(Map<?, ?> map) {
+        int[] slots = parseSlots(asList(map.get("slots")));
+        Object itemRaw = map.get("item");
+        if (!(itemRaw instanceof Map<?, ?> itemMap)) {
+            throw new IllegalArgumentException("ui.frame item requires a map");
+        }
+        return new SfxElectricMachineUiFrame(slots, parseUiItem(itemMap));
+    }
+
+    private static SfxElectricMachineUiItem parseUiItem(ConfigurationSection section) {
+        if (section == null) {
+            throw new IllegalArgumentException("ui item section is missing");
+        }
+        return new SfxElectricMachineUiItem(
+                parseRequiredMaterial(section.getString("material", null)),
+                section.getString("name", " "),
+                section.getStringList("lore"));
+    }
+
+    private static SfxElectricMachineUiItem parseUiItem(Map<?, ?> map) {
+        return new SfxElectricMachineUiItem(
+                parseRequiredMaterial(string(map.get("material"))),
+                stringOrDefault(map.get("name"), " "),
+                strings(map.get("lore")));
+    }
+
+    private static Material parseRequiredMaterial(String raw) {
+        Material material = parseMaterial(raw);
+        if (material == null) {
+            throw new IllegalArgumentException("ui item requires material");
+        }
+        return material;
+    }
+
     private static int[] parseSlots(List<?> raw) {
         if (raw == null) {
             return null;
@@ -187,6 +244,32 @@ final class SfxElectricMachineDefinitionConfig {
             result[index] = values.get(index);
         }
         return result;
+    }
+
+    private static List<?> asList(Object value) {
+        return value instanceof List<?> list ? list : List.of();
+    }
+
+    private static List<String> strings(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        List<String> result = new ArrayList<>();
+        for (Object entry : list) {
+            if (entry != null) {
+                result.add(String.valueOf(entry));
+            }
+        }
+        return result;
+    }
+
+    private static String string(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private static String stringOrDefault(Object value, String fallback) {
+        String result = string(value);
+        return result == null ? fallback : result;
     }
 
     private static SfxElectricAssemblerSpec parseAssembler(ConfigurationSection section) {
