@@ -259,8 +259,16 @@ tasks.register('validateSfxCompiledContent') {
         def recipeFiles = fileTree(new File(root, 'content/recipes')) {
             include '**/*.yml'
         }.files
-        if (recipeFiles.size() != 547) {
-            violations << "compiled recipe file count expected 547, got ${recipeFiles.size()}"
+        int recipeEntryCount = 0
+        recipeFiles.each { file ->
+            def text = file.getText('UTF-8')
+            recipeEntryCount += (text =~ /(?m)^  ['"]?[^#\s][^\r\n]*['"]?:\s*$/).count
+        }
+        if (recipeEntryCount != 547) {
+            violations << "compiled recipe entry count expected 547, got ${recipeEntryCount}"
+        }
+        if (recipeFiles.size() >= recipeEntryCount) {
+            violations << "compiled recipe files are not grouped: files=${recipeFiles.size()} entries=${recipeEntryCount}"
         }
         [
                 'content/recipes/recipes',
