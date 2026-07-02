@@ -665,6 +665,14 @@ tasks.register('validateSfxCompiledContent') {
                     violations << "compiled machine catalog expected ${token} on every entry, got ${count}"
                 }
             }
+            def providerSlotCount = (catalogText =~ /(?m)^      slots:\s*/).count
+            def providerDescriptionCount = (catalogText =~ /(?m)^      description:\s*/).count
+            if (providerSlotCount != 368) {
+                violations << "compiled machine catalog expected provider slots on every input/output provider, got ${providerSlotCount}"
+            }
+            if (providerDescriptionCount != 368) {
+                violations << "compiled machine catalog expected provider description on every input/output provider, got ${providerDescriptionCount}"
+            }
         }
         def manualCompiledFile = new File(root, 'content/machines/manual-machines/manual-machines.yml')
         def manualCompiledCount = 0
