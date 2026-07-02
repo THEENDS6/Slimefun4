@@ -1509,8 +1509,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     String displayResearchName(SfxResearchDefinition research, SfxItemDefinition definition) {
-        Component fallback = definition == null ? Text.mm(research.name()) : localization.itemName(definition.id(), definition.name());
-        return PlainTextComponentSerializer.plainText().serialize(localization.researchName(research.id(), fallback));
+        return PlainTextComponentSerializer.plainText().serialize(localization.component(research.nameKey(), research.nameKey()));
     }
 
     private List<SfxItemCategory> visibleCategoriesFor(Player player, GuideMode mode) {
