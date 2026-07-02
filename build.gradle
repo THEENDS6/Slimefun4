@@ -766,6 +766,10 @@ tasks.register('validateSfxCompiledContent') {
                     violations << "compiled configurable machines missing ${token}"
                 }
             }
+            def configurableScalarOutput = configurableText =~ /(?m)^\s+output:\s+[A-Za-z0-9_:.-]+(?:\*[0-9]+)?\s*$/
+            if (configurableScalarOutput.find()) {
+                violations << "compiled configurable machines contain scalar reactor output shorthand: ${configurableScalarOutput.group(0).trim()}"
+            }
         }
         def compiledCategoryCount = 0
         def compiledItemCount = 0

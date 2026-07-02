@@ -103,11 +103,8 @@ final class SfxConfigurableMachineDefinitions {
         if (raw == null) {
             return null;
         }
-        if (raw instanceof String value) {
-            return value.startsWith("sf:") ? SfxElectricStack.sfx(value, 1) : SfxElectricStack.vanilla(parseMaterial(value), 1);
-        }
         if (!(raw instanceof Map<?, ?> map)) {
-            return null;
+            throw new IllegalArgumentException("configurable reactor output must be an explicit map: " + raw);
         }
         int amount = Math.max(1, integer(requiredValue(map, "amount")));
         Object item = map.get("item");
