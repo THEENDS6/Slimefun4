@@ -37,13 +37,6 @@ final class SfxElectricMachineDefinitionConfig {
     static SfxElectricMachineDefinitionConfig load(JavaPlugin plugin) {
         ensureBundledFile(plugin);
         boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
-        File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
-        if (!file.isFile()) {
-            if (strict) {
-                throw new IllegalStateException("Electric machine YAML missing: " + RESOURCE_PATH);
-            }
-            return new SfxElectricMachineDefinitionConfig(plugin, Map.of());
-        }
         YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {

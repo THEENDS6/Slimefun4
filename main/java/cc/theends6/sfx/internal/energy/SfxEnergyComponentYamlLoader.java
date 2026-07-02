@@ -30,13 +30,6 @@ final class SfxEnergyComponentYamlLoader {
     Map<String, SfxEnergyComponentDefinition> load() {
         ensureBundledFile();
         boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
-        File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
-        if (!file.isFile()) {
-            if (strict) {
-                throw new IllegalStateException("Energy component YAML missing: " + RESOURCE_PATH);
-            }
-            return Map.of();
-        }
         YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("components");
         if (root == null) {
