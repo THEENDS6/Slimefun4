@@ -81,7 +81,142 @@ final class SfxEnergyComponentYamlLoader {
         Material progressMaterial = parseMaterial(requiredString(section, "progress-material"));
         requiredList(section, "fuels");
         List<SfxEnergyComponentDefinition.FuelRule> fuels = parseFuelRules(section);
-        return new SfxEnergyComponentDefinition(id, type, capacity, energyPerTick, 0, burnRate, vanillaFuel, progressMaterial, fuels);
+        SfxEnergyComponentUiDefinition ui = parseUi(id, requiredSection(section, "ui"));
+        return new SfxEnergyComponentDefinition(id, type, capacity, energyPerTick, 0, burnRate, vanillaFuel, progressMaterial, fuels, ui);
+    }
+
+    private SfxEnergyComponentUiDefinition parseUi(String id, ConfigurationSection section) {
+        int inventorySize = requiredInt(section, "inventory-size");
+        int statusSlot = requiredInt(section, "status-slot");
+        List<SfxEnergyComponentUiFrame> frames = new ArrayList<>();
+        for (Object rawFrame : section.getList("frame", List.of())) {
+            if (rawFrame instanceof Map<?, ?> map) {
+                frames.add(parseUiFrame(map));
+            }
+        }
+        Map<Integer, SfxEnergyComponentUiSlot> slots = parseUiSlots(requiredSection(section, "slots"));
+        SfxEnergyComponentUiDefinition ui = new SfxEnergyComponentUiDefinition(inventorySize, statusSlot, frames, slots);
+        validateUi(id, ui);
+        return ui;
+    }
+
+    private void validateUi(String id, SfxEnergyComponentUiDefinition ui) {
+        if (ui.inventorySize() <= 0) {
+            throw new IllegalArgumentException(id + " ui.inventory-size must be positive");
+        }
+        if (ui.statusSlot() < 0 || ui.statusSlot() >= ui.inventorySize()) {
+            throw new IllegalArgumentException(id + " ui.status-slot is outside inventory: " + ui.statusSlot());
+        }
+        if (ui.slots().size() != ui.inventorySize()) {
+            throw new IllegalArgumentException(id + " ui.slots must explicitly define every inventory slot: expected " + ui.inventorySize() + ", got " + ui.slots().size());
+        }
+        for (int slot = 0; slot < ui.inventorySize(); slot++) {
+            if (!ui.slots().containsKey(slot)) {
+                throw new IllegalArgumentException(id + " ui.slots missing explicit slot " + slot);
+            }
+        }
+        for (SfxEnergyComponentUiFrame frame : ui.frame()) {
+            for (int slot : frame.slots()) {
+                if (slot < 0 || slot >= ui.inventorySize()) {
+                    throw new IllegalArgumentException(id + " ui.frame slot is outside inventory: " + slot);
+                }
+            }
+        }
+        if (!ui.isRole(ui.statusSlot(), "status")) {
+            throw new IllegalArgumentException(id + " ui.status-slot must be a status slot: " + ui.statusSlot());
+        }
+        validateIndexedRoleSlots(id, ui, "input", 2);
+        validateIndexedRoleSlots(id, ui, "output", 2);
+    }
+
+    private void validateIndexedRoleSlots(String id, SfxEnergyComponentUiDefinition ui, String role, int expectedCount) {
+        List<Integer> indexes = new ArrayList<>();
+        for (SfxEnergyComponentUiSlot slot : ui.slots().values()) {
+            if (!slot.roleIs(role)) {
+                continue;
+            }
+            if (slot.stateIndex() == null) {
+                throw new IllegalArgumentException(id + " ui." + role + " slot " + slot.slot() + " missing state-index");
+            }
+            indexes.add(slot.stateIndex());
+        }
+        if (indexes.size() != expectedCount) {
+            throw new IllegalArgumentException(id + " energy ui must declare exactly " + expectedCount + " " + role + " slots");
+        }
+        for (int index = 0; index < expectedCount; index++) {
+            if (!indexes.contains(index)) {
+                throw new IllegalArgumentException(id + " ui." + role + " slots missing state-index " + index);
+            }
+        }
+    }
+
+    private SfxEnergyComponentUiFrame parseUiFrame(Map<?, ?> map) {
+        int[] slots = parseSlots(asList(map.get("slots")));
+        Object itemRaw = map.get("item");
+        if (!(itemRaw instanceof Map<?, ?> itemMap)) {
+            throw new IllegalArgumentException("energy ui.frame item requires a map");
+        }
+        return new SfxEnergyComponentUiFrame(slots, parseUiItem(itemMap));
+    }
+
+    private Map<Integer, SfxEnergyComponentUiSlot> parseUiSlots(ConfigurationSection section) {
+        Map<Integer, SfxEnergyComponentUiSlot> slots = new LinkedHashMap<>();
+        for (String key : section.getKeys(false)) {
+            int slot;
+            try {
+                slot = Integer.parseInt(key);
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("energy ui.slots key must be numeric: " + key, ex);
+            }
+            ConfigurationSection child = section.getConfigurationSection(key);
+            if (child == null) {
+                throw new IllegalArgumentException("energy ui.slots." + key + " requires a map");
+            }
+            ConfigurationSection item = child.getConfigurationSection("item");
+            slots.put(slot, new SfxEnergyComponentUiSlot(
+                    slot,
+                    requiredString(child, "role"),
+                    requiredString(child, "behavior"),
+                    child.getString("item-source", null),
+                    optionalInt(child, "state-index"),
+                    item == null ? null : parseUiItem(item)));
+        }
+        return Map.copyOf(slots);
+    }
+
+    private SfxEnergyComponentUiItem parseUiItem(ConfigurationSection section) {
+        String name = optionalPresentString(section, "name");
+        String nameKey = section.getString("name-key", null);
+        requireTextReference(section.getCurrentPath(), "name", name, nameKey);
+        List<String> lore = section.contains("lore") ? section.getStringList("lore") : null;
+        String loreKey = section.getString("lore-key", null);
+        requireTextReference(section.getCurrentPath(), "lore", lore, loreKey);
+        return new SfxEnergyComponentUiItem(
+                parseMaterial(requiredString(section, "material")),
+                name,
+                lore,
+                nameKey,
+                loreKey,
+                requiredBoolean(section, "glint"));
+    }
+
+    private SfxEnergyComponentUiItem parseUiItem(Map<?, ?> map) {
+        Object name = map.get("name");
+        Object nameKey = map.get("name-key");
+        requireTextReference("energy ui item", "name", name, nameKey);
+        Object lore = map.get("lore");
+        Object loreKey = map.get("lore-key");
+        requireTextReference("energy ui item", "lore", lore, loreKey);
+        if (!map.containsKey("glint")) {
+            throw new IllegalArgumentException("energy ui item requires glint");
+        }
+        return new SfxEnergyComponentUiItem(
+                parseMaterial(requiredString(map, "material", map.get("material"))),
+                string(name),
+                strings(lore),
+                string(nameKey),
+                string(loreKey),
+                Boolean.parseBoolean(String.valueOf(map.get("glint"))));
     }
 
     private ConfigurationSection requiredSection(ConfigurationSection section, String path) {
@@ -167,6 +302,74 @@ final class SfxEnergyComponentYamlLoader {
             return SfxElectricStack.vanilla(parseMaterial(String.valueOf(material)), amount);
         }
         return null;
+    }
+
+    private static int[] parseSlots(List<?> raw) {
+        List<Integer> values = new ArrayList<>();
+        for (Object value : raw) {
+            if (value instanceof Number number) {
+                values.add(number.intValue());
+            } else if (value != null && !String.valueOf(value).isBlank()) {
+                values.add(Integer.parseInt(String.valueOf(value).trim()));
+            }
+        }
+        int[] result = new int[values.size()];
+        for (int index = 0; index < values.size(); index++) {
+            result[index] = values.get(index);
+        }
+        return result;
+    }
+
+    private static List<?> asList(Object value) {
+        return value instanceof List<?> list ? list : List.of();
+    }
+
+    private static List<String> strings(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        List<String> result = new ArrayList<>();
+        for (Object entry : list) {
+            if (entry != null) {
+                result.add(String.valueOf(entry));
+            }
+        }
+        return result;
+    }
+
+    private static String optionalPresentString(ConfigurationSection section, String path) {
+        return section.contains(path) ? section.getString(path, "") : null;
+    }
+
+    private static Integer optionalInt(ConfigurationSection section, String path) {
+        if (section == null || !section.contains(path)) {
+            return null;
+        }
+        return section.getInt(path);
+    }
+
+    private static void requireTextReference(String context, String field, Object literal, Object key) {
+        if (literal == null && string(key) == null) {
+            throw new IllegalArgumentException(context + " requires " + field + " or " + field + "-key");
+        }
+        if (containsNonBlankLiteral(literal)) {
+            throw new IllegalArgumentException(context + " uses literal " + field + "; use " + field + "-key");
+        }
+    }
+
+    private static boolean containsNonBlankLiteral(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof List<?> list) {
+            for (Object entry : list) {
+                if (entry != null && !String.valueOf(entry).isBlank()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return !String.valueOf(value).isBlank();
     }
 
     private static Object requiredValue(Map<?, ?> map, String key) {

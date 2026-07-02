@@ -5,7 +5,6 @@ import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.ui.SfxDurabilityBarMode;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -87,15 +86,14 @@ final class SfxElectricMachineDefinitionConfig {
         int energyCapacity = requireInt(entryId, "energy.capacity", entry.energyCapacity);
         int energyConsumption = requireInt(entryId, "energy.consumption-per-tick", entry.energyConsumptionPerTick);
         Material progressMaterial = requireValue(entryId, "progress-material", entry.progressMaterial);
-        int[] inputSlots = requireSlotsFromUi(entry, "input");
-        int[] outputSlots = requireSlotsFromUi(entry, "output");
-        assertSameSlots(entryId, "input", entry.inputSlots, inputSlots);
-        assertSameSlots(entryId, "output", entry.outputSlots, outputSlots);
         Set<String> functionTags = requireFunctionTags(entryId, entry);
         if (entry.ui == null) {
             throw new IllegalStateException("Missing compiled UI definition for electric machine " + entryId);
         }
         SfxElectricMachineUiDefinition ui = entry.ui;
+        assertCompleteUiSlots(entryId, ui);
+        int[] inputSlots = requireSlotsFromUi(entryId, ui, "input");
+        int[] outputSlots = requireSlotsFromUi(entryId, ui, "output");
         assertStatusSlot(entryId, ui);
         assertStatusTemplates(entryId, ui);
         assertRequiredUiItems(entryId, functionTags, ui);
@@ -162,22 +160,39 @@ final class SfxElectricMachineDefinitionConfig {
         return value;
     }
 
-    private static int[] requireSlotsFromUi(Entry entry, String role) {
-        if (entry.ui == null) {
-            throw new IllegalStateException("Missing compiled UI definition.");
+    private static void assertCompleteUiSlots(String machineId, SfxElectricMachineUiDefinition ui) {
+        if (ui.inventorySize() <= 0) {
+            return;
         }
-        if (entry.ui.slots().isEmpty() && entry.ui.inventorySize() > 0) {
-            throw new IllegalStateException("Compiled UI has no explicit slots.");
+        if (ui.slots().size() != ui.inventorySize()) {
+            throw new IllegalStateException("Compiled electric machine " + machineId + " ui.slots must define every inventory slot: expected "
+                    + ui.inventorySize() + ", got " + ui.slots().size());
         }
-        return entry.ui.stateSlots(role);
+        for (int slot = 0; slot < ui.inventorySize(); slot++) {
+            if (!ui.slots().containsKey(slot)) {
+                throw new IllegalStateException("Compiled electric machine " + machineId + " ui.slots missing slot " + slot);
+            }
+        }
     }
 
-    private static void assertSameSlots(String machineId, String role, int[] declared, int[] compiled) {
-        int[] safeDeclared = declared == null ? new int[0] : declared;
-        if (!Arrays.equals(safeDeclared, compiled)) {
-            throw new IllegalStateException("Compiled electric machine " + machineId + " has mismatched " + role
-                    + " slots: declared=" + Arrays.toString(safeDeclared) + ", ui.slots=" + Arrays.toString(compiled));
+    private static int[] requireSlotsFromUi(String machineId, SfxElectricMachineUiDefinition ui, String role) {
+        List<Integer> indexes = new ArrayList<>();
+        for (SfxElectricMachineUiSlot slot : ui.slots().values()) {
+            if (!slot.isRole(role)) {
+                continue;
+            }
+            if (slot.stateIndex() == null) {
+                throw new IllegalStateException("Compiled electric machine " + machineId + " ui." + role + " slot " + slot.slot() + " missing state-index");
+            }
+            indexes.add(slot.stateIndex());
         }
+        int[] result = ui.stateSlots(role);
+        for (int index = 0; index < result.length; index++) {
+            if (!indexes.contains(index)) {
+                throw new IllegalStateException("Compiled electric machine " + machineId + " ui." + role + " slots missing state-index " + index);
+            }
+        }
+        return result;
     }
 
     private static void assertStatusSlot(String machineId, SfxElectricMachineUiDefinition ui) {
@@ -264,14 +279,11 @@ final class SfxElectricMachineDefinitionConfig {
             Integer energyCapacity,
             Integer energyConsumptionPerTick,
             Material progressMaterial,
-            int[] inputSlots,
-            int[] outputSlots,
             Set<String> functionTags,
             SfxElectricMachineUiDefinition ui,
             SfxElectricAssemblerSpec assemblerSpec
     ) {
         static Entry parse(ConfigurationSection section) {
-            ConfigurationSection slots = section.getConfigurationSection("slots");
             ConfigurationSection energy = section.getConfigurationSection("energy");
             return new Entry(
                     section.getString("name-key", null),
@@ -279,8 +291,6 @@ final class SfxElectricMachineDefinitionConfig {
                     optionalInt(energy, "capacity"),
                     optionalInt(energy, "consumption-per-tick"),
                     parseMaterial(section.getString("progress-material", null)),
-                    parseSlots(slots == null ? section.getList("input-slots") : slots.getList("input")),
-                    parseSlots(slots == null ? section.getList("output-slots") : slots.getList("output")),
                     parseFunctionTags(section),
                     parseUi(section.getConfigurationSection("ui")),
                     parseAssembler(section.getConfigurationSection("assembler")));

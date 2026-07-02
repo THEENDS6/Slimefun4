@@ -178,7 +178,7 @@ final class SfxEnergyGridProcessor {
             if (available <= 0) {
                 break;
             }
-            if (!service.canChargeAnyInput(charger.state())) {
+            if (!service.canChargeAnyInput(charger.definition(), charger.state())) {
                 continue;
             }
             int accepted = Math.max(0, Math.min(available, charger.definition().capacity() - charger.state().storedEnergy()));
@@ -222,7 +222,7 @@ final class SfxEnergyGridProcessor {
 
         for (SfxEnergyNodeRef charger : chargerRefs) {
             int remainingDemand = Math.max(0, charger.definition().capacity() - charger.state().storedEnergy());
-            if (remainingDemand <= 0 || !service.canChargeAnyInput(charger.state())) {
+            if (remainingDemand <= 0 || !service.canChargeAnyInput(charger.definition(), charger.state())) {
                 continue;
             }
             remainingDemand = service.drainCapacitorsToCharger(capacitorRefs, service.dirtyNodes, charger, remainingDemand, true);

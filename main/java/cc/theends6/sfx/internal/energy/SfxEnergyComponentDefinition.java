@@ -14,12 +14,14 @@ public record SfxEnergyComponentDefinition(
         int fuelBurnRateTenths,
         boolean usesVanillaCoalResolver,
         Material progressMaterial,
-        List<FuelRule> fuelRules
+        List<FuelRule> fuelRules,
+        SfxEnergyComponentUiDefinition ui
 ) {
     public SfxEnergyComponentDefinition {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(componentType, "componentType");
         Objects.requireNonNull(progressMaterial, "progressMaterial");
+        Objects.requireNonNull(ui, "ui");
         fuelRules = fuelRules == null ? List.of() : List.copyOf(fuelRules);
         capacity = Math.max(0, capacity);
         energyPerTick = Math.max(0, energyPerTick);
