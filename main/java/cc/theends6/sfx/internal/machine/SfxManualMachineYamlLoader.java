@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.machine;
 
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
+import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.util.Text;
 import java.io.File;
 import java.util.ArrayList;
@@ -45,16 +46,7 @@ public final class SfxManualMachineYamlLoader {
 
     public int loadInto(DefaultManualMachineRegistry registry) {
         boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
-        File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
-        if (!file.isFile()) {
-            String message = "Manual machine YAML missing: " + RESOURCE_PATH + "; no manual machines loaded.";
-            if (strict) {
-                throw new IllegalStateException(message);
-            }
-            plugin.getLogger().warning(message);
-            return 0;
-        }
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
             String message = "No machines section in " + RESOURCE_PATH + "; no manual machines loaded.";

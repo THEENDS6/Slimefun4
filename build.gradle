@@ -454,6 +454,8 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     dependsOn 'classes'
     inputs.dir(layout.projectDirectory.dir('main/resources/content/templates'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/machines/configurable-machines.yml'))
     outputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
     classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
     mainClass.set('cc.theends6.sfx.internal.template.SfxTemplateCompilerCli')
@@ -654,6 +656,39 @@ tasks.register('validateSfxCompiledContent') {
                 }
             }
         }
+        def manualCompiledFile = new File(root, 'content/machines/manual-machines/manual-machines.yml')
+        def manualCompiledCount = 0
+        if (!manualCompiledFile.isFile()) {
+            violations << "compiled manual machine output missing content/machines/manual-machines/manual-machines.yml"
+        } else {
+            def manualText = manualCompiledFile.getText('UTF-8')
+            manualCompiledCount = (manualText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
+            if (manualCompiledCount != 13) {
+                violations << "compiled manual machine entry count expected 13, got ${manualCompiledCount}"
+            }
+            ['name:', 'icon:', 'operation:', 'trigger-face:', 'inventory-face:', 'deployable:', 'pattern:', 'display-pattern:'].each { token ->
+                def count = (manualText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count
+                if (count < 13) {
+                    violations << "compiled manual machines expected ${token} on every entry, got ${count}"
+                }
+            }
+        }
+        def configurableCompiledFile = new File(root, 'content/machines/configurable-machines/configurable-machines.yml')
+        def configurableCompiledCount = 0
+        if (!configurableCompiledFile.isFile()) {
+            violations << "compiled configurable machine output missing content/machines/configurable-machines/configurable-machines.yml"
+        } else {
+            def configurableText = configurableCompiledFile.getText('UTF-8')
+            configurableCompiledCount = (configurableText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
+            if (configurableCompiledCount != 3) {
+                violations << "compiled configurable machine entry count expected 3, got ${configurableCompiledCount}"
+            }
+            ['kind:', 'energy:', 'capacity:', 'energy-per-action:', 'energy-per-tick:'].each { token ->
+                if (!configurableText.contains(token)) {
+                    violations << "compiled configurable machines missing ${token}"
+                }
+            }
+        }
         def electricFiles = fileTree(new File(root, 'content/machines/electric-machines')) {
             include '**/*.yml'
         }.files
@@ -736,7 +771,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries.")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, and ${configurableCompiledCount} configurable machine entries.")
     }
 }
 
