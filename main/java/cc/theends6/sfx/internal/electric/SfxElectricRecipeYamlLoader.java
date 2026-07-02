@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
+import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -11,7 +12,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import org.bukkit.Material;
-import org.bukkit.Tag;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -31,16 +31,7 @@ final class SfxElectricRecipeYamlLoader {
     static SfxElectricRecipeYamlLoader load(JavaPlugin plugin) {
         ensureBundledFile(plugin);
         boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
-        File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
-        if (!file.isFile()) {
-            String message = "Electric recipe YAML missing: " + RESOURCE_PATH + "; static electric providers will be empty.";
-            if (strict) {
-                throw new IllegalStateException(message);
-            }
-            plugin.getLogger().warning(message);
-            return new SfxElectricRecipeYamlLoader(plugin, Map.of());
-        }
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("providers");
         if (root == null) {
             String message = "No providers section in " + RESOURCE_PATH + "; static electric providers will be empty.";
@@ -94,57 +85,7 @@ final class SfxElectricRecipeYamlLoader {
         if (expand == null || expand.isBlank()) {
             return List.of(parseRecipe(entry));
         }
-        if (expand.equalsIgnoreCase("tag")) {
-            return expandTag(entry);
-        }
-        if (expand.equalsIgnoreCase("materials")) {
-            return expandMaterials(entry);
-        }
-        throw new IllegalArgumentException("Unsupported electric recipe expansion: " + expand);
-    }
-
-    private static List<SfxElectricRecipe> expandTag(Map<?, ?> entry) {
-        String tagName = string(entry.get("tag"));
-        Iterable<Material> materials = switch (tagName.trim().toUpperCase(Locale.ROOT)) {
-            case "SAPLINGS" -> Tag.SAPLINGS.getValues();
-            case "LEAVES" -> Tag.LEAVES.getValues();
-            default -> throw new IllegalArgumentException("Unsupported material tag: " + tagName);
-        };
-        List<SfxElectricRecipe> result = new ArrayList<>();
-        for (Material material : materials) {
-            result.add(singleMaterialExpansion(entry, material));
-        }
-        return result;
-    }
-
-    private static List<SfxElectricRecipe> expandMaterials(Map<?, ?> entry) {
-        Object raw = entry.get("materials");
-        if (!(raw instanceof List<?> list)) {
-            throw new IllegalArgumentException("materials expansion requires a materials list");
-        }
-        List<SfxElectricRecipe> result = new ArrayList<>();
-        for (Object value : list) {
-            Material material = parseMaterial(String.valueOf(value));
-            result.add(singleMaterialExpansion(entry, material));
-        }
-        return result;
-    }
-
-    private static SfxElectricRecipe singleMaterialExpansion(Map<?, ?> entry, Material expandedMaterial) {
-        String idPrefix = string(entry.get("id-prefix"));
-        Map<String, Object> copy = new LinkedHashMap<>();
-        copy.put("id", idPrefix + ":" + expandedMaterial.key());
-        copy.put("ticks", requiredValue(entry, "ticks"));
-        List<Object> inputs = new ArrayList<>();
-        Object prefixInput = entry.get("input-prefix");
-        if (prefixInput instanceof List<?> prefixList) {
-            inputs.addAll(prefixList);
-        }
-        inputs.add(Map.of("material", expandedMaterial.name(), "amount", integer(requiredValue(entry, "input-amount"))));
-        copy.put("inputs", inputs);
-        copy.put("outputs", entry.get("outputs"));
-        copy.put("random-outputs", entry.get("random-outputs"));
-        return parseRecipe(copy);
+        throw new IllegalArgumentException("Compiled electric recipe entry must not contain expand shorthand: " + expand);
     }
 
     private static SfxElectricRecipe parseRecipe(Map<?, ?> entry) {
