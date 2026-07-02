@@ -45,6 +45,8 @@ Player-visible UI text should use `name-key` and `lore-key` unless the literal i
 
 Recipes should be grouped by process semantics, not by accidental output file shape.
 
+The compiler groups recipe outputs by template source group and `recipe-type`, so a template source may still maintain many legacy entries while compiled output stays coarse enough to review.
+
 Examples:
 
 - gold refining belongs together as a refining chain
@@ -72,6 +74,8 @@ Do not preserve root section names as duplicated directories.
 Expected:
 
 - `content/compiled/content/recipes/custom_example.yml`
+- `content/compiled/content/recipes/electric/food-composter.yml`
+- `content/compiled/content/recipes/smeltery/smeltery.yml`
 - `content/compiled/content/machines/electric-machines/sf_electric_furnace.yml`
 - `content/compiled/content/machines/energy-components/sf_small_capacitor.yml`
 

@@ -73,6 +73,7 @@ public final class SfxTemplateCompiler {
                 pruneTemplatesAndMeta(expanded);
                 outputs.add(new OutputNode(List.of("all"), "$", null, expanded));
             }
+            outputs = groupRecipeOutputs(outputs);
             clearOutputDirectory();
             writeOutputs(outputs);
             writeManifest(sources, outputs);
@@ -462,7 +463,7 @@ public final class SfxTemplateCompiler {
         String outputTarget = stringOrNull(map.get("@outputtarget"));
         String activeTarget = outputTarget == null ? inheritedTarget : outputTarget;
         if (truthy(map.get("@isoutput"))) {
-            result.add(new OutputNode(keys, path, activeTarget, deepCopyMap(map)));
+            result.add(new OutputNode(keys, path, activeTarget, deepCopyMap(map), sourceOf(path), null));
             return;
         }
         for (Map.Entry<String, Object> entry : map.entrySet()) {
@@ -473,6 +474,81 @@ public final class SfxTemplateCompiler {
             childKeys.add(entry.getKey());
             collectOutputs(entry.getValue(), path.equals("$") ? entry.getKey() : path + "." + entry.getKey(), childKeys, activeTarget, result);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<OutputNode> groupRecipeOutputs(List<OutputNode> outputs) {
+        Map<String, Map<String, Object>> groupedRecipes = new LinkedHashMap<>();
+        Map<String, OutputNode> groupNodes = new LinkedHashMap<>();
+        List<OutputNode> result = new ArrayList<>();
+        for (OutputNode output : outputs) {
+            if (!isSingleRecipeOutput(output)) {
+                result.add(output);
+                continue;
+            }
+            String recipeId = output.keys().get(1);
+            Map<String, Object> recipe = deepCopyMap(output.value());
+            String groupFile = recipeGroupFile(output, recipe);
+            groupedRecipes.computeIfAbsent(groupFile, ignored -> new LinkedHashMap<>()).put(recipeId, recipe);
+            groupNodes.putIfAbsent(groupFile, output);
+        }
+        for (Map.Entry<String, Map<String, Object>> entry : groupedRecipes.entrySet()) {
+            OutputNode first = groupNodes.get(entry.getKey());
+            result.add(new OutputNode(
+                    List.of("recipes"),
+                    first == null ? "recipes" : first.path(),
+                    first == null ? "content/recipes.yml" : first.targetResource(),
+                    entry.getValue(),
+                    first == null ? null : first.source(),
+                    entry.getKey()));
+        }
+        return result;
+    }
+
+    private boolean isSingleRecipeOutput(OutputNode output) {
+        return output != null
+                && "content/recipes.yml".equals(output.targetResource())
+                && output.keys().size() == 2
+                && "recipes".equals(output.keys().get(0));
+    }
+
+    private String recipeGroupFile(OutputNode output, Map<String, Object> recipe) {
+        String sourceGroup = recipeSourceGroup(output.source());
+        String recipeType = stringOrNull(recipe.get("recipe-type"));
+        if (recipeType == null) {
+            recipeType = stringOrNull(recipe.get("machine"));
+        }
+        String typeGroup = recipeType == null ? "misc" : recipeType;
+        int colon = typeGroup.indexOf(':');
+        if (colon >= 0 && colon + 1 < typeGroup.length()) {
+            typeGroup = typeGroup.substring(colon + 1);
+        }
+        return sourceGroup + "/" + slug(typeGroup) + ".yml";
+    }
+
+    private String recipeSourceGroup(String source) {
+        if (source == null || source.isBlank()) {
+            return "misc";
+        }
+        String normalized = source.replace('\\', '/');
+        int slash = normalized.lastIndexOf('/');
+        String file = slash >= 0 ? normalized.substring(slash + 1) : normalized;
+        if (file.endsWith(".yml")) {
+            file = file.substring(0, file.length() - 4);
+        } else if (file.endsWith(".yaml")) {
+            file = file.substring(0, file.length() - 5);
+        }
+        file = file.replaceFirst("^[0-9]+-", "");
+        file = file.replaceFirst("^recipes-", "");
+        return slug(file);
+    }
+
+    private String slug(String raw) {
+        String normalized = raw == null ? "misc" : raw.trim().toLowerCase(Locale.ROOT);
+        normalized = normalized.replace('_', '-').replace(':', '-');
+        normalized = normalized.replaceAll("[^a-z0-9.-]+", "-").replaceAll("-+", "-");
+        normalized = normalized.replaceAll("^-|-$", "");
+        return normalized.isBlank() ? "misc" : normalized;
     }
 
     private void writeOutputs(List<OutputNode> outputs) throws IOException {
@@ -672,6 +748,9 @@ public final class SfxTemplateCompiler {
     }
 
     private String outputFileName(OutputNode output) {
+        if (output.relativeOutputFile() != null && !output.relativeOutputFile().isBlank()) {
+            return output.relativeOutputFile().replace('\\', '/');
+        }
         return outputFileName(output.keys(), output.targetResource());
     }
 
@@ -943,6 +1022,11 @@ public final class SfxTemplateCompiler {
         return origin == null ? path : origin.source() + " " + origin.path();
     }
 
+    private String sourceOf(String path) {
+        Origin origin = origins.get(path);
+        return origin == null ? null : origin.source();
+    }
+
     private boolean truthy(Object value) {
         if (value instanceof Boolean bool) {
             return bool;
@@ -1017,6 +1101,9 @@ public final class SfxTemplateCompiler {
     private record MergeDirective(String sourcePath, String targetPath, Map<String, Object> payload) {
     }
 
-    private record OutputNode(List<String> keys, String path, String targetResource, Map<String, Object> value) {
+    private record OutputNode(List<String> keys, String path, String targetResource, Map<String, Object> value, String source, String relativeOutputFile) {
+        private OutputNode(List<String> keys, String path, String targetResource, Map<String, Object> value) {
+            this(keys, path, targetResource, value, null, null);
+        }
     }
 }
