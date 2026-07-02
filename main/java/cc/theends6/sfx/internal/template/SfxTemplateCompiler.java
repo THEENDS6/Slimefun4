@@ -481,7 +481,7 @@ public final class SfxTemplateCompiler {
             Map<String, Object> wrapped = wrapOutput(output.keys(), output.value());
             pruneTemplatesAndMeta(wrapped);
             enrichCompiledOutput(wrapped);
-            Path target = outputRoot.resolve(outputDirectory(output.targetResource())).resolve(outputFileName(output.keys()));
+            Path target = outputRoot.resolve(outputDirectory(output.targetResource())).resolve(outputFileName(output));
             Files.createDirectories(target.getParent());
             YamlConfiguration yaml = new YamlConfiguration();
             for (Map.Entry<String, Object> entry : wrapped.entrySet()) {
@@ -671,7 +671,12 @@ public final class SfxTemplateCompiler {
         return child;
     }
 
-    private String outputFileName(List<String> keys) {
+    private String outputFileName(OutputNode output) {
+        return outputFileName(output.keys(), output.targetResource());
+    }
+
+    private String outputFileName(List<String> keys, String targetResource) {
+        keys = strippedOutputKeys(keys);
         if (keys.isEmpty()) {
             return "all.yml";
         }
@@ -680,6 +685,17 @@ public final class SfxTemplateCompiler {
             safe.add(key.replace(':', '_').replace('#', '_').replaceAll("[^A-Za-z0-9_.-]", "_"));
         }
         return String.join("/", safe) + ".yml";
+    }
+
+    private List<String> strippedOutputKeys(List<String> keys) {
+        if (keys == null || keys.size() <= 1) {
+            return keys == null ? List.of() : keys;
+        }
+        String first = keys.getFirst();
+        if (Set.of("machines", "recipes", "components").contains(first)) {
+            return keys.subList(1, keys.size());
+        }
+        return keys;
     }
 
     private String outputDirectory(String targetResource) {
@@ -722,7 +738,7 @@ public final class SfxTemplateCompiler {
         List<Map<String, Object>> outputEntries = new ArrayList<>();
         for (OutputNode output : outputs) {
             Map<String, Object> entry = new LinkedHashMap<>();
-            String file = outputDirectory(output.targetResource()) + "/" + outputFileName(output.keys());
+            String file = outputDirectory(output.targetResource()) + "/" + outputFileName(output);
             entry.put("file", file);
             entry.put("target", output.targetResource() == null ? "" : output.targetResource());
             entry.put("source-path", output.path());

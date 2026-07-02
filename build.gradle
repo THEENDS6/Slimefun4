@@ -262,7 +262,7 @@ tasks.register('validateSfxCompiledContent') {
         if (recipeFiles.size() != 547) {
             violations << "compiled recipe file count expected 547, got ${recipeFiles.size()}"
         }
-        def electricFiles = fileTree(new File(root, 'content/machines/electric-machines/machines')) {
+        def electricFiles = fileTree(new File(root, 'content/machines/electric-machines')) {
             include '**/*.yml'
         }.files
         if (electricFiles.size() != 66) {
