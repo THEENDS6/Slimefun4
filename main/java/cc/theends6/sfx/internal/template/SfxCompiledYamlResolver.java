@@ -20,8 +20,9 @@ public final class SfxCompiledYamlResolver {
     }
 
     public static YamlConfiguration loadMerged(JavaPlugin plugin, String resourcePath) {
+        boolean strictCompiled = compiledOnly(plugin);
         File baseFile = new File(plugin.getDataFolder(), resourcePath);
-        YamlConfiguration base = baseFile.isFile()
+        YamlConfiguration base = !strictCompiled && baseFile.isFile()
                 ? YamlConfiguration.loadConfiguration(baseFile)
                 : new YamlConfiguration();
         Map<String, Object> mergedMap = sectionToMap(base);
@@ -39,7 +40,7 @@ public final class SfxCompiledYamlResolver {
                 mergeMap(mergedMap, sectionToMap(compiled));
             }
         }
-        if (!hasCompiled && compiledOnly(plugin)) {
+        if (!hasCompiled && strictCompiled) {
             throw new IllegalStateException("Compiled-only content runtime is enabled, but no compiled content was found for " + resourcePath);
         }
         YamlConfiguration merged = new YamlConfiguration();

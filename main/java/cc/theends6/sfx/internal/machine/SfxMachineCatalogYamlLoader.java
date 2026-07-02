@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.machine;
 
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
+import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -41,16 +42,7 @@ public final class SfxMachineCatalogYamlLoader {
 
     public int loadInto(SfxMachineRuntimeEngine engine) {
         boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
-        File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
-        if (!file.isFile()) {
-            String message = "Machine catalog YAML missing: " + RESOURCE_PATH + "; shared runtime catalog will only contain domain-registered definitions.";
-            if (strict) {
-                throw new IllegalStateException(message);
-            }
-            plugin.getLogger().warning(message);
-            return 0;
-        }
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
             String message = "No machines section in " + RESOURCE_PATH + "; shared runtime catalog will only contain domain-registered definitions.";
@@ -100,6 +92,14 @@ public final class SfxMachineCatalogYamlLoader {
                 .tickInterval(Math.max(1, requiredInt(section, "tick-interval")))
                 .tags(tags);
 
+        SfxMachineInputProvider inputProvider = parseInputProvider(section.getConfigurationSection("input-provider"));
+        if (inputProvider != null) {
+            builder.inputProvider(inputProvider);
+        }
+        SfxMachineOutputProvider outputProvider = parseOutputProvider(section.getConfigurationSection("output-provider"));
+        if (outputProvider != null) {
+            builder.outputProvider(outputProvider);
+        }
         Set<SfxMachineCapability> capabilities = parseCapabilities(section.getList("capabilities"));
         if (!capabilities.isEmpty()) {
             builder.capabilities(capabilities);
@@ -114,7 +114,12 @@ public final class SfxMachineCatalogYamlLoader {
             SfxMachinePhase phase = SfxMachinePhase.valueOf(string(raw.get("phase")).trim().replace('-', '_').toUpperCase(Locale.ROOT));
             builder.effect(SfxMachineEffect.marker(name, phase));
         }
-        return SfxMachineSpecialProfiles.apply(builder.build(), section.getString("profile", null));
+        String profile = section.getString("profile", null);
+        if (plugin.getConfig().getBoolean("content.runtime.compiled-only", true) && profile != null && !profile.isBlank()) {
+            throw new IllegalArgumentException("compiled machine catalog must not contain profile shorthand: " + profile);
+        }
+        SfxMachineDefinition definition = builder.build();
+        return profile == null || profile.isBlank() ? definition : SfxMachineSpecialProfiles.apply(definition, profile);
     }
 
     private SfxMachineDefinition merge(SfxMachineDefinition existing, SfxMachineDefinition incoming) {
@@ -123,15 +128,9 @@ public final class SfxMachineCatalogYamlLoader {
         }
         SfxMachineDefinition.Builder builder = existing.toBuilder();
         builder.displayName(incoming.displayName()).category(incoming.category()).tags(incoming.tags()).capabilities(incoming.capabilities());
-        if (!incoming.inputSlots().isEmpty()) {
-            builder.inputSlots(incoming.inputSlots()).inputProvider(incoming.inputProvider());
-        }
-        if (!incoming.outputSlots().isEmpty()) {
-            builder.outputSlots(incoming.outputSlots()).outputProvider(incoming.outputProvider());
-        }
-        if (incoming.statusSlot() >= 0) {
-            builder.statusSlot(incoming.statusSlot());
-        }
+        builder.inputSlots(incoming.inputSlots()).inputProvider(incoming.inputProvider());
+        builder.outputSlots(incoming.outputSlots()).outputProvider(incoming.outputProvider());
+        builder.statusSlot(incoming.statusSlot());
         builder.tickInterval(incoming.tickInterval()).policyRefs(incoming.policyRefs()).effects(incoming.effects());
         return builder.build();
     }
@@ -161,6 +160,22 @@ public final class SfxMachineCatalogYamlLoader {
             throw new IllegalArgumentException("machine catalog field is required: " + path);
         }
         return section.getInt(path);
+    }
+
+    private SfxMachineInputProvider parseInputProvider(ConfigurationSection section) {
+        if (section == null) {
+            return null;
+        }
+        SfxMachineInputProvider.Kind kind = SfxMachineInputProvider.Kind.valueOf(requiredString(section, "kind").trim().replace('-', '_').toUpperCase(Locale.ROOT));
+        return new SfxMachineInputProvider(kind, integerList(section.getList("slots")), section.getString("description", ""));
+    }
+
+    private SfxMachineOutputProvider parseOutputProvider(ConfigurationSection section) {
+        if (section == null) {
+            return null;
+        }
+        SfxMachineOutputProvider.Kind kind = SfxMachineOutputProvider.Kind.valueOf(requiredString(section, "kind").trim().replace('-', '_').toUpperCase(Locale.ROOT));
+        return new SfxMachineOutputProvider(kind, integerList(section.getList("slots")), section.getString("description", ""));
     }
 
     private Set<SfxMachineCapability> parseCapabilities(List<?> raw) {
