@@ -602,14 +602,163 @@ public final class SfxTemplateCompiler {
     @SuppressWarnings("unchecked")
     private void enrichCompiledOutput(Map<String, Object> wrapped) {
         Object machinesRaw = wrapped.get("machines");
-        if (!(machinesRaw instanceof Map<?, ?> rawMachines)) {
-            return;
-        }
-        for (Object value : rawMachines.values()) {
-            if (value instanceof Map<?, ?> rawMachine) {
-                enrichElectricMachineUiSlots((Map<String, Object>) rawMachine);
+        if (machinesRaw instanceof Map<?, ?> rawMachines) {
+            for (Object value : rawMachines.values()) {
+                if (value instanceof Map<?, ?> rawMachine) {
+                    enrichElectricMachineUiSlots((Map<String, Object>) rawMachine);
+                }
             }
         }
+        Object recipesRaw = wrapped.get("recipes");
+        if (recipesRaw instanceof Map<?, ?> rawRecipes) {
+            for (Map.Entry<?, ?> entry : rawRecipes.entrySet()) {
+                if (entry.getValue() instanceof Map<?, ?> rawRecipe) {
+                    enrichRecipeEntry(String.valueOf(entry.getKey()), (Map<String, Object>) rawRecipe);
+                }
+            }
+        } else if (recipesRaw instanceof List<?> recipes) {
+            for (Object entry : recipes) {
+                if (entry instanceof Map<?, ?> rawRecipe) {
+                    enrichRecipeEntry(null, (Map<String, Object>) rawRecipe);
+                }
+            }
+        }
+    }
+
+    private void enrichRecipeEntry(String key, Map<String, Object> recipe) {
+        if (key != null && !key.isBlank()) {
+            recipe.putIfAbsent("id", key);
+        }
+        recipe.putIfAbsent("runtime", Boolean.FALSE);
+        if (recipe.containsKey("matrix")) {
+            recipe.put("matrix", explicitRecipeSlots(recipe.get("matrix")));
+        }
+        if (recipe.containsKey("inputs")) {
+            recipe.put("inputs", explicitRecipeSlots(recipe.get("inputs")));
+        }
+        if (recipe.containsKey("input")) {
+            recipe.put("input", explicitRecipeSlot(recipe.get("input")));
+        }
+        if (recipe.containsKey("outputs")) {
+            recipe.put("outputs", explicitRecipeOutputs(recipe.get("outputs")));
+        }
+        if (recipe.containsKey("random-outputs")) {
+            recipe.put("random-outputs", explicitRecipeOutputs(recipe.get("random-outputs")));
+        }
+    }
+
+    private List<Object> explicitRecipeSlots(Object raw) {
+        if (!(raw instanceof List<?> entries)) {
+            throw new SfxTemplateCompileException("Recipe slot list must be a list.");
+        }
+        List<Object> result = new ArrayList<>(entries.size());
+        for (Object entry : entries) {
+            result.add(explicitRecipeSlot(entry));
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> explicitRecipeSlot(Object raw) {
+        if (raw == null) {
+            return emptyRecipeSlot();
+        }
+        if (raw instanceof Map<?, ?> map) {
+            return explicitRecipeItemMap((Map<String, Object>) map, true);
+        }
+        if (raw instanceof String text) {
+            return explicitRecipeItemToken(text, true);
+        }
+        throw new SfxTemplateCompileException("Unsupported recipe slot value: " + raw);
+    }
+
+    private List<Object> explicitRecipeOutputs(Object raw) {
+        if (!(raw instanceof List<?> entries)) {
+            throw new SfxTemplateCompileException("Recipe output list must be a list.");
+        }
+        List<Object> result = new ArrayList<>(entries.size());
+        for (Object entry : entries) {
+            result.add(explicitRecipeOutput(entry));
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> explicitRecipeOutput(Object raw) {
+        if (raw instanceof Map<?, ?> map) {
+            return explicitRecipeItemMap((Map<String, Object>) map, false);
+        }
+        if (raw instanceof String text) {
+            return explicitRecipeItemToken(text, false);
+        }
+        throw new SfxTemplateCompileException("Unsupported recipe output value: " + raw);
+    }
+
+    private Map<String, Object> explicitRecipeItemToken(String raw, boolean allowEmpty) {
+        String token = raw == null ? "" : raw.trim();
+        if (allowEmpty && (token.isEmpty() || token.equalsIgnoreCase("air") || token.equalsIgnoreCase("empty"))) {
+            return emptyRecipeSlot();
+        }
+        int amount = 1;
+        int star = token.lastIndexOf('*');
+        if (star > 0 && star + 1 < token.length()) {
+            amount = intValue(token.substring(star + 1).trim(), 1);
+            token = token.substring(0, star).trim();
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        if (token.contains(":")) {
+            result.put("type", "sfx");
+            result.put("id", token);
+        } else {
+            result.put("type", "vanilla");
+            result.put("material", parseCatalogMaterial(token).name());
+        }
+        result.put("amount", amount);
+        return result;
+    }
+
+    private Map<String, Object> explicitRecipeItemMap(Map<String, Object> raw, boolean allowEmpty) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        String type = stringOrNull(raw.get("type"));
+        if (type == null) {
+            if (raw.containsKey("id")) {
+                type = "sfx";
+            } else if (raw.containsKey("material")) {
+                type = "vanilla";
+            } else if (allowEmpty) {
+                type = "empty";
+            } else {
+                throw new SfxTemplateCompileException("Recipe output map requires type.");
+            }
+        }
+        type = type.trim().toLowerCase(Locale.ROOT);
+        result.put("type", type);
+        if ("empty".equals(type)) {
+            if (!allowEmpty) {
+                throw new SfxTemplateCompileException("Recipe output cannot be empty.");
+            }
+            result.put("amount", 0);
+            return result;
+        }
+        if ("sfx".equals(type)) {
+            result.put("id", requiredCatalogString(raw, "id"));
+        } else if ("vanilla".equals(type)) {
+            result.put("material", parseCatalogMaterial(requiredCatalogString(raw, "material")).name());
+        } else {
+            throw new SfxTemplateCompileException("Unsupported recipe item type: " + type);
+        }
+        result.put("amount", intValue(raw.containsKey("amount") ? raw.get("amount") : 1, 1));
+        if (!allowEmpty && raw.containsKey("chance")) {
+            result.put("chance", raw.get("chance"));
+        }
+        return result;
+    }
+
+    private Map<String, Object> emptyRecipeSlot() {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("type", "empty");
+        result.put("amount", 0);
+        return result;
     }
 
     @SuppressWarnings("unchecked")

@@ -236,7 +236,7 @@ final class SfxElectricMachineDefinitionConfig {
 
     private static void requireUiItems(String machineId, SfxElectricMachineUiDefinition ui, String... keys) {
         for (String key : keys) {
-            if (ui.item(key, null) == null) {
+            if (!ui.items().containsKey(key)) {
                 throw new IllegalStateException("Compiled electric machine " + machineId + " missing UI item " + key);
             }
         }
@@ -276,8 +276,8 @@ final class SfxElectricMachineDefinitionConfig {
             return new Entry(
                     section.getString("name-key", null),
                     optionalInt(section, "speed"),
-                    optionalInt(energy, "capacity", optionalInt(section, "energy-capacity")),
-                    optionalInt(energy, "consumption-per-tick", optionalInt(section, "energy-consumption-per-tick")),
+                    optionalInt(energy, "capacity"),
+                    optionalInt(energy, "consumption-per-tick"),
                     parseMaterial(section.getString("progress-material", null)),
                     parseSlots(slots == null ? section.getList("input-slots") : slots.getList("input")),
                     parseSlots(slots == null ? section.getList("output-slots") : slots.getList("output")),
@@ -288,12 +288,8 @@ final class SfxElectricMachineDefinitionConfig {
     }
 
     private static Integer optionalInt(ConfigurationSection section, String path) {
-        return optionalInt(section, path, null);
-    }
-
-    private static Integer optionalInt(ConfigurationSection section, String path, Integer fallback) {
         if (section == null || path == null || !section.contains(path)) {
-            return fallback;
+            return null;
         }
         return section.getInt(path);
     }

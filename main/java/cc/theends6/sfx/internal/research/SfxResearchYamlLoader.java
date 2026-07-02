@@ -41,7 +41,7 @@ public final class SfxResearchYamlLoader {
         if (plugin.getConfig().getBoolean("content.runtime.compiled-only", true)) {
             int index = 0;
             for (YamlConfiguration yaml : SfxCompiledYamlResolver.loadCompiledUnder(plugin, "content/researches")) {
-                loadYamlInto(registry, yaml, "compiled research content " + (++index));
+                loadYamlInto(registry, yaml, "compiled research content " + (++index), true);
             }
             return;
         }
@@ -56,15 +56,18 @@ public final class SfxResearchYamlLoader {
         files.sort(Comparator.comparing(File::getPath));
 
         for (File file : files) {
-            loadYamlInto(registry, YamlConfiguration.loadConfiguration(file), file.getName());
+            loadYamlInto(registry, YamlConfiguration.loadConfiguration(file), file.getName(), false);
         }
     }
 
-    private void loadYamlInto(SfxResearchRegistry registry, YamlConfiguration yaml, String sourceName) {
+    private void loadYamlInto(SfxResearchRegistry registry, YamlConfiguration yaml, String sourceName, boolean strict) {
         for (Map<?, ?> entry : yaml.getMapList("researches")) {
             try {
-                registry.register(parseResearch(entry));
+                registry.register(parseResearch(entry, strict));
             } catch (Exception ex) {
+                if (strict) {
+                    throw new IllegalStateException("Failed to load compiled research from YAML " + sourceName + ": " + ex.getMessage(), ex);
+                }
                 logger.warning("Failed to load research from YAML " + sourceName + ": " + ex.getMessage());
             }
         }
@@ -84,12 +87,12 @@ public final class SfxResearchYamlLoader {
         }
     }
 
-    private SfxResearchDefinition parseResearch(Map<?, ?> entry) {
+    private SfxResearchDefinition parseResearch(Map<?, ?> entry, boolean strict) {
         String id = string(entry.get("id"));
         String name = string(entry.get("name"));
         int cost = integer(entry.get("cost"));
         int order = integer(entry.get("order"));
-        List<String> items = stringList(entry.get("items"));
+        List<String> items = strict ? requiredStringList(entry, "items") : stringList(entry.get("items"));
         items = filterFeatureItems(items);
         return new SfxResearchDefinition(id, name, cost, order, new LinkedHashSet<>(items));
     }
@@ -130,6 +133,17 @@ public final class SfxResearchYamlLoader {
             if (!text.isEmpty()) {
                 values.add(text);
             }
+        }
+        return values;
+    }
+
+    private static List<String> requiredStringList(Map<?, ?> map, String key) {
+        if (!map.containsKey(key)) {
+            throw new IllegalArgumentException("required list value missing: " + key);
+        }
+        List<String> values = stringList(map.get(key));
+        if (values.isEmpty()) {
+            throw new IllegalArgumentException("required list value empty: " + key);
         }
         return values;
     }

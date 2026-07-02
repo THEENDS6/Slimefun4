@@ -33,7 +33,7 @@ final class SfxEnergyComponentYamlLoader {
         YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("components");
         if (root == null) {
-            String message = "No components section in " + RESOURCE_PATH + "; energy components will use Java defaults.";
+            String message = "No components section in " + RESOURCE_PATH + "; energy components were not loaded.";
             if (strict) {
                 throw new IllegalStateException(message);
             }
