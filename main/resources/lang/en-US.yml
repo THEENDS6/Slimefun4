@@ -3175,6 +3175,134 @@ items:
     - '&8⇨ &e⚡ &736 J/t'
   sf.birthday_cake:
     name: '&bBirthday Cake'
+  sf.ender_anvil_talisman:
+    name: '&5Ender Talisman of the Anvil'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Anvil'
+  sf.ender_miner_talisman:
+    name: '&5Ender Talisman of the Miner'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Miner'
+  sf.ender_farmer_talisman:
+    name: '&5Ender Talisman of the Farmer'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Farmer'
+  sf.ender_hunter_talisman:
+    name: '&5Ender Talisman of the Hunter'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Hunter'
+  sf.ender_lava_talisman:
+    name: '&5Ender Talisman of the Lava Walker'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Lava Walker'
+  sf.ender_water_talisman:
+    name: '&5Ender Talisman of the Water Breather'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Water Breather'
+  sf.ender_angel_talisman:
+    name: '&5Ender Talisman of the Angel'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Angel'
+  sf.ender_fire_talisman:
+    name: '&5Ender Talisman of the Firefighter'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Firefighter'
+  sf.ender_magician_talisman:
+    name: '&5Ender Talisman of the Magician'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Magician'
+  sf.ender_traveller_talisman:
+    name: '&5Ender Talisman of the Traveller'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Traveller'
+  sf.ender_warrior_talisman:
+    name: '&5Ender Talisman of the Warrior'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Warrior'
+  sf.ender_knight_talisman:
+    name: '&5Ender Talisman of the Knight'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Knight'
+  sf.ender_whirlwind_talisman:
+    name: '&5Ender Talisman of the Whirlwind'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Whirlwind'
+  sf.ender_wizard_talisman:
+    name: '&5Ender Talisman of the Wizard'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Wizard'
+  sf.ender_caveman_talisman:
+    name: '&5Ender Talisman of the Caveman'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Caveman'
+  sf.ender_wise_talisman:
+    name: '&5Ender Talisman of the Wise'
+    lore:
+    - '&7Ender Infused'
+    - ''
+    - '&7Works from your Ender Chest'
+    - '&7as the Tier II variant of'
+    - '&aTalisman of the Wise'
 command:
   errors:
     players-only-guide: Only players can open the SFX guide.
@@ -4061,6 +4189,10 @@ categories:
     name: '&5Wither Assembler'
   sf.xp_collector:
     name: '&aEXP Collector'
+  sf.resources:
+    name: '&fResources'
+  sf.cargo:
+    name: '&fCargo'
 recipes: {}
 materials:
   crafting_table: Crafting Table
@@ -5096,3 +5228,105 @@ android:
       name: <yellow>Attack Adult Animals</yellow>
       lore:
       - <gray>Attack adult animals ahead.</gray>
+
+category-icons:
+  sf.items:
+    name: '&6Portable Crafter'
+  sf.gadgets:
+    name: '&6Gold Pan'
+  sf.backpacks:
+    name: '&eSmall Backpack'
+  sf.jetpacks:
+    name: '&9Electric Jetpack &7- &eI'
+  sf.jetboots:
+    name: '&9Jet Boots &7- &eI'
+  sf.multi_tools:
+    name: '&9Multi Tool &7- &eI'
+  sf.food:
+    name: '&6Fortune Cookie'
+  sf.christmas:
+    name: '&6Glass of Milk'
+  sf.easter:
+    name: '&fEaster Egg'
+  sf.weapons:
+    name: '&7Grandmas Walking Stick'
+  sf.bows:
+    name: '&cExplosive Bow'
+  sf.tools:
+    name: '&6Smelter''s Pickaxe'
+  sf.armor:
+    name: '&e&lGlowstone Helmet'
+  sf.magical_components:
+    name: '&6Magical Lump &7- &eI'
+  sf.technical_components:
+    name: '&bBasic Circuit Board'
+  sf.resources:
+    name: '&fBucket of Oil'
+  sf.rainbow_blocks:
+    name: '&5Rainbow Wool'
+  sf.seasonal:
+    name: '&5Rainbow Wool &7(Christmas)'
+  sf.ingots:
+    name: '&bCopper Ingot'
+  sf.alloy_carbon_iron:
+    name: '&bSteel Ingot'
+  sf.alloy_copper_tin:
+    name: '&bBronze Ingot'
+  sf.alloy_copper_aluminum:
+    name: '&bDuralumin Ingot'
+  sf.alloy_copper_silver:
+    name: '&bBillon Ingot'
+  sf.alloy_copper_zinc:
+    name: '&bBrass Ingot'
+  sf.alloy_aluminum_brass:
+    name: '&bAluminum Brass Ingot'
+  sf.alloy_aluminum_bronze:
+    name: '&bAluminum Bronze Ingot'
+  sf.alloy_gold_silver_copper:
+    name: '&bCorinthian Bronze Ingot'
+  sf.alloy_lead_tin:
+    name: '&bSolder Ingot'
+  sf.alloy_steel_iron_carbon:
+    name: '&bDamascus Steel Ingot'
+  sf.alloy_damascus_steel_duralumin_compressed_carbon_aluminium_bronze:
+    name: '&b&lHardened Metal'
+  sf.alloy_hardened_metal_corinthian_bronze_solder_billon_damascus_steel:
+    name: '&b&lReinforced Alloy Ingot'
+  sf.alloy_iron_silicon:
+    name: '&bFerrosilicon'
+  sf.alloy_iron_gold:
+    name: '&6&lGilded Iron'
+  sf.alloy_redstone_ferrosilicon:
+    name: '&cRedstone Alloy Ingot'
+  sf.alloy_iron_copper:
+    name: '&bNickel Ingot'
+  sf.alloy_nickel_iron_copper:
+    name: '&9Cobalt Ingot'
+  sf.gold:
+    name: '&fGold Ingot &7(4-Carat)'
+  sf.dusts:
+    name: '&6Iron Dust'
+  sf.gems:
+    name: '&bSynthetic Diamond'
+  sf.talisman:
+    name: '&6Common Talisman'
+  sf.staves:
+    name: '&6Elemental Staff'
+  sf.multiblocks:
+    name: '&eEnhanced Crafting Table'
+  sf.machines:
+    name: '&aComposter'
+  sf.enhanced_furnaces:
+    name: '&7Enhanced Furnace - &eI'
+  sf.soulbound_items:
+    name: '&cSoulbound Sword'
+  sf.runes:
+    name: '&fBlank Rune'
+  sf.electricity:
+    name: '&bSolar Generator'
+  sf.cargo:
+    name: '&6Cargo Node'
+  sf.robots:
+    name: '&cProgrammable Android &7(Normal)'
+  sf.gps:
+    name: '&bGPS Transmitter'

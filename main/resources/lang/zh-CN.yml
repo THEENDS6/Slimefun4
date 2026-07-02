@@ -3994,6 +3994,10 @@ categories:
     name: '&5Wither Assembler'
   sf.xp_collector:
     name: '&aEXP Collector'
+  sf.resources:
+    name: '&fResources'
+  sf.cargo:
+    name: '&fCargo'
 guide:
   errors:
     no-open: <red>你没有打开这本科技书的权限。</red>
@@ -5187,3 +5191,105 @@ android:
       name: <yellow>攻击成年动物</yellow>
       lore:
       - <gray>攻击前方成年动物。</gray>
+
+category-icons:
+  sf.items:
+    name: '&6Portable Crafter'
+  sf.gadgets:
+    name: '&6Gold Pan'
+  sf.backpacks:
+    name: '&eSmall Backpack'
+  sf.jetpacks:
+    name: '&9Electric Jetpack &7- &eI'
+  sf.jetboots:
+    name: '&9Jet Boots &7- &eI'
+  sf.multi_tools:
+    name: '&9Multi Tool &7- &eI'
+  sf.food:
+    name: '&6Fortune Cookie'
+  sf.christmas:
+    name: '&6Glass of Milk'
+  sf.easter:
+    name: '&fEaster Egg'
+  sf.weapons:
+    name: '&7Grandmas Walking Stick'
+  sf.bows:
+    name: '&cExplosive Bow'
+  sf.tools:
+    name: '&6Smelter''s Pickaxe'
+  sf.armor:
+    name: '&e&lGlowstone Helmet'
+  sf.magical_components:
+    name: '&6Magical Lump &7- &eI'
+  sf.technical_components:
+    name: '&bBasic Circuit Board'
+  sf.resources:
+    name: '&fBucket of Oil'
+  sf.rainbow_blocks:
+    name: '&5Rainbow Wool'
+  sf.seasonal:
+    name: '&5Rainbow Wool &7(Christmas)'
+  sf.ingots:
+    name: '&bCopper Ingot'
+  sf.alloy_carbon_iron:
+    name: '&bSteel Ingot'
+  sf.alloy_copper_tin:
+    name: '&bBronze Ingot'
+  sf.alloy_copper_aluminum:
+    name: '&bDuralumin Ingot'
+  sf.alloy_copper_silver:
+    name: '&bBillon Ingot'
+  sf.alloy_copper_zinc:
+    name: '&bBrass Ingot'
+  sf.alloy_aluminum_brass:
+    name: '&bAluminum Brass Ingot'
+  sf.alloy_aluminum_bronze:
+    name: '&bAluminum Bronze Ingot'
+  sf.alloy_gold_silver_copper:
+    name: '&bCorinthian Bronze Ingot'
+  sf.alloy_lead_tin:
+    name: '&bSolder Ingot'
+  sf.alloy_steel_iron_carbon:
+    name: '&bDamascus Steel Ingot'
+  sf.alloy_damascus_steel_duralumin_compressed_carbon_aluminium_bronze:
+    name: '&b&lHardened Metal'
+  sf.alloy_hardened_metal_corinthian_bronze_solder_billon_damascus_steel:
+    name: '&b&lReinforced Alloy Ingot'
+  sf.alloy_iron_silicon:
+    name: '&bFerrosilicon'
+  sf.alloy_iron_gold:
+    name: '&6&lGilded Iron'
+  sf.alloy_redstone_ferrosilicon:
+    name: '&cRedstone Alloy Ingot'
+  sf.alloy_iron_copper:
+    name: '&bNickel Ingot'
+  sf.alloy_nickel_iron_copper:
+    name: '&9Cobalt Ingot'
+  sf.gold:
+    name: '&fGold Ingot &7(4-Carat)'
+  sf.dusts:
+    name: '&6Iron Dust'
+  sf.gems:
+    name: '&bSynthetic Diamond'
+  sf.talisman:
+    name: '&6Common Talisman'
+  sf.staves:
+    name: '&6Elemental Staff'
+  sf.multiblocks:
+    name: '&eEnhanced Crafting Table'
+  sf.machines:
+    name: '&aComposter'
+  sf.enhanced_furnaces:
+    name: '&7Enhanced Furnace - &eI'
+  sf.soulbound_items:
+    name: '&cSoulbound Sword'
+  sf.runes:
+    name: '&fBlank Rune'
+  sf.electricity:
+    name: '&bSolar Generator'
+  sf.cargo:
+    name: '&6Cargo Node'
+  sf.robots:
+    name: '&cProgrammable Android &7(Normal)'
+  sf.gps:
+    name: '&bGPS Transmitter'

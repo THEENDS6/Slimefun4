@@ -243,6 +243,8 @@ public final class DefaultSfxRecipeRegistry {
 
     private SfxItemDefinition withRecipes(SfxItemDefinition existing, List<SfxRecipe> recipes) {
         SfxItemDefinition.Builder builder = SfxItemDefinition.builder(existing.id(), existing.material(), existing.name())
+                .nameKey(existing.nameKey())
+                .loreKey(existing.loreKey())
                 .lore(existing.lore())
                 .category(existing.categoryId())
                 .order(existing.order())

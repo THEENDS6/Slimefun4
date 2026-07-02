@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.machine;
 
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
+import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.io.File;
 import java.util.ArrayList;
@@ -23,9 +24,11 @@ public final class SfxManualMachineYamlLoader {
     private static final String RESOURCE_PATH = "content/machines/manual-machines.yml";
 
     private final JavaPlugin plugin;
+    private final SfxLocalization localization;
 
-    public SfxManualMachineYamlLoader(JavaPlugin plugin) {
+    public SfxManualMachineYamlLoader(JavaPlugin plugin, SfxLocalization localization) {
         this.plugin = plugin;
+        this.localization = localization;
     }
 
     public void ensureDefaultFile(boolean overwriteExisting) {
@@ -77,7 +80,10 @@ public final class SfxManualMachineYamlLoader {
     }
 
     private ManualMachineDefinition parse(String id, ConfigurationSection section) {
-        Component name = Text.renderFlexible(requiredString(section, "name"));
+        if (section.contains("name")) {
+            throw new IllegalArgumentException("literal field is not allowed in compiled manual machine content: name (use name-key)");
+        }
+        Component name = Text.renderFlexible(requiredLanguageString(section, "name-key"));
         Material icon = parseMaterial(requiredString(section, "icon"));
         Material[] pattern = parsePattern(section.getList("pattern"));
         Material[] displayPattern = parsePattern(section.getList("display-pattern"));
@@ -86,6 +92,14 @@ public final class SfxManualMachineYamlLoader {
         ManualMachineOperation operation = ManualMachineOperation.valueOf(requiredString(section, "operation").trim().replace('-', '_').toUpperCase(Locale.ROOT));
         boolean deployable = requiredBoolean(section, "deployable");
         return new ManualMachineDefinition(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, stringSet(section.getList("tags")));
+    }
+
+    private String requiredLanguageString(ConfigurationSection section, String path) {
+        String key = requiredString(section, path);
+        if (!localization.has(key)) {
+            throw new IllegalArgumentException("language key missing: " + key);
+        }
+        return localization.requiredText(key);
     }
 
     private String requiredString(ConfigurationSection section, String path) {
@@ -131,13 +145,24 @@ public final class SfxManualMachineYamlLoader {
             return null;
         }
         if (raw instanceof Map<?, ?> map) {
-            raw = map.get("material");
+            String type = requiredString(map, "type");
+            if (type.equalsIgnoreCase("empty")) {
+                return null;
+            }
+            if (!type.equalsIgnoreCase("material")) {
+                throw new IllegalArgumentException("unsupported manual machine pattern slot type: " + type);
+            }
+            return parseMaterial(requiredString(map, "material"));
         }
-        String value = String.valueOf(raw).trim();
-        if (value.isEmpty() || value.equalsIgnoreCase("air") || value.equalsIgnoreCase("empty") || value.equals("-")) {
-            return null;
+        throw new IllegalArgumentException("manual machine pattern slot must be an explicit map: " + raw);
+    }
+
+    private String requiredString(Map<?, ?> map, String path) {
+        Object value = map.get(path);
+        if (value == null || String.valueOf(value).isBlank()) {
+            throw new IllegalArgumentException("manual machine field is required: " + path);
         }
-        return parseMaterial(value);
+        return String.valueOf(value);
     }
 
     private Material parseMaterial(String raw) {

@@ -8,6 +8,7 @@ import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.util.ItemBuilder;
+import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.io.File;
 import java.io.IOException;
@@ -49,11 +50,13 @@ public final class SfxYamlContentLoader {
     );
     private final JavaPlugin plugin;
     private final DefaultSfxItemRegistry registry;
+    private final SfxLocalization localization;
     private final Logger logger;
 
-    public SfxYamlContentLoader(JavaPlugin plugin, SfxItemRegistry registry) {
+    public SfxYamlContentLoader(JavaPlugin plugin, SfxItemRegistry registry, SfxLocalization localization) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.registry = (DefaultSfxItemRegistry) Objects.requireNonNull(registry, "registry");
+        this.localization = Objects.requireNonNull(localization, "localization");
         this.logger = plugin.getLogger();
     }
 
@@ -71,7 +74,7 @@ public final class SfxYamlContentLoader {
         if (plugin.getConfig().getBoolean("content.runtime.compiled-only", true)) {
             int index = 0;
             for (YamlConfiguration yaml : SfxCompiledYamlResolver.loadCompiledUnder(plugin, "content/items")) {
-                loadYaml(yaml, "compiled item content " + (++index));
+                loadYaml(yaml, "compiled item content " + (++index), true);
             }
             return;
         }
@@ -89,11 +92,11 @@ public final class SfxYamlContentLoader {
         }
         files.sort(Comparator.comparing(File::getName));
         for (File file : files) {
-            loadYaml(YamlConfiguration.loadConfiguration(file), file.getName());
+            loadYaml(YamlConfiguration.loadConfiguration(file), file.getName(), false);
         }
     }
 
-    private void loadYaml(YamlConfiguration yaml, String sourceName) {
+    private void loadYaml(YamlConfiguration yaml, String sourceName, boolean strict) {
         for (Map<?, ?> entry : yaml.getMapList("categories")) {
             try {
                 SfxItemCategory category = parseCategory(entry);
@@ -103,6 +106,9 @@ public final class SfxYamlContentLoader {
                     registry.registerCategory(category);
                 }
             } catch (Exception ex) {
+                if (strict) {
+                    throw new IllegalStateException("Invalid category in " + sourceName, ex);
+                }
                 logger.warning("Failed to load category from YAML " + sourceName + ": " + ex.getMessage());
             }
         }
@@ -118,6 +124,9 @@ public final class SfxYamlContentLoader {
                     registry.registerItem(item);
                 }
             } catch (Exception ex) {
+                if (strict) {
+                    throw new IllegalStateException("Invalid item in " + sourceName, ex);
+                }
                 logger.warning("Failed to load item from YAML " + sourceName + ": " + ex.getMessage());
             }
         }
@@ -137,13 +146,15 @@ public final class SfxYamlContentLoader {
 
     private SfxItemCategory parseCategory(Map<?, ?> entry) {
         String id = string(required(entry, "id"));
-        String name = string(required(entry, "name"));
+        rejectLegacyText(entry, "name", "name-key");
+        String nameKey = string(required(entry, "name-key"));
         int order = integer(requiredAny(entry, "priority", "order"));
         boolean hidden = Boolean.TRUE.equals(entry.get("hidden"));
         @SuppressWarnings("unchecked")
         Map<String, Object> icon = (Map<String, Object>) required(entry, "icon");
         Material iconMaterial = parseMaterial(string(required(icon, "material")));
-        String iconName = string(required(icon, "name"));
+        rejectLegacyText(icon, "name", "name-key");
+        String iconNameKey = string(required(icon, "name-key"));
         String headTexture = icon == null ? null : optionalString(icon.get("headTexture"));
         Integer colorRgb = null;
         if (icon != null) {
@@ -153,15 +164,19 @@ public final class SfxYamlContentLoader {
                 colorRgb = parseColor(icon.get("color"));
             }
         }
-        Component parsedName = Text.renderFlexible(name);
-        return new SfxItemCategory(id, parsedName, LegacySfBootstrapSupport.icon(iconMaterial, Text.renderFlexible(iconName), headTexture, colorRgb), order, hidden);
+        Component parsedName = Text.renderFlexible(requiredLanguageString(nameKey));
+        return new SfxItemCategory(id, parsedName, LegacySfBootstrapSupport.icon(iconMaterial, Text.renderFlexible(requiredLanguageString(iconNameKey)), headTexture, colorRgb), order, hidden);
     }
 
     private SfxItemDefinition parseItem(Map<?, ?> entry) {
         String id = string(required(entry, "id"));
         Material material = parseMaterial(string(required(entry, "material")));
         String categoryId = string(required(entry, "category"));
-        SfxItemDefinition.Builder builder = SfxItemDefinition.builder(id, material, Text.renderFlexible(string(required(entry, "name"))));
+        rejectLegacyText(entry, "name", "name-key");
+        rejectLegacyText(entry, "lore", "lore-key");
+        String nameKey = string(required(entry, "name-key"));
+        SfxItemDefinition.Builder builder = SfxItemDefinition.builder(id, material, Text.renderFlexible(requiredLanguageString(nameKey)))
+                .nameKey(nameKey);
         builder.category(categoryId);
         builder.order(integer(requiredAny(entry, "order", "priority", "pos")));
         if (entry.containsKey("version")) {
@@ -191,10 +206,11 @@ public final class SfxYamlContentLoader {
         if (Boolean.TRUE.equals(entry.get("unbreakable"))) {
             builder.unbreakable(true);
         }
-        Object lore = entry.get("lore");
-        if (lore instanceof List<?> lines) {
-            for (Object line : lines) {
-                builder.addLore(Text.renderFlexible(String.valueOf(line)));
+        String loreKey = optionalString(entry.get("lore-key"));
+        if (loreKey != null) {
+            builder.loreKey(loreKey);
+            for (String line : requiredLanguageList(loreKey)) {
+                builder.addLore(Text.renderFlexible(line));
             }
         }
         Object flags = entry.get("flags");
@@ -276,25 +292,21 @@ public final class SfxYamlContentLoader {
         if (raw == null) {
             return SfxRecipeSlot.empty();
         }
-        if (raw instanceof String text) {
-            String normalized = text.trim();
-            if (normalized.isEmpty() || normalized.equalsIgnoreCase("air") || normalized.equalsIgnoreCase("empty")) {
-                return SfxRecipeSlot.empty();
-            }
-            if (normalized.contains(":")) {
-                return SfxRecipeSlot.sfx(normalized);
-            }
-            return SfxRecipeSlot.vanilla(parseMaterial(normalized));
-        }
         if (raw instanceof Map<?, ?> map) {
             String type = string(required(map, "type"));
             int amount = integer(required(map, "amount"));
+            if (type.equalsIgnoreCase("empty")) {
+                return SfxRecipeSlot.empty();
+            }
             if (type.equalsIgnoreCase("sfx")) {
                 return SfxRecipeSlot.sfx(string(map.get("id")), amount);
             }
-            return SfxRecipeSlot.vanilla(parseMaterial(string(map.get("material"))), amount);
+            if (type.equalsIgnoreCase("vanilla")) {
+                return SfxRecipeSlot.vanilla(parseMaterial(string(map.get("material"))), amount);
+            }
+            throw new IllegalArgumentException("unsupported explicit recipe slot type: " + type);
         }
-        throw new IllegalArgumentException("unsupported recipe slot: " + raw);
+        throw new IllegalArgumentException("recipe slot must be an explicit map: " + raw);
     }
 
     private static Object required(Map<?, ?> map, String key) {
@@ -313,6 +325,33 @@ public final class SfxYamlContentLoader {
             }
         }
         throw new IllegalArgumentException("required field missing: " + String.join("/", keys));
+    }
+
+    private void rejectLegacyText(Map<?, ?> map, String legacyKey, String replacementKey) {
+        if (map.containsKey(legacyKey)) {
+            throw new IllegalArgumentException("literal field is not allowed in compiled content: " + legacyKey + " (use " + replacementKey + ")");
+        }
+    }
+
+    private String requiredLanguageString(String key) {
+        if (key == null || key.isBlank()) {
+            throw new IllegalArgumentException("language key cannot be blank");
+        }
+        if (!localization.has(key)) {
+            throw new IllegalArgumentException("language key missing: " + key);
+        }
+        return localization.requiredText(key);
+    }
+
+    private List<String> requiredLanguageList(String key) {
+        if (key == null || key.isBlank()) {
+            throw new IllegalArgumentException("language list key cannot be blank");
+        }
+        List<String> lines = localization.list(key);
+        if (lines.isEmpty()) {
+            throw new IllegalArgumentException("language list key missing or empty: " + key);
+        }
+        return lines;
     }
 
     private Material parseMaterial(String input) {
