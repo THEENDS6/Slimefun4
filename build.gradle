@@ -169,11 +169,13 @@ tasks.register('validateSfxMachineYaml') {
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/electric-recipes.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/machines/configurable-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java'))
     doLast {
         def catalogFile = layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml').asFile
         def manualFile = layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml').asFile
         def electricRecipeFile = layout.projectDirectory.file('main/resources/content/machines/electric-recipes.yml').asFile
+        def configurableFile = layout.projectDirectory.file('main/resources/content/machines/configurable-machines.yml').asFile
         def profilesFile = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java').asFile
         def enumMatcher = profilesFile.getText('UTF-8') =~ /private enum Profile\s*\{([\s\S]*?)\n\s*\}/
         if (!enumMatcher.find()) {
@@ -411,7 +413,30 @@ tasks.register('validateSfxMachineYaml') {
         if (!electricRecipeViolations.isEmpty()) {
             throw new GradleException("Electric recipe YAML validation failed:\n" + electricRecipeViolations.join('\n'))
         }
-        logger.lifecycle("Validated ${declaredProfiles.size()} machine YAML profile declaration(s), ${catalogCount} machine catalog declaration(s), ${manualCount} manual machine declaration(s), and ${electricRecipeEntryCount} electric recipe provider entry(s).")
+
+        def configurableText = configurableFile.getText('UTF-8')
+        def configurableViolations = []
+        def configurableCount = (configurableText =~ /(?m)^  ["']?sf:[^"'\r\n]+["']?:\s*$/).count
+        if (configurableCount != 3) {
+            configurableViolations << "configurable machine count expected 3, got ${configurableCount}"
+        }
+        ['kind:', 'energy:', 'capacity:', 'energy-per-action:', 'energy-per-tick:'].each { token ->
+            if (!configurableText.contains(token)) {
+                configurableViolations << "configurable machines missing ${token}"
+            }
+        }
+        if ((configurableText =~ /(?m)^    reactor:\s*$/).count != 2) {
+            configurableViolations << "configurable reactor section count expected 2"
+        }
+        ['coolant-item:', 'wither-aura:', 'fuels:'].each { token ->
+            if ((configurableText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count < 2) {
+                configurableViolations << "configurable reactor entries missing ${token}"
+            }
+        }
+        if (!configurableViolations.isEmpty()) {
+            throw new GradleException("Configurable machine YAML validation failed:\n" + configurableViolations.join('\n'))
+        }
+        logger.lifecycle("Validated ${declaredProfiles.size()} machine YAML profile declaration(s), ${catalogCount} machine catalog declaration(s), ${manualCount} manual machine declaration(s), ${electricRecipeEntryCount} electric recipe provider entry(s), and ${configurableCount} configurable machine declaration(s).")
     }
 }
 
