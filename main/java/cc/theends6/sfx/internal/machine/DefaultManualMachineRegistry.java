@@ -4,10 +4,12 @@ import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.api.machine.SfxManualMachineRegistry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public final class DefaultManualMachineRegistry implements SfxManualMachineRegistry {
     private final Map<String, ManualMachineDefinition> machines = new LinkedHashMap<>();
@@ -54,6 +56,27 @@ public final class DefaultManualMachineRegistry implements SfxManualMachineRegis
     @Override
     public Collection<ManualMachineDefinition> machines() {
         return List.copyOf(machines.values());
+    }
+
+    public List<String> machineIdsWithTags(Collection<String> requiredTags) {
+        Set<String> tags = new LinkedHashSet<>();
+        if (requiredTags != null) {
+            for (String tag : requiredTags) {
+                if (tag != null && !tag.isBlank()) {
+                    tags.add(tag);
+                }
+            }
+        }
+        if (tags.isEmpty()) {
+            return List.of();
+        }
+        List<String> result = new ArrayList<>();
+        for (ManualMachineDefinition definition : machines.values()) {
+            if (definition.hasTags(tags)) {
+                result.add(definition.id());
+            }
+        }
+        return List.copyOf(result);
     }
 
     @Override

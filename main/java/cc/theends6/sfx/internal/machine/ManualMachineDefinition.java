@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -37,6 +39,7 @@ public final class ManualMachineDefinition {
     private final ManualMachineOperation operation;
     private final boolean symmetric;
     private final boolean deployable;
+    private final Set<String> tags;
 
     public ManualMachineDefinition(String id, Component name, Material icon, Material[] pattern, BlockFace triggerFace, BlockFace inventoryFace, ManualMachineOperation operation) {
         this(id, name, icon, pattern, pattern, triggerFace, inventoryFace, operation, true);
@@ -47,6 +50,10 @@ public final class ManualMachineDefinition {
     }
 
     public ManualMachineDefinition(String id, Component name, Material icon, Material[] pattern, Material[] displayPattern, BlockFace triggerFace, BlockFace inventoryFace, ManualMachineOperation operation, boolean deployable) {
+        this(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, Set.of());
+    }
+
+    public ManualMachineDefinition(String id, Component name, Material icon, Material[] pattern, Material[] displayPattern, BlockFace triggerFace, BlockFace inventoryFace, ManualMachineOperation operation, boolean deployable, Set<String> tags) {
         if (pattern == null || pattern.length != 9) {
             throw new IllegalArgumentException("Manual multiblock pattern must contain exactly 9 material slots.");
         }
@@ -69,6 +76,7 @@ public final class ManualMachineDefinition {
         this.operation = Objects.requireNonNull(operation, "operation");
         this.symmetric = isSymmetric(pattern);
         this.deployable = deployable;
+        this.tags = normalizeTags(tags, this.id, this.operation);
     }
 
     public String id() {
@@ -105,6 +113,14 @@ public final class ManualMachineDefinition {
 
     public boolean deployable() {
         return deployable;
+    }
+
+    public Set<String> tags() {
+        return tags;
+    }
+
+    public boolean hasTags(Set<String> requiredTags) {
+        return requiredTags == null || tags.containsAll(normalizeTags(requiredTags, null, null));
     }
 
     public Material triggerMaterial() {
@@ -188,5 +204,32 @@ public final class ManualMachineDefinition {
         return pattern[0] == pattern[2]
                 && pattern[3] == pattern[5]
                 && pattern[6] == pattern[8];
+    }
+
+    private static Set<String> normalizeTags(Set<String> raw, String id, ManualMachineOperation operation) {
+        Set<String> result = new LinkedHashSet<>();
+        if (id != null && !id.isBlank()) {
+            result.add(normalizeTag(id));
+            int colon = id.indexOf(':');
+            if (colon >= 0 && colon + 1 < id.length()) {
+                result.add(normalizeTag(id.substring(colon + 1)));
+            }
+        }
+        if (operation != null) {
+            result.add(normalizeTag(operation.name()));
+        }
+        result.add("manual");
+        if (raw != null) {
+            for (String tag : raw) {
+                if (tag != null && !tag.isBlank()) {
+                    result.add(normalizeTag(tag));
+                }
+            }
+        }
+        return Set.copyOf(result);
+    }
+
+    private static String normalizeTag(String raw) {
+        return raw.trim().replace('_', '-').toLowerCase(Locale.ROOT);
     }
 }
