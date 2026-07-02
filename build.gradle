@@ -461,6 +461,7 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     inputs.file(layout.projectDirectory.file('main/resources/content/items/10-legacy-categories.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/items/20-legacy-items.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/researches/10-legacy-slimefun.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/legacy-item-behavior.yml'))
     outputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
     classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
     mainClass.set('cc.theends6.sfx.internal.template.SfxTemplateCompilerCli')
@@ -729,6 +730,17 @@ tasks.register('validateSfxCompiledContent') {
             compiledResearchCount = (compiledResearchFile.getText('UTF-8') =~ /(?m)^- id:\s*/).count
             if (compiledResearchCount != 258) {
                 violations << "compiled research count expected 258, got ${compiledResearchCount}"
+            }
+        }
+        def compiledLegacyBehaviorFile = new File(root, 'content/legacy-item-behavior/legacy-item-behavior.yml')
+        if (!compiledLegacyBehaviorFile.isFile()) {
+            violations << "compiled legacy item behavior output missing content/legacy-item-behavior/legacy-item-behavior.yml"
+        } else {
+            def behaviorText = compiledLegacyBehaviorFile.getText('UTF-8')
+            ['beheading-chances:', 'tools:', 'gadgets:', 'talismans:', 'seasonal:'].each { token ->
+                if (!behaviorText.contains(token)) {
+                    violations << "compiled legacy item behavior missing ${token}"
+                }
             }
         }
         def electricRecipeCompiledFile = new File(root, 'content/machines/electric-recipes/electric-recipes.yml')
