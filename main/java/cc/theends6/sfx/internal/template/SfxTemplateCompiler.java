@@ -1,5 +1,14 @@
 package cc.theends6.sfx.internal.template;
 
+import cc.theends6.sfx.internal.machine.SfxMachineCapability;
+import cc.theends6.sfx.internal.machine.SfxMachineCategory;
+import cc.theends6.sfx.internal.machine.SfxMachineDefinition;
+import cc.theends6.sfx.internal.machine.SfxMachineEffect;
+import cc.theends6.sfx.internal.machine.SfxMachineInputProvider;
+import cc.theends6.sfx.internal.machine.SfxMachineOutputProvider;
+import cc.theends6.sfx.internal.machine.SfxMachinePhase;
+import cc.theends6.sfx.internal.machine.SfxMachinePolicyRef;
+import cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles;
 import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -54,10 +63,12 @@ public final class SfxTemplateCompiler {
         errors.clear();
         globalVariables.clear();
         projectVariables.clear();
+        int sourceFileCount = 0;
         try {
             Files.createDirectories(sourceRoot);
             Files.createDirectories(outputRoot);
             List<Path> sources = listYamlFiles(sourceRoot);
+            List<Path> manifestSources = new ArrayList<>(sources);
             Map<String, Object> root = new LinkedHashMap<>();
             for (Path source : sources) {
                 SourceNode sourceNode = loadSource(source);
@@ -74,16 +85,23 @@ public final class SfxTemplateCompiler {
                 outputs.add(new OutputNode(List.of("all"), "$", null, expanded));
             }
             outputs = groupRecipeOutputs(outputs);
+            Path machineCatalogSource = sourceRoot.resolveSibling("machines").resolve("machine-catalog.yml");
+            OutputNode machineCatalogOutput = compileMachineCatalogOutput(machineCatalogSource);
+            if (machineCatalogOutput != null) {
+                outputs.add(machineCatalogOutput);
+                manifestSources.add(machineCatalogSource);
+            }
+            sourceFileCount = manifestSources.size();
             clearOutputDirectory();
             writeOutputs(outputs);
-            writeManifest(sources, outputs);
+            writeManifest(manifestSources, outputs);
             writeSourceMap();
         } catch (SfxTemplateCompileException ex) {
             errors.add(ex.getMessage());
         } catch (RuntimeException | IOException ex) {
             errors.add(ex.getClass().getSimpleName() + ": " + ex.getMessage());
         }
-        return new SfxTemplateCompileReport(sourcesByPath.size(), outputFileCount(), List.copyOf(warnings), List.copyOf(errors));
+        return new SfxTemplateCompileReport(sourceFileCount == 0 ? sourcesByPath.size() : sourceFileCount, outputFileCount(), List.copyOf(warnings), List.copyOf(errors));
     }
 
     private List<Path> listYamlFiles(Path root) throws IOException {
@@ -790,6 +808,159 @@ public final class SfxTemplateCompiler {
         definition.put("role", role);
         definition.put("behavior", behavior);
         return definition;
+    }
+
+    private OutputNode compileMachineCatalogOutput(Path source) throws IOException {
+        if (!Files.isRegularFile(source)) {
+            return null;
+        }
+        YamlConfiguration yaml = new YamlConfiguration();
+        try {
+            yaml.loadFromString(Files.readString(source, StandardCharsets.UTF_8));
+        } catch (Exception ex) {
+            throw new SfxTemplateCompileException("Cannot load machine catalog source " + relativeSource(source) + ": " + ex.getMessage(), ex);
+        }
+        ConfigurationSection root = yaml.getConfigurationSection("machines");
+        if (root == null) {
+            throw new SfxTemplateCompileException("Machine catalog source " + relativeSource(source) + " requires machines root section.");
+        }
+        Map<String, Object> machines = new LinkedHashMap<>();
+        for (String id : root.getKeys(false)) {
+            ConfigurationSection section = root.getConfigurationSection(id);
+            if (section == null) {
+                continue;
+            }
+            SfxMachineDefinition definition = compileMachineCatalogDefinition(id, section);
+            machines.put(id, serializeMachineCatalogDefinition(definition));
+        }
+        Map<String, Object> wrapped = new LinkedHashMap<>();
+        wrapped.put("machines", machines);
+        return new OutputNode(List.of(), "$.machines", "content/machines/machine-catalog.yml", wrapped, relativeSource(source), "catalog.yml");
+    }
+
+    private SfxMachineDefinition compileMachineCatalogDefinition(String id, ConfigurationSection section) {
+        SfxMachineCategory category = SfxMachineCategory.valueOf(requiredCatalogString(section, "category").trim().replace('-', '_').toUpperCase(Locale.ROOT));
+        Set<String> tags = Set.copyOf(strings(section.getList("tags")));
+        if (tags.isEmpty()) {
+            throw new SfxTemplateCompileException("Machine catalog " + id + " requires at least one tag.");
+        }
+        SfxMachineDefinition.Builder builder = SfxMachineDefinition.builder(id)
+                .displayName(requiredCatalogString(section, "display-name"))
+                .category(category)
+                .inputSlots(ints(section.getList("input-slots")))
+                .outputSlots(ints(section.getList("output-slots")))
+                .statusSlot(requiredCatalogInt(section, "status-slot"))
+                .tickInterval(Math.max(1, requiredCatalogInt(section, "tick-interval")))
+                .tags(tags);
+        for (String capability : strings(section.getList("capabilities"))) {
+            builder.capability(SfxMachineCapability.valueOf(capability.trim().replace('-', '_').toUpperCase(Locale.ROOT)));
+        }
+        SfxMachineInputProvider inputProvider = parseCatalogInputProvider(section.getConfigurationSection("input-provider"));
+        if (inputProvider != null) {
+            builder.inputProvider(inputProvider);
+        }
+        SfxMachineOutputProvider outputProvider = parseCatalogOutputProvider(section.getConfigurationSection("output-provider"));
+        if (outputProvider != null) {
+            builder.outputProvider(outputProvider);
+        }
+        for (Map<?, ?> raw : section.getMapList("policies")) {
+            builder.policyRef(SfxMachinePolicyRef.of(requiredCatalogString(raw, "type"), requiredCatalogString(raw, "name")));
+        }
+        for (Map<?, ?> raw : section.getMapList("effects")) {
+            SfxMachinePhase phase = SfxMachinePhase.valueOf(requiredCatalogString(raw, "phase").trim().replace('-', '_').toUpperCase(Locale.ROOT));
+            builder.effect(SfxMachineEffect.marker(requiredCatalogString(raw, "name"), phase));
+        }
+        return SfxMachineSpecialProfiles.apply(builder.build(), section.getString("profile", null));
+    }
+
+    private Map<String, Object> serializeMachineCatalogDefinition(SfxMachineDefinition definition) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("category", definition.category().name());
+        result.put("display-name", definition.displayName());
+        result.put("input-slots", new ArrayList<>(definition.inputSlots()));
+        result.put("output-slots", new ArrayList<>(definition.outputSlots()));
+        result.put("status-slot", definition.statusSlot());
+        result.put("tick-interval", definition.tickInterval());
+        result.put("tags", new ArrayList<>(definition.tags().stream().sorted().toList()));
+        result.put("capabilities", new ArrayList<>(definition.capabilities().stream().map(Enum::name).sorted().toList()));
+        result.put("input-provider", serializeInputProvider(definition.inputProvider()));
+        result.put("output-provider", serializeOutputProvider(definition.outputProvider()));
+        List<Map<String, Object>> policies = new ArrayList<>();
+        for (SfxMachinePolicyRef ref : definition.policyRefs()) {
+            Map<String, Object> policy = new LinkedHashMap<>();
+            policy.put("type", ref.type());
+            policy.put("name", ref.name());
+            policies.add(policy);
+        }
+        result.put("policies", policies);
+        List<Map<String, Object>> effects = new ArrayList<>();
+        for (SfxMachineEffect effect : definition.effects()) {
+            Map<String, Object> marker = new LinkedHashMap<>();
+            marker.put("name", effect.name());
+            marker.put("phase", effect.phase().name());
+            effects.add(marker);
+        }
+        result.put("effects", effects);
+        return result;
+    }
+
+    private SfxMachineInputProvider parseCatalogInputProvider(ConfigurationSection section) {
+        if (section == null) {
+            return null;
+        }
+        SfxMachineInputProvider.Kind kind = SfxMachineInputProvider.Kind.valueOf(requiredCatalogString(section, "kind").trim().replace('-', '_').toUpperCase(Locale.ROOT));
+        return new SfxMachineInputProvider(kind, ints(section.getList("slots")), section.getString("description", ""));
+    }
+
+    private SfxMachineOutputProvider parseCatalogOutputProvider(ConfigurationSection section) {
+        if (section == null) {
+            return null;
+        }
+        SfxMachineOutputProvider.Kind kind = SfxMachineOutputProvider.Kind.valueOf(requiredCatalogString(section, "kind").trim().replace('-', '_').toUpperCase(Locale.ROOT));
+        return new SfxMachineOutputProvider(kind, ints(section.getList("slots")), section.getString("description", ""));
+    }
+
+    private Map<String, Object> serializeInputProvider(SfxMachineInputProvider provider) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("kind", provider.kind().name());
+        result.put("slots", new ArrayList<>(provider.slots()));
+        result.put("description", provider.description());
+        return result;
+    }
+
+    private Map<String, Object> serializeOutputProvider(SfxMachineOutputProvider provider) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("kind", provider.kind().name());
+        result.put("slots", new ArrayList<>(provider.slots()));
+        result.put("description", provider.description());
+        return result;
+    }
+
+    private String requiredCatalogString(ConfigurationSection section, String path) {
+        String value = section.getString(path, null);
+        if (value == null || value.isBlank()) {
+            throw new SfxTemplateCompileException(section.getCurrentPath() + " requires " + path);
+        }
+        return value;
+    }
+
+    private int requiredCatalogInt(ConfigurationSection section, String path) {
+        if (!section.contains(path)) {
+            throw new SfxTemplateCompileException(section.getCurrentPath() + " requires " + path);
+        }
+        return section.getInt(path);
+    }
+
+    private String requiredCatalogString(Map<?, ?> map, String path) {
+        Object value = map.get(path);
+        if (value == null || String.valueOf(value).isBlank()) {
+            throw new SfxTemplateCompileException("machine catalog map entry requires " + path);
+        }
+        return String.valueOf(value).trim();
+    }
+
+    private String relativeSource(Path source) {
+        return sourceRoot.relativize(source).toString().replace('\\', '/');
     }
 
     private void clearOutputDirectory() throws IOException {

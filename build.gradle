@@ -453,6 +453,7 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     description = 'Compiles bundled SFX templates into build/sfx-template-compiled and fails on unresolved or invalid template output.'
     dependsOn 'classes'
     inputs.dir(layout.projectDirectory.dir('main/resources/content/templates'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
     outputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
     classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
     mainClass.set('cc.theends6.sfx.internal.template.SfxTemplateCompilerCli')
@@ -495,7 +496,8 @@ tasks.register('validateSfxCompiledContent') {
                 '${',
                 'tag-fuels',
                 '&id',
-                '*id'
+                '*id',
+                'profile:'
         ]
         def violations = []
         compiledFiles.each { file ->
@@ -628,10 +630,28 @@ tasks.register('validateSfxCompiledContent') {
         [
                 'content/recipes/recipes',
                 'content/machines/electric-machines/machines',
-                'content/machines/energy-components/components'
+                'content/machines/energy-components/components',
+                'content/machines/machine-catalog/machines'
         ].each { repeatedPath ->
             if (new File(root, repeatedPath).exists()) {
                 violations << "compiled output path still contains repeated root section: ${repeatedPath}"
+            }
+        }
+        def catalogCompiledFile = new File(root, 'content/machines/machine-catalog/catalog.yml')
+        def catalogCompiledCount = 0
+        if (!catalogCompiledFile.isFile()) {
+            violations << "compiled machine catalog output missing content/machines/machine-catalog/catalog.yml"
+        } else {
+            def catalogText = catalogCompiledFile.getText('UTF-8')
+            catalogCompiledCount = (catalogText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
+            if (catalogCompiledCount != 184) {
+                violations << "compiled machine catalog entry count expected 184, got ${catalogCompiledCount}"
+            }
+            ['category:', 'display-name:', 'input-slots:', 'output-slots:', 'status-slot:', 'tick-interval:', 'tags:', 'capabilities:', 'input-provider:', 'output-provider:', 'policies:', 'effects:'].each { token ->
+                def count = (catalogText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count
+                if (count < 184) {
+                    violations << "compiled machine catalog expected ${token} on every entry, got ${count}"
+                }
             }
         }
         def electricFiles = fileTree(new File(root, 'content/machines/electric-machines')) {
@@ -716,7 +736,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s).")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries.")
     }
 }
 
