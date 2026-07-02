@@ -1,4 +1,5 @@
 beheading-chances:
+  default: 0
   zombie: 40
   zombie-villager: 40
   skeleton: 40
@@ -6,6 +7,7 @@ beheading-chances:
   wither-skeleton: 25
   piglin: 40
   zombified-piglin: 40
+  ender-dragon: 100
   player: 70
 
 tools:

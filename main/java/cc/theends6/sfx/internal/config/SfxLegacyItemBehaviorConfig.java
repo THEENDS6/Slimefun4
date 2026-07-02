@@ -55,6 +55,7 @@ public final class SfxLegacyItemBehaviorConfig {
     public void reload() {
         this.yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         this.talismans = new SfxTalismanBehaviorConfig(yaml);
+        validateRequiredSchema();
     }
 
 
@@ -64,21 +65,22 @@ public final class SfxLegacyItemBehaviorConfig {
 
     public int beheadingChance(EntityType type) {
         String key = type.name().toLowerCase(Locale.ROOT).replace('_', '-');
-        return clampPercent(yaml.getInt("beheading-chances." + key, defaultBeheadingChance(type)));
+        String path = "beheading-chances." + key;
+        if (!yaml.contains(path, true)) {
+            path = "beheading-chances.default";
+        }
+        return requiredPercent(path);
     }
 
     public boolean smeltersPickaxeAllowFortune() {
-        return yaml.getBoolean("tools.smelters-pickaxe.allow-fortune", true);
+        return requiredBoolean("tools.smelters-pickaxe.allow-fortune");
     }
 
     public Material smeltersPickaxeCustomOutput(Material input) {
         if (input == null) {
             return null;
         }
-        ConfigurationSection section = yaml.getConfigurationSection("tools.smelters-pickaxe.custom-smelts");
-        if (section == null) {
-            return null;
-        }
+        ConfigurationSection section = requiredSection("tools.smelters-pickaxe.custom-smelts");
         String raw = section.getString(input.name().toLowerCase(Locale.ROOT));
         if (raw == null || raw.isBlank()) {
             raw = section.getString(input.name());
@@ -87,68 +89,55 @@ public final class SfxLegacyItemBehaviorConfig {
     }
 
     public boolean explosivePickaxeAllowFortune() {
-        return yaml.getBoolean("tools.explosive-pickaxe.allow-fortune", false);
+        return requiredBoolean("tools.explosive-pickaxe.allow-fortune");
     }
 
     public boolean explosiveShovelAllowFortune() {
-        return yaml.getBoolean("tools.explosive-shovel.allow-fortune", false);
+        return requiredBoolean("tools.explosive-shovel.allow-fortune");
     }
 
     public boolean veinMiningAllowFortune() {
-        return yaml.getBoolean("tools.vein-mining.allow-fortune", true);
+        return requiredBoolean("tools.vein-mining.allow-fortune");
     }
 
     public int veinMiningMaxBlocks() {
-        return Math.max(1, yaml.getInt("tools.vein-mining.max-blocks", 16));
+        return requiredPositiveInt("tools.vein-mining.max-blocks");
     }
 
     public int seekerRange() {
-        return Math.max(1, yaml.getInt("tools.pickaxe-of-the-seeker.range", 5));
+        return requiredPositiveInt("tools.pickaxe-of-the-seeker.range");
     }
 
     public int seekerDurabilityCost() {
-        return Math.max(0, yaml.getInt("tools.pickaxe-of-the-seeker.durability-cost", 1));
+        return requiredNonNegativeInt("tools.pickaxe-of-the-seeker.durability-cost");
     }
 
     public boolean climbingPickDualWielding() {
-        return yaml.getBoolean("tools.climbing-pick.dual-wielding", true);
+        return requiredBoolean("tools.climbing-pick.dual-wielding");
     }
 
     public int telepositionScrollRadius() {
-        return Math.max(1, yaml.getInt("gadgets.scroll-of-dimensional-teleposition.radius", 10));
+        return requiredPositiveInt("gadgets.scroll-of-dimensional-teleposition.radius");
     }
 
     public boolean grapplingHookConsumeOnUse() {
-        return yaml.getBoolean("gadgets.grappling-hook.consume-on-use", true);
+        return requiredBoolean("gadgets.grappling-hook.consume-on-use");
     }
 
     public int grapplingHookNoFallTicks() {
-        return Math.max(0, yaml.getInt("gadgets.grappling-hook.no-fall-ticks", 60));
+        return requiredNonNegativeInt("gadgets.grappling-hook.no-fall-ticks");
     }
 
     public boolean christmasPresentEnabled() {
-        return yaml.getBoolean("seasonal.christmas-present.enabled", true);
+        return requiredBoolean("seasonal.christmas-present.enabled");
     }
 
     public int christmasPresentFireworkCount() {
-        return Math.max(0, yaml.getInt("seasonal.christmas-present.firework-count", 3));
+        return requiredNonNegativeInt("seasonal.christmas-present.firework-count");
     }
 
     public List<GiftEntry> christmasPresentGifts() {
-        List<?> raw = yaml.getList("seasonal.christmas-present.gifts", List.of(
-                "sf:christmas_hot_chocolate*1",
-                "sf:christmas_chocolate_apple*4",
-                "sf:christmas_caramel_apple*4",
-                "sf:christmas_cake*4",
-                "sf:christmas_cookie*8",
-                "sf:christmas_present*1",
-                "sf:christmas_egg_nog*1",
-                "sf:christmas_milk*1",
-                "sf:christmas_apple_cider*1",
-                "sf:christmas_fruit_cake*4",
-                "sf:christmas_apple_pie*4",
-                "EMERALD*1"
-        ));
+        List<?> raw = requiredList("seasonal.christmas-present.gifts");
         List<GiftEntry> result = new ArrayList<>();
         for (Object entry : raw) {
             GiftEntry parsed = parseGiftEntry(entry);
@@ -163,24 +152,31 @@ public final class SfxLegacyItemBehaviorConfig {
         if (entry instanceof String text) {
             String trimmed = text.trim();
             if (trimmed.isEmpty()) {
-                return null;
+                throw invalid("seasonal.christmas-present.gifts", "string entries must not be blank");
             }
             String id = trimmed;
-            int amount = 1;
             int star = trimmed.lastIndexOf('*');
-            if (star >= 0) {
-                id = trimmed.substring(0, star).trim();
-                try {
-                    amount = Integer.parseInt(trimmed.substring(star + 1).trim());
-                } catch (NumberFormatException ignored) {
-                    amount = 1;
-                }
+            if (star < 0) {
+                throw invalid("seasonal.christmas-present.gifts", "string entries must use id*amount");
+            }
+            id = trimmed.substring(0, star).trim();
+            int amount;
+            try {
+                amount = Integer.parseInt(trimmed.substring(star + 1).trim());
+            } catch (NumberFormatException ex) {
+                throw invalid("seasonal.christmas-present.gifts", "gift amount must be an integer");
             }
             return GiftEntry.of(id, amount);
         }
         if (entry instanceof ConfigurationSection section) {
-            String id = section.getString("id", section.getString("material", ""));
-            return GiftEntry.of(id, section.getInt("amount", 1));
+            String id = section.getString("id");
+            if (id == null || id.isBlank()) {
+                id = section.getString("material");
+            }
+            if (id == null || id.isBlank() || !section.isInt("amount")) {
+                throw invalid("seasonal.christmas-present.gifts", "map entries must include id/material and amount");
+            }
+            return GiftEntry.of(id, section.getInt("amount"));
         }
         if (entry instanceof java.util.Map<?, ?> map) {
             Object id = map.get("id");
@@ -188,19 +184,25 @@ public final class SfxLegacyItemBehaviorConfig {
                 id = map.get("material");
             }
             Object amount = map.get("amount");
-            int parsedAmount = amount instanceof Number number ? number.intValue() : 1;
+            if (id == null || id.toString().isBlank() || !(amount instanceof Number number)) {
+                throw invalid("seasonal.christmas-present.gifts", "map entries must include id/material and amount");
+            }
+            int parsedAmount = number.intValue();
             return GiftEntry.of(id == null ? "" : id.toString(), parsedAmount);
         }
-        return null;
+        throw invalid("seasonal.christmas-present.gifts", "unsupported gift entry type");
     }
 
     public record GiftEntry(String id, int amount) {
         static GiftEntry of(String id, int amount) {
             String normalized = id == null ? "" : id.trim();
             if (normalized.isBlank()) {
-                return null;
+                throw new IllegalArgumentException("Gift id must not be blank");
             }
-            return new GiftEntry(normalized, Math.max(1, amount));
+            if (amount < 1) {
+                throw new IllegalArgumentException("Gift amount must be at least 1");
+            }
+            return new GiftEntry(normalized, amount);
         }
     }
 
@@ -208,17 +210,98 @@ public final class SfxLegacyItemBehaviorConfig {
         return new File(plugin.getDataFolder(), RESOURCE_PATH);
     }
 
-    private int defaultBeheadingChance(EntityType type) {
-        return switch (type) {
-            case ZOMBIE, ZOMBIE_VILLAGER, SKELETON, CREEPER, PIGLIN, ZOMBIFIED_PIGLIN -> 40;
-            case WITHER_SKELETON -> 25;
-            case ENDER_DRAGON -> 100;
-            case PLAYER -> 70;
-            default -> 0;
-        };
+    private void validateRequiredSchema() {
+        requiredSection("beheading-chances");
+        requiredPercent("beheading-chances.default");
+        requiredPercent("beheading-chances.ender-dragon");
+        requiredPercent("beheading-chances.zombie");
+        requiredPercent("beheading-chances.zombie-villager");
+        requiredPercent("beheading-chances.skeleton");
+        requiredPercent("beheading-chances.creeper");
+        requiredPercent("beheading-chances.wither-skeleton");
+        requiredPercent("beheading-chances.piglin");
+        requiredPercent("beheading-chances.zombified-piglin");
+        requiredPercent("beheading-chances.player");
+
+        smeltersPickaxeAllowFortune();
+        requiredSection("tools.smelters-pickaxe.custom-smelts");
+        explosivePickaxeAllowFortune();
+        explosiveShovelAllowFortune();
+        veinMiningAllowFortune();
+        veinMiningMaxBlocks();
+        seekerRange();
+        seekerDurabilityCost();
+        climbingPickDualWielding();
+        telepositionScrollRadius();
+        grapplingHookConsumeOnUse();
+        grapplingHookNoFallTicks();
+        christmasPresentEnabled();
+        christmasPresentFireworkCount();
+        if (christmasPresentGifts().isEmpty()) {
+            throw invalid("seasonal.christmas-present.gifts", "must contain at least one gift");
+        }
+        talismans.validate();
     }
 
-    private static int clampPercent(int value) {
-        return Math.max(0, Math.min(100, value));
+    private ConfigurationSection requiredSection(String path) {
+        ConfigurationSection section = yaml.getConfigurationSection(path);
+        if (section == null) {
+            throw missing(path);
+        }
+        return section;
+    }
+
+    private List<?> requiredList(String path) {
+        List<?> list = yaml.getList(path);
+        if (list == null) {
+            throw missing(path);
+        }
+        return list;
+    }
+
+    private boolean requiredBoolean(String path) {
+        if (!yaml.isBoolean(path)) {
+            throw missing(path);
+        }
+        return yaml.getBoolean(path);
+    }
+
+    private int requiredPositiveInt(String path) {
+        int value = requiredInt(path);
+        if (value < 1) {
+            throw invalid(path, "must be at least 1");
+        }
+        return value;
+    }
+
+    private int requiredNonNegativeInt(String path) {
+        int value = requiredInt(path);
+        if (value < 0) {
+            throw invalid(path, "must be zero or greater");
+        }
+        return value;
+    }
+
+    private int requiredPercent(String path) {
+        int value = requiredInt(path);
+        if (value < 0 || value > 100) {
+            throw invalid(path, "must be between 0 and 100");
+        }
+        return value;
+    }
+
+    private int requiredInt(String path) {
+        if (!yaml.isInt(path)) {
+            throw missing(path);
+        }
+        return yaml.getInt(path);
+    }
+
+    private IllegalStateException missing(String path) {
+        return invalid(path, "is missing");
+    }
+
+    private IllegalStateException invalid(String path, String reason) {
+        return new IllegalStateException(RESOURCE_PATH + " requires explicit field " + path + " (" + reason + ")");
     }
 }
