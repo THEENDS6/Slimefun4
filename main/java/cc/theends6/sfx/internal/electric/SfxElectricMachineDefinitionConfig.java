@@ -491,12 +491,33 @@ final class SfxElectricMachineDefinitionConfig {
         if (literal == null && stringOrNull(key) == null) {
             throw new IllegalArgumentException(section.getCurrentPath() + " requires " + field + " or " + field + "-key");
         }
+        if (containsNonBlankLiteral(literal)) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " uses literal " + field + "; use " + field + "-key");
+        }
     }
 
     private static void requireTextReference(Map<?, ?> map, String field, Object literal, Object key) {
         if (literal == null && stringOrNull(key) == null) {
             throw new IllegalArgumentException("ui item requires " + field + " or " + field + "-key");
         }
+        if (containsNonBlankLiteral(literal)) {
+            throw new IllegalArgumentException("ui item uses literal " + field + "; use " + field + "-key");
+        }
+    }
+
+    private static boolean containsNonBlankLiteral(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof List<?> list) {
+            for (Object entry : list) {
+                if (entry != null && !String.valueOf(entry).isBlank()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return !String.valueOf(value).isBlank();
     }
 
     private static SfxDurabilityBarMode parseDurabilityMode(String raw) {

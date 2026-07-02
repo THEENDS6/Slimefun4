@@ -951,15 +951,53 @@ tasks.register('validateSfxCompiledContent') {
         }
         electricFiles.each { file ->
             def text = file.getText('UTF-8')
+            def rel = root.toPath().relativize(file.toPath()).toString()
             ['name-key:', 'functions:', 'ui:', 'inventory-size:', 'status-slot:', 'frame:', 'items:', 'status:', 'slots:'].each { token ->
                 if (!text.contains(token)) {
-                    violations << "${root.toPath().relativize(file.toPath())}: missing ${token}"
+                    violations << "${rel}: missing ${token}"
                 }
             }
             if (!text.contains('inventory-size: 0')) {
                 ['role:', 'behavior:'].each { token ->
                     if (!text.contains(token)) {
-                        violations << "${root.toPath().relativize(file.toPath())}: missing ${token}"
+                        violations << "${rel}: missing ${token}"
+                    }
+                }
+            }
+            def lines = text.readLines()
+            for (int index = 0; index < lines.size(); index++) {
+                def line = lines[index]
+                def nameMatch = line =~ /^\s+name:\s*(.*)$/
+                if (nameMatch.matches()) {
+                    def value = cleanScalar(nameMatch[0][1])
+                    if (value != null && !value.isBlank()) {
+                        violations << "${rel}:${index + 1}: electric ui uses literal name; use name-key"
+                    }
+                }
+                def loreMatch = line =~ /^\s+lore:\s*(.*)$/
+                if (loreMatch.matches()) {
+                    def value = loreMatch[0][1].trim()
+                    if (!value.isEmpty() && value != '[]' && value != '[ ]') {
+                        violations << "${rel}:${index + 1}: electric ui uses literal lore; use lore-key"
+                    } else if (value.isEmpty()) {
+                        def indent = (line =~ /^(\s*)/)[0][1].length()
+                        for (int nextIndex = index + 1; nextIndex < lines.size(); nextIndex++) {
+                            def nextLine = lines[nextIndex]
+                            if (nextLine.trim().isEmpty() || nextLine.trim().startsWith('#')) {
+                                continue
+                            }
+                            def nextIndent = (nextLine =~ /^(\s*)/)[0][1].length()
+                            if (nextIndent <= indent) {
+                                break
+                            }
+                            def itemMatch = nextLine =~ /^\s*-\s*(.*)$/
+                            if (itemMatch.matches()) {
+                                def itemValue = cleanScalar(itemMatch[0][1])
+                                if (itemValue != null && !itemValue.isBlank()) {
+                                    violations << "${rel}:${nextIndex + 1}: electric ui uses literal lore; use lore-key"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -969,7 +1007,7 @@ tasks.register('validateSfxCompiledContent') {
             def currentStateIndex = false
             def flushSlot = {
                 if (currentSlot != null && (currentRole == 'input' || currentRole == 'output') && !currentStateIndex) {
-                    violations << "${root.toPath().relativize(file.toPath())}: ui.slots.${currentSlot} ${currentRole} missing state-index"
+                    violations << "${rel}: ui.slots.${currentSlot} ${currentRole} missing state-index"
                 }
             }
             text.readLines().each { line ->

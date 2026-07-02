@@ -115,14 +115,20 @@ final class SfxElectricMachineStatusIconRenderer {
         if (template.nameKey() != null) {
             return localization.requiredText(template.nameKey());
         }
-        return localization.textOrLiteral(template.name(), "electric-ui.status.name");
+        if (template.name() == null || template.name().isBlank()) {
+            return " ";
+        }
+        throw new IllegalStateException("Electric status template is missing name-key for non-blank status name: " + template.name());
     }
 
     private List<String> templateLore(SfxElectricMachineStatusUiTemplate template) {
         if (template.loreKey() != null) {
             return localization.requiredList(template.loreKey());
         }
-        return localization.listOrLiterals(template.lore(), "electric-ui.status.lore");
+        if (template.lore() == null || template.lore().isEmpty()) {
+            return List.of();
+        }
+        throw new IllegalStateException("Electric status template is missing lore-key for non-empty status lore");
     }
 
     private Map<String, ?> statusPlaceholders(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {

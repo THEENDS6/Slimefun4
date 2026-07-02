@@ -64,7 +64,10 @@ record SfxElectricMachineUiItem(Material material, String name, List<String> lor
         if (nameKey != null) {
             return localization.requiredText(nameKey);
         }
-        return localization.textOrLiteral(name, "electric-ui.name");
+        if (name == null || name.isBlank()) {
+            return " ";
+        }
+        throw new IllegalStateException("Electric UI item is missing name-key for non-blank name: " + name);
     }
 
     private List<String> localizedLore(SfxLocalization localization) {
@@ -74,7 +77,10 @@ record SfxElectricMachineUiItem(Material material, String name, List<String> lor
         if (loreKey != null) {
             return localization.requiredList(loreKey);
         }
-        return localization.listOrLiterals(lore, "electric-ui.lore");
+        if (lore == null || lore.isEmpty()) {
+            return List.of();
+        }
+        throw new IllegalStateException("Electric UI item is missing lore-key for non-empty lore");
     }
 
     private static String blankToNull(String value) {
