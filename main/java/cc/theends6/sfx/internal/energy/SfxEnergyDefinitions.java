@@ -18,6 +18,9 @@ final class SfxEnergyDefinitions {
         if (!yamlDefinitions.isEmpty()) {
             return yamlDefinitions;
         }
+        if (plugin.getConfig().getBoolean("content.runtime.compiled-only", true)) {
+            throw new IllegalStateException("Compiled-only content runtime is enabled, but no energy component definitions were loaded.");
+        }
         Map<String, SfxEnergyComponentDefinition> definitions = new LinkedHashMap<>();
         boolean useSfxBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
         int tier2BurnRate = useSfxBalance ? 15 : 10;
