@@ -73,19 +73,19 @@ public final class SfxTalismanListener implements Listener {
         switch (event.getCause()) {
             case LAVA -> {
                 if (activate(player, "lava", event)) {
-                    addPotion(player, "FIRE_RESISTANCE", config.durationTicks("lava", 3600), config.amplifier("lava", 4));
+                    addPotion(player, "FIRE_RESISTANCE", config.durationTicks("lava"), config.amplifier("lava"));
                     event.setCancelled(true);
                 }
             }
             case FIRE, FIRE_TICK -> {
                 if (activate(player, "fire", event)) {
-                    addPotion(player, "FIRE_RESISTANCE", config.durationTicks("fire", 3600), config.amplifier("fire", 4));
+                    addPotion(player, "FIRE_RESISTANCE", config.durationTicks("fire"), config.amplifier("fire"));
                     event.setCancelled(true);
                 }
             }
             case DROWNING -> {
                 if (activate(player, "water", event)) {
-                    addPotion(player, "WATER_BREATHING", config.durationTicks("water", 3600), config.amplifier("water", 4));
+                    addPotion(player, "WATER_BREATHING", config.durationTicks("water"), config.amplifier("water"));
                     event.setCancelled(true);
                 }
             }
@@ -96,10 +96,10 @@ public final class SfxTalismanListener implements Listener {
             }
             case ENTITY_ATTACK, ENTITY_SWEEP_ATTACK -> {
                 if (activate(player, "warrior", event)) {
-                    addPotion(player, "INCREASE_DAMAGE", config.durationTicks("warrior", 3600), config.amplifier("warrior", 2));
+                    addPotion(player, "INCREASE_DAMAGE", config.durationTicks("warrior"), config.amplifier("warrior"));
                 }
                 if (activate(player, "knight", event)) {
-                    addPotion(player, "REGENERATION", config.durationTicks("knight", 100), config.amplifier("knight", 3));
+                    addPotion(player, "REGENERATION", config.durationTicks("knight"), config.amplifier("knight"));
                 }
             }
             case PROJECTILE -> {
@@ -138,7 +138,7 @@ public final class SfxTalismanListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onSprint(PlayerToggleSprintEvent event) {
         if (event.isSprinting() && activate(event.getPlayer(), "traveller", event)) {
-            addPotion(event.getPlayer(), "SPEED", config.durationTicks("traveller", 3600), config.amplifier("traveller", 2));
+            addPotion(event.getPlayer(), "SPEED", config.durationTicks("traveller"), config.amplifier("traveller"));
         }
     }
 
@@ -153,7 +153,7 @@ public final class SfxTalismanListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Material type = event.getBlock().getType();
         if (isOre(type) && activate(event.getPlayer(), "caveman", event)) {
-            addPotion(event.getPlayer(), "FAST_DIGGING", config.durationTicks("caveman", 800), config.amplifier("caveman", 2));
+            addPotion(event.getPlayer(), "FAST_DIGGING", config.durationTicks("caveman"), config.amplifier("caveman"));
         }
     }
 

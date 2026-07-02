@@ -742,6 +742,49 @@ tasks.register('validateSfxCompiledContent') {
                     violations << "compiled legacy item behavior missing ${token}"
                 }
             }
+            [
+                    'default:',
+                    'ender-dragon:',
+                    'allow-fortune:',
+                    'custom-smelts:',
+                    'max-blocks:',
+                    'range:',
+                    'durability-cost:',
+                    'dual-wielding:',
+                    'consume-on-use:',
+                    'no-fall-ticks:',
+                    'firework-count:',
+                    'copy-equipment-drops:',
+                    'duplicate-block-drops:',
+                    'fortune-min:',
+                    'fortune-max:',
+                    'degrade-existing-enchantments:',
+                    'degrade-chance:'
+            ].each { token ->
+                if (!behaviorText.contains(token)) {
+                    violations << "compiled legacy item behavior missing ${token}"
+                }
+            }
+            def talismanChanceCount = (behaviorText =~ /(?m)^    chance:\s*/).count
+            def talismanConsumeCount = (behaviorText =~ /(?m)^    consume:\s*/).count
+            def talismanDurationCount = (behaviorText =~ /(?m)^    duration-ticks:\s*/).count
+            def talismanAmplifierCount = (behaviorText =~ /(?m)^    amplifier:\s*/).count
+            def christmasGiftCount = (behaviorText =~ /(?m)^    -\s*/).count
+            if (talismanChanceCount != 16) {
+                violations << "compiled legacy item behavior talisman chance count expected 16, got ${talismanChanceCount}"
+            }
+            if (talismanConsumeCount != 16) {
+                violations << "compiled legacy item behavior talisman consume count expected 16, got ${talismanConsumeCount}"
+            }
+            if (talismanDurationCount != 7) {
+                violations << "compiled legacy item behavior talisman duration count expected 7, got ${talismanDurationCount}"
+            }
+            if (talismanAmplifierCount != 7) {
+                violations << "compiled legacy item behavior talisman amplifier count expected 7, got ${talismanAmplifierCount}"
+            }
+            if (christmasGiftCount != 12) {
+                violations << "compiled legacy item behavior christmas gift count expected 12, got ${christmasGiftCount}"
+            }
         }
         def electricRecipeCompiledFile = new File(root, 'content/machines/electric-recipes/electric-recipes.yml')
         def electricRecipeCompiledProviderCount = 0
