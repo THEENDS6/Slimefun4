@@ -1,32 +1,32 @@
 researches:
   - id: walking_sticks
     order: 0
-    name: 'Walking Sticks'
+    name-key: researches.walking_sticks.name
     cost: 1
     items:
       - sf:grandmas_walking_stick
       - sf:grandpas_walking_stick
   - id: portable_crafter
     order: 1
-    name: 'Portable Crafter'
+    name-key: researches.portable_crafter.name
     cost: 1
     items:
       - sf:portable_crafter
   - id: fortune_cookie
     order: 2
-    name: 'Fortune Cookie'
+    name-key: researches.fortune_cookie.name
     cost: 1
     items:
       - sf:fortune_cookie
   - id: portable_dustbin
     order: 4
-    name: 'Portable Dustbin'
+    name-key: researches.portable_dustbin.name
     cost: 2
     items:
       - sf:portable_dustbin
   - id: meat_jerky
     order: 5
-    name: 'Jerkys'
+    name-key: researches.meat_jerky.name
     cost: 2
     items:
       - sf:beef_jerky
@@ -37,13 +37,13 @@ researches:
       - sf:pork_jerky
   - id: armor_forge
     order: 6
-    name: 'Armor Crafting'
+    name-key: researches.armor_forge.name
     cost: 2
     items:
       - sf:armor_forge
   - id: glowstone_armor
     order: 7
-    name: 'Glowstone Armor'
+    name-key: researches.glowstone_armor.name
     cost: 3
     items:
       - sf:glowstone_helmet
@@ -52,7 +52,7 @@ researches:
       - sf:glowstone_boots
   - id: lumps
     order: 8
-    name: 'Lumps and Magic'
+    name-key: researches.lumps.name
     cost: 3
     items:
       - sf:magic_lump_1
@@ -63,13 +63,13 @@ researches:
       - sf:ender_lump_3
   - id: ender_backpack
     order: 9
-    name: 'Ender Backpack'
+    name-key: researches.ender_backpack.name
     cost: 4
     items:
       - sf:ender_backpack
   - id: ender_armor
     order: 10
-    name: 'Ender Armor'
+    name-key: researches.ender_armor.name
     cost: 4
     items:
       - sf:ender_helmet
@@ -78,25 +78,25 @@ researches:
       - sf:ender_boots
   - id: magic_eye_of_ender
     order: 11
-    name: 'Magic Eye of Ender'
+    name-key: researches.magic_eye_of_ender.name
     cost: 4
     items:
       - sf:magic_eye_of_ender
   - id: magic_sugar
     order: 12
-    name: 'Magic Sugar'
+    name-key: researches.magic_sugar.name
     cost: 4
     items:
       - sf:magic_sugar
   - id: monster_jerky
     order: 13
-    name: 'Monster Jerky'
+    name-key: researches.monster_jerky.name
     cost: 5
     items:
       - sf:monster_jerky
   - id: slime_armor
     order: 14
-    name: 'Slime Armor'
+    name-key: researches.slime_armor.name
     cost: 5
     items:
       - sf:slime_helmet
@@ -105,68 +105,68 @@ researches:
       - sf:slime_boots
   - id: sword_of_beheading
     order: 15
-    name: 'Sword of Beheading'
+    name-key: researches.sword_of_beheading.name
     cost: 6
     items:
       - sf:sword_of_beheading
   - id: basic_circuit_board
     order: 16
-    name: 'Electric Work'
+    name-key: researches.basic_circuit_board.name
     cost: 8
     items:
       - sf:basic_circuit_board
   - id: advanced_circuit_board
     order: 17
-    name: 'Advanced Electricity'
+    name-key: researches.advanced_circuit_board.name
     cost: 9
     items:
       - sf:advanced_circuit_board
   - id: smeltery
     order: 18
-    name: 'Hot Smelting'
+    name-key: researches.smeltery.name
     cost: 10
     items:
       - sf:smeltery
   - id: steel
     order: 19
-    name: 'Steel Age'
+    name-key: researches.steel.name
     cost: 11
     items:
       - sf:steel_ingot
   - id: misc_power_items
     order: 20
-    name: 'Important Power-Related Items'
+    name-key: researches.misc_power_items.name
     cost: 12
     items:
       - sf:sulfate
       - sf:power_crystal
   - id: battery
     order: 21
-    name: 'Your first Battery'
+    name-key: researches.battery.name
     cost: 10
     items:
       - sf:battery
   - id: steel_plate
     order: 22
-    name: 'Steel Plating'
+    name-key: researches.steel_plate.name
     cost: 14
     items:
       - sf:steel_plate
   - id: steel_thruster
     order: 23
-    name: 'Steel Thruster'
+    name-key: researches.steel_thruster.name
     cost: 14
     items:
       - sf:steel_thruster
   - id: parachute
     order: 24
-    name: 'Parachute'
+    name-key: researches.parachute.name
     cost: 15
     items:
       - sf:parachute
   - id: grappling_hook
     order: 25
-    name: 'Grappling Hook'
+    name-key: researches.grappling_hook.name
     cost: 15
     items:
       - sf:grappling_hook
@@ -174,7 +174,7 @@ researches:
       - sf:chain
   - id: jetpacks
     order: 26
-    name: 'Jetpacks'
+    name-key: researches.jetpacks.name
     cost: 22
     items:
       - sf:duralumin_jetpack
@@ -186,7 +186,7 @@ researches:
       - sf:fuel_jetpack
   - id: multitools
     order: 27
-    name: 'Multi Tools'
+    name-key: researches.multitools.name
     cost: 18
     items:
       - sf:duralumin_multi_tool
@@ -197,26 +197,26 @@ researches:
       - sf:reinforced_alloy_multi_tool
   - id: solar_panel_and_helmet
     order: 28
-    name: 'Solar Power'
+    name-key: researches.solar_panel_and_helmet.name
     cost: 17
     items:
       - sf:solar_panel
       - sf:solar_helmet
   - id: elemental_staff
     order: 29
-    name: 'Elemental Staves'
+    name-key: researches.elemental_staff.name
     cost: 17
     items:
       - sf:staff_elemental
   - id: grind_stone
     order: 30
-    name: 'Grind Stone'
+    name-key: researches.grind_stone.name
     cost: 4
     items:
       - sf:grind_stone
   - id: cactus_armor
     order: 31
-    name: 'Cactus Suit'
+    name-key: researches.cactus_armor.name
     cost: 5
     items:
       - sf:cactus_boots
@@ -225,19 +225,19 @@ researches:
       - sf:cactus_leggings
   - id: gold_pan
     order: 32
-    name: 'Gold Pan'
+    name-key: researches.gold_pan.name
     cost: 5
     items:
       - sf:gold_pan
   - id: magical_book_cover
     order: 33
-    name: 'Magical Book Binding'
+    name-key: researches.magical_book_cover.name
     cost: 5
     items:
       - sf:magical_book_cover
   - id: slimefun_metals
     order: 34
-    name: 'New Metals'
+    name-key: researches.slimefun_metals.name
     cost: 6
     items:
       - sf:copper_ingot
@@ -249,19 +249,19 @@ researches:
       - sf:magnesium_ingot
   - id: ore_crusher
     order: 35
-    name: 'Ore Doubling'
+    name-key: researches.ore_crusher.name
     cost: 6
     items:
       - sf:ore_crusher
   - id: bronze
     order: 36
-    name: 'Bronze Creation'
+    name-key: researches.bronze.name
     cost: 8
     items:
       - sf:bronze_ingot
   - id: alloys
     order: 37
-    name: 'Advanced Alloys'
+    name-key: researches.alloys.name
     cost: 12
     items:
       - sf:billon_ingot
@@ -273,14 +273,14 @@ researches:
       - sf:brass_ingot
   - id: compressor_and_carbon
     order: 38
-    name: 'Carbon Creation'
+    name-key: researches.compressor_and_carbon.name
     cost: 9
     items:
       - sf:compressor
       - sf:carbon
   - id: gilded_iron_armor
     order: 40
-    name: 'Gilded Iron Armor'
+    name-key: researches.gilded_iron_armor.name
     cost: 16
     items:
       - sf:gilded_iron_helmet
@@ -289,7 +289,7 @@ researches:
       - sf:gilded_iron_boots
   - id: synthetic_diamond
     order: 41
-    name: 'Synthetic Diamonds'
+    name-key: researches.synthetic_diamond.name
     cost: 10
     items:
       - sf:compressed_carbon
@@ -297,25 +297,25 @@ researches:
       - sf:synthetic_diamond
   - id: pressure_chamber
     order: 42
-    name: 'Pressure Chamber'
+    name-key: researches.pressure_chamber.name
     cost: 14
     items:
       - sf:pressure_chamber
   - id: synthetic_sapphire
     order: 43
-    name: 'Synthetic Sapphires'
+    name-key: researches.synthetic_sapphire.name
     cost: 16
     items:
       - sf:synthetic_sapphire
   - id: damascus_steel
     order: 45
-    name: 'Damascus Steel'
+    name-key: researches.damascus_steel.name
     cost: 17
     items:
       - sf:damascus_steel_ingot
   - id: damascus_steel_armor
     order: 46
-    name: 'Damascus Steel Armor'
+    name-key: researches.damascus_steel_armor.name
     cost: 18
     items:
       - sf:damascus_steel_helmet
@@ -324,33 +324,33 @@ researches:
       - sf:damascus_steel_boots
   - id: reinforced_alloy
     order: 47
-    name: 'Reinforced Alloy'
+    name-key: researches.reinforced_alloy.name
     cost: 22
     items:
       - sf:hardened_metal_ingot
       - sf:reinforced_alloy_ingot
   - id: carbonado
     order: 48
-    name: 'Black Diamonds'
+    name-key: researches.carbonado.name
     cost: 26
     items:
       - sf:raw_carbonado
       - sf:carbonado
   - id: magic_workbench
     order: 50
-    name: 'Magic Workbench'
+    name-key: researches.magic_workbench.name
     cost: 12
     items:
       - sf:magic_workbench
   - id: wind_staff
     order: 51
-    name: 'Wind Staff'
+    name-key: researches.wind_staff.name
     cost: 17
     items:
       - sf:staff_elemental_wind
   - id: reinforced_armor
     order: 52
-    name: 'Reinforced Armor'
+    name-key: researches.reinforced_armor.name
     cost: 26
     items:
       - sf:reinforced_alloy_helmet
@@ -359,7 +359,7 @@ researches:
       - sf:reinforced_alloy_boots
   - id: ore_washer
     order: 53
-    name: 'Ore Washer'
+    name-key: researches.ore_washer.name
     cost: 5
     items:
       - sf:ore_washer
@@ -367,7 +367,7 @@ researches:
       - sf:sifted_ore
   - id: gold_carats
     order: 54
-    name: 'Pure Gold'
+    name-key: researches.gold_carats.name
     cost: 7
     items:
       - sf:gold_4k
@@ -383,116 +383,116 @@ researches:
       - sf:gold_24k
   - id: silicon
     order: 55
-    name: 'Silicon Valley'
+    name-key: researches.silicon.name
     cost: 12
     items:
       - sf:silicon
       - sf:ferrosilicon
   - id: fire_staff
     order: 56
-    name: 'Fire Staff'
+    name-key: researches.fire_staff.name
     cost: 2
     items:
       - sf:staff_elemental_fire
   - id: smelters_pickaxe
     order: 57
-    name: 'Smelters Pickaxe'
+    name-key: researches.smelters_pickaxe.name
     cost: 17
     items:
       - sf:smelters_pickaxe
   - id: common_talisman
     order: 58
-    name: 'Common Talisman'
+    name-key: researches.common_talisman.name
     cost: 14
     items:
       - sf:common_talisman
   - id: anvil_talisman
     order: 59
-    name: 'Talisman of the Anvil'
+    name-key: researches.anvil_talisman.name
     cost: 18
     items:
       - sf:anvil_talisman
   - id: miner_talisman
     order: 60
-    name: 'Talisman of the Miner'
+    name-key: researches.miner_talisman.name
     cost: 18
     items:
       - sf:miner_talisman
   - id: hunter_talisman
     order: 61
-    name: 'Talisman of the Hunter'
+    name-key: researches.hunter_talisman.name
     cost: 18
     items:
       - sf:hunter_talisman
   - id: lava_talisman
     order: 62
-    name: 'Talisman of the Lava Walker'
+    name-key: researches.lava_talisman.name
     cost: 18
     items:
       - sf:lava_talisman
   - id: water_talisman
     order: 63
-    name: 'Talisman of the Water Breather'
+    name-key: researches.water_talisman.name
     cost: 18
     items:
       - sf:water_talisman
   - id: angel_talisman
     order: 64
-    name: 'Talisman of the Angel'
+    name-key: researches.angel_talisman.name
     cost: 18
     items:
       - sf:angel_talisman
   - id: fire_talisman
     order: 65
-    name: 'Talisman of the Firefighter'
+    name-key: researches.fire_talisman.name
     cost: 18
     items:
       - sf:fire_talisman
   - id: lava_crystal
     order: 67
-    name: 'Firey Situation'
+    name-key: researches.lava_crystal.name
     cost: 14
     items:
       - sf:lava_crystal
   - id: magician_talisman
     order: 68
-    name: 'Talisman of the Magician'
+    name-key: researches.magician_talisman.name
     cost: 20
     items:
       - sf:magician_talisman
   - id: traveller_talisman
     order: 69
-    name: 'Talisman of the Traveller'
+    name-key: researches.traveller_talisman.name
     cost: 20
     items:
       - sf:traveller_talisman
   - id: warrior_talisman
     order: 70
-    name: 'Talisman of the Warrior'
+    name-key: researches.warrior_talisman.name
     cost: 20
     items:
       - sf:warrior_talisman
   - id: knight_talisman
     order: 71
-    name: 'Talisman of the Knight'
+    name-key: researches.knight_talisman.name
     cost: 20
     items:
       - sf:knight_talisman
   - id: gilded_iron
     order: 72
-    name: 'Shiny Iron'
+    name-key: researches.gilded_iron.name
     cost: 11
     items:
       - sf:gilded_iron
   - id: synthetic_emerald
     order: 73
-    name: 'Fake Gem'
+    name-key: researches.synthetic_emerald.name
     cost: 17
     items:
       - sf:synthetic_emerald
   - id: chainmail_armor
     order: 74
-    name: 'Chainmail Armor'
+    name-key: researches.chainmail_armor.name
     cost: 8
     items:
       - minecraft:chainmail_helmet
@@ -501,25 +501,25 @@ researches:
       - minecraft:chainmail_boots
   - id: whirlwind_talisman
     order: 75
-    name: 'Talisman of the Whirlwind'
+    name-key: researches.whirlwind_talisman.name
     cost: 19
     items:
       - sf:whirlwind_talisman
   - id: wizard_talisman
     order: 76
-    name: 'Talisman of the Wizard'
+    name-key: researches.wizard_talisman.name
     cost: 22
     items:
       - sf:wizard_talisman
   - id: lumber_axe
     order: 77
-    name: 'Lumber Axe'
+    name-key: researches.lumber_axe.name
     cost: 21
     items:
       - sf:lumber_axe
   - id: hazmat_suit
     order: 79
-    name: 'Hazmat Suit'
+    name-key: researches.hazmat_suit.name
     cost: 21
     items:
       - sf:scuba_helmet
@@ -528,7 +528,7 @@ researches:
       - sf:hazmat_boots
   - id: uranium
     order: 80
-    name: 'Radioactive'
+    name-key: researches.uranium.name
     cost: 30
     items:
       - sf:tiny_uranium
@@ -536,7 +536,7 @@ researches:
       - sf:uranium
   - id: crushed_ore
     order: 81
-    name: 'Ore Purification'
+    name-key: researches.crushed_ore.name
     cost: 25
     items:
       - sf:crushed_ore
@@ -544,13 +544,13 @@ researches:
       - sf:pure_ore_cluster
   - id: redstone_alloy
     order: 84
-    name: 'Redstone Alloy'
+    name-key: researches.redstone_alloy.name
     cost: 16
     items:
       - sf:redstone_alloy
   - id: carbonado_tools
     order: 85
-    name: 'Top Tier Machines'
+    name-key: researches.carbonado_tools.name
     cost: 24
     items:
       - sf:carbonado_multi_tool
@@ -558,7 +558,7 @@ researches:
       - sf:carbonado_jetboots
   - id: first_aid
     order: 86
-    name: 'First Aid'
+    name-key: researches.first_aid.name
     cost: 2
     items:
       - sf:cloth
@@ -570,7 +570,7 @@ researches:
       - sf:medicine
   - id: gold_armor
     order: 87
-    name: 'Shiny Armor'
+    name-key: researches.gold_armor.name
     cost: 13
     items:
       - sf:gold_12k_helmet
@@ -579,26 +579,26 @@ researches:
       - sf:gold_12k_boots
   - id: night_vision_googles
     order: 89
-    name: 'Night Vision Goggles'
+    name-key: researches.night_vision_googles.name
     cost: 10
     items:
       - sf:night_vision_goggles
   - id: pickaxe_of_containment
     order: 90
-    name: 'Pickaxe of Containment'
+    name-key: researches.pickaxe_of_containment.name
     cost: 14
     items:
       - sf:pickaxe_of_containment
       - sf:broken_spawner
   - id: table_saw
     order: 92
-    name: 'Table Saw'
+    name-key: researches.table_saw.name
     cost: 4
     items:
       - sf:table_saw
   - id: slime_steel_armor
     order: 93
-    name: 'Slimy Steel Armor'
+    name-key: researches.slime_steel_armor.name
     cost: 27
     items:
       - sf:slime_steel_helmet
@@ -607,62 +607,62 @@ researches:
       - sf:slime_steel_boots
   - id: blade_of_vampires
     order: 94
-    name: 'Blade of Vampires'
+    name-key: researches.blade_of_vampires.name
     cost: 26
     items:
       - sf:blade_of_vampires
   - id: water_staff
     order: 96
-    name: 'Water Staff'
+    name-key: researches.water_staff.name
     cost: 8
     items:
       - sf:staff_elemental_water
   - id: 24k_gold_block
     order: 97
-    name: 'Golden City'
+    name-key: researches.24k_gold_block.name
     cost: 19
     items:
       - sf:gold_24k_block
   - id: composter
     order: 99
-    name: 'Composting Dirt'
+    name-key: researches.composter.name
     cost: 3
     items:
       - sf:composter
   - id: farmer_shoes
     order: 100
-    name: 'Farmer Shoes'
+    name-key: researches.farmer_shoes.name
     cost: 4
     items:
       - sf:farmer_shoes
   - id: explosive_tools
     order: 101
-    name: 'Explosive Tools'
+    name-key: researches.explosive_tools.name
     cost: 30
     items:
       - sf:explosive_pickaxe
       - sf:explosive_shovel
   - id: automated_panning_machine
     order: 102
-    name: 'Automated Gold Pan'
+    name-key: researches.automated_panning_machine.name
     cost: 17
     items:
       - sf:automated_panning_machine
   - id: boots_of_the_stomper
     order: 103
-    name: 'Boots of the Stomper'
+    name-key: researches.boots_of_the_stomper.name
     cost: 19
     items:
       - sf:boots_of_the_stomper
   - id: pickaxe_of_the_seeker
     order: 104
-    name: 'Pickaxe of the Seeker'
+    name-key: researches.pickaxe_of_the_seeker.name
     cost: 19
     items:
       - sf:pickaxe_of_the_seeker
   - id: backpacks
     order: 105
-    name: 'Backpacks'
+    name-key: researches.backpacks.name
     cost: 15
     items:
       - sf:large_backpack
@@ -670,74 +670,74 @@ researches:
       - sf:small_backpack
   - id: woven_backpack
     order: 106
-    name: 'Woven Backpack'
+    name-key: researches.woven_backpack.name
     cost: 19
     items:
       - sf:woven_backpack
   - id: crucible
     order: 107
-    name: 'Crucible'
+    name-key: researches.crucible.name
     cost: 13
     items:
       - sf:crucible
   - id: gilded_backpack
     order: 108
-    name: 'Gilded Backpack'
+    name-key: researches.gilded_backpack.name
     cost: 22
     items:
       - sf:gilded_backpack
   - id: armored_jetpack
     order: 111
-    name: 'Armored Jetpack'
+    name-key: researches.armored_jetpack.name
     cost: 27
     items:
       - sf:armored_jetpack
   - id: ender_talismans
     order: 112
-    name: 'Ender Talismans'
+    name-key: researches.ender_talismans.name
     cost: 28
     items: []
   - id: nickel_and_cobalt
     order: 115
-    name: 'Even more Ores'
+    name-key: researches.nickel_and_cobalt.name
     cost: 10
     items:
       - sf:nickel_ingot
       - sf:cobalt_ingot
   - id: magnet
     order: 116
-    name: 'Magnetic Metals'
+    name-key: researches.magnet.name
     cost: 16
     items:
       - sf:magnet
   - id: infused_magnet
     order: 117
-    name: 'Infused Magnets'
+    name-key: researches.infused_magnet.name
     cost: 18
     items:
       - sf:infused_magnet
   - id: cobalt_pickaxe
     order: 118
-    name: 'Speedy Pickaxe'
+    name-key: researches.cobalt_pickaxe.name
     cost: 14
     items:
       - sf:cobalt_pickaxe
   - id: essence_of_afterlife
     order: 119
-    name: 'Necromancy'
+    name-key: researches.essence_of_afterlife.name
     cost: 19
     items:
       - sf:necrotic_skull
       - sf:essence_of_afterlife
   - id: bound_backpack
     order: 120
-    name: 'Soulbound Storage'
+    name-key: researches.bound_backpack.name
     cost: 22
     items:
       - sf:bound_backpack
   - id: jetboots
     order: 121
-    name: 'Jet Boots'
+    name-key: researches.jetboots.name
     cost: 25
     items:
       - sf:duralumin_jetboots
@@ -748,25 +748,25 @@ researches:
       - sf:reinforced_alloy_jetboots
   - id: armored_jetboots
     order: 122
-    name: 'Armored Jet Boots'
+    name-key: researches.armored_jetboots.name
     cost: 27
     items:
       - sf:armored_jetboots
   - id: seismic_axe
     order: 123
-    name: 'Seismic Axe'
+    name-key: researches.seismic_axe.name
     cost: 29
     items:
       - sf:seismic_axe
   - id: pickaxe_of_vein_mining
     order: 124
-    name: 'Pickaxe of Vein Mining'
+    name-key: researches.pickaxe_of_vein_mining.name
     cost: 29
     items:
       - sf:pickaxe_of_vein_mining
   - id: bound_weapons
     order: 125
-    name: 'Soulbound Weapons'
+    name-key: researches.bound_weapons.name
     cost: 29
     items:
       - sf:soulbound_sword
@@ -774,7 +774,7 @@ researches:
       - sf:soulbound_trident
   - id: bound_tools
     order: 126
-    name: 'Soulbound Tools'
+    name-key: researches.bound_tools.name
     cost: 29
     items:
       - sf:soulbound_pickaxe
@@ -783,7 +783,7 @@ researches:
       - sf:soulbound_hoe
   - id: bound_armor
     order: 127
-    name: 'Soulbound Armor'
+    name-key: researches.bound_armor.name
     cost: 29
     items:
       - sf:soulbound_helmet
@@ -792,7 +792,7 @@ researches:
       - sf:soulbound_boots
   - id: juicer
     order: 129
-    name: 'Delicious Drinks'
+    name-key: researches.juicer.name
     cost: 29
     items:
       - sf:juicer
@@ -804,20 +804,20 @@ researches:
       - sf:glow_berry_juice
   - id: repaired_spawner
     order: 130
-    name: 'Repairing Spawners'
+    name-key: researches.repaired_spawner.name
     cost: 15
     items:
       - sf:reinforced_spawner
   - id: enhanced_furnace
     order: 132
-    name: 'Enhanced Furnace'
+    name-key: researches.enhanced_furnace.name
     cost: 7
     items:
       - sf:enhanced_furnace
       - sf:enhanced_furnace_2
   - id: more_enhanced_furnaces
     order: 133
-    name: 'Better Furnaces'
+    name-key: researches.more_enhanced_furnaces.name
     cost: 18
     items:
       - sf:enhanced_furnace_3
@@ -827,7 +827,7 @@ researches:
       - sf:enhanced_furnace_7
   - id: high_tier_enhanced_furnaces
     order: 134
-    name: 'High Tier Furnace'
+    name-key: researches.high_tier_enhanced_furnaces.name
     cost: 29
     items:
       - sf:enhanced_furnace_8
@@ -836,19 +836,19 @@ researches:
       - sf:enhanced_furnace_11
   - id: reinforced_furnace
     order: 135
-    name: 'Reinforced Furnace'
+    name-key: researches.reinforced_furnace.name
     cost: 32
     items:
       - sf:reinforced_furnace
   - id: carbonado_furnace
     order: 136
-    name: 'Carbonado Edged Furnace'
+    name-key: researches.carbonado_furnace.name
     cost: 35
     items:
       - sf:carbonado_edged_furnace
   - id: electric_motor
     order: 137
-    name: 'Heating up'
+    name-key: researches.electric_motor.name
     cost: 32
     items:
       - sf:electro_magnet
@@ -856,71 +856,71 @@ researches:
       - sf:heating_coil
   - id: block_placer
     order: 138
-    name: 'Block Placer'
+    name-key: researches.block_placer.name
     cost: 17
     items:
       - sf:block_placer
   - id: scroll_of_dimensional_teleposition
     order: 142
-    name: 'Turning things around'
+    name-key: researches.scroll_of_dimensional_teleposition.name
     cost: 38
     items:
       - sf:scroll_of_dimensional_teleposition
   - id: special_bows
     order: 143
-    name: 'Robin Hood'
+    name-key: researches.special_bows.name
     cost: 22
     items:
       - sf:explosive_bow
       - sf:icy_bow
   - id: tome_of_knowledge_sharing
     order: 144
-    name: 'Sharing with friends'
+    name-key: researches.tome_of_knowledge_sharing.name
     cost: 30
     items:
       - sf:tome_of_knowledge_sharing
   - id: flask_of_knowledge
     order: 145
-    name: 'XP Storage'
+    name-key: researches.flask_of_knowledge.name
     cost: 13
     items:
       - sf:flask_of_knowledge
   - id: hardened_glass
     order: 146
-    name: 'Withstanding Explosions'
+    name-key: researches.hardened_glass.name
     cost: 15
     items:
       - sf:reinforced_plate
       - sf:hardened_glass
   - id: golden_apple_juice
     order: 149
-    name: 'Golden potion'
+    name-key: researches.golden_apple_juice.name
     cost: 24
     items:
       - sf:golden_apple_juice
   - id: cooler
     order: 150
-    name: 'Portable Beverages'
+    name-key: researches.cooler.name
     cost: 24
     items:
       - sf:cooling_unit
       - sf:cooler
   - id: ancient_altar
     order: 151
-    name: 'Ancient Altar'
+    name-key: researches.ancient_altar.name
     cost: 15
     items:
       - sf:ancient_pedestal
       - sf:ancient_altar
   - id: wither_proof_obsidian
     order: 152
-    name: 'Wither-Proof Obsidian'
+    name-key: researches.wither_proof_obsidian.name
     cost: 21
     items:
       - sf:wither_proof_obsidian
   - id: ancient_runes
     order: 155
-    name: 'Elemental Runes'
+    name-key: researches.ancient_runes.name
     cost: 15
     items:
       - sf:blank_rune
@@ -930,20 +930,20 @@ researches:
       - sf:ancient_rune_fire
   - id: special_runes
     order: 156
-    name: 'Purple Runes'
+    name-key: researches.special_runes.name
     cost: 18
     items:
       - sf:ancient_rune_ender
       - sf:ancient_rune_rainbow
   - id: infernal_bonemeal
     order: 157
-    name: 'Infernal Bonemeal'
+    name-key: researches.infernal_bonemeal.name
     cost: 12
     items:
       - sf:infernal_bonemeal
   - id: rainbow_blocks
     order: 158
-    name: 'Rainbow Blocks'
+    name-key: researches.rainbow_blocks.name
     cost: 24
     items:
       - sf:rainbow_clay
@@ -954,57 +954,57 @@ researches:
       - sf:rainbow_glazed_terracotta
   - id: infused_hopper
     order: 159
-    name: 'Infused Hopper'
+    name-key: researches.infused_hopper.name
     cost: 22
     items:
       - sf:infused_hopper
   - id: wither_proof_glass
     order: 160
-    name: 'Wither-Proof Glass'
+    name-key: researches.wither_proof_glass.name
     cost: 20
     items:
       - sf:wither_proof_glass
   - id: duct_tape
     order: 161
-    name: 'Duct Tape'
+    name-key: researches.duct_tape.name
     cost: 14
     items:
       - sf:duct_tape
   - id: plastic_sheet
     order: 162
-    name: 'Plastic'
+    name-key: researches.plastic_sheet.name
     cost: 25
     items:
       - sf:plastic_sheet
   - id: android_memory_core
     order: 163
-    name: 'Memory Core'
+    name-key: researches.android_memory_core.name
     cost: 28
     items:
       - sf:android_memory_core
   - id: oil
     order: 164
-    name: 'Oil'
+    name-key: researches.oil.name
     cost: 30
     items:
       - sf:bucket_of_oil
       - sf:oil_pump
   - id: fuel
     order: 165
-    name: 'Fuel'
+    name-key: researches.fuel.name
     cost: 30
     items:
       - sf:bucket_of_fuel
       - sf:refinery
   - id: hologram_projector
     order: 166
-    name: 'Holograms'
+    name-key: researches.hologram_projector.name
     cost: 36
     items:
       - sf:hologram_projector
   - id: capacitors
     order: 167
-    name: 'Tier 1 Capacitors'
+    name-key: researches.capacitors.name
     cost: 25
     items:
       - sf:small_capacitor
@@ -1012,71 +1012,71 @@ researches:
       - sf:big_capacitor
   - id: high_tier_capacitors
     order: 168
-    name: 'Tier 2 Capacitors'
+    name-key: researches.high_tier_capacitors.name
     cost: 32
     items:
       - sf:large_capacitor
       - sf:carbonado_edged_capacitor
   - id: solar_generators
     order: 169
-    name: 'Solar Power Plant'
+    name-key: researches.solar_generators.name
     cost: 14
     items:
       - sf:solar_generator
   - id: electric_furnaces
     order: 170
-    name: 'Powered Furnace'
+    name-key: researches.electric_furnaces.name
     cost: 15
     items:
       - sf:electric_furnace
   - id: electric_ore_grinding
     order: 171
-    name: 'Crushing and Grinding'
+    name-key: researches.electric_ore_grinding.name
     cost: 20
     items:
       - sf:electric_ore_grinder
       - sf:electric_ingot_pulverizer
   - id: heated_pressure_chamber
     order: 172
-    name: 'Heated Pressure Chamber'
+    name-key: researches.heated_pressure_chamber.name
     cost: 22
     items:
       - sf:heated_pressure_chamber
   - id: coal_generator
     order: 173
-    name: 'Coal Generator'
+    name-key: researches.coal_generator.name
     cost: 14
     items:
       - sf:coal_generator
   - id: bio_reactor
     order: 173
-    name: 'Bio-Reactor'
+    name-key: researches.bio_reactor.name
     cost: 18
     items:
       - sf:bio_reactor
   - id: auto_enchanting
     order: 174
-    name: 'Automatic Enchanting and Disenchanting'
+    name-key: researches.auto_enchanting.name
     cost: 24
     items:
       - sf:auto_enchanter
       - sf:auto_disenchanter
   - id: auto_anvil
     order: 175
-    name: 'Automatic Anvil'
+    name-key: researches.auto_anvil.name
     cost: 34
     items:
       - sf:auto_anvil
       - sf:auto_anvil_2
   - id: multimeter
     order: 176
-    name: 'Power Measurement'
+    name-key: researches.multimeter.name
     cost: 10
     items:
       - sf:multimeter
   - id: gps_setup
     order: 177
-    name: 'Basic GPS Setup'
+    name-key: researches.gps_setup.name
     cost: 28
     items:
       - sf:gps_transmitter
@@ -1084,13 +1084,13 @@ researches:
       - sf:gps_marker_tool
   - id: gps_emergency_transmitter
     order: 178
-    name: 'GPS Emergency Waypoint'
+    name-key: researches.gps_emergency_transmitter.name
     cost: 30
     items:
       - sf:gps_emergency_transmitter
   - id: programmable_androids
     order: 179
-    name: 'Programmable Androids'
+    name-key: researches.programmable_androids.name
     cost: 50
     items:
       - sf:programmable_android
@@ -1100,85 +1100,85 @@ researches:
       - sf:programmable_android_woodcutter
   - id: android_interfaces
     order: 180
-    name: 'Android Interfaces'
+    name-key: researches.android_interfaces.name
     cost: 26
     items:
       - sf:android_interface_fuel
       - sf:android_interface_items
   - id: geo_scanner
     order: 181
-    name: 'GEO-Scans'
+    name-key: researches.geo_scanner.name
     cost: 30
     items:
       - sf:gps_geo_scanner
       - sf:portable_geo_scanner
   - id: combustion_reactor
     order: 182
-    name: 'Combustion Reactor'
+    name-key: researches.combustion_reactor.name
     cost: 38
     items:
       - sf:combustion_reactor
   - id: teleporter
     order: 183
-    name: 'Teleporter Base Components'
+    name-key: researches.teleporter.name
     cost: 42
     items:
       - sf:gps_teleportation_matrix
       - sf:gps_teleporter_pylon
   - id: teleporter_activation_plates
     order: 184
-    name: 'Teleporter Activation'
+    name-key: researches.teleporter_activation_plates.name
     cost: 36
     items:
       - sf:gps_activation_device_personal
       - sf:gps_activation_device_shared
   - id: better_solar_generators
     order: 185
-    name: 'Upgraded Solar Generators'
+    name-key: researches.better_solar_generators.name
     cost: 28
     items:
       - sf:solar_generator_2
       - sf:solar_generator_3
   - id: better_gps_transmitters
     order: 186
-    name: 'Upgraded Transmitters'
+    name-key: researches.better_gps_transmitters.name
     cost: 36
     items:
       - sf:gps_transmitter_2
       - sf:gps_transmitter_3
   - id: elevator
     order: 187
-    name: 'Elevators'
+    name-key: researches.elevator.name
     cost: 28
     items:
       - sf:elevator_plate
   - id: energized_solar_generator
     order: 188
-    name: 'Full-Time Solar Power'
+    name-key: researches.energized_solar_generator.name
     cost: 44
     items:
       - sf:solar_generator_4
   - id: energized_gps_transmitter
     order: 189
-    name: 'Top Tier Transmitter'
+    name-key: researches.energized_gps_transmitter.name
     cost: 44
     items:
       - sf:gps_transmitter_4
   - id: energy_regulator
     order: 190
-    name: 'Energy Networks 101'
+    name-key: researches.energy_regulator.name
     cost: 6
     items:
       - sf:energy_regulator
   - id: butcher_androids
     order: 191
-    name: 'Butcher Androids'
+    name-key: researches.butcher_androids.name
     cost: 32
     items:
       - sf:programmable_android_butcher
   - id: organic_food
     order: 192
-    name: 'Organic Food'
+    name-key: researches.organic_food.name
     cost: 25
     items:
       - sf:food_fabricator
@@ -1195,43 +1195,43 @@ researches:
       - sf:organic_food_seagrass
   - id: auto_breeder
     order: 193
-    name: 'Automated Feeding'
+    name-key: researches.auto_breeder.name
     cost: 25
     items:
       - sf:auto_breeder
   - id: advanced_android
     order: 194
-    name: 'Advanced Androids'
+    name-key: researches.advanced_android.name
     cost: 60
     items:
       - sf:programmable_android_2
   - id: advanced_butcher_android
     order: 195
-    name: 'Advanced Androids - Butcher'
+    name-key: researches.advanced_butcher_android.name
     cost: 30
     items:
       - sf:programmable_android_2_butcher
   - id: advanced_fisherman_android
     order: 196
-    name: 'Advanced Androids - Fisherman'
+    name-key: researches.advanced_fisherman_android.name
     cost: 30
     items:
       - sf:programmable_android_2_fisherman
   - id: animal_growth_accelerator
     order: 197
-    name: 'Animal Growth Manipulation'
+    name-key: researches.animal_growth_accelerator.name
     cost: 32
     items:
       - sf:animal_growth_accelerator
   - id: xp_collector
     order: 198
-    name: 'XP Collector'
+    name-key: researches.xp_collector.name
     cost: 36
     items:
       - sf:xp_collector
   - id: organic_fertilizer
     order: 199
-    name: 'Organic Fertilizer'
+    name-key: researches.organic_fertilizer.name
     cost: 36
     items:
       - sf:food_composter
@@ -1248,19 +1248,19 @@ researches:
       - sf:fertilizer_seagrass
   - id: crop_growth_accelerator
     order: 200
-    name: 'Crop Growth Acceleration'
+    name-key: researches.crop_growth_accelerator.name
     cost: 40
     items:
       - sf:crop_growth_accelerator
   - id: better_crop_growth_accelerator
     order: 201
-    name: 'Upgraded Crop Growth Accelerator'
+    name-key: researches.better_crop_growth_accelerator.name
     cost: 44
     items:
       - sf:crop_growth_accelerator_2
   - id: reactor_essentials
     order: 202
-    name: 'Reactor Essentials'
+    name-key: researches.reactor_essentials.name
     cost: 36
     items:
       - sf:reactor_coolant_cell
@@ -1268,19 +1268,19 @@ researches:
       - sf:plutonium
   - id: nuclear_reactor
     order: 203
-    name: 'Nuclear Power Plant'
+    name-key: researches.nuclear_reactor.name
     cost: 48
     items:
       - sf:nuclear_reactor
   - id: freezer
     order: 204
-    name: 'Mr Freeze'
+    name-key: researches.freezer.name
     cost: 20
     items:
       - sf:freezer
   - id: cargo_basics
     order: 205
-    name: 'Cargo Basics'
+    name-key: researches.cargo_basics.name
     cost: 30
     items:
       - sf:cargo_motor
@@ -1288,7 +1288,7 @@ researches:
       - sf:cargo_node
   - id: cargo_nodes
     order: 206
-    name: 'Cargo Setup'
+    name-key: researches.cargo_nodes.name
     cost: 30
     items:
       - sf:cargo_node_input
@@ -1296,7 +1296,7 @@ researches:
       - sf:cargo_node_output
   - id: electric_ingot_machines
     order: 207
-    name: 'Electric Ingot Fabrication'
+    name-key: researches.electric_ingot_machines.name
     cost: 18
     items:
       - sf:electric_gold_pan
@@ -1304,7 +1304,7 @@ researches:
       - sf:electric_ingot_factory
   - id: medium_tier_electric_ingot_machines
     order: 208
-    name: 'Fast Ingot Fabrication'
+    name-key: researches.medium_tier_electric_ingot_machines.name
     cost: 25
     items:
       - sf:electric_gold_pan_2
@@ -1313,7 +1313,7 @@ researches:
       - sf:electric_ore_grinder_2
   - id: high_tier_electric_ingot_machines
     order: 209
-    name: 'Super Fast Ingot Fabrication'
+    name-key: researches.high_tier_electric_ingot_machines.name
     cost: 32
     items:
       - sf:electric_gold_pan_3
@@ -1322,157 +1322,157 @@ researches:
       - sf:electric_ore_grinder_3
   - id: better_food_fabricator
     order: 211
-    name: 'Upgraded Food Fabrication'
+    name-key: researches.better_food_fabricator.name
     cost: 28
     items:
       - sf:food_fabricator_2
       - sf:food_composter_2
   - id: reactor_access_port
     order: 212
-    name: 'Reactor Interaction'
+    name-key: researches.reactor_access_port.name
     cost: 18
     items:
       - sf:reactor_access_port
   - id: fluid_pump
     order: 213
-    name: 'Fluid Pump'
+    name-key: researches.fluid_pump.name
     cost: 28
     items:
       - sf:fluid_pump
   - id: better_freezer
     order: 214
-    name: 'Upgraded Freezer'
+    name-key: researches.better_freezer.name
     cost: 29
     items:
       - sf:freezer_2
       - sf:freezer_3
   - id: boosted_uranium
     order: 215
-    name: 'Never-Ending Circle'
+    name-key: researches.boosted_uranium.name
     cost: 30
     items:
       - sf:boosted_uranium
   - id: trash_can
     order: 216
-    name: 'Trash'
+    name-key: researches.trash_can.name
     cost: 8
     items:
       - sf:trash_can_block
   - id: advanced_output_node
     order: 217
-    name: 'Advanced Output Node'
+    name-key: researches.advanced_output_node.name
     cost: 24
     items:
       - sf:cargo_node_output_advanced
   - id: carbon_press
     order: 218
-    name: 'Carbon Press'
+    name-key: researches.carbon_press.name
     cost: 28
     items:
       - sf:carbon_press
   - id: electric_smeltery
     order: 219
-    name: 'Electric Smeltery'
+    name-key: researches.electric_smeltery.name
     cost: 28
     items:
       - sf:electric_smeltery
   - id: better_electric_furnace
     order: 220
-    name: 'Upgraded Electric Furnace'
+    name-key: researches.better_electric_furnace.name
     cost: 20
     items:
       - sf:electric_furnace_2
       - sf:electric_furnace_3
   - id: better_carbon_press
     order: 221
-    name: 'Upgraded Carbon Press'
+    name-key: researches.better_carbon_press.name
     cost: 26
     items:
       - sf:carbon_press_2
   - id: empowered_android
     order: 222
-    name: 'Empowered Androids'
+    name-key: researches.empowered_android.name
     cost: 60
     items:
       - sf:programmable_android_3
   - id: empowered_butcher_android
     order: 223
-    name: 'Empowered Androids - Butcher'
+    name-key: researches.empowered_butcher_android.name
     cost: 30
     items:
       - sf:programmable_android_3_butcher
   - id: empowered_fisherman_android
     order: 224
-    name: 'Empowered Androids - Fisherman'
+    name-key: researches.empowered_fisherman_android.name
     cost: 30
     items:
       - sf:programmable_android_3_fisherman
   - id: high_tier_carbon_press
     order: 225
-    name: 'Ultimate Carbon Press'
+    name-key: researches.high_tier_carbon_press.name
     cost: 32
     items:
       - sf:carbon_press_3
   - id: wither_assembler
     order: 226
-    name: 'Automated Wither Killer'
+    name-key: researches.wither_assembler.name
     cost: 35
     items:
       - sf:wither_assembler
   - id: better_heated_pressure_chamber
     order: 227
-    name: 'Upgraded Heated Pressure Chamber'
+    name-key: researches.better_heated_pressure_chamber.name
     cost: 20
     items:
       - sf:heated_pressure_chamber_2
   - id: elytra
     order: 228
-    name: 'Elytras'
+    name-key: researches.elytra.name
     cost: 20
     items:
       - sf:elytra_scale
       - minecraft:elytra
   - id: special_elytras
     order: 229
-    name: 'Special Elytras'
+    name-key: researches.special_elytras.name
     cost: 30
     items:
       - sf:infused_elytra
       - sf:soulbound_elytra
   - id: electric_crucible
     order: 230
-    name: 'Electrified Crucible'
+    name-key: researches.electric_crucible.name
     cost: 26
     items:
       - sf:electrified_crucible
   - id: better_electric_crucibles
     order: 231
-    name: 'Hot Crucibles'
+    name-key: researches.better_electric_crucibles.name
     cost: 30
     items:
       - sf:electrified_crucible_2
       - sf:electrified_crucible_3
   - id: advanced_electric_smeltery
     order: 232
-    name: 'Advanced Electric Smeltery'
+    name-key: researches.advanced_electric_smeltery.name
     cost: 28
     items:
       - sf:electric_smeltery_2
   - id: advanced_farmer_android
     order: 233
-    name: 'Advanced Androids - Farmer'
+    name-key: researches.advanced_farmer_android.name
     cost: 30
     items:
       - sf:programmable_android_2_farmer
   - id: lava_generator
     order: 234
-    name: 'Lava Generator'
+    name-key: researches.lava_generator.name
     cost: 16
     items:
       - sf:lava_generator
   - id: nether_ice
     order: 235
-    name: 'Nether Ice Coolant'
+    name-key: researches.nether_ice.name
     cost: 45
     items:
       - sf:nether_ice
@@ -1480,13 +1480,13 @@ researches:
       - sf:nether_ice_coolant_cell
   - id: netherstar_reactor
     order: 236
-    name: 'Nether Star Reactor'
+    name-key: researches.netherstar_reactor.name
     cost: 60
     items:
       - sf:netherstar_reactor
   - id: blistering_ingots
     order: 237
-    name: 'Blistering Radioactivity'
+    name-key: researches.blistering_ingots.name
     cost: 38
     items:
       - sf:blistering_ingot
@@ -1494,210 +1494,210 @@ researches:
       - sf:blistering_ingot_3
   - id: automatic_ignition_chamber
     order: 239
-    name: 'Automatic Ignition Chamber'
+    name-key: researches.automatic_ignition_chamber.name
     cost: 12
     items:
       - sf:ignition_chamber
   - id: output_chest
     order: 240
-    name: 'Basic machinery output chest'
+    name-key: researches.output_chest.name
     cost: 20
     items:
       - sf:output_chest
   - id: copper_wire
     order: 241
-    name: 'Thinned-down Conductivity'
+    name-key: researches.copper_wire.name
     cost: 15
     items:
       - sf:copper_wire
   - id: radiant_backpack
     order: 242
-    name: 'Radiant Backpack'
+    name-key: researches.radiant_backpack.name
     cost: 25
     items:
       - sf:radiant_backpack
   - id: auto_drier
     order: 243
-    name: 'A Dry Day'
+    name-key: researches.auto_drier.name
     cost: 15
     items:
       - sf:auto_drier
   - id: diet_cookie
     order: 244
-    name: 'Diet Cookie'
+    name-key: researches.diet_cookie.name
     cost: 3
     items:
       - sf:diet_cookie
   - id: storm_staff
     order: 245
-    name: 'Storm Staff'
+    name-key: researches.storm_staff.name
     cost: 30
     items:
       - sf:staff_elemental_storm
   - id: soulbound_rune
     order: 246
-    name: 'Soulbound Rune'
+    name-key: researches.soulbound_rune.name
     cost: 60
     items:
       - sf:ancient_rune_soulbound
   - id: geo_miner
     order: 247
-    name: 'GEO-Miner'
+    name-key: researches.geo_miner.name
     cost: 24
     items:
       - sf:geo_miner
   - id: lightning_rune
     order: 248
-    name: 'Lightning Rune'
+    name-key: researches.lightning_rune.name
     cost: 24
     items:
       - sf:ancient_rune_lightning
   - id: totem_of_undying
     order: 249
-    name: 'Totem of Undying'
+    name-key: researches.totem_of_undying.name
     cost: 36
     items:
       - minecraft:totem_of_undying
   - id: charging_bench
     order: 250
-    name: 'Charging Bench'
+    name-key: researches.charging_bench.name
     cost: 8
     items:
       - sf:charging_bench
   - id: nether_gold_pan
     order: 251
-    name: 'Nether Gold Pan'
+    name-key: researches.nether_gold_pan.name
     cost: 8
     items:
       - sf:nether_gold_pan
   - id: electric_press
     order: 252
-    name: 'Electric Press'
+    name-key: researches.electric_press.name
     cost: 16
     items:
       - sf:electric_press
       - sf:electric_press_2
   - id: magnesium_generator
     order: 253
-    name: 'Power from Magnesium'
+    name-key: researches.magnesium_generator.name
     cost: 20
     items:
       - sf:magnesium_salt
       - sf:magnesium_generator
   - id: kelp_cookie
     order: 254
-    name: 'Tasty Kelp'
+    name-key: researches.kelp_cookie.name
     cost: 4
     items:
       - sf:kelp_cookie
   - id: makeshift_smeltery
     order: 255
-    name: 'Improvised Smeltery'
+    name-key: researches.makeshift_smeltery.name
     cost: 6
     items:
       - sf:makeshift_smeltery
   - id: tree_growth_accelerator
     order: 256
-    name: 'Faster Trees'
+    name-key: researches.tree_growth_accelerator.name
     cost: 18
     items:
       - sf:tree_growth_accelerator
   - id: industrial_miner
     order: 95
-    name: 'Industrial Mining'
+    name-key: researches.industrial_miner.name
     cost: 28
     items:
       - sf:industrial_miner
   - id: advanced_industrial_miner
     order: 98
-    name: 'Better Mining'
+    name-key: researches.advanced_industrial_miner.name
     cost: 36
     items:
       - sf:advanced_industrial_miner
   - id: magical_zombie_pills
     order: 257
-    name: 'De-Zombification'
+    name-key: researches.magical_zombie_pills.name
     cost: 22
     items:
       - sf:magical_zombie_pills
   - id: auto_brewer
     order: 258
-    name: 'Industrial Brewery'
+    name-key: researches.auto_brewer.name
     cost: 30
     items:
       - sf:auto_brewer
       - sf:auto_brewer_2
   - id: enchantment_rune
     order: 259
-    name: 'Ancient Enchanting'
+    name-key: researches.enchantment_rune.name
     cost: 24
     items:
       - sf:magical_glass
       - sf:ancient_rune_enchantment
   - id: lead_clothing
     order: 260
-    name: 'Lead Clothing'
+    name-key: researches.lead_clothing.name
     cost: 14
     items:
       - sf:reinforced_cloth
   - id: tape_measure
     order: 261
-    name: 'Tape Measure'
+    name-key: researches.tape_measure.name
     cost: 7
     items:
       - sf:tape_measure
   - id: iron_golem_assembler
     order: 262
-    name: 'Automated Iron Golems'
+    name-key: researches.iron_golem_assembler.name
     cost: 30
     items:
       - sf:iron_golem_assembler
   - id: shulker_shell
     order: 263
-    name: 'Synthetic Shulkers'
+    name-key: researches.shulker_shell.name
     cost: 30
     items:
       - sf:synthetic_shulker_shell
   - id: villager_rune
     order: 264
-    name: 'Reset Villager Trades'
+    name-key: researches.villager_rune.name
     cost: 26
     items:
       - sf:ancient_rune_villagers
       - sf:strange_nether_goo
   - id: climbing_pick
     order: 265
-    name: 'Block Raider'
+    name-key: researches.climbing_pick.name
     cost: 20
     items:
       - sf:climbing_pick
   - id: even_higher_tier_capacitors
     order: 266
-    name: 'Tier 3 Capacitors'
+    name-key: researches.even_higher_tier_capacitors.name
     cost: 40
     items:
       - sf:energized_capacitor
   - id: caveman_talisman
     order: 267
-    name: 'Talisman of the Caveman'
+    name-key: researches.caveman_talisman.name
     cost: 20
     items:
       - sf:caveman_talisman
   - id: elytra_cap
     order: 268
-    name: 'Crash Gear'
+    name-key: researches.elytra_cap.name
     cost: 20
     items:
       - sf:elytra_cap
   - id: energy_connectors
     order: 269
-    name: 'Wired Connections'
+    name-key: researches.energy_connectors.name
     cost: 12
     items:
       - sf:energy_connector
   - id: bee_armor
     order: 270
-    name: 'Bee Armor'
+    name-key: researches.bee_armor.name
     cost: 24
     items:
       - sf:bee_helmet
@@ -1706,19 +1706,19 @@ researches:
       - sf:bee_boots
   - id: wise_talisman
     order: 271
-    name: 'Talisman of the Wise'
+    name-key: researches.wise_talisman.name
     cost: 20
     items:
       - sf:wise_talisman
   - id: book_binder
     order: 272
-    name: 'Enchantment Book Binding'
+    name-key: researches.book_binder.name
     cost: 26
     items:
       - sf:book_binder
   - id: auto_crafting
     order: 273
-    name: 'Automatic Crafting'
+    name-key: researches.auto_crafting.name
     cost: 30
     items:
       - sf:crafting_motor
@@ -1727,13 +1727,13 @@ researches:
       - sf:armor_auto_crafter
   - id: produce_collector
     order: 274
-    name: 'Automatic Milking'
+    name-key: researches.produce_collector.name
     cost: 20
     items:
       - sf:produce_collector
   - id: improved_generators
     order: 275
-    name: 'Improved Generators'
+    name-key: researches.improved_generators.name
     cost: 24
     items:
       - sf:coal_generator_2
@@ -1741,7 +1741,7 @@ researches:
       - sf:bio_reactor_2
   - id: ingredients_and_cheese
     order: 276
-    name: 'Slimefun Cuisine'
+    name-key: researches.ingredients_and_cheese.name
     cost: 5
     items:
       - sf:salt
@@ -1751,32 +1751,32 @@ researches:
       - sf:butter
   - id: medium_tier_auto_enchanting
     order: 277
-    name: 'Fast Automatic Enchanting and Disenchanting'
+    name-key: researches.medium_tier_auto_enchanting.name
     cost: 48
     items:
       - sf:auto_enchanter_2
       - sf:auto_disenchanter_2
   - id: portable_teleporter
     order: 278
-    name: 'Teleportation from Anywhere'
+    name-key: researches.portable_teleporter.name
     cost: 42
     items:
       - sf:portable_teleporter
   - id: trident
     order: 279
-    name: 'Trident'
+    name-key: researches.trident.name
     cost: 20
     items:
       - minecraft:trident
   - id: farmer_talisman
     order: 280
-    name: 'Talisman of the Farmer'
+    name-key: researches.farmer_talisman.name
     cost: 18
     items:
       - sf:farmer_talisman
   - id: rainbow_armor
     order: 281
-    name: 'I wanna see the rainbow high in the sky'
+    name-key: researches.rainbow_armor.name
     cost: 22
     items:
       - sf:rainbow_helmet

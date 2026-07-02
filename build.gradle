@@ -790,9 +790,17 @@ tasks.register('validateSfxCompiledContent') {
         if (!compiledResearchFile.isFile()) {
             violations << "compiled research output missing content/researches/10-legacy-slimefun.yml"
         } else {
-            compiledResearchCount = (compiledResearchFile.getText('UTF-8') =~ /(?m)^- id:\s*/).count
+            def researchText = compiledResearchFile.getText('UTF-8')
+            compiledResearchCount = (researchText =~ /(?m)^- id:\s*/).count
             if (compiledResearchCount != 258) {
                 violations << "compiled research count expected 258, got ${compiledResearchCount}"
+            }
+            def researchNameKeyCount = (researchText =~ /(?m)^  name-key:\s*/).count
+            if (researchNameKeyCount != 258) {
+                violations << "compiled researches expected name-key on every entry, got ${researchNameKeyCount}"
+            }
+            if ((researchText =~ /(?m)^  name:\s*/).find()) {
+                violations << "compiled researches must not contain literal name fields"
             }
         }
         def compiledLegacyBehaviorFile = new File(root, 'content/legacy-item-behavior/legacy-item-behavior.yml')

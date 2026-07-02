@@ -5,10 +5,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public record SfxResearchDefinition(String id, String name, int cost, int order, Set<String> itemIds) {
+public record SfxResearchDefinition(String id, String nameKey, int cost, int order, Set<String> itemIds) {
     public SfxResearchDefinition {
         id = normalizeId(id);
-        name = Objects.requireNonNull(name, "name");
+        nameKey = Objects.requireNonNull(nameKey, "nameKey");
+        if (nameKey.isBlank()) {
+            throw new IllegalArgumentException("Research name key cannot be blank");
+        }
         if (cost < 0) {
             throw new IllegalArgumentException("Research cost must be zero or greater");
         }
@@ -17,8 +20,8 @@ public record SfxResearchDefinition(String id, String name, int cost, int order,
                 .toList()));
     }
 
-    public static SfxResearchDefinition of(String id, String name, int cost, int order, String... itemIds) {
-        return new SfxResearchDefinition(id, name, cost, order, new LinkedHashSet<>(List.of(itemIds)));
+    public static SfxResearchDefinition of(String id, String nameKey, int cost, int order, String... itemIds) {
+        return new SfxResearchDefinition(id, nameKey, cost, order, new LinkedHashSet<>(List.of(itemIds)));
     }
 
     private static String normalizeId(String id) {

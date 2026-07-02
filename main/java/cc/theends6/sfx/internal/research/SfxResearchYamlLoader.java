@@ -89,12 +89,12 @@ public final class SfxResearchYamlLoader {
 
     private SfxResearchDefinition parseResearch(Map<?, ?> entry, boolean strict) {
         String id = string(entry.get("id"));
-        String name = string(entry.get("name"));
+        String nameKey = string(entry.get("name-key"));
         int cost = integer(entry.get("cost"));
         int order = integer(entry.get("order"));
         List<String> items = strict ? requiredStringList(entry, "items") : stringList(entry.get("items"));
         items = filterFeatureItems(items);
-        return new SfxResearchDefinition(id, name, cost, order, new LinkedHashSet<>(items));
+        return new SfxResearchDefinition(id, nameKey, cost, order, new LinkedHashSet<>(items));
     }
 
     private List<String> filterFeatureItems(List<String> items) {
