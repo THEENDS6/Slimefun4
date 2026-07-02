@@ -59,22 +59,9 @@ public final class SfxRecipeYamlLoader {
             }
         }
 
-        List<File> compiledFiles = new ArrayList<>();
-        collectYaml(new File(plugin.getDataFolder(), "content/compiled/content/recipes"), compiledFiles);
-        compiledFiles.sort(Comparator.comparing(File::getPath));
-        if (compiledFiles.isEmpty()) {
-            List<YamlConfiguration> bundledCompiled = SfxCompiledYamlResolver.loadBundledCompiledUnder(plugin, "content/recipes");
-            if (bundledCompiled.isEmpty() && compiledOnly) {
-                throw new IllegalStateException("Compiled-only content runtime is enabled, but no compiled recipes were found.");
-            }
-            int index = 0;
-            for (YamlConfiguration yaml : bundledCompiled) {
-                loadYamlInto(registry, yaml, "bundled compiled recipe " + (++index), true);
-            }
-        } else {
-            for (File file : compiledFiles) {
-                loadYamlInto(registry, YamlConfiguration.loadConfiguration(file), file.getName(), true);
-            }
+        int index = 0;
+        for (YamlConfiguration yaml : SfxCompiledYamlResolver.loadCompiledUnder(plugin, "content/recipes")) {
+            loadYamlInto(registry, yaml, "compiled recipe content " + (++index), true);
         }
     }
 
