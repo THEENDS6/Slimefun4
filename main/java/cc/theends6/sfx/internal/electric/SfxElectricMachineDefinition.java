@@ -17,7 +17,7 @@ public record SfxElectricMachineDefinition(
         SfxElectricRecipeProvider recipeProvider,
         int[] inputSlots,
         int[] outputSlots,
-        SfxElectricMachineMenuStyle menuStyle,
+        String compiledEntryId,
         Set<String> functionTags,
         SfxElectricMachineUiDefinition ui,
         SfxElectricAssemblerSpec assemblerSpec
@@ -43,7 +43,20 @@ public record SfxElectricMachineDefinition(
             Material progressMaterial,
             SfxElectricRecipeProvider recipeProvider
     ) {
-        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, DEFAULT_INPUT_SLOTS, DEFAULT_OUTPUT_SLOTS, SfxElectricMachineMenuStyle.STANDARD, Set.of(), SfxElectricMachineUiDefinition.UNDEFINED, null);
+        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, DEFAULT_INPUT_SLOTS, DEFAULT_OUTPUT_SLOTS);
+    }
+
+    public SfxElectricMachineDefinition(
+            String id,
+            String nameKey,
+            int speed,
+            int energyCapacity,
+            int energyConsumptionPerTick,
+            Material progressMaterial,
+            SfxElectricRecipeProvider recipeProvider,
+            String compiledEntryId
+    ) {
+        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, DEFAULT_INPUT_SLOTS, DEFAULT_OUTPUT_SLOTS, compiledEntryId);
     }
 
     public SfxElectricMachineDefinition(
@@ -57,7 +70,7 @@ public record SfxElectricMachineDefinition(
             int[] inputSlots,
             int[] outputSlots
     ) {
-        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, SfxElectricMachineMenuStyle.STANDARD, Set.of(), SfxElectricMachineUiDefinition.UNDEFINED, null);
+        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, id);
     }
 
     public SfxElectricMachineDefinition(
@@ -70,9 +83,9 @@ public record SfxElectricMachineDefinition(
             SfxElectricRecipeProvider recipeProvider,
             int[] inputSlots,
             int[] outputSlots,
-            SfxElectricMachineMenuStyle menuStyle
+            String compiledEntryId
     ) {
-        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, menuStyle, Set.of(), SfxElectricMachineUiDefinition.UNDEFINED, null);
+        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, compiledEntryId, Set.of(), SfxElectricMachineUiDefinition.UNDEFINED, null);
     }
 
     public SfxElectricMachineDefinition(
@@ -85,10 +98,9 @@ public record SfxElectricMachineDefinition(
             SfxElectricRecipeProvider recipeProvider,
             int[] inputSlots,
             int[] outputSlots,
-            SfxElectricMachineMenuStyle menuStyle,
             SfxElectricAssemblerSpec assemblerSpec
     ) {
-        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, menuStyle, Set.of(), SfxElectricMachineUiDefinition.UNDEFINED, assemblerSpec);
+        this(id, nameKey, speed, energyCapacity, energyConsumptionPerTick, progressMaterial, recipeProvider, inputSlots, outputSlots, null, Set.of(), SfxElectricMachineUiDefinition.UNDEFINED, assemblerSpec);
     }
 
     public SfxElectricMachineDefinition {
@@ -98,7 +110,7 @@ public record SfxElectricMachineDefinition(
         Objects.requireNonNull(recipeProvider, "recipeProvider");
         Objects.requireNonNull(inputSlots, "inputSlots");
         Objects.requireNonNull(outputSlots, "outputSlots");
-        Objects.requireNonNull(menuStyle, "menuStyle");
+        compiledEntryId = compiledEntryId == null || compiledEntryId.isBlank() ? id : compiledEntryId.trim();
         functionTags = normalizeFunctionTags(functionTags);
         Objects.requireNonNull(ui, "ui");
         if (inputSlots.length > SfxElectricMachineState.MAX_INPUTS) {
