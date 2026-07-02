@@ -1,10 +1,5 @@
 
 
-
-
-
-
-
 @project:
   default-progress-material: FLINT_AND_STEEL
 
@@ -24,32 +19,23 @@ templates:
             name: " "
             include-default-lore: false
             durability-mode: AUTO
-            lore:
-              - "&7进度：&f{progress_current}&7/&f{progress_total} &8({progress_percent}%)"
-              - "&7剩余时间：&f{time_left}"
-              - ""
-              - "&7储能：&e{stored_energy}&7/&e{energy_capacity} J"
-              - "&7耗电：&e{energy_per_tick} J/t"
+            lore-key: electric-ui.template.status.working.lore
           idle:
             material: BLACK_STAINED_GLASS_PANE
-            name: "&7闲置"
-            lore:
-              - "&7等待输入。"
+            name-key: electric-ui.template.status.idle.name
+            lore-key: electric-ui.template.status.idle.lore
           no-power:
             material: RED_STAINED_GLASS_PANE
-            name: "&c无电力"
-            lore:
-              - "&7给机器供电后继续。"
+            name-key: electric-ui.template.status.no-power.name
+            lore-key: electric-ui.template.status.no-power.lore
           output-full:
             material: ORANGE_STAINED_GLASS_PANE
-            name: "&c输出已满"
-            lore:
-              - "&7清理输出槽后继续。"
+            name-key: electric-ui.template.status.output-full.name
+            lore-key: electric-ui.template.status.output-full.lore
           no-recipe:
             material: BLACK_STAINED_GLASS_PANE
-            name: "&7无配方"
-            lore:
-              - "&7当前输入没有匹配配方。"
+            name-key: electric-ui.template.status.no-recipe.name
+            lore-key: electric-ui.template.status.no-recipe.lore
         frame:
           - slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 31, 36, 37, 38, 39, 40, 41, 42, 43, 44]
             item:
@@ -59,15 +45,13 @@ templates:
           - slots: [9, 10, 11, 12, 18, 21, 27, 28, 29, 30]
             item:
               material: CYAN_STAINED_GLASS_PANE
-              name: "&b输入"
-              lore:
-                - "&7将物品放在这里。"
+              name-key: electric-ui.template.frame.input.name
+              lore-key: electric-ui.template.frame.input.lore
           - slots: [14, 15, 16, 17, 23, 26, 32, 33, 34, 35]
             item:
               material: ORANGE_STAINED_GLASS_PANE
-              name: "&6输出"
-              lore:
-                - "&7从这里取走成品。"
+              name-key: electric-ui.template.frame.output.name
+              lore-key: electric-ui.template.frame.output.lore
   energy:
     electric-consumer:
       @istemplate: true

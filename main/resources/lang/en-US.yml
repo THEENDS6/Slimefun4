@@ -3614,6 +3614,109 @@ electric-ui:
     xp-working:
       name: <yellow>Collecting XP</yellow>
       lore: <gray>Collecting all nearby experience orbs.</gray>
+  template:
+    frame:
+      input:
+        name: '&bInput'
+        lore:
+        - '&7Place items here.'
+      output:
+        name: '&6Output'
+        lore:
+        - '&7Take finished items here.'
+    status:
+      working:
+        lore:
+        - '&7Progress: &f{progress_current}&7/&f{progress_total} &8({progress_percent}%)'
+        - '&7Time left: &f{time_left}'
+        - ''
+        - '&7Stored energy: &e{stored_energy}&7/&e{energy_capacity} J'
+        - '&7Consumption: &e{energy_per_tick} J/t'
+      idle:
+        name: '&7Idle'
+        lore:
+        - '&7Waiting for input.'
+      no-power:
+        name: '&cNo Power'
+        lore:
+        - '&7Power this machine to continue.'
+      output-full:
+        name: '&cOutput Full'
+        lore:
+        - '&7Clear the output slots to continue.'
+      no-recipe:
+        name: '&7No Recipe'
+        lore:
+        - '&7The current input has no matching recipe.'
+    auto-brewer:
+      blaze-frame:
+        name: '&6Blaze Powder'
+      ingredient-frame:
+        name: '&9Brewing Ingredient'
+      potion-frame:
+        name: '&aPotion Bottles'
+      fuel:
+        name: '&6Blaze Powder'
+        empty-lore:
+        - '&7Stored blaze powder: &e{fuel} &7/ &e{capacity} &7tick(s)'
+        - '&7Add blaze powder before brewing.'
+        stored-lore:
+        - '&7Stored blaze powder: &e{fuel} &7/ &e{capacity} &7tick(s)'
+        - '&7Recipe cost: &e{recipe_fuel} &7tick(s), up to &e{powders} &7blaze powder'
+    auto-crafter:
+      container:
+        name: '&6Attached Container'
+        lore:
+        - '&7This machine uses the container directly below it.'
+      enabled:
+        name: '&aRecipe Enabled'
+      disabled:
+        name: '&cRecipe Disabled'
+      recipe-button:
+        lore:
+        - '&eLeft-click: toggle recipe'
+        - '&eRight-click: clear recipe'
+        - '&7Recipe: &f{recipe}'
+      no-recipe:
+        name: '&eNo Recipe Selected'
+        lore:
+        - '&7Sneak-right-click this machine while holding the target item to configure.'
+      previous:
+        name: '&ePrevious Recipe'
+      next:
+        name: '&eNext Recipe'
+      page:
+        lore:
+        - '&7Recipe {page} / {total}'
+      select:
+        name: '&aSelect Recipe'
+        lore:
+        - '&eClick to select this recipe.'
+    assembler:
+      enabled:
+        name: '&aEnabled'
+      disabled:
+        name: '&cDisabled'
+        lore:
+        - '&7This assembler will not start.'
+        - '&7Click to toggle this assembler.'
+      toggle:
+        lore:
+        - '&7Click to toggle this assembler.'
+      offset:
+        name: '&bSpawn Offset'
+        lore:
+        - '&7Current offset: &e{offset} &7block(s)'
+        - '&eLeft-click: &7+0.1'
+        - '&eRight-click: &7-0.1'
+        - '&7Range: -10.0 to 10.0'
+      head:
+        name: '&eHead Material'
+      body:
+        name: '&6Body Material'
+      required:
+        lore:
+        - '&7Required amount: &e{amount}'
 energy:
   regulator:
     no-network: <red>Not connected to any electric machines</red>

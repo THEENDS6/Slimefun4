@@ -9,6 +9,8 @@ import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.kyori.adventure.text.Component;
@@ -20,6 +22,7 @@ public final class SfxLocalization {
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{([a-zA-Z0-9_.-]+)}");
 
     private final JavaPlugin plugin;
+    private final Set<String> warnedMissingPaths = ConcurrentHashMap.newKeySet();
     private YamlConfiguration bundled;
     private YamlConfiguration custom;
 
@@ -45,6 +48,27 @@ public final class SfxLocalization {
     public String text(String path, String fallback) {
         String value = lookup(path);
         return value == null ? fallback : value;
+    }
+
+    public String requiredText(String path) {
+        String value = lookup(path);
+        if (value != null) {
+            return value;
+        }
+        warnMissing(path);
+        return path;
+    }
+
+    public String textOrLiteral(String value, String context) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        String localized = lookup(value);
+        if (localized != null) {
+            return localized;
+        }
+        warnLiteral(context, value);
+        return value;
     }
 
     public String text(String path, String fallback, Map<String, ?> placeholders) {
@@ -112,6 +136,43 @@ public final class SfxLocalization {
             return postProcessList(path, indexed);
         }
         return postProcessList(path, indexedList(bundled, path));
+    }
+
+    public List<String> requiredList(String path) {
+        List<String> values = list(path);
+        if (!values.isEmpty()) {
+            return values;
+        }
+        String value = lookup(path);
+        if (value != null) {
+            return List.of(value);
+        }
+        warnMissing(path);
+        return List.of(path);
+    }
+
+    public List<String> listOrLiterals(List<String> values, String context) {
+        if (values == null || values.isEmpty()) {
+            return List.of();
+        }
+        List<String> result = new ArrayList<>(values.size());
+        for (String value : values) {
+            result.add(textOrLiteral(value, context));
+        }
+        return result;
+    }
+
+    private void warnMissing(String path) {
+        if (path != null && warnedMissingPaths.add(path)) {
+            plugin.getLogger().warning("Missing language key: " + path + " (displaying the key text)");
+        }
+    }
+
+    private void warnLiteral(String context, String value) {
+        String key = "literal:" + context + ":" + value;
+        if (warnedMissingPaths.add(key)) {
+            plugin.getLogger().warning("Language key not found for " + context + ": " + value + " (using the configured string directly)");
+        }
     }
 
     private List<String> postProcessList(String path, List<String> values) {

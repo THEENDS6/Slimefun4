@@ -40,8 +40,8 @@ final class SfxElectricMachineStatusIconRenderer {
                 .material(template != null && template.material() != null ? template.material() : material(definition, effectiveStatus, statusKey))
                 .energy(state.storedEnergy(), definition.energyCapacity());
 
-        Component nameOverride = template != null && template.name() != null
-                ? Text.renderFlexible(applyPlaceholders(template.name(), statusPlaceholders(definition, state, recipe, effectiveStatus)))
+        Component nameOverride = template != null && templateName(template) != null
+                ? Text.renderFlexible(applyPlaceholders(templateName(template), statusPlaceholders(definition, state, recipe, effectiveStatus)))
                 : displayNameOverride(viewerId, definition, effectiveStatus);
         if (nameOverride != null) {
             view.name(nameOverride);
@@ -76,8 +76,9 @@ final class SfxElectricMachineStatusIconRenderer {
         }
         if (template != null) {
             view.includeDefaultStatusLore(template.includeDefaultLore());
-            if (!template.lore().isEmpty()) {
-                view.overrideStatusLore(template.lore().stream()
+            List<String> templateLore = templateLore(template);
+            if (!templateLore.isEmpty()) {
+                view.overrideStatusLore(templateLore.stream()
                         .map(line -> Text.renderFlexible(applyPlaceholders(line, statusPlaceholders(definition, state, recipe, effectiveStatus))))
                         .toList());
             }
@@ -103,6 +104,20 @@ final class SfxElectricMachineStatusIconRenderer {
 
     private String statusTemplateKey(SfxElectricMachineRenderStatus status) {
         return status == null ? "idle" : status.name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
+    }
+
+    private String templateName(SfxElectricMachineStatusUiTemplate template) {
+        if (template.nameKey() != null) {
+            return localization.requiredText(template.nameKey());
+        }
+        return localization.textOrLiteral(template.name(), "electric-ui.status.name");
+    }
+
+    private List<String> templateLore(SfxElectricMachineStatusUiTemplate template) {
+        if (template.loreKey() != null) {
+            return localization.requiredList(template.loreKey());
+        }
+        return localization.listOrLiterals(template.lore(), "electric-ui.status.lore");
     }
 
     private Map<String, ?> statusPlaceholders(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {

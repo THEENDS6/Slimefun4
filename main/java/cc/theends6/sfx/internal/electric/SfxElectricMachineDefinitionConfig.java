@@ -226,6 +226,8 @@ final class SfxElectricMachineDefinitionConfig {
                 parseRequiredMaterial(section.getString("material", null)),
                 section.getString("name", " "),
                 section.getStringList("lore"),
+                section.getString("name-key", null),
+                section.getString("lore-key", null),
                 section.getBoolean("glint", false));
     }
 
@@ -249,6 +251,8 @@ final class SfxElectricMachineDefinitionConfig {
                 parseRequiredMaterial(string(map.get("material"))),
                 stringOrDefault(map.get("name"), " "),
                 strings(map.get("lore")),
+                string(map.get("name-key")),
+                string(map.get("lore-key")),
                 Boolean.parseBoolean(stringOrDefault(map.get("glint"), "false")));
     }
 
@@ -257,6 +261,8 @@ final class SfxElectricMachineDefinitionConfig {
                 parseMaterial(section.getString("material", null)),
                 section.getString("name", null),
                 section.getStringList("lore"),
+                section.getString("name-key", null),
+                section.getString("lore-key", null),
                 section.getBoolean("include-default-lore", true),
                 parseDurabilityMode(section.getString("durability-mode", "NONE")));
     }

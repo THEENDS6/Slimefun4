@@ -3,6 +3,7 @@ package cc.theends6.sfx.internal.electric;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.inventory.Inventory;
 
@@ -11,10 +12,12 @@ final class SfxSimpleIoMachineMenuRenderer {
     private static final int[] IO_SLOTS = SfxElectricMachineDefinition.SIMPLE_IO_SLOTS;
 
     private final SfxItems items;
+    private final SfxLocalization localization;
     private final SfxElectricMachineStatusIconRenderer statusIcons;
 
     SfxSimpleIoMachineMenuRenderer(SfxItems items, SfxLocalization localization, SfxPlayerDataService profiles) {
         this.items = items;
+        this.localization = localization;
         this.statusIcons = new SfxElectricMachineStatusIconRenderer(items, localization, profiles);
     }
 
@@ -39,7 +42,7 @@ final class SfxSimpleIoMachineMenuRenderer {
         for (SfxElectricMachineUiFrame frame : definition.ui().frame()) {
             for (int slot : frame.slots()) {
                 if (slot >= 0 && slot < inventory.getSize()) {
-                    inventory.setItem(slot, frame.item().toItemStack());
+                    inventory.setItem(slot, frame.item().toItemStack(localization, Map.of()));
                 }
             }
         }

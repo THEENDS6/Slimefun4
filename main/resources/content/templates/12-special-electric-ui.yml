@@ -1,6 +1,5 @@
 
 
-
 templates:
   ui:
     simple-io:
@@ -28,9 +27,8 @@ templates:
           - slots: [19, 20, 21, 22, 23, 24, 25, 28, 34, 37, 43, 46, 47, 48, 49, 50, 51, 52]
             item:
               material: ORANGE_STAINED_GLASS_PANE
-              name: "&6输出"
-              lore:
-                - "&7从这里取走成品。"
+              name-key: electric-ui.template.frame.output.name
+              lore-key: electric-ui.template.frame.output.lore
     auto-brewer:
       @it: true
       ui:
@@ -40,7 +38,7 @@ templates:
           - slots: [0, 1, 2, 9, 11, 18, 19, 20]
             item:
               material: ORANGE_STAINED_GLASS_PANE
-              name: "&6烈焰粉"
+              name-key: electric-ui.template.auto-brewer.blaze-frame.name
               lore: []
           - slots: [3, 4, 5, 12, 14, 21, 23]
             item:
@@ -50,26 +48,22 @@ templates:
           - slots: [6, 7, 8, 15, 17, 24, 25, 26]
             item:
               material: BLUE_STAINED_GLASS_PANE
-              name: "&9酿造原料"
+              name-key: electric-ui.template.auto-brewer.ingredient-frame.name
               lore: []
           - slots: [27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 40, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53]
             item:
               material: LIME_STAINED_GLASS_PANE
-              name: "&a药水瓶"
+              name-key: electric-ui.template.auto-brewer.potion-frame.name
               lore: []
         items:
           auto-brewer.fuel.empty:
             material: STONE
-            name: "&6烈焰粉"
-            lore:
-              - "&7储存烈焰粉：&e{fuel} &7/ &e{capacity} &7tick(s)"
-              - "&7添加烈焰粉后才会开始酿造。"
+            name-key: electric-ui.template.auto-brewer.fuel.name
+            lore-key: electric-ui.template.auto-brewer.fuel.empty-lore
           auto-brewer.fuel.stored:
             material: MAGMA_BLOCK
-            name: "&6烈焰粉"
-            lore:
-              - "&7储存烈焰粉：&e{fuel} &7/ &e{capacity} &7tick(s)"
-              - "&7本配方消耗：&e{recipe_fuel} &7tick(s)，最多 &e{powders} &7个烈焰粉"
+            name-key: electric-ui.template.auto-brewer.fuel.name
+            lore-key: electric-ui.template.auto-brewer.fuel.stored-lore
     auto-crafter:
       @it: true
       ui:
@@ -84,48 +78,36 @@ templates:
         items:
           auto-crafter.container.ok:
             material: CHEST
-            name: "&6附加容器"
-            lore:
-              - "&7该机器直接使用下方容器。"
+            name-key: electric-ui.template.auto-crafter.container.name
+            lore-key: electric-ui.template.auto-crafter.container.lore
           auto-crafter.container.missing:
             material: BARRIER
-            name: "&6附加容器"
-            lore:
-              - "&7该机器直接使用下方容器。"
+            name-key: electric-ui.template.auto-crafter.container.name
+            lore-key: electric-ui.template.auto-crafter.container.lore
           auto-crafter.enabled:
             material: BARRIER
-            name: "&a配方已启用"
-            lore:
-              - "&e左键：切换配方"
-              - "&e右键：清除配方"
-              - "&7配方：&f{recipe}"
+            name-key: electric-ui.template.auto-crafter.enabled.name
+            lore-key: electric-ui.template.auto-crafter.recipe-button.lore
           auto-crafter.disabled:
             material: REDSTONE_TORCH
-            name: "&c配方已禁用"
-            lore:
-              - "&e左键：切换配方"
-              - "&e右键：清除配方"
-              - "&7配方：&f{recipe}"
+            name-key: electric-ui.template.auto-crafter.disabled.name
+            lore-key: electric-ui.template.auto-crafter.recipe-button.lore
           auto-crafter.no-recipe:
             material: PAPER
-            name: "&e未选择配方"
-            lore:
-              - "&7手持目标物品潜行右键机器来配置。"
+            name-key: electric-ui.template.auto-crafter.no-recipe.name
+            lore-key: electric-ui.template.auto-crafter.no-recipe.lore
           auto-crafter.previous:
             material: ARROW
-            name: "&e上一个配方"
-            lore:
-              - "&7配方 {page} / {total}"
+            name-key: electric-ui.template.auto-crafter.previous.name
+            lore-key: electric-ui.template.auto-crafter.page.lore
           auto-crafter.next:
             material: ARROW
-            name: "&e下一个配方"
-            lore:
-              - "&7配方 {page} / {total}"
+            name-key: electric-ui.template.auto-crafter.next.name
+            lore-key: electric-ui.template.auto-crafter.page.lore
           auto-crafter.select:
             material: CRAFTING_TABLE
-            name: "&a选择配方"
-            lore:
-              - "&e点击选择这个配方。"
+            name-key: electric-ui.template.auto-crafter.select.name
+            lore-key: electric-ui.template.auto-crafter.select.lore
     assembler-base:
       @it: true
       ui:
@@ -140,33 +122,24 @@ templates:
         items:
           assembler.enabled:
             material: LIME_STAINED_GLASS_PANE
-            name: "&a已启用"
-            lore:
-              - "&7点击切换装配机状态。"
+            name-key: electric-ui.template.assembler.enabled.name
+            lore-key: electric-ui.template.assembler.toggle.lore
           assembler.disabled:
             material: RED_STAINED_GLASS_PANE
-            name: "&c已禁用"
-            lore:
-              - "&7此装配机不会开始工作。"
-              - "&7点击切换装配机状态。"
+            name-key: electric-ui.template.assembler.disabled.name
+            lore-key: electric-ui.template.assembler.disabled.lore
           assembler.offset:
             material: COMPASS
-            name: "&b生成偏移"
-            lore:
-              - "&7当前偏移：&e{offset} &7格"
-              - "&e左键：&7+0.1"
-              - "&e右键：&7-0.1"
-              - "&7范围：-10.0 到 10.0"
+            name-key: electric-ui.template.assembler.offset.name
+            lore-key: electric-ui.template.assembler.offset.lore
           assembler.head.display:
             material: CARVED_PUMPKIN
-            name: "&e头部材料"
-            lore:
-              - "&7需求数量：&e{amount}"
+            name-key: electric-ui.template.assembler.head.name
+            lore-key: electric-ui.template.assembler.required.lore
           assembler.body.display:
             material: IRON_BLOCK
-            name: "&6身体材料"
-            lore:
-              - "&7需求数量：&e{amount}"
+            name-key: electric-ui.template.assembler.body.name
+            lore-key: electric-ui.template.assembler.required.lore
     iron-golem-assembler:
       @it: true
       @cf: templates.ui.assembler-base
@@ -180,24 +153,13 @@ templates:
           - slots: [9, 10, 11, 18, 20, 27, 29, 36, 37, 38]
             item:
               material: ORANGE_STAINED_GLASS_PANE
-              name: "&e头部材料"
+              name-key: electric-ui.template.assembler.head.name
               lore: []
           - slots: [15, 16, 17, 24, 26, 33, 35, 42, 43, 44]
             item:
               material: WHITE_STAINED_GLASS_PANE
-              name: "&6身体材料"
+              name-key: electric-ui.template.assembler.body.name
               lore: []
-        items:
-          assembler.head.display:
-            material: CARVED_PUMPKIN
-            name: "&e头部材料"
-            lore:
-              - "&7需求数量：&e{amount}"
-          assembler.body.display:
-            material: IRON_BLOCK
-            name: "&6身体材料"
-            lore:
-              - "&7需求数量：&e{amount}"
     wither-assembler:
       @it: true
       @cf: templates.ui.assembler-base
@@ -211,24 +173,13 @@ templates:
           - slots: [9, 10, 11, 18, 20, 27, 29, 36, 37, 38]
             item:
               material: BLACK_STAINED_GLASS_PANE
-              name: "&e头部材料"
+              name-key: electric-ui.template.assembler.head.name
               lore: []
           - slots: [15, 16, 17, 24, 26, 33, 35, 42, 43, 44]
             item:
               material: BROWN_STAINED_GLASS_PANE
-              name: "&6身体材料"
+              name-key: electric-ui.template.assembler.body.name
               lore: []
-        items:
-          assembler.head.display:
-            material: WITHER_SKELETON_SKULL
-            name: "&e头部材料"
-            lore:
-              - "&7需求数量：&e{amount}"
-          assembler.body.display:
-            material: SOUL_SAND
-            name: "&6身体材料"
-            lore:
-              - "&7需求数量：&e{amount}"
 
 machines:
   @ot: content/machines/electric-machines.yml
