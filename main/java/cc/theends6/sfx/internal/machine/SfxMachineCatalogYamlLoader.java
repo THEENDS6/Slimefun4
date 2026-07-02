@@ -40,15 +40,24 @@ public final class SfxMachineCatalogYamlLoader {
     }
 
     public int loadInto(SfxMachineRuntimeEngine engine) {
+        boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
         File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
         if (!file.isFile()) {
-            plugin.getLogger().warning("Machine catalog YAML missing: " + RESOURCE_PATH + "; shared runtime catalog will only contain domain-registered definitions.");
+            String message = "Machine catalog YAML missing: " + RESOURCE_PATH + "; shared runtime catalog will only contain domain-registered definitions.";
+            if (strict) {
+                throw new IllegalStateException(message);
+            }
+            plugin.getLogger().warning(message);
             return 0;
         }
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
-            plugin.getLogger().warning("No machines section in " + RESOURCE_PATH + "; shared runtime catalog will only contain domain-registered definitions.");
+            String message = "No machines section in " + RESOURCE_PATH + "; shared runtime catalog will only contain domain-registered definitions.";
+            if (strict) {
+                throw new IllegalStateException(message);
+            }
+            plugin.getLogger().warning(message);
             return 0;
         }
         int loaded = 0;
@@ -66,6 +75,9 @@ public final class SfxMachineCatalogYamlLoader {
                 }
                 loaded++;
             } catch (RuntimeException ex) {
+                if (strict) {
+                    throw new IllegalStateException("Invalid machine catalog YAML entry " + id, ex);
+                }
                 plugin.getLogger().log(Level.WARNING, "Invalid machine catalog YAML entry " + id + "; skipping it.", ex);
             }
         }
@@ -74,15 +86,19 @@ public final class SfxMachineCatalogYamlLoader {
     }
 
     private SfxMachineDefinition parse(String id, ConfigurationSection section) {
-        SfxMachineCategory category = parseCategory(section.getString("category", "SPECIAL"));
+        SfxMachineCategory category = parseCategory(requiredString(section, "category"));
+        Set<String> tags = stringSet(requiredList(section, "tags"));
+        if (tags.isEmpty()) {
+            throw new IllegalArgumentException("machine catalog field must not be empty: tags");
+        }
         SfxMachineDefinition.Builder builder = SfxMachineDefinition.builder(id)
-                .displayName(section.getString("display-name", id))
+                .displayName(requiredString(section, "display-name"))
                 .category(category)
                 .inputSlots(integerList(section.getList("input-slots")))
                 .outputSlots(integerList(section.getList("output-slots")))
                 .statusSlot(section.getInt("status-slot", -1))
                 .tickInterval(Math.max(1, section.getInt("tick-interval", 1)))
-                .tags(stringSet(section.getList("tags")));
+                .tags(tags);
 
         Set<SfxMachineCapability> capabilities = parseCapabilities(section.getList("capabilities"));
         if (!capabilities.isEmpty()) {
@@ -122,6 +138,22 @@ public final class SfxMachineCatalogYamlLoader {
 
     private SfxMachineCategory parseCategory(String raw) {
         return SfxMachineCategory.valueOf(raw.trim().replace('-', '_').toUpperCase(Locale.ROOT));
+    }
+
+    private String requiredString(ConfigurationSection section, String path) {
+        String value = section.getString(path, null);
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("machine catalog field is required: " + path);
+        }
+        return value;
+    }
+
+    private List<?> requiredList(ConfigurationSection section, String path) {
+        List<?> value = section.getList(path);
+        if (value == null) {
+            throw new IllegalArgumentException("machine catalog field is required: " + path);
+        }
+        return value;
     }
 
     private Set<SfxMachineCapability> parseCapabilities(List<?> raw) {

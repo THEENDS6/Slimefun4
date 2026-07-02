@@ -56,6 +56,8 @@ Examples:
 
 Prefer `runtime-machines` when a recipe truly belongs to specific machine ids. Prefer `runtime-machine-tags` when the recipe belongs to every machine that has a capability tag. Multiple tags are treated as an all-tags requirement.
 
+Compiled recipes must be self-contained. Each entry must define `id`, `recipe-type`, `operation`, and `outputs`. Shaped recipes must provide a 9-entry `matrix`; shapeless recipes must provide 1-9 `inputs`; single and hand recipes must provide `input`. Java runtime must not treat missing or unknown operations as shaped recipes.
+
 ## Machine Tags
 
 Manual machines get default tags:

@@ -36,14 +36,22 @@ final class SfxElectricMachineDefinitionConfig {
 
     static SfxElectricMachineDefinitionConfig load(JavaPlugin plugin) {
         ensureBundledFile(plugin);
+        boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
         File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
         if (!file.isFile()) {
+            if (strict) {
+                throw new IllegalStateException("Electric machine YAML missing: " + RESOURCE_PATH);
+            }
             return new SfxElectricMachineDefinitionConfig(plugin, Map.of());
         }
         YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
-            plugin.getLogger().warning("No machines section in " + RESOURCE_PATH + "; electric machines will use code defaults.");
+            String message = "No machines section in " + RESOURCE_PATH + "; electric machines will use code defaults.";
+            if (strict) {
+                throw new IllegalStateException(message);
+            }
+            plugin.getLogger().warning(message);
             return new SfxElectricMachineDefinitionConfig(plugin, Map.of());
         }
         Map<String, Entry> parsed = new LinkedHashMap<>();
@@ -55,6 +63,9 @@ final class SfxElectricMachineDefinitionConfig {
             try {
                 parsed.put(id, Entry.parse(section));
             } catch (RuntimeException ex) {
+                if (strict) {
+                    throw new IllegalStateException("Invalid electric machine YAML entry " + id, ex);
+                }
                 plugin.getLogger().log(Level.WARNING, "Invalid electric machine YAML entry " + id + "; keeping Java defaults for this machine.", ex);
             }
         }
