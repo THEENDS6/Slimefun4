@@ -1,4 +1,4 @@
-# Shared electric machine definition templates. These compose machine parameters with optional UI fragments.
+﻿# Shared electric machine definition templates. These compose machine parameters with optional UI fragments.
 templates:
   machines:
     electric-definition:
@@ -9,8 +9,6 @@ templates:
         capacity: "${capacity}"
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
-      ui:
-        layout: "${ui-layout}"
       functions: "${functions}"
       slots:
         input: "${input-slots}"
@@ -19,7 +17,6 @@ templates:
       @it: true
       @cf: templates.ui.standard-electric-machine
       @define:
-        ui-layout: STANDARD
         functions:
         - standard-processing
         input-slots:
@@ -34,8 +31,6 @@ templates:
         capacity: "${capacity}"
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
-      ui:
-        layout: "${ui-layout}"
       functions: "${functions}"
       slots:
         input: "${input-slots}"
@@ -44,7 +39,6 @@ templates:
       @it: true
       @cf: templates.machines.standard-electric-definition
       @define:
-        ui-layout: STANDARD
         functions:
         - standard-processing
         input-slots:
@@ -59,8 +53,6 @@ templates:
         capacity: "${capacity}"
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
-      ui:
-        layout: "${ui-layout}"
       functions: "${functions}"
       slots:
         input: "${input-slots}"
@@ -69,7 +61,6 @@ templates:
       @it: true
       @cf: templates.ui.simple-io
       @define:
-        ui-layout: SIMPLE_IO
         functions:
         - simple-io
         input-slots:
@@ -87,8 +78,6 @@ templates:
         capacity: "${capacity}"
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
-      ui:
-        layout: "${ui-layout}"
       functions: "${functions}"
       slots:
         input: "${input-slots}"
@@ -96,7 +85,6 @@ templates:
     no-menu-definition:
       @it: true
       @define:
-        ui-layout: NONE
         functions:
         - no-menu
         input-slots: []
@@ -108,7 +96,11 @@ templates:
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
       ui:
-        layout: "${ui-layout}"
+        inventory-size: 0
+        status-slot: -1
+        frame: []
+        items: {}
+        status: {}
       functions: "${functions}"
       slots:
         input: "${input-slots}"
@@ -117,7 +109,6 @@ templates:
       @it: true
       @cf: templates.ui.auto-brewer
       @define:
-        ui-layout: AUTO_BREWER
         functions:
         - auto-brewer
         input-slots:
@@ -134,8 +125,6 @@ templates:
         capacity: "${capacity}"
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
-      ui:
-        layout: "${ui-layout}"
       functions: "${functions}"
       slots:
         input: "${input-slots}"
@@ -144,7 +133,6 @@ templates:
       @it: true
       @cf: templates.ui.auto-crafter
       @define:
-        ui-layout: AUTO_CRAFTER
         functions:
         - auto-crafter
         input-slots: []
@@ -155,8 +143,6 @@ templates:
         capacity: "${capacity}"
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
-      ui:
-        layout: "${ui-layout}"
       functions: "${functions}"
       slots:
         input: "${input-slots}"
@@ -165,7 +151,6 @@ templates:
       @it: true
       @cf: templates.ui.geo-miner
       @define:
-        ui-layout: GEO_MINER
         functions:
         - geo-miner
         input-slots: []
@@ -186,8 +171,6 @@ templates:
         capacity: "${capacity}"
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
-      ui:
-        layout: "${ui-layout}"
       functions: "${functions}"
       slots:
         input: "${input-slots}"
@@ -196,7 +179,6 @@ templates:
       @it: true
       @cf: templates.ui.iron-golem-assembler
       @define:
-        ui-layout: ASSEMBLER
         functions:
         - assembler
         input-slots:
@@ -211,8 +193,6 @@ templates:
         capacity: "${capacity}"
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
-      ui:
-        layout: "${ui-layout}"
       functions: "${functions}"
       slots:
         input: "${input-slots}"
@@ -221,7 +201,6 @@ templates:
       @it: true
       @cf: templates.ui.wither-assembler
       @define:
-        ui-layout: ASSEMBLER
         functions:
         - assembler
         input-slots:
@@ -236,8 +215,6 @@ templates:
         capacity: "${capacity}"
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
-      ui:
-        layout: "${ui-layout}"
       functions: "${functions}"
       slots:
         input: "${input-slots}"
@@ -246,7 +223,6 @@ templates:
       @it: true
       @cf: templates.ui.assembler-base
       @define:
-        ui-layout: ASSEMBLER
         functions:
         - assembler
         input-slots:
@@ -261,8 +237,6 @@ templates:
         capacity: "${capacity}"
         consumption-per-tick: "${consumption}"
       progress-material: "${progress-material}"
-      ui:
-        layout: "${ui-layout}"
       functions: "${functions}"
       slots:
         input: "${input-slots}"

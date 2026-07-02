@@ -408,7 +408,7 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         SfxEventGuards.denyBlockAndItemUse(event);
-        if (definition != null && definition.menuStyle() == SfxElectricMachineMenuStyle.NONE) {
+        if (definition != null && definition.hasFunction("no-menu")) {
             return;
         }
         if (autoCrafterSelection) {
@@ -875,7 +875,7 @@ public final class SfxElectricMachineService implements Listener {
     private void openMachine(Player player, SfxBlockInstanceRecord instance) {
         SfxMachineLegacyHookBridge.menuOpen(machineRuntime, instance.typeId(), instance.instanceId(), locationFor(instance), "electric", "SfxElectricMachineService.openMachine");
         SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
-        if (definition == null || definition.menuStyle() == SfxElectricMachineMenuStyle.NONE) {
+        if (definition == null || definition.hasFunction("no-menu")) {
             return;
         }
         SfxElectricMachineSession existing = sessionsByInstance.get(instance.instanceId());
@@ -1253,9 +1253,9 @@ public final class SfxElectricMachineService implements Listener {
     void render(SfxElectricMachineSession session, SfxElectricMachineDefinition definition, Inventory inventory, SfxElectricMachineState state, SfxElectricRecipe recipe, SfxElectricMachineRenderStatus status) {
         if (session != null) {
             session.markRendered(tickCounter, status);
-            if (definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO) {
+            if (definition.hasFunction("simple-io")) {
                 simpleIoMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
-            } else if (definition.menuStyle() == SfxElectricMachineMenuStyle.GEO_MINER) {
+            } else if (definition.hasFunction("geo-miner")) {
                 geoMinerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
             } else if (definition.hasFunction("assembler")) {
                 assemblerMenuRenderer.render(session.viewerId(), definition, inventory, state, status);
