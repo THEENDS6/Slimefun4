@@ -86,10 +86,10 @@ public final class SfxMachineCatalogYamlLoader {
         SfxMachineDefinition.Builder builder = SfxMachineDefinition.builder(id)
                 .displayName(requiredString(section, "display-name"))
                 .category(category)
-                .inputSlots(integerList(section.getList("input-slots")))
-                .outputSlots(integerList(section.getList("output-slots")))
+                .inputSlots(integerList(requiredList(section, "input-slots")))
+                .outputSlots(integerList(requiredList(section, "output-slots")))
                 .statusSlot(requiredInt(section, "status-slot"))
-                .tickInterval(Math.max(1, requiredInt(section, "tick-interval")))
+                .tickInterval(requiredPositiveInt(section, "tick-interval"))
                 .tags(tags);
 
         SfxMachineInputProvider inputProvider = parseInputProvider(section.getConfigurationSection("input-provider"));
@@ -100,16 +100,16 @@ public final class SfxMachineCatalogYamlLoader {
         if (outputProvider != null) {
             builder.outputProvider(outputProvider);
         }
-        Set<SfxMachineCapability> capabilities = parseCapabilities(section.getList("capabilities"));
+        Set<SfxMachineCapability> capabilities = parseCapabilities(requiredList(section, "capabilities"));
         if (!capabilities.isEmpty()) {
             builder.capabilities(capabilities);
         }
-        for (Map<?, ?> raw : section.getMapList("policies")) {
+        for (Map<?, ?> raw : mapList(requiredList(section, "policies"), "policies")) {
             String type = string(raw.get("type"));
             String name = string(raw.get("name"));
             builder.policyRef(SfxMachinePolicyRef.of(type, name));
         }
-        for (Map<?, ?> raw : section.getMapList("effects")) {
+        for (Map<?, ?> raw : mapList(requiredList(section, "effects"), "effects")) {
             String name = string(raw.get("name"));
             SfxMachinePhase phase = SfxMachinePhase.valueOf(string(raw.get("phase")).trim().replace('-', '_').toUpperCase(Locale.ROOT));
             builder.effect(SfxMachineEffect.marker(name, phase));
@@ -162,12 +162,20 @@ public final class SfxMachineCatalogYamlLoader {
         return section.getInt(path);
     }
 
+    private int requiredPositiveInt(ConfigurationSection section, String path) {
+        int value = requiredInt(section, path);
+        if (value < 1) {
+            throw new IllegalArgumentException("machine catalog field must be at least 1: " + path);
+        }
+        return value;
+    }
+
     private SfxMachineInputProvider parseInputProvider(ConfigurationSection section) {
         if (section == null) {
             return null;
         }
         SfxMachineInputProvider.Kind kind = SfxMachineInputProvider.Kind.valueOf(requiredString(section, "kind").trim().replace('-', '_').toUpperCase(Locale.ROOT));
-        return new SfxMachineInputProvider(kind, integerList(section.getList("slots")), section.getString("description", ""));
+        return new SfxMachineInputProvider(kind, integerList(requiredList(section, "slots")), requiredString(section, "description"));
     }
 
     private SfxMachineOutputProvider parseOutputProvider(ConfigurationSection section) {
@@ -175,7 +183,7 @@ public final class SfxMachineCatalogYamlLoader {
             return null;
         }
         SfxMachineOutputProvider.Kind kind = SfxMachineOutputProvider.Kind.valueOf(requiredString(section, "kind").trim().replace('-', '_').toUpperCase(Locale.ROOT));
-        return new SfxMachineOutputProvider(kind, integerList(section.getList("slots")), section.getString("description", ""));
+        return new SfxMachineOutputProvider(kind, integerList(requiredList(section, "slots")), requiredString(section, "description"));
     }
 
     private Set<SfxMachineCapability> parseCapabilities(List<?> raw) {
@@ -217,6 +225,18 @@ public final class SfxMachineCatalogYamlLoader {
             }
         }
         return Set.copyOf(result);
+    }
+
+    private List<Map<?, ?>> mapList(List<?> raw, String path) {
+        List<Map<?, ?>> result = new ArrayList<>();
+        for (Object entry : raw) {
+            if (entry instanceof Map<?, ?> map) {
+                result.add(map);
+            } else {
+                throw new IllegalArgumentException("machine catalog list " + path + " must contain maps");
+            }
+        }
+        return result;
     }
 
     private static String string(Object raw) {
