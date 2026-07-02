@@ -854,7 +854,12 @@ public final class SfxTemplateCompiler {
 
     private List<ContentPassThroughSource> contentPassThroughSources() {
         Path machines = sourceRoot.resolveSibling("machines");
+        Path contentRoot = sourceRoot.getParent();
         return List.of(
+                new ContentPassThroughSource(contentRoot.resolve("items.yml"), "content/items.yml", "items.yml"),
+                new ContentPassThroughSource(contentRoot.resolve("items").resolve("10-legacy-categories.yml"), "content/items.yml", "10-legacy-categories.yml"),
+                new ContentPassThroughSource(contentRoot.resolve("items").resolve("20-legacy-items.yml"), "content/items.yml", "20-legacy-items.yml"),
+                new ContentPassThroughSource(contentRoot.resolve("researches").resolve("10-legacy-slimefun.yml"), "content/researches.yml", "10-legacy-slimefun.yml"),
                 new ContentPassThroughSource(machines.resolve("manual-machines.yml"), "content/machines/manual-machines.yml", "manual-machines.yml"),
                 new ContentPassThroughSource(machines.resolve("configurable-machines.yml"), "content/machines/configurable-machines.yml", "configurable-machines.yml")
         );

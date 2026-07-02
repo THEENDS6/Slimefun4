@@ -1,5 +1,6 @@
 package cc.theends6.sfx.internal.research;
 
+import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,6 +38,14 @@ public final class SfxResearchYamlLoader {
     public void loadInto(SfxResearchRegistry registry) {
         registry.clear();
 
+        if (plugin.getConfig().getBoolean("content.runtime.compiled-only", true)) {
+            int index = 0;
+            for (YamlConfiguration yaml : SfxCompiledYamlResolver.loadCompiledUnder(plugin, "content/researches")) {
+                loadYamlInto(registry, yaml, "compiled research content " + (++index));
+            }
+            return;
+        }
+
         File root = new File(plugin.getDataFolder(), "content/researches");
         if (!root.isDirectory()) {
             return;
@@ -47,13 +56,16 @@ public final class SfxResearchYamlLoader {
         files.sort(Comparator.comparing(File::getPath));
 
         for (File file : files) {
-            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
-            for (Map<?, ?> entry : yaml.getMapList("researches")) {
-                try {
-                    registry.register(parseResearch(entry));
-                } catch (Exception ex) {
-                    logger.warning("Failed to load research from YAML " + file.getName() + ": " + ex.getMessage());
-                }
+            loadYamlInto(registry, YamlConfiguration.loadConfiguration(file), file.getName());
+        }
+    }
+
+    private void loadYamlInto(SfxResearchRegistry registry, YamlConfiguration yaml, String sourceName) {
+        for (Map<?, ?> entry : yaml.getMapList("researches")) {
+            try {
+                registry.register(parseResearch(entry));
+            } catch (Exception ex) {
+                logger.warning("Failed to load research from YAML " + sourceName + ": " + ex.getMessage());
             }
         }
     }
