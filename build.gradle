@@ -168,10 +168,12 @@ tasks.register('validateSfxMachineYaml') {
     description = 'Validates machine YAML profile declarations against the Java profile registry.'
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/machines/electric-recipes.yml'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java'))
     doLast {
         def catalogFile = layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml').asFile
         def manualFile = layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml').asFile
+        def electricRecipeFile = layout.projectDirectory.file('main/resources/content/machines/electric-recipes.yml').asFile
         def profilesFile = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java').asFile
         def enumMatcher = profilesFile.getText('UTF-8') =~ /private enum Profile\s*\{([\s\S]*?)\n\s*\}/
         if (!enumMatcher.find()) {
@@ -325,7 +327,91 @@ tasks.register('validateSfxMachineYaml') {
         if (!manualViolations.isEmpty()) {
             throw new GradleException("Manual machine YAML validation failed:\n" + manualViolations.join('\n'))
         }
-        logger.lifecycle("Validated ${declaredProfiles.size()} machine YAML profile declaration(s), ${catalogCount} machine catalog declaration(s), and ${manualCount} manual machine declaration(s).")
+
+        def electricRecipeViolations = []
+        def electricProviderCount = 0
+        def electricRecipeEntryCount = 0
+        def electricExpansionCount = 0
+        def currentProvider = null
+        def currentElectricRecipe = null
+        def validateElectricRecipe = { recipe ->
+            if (recipe == null) {
+                return
+            }
+            electricRecipeEntryCount++
+            if (recipe.fields.contains('expand')) {
+                electricExpansionCount++
+                ['expand', 'id-prefix', 'input-amount', 'ticks', 'outputs'].each { field ->
+                    if (!recipe.fields.contains(field)) {
+                        electricRecipeViolations << "electric recipe provider ${recipe.provider} expansion missing ${field}"
+                    }
+                }
+                if (!recipe.fields.contains('tag') && !recipe.fields.contains('materials')) {
+                    electricRecipeViolations << "electric recipe provider ${recipe.provider} expansion missing tag/materials"
+                }
+            } else {
+                ['id', 'inputs', 'ticks'].each { field ->
+                    if (!recipe.fields.contains(field)) {
+                        electricRecipeViolations << "electric recipe provider ${recipe.provider} recipe missing ${field}"
+                    }
+                }
+                if (!recipe.fields.contains('outputs') && !recipe.fields.contains('random-outputs')) {
+                    electricRecipeViolations << "electric recipe provider ${recipe.provider} recipe ${recipe.id ?: '<unknown>'} missing outputs/random-outputs"
+                }
+            }
+        }
+        def flushElectricRecipe = {
+            validateElectricRecipe(currentElectricRecipe)
+        }
+        electricRecipeFile.eachLine('UTF-8') { line ->
+            def providerMatch = line =~ /^  ([a-z0-9_]+):\s*$/
+            if (providerMatch.matches()) {
+                flushElectricRecipe()
+                currentElectricRecipe = null
+                currentProvider = providerMatch.group(1)
+                electricProviderCount++
+                return
+            }
+            if (currentProvider == null) {
+                return
+            }
+            def recipeStart = line =~ /^    - (id|expand):\s*(.+?)\s*$/
+            if (recipeStart.matches()) {
+                flushElectricRecipe()
+                currentElectricRecipe = [
+                        provider: currentProvider,
+                        fields  : [] as Set,
+                        id      : null
+                ]
+                def field = recipeStart.group(1)
+                currentElectricRecipe.fields.add(field)
+                if (field == 'id') {
+                    currentElectricRecipe.id = recipeStart.group(2)
+                }
+                return
+            }
+            if (currentElectricRecipe == null) {
+                return
+            }
+            def fieldMatch = line =~ /^      ([A-Za-z0-9_-]+):(?:\s*(.*))?$/
+            if (fieldMatch.matches()) {
+                currentElectricRecipe.fields.add(fieldMatch.group(1))
+            }
+        }
+        flushElectricRecipe()
+        if (electricProviderCount != 13) {
+            electricRecipeViolations << "electric recipe provider count expected 13, got ${electricProviderCount}"
+        }
+        if (electricRecipeEntryCount != 139) {
+            electricRecipeViolations << "electric recipe entry count expected 139, got ${electricRecipeEntryCount}"
+        }
+        if (electricExpansionCount != 4) {
+            electricRecipeViolations << "electric recipe expansion count expected 4, got ${electricExpansionCount}"
+        }
+        if (!electricRecipeViolations.isEmpty()) {
+            throw new GradleException("Electric recipe YAML validation failed:\n" + electricRecipeViolations.join('\n'))
+        }
+        logger.lifecycle("Validated ${declaredProfiles.size()} machine YAML profile declaration(s), ${catalogCount} machine catalog declaration(s), ${manualCount} manual machine declaration(s), and ${electricRecipeEntryCount} electric recipe provider entry(s).")
     }
 }
 

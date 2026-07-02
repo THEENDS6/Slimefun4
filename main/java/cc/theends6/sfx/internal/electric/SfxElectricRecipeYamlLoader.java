@@ -30,15 +30,24 @@ final class SfxElectricRecipeYamlLoader {
 
     static SfxElectricRecipeYamlLoader load(JavaPlugin plugin) {
         ensureBundledFile(plugin);
+        boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
         File file = new File(plugin.getDataFolder(), RESOURCE_PATH);
         if (!file.isFile()) {
-            plugin.getLogger().warning("Electric recipe YAML missing: " + RESOURCE_PATH + "; static electric providers will be empty.");
+            String message = "Electric recipe YAML missing: " + RESOURCE_PATH + "; static electric providers will be empty.";
+            if (strict) {
+                throw new IllegalStateException(message);
+            }
+            plugin.getLogger().warning(message);
             return new SfxElectricRecipeYamlLoader(plugin, Map.of());
         }
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection root = yaml.getConfigurationSection("providers");
         if (root == null) {
-            plugin.getLogger().warning("No providers section in " + RESOURCE_PATH + "; static electric providers will be empty.");
+            String message = "No providers section in " + RESOURCE_PATH + "; static electric providers will be empty.";
+            if (strict) {
+                throw new IllegalStateException(message);
+            }
+            plugin.getLogger().warning(message);
             return new SfxElectricRecipeYamlLoader(plugin, Map.of());
         }
         Map<String, SfxElectricRecipeProvider> result = new LinkedHashMap<>();
@@ -49,10 +58,14 @@ final class SfxElectricRecipeYamlLoader {
                 continue;
             }
             List<SfxElectricRecipe> parsed = new ArrayList<>();
-            for (Map<?, ?> raw : section.getMapList("recipes")) {
+            List<Map<?, ?>> entries = requiredRecipeList(section, "recipes");
+            for (Map<?, ?> raw : entries) {
                 try {
                     parsed.addAll(parseRecipeOrExpansion(raw));
                 } catch (RuntimeException ex) {
+                    if (strict) {
+                        throw new IllegalStateException("Invalid electric recipe YAML entry in provider " + providerId, ex);
+                    }
                     plugin.getLogger().log(Level.WARNING, "Invalid electric recipe YAML entry in provider " + providerId + "; skipping it.", ex);
                 }
             }
@@ -67,6 +80,9 @@ final class SfxElectricRecipeYamlLoader {
     SfxElectricRecipeProvider provider(String id) {
         SfxElectricRecipeProvider provider = providers.get(id);
         if (provider == null) {
+            if (plugin.getConfig().getBoolean("content.runtime.compiled-only", true)) {
+                throw new IllegalStateException("Missing electric recipe provider in YAML: " + id);
+            }
             plugin.getLogger().warning("Missing electric recipe provider in YAML: " + id);
             return List::of;
         }
@@ -118,13 +134,13 @@ final class SfxElectricRecipeYamlLoader {
         String idPrefix = string(entry.get("id-prefix"));
         Map<String, Object> copy = new LinkedHashMap<>();
         copy.put("id", idPrefix + ":" + expandedMaterial.key());
-        copy.put("ticks", entry.get("ticks"));
+        copy.put("ticks", requiredValue(entry, "ticks"));
         List<Object> inputs = new ArrayList<>();
         Object prefixInput = entry.get("input-prefix");
         if (prefixInput instanceof List<?> prefixList) {
             inputs.addAll(prefixList);
         }
-        inputs.add(Map.of("material", expandedMaterial.name(), "amount", integer(entry.containsKey("input-amount") ? entry.get("input-amount") : 1)));
+        inputs.add(Map.of("material", expandedMaterial.name(), "amount", integer(requiredValue(entry, "input-amount"))));
         copy.put("inputs", inputs);
         copy.put("outputs", entry.get("outputs"));
         copy.put("random-outputs", entry.get("random-outputs"));
@@ -133,8 +149,7 @@ final class SfxElectricRecipeYamlLoader {
 
     private static SfxElectricRecipe parseRecipe(Map<?, ?> entry) {
         String id = string(entry.get("id"));
-        Object tickRaw = entry.containsKey("ticks") ? entry.get("ticks") : (entry.containsKey("base-ticks") ? entry.get("base-ticks") : 1);
-        int ticks = integer(tickRaw);
+        int ticks = integer(requiredValue(entry, "ticks"));
         List<SfxRecipeSlot> inputs = parseInputs(entry.get("inputs"));
         Object randomOutputs = entry.get("random-outputs");
         if (randomOutputs instanceof List<?>) {
@@ -165,7 +180,7 @@ final class SfxElectricRecipeYamlLoader {
         if (!(raw instanceof Map<?, ?> map)) {
             throw new IllegalArgumentException("unsupported electric input: " + raw);
         }
-        int amount = integer(map.containsKey("amount") ? map.get("amount") : 1);
+        int amount = integer(requiredValue(map, "amount"));
         Object item = map.get("item");
         if (item != null) {
             return SfxRecipeSlot.sfx(String.valueOf(item), amount);
@@ -197,7 +212,7 @@ final class SfxElectricRecipeYamlLoader {
             if (!(entry instanceof Map<?, ?> map)) {
                 throw new IllegalArgumentException("weighted random output must be a map: " + entry);
             }
-            int weight = Math.max(1, integer(map.containsKey("weight") ? map.get("weight") : 1));
+            int weight = Math.max(1, integer(requiredValue(map, "weight")));
             SfxElectricStack stack = parseOutput(map);
             for (int i = 0; i < weight; i++) {
                 result.add(stack);
@@ -223,7 +238,7 @@ final class SfxElectricRecipeYamlLoader {
         if (!(raw instanceof Map<?, ?> map)) {
             throw new IllegalArgumentException("unsupported electric output: " + raw);
         }
-        int amount = integer(map.containsKey("amount") ? map.get("amount") : 1);
+        int amount = integer(requiredValue(map, "amount"));
         Object item = map.get("item");
         if (item != null) {
             return SfxElectricStack.sfx(String.valueOf(item), amount);
@@ -257,6 +272,20 @@ final class SfxElectricRecipeYamlLoader {
         } catch (IllegalArgumentException ex) {
             plugin.getLogger().log(Level.WARNING, "Bundled electric recipe YAML is missing: " + RESOURCE_PATH, ex);
         }
+    }
+
+    private static List<Map<?, ?>> requiredRecipeList(ConfigurationSection section, String path) {
+        if (!section.contains(path) || !(section.get(path) instanceof List<?>)) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return section.getMapList(path);
+    }
+
+    private static Object requiredValue(Map<?, ?> map, String key) {
+        if (!map.containsKey(key) || map.get(key) == null) {
+            throw new IllegalArgumentException("map requires " + key);
+        }
+        return map.get(key);
     }
 
     private static String string(Object raw) {
