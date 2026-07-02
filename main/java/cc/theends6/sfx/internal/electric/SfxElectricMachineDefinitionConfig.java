@@ -400,13 +400,19 @@ final class SfxElectricMachineDefinitionConfig {
         if (section == null) {
             throw new IllegalArgumentException("ui item section is missing");
         }
+        String name = optionalPresentString(section, "name");
+        String nameKey = section.getString("name-key", null);
+        requireTextReference(section, "name", name, nameKey);
+        List<String> lore = section.contains("lore") ? section.getStringList("lore") : null;
+        String loreKey = section.getString("lore-key", null);
+        requireTextReference(section, "lore", lore, loreKey);
         return new SfxElectricMachineUiItem(
                 parseRequiredMaterial(section.getString("material", null)),
-                section.getString("name", " "),
-                section.getStringList("lore"),
-                section.getString("name-key", null),
-                section.getString("lore-key", null),
-                section.getBoolean("glint", false));
+                name,
+                lore,
+                nameKey,
+                loreKey,
+                requiredBoolean(section, "glint"));
     }
 
     private static void collectUiItems(Map<String, SfxElectricMachineUiItem> target, String prefix, ConfigurationSection section) {
@@ -425,24 +431,62 @@ final class SfxElectricMachineDefinitionConfig {
     }
 
     private static SfxElectricMachineUiItem parseUiItem(Map<?, ?> map) {
+        Object name = map.get("name");
+        Object nameKey = map.get("name-key");
+        requireTextReference(map, "name", name, nameKey);
+        Object lore = map.get("lore");
+        Object loreKey = map.get("lore-key");
+        requireTextReference(map, "lore", lore, loreKey);
+        if (!map.containsKey("glint")) {
+            throw new IllegalArgumentException("ui item requires glint");
+        }
         return new SfxElectricMachineUiItem(
                 parseRequiredMaterial(string(map.get("material"))),
-                stringOrDefault(map.get("name"), " "),
-                strings(map.get("lore")),
-                string(map.get("name-key")),
-                string(map.get("lore-key")),
-                Boolean.parseBoolean(stringOrDefault(map.get("glint"), "false")));
+                string(name),
+                strings(lore),
+                string(nameKey),
+                string(loreKey),
+                Boolean.parseBoolean(string(map.get("glint"))));
     }
 
     private static SfxElectricMachineStatusUiTemplate parseStatusTemplate(ConfigurationSection section) {
+        String name = optionalPresentString(section, "name");
+        String nameKey = section.getString("name-key", null);
+        requireTextReference(section, "name", name, nameKey);
+        List<String> lore = section.contains("lore") ? section.getStringList("lore") : null;
+        String loreKey = section.getString("lore-key", null);
+        requireTextReference(section, "lore", lore, loreKey);
         return new SfxElectricMachineStatusUiTemplate(
-                parseMaterial(section.getString("material", null)),
-                section.getString("name", null),
-                section.getStringList("lore"),
-                section.getString("name-key", null),
-                section.getString("lore-key", null),
-                section.getBoolean("include-default-lore", true),
-                parseDurabilityMode(section.getString("durability-mode", "NONE")));
+                parseRequiredMaterial(section.getString("material", null)),
+                name,
+                lore,
+                nameKey,
+                loreKey,
+                requiredBoolean(section, "include-default-lore"),
+                parseDurabilityMode(requiredString(section, "durability-mode")));
+    }
+
+    private static String optionalPresentString(ConfigurationSection section, String path) {
+        return section.contains(path) ? section.getString(path, "") : null;
+    }
+
+    private static boolean requiredBoolean(ConfigurationSection section, String path) {
+        if (!section.contains(path)) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
+        }
+        return section.getBoolean(path);
+    }
+
+    private static void requireTextReference(ConfigurationSection section, String field, Object literal, Object key) {
+        if (literal == null && stringOrNull(key) == null) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " requires " + field + " or " + field + "-key");
+        }
+    }
+
+    private static void requireTextReference(Map<?, ?> map, String field, Object literal, Object key) {
+        if (literal == null && stringOrNull(key) == null) {
+            throw new IllegalArgumentException("ui item requires " + field + " or " + field + "-key");
+        }
     }
 
     private static SfxDurabilityBarMode parseDurabilityMode(String raw) {
@@ -500,9 +544,9 @@ final class SfxElectricMachineDefinitionConfig {
         return value == null ? null : String.valueOf(value);
     }
 
-    private static String stringOrDefault(Object value, String fallback) {
-        String result = string(value);
-        return result == null ? fallback : result;
+    private static String stringOrNull(Object value) {
+        String text = string(value);
+        return text == null || text.isBlank() ? null : text;
     }
 
     private static SfxElectricAssemblerSpec parseAssembler(ConfigurationSection section) {

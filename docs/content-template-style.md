@@ -41,6 +41,8 @@ Each compiled slot should have:
 
 Player-visible UI text should use `name-key` and `lore-key` unless the literal is intentionally blank.
 
+Compiled UI items must include explicit `glint`. Compiled status templates must include explicit `include-default-lore` and `durability-mode`; these defaults are completed by the compiler, not by runtime.
+
 ## Recipe Rules
 
 Recipes should be grouped by process semantics, not by accidental output file shape.
