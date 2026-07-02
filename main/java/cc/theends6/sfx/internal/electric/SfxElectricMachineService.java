@@ -481,7 +481,7 @@ public final class SfxElectricMachineService implements Listener {
             }
             return;
         }
-        if (topSlot && clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER && isAssemblerButton(event.getRawSlot())) {
+        if (topSlot && clickDefinition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER && isAssemblerButton(clickDefinition, event.getRawSlot())) {
             event.setCancelled(true);
             handleAssemblerButton(holder.instanceId(), event.getRawSlot(), event.getClick());
             runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
@@ -1495,9 +1495,9 @@ public final class SfxElectricMachineService implements Listener {
         openMachine(player, instance);
     }
 
-    private boolean isAssemblerButton(int slot) {
+    private boolean isAssemblerButton(SfxElectricMachineDefinition definition, int slot) {
         return slot == SfxElectricAssemblerMenuRenderer.ENABLE_SLOT
-                || slot == SfxElectricAssemblerMenuRenderer.STATUS_SLOT
+                || slot == definition.ui().statusSlot()
                 || slot == SfxElectricAssemblerMenuRenderer.OFFSET_SLOT;
     }
 
