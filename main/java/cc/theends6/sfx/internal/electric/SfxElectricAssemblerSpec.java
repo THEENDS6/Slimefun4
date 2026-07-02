@@ -16,8 +16,12 @@ record SfxElectricAssemblerSpec(
         if (bodyMaterials == null || bodyMaterials.isEmpty()) {
             throw new IllegalArgumentException("Body materials cannot be empty.");
         }
-        headAmount = Math.max(1, headAmount);
-        bodyAmount = Math.max(1, bodyAmount);
+        if (headAmount < 1) {
+            throw new IllegalArgumentException("Head amount must be at least 1.");
+        }
+        if (bodyAmount < 1) {
+            throw new IllegalArgumentException("Body amount must be at least 1.");
+        }
         bodyMaterials = Set.copyOf(bodyMaterials);
     }
 
