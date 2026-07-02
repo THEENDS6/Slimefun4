@@ -47,7 +47,7 @@ final class SfxAutoBrewerMenuRenderer {
         for (SfxElectricMachineUiFrame frame : definition.ui().frame()) {
             for (int slot : frame.slots()) {
                 if (slot >= 0 && slot < inventory.getSize()) {
-                    inventory.setItem(slot, frame.item().toItemStack());
+                    inventory.setItem(slot, frame.item().toItemStack(localization, Map.of()));
                 }
             }
         }
@@ -60,7 +60,7 @@ final class SfxAutoBrewerMenuRenderer {
         SfxElectricMachineUiItem configured = definition.ui().item(stored <= 0 ? "auto-brewer.fuel.empty" : "auto-brewer.fuel.stored", null);
         ItemStack stack = configured == null
                 ? new ItemStack(stored <= 0 ? Material.STONE : Material.MAGMA_BLOCK)
-                : configured.toItemStack(Map.of(
+                : configured.toItemStack(localization, Map.of(
                 "fuel", stored,
                 "capacity", SfxAdvancedAutoBrewerRecipeProvider.MAX_BLAZE_FUEL_TICKS,
                 "recipe_fuel", recipeFuel,

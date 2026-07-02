@@ -3708,6 +3708,109 @@ electric-ui:
     xp-working:
       name: <yellow>收集经验中</yellow>
       lore: <gray>正在收集附近所有经验球。</gray>
+  template:
+    frame:
+      input:
+        name: '&b输入'
+        lore:
+        - '&7放入待处理物品。'
+      output:
+        name: '&6输出'
+        lore:
+        - '&7从这里取走成品。'
+    status:
+      working:
+        lore:
+        - '&7进度：&f{progress_current}&7/&f{progress_total} &8({progress_percent}%)'
+        - '&7剩余时间：&f{time_left}'
+        - ''
+        - '&7储能：&e{stored_energy}&7/&e{energy_capacity} J'
+        - '&7耗电：&e{energy_per_tick} J/t'
+      idle:
+        name: '&7闲置'
+        lore:
+        - '&7等待输入。'
+      no-power:
+        name: '&c无电力'
+        lore:
+        - '&7给机器供电后继续。'
+      output-full:
+        name: '&c输出已满'
+        lore:
+        - '&7清理输出槽后继续。'
+      no-recipe:
+        name: '&7无配方'
+        lore:
+        - '&7当前输入没有匹配配方。'
+    auto-brewer:
+      blaze-frame:
+        name: '&6烈焰粉'
+      ingredient-frame:
+        name: '&9酿造原料'
+      potion-frame:
+        name: '&a药水瓶'
+      fuel:
+        name: '&6烈焰粉'
+        empty-lore:
+        - '&7储存烈焰粉：&e{fuel} &7/ &e{capacity} &7tick(s)'
+        - '&7添加烈焰粉后才会开始酿造。'
+        stored-lore:
+        - '&7储存烈焰粉：&e{fuel} &7/ &e{capacity} &7tick(s)'
+        - '&7本配方消耗：&e{recipe_fuel} &7tick(s)，最多 &e{powders} &7个烈焰粉'
+    auto-crafter:
+      container:
+        name: '&6附加容器'
+        lore:
+        - '&7该机器直接使用下方容器。'
+      enabled:
+        name: '&a配方已启用'
+      disabled:
+        name: '&c配方已禁用'
+      recipe-button:
+        lore:
+        - '&e左键：切换配方'
+        - '&e右键：清除配方'
+        - '&7配方：&f{recipe}'
+      no-recipe:
+        name: '&e未选择配方'
+        lore:
+        - '&7手持目标物品潜行右键机器来配置。'
+      previous:
+        name: '&e上一个配方'
+      next:
+        name: '&e下一个配方'
+      page:
+        lore:
+        - '&7配方 {page} / {total}'
+      select:
+        name: '&a选择配方'
+        lore:
+        - '&e点击选择这个配方。'
+    assembler:
+      enabled:
+        name: '&a已启用'
+      disabled:
+        name: '&c已禁用'
+        lore:
+        - '&7此装配机不会开始工作。'
+        - '&7点击切换装配机状态。'
+      toggle:
+        lore:
+        - '&7点击切换装配机状态。'
+      offset:
+        name: '&b生成偏移'
+        lore:
+        - '&7当前偏移：&e{offset} &7格'
+        - '&e左键：&7+0.1'
+        - '&e右键：&7-0.1'
+        - '&7范围：-10.0 到 10.0'
+      head:
+        name: '&e头部材料'
+      body:
+        name: '&6身体材料'
+      required:
+        lore:
+        - '&7需求数量：&e{amount}'
 energy:
   regulator:
     no-network: <red>未连接到任意电力机器</red>

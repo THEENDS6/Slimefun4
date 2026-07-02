@@ -4,10 +4,10 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.ui.SfxUiItems;
 import cc.theends6.sfx.internal.util.SfxLocalization;
+import cc.theends6.sfx.internal.util.Text;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -55,14 +55,10 @@ final class SfxAutoCrafterMenuRenderer {
         for (SfxElectricMachineUiFrame frame : definition.ui().frame()) {
             for (int slot : frame.slots()) {
                 if (slot >= 0 && slot < inventory.getSize()) {
-                    inventory.setItem(slot, frame.item().toItemStack());
+                    inventory.setItem(slot, frame.item().toItemStack(localization, Map.of()));
                 }
             }
         }
-    }
-
-    private void drawRecipePreview(Inventory inventory, SfxAutoCrafterRecipeChoice choice) {
-        drawRecipePreview(null, inventory, choice);
     }
 
     private void drawRecipePreview(SfxElectricMachineDefinition definition, Inventory inventory, SfxAutoCrafterRecipeChoice choice) {
@@ -72,7 +68,7 @@ final class SfxAutoCrafterMenuRenderer {
                     ? SfxUiItems.named(org.bukkit.Material.PAPER, localization.component("electric-ui.auto-crafter.recipe.none-title", "<yellow>No Recipe Selected</yellow>"), List.of(
                     localization.component("electric-ui.auto-crafter.recipe.configure", "<gray>Sneak-right-click this machine while holding the target item to configure.</gray>")
             ))
-                    : item.toItemStack());
+                    : item.toItemStack(localization, Map.of()));
             return;
         }
         ItemStack[] inputs = choice.inputPreview();
@@ -86,46 +82,60 @@ final class SfxAutoCrafterMenuRenderer {
         String recipe = recipeKey == null || recipeKey.isBlank() ? localization.text("electric-ui.auto-crafter.recipe.none", "None") : recipeKey;
         SfxElectricMachineUiItem item = definition.ui().item(enabled ? "auto-crafter.enabled" : "auto-crafter.disabled", null);
         if (item != null) {
-            return item.toItemStack(Map.of("recipe", recipe));
+            return item.toItemStack(localization, Map.of("recipe", recipe));
         }
         org.bukkit.Material material = enabled ? org.bukkit.Material.BARRIER : org.bukkit.Material.REDSTONE_TORCH;
         String key = enabled ? "electric-ui.auto-crafter.enabled.name" : "electric-ui.auto-crafter.disabled.name";
-        String fallback = enabled ? "<green>Recipe Enabled</green>" : "<red>Recipe Disabled</red>";
-        return SfxUiItems.named(material, localization.component(key, fallback), List.of(
-                localization.component("electric-ui.auto-crafter.enabled.lore", "<yellow>Left-click: toggle recipe.</yellow>"),
-                localization.component("electric-ui.auto-crafter.recipe.clear", "<yellow>Right-click: clear recipe</yellow>"),
-                localization.component("electric-ui.auto-crafter.recipe.current", "<gray>Recipe: </gray><white>{recipe}</white>", Map.of("recipe", recipe))
+        return SfxUiItems.named(material, Text.renderFlexible(localization.requiredText(key)), List.of(
+                Text.renderFlexible(localization.requiredText("electric-ui.auto-crafter.enabled.lore")),
+                Text.renderFlexible(localization.requiredText("electric-ui.auto-crafter.recipe.clear")),
+                Text.renderFlexible(applyPlaceholders(localization.requiredText("electric-ui.auto-crafter.recipe.current"), Map.of("recipe", recipe)))
         ));
     }
 
     private ItemStack selectItem(SfxElectricMachineDefinition definition, SfxAutoCrafterRecipeChoice choice) {
-        ItemStack icon = choice == null ? definition.ui().item("auto-crafter.select", new SfxElectricMachineUiItem(org.bukkit.Material.CRAFTING_TABLE, "&a选择配方", List.of("&e点击选择这个配方。"))).toItemStack() : cloneOrNull(choice.outputPreview());
+        ItemStack icon = choice == null
+                ? configuredSelectItem(definition)
+                : cloneOrNull(choice.outputPreview());
         if (icon == null || icon.getType().isAir()) {
-            icon = definition.ui().item("auto-crafter.select", new SfxElectricMachineUiItem(org.bukkit.Material.CRAFTING_TABLE, "&a选择配方", List.of("&e点击选择这个配方。"))).toItemStack();
+            icon = configuredSelectItem(definition);
         }
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
-            meta.displayName(localization.component("electric-ui.auto-crafter.select.name", "<green>Select Recipe</green>"));
-            meta.lore(List.of(localization.component("electric-ui.auto-crafter.select.lore", "<yellow>Click to select this recipe.</yellow>")));
+            meta.displayName(Text.renderFlexible(localization.requiredText("electric-ui.auto-crafter.select.name")));
+            meta.lore(List.of(Text.renderFlexible(localization.requiredText("electric-ui.auto-crafter.select.lore"))));
             icon.setItemMeta(meta);
         }
         return icon;
     }
 
+    private ItemStack configuredSelectItem(SfxElectricMachineDefinition definition) {
+        return definition.ui().item("auto-crafter.select", new SfxElectricMachineUiItem(org.bukkit.Material.CRAFTING_TABLE, "<green>Select Recipe</green>", List.of("<yellow>Click to select this recipe.</yellow>")))
+                .toItemStack(localization, Map.of());
+    }
+
     private ItemStack pageButton(SfxElectricMachineDefinition definition, String key, int page, int total) {
-        return definition.ui().item(key, new SfxElectricMachineUiItem(org.bukkit.Material.ARROW, "&e配方", List.of("&7配方 {page} / {total}")))
-                .toItemStack(Map.of("page", page, "total", Math.max(1, total)));
+        return definition.ui().item(key, new SfxElectricMachineUiItem(org.bukkit.Material.ARROW, "<yellow>Recipe</yellow>", List.of("<gray>Recipe {page} / {total}</gray>")))
+                .toItemStack(localization, Map.of("page", page, "total", Math.max(1, total)));
     }
 
     private ItemStack chestItem(SfxElectricMachineDefinition definition, SfxElectricMachineRenderStatus status) {
         SfxElectricMachineUiItem configured = definition.ui().item(status == SfxElectricMachineRenderStatus.NO_TARGET ? "auto-crafter.container.missing" : "auto-crafter.container.ok", null);
         if (configured != null) {
-            return configured.toItemStack();
+            return configured.toItemStack(localization, Map.of());
         }
         org.bukkit.Material material = status == SfxElectricMachineRenderStatus.NO_TARGET ? org.bukkit.Material.BARRIER : org.bukkit.Material.CHEST;
-        return SfxUiItems.named(material, localization.component("electric-ui.auto-crafter.container.name", "<gold>Attached Container</gold>"), List.of(
-                localization.component("electric-ui.auto-crafter.container.lore", "<gray>This machine uses the container directly below it.</gray>")
+        return SfxUiItems.named(material, Text.renderFlexible(localization.requiredText("electric-ui.auto-crafter.container.name")), List.of(
+                Text.renderFlexible(localization.requiredText("electric-ui.auto-crafter.container.lore"))
         ));
+    }
+
+    private String applyPlaceholders(String text, Map<String, ?> placeholders) {
+        String result = text;
+        for (Map.Entry<String, ?> entry : placeholders.entrySet()) {
+            result = result.replace("{" + entry.getKey() + "}", String.valueOf(entry.getValue()));
+        }
+        return result;
     }
 
     private ItemStack cloneOrNull(ItemStack stack) {

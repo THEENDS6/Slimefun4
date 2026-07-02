@@ -4,7 +4,6 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +20,12 @@ final class SfxElectricAssemblerMenuRenderer {
     static final int[] BODY_SLOTS = {25, 34};
 
     private final SfxItems items;
+    private final SfxLocalization localization;
     private final SfxElectricMachineStatusIconRenderer statusIcons;
 
     SfxElectricAssemblerMenuRenderer(SfxItems items, SfxLocalization localization, SfxPlayerDataService profiles) {
         this.items = items;
+        this.localization = localization;
         this.statusIcons = new SfxElectricMachineStatusIconRenderer(items, localization, profiles);
     }
 
@@ -43,7 +44,7 @@ final class SfxElectricAssemblerMenuRenderer {
         inventory.clear();
         SfxElectricAssemblerSpec spec = definition.assemblerSpec();
         for (SfxElectricMachineUiFrame frame : definition.ui().frame()) {
-            SfxInventoryPainter.setSlots(inventory, frame.item().toItemStack(), frame.slots());
+            SfxInventoryPainter.setSlots(inventory, frame.item().toItemStack(localization, Map.of()), frame.slots());
         }
         if (spec != null) {
             inventory.setItem(1, displayMaterial(definition, "assembler.head.display", spec.headMaterial(), spec.headAmount(), List.of(spec.headMaterial())));
@@ -57,7 +58,7 @@ final class SfxElectricAssemblerMenuRenderer {
                 new SfxElectricMachineUiItem(enabled ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE,
                         enabled ? "<green>Enabled</green>" : "<red>Disabled</red>",
                         List.of("<gray>Click to toggle this assembler.</gray>")))
-                .toItemStack();
+                .toItemStack(localization, Map.of());
     }
 
     private ItemStack offsetItem(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
@@ -68,16 +69,16 @@ final class SfxElectricAssemblerMenuRenderer {
                         "<gray>Left-click: +0.1</gray>",
                         "<gray>Right-click: -0.1</gray>",
                         "<gray>Range: -10.0 to 10.0</gray>")))
-                .toItemStack(Map.of("offset", offset));
+                .toItemStack(localization, Map.of("offset", offset));
     }
 
     private ItemStack displayMaterial(SfxElectricMachineDefinition definition, String key, Material material, int amount, List<Material> acceptedMaterials) {
         ItemStack stack = definition.ui().item(key,
                 new SfxElectricMachineUiItem(material, "<yellow>Required Material</yellow>", List.of("<gray>Required: {amount}</gray>")))
-                .toItemStack(material, Map.of("amount", amount));
+                .toItemStack(material, localization, Map.of("amount", amount));
         if (acceptedMaterials.size() > 1) {
             List<Component> lore = stack.lore() == null ? new ArrayList<>() : new ArrayList<>(stack.lore());
-            lore.add(Text.renderFlexible("&7可用材料："));
+            lore.add(localization.component("configurable-ui.assembler.accepted.lore", "<gray>Accepted materials:</gray>"));
             for (Material accepted : acceptedMaterials) {
                 lore.add(Component.text(" - ").append(Component.translatable(accepted.translationKey())));
             }
