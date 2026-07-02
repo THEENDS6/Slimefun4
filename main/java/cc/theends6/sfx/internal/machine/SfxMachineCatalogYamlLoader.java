@@ -96,8 +96,8 @@ public final class SfxMachineCatalogYamlLoader {
                 .category(category)
                 .inputSlots(integerList(section.getList("input-slots")))
                 .outputSlots(integerList(section.getList("output-slots")))
-                .statusSlot(section.getInt("status-slot", -1))
-                .tickInterval(Math.max(1, section.getInt("tick-interval", 1)))
+                .statusSlot(requiredInt(section, "status-slot"))
+                .tickInterval(Math.max(1, requiredInt(section, "tick-interval")))
                 .tags(tags);
 
         Set<SfxMachineCapability> capabilities = parseCapabilities(section.getList("capabilities"));
@@ -154,6 +154,13 @@ public final class SfxMachineCatalogYamlLoader {
             throw new IllegalArgumentException("machine catalog field is required: " + path);
         }
         return value;
+    }
+
+    private int requiredInt(ConfigurationSection section, String path) {
+        if (!section.contains(path)) {
+            throw new IllegalArgumentException("machine catalog field is required: " + path);
+        }
+        return section.getInt(path);
     }
 
     private Set<SfxMachineCapability> parseCapabilities(List<?> raw) {

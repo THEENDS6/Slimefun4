@@ -177,6 +177,14 @@ tasks.register('validateSfxMachineYaml') {
         def electricRecipeFile = layout.projectDirectory.file('main/resources/content/machines/electric-recipes.yml').asFile
         def configurableFile = layout.projectDirectory.file('main/resources/content/machines/configurable-machines.yml').asFile
         def profilesFile = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java').asFile
+        def catalogLines = catalogFile.readLines('UTF-8')
+        def firstCatalogContent = catalogLines.find { line ->
+            def trimmed = line.trim()
+            trimmed && !trimmed.startsWith('#')
+        }
+        if (firstCatalogContent != 'machines:') {
+            throw new GradleException("Machine catalog YAML must start with a machines root section.")
+        }
         def enumMatcher = profilesFile.getText('UTF-8') =~ /private enum Profile\s*\{([\s\S]*?)\n\s*\}/
         if (!enumMatcher.find()) {
             throw new GradleException('Cannot locate SfxMachineSpecialProfiles.Profile enum.')
@@ -187,7 +195,7 @@ tasks.register('validateSfxMachineYaml') {
                 .findAll { it }
                 .toSet()
         def declaredProfiles = []
-        catalogFile.eachLine('UTF-8') { line ->
+        catalogLines.each { line ->
             def matcher = line =~ /^\s*profile:\s*([A-Za-z0-9_:-]+)\s*$/
             if (matcher.matches()) {
                 declaredProfiles << matcher.group(1).trim().replace('-', '_').replace(':', '_').toUpperCase(Locale.ROOT)
@@ -206,7 +214,7 @@ tasks.register('validateSfxMachineYaml') {
                 return
             }
             catalogCount++
-            ['category', 'display-name', 'tags'].each { field ->
+            ['category', 'display-name', 'status-slot', 'tick-interval', 'tags'].each { field ->
                 if (!machine.fields.contains(field)) {
                     catalogViolations << "machine catalog ${machine.id} missing ${field}"
                 }
@@ -222,7 +230,7 @@ tasks.register('validateSfxMachineYaml') {
         def flushCatalogMachine = {
             validateCatalogMachine(currentCatalogMachine)
         }
-        catalogFile.eachLine('UTF-8') { line ->
+        catalogLines.each { line ->
             def machineMatch = line =~ /^  (sf:[A-Za-z0-9_:-]+):\s*$/
             if (machineMatch.matches()) {
                 flushCatalogMachine()
