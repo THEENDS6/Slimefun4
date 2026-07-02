@@ -40,7 +40,7 @@ final class SfxElectricMachineDefinitionConfig {
         YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
-            String message = "No machines section in " + RESOURCE_PATH + "; electric machines will use code defaults.";
+            String message = "No machines section in " + RESOURCE_PATH + "; electric machines cannot be registered from compiled content.";
             if (strict) {
                 throw new IllegalStateException(message);
             }
@@ -59,61 +59,79 @@ final class SfxElectricMachineDefinitionConfig {
                 if (strict) {
                     throw new IllegalStateException("Invalid electric machine YAML entry " + id, ex);
                 }
-                plugin.getLogger().log(Level.WARNING, "Invalid electric machine YAML entry " + id + "; keeping Java defaults for this machine.", ex);
+                plugin.getLogger().log(Level.WARNING, "Invalid electric machine YAML entry " + id + "; this compiled entry will not be available.", ex);
             }
         }
         SfxValidationDiagnostics.log(plugin, "machine-yaml", "electric machine yaml entries=" + parsed.size());
         return new SfxElectricMachineDefinitionConfig(plugin, parsed);
     }
 
-    SfxElectricMachineDefinition apply(SfxElectricMachineDefinition fallback) {
-        Entry entry = selectEntry(fallback);
-        if (entry == null) {
-            throw new IllegalStateException("Missing compiled electric machine definition for " + fallback.id());
+    SfxElectricMachineDefinition create(String id, SfxElectricRecipeProvider recipeProvider) {
+        return create(id, id, recipeProvider);
+    }
+
+    SfxElectricMachineDefinition create(String id, String compiledEntryId, SfxElectricRecipeProvider recipeProvider) {
+        if (id == null || id.isBlank()) {
+            throw new IllegalArgumentException("Electric machine id is required.");
         }
-        String nameKey = requireString(fallback.id(), "name-key", entry.nameKey);
-        int speed = requireInt(fallback.id(), "speed", entry.speed);
-        int energyCapacity = requireInt(fallback.id(), "energy.capacity", entry.energyCapacity);
-        int energyConsumption = requireInt(fallback.id(), "energy.consumption-per-tick", entry.energyConsumptionPerTick);
-        Material progressMaterial = requireValue(fallback.id(), "progress-material", entry.progressMaterial);
+        if (recipeProvider == null) {
+            throw new IllegalArgumentException("Electric machine " + id + " requires a recipe provider.");
+        }
+        String entryId = compiledEntryId == null || compiledEntryId.isBlank() ? id : compiledEntryId.trim();
+        Entry entry = selectEntry(entryId);
+        if (entry == null) {
+            throw new IllegalStateException("Missing compiled electric machine definition for " + entryId + " while registering " + id);
+        }
+        String nameKey = requireString(entryId, "name-key", entry.nameKey);
+        int speed = requireInt(entryId, "speed", entry.speed);
+        int energyCapacity = requireInt(entryId, "energy.capacity", entry.energyCapacity);
+        int energyConsumption = requireInt(entryId, "energy.consumption-per-tick", entry.energyConsumptionPerTick);
+        Material progressMaterial = requireValue(entryId, "progress-material", entry.progressMaterial);
         int[] inputSlots = requireSlotsFromUi(entry, "input");
         int[] outputSlots = requireSlotsFromUi(entry, "output");
-        assertSameSlots(fallback.id(), "input", entry.inputSlots, inputSlots);
-        assertSameSlots(fallback.id(), "output", entry.outputSlots, outputSlots);
-        Set<String> functionTags = requireFunctionTags(fallback.id(), entry);
+        assertSameSlots(entryId, "input", entry.inputSlots, inputSlots);
+        assertSameSlots(entryId, "output", entry.outputSlots, outputSlots);
+        Set<String> functionTags = requireFunctionTags(entryId, entry);
         if (entry.ui == null) {
-            throw new IllegalStateException("Missing compiled UI definition for electric machine " + fallback.id());
+            throw new IllegalStateException("Missing compiled UI definition for electric machine " + entryId);
         }
         SfxElectricMachineUiDefinition ui = entry.ui;
-        assertStatusSlot(fallback.id(), ui);
-        assertStatusTemplates(fallback.id(), ui);
-        assertRequiredUiItems(fallback.id(), functionTags, ui);
+        assertStatusSlot(entryId, ui);
+        assertStatusTemplates(entryId, ui);
+        assertRequiredUiItems(entryId, functionTags, ui);
         SfxElectricAssemblerSpec assemblerSpec = entry.assemblerSpec;
         if (functionTags.contains("assembler") && assemblerSpec == null) {
-            throw new IllegalStateException("Missing compiled assembler spec for electric machine " + fallback.id());
+            throw new IllegalStateException("Missing compiled assembler spec for electric machine " + entryId);
         }
         return new SfxElectricMachineDefinition(
-                fallback.id(),
+                id.trim(),
                 nameKey,
                 speed,
                 energyCapacity,
                 energyConsumption,
                 progressMaterial,
-                fallback.recipeProvider(),
+                recipeProvider,
                 inputSlots,
                 outputSlots,
-                fallback.compiledEntryId(),
+                entryId,
                 functionTags,
                 ui,
                 assemblerSpec);
     }
 
-    private Entry selectEntry(SfxElectricMachineDefinition fallback) {
-        Entry variant = entries.get(fallback.compiledEntryId());
-        if (variant != null) {
-            return variant;
+    SfxElectricAssemblerSpec assemblerSpec(String compiledEntryId) {
+        Entry entry = selectEntry(compiledEntryId);
+        if (entry == null) {
+            throw new IllegalStateException("Missing compiled electric machine definition for " + compiledEntryId);
         }
-        return entries.get(fallback.id());
+        if (entry.assemblerSpec == null) {
+            throw new IllegalStateException("Missing compiled assembler spec for electric machine " + compiledEntryId);
+        }
+        return entry.assemblerSpec;
+    }
+
+    private Entry selectEntry(String compiledEntryId) {
+        return entries.get(compiledEntryId);
     }
 
     private static Set<String> requireFunctionTags(String machineId, Entry entry) {
@@ -547,7 +565,7 @@ final class SfxElectricMachineDefinitionConfig {
             return null;
         }
         Material head = parseMaterial(section.getString("head-material", null));
-        int headAmount = Math.max(0, section.getInt("head-amount", 0));
+        int headAmount = requiredPositiveInt(section, "head-amount");
         Set<Material> bodies = new LinkedHashSet<>();
         for (Object raw : section.getList("body-materials", List.of())) {
             Material material = parseMaterial(String.valueOf(raw));
@@ -555,10 +573,21 @@ final class SfxElectricMachineDefinitionConfig {
                 bodies.add(material);
             }
         }
-        int bodyAmount = Math.max(0, section.getInt("body-amount", 0));
-        if (head == null || bodies.isEmpty() || headAmount <= 0 || bodyAmount <= 0) {
-            throw new IllegalArgumentException("assembler requires head-material/head-amount/body-materials/body-amount");
+        int bodyAmount = requiredPositiveInt(section, "body-amount");
+        if (head == null || bodies.isEmpty()) {
+            throw new IllegalArgumentException("assembler requires head-material/body-materials");
         }
         return new SfxElectricAssemblerSpec(head, headAmount, bodies, bodyAmount);
+    }
+
+    private static int requiredPositiveInt(ConfigurationSection section, String path) {
+        if (section == null || !section.isInt(path)) {
+            throw new IllegalArgumentException("assembler requires " + path);
+        }
+        int value = section.getInt(path);
+        if (value < 1) {
+            throw new IllegalArgumentException("assembler " + path + " must be at least 1");
+        }
+        return value;
     }
 }

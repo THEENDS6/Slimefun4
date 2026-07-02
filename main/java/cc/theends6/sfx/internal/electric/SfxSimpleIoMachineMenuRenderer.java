@@ -8,9 +8,6 @@ import java.util.UUID;
 import org.bukkit.inventory.Inventory;
 
 final class SfxSimpleIoMachineMenuRenderer {
-    private static final int STATUS_SLOT = 4;
-    private static final int[] IO_SLOTS = SfxElectricMachineDefinition.SIMPLE_IO_SLOTS;
-
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxElectricMachineStatusIconRenderer statusIcons;
