@@ -73,11 +73,11 @@ final class SfxElectricMachineTickController {
                 cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard.proceed(complete, frameworkAttributes, SfxMachinePhase.ON_COMPLETE.name());
             }
             if (session != null && service.shouldRenderSession(session, customResult.status())) {
-                SfxElectricRecipe renderRecipe = definition.menuStyle() == SfxElectricMachineMenuStyle.SIMPLE_IO
-                        || definition.menuStyle() == SfxElectricMachineMenuStyle.GEO_MINER
-                        || definition.menuStyle() == SfxElectricMachineMenuStyle.ASSEMBLER
-                        || definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_BREWER
-                        || definition.menuStyle() == SfxElectricMachineMenuStyle.AUTO_CRAFTER
+                SfxElectricRecipe renderRecipe = definition.hasFunction("simple-io")
+                        || definition.hasFunction("geo-miner")
+                        || definition.hasFunction("assembler")
+                        || definition.hasFunction("auto-brewer")
+                        || definition.hasFunction("auto-crafter")
                         ? null
                         : service.recipeProcessor.activeRecipe(definition, state);
                 service.render(session, definition, session.inventory(), state, renderRecipe, customResult.status());

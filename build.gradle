@@ -213,6 +213,70 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     }
 }
 
+tasks.register('validateSfxCompiledContent') {
+    group = 'verification'
+    description = 'Validates compiled SFX content is explicit runtime data without template or layout fallback tokens.'
+    dependsOn 'validateSfxTemplateCompile'
+    inputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
+    doLast {
+        def root = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
+        def compiledFiles = fileTree(root) {
+            include '**/*.yml'
+            exclude '_source-map.yml'
+        }.files
+        def forbiddenTokens = [
+                'menu-style:',
+                '@cf',
+                '@copyfrom',
+                '@define',
+                '@io',
+                '@isoutput',
+                '@it',
+                '@istemplate',
+                '@ot',
+                '@outputtarget',
+                '${',
+                'tag-fuels'
+        ]
+        def violations = []
+        compiledFiles.each { file ->
+            def text = file.getText('UTF-8')
+            forbiddenTokens.each { token ->
+                if (text.contains(token)) {
+                    violations << "${root.toPath().relativize(file.toPath())}: contains ${token}"
+                }
+            }
+            if ((text =~ /(?m)^\s*layout\s*:/).find()) {
+                violations << "${root.toPath().relativize(file.toPath())}: contains runtime layout token"
+            }
+        }
+        def recipeFiles = fileTree(new File(root, 'content/recipes')) {
+            include '**/*.yml'
+        }.files
+        if (recipeFiles.size() != 547) {
+            violations << "compiled recipe file count expected 547, got ${recipeFiles.size()}"
+        }
+        def electricFiles = fileTree(new File(root, 'content/machines/electric-machines/machines')) {
+            include '**/*.yml'
+        }.files
+        if (electricFiles.size() != 66) {
+            violations << "compiled electric machine file count expected 66, got ${electricFiles.size()}"
+        }
+        electricFiles.each { file ->
+            def text = file.getText('UTF-8')
+            ['name-key:', 'functions:', 'ui:', 'inventory-size:', 'status-slot:', 'frame:', 'items:', 'status:'].each { token ->
+                if (!text.contains(token)) {
+                    violations << "${root.toPath().relativize(file.toPath())}: missing ${token}"
+                }
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
+        }
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s).")
+    }
+}
+
 tasks.named('build') {
     finalizedBy 'exportPluginArtifacts'
 }
@@ -220,6 +284,7 @@ tasks.named('build') {
 tasks.named('check') {
     dependsOn 'validateSfxMachineYaml'
     dependsOn 'validateSfxTemplateCompile'
+    dependsOn 'validateSfxCompiledContent'
 }
 
 tasks.register('prepareRuntimeDirs') {

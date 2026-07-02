@@ -64,7 +64,7 @@ final class SfxElectricMachineDefinitionConfig {
     SfxElectricMachineDefinition apply(SfxElectricMachineDefinition fallback) {
         Entry entry = selectEntry(fallback);
         if (entry == null) {
-            return fallback;
+            throw new IllegalStateException("Missing compiled electric machine definition for " + fallback.id());
         }
         String nameKey = entry.nameKey == null || entry.nameKey.isBlank() ? itemNameKey(fallback.id()) : entry.nameKey;
         int speed = entry.speed == null ? fallback.speed() : entry.speed;
@@ -73,9 +73,12 @@ final class SfxElectricMachineDefinitionConfig {
         Material progressMaterial = entry.progressMaterial == null ? fallback.progressMaterial() : entry.progressMaterial;
         int[] inputSlots = entry.inputSlots == null ? fallback.inputSlots() : entry.inputSlots;
         int[] outputSlots = entry.outputSlots == null ? fallback.outputSlots() : entry.outputSlots;
-        SfxElectricMachineMenuStyle menuStyle = entry.uiLayout == null ? fallback.menuStyle() : entry.uiLayout;
+        SfxElectricMachineMenuStyle menuStyle = fallback.menuStyle();
         Set<String> functionTags = entry.functionTags == null ? fallback.functionTags() : entry.functionTags;
-        SfxElectricMachineUiDefinition ui = entry.ui == null ? fallback.ui() : entry.ui;
+        if (entry.ui == null) {
+            throw new IllegalStateException("Missing compiled UI definition for electric machine " + fallback.id());
+        }
+        SfxElectricMachineUiDefinition ui = entry.ui;
         SfxElectricAssemblerSpec assemblerSpec = entry.assemblerSpec == null ? fallback.assemblerSpec() : entry.assemblerSpec;
         return new SfxElectricMachineDefinition(
                 fallback.id(),
@@ -127,7 +130,6 @@ final class SfxElectricMachineDefinitionConfig {
             Material progressMaterial,
             int[] inputSlots,
             int[] outputSlots,
-            SfxElectricMachineMenuStyle uiLayout,
             Set<String> functionTags,
             SfxElectricMachineUiDefinition ui,
             SfxElectricAssemblerSpec assemblerSpec
@@ -143,9 +145,8 @@ final class SfxElectricMachineDefinitionConfig {
                     parseMaterial(section.getString("progress-material", null)),
                     parseSlots(slots == null ? section.getList("input-slots") : slots.getList("input")),
                     parseSlots(slots == null ? section.getList("output-slots") : slots.getList("output")),
-                    parseUiLayout(section),
                     parseFunctionTags(section),
-                    parseUi(section.getConfigurationSection("ui"), parseUiLayout(section)),
+                    parseUi(section.getConfigurationSection("ui")),
                     parseAssembler(section.getConfigurationSection("assembler")));
         }
     }
@@ -172,21 +173,6 @@ final class SfxElectricMachineDefinitionConfig {
         return material;
     }
 
-    private static SfxElectricMachineMenuStyle parseMenuStyle(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return null;
-        }
-        return SfxElectricMachineMenuStyle.valueOf(raw.trim().replace('-', '_').toUpperCase(Locale.ROOT));
-    }
-
-    private static SfxElectricMachineMenuStyle parseUiLayout(ConfigurationSection section) {
-        String raw = section == null ? null : section.getString("ui.layout", null);
-        if (raw == null || raw.isBlank()) {
-            raw = section == null ? null : section.getString("menu-style", null);
-        }
-        return parseMenuStyle(raw);
-    }
-
     private static Set<String> parseFunctionTags(ConfigurationSection section) {
         if (section == null || !section.contains("functions")) {
             return null;
@@ -205,13 +191,12 @@ final class SfxElectricMachineDefinitionConfig {
         return "items." + baseId.replace(':', '.').toLowerCase(Locale.ROOT) + ".name";
     }
 
-    private static SfxElectricMachineUiDefinition parseUi(ConfigurationSection section, SfxElectricMachineMenuStyle menuStyle) {
+    private static SfxElectricMachineUiDefinition parseUi(ConfigurationSection section) {
         if (section == null) {
             return null;
         }
-        SfxElectricMachineUiDefinition base = SfxElectricMachineUiDefinition.forStyle(menuStyle == null ? SfxElectricMachineMenuStyle.STANDARD : menuStyle);
-        int inventorySize = optionalInt(section, "inventory-size", base.inventorySize());
-        int statusSlot = optionalInt(section, "status-slot", base.statusSlot());
+        int inventorySize = optionalInt(section, "inventory-size", 0);
+        int statusSlot = optionalInt(section, "status-slot", -1);
         List<SfxElectricMachineUiFrame> frames = new ArrayList<>();
         for (Object rawFrame : section.getList("frame", List.of())) {
             if (rawFrame instanceof Map<?, ?> map) {
@@ -221,12 +206,12 @@ final class SfxElectricMachineDefinitionConfig {
         if (frames.isEmpty() && section.isConfigurationSection("border")) {
             frames.add(new SfxElectricMachineUiFrame(parseSlots(section.getList("border.slots", List.of())), parseUiItem(section.getConfigurationSection("border"))));
         }
-        Map<String, SfxElectricMachineUiItem> items = new LinkedHashMap<>(base.items());
+        Map<String, SfxElectricMachineUiItem> items = new LinkedHashMap<>();
         ConfigurationSection itemSection = section.getConfigurationSection("items");
         if (itemSection != null) {
             collectUiItems(items, "", itemSection);
         }
-        Map<String, SfxElectricMachineStatusUiTemplate> status = new LinkedHashMap<>(base.status());
+        Map<String, SfxElectricMachineStatusUiTemplate> status = new LinkedHashMap<>();
         ConfigurationSection statusSection = section.getConfigurationSection("status");
         if (statusSection != null) {
             for (String key : statusSection.getKeys(false)) {
@@ -236,7 +221,7 @@ final class SfxElectricMachineDefinitionConfig {
                 }
             }
         }
-        return new SfxElectricMachineUiDefinition(inventorySize, statusSlot, frames.isEmpty() ? base.frame() : frames, items, status);
+        return new SfxElectricMachineUiDefinition(inventorySize, statusSlot, frames, items, status);
     }
 
     private static SfxElectricMachineUiFrame parseUiFrame(Map<?, ?> map) {
