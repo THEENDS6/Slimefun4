@@ -3,14 +3,11 @@ package cc.theends6.sfx.internal.energy;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
-import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
-import cc.theends6.sfx.internal.ui.SfxUiItems;
-import java.util.List;
 import java.util.Map;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
@@ -20,13 +17,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 final class SfxEnergyGeneratorMenuRenderer {
-    private static final int DISPLAY_SLOT = 22;
-    private static final int[] INPUT_SLOTS = {19, 20};
-    private static final int[] OUTPUT_SLOTS = {24, 25};
-    private static final int[] BORDER = {0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 31, 36, 37, 38, 39, 40, 41, 42, 43, 44};
-    private static final int[] BORDER_IN = {9, 10, 11, 12, 18, 21, 27, 28, 29, 30};
-    private static final int[] BORDER_OUT = {14, 15, 16, 17, 23, 26, 32, 33, 34, 35};
-
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxMachineStatusIconRenderer statusIcons;
@@ -42,43 +32,43 @@ final class SfxEnergyGeneratorMenuRenderer {
     }
 
     void render(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status) {
-        fillInventoryFrame(inventory);
-        inventory.setItem(DISPLAY_SLOT, progressIcon(definition, state, status));
-        for (int i = 0; i < INPUT_SLOTS.length; i++) {
-            inventory.setItem(INPUT_SLOTS[i], state.input(i) == null ? null : state.input(i).toItemStack(items));
+        fillInventoryFrame(definition, inventory);
+        inventory.setItem(definition.ui().statusSlot(), progressIcon(definition, state, status));
+        int[] inputSlots = definition.ui().inputSlots();
+        for (int i = 0; i < inputSlots.length; i++) {
+            inventory.setItem(inputSlots[i], state.input(i) == null ? null : state.input(i).toItemStack(items));
         }
-        for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
-            inventory.setItem(OUTPUT_SLOTS[i], state.output(i) == null ? null : state.output(i).toItemStack(items));
+        int[] outputSlots = definition.ui().outputSlots();
+        for (int i = 0; i < outputSlots.length; i++) {
+            inventory.setItem(outputSlots[i], state.output(i) == null ? null : state.output(i).toItemStack(items));
         }
     }
 
     void renderStatusOnly(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status) {
-        fillInventoryFrame(inventory);
-        inventory.setItem(DISPLAY_SLOT, progressIcon(definition, state, status));
+        fillInventoryFrame(definition, inventory);
+        inventory.setItem(definition.ui().statusSlot(), progressIcon(definition, state, status));
     }
 
-    void renderStorageSlots(Inventory inventory, SfxEnergyNodeState state) {
-        for (int i = 0; i < INPUT_SLOTS.length; i++) {
-            inventory.setItem(INPUT_SLOTS[i], state.input(i) == null ? null : state.input(i).toItemStack(items));
+    void renderStorageSlots(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state) {
+        int[] inputSlots = definition.ui().inputSlots();
+        for (int i = 0; i < inputSlots.length; i++) {
+            inventory.setItem(inputSlots[i], state.input(i) == null ? null : state.input(i).toItemStack(items));
         }
-        for (int i = 0; i < OUTPUT_SLOTS.length; i++) {
-            inventory.setItem(OUTPUT_SLOTS[i], state.output(i) == null ? null : state.output(i).toItemStack(items));
+        int[] outputSlots = definition.ui().outputSlots();
+        for (int i = 0; i < outputSlots.length; i++) {
+            inventory.setItem(outputSlots[i], state.output(i) == null ? null : state.output(i).toItemStack(items));
         }
     }
 
-    private void fillInventoryFrame(Inventory inventory) {
-        ItemStack filler = namedItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "), List.of());
-        ItemStack inputBorder = namedItem(
-                Material.CYAN_STAINED_GLASS_PANE,
-                localization.component("electric-ui.input.name", "<aqua>Input</aqua>"),
-                List.of(localization.component("electric-ui.input.lore", "<gray>Place items here.</gray>")));
-        ItemStack outputBorder = namedItem(
-                Material.ORANGE_STAINED_GLASS_PANE,
-                localization.component("electric-ui.output.name", "<gold>Output</gold>"),
-                List.of(localization.component("electric-ui.output.lore", "<gray>Take finished items here.</gray>")));
-        SfxInventoryPainter.setSlots(inventory, filler, BORDER);
-        SfxInventoryPainter.setSlots(inventory, inputBorder, BORDER_IN);
-        SfxInventoryPainter.setSlots(inventory, outputBorder, BORDER_OUT);
+    private void fillInventoryFrame(SfxEnergyComponentDefinition definition, Inventory inventory) {
+        for (SfxEnergyComponentUiFrame frame : definition.ui().frame()) {
+            ItemStack item = frame.item().toItemStack(localization);
+            for (int slot : frame.slots()) {
+                if (slot >= 0 && slot < inventory.getSize()) {
+                    inventory.setItem(slot, item);
+                }
+            }
+        }
     }
 
     private int displayedEnergy(SfxEnergyNodeState state, SfxEnergyComponentDefinition definition) {
@@ -137,7 +127,7 @@ final class SfxEnergyGeneratorMenuRenderer {
     }
 
     private ItemStack chargingBenchIcon(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
-        ChargingBenchDisplay display = chargingBenchDisplay(state);
+        ChargingBenchDisplay display = chargingBenchDisplay(definition, state);
         SfxMachineStatusView.Builder builder = SfxMachineStatusView.builder(display.status())
                 .name(localization.component("energy.charging-bench.name", "<yellow>Charging Bench</yellow>"));
         if (display.charging()) {
@@ -160,8 +150,8 @@ final class SfxEnergyGeneratorMenuRenderer {
         return statusIcons.render(builder.build());
     }
 
-    private ChargingBenchDisplay chargingBenchDisplay(SfxEnergyNodeState state) {
-        for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
+    private ChargingBenchDisplay chargingBenchDisplay(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+        for (int slot = 0; slot < definition.ui().inputSlots().length; slot++) {
             SfxElectricStack input = state.input(slot);
             if (input == null) {
                 continue;
@@ -222,9 +212,5 @@ final class SfxEnergyGeneratorMenuRenderer {
     }
 
     private record ChargingBenchDisplay(int current, int total, SfxMachineStatusKey status, boolean charging, Component statusLore) {
-    }
-
-    private ItemStack namedItem(Material material, Component name, List<Component> lore) {
-        return SfxUiItems.named(material, name, lore);
     }
 }

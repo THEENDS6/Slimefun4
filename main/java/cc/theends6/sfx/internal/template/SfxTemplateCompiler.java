@@ -609,6 +609,14 @@ public final class SfxTemplateCompiler {
                 }
             }
         }
+        Object componentsRaw = wrapped.get("components");
+        if (componentsRaw instanceof Map<?, ?> rawComponents) {
+            for (Object value : rawComponents.values()) {
+                if (value instanceof Map<?, ?> rawComponent) {
+                    enrichElectricMachineUiSlots((Map<String, Object>) rawComponent);
+                }
+            }
+        }
         Object recipesRaw = wrapped.get("recipes");
         if (recipesRaw instanceof Map<?, ?> rawRecipes) {
             for (Map.Entry<?, ?> entry : rawRecipes.entrySet()) {
@@ -771,6 +779,7 @@ public final class SfxTemplateCompiler {
         int inventorySize = intValue(ui.get("inventory-size"), 0);
         if (inventorySize <= 0) {
             ui.putIfAbsent("slots", new LinkedHashMap<String, Object>());
+            machine.remove("slots");
             return;
         }
         Map<String, Object> slotDefinitions = new LinkedHashMap<>();
@@ -819,6 +828,7 @@ public final class SfxTemplateCompiler {
             putSlot(slotDefinitions, inventorySize, statusSlot, definition);
         }
         applySpecialElectricUiSlots(machine, slotDefinitions, inventorySize);
+        machine.remove("slots");
         ui.put("slots", slotDefinitions);
         completeElectricUiDefaults(ui);
     }

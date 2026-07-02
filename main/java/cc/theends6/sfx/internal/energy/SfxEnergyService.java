@@ -54,8 +54,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxEnergyService implements Listener {
     private static final int RANGE = 6;
-    private static final int[] INPUT_SLOTS = {19, 20};
-    private static final int[] OUTPUT_SLOTS = {24, 25};
     private static final long FLUSH_INTERVAL = 20L;
 
     final JavaPlugin plugin;
@@ -264,10 +262,10 @@ public final class SfxEnergyService implements Listener {
             state = SfxEnergyNodeState.empty();
         }
         SfxEnergyComponentDefinition definition = definitions.get(typeId);
-        for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
+        for (int slot = 0; slot < inputSlotCount(definition); slot++) {
             dropStack(block, state.input(slot));
         }
-        for (int slot = 0; slot < OUTPUT_SLOTS.length; slot++) {
+        for (int slot = 0; slot < outputSlotCount(definition); slot++) {
             dropStack(block, state.output(slot));
         }
         if (definition != null && state.hasActiveFuel()) {
@@ -593,7 +591,7 @@ public final class SfxEnergyService implements Listener {
             boolean isDaytime = !world.hasStorm() && !world.isThundering() && (time < 12300 || time > 23850);
             return isDaytime ? definition.energyPerTick() : definition.nightEnergyPerTick();
         }
-        if (state.hasPendingOutput() && findOutputSlot(state, state.pendingOutput()) == null) {
+        if (state.hasPendingOutput() && findOutputSlot(definition, state, state.pendingOutput()) == null) {
             return 0;
         }
         if (state.hasActiveFuel()) {
@@ -603,7 +601,7 @@ public final class SfxEnergyService implements Listener {
         if (fuel == null) {
             return 0;
         }
-        if (fuel.output() != null && findOutputSlot(state, fuel.output()) == null) {
+        if (fuel.output() != null && findOutputSlot(definition, state, fuel.output()) == null) {
             return 0;
         }
         return definition.energyPerTick();
@@ -818,7 +816,7 @@ public final class SfxEnergyService implements Listener {
     int requestedChargerEnergy(List<SfxEnergyNodeRef> chargerRefs) {
         int total = 0;
         for (SfxEnergyNodeRef charger : chargerRefs) {
-            if (!canChargeAnyInput(charger.state())) {
+            if (!canChargeAnyInput(charger.definition(), charger.state())) {
                 continue;
             }
             int demand = Math.max(0, charger.definition().capacity() - charger.state().storedEnergy());
@@ -827,8 +825,8 @@ public final class SfxEnergyService implements Listener {
         return total;
     }
 
-    boolean canChargeAnyInput(SfxEnergyNodeState state) {
-        for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
+    boolean canChargeAnyInput(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+        for (int slot = 0; slot < inputSlotCount(definition); slot++) {
             SfxElectricStack input = state.input(slot);
             if (input == null || input.amount() != 1) {
                 continue;
@@ -840,7 +838,7 @@ public final class SfxEnergyService implements Listener {
             if (rechargeableItems.charge(item) < rechargeableItems.capacity(item)) {
                 return true;
             }
-            if (findOutputSlot(state, SfxElectricStack.fromItemStack(items, item)) != null) {
+            if (findOutputSlot(definition, state, SfxElectricStack.fromItemStack(items, item)) != null) {
                 return true;
             }
         }
@@ -849,7 +847,7 @@ public final class SfxEnergyService implements Listener {
 
     void tickChargingBench(SfxEnergyNodeRef charger) {
         SfxEnergyNodeState state = charger.state();
-        for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
+        for (int slot = 0; slot < inputSlotCount(charger.definition()); slot++) {
             SfxElectricStack input = state.input(slot);
             if (input == null || input.amount() != 1) {
                 continue;
@@ -918,7 +916,7 @@ public final class SfxEnergyService implements Listener {
     }
 
     private void moveChargingBenchInputToOutput(SfxEnergyNodeRef charger, int inputSlot, SfxElectricStack stack) {
-        Integer outputSlot = findOutputSlot(charger.state(), stack);
+        Integer outputSlot = findOutputSlot(charger.definition(), charger.state(), stack);
         if (outputSlot == null) {
             return;
         }
@@ -948,7 +946,7 @@ public final class SfxEnergyService implements Listener {
         }
 
         if (state.hasPendingOutput()) {
-            Integer outputSlot = findOutputSlot(state, state.pendingOutput());
+            Integer outputSlot = findOutputSlot(definition, state, state.pendingOutput());
             if (outputSlot != null) {
                 pushOutput(state, outputSlot, state.pendingOutput());
                 state.pendingOutput(null);
@@ -963,7 +961,7 @@ public final class SfxEnergyService implements Listener {
             if (fuel == null) {
                 return 0;
             }
-            if (fuel.output() != null && findOutputSlot(state, fuel.output()) == null) {
+            if (fuel.output() != null && findOutputSlot(definition, state, fuel.output()) == null) {
                 return 0;
             }
             consumeInput(state, fuel.inputSlot(), fuel.input().amount());
@@ -971,7 +969,7 @@ public final class SfxEnergyService implements Listener {
             state.fuelProgressTenths(0);
             state.fuelTotalTenths(fuel.totalTenths());
             if (shouldReturnFuelOutputImmediately(definition, fuel.output())) {
-                Integer outputSlot = findOutputSlot(state, fuel.output());
+                Integer outputSlot = findOutputSlot(definition, state, fuel.output());
                 if (outputSlot != null) {
                     pushOutput(state, outputSlot, fuel.output());
                 }
@@ -990,7 +988,7 @@ public final class SfxEnergyService implements Listener {
             state.clearFuelOperation();
             SfxElectricStack completedOutput = fuelOutput(definition, completedFuelKey);
             if (completedOutput != null && !shouldReturnFuelOutputImmediately(definition, completedOutput)) {
-                Integer outputSlot = findOutputSlot(state, completedOutput);
+                Integer outputSlot = findOutputSlot(definition, state, completedOutput);
                 if (outputSlot != null) {
                     pushOutput(state, outputSlot, completedOutput);
                 } else {
@@ -1003,7 +1001,7 @@ public final class SfxEnergyService implements Listener {
     }
 
     SfxEnergyFuelMatch findFuelMatch(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
-        for (int slot = 0; slot < INPUT_SLOTS.length; slot++) {
+        for (int slot = 0; slot < inputSlotCount(definition); slot++) {
             SfxElectricStack input = state.input(slot);
             if (input == null) {
                 continue;
@@ -1133,19 +1131,27 @@ public final class SfxEnergyService implements Listener {
         return consumed;
     }
 
-    Integer findOutputSlot(SfxEnergyNodeState state, SfxElectricStack output) {
-        for (int slot = 0; slot < OUTPUT_SLOTS.length; slot++) {
+    Integer findOutputSlot(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, SfxElectricStack output) {
+        for (int slot = 0; slot < outputSlotCount(definition); slot++) {
             SfxElectricStack current = state.output(slot);
             if (current != null && output.canMerge(current, items)) {
                 return slot;
             }
         }
-        for (int slot = 0; slot < OUTPUT_SLOTS.length; slot++) {
+        for (int slot = 0; slot < outputSlotCount(definition); slot++) {
             if (state.output(slot) == null) {
                 return slot;
             }
         }
         return null;
+    }
+
+    private int inputSlotCount(SfxEnergyComponentDefinition definition) {
+        return definition == null ? 0 : definition.ui().inputSlots().length;
+    }
+
+    private int outputSlotCount(SfxEnergyComponentDefinition definition) {
+        return definition == null ? 0 : definition.ui().outputSlots().length;
     }
 
     private void pushOutput(SfxEnergyNodeState state, int slot, SfxElectricStack output) {
