@@ -892,7 +892,7 @@ public final class SfxElectricMachineService implements Listener {
 
         SfxElectricMachineState state = currentState(instance.instanceId(), instance);
         Component title = localization.itemName(definition.id(), Text.renderFlexible(definition.title()));
-        Inventory inventory = plugin.getServer().createInventory(new SfxElectricMachineHolder(instance.instanceId()), definition.menuStyle().inventorySize(), title);
+        Inventory inventory = plugin.getServer().createInventory(new SfxElectricMachineHolder(instance.instanceId()), definition.ui().inventorySize(), title);
         SfxElectricMachineSession session = new SfxElectricMachineSession(player.getUniqueId(), instance.instanceId(), inventory);
         sessionsByViewer.put(player.getUniqueId(), session);
         sessionsByInstance.put(instance.instanceId(), session);

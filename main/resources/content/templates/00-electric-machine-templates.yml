@@ -7,24 +7,35 @@
 
 @project:
   default-progress-material: FLINT_AND_STEEL
-  standard-menu-style: STANDARD
 
 templates:
   ui:
     standard-electric-machine:
       @it: true
-      menu-style: ${standard-menu-style}
       slots:
         input: [19, 20]
         output: [24, 25]
       ui:
-        title-color: red
+        inventory-size: 45
         status-slot: 22
-        border:
-          material: GRAY_STAINED_GLASS_PANE
-          name: " "
-          lore:
-            - "不可移动"
+        frame:
+          - slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 31, 36, 37, 38, 39, 40, 41, 42, 43, 44]
+            item:
+              material: GRAY_STAINED_GLASS_PANE
+              name: " "
+              lore: []
+          - slots: [9, 10, 11, 12, 18, 21, 27, 28, 29, 30]
+            item:
+              material: CYAN_STAINED_GLASS_PANE
+              name: "&b输入"
+              lore:
+                - "&7将物品放在这里。"
+          - slots: [14, 15, 16, 17, 23, 26, 32, 33, 34, 35]
+            item:
+              material: ORANGE_STAINED_GLASS_PANE
+              name: "&6输出"
+              lore:
+                - "&7从这里取走成品。"
   energy:
     electric-consumer:
       @istemplate: true
@@ -71,11 +82,11 @@ templates:
       @istemplate: true
       @define:
         machine-title: Electric Furnace
-        level-suffix: " <gray>-</gray> <yellow>I</yellow>"
+        level-suffix: " &7- &eI"
         speed: 1
         capacity: 1280
         consumption: 4
-      title: "<gold>${machine-title}</gold>${level-suffix}"
+      title: "&6${machine-title}${level-suffix}"
       speed: ${speed}
       energy:
         capacity: ${capacity}
