@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -97,6 +98,12 @@ public final class SfxTemplateCompiler {
                     outputs.add(output);
                     manifestSources.add(source.path());
                 }
+            }
+            Path electricRecipeSource = sourceRoot.resolveSibling("machines").resolve("electric-recipes.yml");
+            OutputNode electricRecipeOutput = compileElectricRecipeProviderOutput(electricRecipeSource);
+            if (electricRecipeOutput != null) {
+                outputs.add(electricRecipeOutput);
+                manifestSources.add(electricRecipeSource);
             }
             sourceFileCount = manifestSources.size();
             clearOutputDirectory();
@@ -886,6 +893,173 @@ public final class SfxTemplateCompiler {
             }
         }
         return map;
+    }
+
+    private OutputNode compileElectricRecipeProviderOutput(Path source) throws IOException {
+        if (!Files.isRegularFile(source)) {
+            return null;
+        }
+        YamlConfiguration yaml = new YamlConfiguration();
+        try {
+            yaml.loadFromString(Files.readString(source, StandardCharsets.UTF_8));
+        } catch (Exception ex) {
+            throw new SfxTemplateCompileException("Cannot load electric recipe source " + relativeSource(source) + ": " + ex.getMessage(), ex);
+        }
+        ConfigurationSection root = yaml.getConfigurationSection("providers");
+        if (root == null) {
+            throw new SfxTemplateCompileException("Electric recipe source " + relativeSource(source) + " requires providers root section.");
+        }
+        Map<String, Object> providers = new LinkedHashMap<>();
+        for (String providerId : root.getKeys(false)) {
+            ConfigurationSection section = root.getConfigurationSection(providerId);
+            if (section == null) {
+                continue;
+            }
+            List<Map<String, Object>> recipes = new ArrayList<>();
+            for (Map<?, ?> raw : section.getMapList("recipes")) {
+                recipes.addAll(compileElectricRecipeEntry(raw));
+            }
+            Map<String, Object> provider = new LinkedHashMap<>();
+            provider.put("recipes", recipes);
+            providers.put(providerId, provider);
+        }
+        Map<String, Object> wrapped = new LinkedHashMap<>();
+        wrapped.put("providers", providers);
+        return new OutputNode(List.of(), "$.providers", "content/machines/electric-recipes.yml", wrapped, relativeSource(source), "electric-recipes.yml");
+    }
+
+    private List<Map<String, Object>> compileElectricRecipeEntry(Map<?, ?> entry) {
+        String expand = stringOrNull(entry.get("expand"));
+        if (expand == null) {
+            return List.of(normalizeElectricRecipeEntry(entry));
+        }
+        if (expand.equalsIgnoreCase("tag")) {
+            return compileElectricTagExpansion(entry);
+        }
+        if (expand.equalsIgnoreCase("materials")) {
+            return compileElectricMaterialsExpansion(entry);
+        }
+        throw new SfxTemplateCompileException("Unsupported electric recipe expansion: " + expand);
+    }
+
+    private List<Map<String, Object>> compileElectricTagExpansion(Map<?, ?> entry) {
+        String tagName = requiredCatalogString(entry, "tag");
+        List<Material> materials = switch (tagName.trim().toUpperCase(Locale.ROOT)) {
+            case "SAPLINGS" -> catalogMaterials(
+                    "OAK_SAPLING",
+                    "SPRUCE_SAPLING",
+                    "BIRCH_SAPLING",
+                    "JUNGLE_SAPLING",
+                    "ACACIA_SAPLING",
+                    "DARK_OAK_SAPLING",
+                    "MANGROVE_PROPAGULE",
+                    "CHERRY_SAPLING",
+                    "PALE_OAK_SAPLING");
+            case "LEAVES" -> catalogMaterials(
+                    "OAK_LEAVES",
+                    "SPRUCE_LEAVES",
+                    "BIRCH_LEAVES",
+                    "JUNGLE_LEAVES",
+                    "ACACIA_LEAVES",
+                    "DARK_OAK_LEAVES",
+                    "MANGROVE_LEAVES",
+                    "CHERRY_LEAVES",
+                    "PALE_OAK_LEAVES",
+                    "AZALEA_LEAVES",
+                    "FLOWERING_AZALEA_LEAVES");
+            default -> throw new SfxTemplateCompileException("Unsupported electric recipe material tag: " + tagName);
+        };
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Material material : materials) {
+            result.add(compileSingleMaterialExpansion(entry, material));
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> compileElectricMaterialsExpansion(Map<?, ?> entry) {
+        Object raw = entry.get("materials");
+        if (!(raw instanceof List<?> materials)) {
+            throw new SfxTemplateCompileException("Electric recipe materials expansion requires materials list.");
+        }
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Object value : materials) {
+            Material material = parseCatalogMaterial(String.valueOf(value));
+            result.add(compileSingleMaterialExpansion(entry, material));
+        }
+        return result;
+    }
+
+    private Map<String, Object> compileSingleMaterialExpansion(Map<?, ?> entry, Material material) {
+        Map<String, Object> recipe = new LinkedHashMap<>();
+        recipe.put("id", requiredCatalogString(entry, "id-prefix") + ":" + material.key());
+        recipe.put("ticks", requiredCatalogValue(entry, "ticks"));
+        List<Object> inputs = new ArrayList<>();
+        Object prefixInput = entry.get("input-prefix");
+        if (prefixInput instanceof List<?> prefixList) {
+            inputs.addAll(deepCopyList(prefixList));
+        }
+        Map<String, Object> materialInput = new LinkedHashMap<>();
+        materialInput.put("material", material.name());
+        materialInput.put("amount", intValue(requiredCatalogValue(entry, "input-amount"), 1));
+        inputs.add(materialInput);
+        recipe.put("inputs", inputs);
+        Object outputs = entry.get("outputs");
+        if (outputs != null) {
+            recipe.put("outputs", deepCopyValue(outputs));
+        }
+        Object randomOutputs = entry.get("random-outputs");
+        if (randomOutputs != null) {
+            recipe.put("random-outputs", deepCopyValue(randomOutputs));
+        }
+        return recipe;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> normalizeElectricRecipeEntry(Map<?, ?> entry) {
+        if (!entry.containsKey("id")) {
+            throw new SfxTemplateCompileException("Electric recipe entry requires id.");
+        }
+        if (entry.containsKey("expand")) {
+            throw new SfxTemplateCompileException("Compiled electric recipe entry must not contain expand.");
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> raw : entry.entrySet()) {
+            if (raw.getKey() == null) {
+                continue;
+            }
+            Object value = raw.getValue();
+            if (value instanceof Map<?, ?> map) {
+                result.put(String.valueOf(raw.getKey()), deepCopyMap((Map<String, Object>) map));
+            } else if (value instanceof List<?> list) {
+                result.put(String.valueOf(raw.getKey()), deepCopyList(list));
+            } else {
+                result.put(String.valueOf(raw.getKey()), value);
+            }
+        }
+        return result;
+    }
+
+    private Object requiredCatalogValue(Map<?, ?> map, String path) {
+        if (!map.containsKey(path) || map.get(path) == null) {
+            throw new SfxTemplateCompileException("machine catalog map entry requires " + path);
+        }
+        return map.get(path);
+    }
+
+    private Material parseCatalogMaterial(String raw) {
+        Material material = Material.matchMaterial(raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT));
+        if (material == null) {
+            throw new SfxTemplateCompileException("Unknown material in compiled content source: " + raw);
+        }
+        return material;
+    }
+
+    private List<Material> catalogMaterials(String... names) {
+        List<Material> result = new ArrayList<>();
+        for (String name : names) {
+            result.add(parseCatalogMaterial(name));
+        }
+        return result;
     }
 
     private SfxMachineDefinition compileMachineCatalogDefinition(String id, ConfigurationSection section) {

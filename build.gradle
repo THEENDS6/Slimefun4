@@ -456,6 +456,7 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/configurable-machines.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/machines/electric-recipes.yml'))
     outputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
     classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
     mainClass.set('cc.theends6.sfx.internal.template.SfxTemplateCompilerCli')
@@ -482,6 +483,10 @@ tasks.register('validateSfxCompiledContent') {
         def root = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
         def compiledFiles = fileTree(root) {
             include '**
+
+
+
+
 
 
 
@@ -689,6 +694,27 @@ tasks.register('validateSfxCompiledContent') {
                 }
             }
         }
+        def electricRecipeCompiledFile = new File(root, 'content/machines/electric-recipes/electric-recipes.yml')
+        def electricRecipeCompiledProviderCount = 0
+        def electricRecipeCompiledEntryCount = 0
+        if (!electricRecipeCompiledFile.isFile()) {
+            violations << "compiled electric recipe provider output missing content/machines/electric-recipes/electric-recipes.yml"
+        } else {
+            def electricRecipeText = electricRecipeCompiledFile.getText('UTF-8')
+            electricRecipeCompiledProviderCount = (electricRecipeText =~ /(?m)^  [a-z0-9_]+:\s*$/).count
+            electricRecipeCompiledEntryCount = (electricRecipeText =~ /(?m)^    - id:\s*/).count
+            if (electricRecipeCompiledProviderCount != 13) {
+                violations << "compiled electric recipe provider count expected 13, got ${electricRecipeCompiledProviderCount}"
+            }
+            if (electricRecipeCompiledEntryCount != 182) {
+                violations << "compiled electric recipe entry count expected 182, got ${electricRecipeCompiledEntryCount}"
+            }
+            ['id:', 'inputs:', 'ticks:'].each { token ->
+                if (!electricRecipeText.contains(token)) {
+                    violations << "compiled electric recipes missing ${token}"
+                }
+            }
+        }
         def electricFiles = fileTree(new File(root, 'content/machines/electric-machines')) {
             include '**/*.yml'
         }.files
@@ -771,7 +797,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, and ${configurableCompiledCount} configurable machine entries.")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, and ${electricRecipeCompiledEntryCount} electric provider recipe entries.")
     }
 }
 
