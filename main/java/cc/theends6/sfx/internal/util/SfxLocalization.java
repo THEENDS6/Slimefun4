@@ -58,18 +58,6 @@ public final class SfxLocalization {
         return path;
     }
 
-    public String textOrLiteral(String value, String context) {
-        if (value == null || value.isBlank()) {
-            return value;
-        }
-        String localized = lookup(value);
-        if (localized != null) {
-            return localized;
-        }
-        warnLiteral(context, value);
-        return value;
-    }
-
     public String text(String path, String fallback, Map<String, ?> placeholders) {
         return applyPlaceholders(requiredText(path), placeholders);
     }
@@ -144,27 +132,9 @@ public final class SfxLocalization {
         return List.of(path);
     }
 
-    public List<String> listOrLiterals(List<String> values, String context) {
-        if (values == null || values.isEmpty()) {
-            return List.of();
-        }
-        List<String> result = new ArrayList<>(values.size());
-        for (String value : values) {
-            result.add(textOrLiteral(value, context));
-        }
-        return result;
-    }
-
     private void warnMissing(String path) {
         if (path != null && warnedMissingPaths.add(path)) {
             plugin.getLogger().warning("Missing language key: " + path + " (displaying the key text)");
-        }
-    }
-
-    private void warnLiteral(String context, String value) {
-        String key = "literal:" + context + ":" + value;
-        if (warnedMissingPaths.add(key)) {
-            plugin.getLogger().warning("Language key not found for " + context + ": " + value + " (using the configured string directly)");
         }
     }
 
