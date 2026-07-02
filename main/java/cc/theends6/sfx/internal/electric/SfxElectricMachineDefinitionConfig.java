@@ -326,8 +326,11 @@ final class SfxElectricMachineDefinitionConfig {
         if (section == null) {
             return null;
         }
-        int inventorySize = optionalInt(section, "inventory-size", 0);
-        int statusSlot = optionalInt(section, "status-slot", -1);
+        int inventorySize = requiredNonNegativeInt(section, "inventory-size");
+        int statusSlot = requiredInt(section, "status-slot");
+        if (inventorySize == 0 && statusSlot != -1) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " status-slot must be -1 when inventory-size is 0");
+        }
         List<SfxElectricMachineUiFrame> frames = new ArrayList<>();
         for (Object rawFrame : section.getList("frame", List.of())) {
             if (rawFrame instanceof Map<?, ?> map) {
@@ -581,13 +584,25 @@ final class SfxElectricMachineDefinitionConfig {
     }
 
     private static int requiredPositiveInt(ConfigurationSection section, String path) {
-        if (section == null || !section.isInt(path)) {
-            throw new IllegalArgumentException("assembler requires " + path);
-        }
-        int value = section.getInt(path);
+        int value = requiredInt(section, path);
         if (value < 1) {
-            throw new IllegalArgumentException("assembler " + path + " must be at least 1");
+            throw new IllegalArgumentException(section.getCurrentPath() + " " + path + " must be at least 1");
         }
         return value;
+    }
+
+    private static int requiredNonNegativeInt(ConfigurationSection section, String path) {
+        int value = requiredInt(section, path);
+        if (value < 0) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " " + path + " must be zero or greater");
+        }
+        return value;
+    }
+
+    private static int requiredInt(ConfigurationSection section, String path) {
+        if (section == null || !section.isInt(path)) {
+            throw new IllegalArgumentException((section == null ? "section" : section.getCurrentPath()) + " requires " + path);
+        }
+        return section.getInt(path);
     }
 }
