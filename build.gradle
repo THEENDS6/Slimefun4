@@ -1577,6 +1577,42 @@ tasks.register('validateSfxRuntimeCompiledOnlyConfig') {
     }
 }
 
+tasks.register('validateSfxSlotsFirstUiRendering') {
+    group = 'verification'
+    description = 'Validates machine menu renderers draw configured UI from compiled ui.slots instead of frame helpers.'
+    def rendererFiles = [
+            'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/electric/SfxSimpleIoMachineMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/electric/SfxAutoCrafterMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/electric/SfxAutoBrewerMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/electric/SfxGeoMinerMachineMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/electric/SfxElectricAssemblerMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java'
+    ]
+    inputs.files(rendererFiles.collect { layout.projectDirectory.file(it) })
+    doLast {
+        def violations = []
+        def framePatterns = [
+                ~/definition\.ui\(\)\.frame\(\)/,
+                ~/for\s*\([^)]*Sfx(?:ElectricMachine|EnergyComponent)UiFrame\s+frame/
+        ]
+        rendererFiles.each { path ->
+            def text = layout.projectDirectory.file(path).asFile.getText('UTF-8')
+            framePatterns.each { pattern ->
+                def matcher = pattern.matcher(text)
+                while (matcher.find()) {
+                    def line = text.substring(0, matcher.start()).count('\n') + 1
+                    violations << "${path}:${line}: renderer must use ui.slots, not ui.frame"
+                }
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException("Slots-first UI rendering validation failed:\n" + violations.join('\n'))
+        }
+        logger.lifecycle("Validated ${rendererFiles.size()} machine menu renderer file(s) render configured UI from compiled ui.slots.")
+    }
+}
+
 tasks.named('build') {
     finalizedBy 'exportPluginArtifacts'
 }
@@ -1587,6 +1623,7 @@ tasks.named('check') {
     dependsOn 'validateSfxCompiledContent'
     dependsOn 'validateSfxCoreLocalizationCalls'
     dependsOn 'validateSfxRuntimeCompiledOnlyConfig'
+    dependsOn 'validateSfxSlotsFirstUiRendering'
 }
 
 tasks.register('prepareRuntimeDirs') {
