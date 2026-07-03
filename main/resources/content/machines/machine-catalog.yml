@@ -59,6 +59,7 @@ machines:
     - basic
     - manual
     - armor
+    - armor-forge
   sf:makeshift_smeltery:
     category: BASIC
     display-name: sf:makeshift_smeltery
