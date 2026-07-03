@@ -1407,10 +1407,13 @@ tasks.register('validateSfxCompiledContent') {
         electricFiles.each { file ->
             def text = file.getText('UTF-8')
             def rel = root.toPath().relativize(file.toPath()).toString()
-            ['name-key:', 'functions:', 'ui:', 'inventory-size:', 'status-slot:', 'frame:', 'items:', 'status:', 'slots:'].each { token ->
+            ['name-key:', 'functions:', 'ui:', 'inventory-size:', 'status-slot:', 'items:', 'status:', 'slots:'].each { token ->
                 if (!text.contains(token)) {
                     violations << "${rel}: missing ${token}"
                 }
+            }
+            if ((text =~ /(?m)^      frame:\s*/).find()) {
+                violations << "${rel}: contains ui.frame helper; compiled UI must render from ui.slots"
             }
             if ((text =~ /(?m)^    (slots|input-slots|output-slots):\s*$/).find()) {
                 violations << "${rel}: contains top-level slot helper fields; derive runtime slots from ui.slots"
@@ -1477,10 +1480,13 @@ tasks.register('validateSfxCompiledContent') {
         energyFiles.each { file ->
             def text = file.getText('UTF-8')
             def rel = root.toPath().relativize(file.toPath()).toString()
-            ['components:', 'type:', 'energy:', 'capacity:', 'generation-per-tick:', 'consumption-per-tick:', 'burn-rate:', 'vanilla-fuel:', 'progress-material:', 'fuels:', 'ui:', 'inventory-size:', 'status-slot:', 'frame:', 'slots:', 'role:', 'behavior:', 'state-index:', 'item-source: machine-status'].each { token ->
+            ['components:', 'type:', 'energy:', 'capacity:', 'generation-per-tick:', 'consumption-per-tick:', 'burn-rate:', 'vanilla-fuel:', 'progress-material:', 'fuels:', 'ui:', 'inventory-size:', 'status-slot:', 'slots:', 'role:', 'behavior:', 'state-index:', 'item-source: machine-status'].each { token ->
                 if (!text.contains(token)) {
                     violations << "${rel}: missing ${token}"
                 }
+            }
+            if ((text =~ /(?m)^      frame:\s*/).find()) {
+                violations << "${rel}: contains ui.frame helper; compiled UI must render from ui.slots"
             }
             if ((text =~ /(?m)^    slots:\s*$/).find()) {
                 violations << "${rel}: contains top-level slot helper fields; derive runtime slots from ui.slots"
