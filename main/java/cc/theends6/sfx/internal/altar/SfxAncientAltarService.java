@@ -306,7 +306,7 @@ public final class SfxAncientAltarService implements Listener {
         SfxBlockInstanceRecord instance = instanceAt(below.getLocation());
         if (instance != null && ANCIENT_PEDESTAL.equals(instance.typeId())) {
             event.setCancelled(true);
-            sendMessage(event.getPlayer(), "machines.ancient-pedestal.obstructed", "<red>The Ancient Pedestal is obstructed.</red>");
+            sendMessage(event.getPlayer(), "machines.ancient-pedestal.obstructed");
         }
     }
 
@@ -341,7 +341,7 @@ public final class SfxAncientAltarService implements Listener {
     private void handlePedestalUse(Player player, Block block, SfxBlockInstanceRecord instance) {
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(block.getLocation());
         if (sessionsByBlock.containsKey(key)) {
-            sendMessage(player, "machines.ancient-altar.in-use", "<red>This Ancient Altar is currently performing a ritual.</red>");
+            sendMessage(player, "machines.ancient-altar.in-use");
             return;
         }
         PedestalState existing = pedestalStates.get(key);
@@ -356,7 +356,7 @@ public final class SfxAncientAltarService implements Listener {
 
         ItemStack hand = player.getInventory().getItemInMainHand();
         if (hand == null || hand.getType().isAir() || hand.getAmount() <= 0) {
-            sendMessage(player, "machines.ancient-pedestal.hold-item", "<red>Hold an item to place it on the Ancient Pedestal.</red>");
+            sendMessage(player, "machines.ancient-pedestal.hold-item");
             return;
         }
         ItemStack stored = hand.clone();
@@ -372,7 +372,7 @@ public final class SfxAncientAltarService implements Listener {
     private void handleAltarUse(Player player, Block altarBlock, SfxBlockInstanceRecord altarInstance) {
         SfxBlockAnchorKey altarKey = SfxBlockAnchorKey.fromLocation(altarBlock.getLocation());
         if (sessionsByBlock.containsKey(altarKey)) {
-            sendMessage(player, "machines.ancient-altar.in-use", "<red>This Ancient Altar is already in use.</red>");
+            sendMessage(player, "machines.ancient-altar.in-use");
             return;
         }
         Map<String, Object> startFramework = altarFrameworkAttributes(altarInstance, player, null);
@@ -385,7 +385,6 @@ public final class SfxAncientAltarService implements Listener {
             SfxBlockInstanceRecord pedestal = instanceAt(key);
             if (pedestal == null || !ANCIENT_PEDESTAL.equals(pedestal.typeId())) {
                 sendMessage(player, "machines.ancient-altar.not-enough-pedestals",
-                        "<red>Not enough Ancient Pedestals! Placed: {pedestals}/8.</red>",
                         Map.of("pedestals", countPedestals(pedestalKeys)));
                 return;
             }
@@ -394,7 +393,7 @@ public final class SfxAncientAltarService implements Listener {
 
         ItemStack catalyst = player.getInventory().getItemInMainHand();
         if (catalyst == null || catalyst.getType().isAir()) {
-            sendMessage(player, "machines.ancient-altar.unknown-catalyst", "<red>Unknown catalyst! Hold the catalyst item and right-click the Ancient Altar.</red>");
+            sendMessage(player, "machines.ancient-altar.unknown-catalyst");
             return;
         }
 
@@ -403,7 +402,7 @@ public final class SfxAncientAltarService implements Listener {
                 .toList();
         MatchedRecipe match = findMatchingRecipe(catalyst, inputs);
         if (match == null) {
-            sendMessage(player, "machines.ancient-altar.unknown-recipe", "<red>Unknown recipe! Check the items on the Ancient Pedestals.</red>");
+            sendMessage(player, "machines.ancient-altar.unknown-recipe");
             altarBlock.getWorld().playSound(altarBlock.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, SoundCategory.BLOCKS, 1.0F, 1.0F);
             return;
         }
@@ -682,7 +681,7 @@ public final class SfxAncientAltarService implements Listener {
             return stack;
         }
         meta.getPersistentDataContainer().set(spawnerTypeKey, PersistentDataType.STRING, entityType.name());
-        meta.lore(List.of(Text.renderFlexible(localization.text("items.sf.reinforced_spawner.type-line", "&7Type: &b{type}", Map.of("type", prettyEnumName(entityType.name()))))));
+        meta.lore(List.of(Text.renderFlexible(localization.text("items.sf.reinforced_spawner.type-line", Map.of("type", prettyEnumName(entityType.name()))))));
         if (meta instanceof BlockStateMeta blockStateMeta && blockStateMeta.getBlockState() instanceof CreatureSpawner spawner) {
             spawner.setSpawnedType(entityType);
             blockStateMeta.setBlockState(spawner);
@@ -892,15 +891,15 @@ public final class SfxAncientAltarService implements Listener {
         });
     }
 
-    private void sendMessage(Player player, String path, String fallback) {
+    private void sendMessage(Player player, String path) {
         if (player != null) {
-            player.sendMessage(Text.prefixed(plugin, localization.text(path, fallback)));
+            player.sendMessage(Text.prefixed(plugin, localization.text(path)));
         }
     }
 
-    private void sendMessage(Player player, String path, String fallback, Map<String, ?> placeholders) {
+    private void sendMessage(Player player, String path, Map<String, ?> placeholders) {
         if (player != null) {
-            player.sendMessage(Text.prefixed(plugin, localization.text(path, fallback, placeholders)));
+            player.sendMessage(Text.prefixed(plugin, localization.text(path, placeholders)));
         }
     }
 
