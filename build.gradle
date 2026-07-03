@@ -1610,6 +1610,100 @@ tasks.register('validateSfxCompiledContent') {
     }
 }
 
+tasks.register('validateSfxBundledCompiledContent') {
+    group = 'verification'
+    description = 'Validates the plugin jar embeds compiled SFX content matching the generated manifest.'
+    dependsOn 'jar'
+    inputs.file(tasks.named('jar').flatMap { it.archiveFile })
+    inputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
+    doLast {
+        def root = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
+        def manifestFile = new File(root, '_manifest.yml')
+        if (!manifestFile.isFile()) {
+            throw new GradleException("compiled manifest missing _manifest.yml")
+        }
+        def cleanScalar = { value ->
+            value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
+        }
+        def sha256Stream = { InputStream stream ->
+            def digest = java.security.MessageDigest.getInstance('SHA-256')
+            byte[] buffer = new byte[8192]
+            int read
+            while ((read = stream.read(buffer)) != -1) {
+                digest.update(buffer, 0, read)
+            }
+            digest.digest().collect { String.format('%02x', it & 0xff) }.join()
+        }
+        def manifestText = manifestFile.getText('UTF-8')
+        def outputEntries = []
+        def currentOutput = null
+        boolean inOutputs = false
+        manifestText.readLines().each { line ->
+            if (line == 'outputs:') {
+                inOutputs = true
+                return
+            }
+            if (!inOutputs) {
+                return
+            }
+            def fileMatch = line =~ /^- file:\s*(.+?)\s*$/
+            if (fileMatch.matches()) {
+                currentOutput = [file: cleanScalar(fileMatch[0][1]), sha256: null]
+                outputEntries << currentOutput
+                return
+            }
+            def shaMatch = line =~ /^  sha256:\s*([0-9a-fA-F]{64})\s*$/
+            if (shaMatch.matches() && currentOutput != null) {
+                currentOutput.sha256 = shaMatch[0][1].toLowerCase(Locale.ROOT)
+            }
+        }
+        def jarFile = tasks.named('jar').get().archiveFile.get().asFile
+        def violations = []
+        def declaredJarEntries = outputEntries.collect { "content/compiled/${it.file}".toString() } as Set
+        new java.util.zip.ZipFile(jarFile).withCloseable { zip ->
+            if (zip.getEntry('content/compiled/_manifest.yml') == null) {
+                violations << "${jarFile.name}: missing content/compiled/_manifest.yml"
+            }
+            outputEntries.each { output ->
+                if (output.file == null || output.file.isBlank()) {
+                    violations << "_manifest.yml contains output without file"
+                    return
+                }
+                if (output.sha256 == null) {
+                    violations << "_manifest.yml output ${output.file} missing sha256"
+                    return
+                }
+                String entryName = "content/compiled/${output.file}".toString()
+                def entry = zip.getEntry(entryName)
+                if (entry == null) {
+                    violations << "${jarFile.name}: missing ${entryName}"
+                    return
+                }
+                def actualSha = zip.getInputStream(entry).withCloseable { stream -> sha256Stream(stream) }
+                if (actualSha != output.sha256) {
+                    violations << "${jarFile.name}: ${entryName} sha256 mismatch"
+                }
+            }
+            zip.entries().each { entry ->
+                String name = entry.name
+                if (!name.startsWith('content/compiled/') || !name.endsWith('.yml')) {
+                    return
+                }
+                if (name == 'content/compiled/_manifest.yml' || name == 'content/compiled/_source-map.yml') {
+                    return
+                }
+                if (!declaredJarEntries.contains(name)) {
+                    violations << "${jarFile.name}: bundled compiled YAML is not listed in _manifest.yml: ${name}"
+                }
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException("Bundled compiled content validation failed:\n" + violations.take(100).join('\n'))
+        }
+        logger.lifecycle("Validated bundled compiled content in ${jarFile.name}: ${outputEntries.size()} manifest output file(s).")
+    }
+}
+
 tasks.register('validateSfxCoreLocalizationCalls') {
     group = 'verification'
     description = 'Validates migrated core machine UI code uses language keys directly without literal localization fallback arguments.'
@@ -1717,6 +1811,7 @@ tasks.named('check') {
     dependsOn 'validateSfxMachineYaml'
     dependsOn 'validateSfxTemplateCompile'
     dependsOn 'validateSfxCompiledContent'
+    dependsOn 'validateSfxBundledCompiledContent'
     dependsOn 'validateSfxCoreLocalizationCalls'
     dependsOn 'validateSfxRuntimeCompiledOnlyConfig'
     dependsOn 'validateSfxSlotsFirstUiRendering'
