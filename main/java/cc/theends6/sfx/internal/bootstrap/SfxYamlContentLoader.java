@@ -99,6 +99,9 @@ public final class SfxYamlContentLoader {
     private void loadYaml(YamlConfiguration yaml, String sourceName, boolean strict) {
         for (Map<?, ?> entry : yaml.getMapList("categories")) {
             try {
+                if (strict) {
+                    validateCompiledContentEntry(entry, "category");
+                }
                 SfxItemCategory category = parseCategory(entry);
                 if (Boolean.TRUE.equals(entry.get("replace"))) {
                     registry.replaceCategory(category);
@@ -116,6 +119,9 @@ public final class SfxYamlContentLoader {
             try {
                 if (!isFeatureEnabled(entry)) {
                     continue;
+                }
+                if (strict) {
+                    validateCompiledContentEntry(entry, "item");
                 }
                 SfxItemDefinition item = parseItem(entry);
                 if (Boolean.TRUE.equals(entry.get("replace"))) {
@@ -142,6 +148,36 @@ public final class SfxYamlContentLoader {
             return false;
         }
         return true;
+    }
+
+    private void validateCompiledContentEntry(Map<?, ?> entry, String label) {
+        validateCompiledContentNode(entry, label);
+    }
+
+    private void validateCompiledContentNode(Object value, String path) {
+        if (value instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> child : map.entrySet()) {
+                String key = String.valueOf(child.getKey());
+                String childPath = path + "." + key;
+                if (key.startsWith("@")) {
+                    throw new IllegalArgumentException("compiled " + path + " must not contain template directive: " + key);
+                }
+                if (key.equals("profile")) {
+                    throw new IllegalArgumentException("compiled " + path + " must not contain profile shorthand: " + childPath);
+                }
+                if (key.equals("expand")
+                        || key.equals("id-prefix")
+                        || key.equals("input-prefix")
+                        || key.equals("input-amount")) {
+                    throw new IllegalArgumentException("compiled " + path + " must not contain expansion helper: " + childPath);
+                }
+                validateCompiledContentNode(child.getValue(), childPath);
+            }
+        } else if (value instanceof List<?> list) {
+            for (int i = 0; i < list.size(); i++) {
+                validateCompiledContentNode(list.get(i), path + "[" + i + "]");
+            }
+        }
     }
 
     private SfxItemCategory parseCategory(Map<?, ?> entry) {
