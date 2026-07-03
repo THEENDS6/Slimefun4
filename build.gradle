@@ -580,6 +580,45 @@ tasks.register('validateSfxCompiledContent') {
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
         }
+        def validateNoLiteralUiText = { String text, String rel, String label ->
+            def lines = text.readLines()
+            for (int index = 0; index < lines.size(); index++) {
+                def line = lines[index]
+                def nameMatch = line =~ /^\s+name:\s*(.*)$/
+                if (nameMatch.matches()) {
+                    def value = cleanScalar(nameMatch[0][1])
+                    if (value != null && !value.isBlank()) {
+                        violations << "${rel}:${index + 1}: ${label} uses literal name; use name-key"
+                    }
+                }
+                def loreMatch = line =~ /^\s+lore:\s*(.*)$/
+                if (loreMatch.matches()) {
+                    def value = loreMatch[0][1].trim()
+                    if (!value.isEmpty() && value != '[]' && value != '[ ]') {
+                        violations << "${rel}:${index + 1}: ${label} uses literal lore; use lore-key"
+                    } else if (value.isEmpty()) {
+                        def indent = (line =~ /^(\s*)/)[0][1].length()
+                        for (int nextIndex = index + 1; nextIndex < lines.size(); nextIndex++) {
+                            def nextLine = lines[nextIndex]
+                            if (nextLine.trim().isEmpty() || nextLine.trim().startsWith('#')) {
+                                continue
+                            }
+                            def nextIndent = (nextLine =~ /^(\s*)/)[0][1].length()
+                            if (nextIndent <= indent) {
+                                break
+                            }
+                            def itemMatch = nextLine =~ /^\s*-\s*(.*)$/
+                            if (itemMatch.matches()) {
+                                def itemValue = cleanScalar(itemMatch[0][1])
+                                if (itemValue != null && !itemValue.isBlank()) {
+                                    violations << "${rel}:${nextIndex + 1}: ${label} uses literal lore; use lore-key"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         def validateRecipeEntry = { file, recipe ->
             if (recipe == null) {
                 return
@@ -857,6 +896,7 @@ tasks.register('validateSfxCompiledContent') {
             if (configurablePanelHelper.find()) {
                 violations << "compiled configurable machine ui panels contain helper section: ${configurablePanelHelper.group(1)}"
             }
+            validateNoLiteralUiText(configurableText, 'content/machines/configurable-machines/configurable-machines.yml', 'configurable ui')
         }
         def compiledCategoryCount = 0
         def compiledItemCount = 0
@@ -1067,43 +1107,7 @@ tasks.register('validateSfxCompiledContent') {
                     }
                 }
             }
-            def lines = text.readLines()
-            for (int index = 0; index < lines.size(); index++) {
-                def line = lines[index]
-                def nameMatch = line =~ /^\s+name:\s*(.*)$/
-                if (nameMatch.matches()) {
-                    def value = cleanScalar(nameMatch[0][1])
-                    if (value != null && !value.isBlank()) {
-                        violations << "${rel}:${index + 1}: electric ui uses literal name; use name-key"
-                    }
-                }
-                def loreMatch = line =~ /^\s+lore:\s*(.*)$/
-                if (loreMatch.matches()) {
-                    def value = loreMatch[0][1].trim()
-                    if (!value.isEmpty() && value != '[]' && value != '[ ]') {
-                        violations << "${rel}:${index + 1}: electric ui uses literal lore; use lore-key"
-                    } else if (value.isEmpty()) {
-                        def indent = (line =~ /^(\s*)/)[0][1].length()
-                        for (int nextIndex = index + 1; nextIndex < lines.size(); nextIndex++) {
-                            def nextLine = lines[nextIndex]
-                            if (nextLine.trim().isEmpty() || nextLine.trim().startsWith('#')) {
-                                continue
-                            }
-                            def nextIndent = (nextLine =~ /^(\s*)/)[0][1].length()
-                            if (nextIndent <= indent) {
-                                break
-                            }
-                            def itemMatch = nextLine =~ /^\s*-\s*(.*)$/
-                            if (itemMatch.matches()) {
-                                def itemValue = cleanScalar(itemMatch[0][1])
-                                if (itemValue != null && !itemValue.isBlank()) {
-                                    violations << "${rel}:${nextIndex + 1}: electric ui uses literal lore; use lore-key"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            validateNoLiteralUiText(text, rel, 'electric ui')
             def inUiSlots = false
             def currentSlot = null
             def currentRole = null
@@ -1188,43 +1192,7 @@ tasks.register('validateSfxCompiledContent') {
             if (stateIndexCount != 4) {
                 violations << "${rel}: energy ui expected state-index on 2 input and 2 output slots, got ${stateIndexCount}"
             }
-            def lines = text.readLines()
-            for (int index = 0; index < lines.size(); index++) {
-                def line = lines[index]
-                def nameMatch = line =~ /^\s+name:\s*(.*)$/
-                if (nameMatch.matches()) {
-                    def value = cleanScalar(nameMatch[0][1])
-                    if (value != null && !value.isBlank()) {
-                        violations << "${rel}:${index + 1}: energy ui uses literal name; use name-key"
-                    }
-                }
-                def loreMatch = line =~ /^\s+lore:\s*(.*)$/
-                if (loreMatch.matches()) {
-                    def value = loreMatch[0][1].trim()
-                    if (!value.isEmpty() && value != '[]' && value != '[ ]') {
-                        violations << "${rel}:${index + 1}: energy ui uses literal lore; use lore-key"
-                    } else if (value.isEmpty()) {
-                        def indent = (line =~ /^(\s*)/)[0][1].length()
-                        for (int nextIndex = index + 1; nextIndex < lines.size(); nextIndex++) {
-                            def nextLine = lines[nextIndex]
-                            if (nextLine.trim().isEmpty() || nextLine.trim().startsWith('#')) {
-                                continue
-                            }
-                            def nextIndent = (nextLine =~ /^(\s*)/)[0][1].length()
-                            if (nextIndent <= indent) {
-                                break
-                            }
-                            def itemMatch = nextLine =~ /^\s*-\s*(.*)$/
-                            if (itemMatch.matches()) {
-                                def itemValue = cleanScalar(itemMatch[0][1])
-                                if (itemValue != null && !itemValue.isBlank()) {
-                                    violations << "${rel}:${nextIndex + 1}: energy ui uses literal lore; use lore-key"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            validateNoLiteralUiText(text, rel, 'energy ui')
         }
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
