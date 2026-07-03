@@ -1810,6 +1810,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/block/SfxHologramProjectorService.java',
             'main/java/cc/theends6/sfx/internal/altar/SfxAncientAltarService.java',
             'main/java/cc/theends6/sfx/internal/energy/SfxMultimeterListener.java',
+            'main/java/cc/theends6/sfx/internal/energy/SfxEnergyDisplayController.java',
             'main/java/cc/theends6/sfx/internal/block/SfxBasicMachineBlockListener.java',
             'main/java/cc/theends6/sfx/internal/block/SfxSpawnerService.java',
             'main/java/cc/theends6/sfx/internal/listener/SfxItemUseDispatcher.java',
@@ -1856,6 +1857,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
         def itemFallback = ~/(?s)localization\.(?:itemName|itemLore)\(\s*[^,\r\n]+,\s*/
         def literalLanguageCall = ~/localization\.(?:text|component|requiredList|list)\(\s*"([^"]+)"/
         def literalHelperLanguageCall = /(?:^|[^\w.])(?:send|sendMessage)\(\s*[^,\r\n]+,\s*"([^"]+)"/
+        def literalDisplayTextCall = /new\s+DisplayText\(\s*"([^"]+)"/
         coreLocalizationFiles.each { path ->
             def file = layout.projectDirectory.file(path).asFile
             def text = file.getText('UTF-8')
@@ -1888,6 +1890,19 @@ tasks.register('validateSfxCoreLocalizationCalls') {
                 languageKeysByFile.each { languageFile, keys ->
                     if (!keys.contains(key)) {
                         def line = text.substring(0, helperKeyMatcher.start()).count('\n') + 1
+                        violations << "${path}:${line}: ${languageFile} missing language key ${key}"
+                    }
+                }
+            }
+            def displayTextMatcher = (text =~ literalDisplayTextCall)
+            while (displayTextMatcher.find()) {
+                def key = displayTextMatcher.group(1)
+                if (key.contains("{") || key.contains("+") || key.endsWith(".")) {
+                    continue
+                }
+                languageKeysByFile.each { languageFile, keys ->
+                    if (!keys.contains(key)) {
+                        def line = text.substring(0, displayTextMatcher.start()).count('\n') + 1
                         violations << "${path}:${line}: ${languageFile} missing language key ${key}"
                     }
                 }
