@@ -529,21 +529,11 @@ tasks.register('validateSfxCompiledContent') {
     description = 'Validates compiled SFX content is explicit runtime data without template or layout fallback tokens.'
     dependsOn 'validateSfxTemplateCompile'
     inputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
+    inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
     doLast {
         def root = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
         def compiledFiles = fileTree(root) {
             include '**
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -579,6 +569,73 @@ tasks.register('validateSfxCompiledContent') {
         def validRecipeOperations = ['shaped', 'shapeless', 'single', 'hand'] as Set
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
+        }
+        def flattenLanguageKeys = { File file ->
+            def keys = [] as Set
+            def stack = []
+            file.readLines('UTF-8').each { line ->
+                if (line.trim().isEmpty() || line.trim().startsWith('#') || line.trim().startsWith('-')) {
+                    return
+                }
+                def matcher = line =~ /^(\s*)(['"]?)([^:'"]+)\2:\s*(.*)$/
+                if (!matcher.matches()) {
+                    return
+                }
+                int indent = matcher[0][1].length()
+                String key = matcher[0][3].trim()
+                while (!stack.isEmpty() && stack[-1].indent >= indent) {
+                    stack.remove(stack.size() - 1)
+                }
+                def path = (stack.collect { it.key } + key).join('.')
+                keys << path
+                stack << [indent: indent, key: key]
+            }
+            keys
+        }
+        def languageFiles = fileTree(layout.projectDirectory.dir('main/resources/lang')) {
+            include '**/*.yml'
+        }.files.sort { it.name }
+        def languageKeysByFile = languageFiles.collectEntries { file ->
+            [(file.name): flattenLanguageKeys(file)]
+        }
+        if (languageKeysByFile.isEmpty()) {
+            violations << "no bundled language files found under main/resources/lang"
+        }
+        def referencedLanguageKeys = [] as Set
+        def validateLanguageReferences = { String text, String rel ->
+            def missing = [] as Set
+            def lines = text.readLines()
+            for (int index = 0; index < lines.size(); index++) {
+                def matcher = lines[index] =~ /^\s+[A-Za-z0-9_.-]+-key:\s*(.+?)\s*$/
+                if (!matcher.matches()) {
+                    continue
+                }
+                def key = cleanScalar(matcher[0][1])
+                if (key == null || key.isBlank()) {
+                    violations << "${rel}:${index + 1}: blank language key reference"
+                    continue
+                }
+                referencedLanguageKeys << key
+                languageKeysByFile.each { languageFile, keys ->
+                    if (!keys.contains(key)) {
+                        missing << "${rel}:${index + 1}: ${languageFile} missing language key ${key}"
+                    }
+                }
+            }
+            violations.addAll(missing)
+        }
+        compiledFiles.each { file ->
+            def text = file.getText('UTF-8')
+            def rel = root.toPath().relativize(file.toPath()).toString()
+            forbiddenTokens.each { token ->
+                if (text.contains(token)) {
+                    violations << "${rel}: contains ${token}"
+                }
+            }
+            if ((text =~ /(?m)^\s*layout\s*:/).find()) {
+                violations << "${rel}: contains runtime layout token"
+            }
+            validateLanguageReferences(text, rel)
         }
         def validateNoLiteralUiText = { String text, String rel, String label ->
             def lines = text.readLines()
@@ -1084,77 +1141,77 @@ tasks.register('validateSfxCompiledContent') {
             }
         }
         def electricFiles = fileTree(new File(root, 'content/machines/electric-machines')) {
-            include '**/*.yml'
-        }.files
-        if (electricFiles.size() != 66) {
-            violations << "compiled electric machine file count expected 66, got ${electricFiles.size()}"
-        }
-        electricFiles.each { file ->
-            def text = file.getText('UTF-8')
-            def rel = root.toPath().relativize(file.toPath()).toString()
-            ['name-key:', 'functions:', 'ui:', 'inventory-size:', 'status-slot:', 'frame:', 'items:', 'status:', 'slots:'].each { token ->
-                if (!text.contains(token)) {
-                    violations << "${rel}: missing ${token}"
-                }
-            }
-            if ((text =~ /(?m)^    (slots|input-slots|output-slots):\s*$/).find()) {
-                violations << "${rel}: contains top-level slot helper fields; derive runtime slots from ui.slots"
-            }
-            if (!text.contains('inventory-size: 0')) {
-                ['role:', 'behavior:'].each { token ->
-                    if (!text.contains(token)) {
-                        violations << "${rel}: missing ${token}"
-                    }
-                }
-            }
-            validateNoLiteralUiText(text, rel, 'electric ui')
-            def inUiSlots = false
-            def currentSlot = null
-            def currentRole = null
-            def currentStateIndex = false
-            def flushSlot = {
-                if (currentSlot != null && (currentRole == 'input' || currentRole == 'output') && !currentStateIndex) {
-                    violations << "${rel}: ui.slots.${currentSlot} ${currentRole} missing state-index"
-                }
-            }
-            text.readLines().each { line ->
-                if (!inUiSlots && line == '      slots:') {
-                    inUiSlots = true
-                    return
-                }
-                if (!inUiSlots) {
-                    return
-                }
-                def slotMatch = line =~ /^        '?([0-9]+)'?:\s*$/
-                if (slotMatch.matches()) {
-                    flushSlot()
-                    currentSlot = slotMatch[0][1]
-                    currentRole = null
-                    currentStateIndex = false
-                    return
-                }
-                if ((line =~ /^      [^ ]/).find()) {
-                    flushSlot()
-                    inUiSlots = false
-                    currentSlot = null
-                    currentRole = null
-                    currentStateIndex = false
-                    return
-                }
-                if (currentSlot != null) {
-                    def roleMatch = line =~ /^          role:\s*([A-Za-z0-9_-]+)\s*$/
-                    if (roleMatch.matches()) {
-                        currentRole = roleMatch[0][1].replace('_', '-').toLowerCase(Locale.ROOT)
-                    }
-                    if ((line =~ /^          state-index:\s*[0-9]+\s*$/).find()) {
-                        currentStateIndex = true
-                    }
-                }
-            }
-            flushSlot()
-        }
-        def energyFiles = fileTree(new File(root, 'content/machines/energy-components')) {
-            include '**/*.yml'
+            include '**
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*.yml'
         }.files
         if (energyFiles.size() != 21) {
             violations << "compiled energy component file count expected 21, got ${energyFiles.size()}"
@@ -1197,7 +1254,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, and ${compiledResearchCount} researches.")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
     }
 }
 
