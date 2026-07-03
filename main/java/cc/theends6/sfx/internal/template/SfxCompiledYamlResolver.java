@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -25,6 +26,32 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class SfxCompiledYamlResolver {
     private static final String COMPILED_DIRECTORY = "content/compiled";
     private static final Set<String> WARNED_LOCAL_COMPILED_ROOTS = ConcurrentHashMap.newKeySet();
+    private static final Set<String> FORBIDDEN_COMPILED_KEYS = Set.of(
+            "menu-style",
+            "layout",
+            "tag-fuels",
+            "expand",
+            "id-prefix",
+            "input-prefix",
+            "input-amount",
+            "profile",
+            "@cf",
+            "@copyfrom",
+            "@d",
+            "@define",
+            "@g",
+            "@global",
+            "@io",
+            "@isoutput",
+            "@it",
+            "@istemplate",
+            "@mi",
+            "@mergeinto",
+            "@ot",
+            "@outputtarget",
+            "@p",
+            "@project"
+    );
 
     private SfxCompiledYamlResolver() {
     }
@@ -47,6 +74,7 @@ public final class SfxCompiledYamlResolver {
             hasCompiled = hasCompiled || !files.isEmpty();
             for (File file : files) {
                 YamlConfiguration compiled = YamlConfiguration.loadConfiguration(file);
+                validateCompiledShape(compiled, "local " + file.getAbsolutePath());
                 mergeMap(mergedMap, sectionToMap(compiled));
             }
         }
@@ -73,7 +101,9 @@ public final class SfxCompiledYamlResolver {
         File compiledRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY + "/" + normalizedPrefix);
         if (compiledRoot.isDirectory() && localCompiledIsCurrent(plugin)) {
             for (File file : listYamlFiles(compiledRoot)) {
-                result.add(YamlConfiguration.loadConfiguration(file));
+                YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+                validateCompiledShape(yaml, "local " + file.getAbsolutePath());
+                result.add(yaml);
             }
         }
         if (result.isEmpty()) {
@@ -112,6 +142,7 @@ public final class SfxCompiledYamlResolver {
                     continue;
                 }
                 YamlConfiguration yaml = YamlConfiguration.loadConfiguration(new InputStreamReader(stream, StandardCharsets.UTF_8));
+                validateCompiledShape(yaml, "bundled " + resource);
                 result.add(new BundledCompiledEntry(file, target == null ? "" : target, yaml));
             } catch (Exception ex) {
                 plugin.getLogger().warning("Failed to read bundled SFX compiled resource " + resource + ": " + ex.getMessage());
@@ -246,7 +277,7 @@ public final class SfxCompiledYamlResolver {
                     if (file.isDirectory()) {
                         return listYamlFiles(file).stream();
                     }
-                    String name = file.getName().toLowerCase(java.util.Locale.ROOT);
+                    String name = file.getName().toLowerCase(Locale.ROOT);
                     if (name.startsWith("_")) {
                         return java.util.stream.Stream.empty();
                     }
@@ -290,6 +321,40 @@ public final class SfxCompiledYamlResolver {
 
     private static boolean compiledOnly(JavaPlugin plugin) {
         return plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
+    }
+
+    private static void validateCompiledShape(YamlConfiguration yaml, String sourceName) {
+        validateCompiledNode(sectionToMap(yaml), sourceName, "$");
+    }
+
+    private static void validateCompiledNode(Object value, String sourceName, String path) {
+        if (value instanceof ConfigurationSection section) {
+            validateCompiledNode(sectionToMap(section), sourceName, path);
+            return;
+        }
+        if (value instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                String key = String.valueOf(entry.getKey());
+                String normalized = key.trim().toLowerCase(Locale.ROOT);
+                String childPath = path.equals("$") ? key : path + "." + key;
+                if (normalized.startsWith("@") || FORBIDDEN_COMPILED_KEYS.contains(normalized)) {
+                    throw new IllegalStateException("Compiled SFX content " + sourceName
+                            + " contains template or layout helper key at " + childPath + ": " + key);
+                }
+                validateCompiledNode(entry.getValue(), sourceName, childPath);
+            }
+            return;
+        }
+        if (value instanceof List<?> list) {
+            for (int i = 0; i < list.size(); i++) {
+                validateCompiledNode(list.get(i), sourceName, path + "[" + i + "]");
+            }
+            return;
+        }
+        if (value instanceof String text && text.contains("${")) {
+            throw new IllegalStateException("Compiled SFX content " + sourceName
+                    + " contains unresolved template placeholder at " + path);
+        }
     }
 
     @SuppressWarnings("unchecked")

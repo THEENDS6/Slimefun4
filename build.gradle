@@ -564,6 +564,7 @@ tasks.register('validateSfxCompiledContent') {
 
 
 
+
 *.yml'
         }.files
         def validRecipeOperations = ['shaped', 'shapeless', 'single', 'hand'] as Set
