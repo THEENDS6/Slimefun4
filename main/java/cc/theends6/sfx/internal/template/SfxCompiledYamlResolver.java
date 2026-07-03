@@ -181,7 +181,40 @@ public final class SfxCompiledYamlResolver {
                 return false;
             }
         }
+        if (!manifestOutputsMatch(plugin, localManifest, bundledManifest)) {
+            return false;
+        }
         return localCompiledOutputsMatch(plugin, localRoot, localManifest);
+    }
+
+    private static boolean manifestOutputsMatch(JavaPlugin plugin, YamlConfiguration localManifest, YamlConfiguration bundledManifest) {
+        Map<String, String> localOutputs = manifestOutputHashes(localManifest);
+        Map<String, String> bundledOutputs = manifestOutputHashes(bundledManifest);
+        if (!localOutputs.keySet().equals(bundledOutputs.keySet())) {
+            warnLocalCompiledIgnored(plugin, "_manifest.yml output file list differs from bundled manifest");
+            return false;
+        }
+        for (Map.Entry<String, String> entry : bundledOutputs.entrySet()) {
+            String localSha = localOutputs.get(entry.getKey());
+            if (!Objects.equals(localSha, entry.getValue())) {
+                warnLocalCompiledIgnored(plugin, "_manifest.yml sha256 for " + entry.getKey() + " differs from bundled manifest");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Map<String, String> manifestOutputHashes(YamlConfiguration manifest) {
+        Map<String, String> outputs = new LinkedHashMap<>();
+        for (Map<?, ?> output : manifest.getMapList("outputs")) {
+            String file = normalizeResource(string(output.get("file")));
+            if (file == null || file.isBlank()) {
+                continue;
+            }
+            String sha = string(output.get("sha256"));
+            outputs.put(file, sha == null ? null : sha.toLowerCase(Locale.ROOT));
+        }
+        return outputs;
     }
 
     private static boolean localCompiledOutputsMatch(JavaPlugin plugin, File localRoot, YamlConfiguration manifest) {
