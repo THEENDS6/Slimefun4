@@ -571,6 +571,7 @@ tasks.register('validateSfxCompiledContent') {
         def recipeMachineTagReferences = []
         def recipeItemReferences = []
         def electricRecipeItemReferences = []
+        def itemGuideRecipeItemReferences = []
         def compiledItemIds = [] as Set
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
@@ -1147,13 +1148,29 @@ tasks.register('validateSfxCompiledContent') {
             if (itemGuideMatrixSlotCount != itemRecipeMatrixCount * 9 || itemGuideMatrixAmountCount != itemRecipeMatrixCount * 9) {
                 violations << "compiled item guide recipe matrices must contain explicit type/amount on every slot: matrices=${itemRecipeMatrixCount}, slots=${itemGuideMatrixSlotCount}, amounts=${itemGuideMatrixAmountCount}"
             }
+            def currentItemId = null
             def inItemGuideMatrix = false
-            itemText.readLines().each { line ->
+            def pendingItemGuideSfxLine = null
+            itemText.readLines().eachWithIndex { line, lineIndex ->
+                def itemIdMatch = line =~ /^- id:\s*(.+?)\s*$/
+                if (itemIdMatch.matches()) {
+                    if (pendingItemGuideSfxLine != null) {
+                        violations << "content/items/20-legacy-items.yml:${pendingItemGuideSfxLine}: item ${currentItemId} guide recipe sfx matrix slot missing id"
+                        pendingItemGuideSfxLine = null
+                    }
+                    currentItemId = cleanScalar(itemIdMatch[0][1])
+                    inItemGuideMatrix = false
+                    return
+                }
                 if ((line =~ /^    matrix:\s*$/).matches()) {
                     inItemGuideMatrix = true
                     return
                 }
                 if (inItemGuideMatrix && (line =~ /^  [A-Za-z0-9_-]+:/).find()) {
+                    if (pendingItemGuideSfxLine != null) {
+                        violations << "content/items/20-legacy-items.yml:${pendingItemGuideSfxLine}: item ${currentItemId} guide recipe sfx matrix slot missing id"
+                        pendingItemGuideSfxLine = null
+                    }
                     inItemGuideMatrix = false
                 }
                 if (inItemGuideMatrix) {
@@ -1161,7 +1178,32 @@ tasks.register('validateSfxCompiledContent') {
                     if (scalarSlot.matches() && !scalarSlot.group(1).startsWith('type:')) {
                         violations << "compiled item guide recipe matrix contains scalar slot shorthand: ${scalarSlot.group(1)}"
                     }
+                    def typeMatch = line =~ /^    -\s*type:\s*(.+?)\s*$/
+                    if (typeMatch.matches()) {
+                        if (pendingItemGuideSfxLine != null) {
+                            violations << "content/items/20-legacy-items.yml:${pendingItemGuideSfxLine}: item ${currentItemId} guide recipe sfx matrix slot missing id"
+                            pendingItemGuideSfxLine = null
+                        }
+                        def type = cleanScalar(typeMatch[0][1])
+                        if (type != null && type.equalsIgnoreCase('sfx')) {
+                            pendingItemGuideSfxLine = lineIndex + 1
+                        }
+                        return
+                    }
+                    def idMatch = line =~ /^      id:\s*(.+?)\s*$/
+                    if (pendingItemGuideSfxLine != null && idMatch.matches()) {
+                        def id = cleanScalar(idMatch[0][1])
+                        if (id == null || id.isBlank()) {
+                            violations << "content/items/20-legacy-items.yml:${lineIndex + 1}: item ${currentItemId} guide recipe contains blank sfx item reference"
+                        } else {
+                            itemGuideRecipeItemReferences << [rel: 'content/items/20-legacy-items.yml', line: lineIndex + 1, item: currentItemId, ref: id]
+                        }
+                        pendingItemGuideSfxLine = null
+                    }
                 }
+            }
+            if (pendingItemGuideSfxLine != null) {
+                violations << "content/items/20-legacy-items.yml:${pendingItemGuideSfxLine}: item ${currentItemId} guide recipe sfx matrix slot missing id"
             }
         }
         if (!new File(root, 'content/items/items.yml').isFile()) {
@@ -1321,6 +1363,11 @@ tasks.register('validateSfxCompiledContent') {
                     violations << "${ref.rel}:${ref.line}: electric recipe references unknown item ${ref.item}"
                 }
             }
+            itemGuideRecipeItemReferences.each { ref ->
+                if (!compiledItemIds.contains(ref.ref)) {
+                    violations << "${ref.rel}:${ref.line}: item ${ref.item} guide recipe references unknown item ${ref.ref}"
+                }
+            }
         }
         def electricFiles = fileTree(new File(root, 'content/machines/electric-machines')) {
             include '**/*.yml'
@@ -1436,7 +1483,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, ${recipeMachineReferences.size()} recipe machine reference(s), ${recipeMachineTagReferences.size()} recipe machine tag reference(s), ${recipeItemReferences.size()} recipe item reference(s), ${electricRecipeItemReferences.size()} electric recipe item reference(s), and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, ${recipeMachineReferences.size()} recipe machine reference(s), ${recipeMachineTagReferences.size()} recipe machine tag reference(s), ${recipeItemReferences.size()} recipe item reference(s), ${electricRecipeItemReferences.size()} electric recipe item reference(s), ${itemGuideRecipeItemReferences.size()} item guide recipe item reference(s), and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
     }
 }
 
