@@ -85,7 +85,7 @@ The jar embeds compiled content, so startup should not need to compile templates
 Defaults:
 
 - `content.compile-templates-on-startup: false`
-- `content.sync-bundled-templates-on-startup: false`
+- `content.sync-bundled-templates-before-compile: false`
 - `content.runtime.compiled-only: true`
 
 Use `/sfx template compile` or `/sfx template reload` when intentionally regenerating local compiled content. Only enable bundled template syncing while deliberately resetting local template sources from the jar.

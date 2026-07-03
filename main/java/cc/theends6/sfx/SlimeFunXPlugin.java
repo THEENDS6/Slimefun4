@@ -250,7 +250,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     }
 
     boolean syncBundledTemplateFiles() {
-        return getConfig().getBoolean("content.sync-bundled-templates-on-startup", false);
+        return getConfig().getBoolean("content.sync-bundled-templates-before-compile", false);
     }
 
     boolean syncBundledRecipeFiles() {
