@@ -77,15 +77,15 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private void openGuide(CommandSender sender, GuideMode mode) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(tr("command.errors.players-only-guide", "Only players can open the SFX guide."));
+            sender.sendMessage(tr("command.errors.players-only-guide"));
             return;
         }
         if (mode == GuideMode.CHEAT && !player.hasPermission("sfx.command.cheatguide")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-guide", "<red>You do not have permission to open the cheat guide.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-guide")));
             return;
         }
         if (mode == GuideMode.SURVIVAL && !player.hasPermission("sfx.command.guide")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-guide", "<red>You do not have permission to open the guide.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-guide")));
             return;
         }
         api.guide().open(player, mode);
@@ -93,70 +93,70 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private void giveGuideBook(CommandSender sender, GuideMode mode) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(tr("command.errors.players-only-book", "Only players can receive the SFX guide book."));
+            sender.sendMessage(tr("command.errors.players-only-book"));
             return;
         }
         if (mode == GuideMode.CHEAT && !player.hasPermission("sfx.command.cheatbook")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-book", "<red>You do not have permission to receive the cheat guide book.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-cheat-book")));
             return;
         }
         if (mode == GuideMode.SURVIVAL && !player.hasPermission("sfx.command.book")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-book", "<red>You do not have permission to receive the guide book.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-book")));
             return;
         }
         api.items().give(player, api.items().createGuideBook(mode));
         player.sendMessage(Text.prefixed(plugin, mode == GuideMode.CHEAT
-                ? tr("command.book.received-cheat", "<green>You received a cheat guide book.</green>")
-                : tr("command.book.received", "<green>You received a guide book.</green>")));
+                ? tr("command.book.received-cheat")
+                : tr("command.book.received")));
     }
 
     private void giveItem(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(tr("command.errors.players-only-give", "Only players can receive SFX items."));
+            sender.sendMessage(tr("command.errors.players-only-give"));
             return;
         }
         if (!player.hasPermission("sfx.command.give")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-give", "<red>You do not have permission to receive SFX items directly.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-give")));
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.usage", "<red>Usage: /slimefunx give <id> [amount]</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.usage")));
             return;
         }
         String itemId = args[1];
         int amount = args.length >= 3 ? parsePositive(args[2], 1) : 1;
         SfxItemDefinition definition = api.itemRegistry().item(itemId).orElse(null);
         if (definition == null) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.unknown", "<red>Unknown SFX item: {id}</red>").replace("{id}", itemId)));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.unknown").replace("{id}", itemId)));
             return;
         }
         if (!definition.giveable()) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.not-giveable", "<red>This item cannot be given directly.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.not-giveable")));
             return;
         }
         int inserted = giveStacks(player.getInventory(), definition, amount);
         if (inserted <= 0) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.no-space", "<red>Your inventory does not have enough free space.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.no-space")));
             return;
         }
         if (inserted < amount) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.give.partial", "<yellow>Inserted {amount}x {item}. Inventory became full.</yellow>")
+            player.sendMessage(Text.prefixed(plugin, tr("command.give.partial")
                     .replace("{amount}", Integer.toString(inserted))
                     .replace("{item}", itemDisplayName(definition))));
             return;
         }
-        player.sendMessage(Text.prefixed(plugin, tr("command.give.success", "<green>Received {amount}x {item}.</green>")
+        player.sendMessage(Text.prefixed(plugin, tr("command.give.success")
                 .replace("{amount}", Integer.toString(inserted))
                 .replace("{item}", itemDisplayName(definition))));
     }
 
     private void handleResearch(CommandSender sender, String[] args) {
         if (!sender.hasPermission("sfx.command.research")) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-research", "<red>You do not have permission to manage researches.</red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-research")));
             return;
         }
         if (args.length < 3) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.research.usage", "<red>Usage: /slimefunx research <player|uuid> <all|reset|research-id></red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.research.usage")));
             return;
         }
         SlimeFunXPlugin sfx = sfxPlugin();
@@ -166,7 +166,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         }
         ResolvedPlayerRef target = resolvePlayer(args[1]);
         if (target == null) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.player.unknown", "<red>Unknown player or UUID.</red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.player.unknown")));
             return;
         }
         String action = args[2].toLowerCase(Locale.ROOT);
@@ -175,22 +175,22 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             switch (action) {
                 case "all" -> {
                     researches.grantAll(profile);
-                    sender.sendMessage(Text.prefixed(plugin, tr("command.research.success-all", "<green>Unlocked all researches for {player}.</green>").replace("{player}", target.displayName())));
+                    sender.sendMessage(Text.prefixed(plugin, tr("command.research.success-all").replace("{player}", target.displayName())));
                 }
                 case "reset" -> {
                     researches.resetAll(profile);
-                    sender.sendMessage(Text.prefixed(plugin, tr("command.research.success-reset", "<green>Reset all researches for {player}.</green>").replace("{player}", target.displayName())));
+                    sender.sendMessage(Text.prefixed(plugin, tr("command.research.success-reset").replace("{player}", target.displayName())));
                 }
                 default -> {
                     Optional<SfxResearchDefinition> research = researches.researchById(action);
                     if (research.isEmpty()) {
-                        sender.sendMessage(Text.prefixed(plugin, tr("command.research.unknown", "<red>Unknown research: {id}</red>").replace("{id}", action)));
+                        sender.sendMessage(Text.prefixed(plugin, tr("command.research.unknown").replace("{id}", action)));
                         return;
                     }
                     boolean changed = researches.grant(profile, research.get());
                     sender.sendMessage(Text.prefixed(plugin, (changed
-                            ? tr("command.research.success-one", "<green>Unlocked research {id} for {player}.</green>")
-                            : tr("command.research.already", "<yellow>{player} already had research {id}.</yellow>"))
+                            ? tr("command.research.success-one")
+                            : tr("command.research.already"))
                             .replace("{id}", research.get().id())
                             .replace("{player}", target.displayName())));
                 }
@@ -200,11 +200,11 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private void handleBackpack(CommandSender sender, String[] args) {
         if (!sender.hasPermission("sfx.command.backpack")) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-backpack", "<red>You do not have permission to manage backpacks.</red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-backpack")));
             return;
         }
         if (args.length < 3) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.backpack.usage", "<red>Usage: /slimefunx backpack <list|open|give> <player|uuid> [id] [size]</red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.backpack.usage")));
             return;
         }
         SlimeFunXPlugin sfx = sfxPlugin();
@@ -215,26 +215,26 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         String action = args[1].toLowerCase(Locale.ROOT);
         ResolvedPlayerRef target = resolvePlayer(args[2]);
         if (target == null) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.player.unknown", "<red>Unknown player or UUID.</red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.player.unknown")));
             return;
         }
         switch (action) {
             case "list" -> listBackpacks(sender, sfx, target);
             case "open" -> openBackpack(sender, sfx, target, args);
             case "give" -> giveBackpack(sender, sfx, target, args);
-            default -> sender.sendMessage(Text.prefixed(plugin, tr("command.backpack.usage", "<red>Usage: /slimefunx backpack <list|open|give> <player|uuid> [id] [size]</red>")));
+            default -> sender.sendMessage(Text.prefixed(plugin, tr("command.backpack.usage")));
         }
     }
 
     private void listBackpacks(CommandSender sender, SlimeFunXPlugin sfx, ResolvedPlayerRef target) {
         sfx.playerDataService().request(target.offlinePlayer(), profile -> {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.backpack.list.header", "<green>Backpacks for {player}</green>").replace("{player}", target.displayName())));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.backpack.list.header").replace("{player}", target.displayName())));
             if (profile.backpacksCopy().isEmpty()) {
-                sender.sendMessage(Text.mm(tr("command.backpack.list.empty", "<gray>No backpacks found.</gray>")));
+                sender.sendMessage(Text.mm(tr("command.backpack.list.empty")));
                 return;
             }
             for (SfxBackpackRecord backpack : profile.backpacksCopy().values()) {
-                sender.sendMessage(Text.mm(tr("command.backpack.list.entry", "<gray>- ID {id} | size {size} | updated {updated}</gray>")
+                sender.sendMessage(Text.mm(tr("command.backpack.list.entry")
                         .replace("{id}", Integer.toString(backpack.id()))
                         .replace("{size}", Integer.toString(backpack.size()))
                         .replace("{updated}", formatTimestamp(backpack.updatedAt()))));
@@ -244,16 +244,16 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private void openBackpack(CommandSender sender, SlimeFunXPlugin sfx, ResolvedPlayerRef target, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(tr("command.errors.players-only-backpack-open", "Only players can open backpacks directly."));
+            sender.sendMessage(tr("command.errors.players-only-backpack-open"));
             return;
         }
         if (args.length < 4) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.open.usage", "<red>Usage: /slimefunx backpack open <player|uuid> <id></red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.open.usage")));
             return;
         }
         Integer backpackId = parseNonNegativeInt(args[3]);
         if (backpackId == null) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.invalid-id", "<red>Invalid backpack id.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.invalid-id")));
             return;
         }
         sfx.backpackListener().openBackpackForAdmin(player, target.offlinePlayer().getUniqueId(), target.displayName(), backpackId);
@@ -261,57 +261,57 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private void giveBackpack(CommandSender sender, SlimeFunXPlugin sfx, ResolvedPlayerRef target, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(tr("command.errors.players-only-backpack-give", "Only players can receive backpack items."));
+            sender.sendMessage(tr("command.errors.players-only-backpack-give"));
             return;
         }
         if (args.length < 4) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.give.usage", "<red>Usage: /slimefunx backpack give <player|uuid> <id> [size|tier]</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.give.usage")));
             return;
         }
         Integer backpackId = parseNonNegativeInt(args[3]);
         if (backpackId == null) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.invalid-id", "<red>Invalid backpack id.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.invalid-id")));
             return;
         }
         Integer size = args.length >= 5 ? parseBackpackSizeArg(args[4]) : null;
         if (args.length >= 5 && size == null) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.invalid-size", "<red>Use backpack size 9/18/27/36/45/54 or tier 1-6.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.backpack.invalid-size")));
             return;
         }
         sfx.backpackListener().giveBackpackItem(player, target.offlinePlayer().getUniqueId(), target.displayName(), backpackId, size);
-        player.sendMessage(Text.prefixed(plugin, tr("command.backpack.give.sent", "<green>Prepared backpack item for {player} #{id}.</green>")
+        player.sendMessage(Text.prefixed(plugin, tr("command.backpack.give.sent")
                 .replace("{player}", target.displayName())
                 .replace("{id}", Integer.toString(backpackId))));
     }
 
     private void inspectItem(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(tr("command.errors.players-only-inspect", "Only players can inspect SFX items."));
+            sender.sendMessage(tr("command.errors.players-only-inspect"));
             return;
         }
         if (!player.hasPermission("sfx.command.inspect")) {
-            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-inspect", "<red>You do not have permission to inspect SFX item markers.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("command.errors.no-inspect")));
             return;
         }
         SfxItemMarker marker = api.items().readMarker(player.getInventory().getItemInMainHand()).orElse(null);
         if (marker == null) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.inspect.no-marker", "<gray>No SFX item marker was found in your main hand.</gray>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.inspect.no-marker")));
             return;
         }
-        sender.sendMessage(Text.mm(tr("command.inspect.header", "<green>SFX Item Marker</green>")));
-        sender.sendMessage(Text.mm(tr("command.inspect.field.item-id", "<gray>item_id: </gray><white>{value}</white>").replace("{value}", marker.itemId())));
-        sender.sendMessage(Text.mm(tr("command.inspect.field.item-version", "<gray>item_version: </gray><white>{value}</white>").replace("{value}", Integer.toString(marker.itemVersion()))));
-        sender.sendMessage(Text.mm(tr("command.inspect.field.item-schema", "<gray>item_schema: </gray><white>{value}</white>").replace("{value}", Integer.toString(marker.schemaVersion()))));
-        sender.sendMessage(Text.mm(tr("command.inspect.field.item-variant", "<gray>item_variant: </gray><white>{value}</white>").replace("{value}", marker.variant())));
-        sender.sendMessage(Text.mm(tr("command.inspect.field.item-kind", "<gray>item_kind: </gray><white>{value}</white>").replace("{value}", marker.kind().pdcValue())));
-        sender.sendMessage(Text.mm(tr("command.inspect.field.item-flags", "<gray>item_flags: </gray><white>{value}</white>").replace("{value}", marker.flagsAsString())));
+        sender.sendMessage(Text.mm(tr("command.inspect.header")));
+        sender.sendMessage(Text.mm(tr("command.inspect.field.item-id").replace("{value}", marker.itemId())));
+        sender.sendMessage(Text.mm(tr("command.inspect.field.item-version").replace("{value}", Integer.toString(marker.itemVersion()))));
+        sender.sendMessage(Text.mm(tr("command.inspect.field.item-schema").replace("{value}", Integer.toString(marker.schemaVersion()))));
+        sender.sendMessage(Text.mm(tr("command.inspect.field.item-variant").replace("{value}", marker.variant())));
+        sender.sendMessage(Text.mm(tr("command.inspect.field.item-kind").replace("{value}", marker.kind().pdcValue())));
+        sender.sendMessage(Text.mm(tr("command.inspect.field.item-flags").replace("{value}", marker.flagsAsString())));
         api.items().readGuideMode(player.getInventory().getItemInMainHand())
-                .ifPresent(mode -> sender.sendMessage(Text.mm(tr("command.inspect.field.guide-mode", "<gray>guide_mode: </gray><white>{value}</white>").replace("{value}", mode.pdcValue()))));
+                .ifPresent(mode -> sender.sendMessage(Text.mm(tr("command.inspect.field.guide-mode").replace("{value}", mode.pdcValue()))));
     }
 
     private void listItems(CommandSender sender, int page) {
         if (!sender.hasPermission("sfx.command.list")) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-list", "<red>You do not have permission to view the SFX item list.</red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-list")));
             return;
         }
         List<SfxItemDefinition> definitions = api.itemRegistry().items().stream().filter(item -> !item.hidden()).toList();
@@ -319,7 +319,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         int safePage = Math.max(0, Math.min(page, pageCount - 1));
 
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Text.mm(tr("command.list.header", "<green>SFX Item Registry</green><gray> {count} items | page {page}/{pages}</gray>")
+            sender.sendMessage(Text.mm(tr("command.list.header")
                     .replace("{count}", Integer.toString(definitions.size()))
                     .replace("{page}", Integer.toString(safePage + 1))
                     .replace("{pages}", Integer.toString(pageCount))));
@@ -332,7 +332,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        SfxMenu.Builder builder = SfxMenu.builder(Text.mm(tr("command.list.menu-title", "<dark_green>SFX Item Registry</dark_green> <gray>{page}/{pages}</gray>")
+        SfxMenu.Builder builder = SfxMenu.builder(Text.mm(tr("command.list.menu-title")
                 .replace("{page}", Integer.toString(safePage + 1))
                 .replace("{pages}", Integer.toString(pageCount)))).rows(6);
         ItemStack pane = ItemBuilder.of(Material.GREEN_STAINED_GLASS_PANE).name("<dark_gray> </dark_gray>").build();
@@ -352,23 +352,23 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             }));
         }
         builder.button(46, new SfxMenuButton(ItemBuilder.of(Material.ARROW)
-                .name(safePage > 0 ? tr("guide.pagination.prev.active", "<yellow>Previous Page</yellow>") : tr("guide.pagination.prev.inactive", "<dark_gray>Previous Page</dark_gray>"))
-                .lore(tr("guide.pagination.page", "<gray>Page {current} / {total}</gray>").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
+                .name(safePage > 0 ? tr("guide.pagination.prev.active") : tr("guide.pagination.prev.inactive"))
+                .lore(tr("guide.pagination.page").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
                 .build(), click -> {
             if (safePage > 0) {
                 listItems(click.player(), safePage - 1);
             }
         }));
         builder.button(49, new SfxMenuButton(ItemBuilder.of(Material.NETHER_STAR)
-                .name(tr("command.list.registry-name", "<green>SFX Item Registry</green>"))
-                .lore(tr("command.list.registry-lore.0", "<gray>Browse all currently registered visible items.</gray>"),
-                        tr("command.list.registry-lore.1", "<gray>Total: {count}</gray>").replace("{count}", Integer.toString(definitions.size())),
+                .name(tr("command.list.registry-name"))
+                .lore(tr("command.list.registry-lore.0"),
+                        tr("command.list.registry-lore.1").replace("{count}", Integer.toString(definitions.size())),
                         "",
-                        tr("guide.actions.close", "<dark_gray>Click to close.</dark_gray>"))
+                        tr("guide.actions.close"))
                 .build(), click -> click.menus().close(click.player())));
         builder.button(52, new SfxMenuButton(ItemBuilder.of(Material.ARROW)
-                .name(safePage + 1 < pageCount ? tr("guide.pagination.next.active", "<yellow>Next Page</yellow>") : tr("guide.pagination.next.inactive", "<dark_gray>Next Page</dark_gray>"))
-                .lore(tr("guide.pagination.page", "<gray>Page {current} / {total}</gray>").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
+                .name(safePage + 1 < pageCount ? tr("guide.pagination.next.active") : tr("guide.pagination.next.inactive"))
+                .lore(tr("guide.pagination.page").replace("{current}", Integer.toString(safePage + 1)).replace("{total}", Integer.toString(pageCount)))
                 .build(), click -> {
             if (safePage + 1 < pageCount) {
                 listItems(click.player(), safePage + 1);
@@ -383,7 +383,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         if (meta != null) {
             List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
             lore.add(Component.empty());
-            lore.add(Component.text(tr("command.list.registry-entry", "Registry Entry"), NamedTextColor.GRAY));
+            lore.add(Component.text(tr("command.list.registry-entry"), NamedTextColor.GRAY));
             meta.lore(lore.stream().map(Text::noItalic).toList());
             icon.setItemMeta(meta);
         }
@@ -392,15 +392,15 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
 
     private void reload(CommandSender sender, String[] args) {
         if (!sender.hasPermission("sfx.command.reload")) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload", "<red>You do not have permission to reload SFX.</red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload")));
             return;
         }
         if (plugin instanceof SlimeFunXPlugin sfxPlugin) {
             if (args.length >= 2 && (args[1].equalsIgnoreCase("runtime") || args[1].equalsIgnoreCase("all"))) {
                 boolean ok = sfxPlugin.reloadAllContent();
                 sender.sendMessage(Text.prefixed(plugin, ok
-                        ? tr("command.reload.success-all", "<green>SFX runtime reloaded: listeners, services, machine framework, registries, recipes, researches, and menus were rebuilt.</green>")
-                        : tr("command.reload.failed-all", "<red>SFX runtime reload failed. The plugin was disabled to avoid running with a partial service graph.</red>")));
+                        ? tr("command.reload.success-all")
+                        : tr("command.reload.failed-all")));
                 return;
             }
             plugin.reloadConfig();
@@ -409,12 +409,12 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         } else {
             plugin.reloadConfig();
         }
-        sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success", "<green>SFX configuration and language files were reloaded.</green>")));
+        sender.sendMessage(Text.prefixed(plugin, tr("command.reload.success")));
     }
 
     private void handleTemplate(CommandSender sender, String[] args) {
         if (!sender.hasPermission("sfx.command.reload")) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload", "<red>You do not have permission to reload SFX.</red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload")));
             return;
         }
         SlimeFunXPlugin sfx = sfxPlugin();
@@ -423,45 +423,45 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.template.usage", "<red>Usage: /sfx template <compile|reload></red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.template.usage")));
             return;
         }
         if (args[1].equalsIgnoreCase("reload")) {
             boolean ok = sfx.reloadAllContent();
             sender.sendMessage(Text.prefixed(plugin, ok
-                    ? tr("command.template.reload-success", "<green>SFX templates compiled and runtime content was rebuilt.</green>")
-                    : tr("command.reload.failed-all", "<red>SFX runtime reload failed. The plugin was disabled to avoid running with a partial service graph.</red>")));
+                    ? tr("command.template.reload-success")
+                    : tr("command.reload.failed-all")));
             return;
         }
         if (!args[1].equalsIgnoreCase("compile")) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.template.usage", "<red>Usage: /sfx template <compile|reload></red>")));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.template.usage")));
             return;
         }
         try {
             SfxTemplateCompileReport report = sfx.compileContentTemplates();
-            sender.sendMessage(Text.prefixed(plugin, tr("command.template.compile-success", "<green>SFX templates compiled: {sources} source file(s), {outputs} output file(s). Use /sfx reload runtime to apply runtime changes.</green>")
+            sender.sendMessage(Text.prefixed(plugin, tr("command.template.compile-success")
                     .replace("{sources}", Integer.toString(report.sourceFiles()))
                     .replace("{outputs}", Integer.toString(report.outputFiles()))));
             for (String warning : report.warnings()) {
-                sender.sendMessage(Text.prefixed(plugin, tr("command.template.warning", "<yellow>[template] {warning}</yellow>").replace("{warning}", warning)));
+                sender.sendMessage(Text.prefixed(plugin, tr("command.template.warning").replace("{warning}", warning)));
             }
         } catch (RuntimeException ex) {
-            sender.sendMessage(Text.prefixed(plugin, tr("command.template.compile-failed", "<red>SFX template compile failed: {message}</red>").replace("{message}", ex.getMessage())));
+            sender.sendMessage(Text.prefixed(plugin, tr("command.template.compile-failed").replace("{message}", ex.getMessage())));
         }
     }
 
     private void sendHelp(CommandSender sender, String label) {
-        sender.sendMessage(Text.mm(tr("command.help.header", "<green>SFX Commands</green>")));
-        sender.sendMessage(Text.mm(tr("command.help.line.guide", "<gray>/{label} guide</gray> <dark_gray>- open the survival guide</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.book", "<gray>/{label} book [cheat]</gray> <dark_gray>- receive a guide book</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.cheatguide", "<gray>/{label} cheatguide</gray> <dark_gray>- open the cheat guide</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.give", "<gray>/{label} give <id> [amount]</gray> <dark_gray>- receive an SFX item</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.research", "<gray>/{label} research <player> <all|reset|id></gray> <dark_gray>- manage researches</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.backpack", "<gray>/{label} backpack <list|open|give> ...</gray> <dark_gray>- manage backpacks</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.inspect", "<gray>/{label} inspect</gray> <dark_gray>- inspect the SFX item in your main hand</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.list", "<gray>/{label} list [page]</gray> <dark_gray>- list visible SFX items</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.reload", "<gray>/{label} reload [config|runtime]</gray> <dark_gray>- reload config or rebuild the SFX runtime</dark_gray>").replace("{label}", label)));
-        sender.sendMessage(Text.mm(tr("command.help.line.template", "<gray>/{label} template <compile|reload></gray> <dark_gray>- compile templates or compile and rebuild runtime content</dark_gray>").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.header")));
+        sender.sendMessage(Text.mm(tr("command.help.line.guide").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.book").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.cheatguide").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.give").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.research").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.backpack").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.inspect").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.list").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.reload").replace("{label}", label)));
+        sender.sendMessage(Text.mm(tr("command.help.line.template").replace("{label}", label)));
     }
 
     @Override
@@ -473,14 +473,14 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         return plugin instanceof SlimeFunXPlugin sfx ? sfx : null;
     }
 
-    private String tr(String key, String fallback) {
+    private String tr(String key) {
         SlimeFunXPlugin sfx = sfxPlugin();
-        return sfx == null ? fallback : sfx.localization().text(key, fallback);
+        return sfx == null ? key : sfx.localization().text(key);
     }
 
     private String itemDisplayName(SfxItemDefinition definition) {
         SlimeFunXPlugin sfx = sfxPlugin();
-        return sfx == null ? plainText(definition.name()) : plainText(sfx.localization().itemName(definition.id(), definition.name()));
+        return sfx == null ? definition.nameKey() : plainText(sfx.localization().itemName(definition.id()));
     }
 
     private String plainText(Component component) {
