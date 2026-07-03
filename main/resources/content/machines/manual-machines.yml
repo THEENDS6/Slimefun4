@@ -6,6 +6,11 @@ machines:
     trigger-face: SELF
     inventory-face: DOWN
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
+    - enhanced-crafting
     pattern:
     - type: empty
     - type: empty
@@ -37,6 +42,10 @@ machines:
     trigger-face: SELF
     inventory-face: DOWN
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
     pattern:
     - type: empty
     - type: empty
@@ -68,6 +77,10 @@ machines:
     trigger-face: SELF
     inventory-face: DOWN
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
     pattern:
     - type: empty
     - type: empty
@@ -103,6 +116,10 @@ machines:
     trigger-face: SELF
     inventory-face: DOWN
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
     pattern:
     - type: empty
     - type: empty
@@ -138,6 +155,10 @@ machines:
     trigger-face: SELF
     inventory-face: UP
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
     pattern:
     - type: empty
     - type: material
@@ -171,6 +192,11 @@ machines:
     trigger-face: SELF
     inventory-face: DOWN
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
+    - armor
     pattern:
     - type: empty
     - type: empty
@@ -202,6 +228,11 @@ machines:
     trigger-face: DOWN
     inventory-face: SELF
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
+    - smeltery
     pattern:
     - type: empty
     - type: material
@@ -238,6 +269,11 @@ machines:
     trigger-face: DOWN
     inventory-face: SELF
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
+    - smeltery
     pattern:
     - type: empty
     - type: material
@@ -274,6 +310,10 @@ machines:
     trigger-face: UP
     inventory-face: UP
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
     pattern:
     - type: material
       material: SMOOTH_STONE_SLAB
@@ -319,6 +359,11 @@ machines:
     trigger-face: SELF
     inventory-face: SELF
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
+    - magic
     pattern:
     - type: empty
     - type: empty
@@ -352,6 +397,11 @@ machines:
     trigger-face: SELF
     inventory-face: SELF
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
+    - hand-input-transform
     pattern:
     - type: empty
     - type: empty
@@ -387,6 +437,10 @@ machines:
     trigger-face: SELF
     inventory-face: DOWN
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
     pattern:
     - type: empty
     - type: material
@@ -420,6 +474,11 @@ machines:
     trigger-face: SELF
     inventory-face: SELF
     deployable: true
+    tags:
+    - machine
+    - basic
+    - manual
+    - hand-input-transform
     pattern:
     - type: empty
     - type: empty
