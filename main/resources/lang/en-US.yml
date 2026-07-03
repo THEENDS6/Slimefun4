@@ -4233,7 +4233,7 @@ messages:
     foreign-owner: <red>This backpack belongs to another player.</red>
     already-open: <red>This backpack is already open.</red>
     not-found: <red>That backpack does not exist.</red>
-    admin-title: Backpack
+    admin-title: Backpack #{id} ({owner})
   tape-measure:
     no-anchor: '&cYou need to set an anchor before you can start to measure!'
     wrong-world: '&cYour anchor seems to be in a different world!'
