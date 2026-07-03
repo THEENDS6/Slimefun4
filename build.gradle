@@ -1804,6 +1804,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineService.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineStatusIconRenderer.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxAutoCrafterMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/electric/SfxElectricAssemblerMenuRenderer.java',
             'main/java/cc/theends6/sfx/internal/energy/SfxEnergyBackedElectricMenuService.java',
             'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java',
             'main/java/cc/theends6/sfx/internal/machine/ManualMachineService.java',
