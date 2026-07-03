@@ -13,7 +13,6 @@ import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -107,13 +106,11 @@ public final class SfxBackpackListener implements Listener {
         profiles.request(ownerId, ownerName, profile -> {
             SfxBackpackRecord backpack = profile.getBackpack(backpackId);
             if (backpack == null) {
-                runtime.executeForPlayer(viewer, () -> send(viewer, "messages.backpack.not-found", "<red>That backpack does not exist.</red>"));
+                runtime.executeForPlayer(viewer, () -> send(viewer, "messages.backpack.not-found"));
                 return;
             }
             runtime.executeForPlayer(viewer, () -> openProfileBackpack(viewer, profile, backpackId, itemIdForSize(backpack.size()),
-                    localization.text("messages.backpack.admin-title", "Backpack #{id} ({owner})")
-                            .replace("{id}", Integer.toString(backpackId))
-                            .replace("{owner}", ownerName),
+                    localization.text("messages.backpack.admin-title", Map.of("id", backpackId, "owner", ownerName)),
                     true, false));
         });
     }
@@ -123,7 +120,7 @@ public final class SfxBackpackListener implements Listener {
             String itemId;
             if (requestedSize == null) {
                 if (profile.getBackpack(backpackId) == null) {
-                    runtime.executeForPlayer(recipient, () -> send(recipient, "messages.backpack.not-found", "<red>That backpack does not exist.</red>"));
+                    runtime.executeForPlayer(recipient, () -> send(recipient, "messages.backpack.not-found"));
                     return;
                 }
                 itemId = "sf:restored_backpack";
@@ -254,24 +251,24 @@ public final class SfxBackpackListener implements Listener {
 
     private void openBackpack(Player player, ItemStack item, String itemId) {
         if (!researches.canUse(player, itemId)) {
-            send(player, "messages.not-researched-item", "<red>You have not unlocked this item yet.</red>");
+            send(player, "messages.not-researched-item");
             return;
         }
         if (item == null || item.getAmount() != 1) {
-            send(player, "messages.backpack.no-stack", "<red>Backpacks must be used one at a time.</red>");
+            send(player, "messages.backpack.no-stack");
             return;
         }
         Optional<SfxPlayerProfile> optional = profiles.find(player.getUniqueId());
         if (optional.isEmpty()) {
             profiles.request(player, profile -> {
             });
-            send(player, "messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>");
+            send(player, "messages.profile.loading");
             return;
         }
         SfxPlayerProfile profile = optional.get();
         BackpackBinding binding = readBinding(item).orElseGet(() -> bindBackpackItem(item, profile, itemId));
         if (!allowForeignOpen() && !binding.ownerId().equals(player.getUniqueId())) {
-            send(player, "messages.backpack.foreign-owner", "<red>This backpack belongs to another player.</red>");
+            send(player, "messages.backpack.foreign-owner");
             return;
         }
         String ownerName = resolveOwnerName(binding.ownerId(), profile);
@@ -440,23 +437,11 @@ public final class SfxBackpackListener implements Listener {
     }
 
     private String backpackTitle(ItemStack item, String itemId) {
-        String fallback = switch (itemId) {
-            case "sf:small_backpack" -> "Small Backpack";
-            case "sf:medium_backpack" -> "Backpack";
-            case "sf:large_backpack" -> "Large Backpack";
-            case "sf:woven_backpack" -> "Woven Backpack";
-            case "sf:gilded_backpack" -> "Gilded Backpack";
-            case "sf:radiant_backpack" -> "Radiant Backpack";
-            case "sf:bound_backpack" -> "Soulbound Backpack";
-            case "sf:cooler" -> "Cooler";
-            case "sf:restored_backpack" -> "Restored Backpack";
-            default -> itemId;
-        };
         return items.readMarker(item)
                 .flatMap(marker -> Optional.ofNullable(item.getItemMeta()))
                 .flatMap(meta -> Optional.ofNullable(meta.displayName()))
                 .map(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()::serialize)
-                .orElse(localization.text("items." + itemId.replace(':', '.').toLowerCase(Locale.ROOT) + ".name", fallback));
+                .orElse(PlainTextComponentSerializer.plainText().serialize(localization.itemName(itemId)));
     }
 
     private void openProfileBackpack(Player player, SfxPlayerProfile ownerProfile, int backpackId, String itemId, String title, boolean force, boolean createIfMissing) {
@@ -464,7 +449,7 @@ public final class SfxBackpackListener implements Listener {
         UUID viewer = openBackpacks.get(uniqueKey);
         if (viewer != null && !viewer.equals(player.getUniqueId())) {
             if (!force) {
-                send(player, "messages.backpack.already-open", "<red>This backpack is already open.</red>");
+                send(player, "messages.backpack.already-open");
                 return;
             }
             Player existingViewer = plugin.getServer().getPlayer(viewer);
@@ -482,7 +467,7 @@ public final class SfxBackpackListener implements Listener {
                 ? ownerProfile.getOrCreateBackpack(backpackId, backpackSize(itemId))
                 : ownerProfile.getBackpack(backpackId);
         if (backpack == null) {
-            send(player, "messages.backpack.not-found", "<red>That backpack does not exist.</red>");
+            send(player, "messages.backpack.not-found");
             return;
         }
         OpenBackpackSession previous = sessions.remove(player.getUniqueId());
@@ -549,8 +534,8 @@ public final class SfxBackpackListener implements Listener {
         return copy;
     }
 
-    private void send(Player player, String key, String fallback) {
-        player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback)));
+    private void send(Player player, String key) {
+        player.sendMessage(Text.prefixed(plugin, localization.text(key)));
     }
 
 

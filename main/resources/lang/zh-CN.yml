@@ -4190,7 +4190,7 @@ messages:
     foreign-owner: <red>这个背包属于其他玩家。</red>
     already-open: <red>这个背包已经被打开了。</red>
     not-found: <red>这个背包不存在。</red>
-    admin-title: 背包
+    admin-title: 背包 
   tape-measure:
     no-anchor: '&c在开始测量之前请先设置一个锚点！'
     wrong-world: '&c你设置的锚点似乎在另一个世界。'
