@@ -1798,6 +1798,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
     def coreLocalizationFiles = [
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusIconRenderer.java',
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusDefaults.java',
+            'main/java/cc/theends6/sfx/SlimeFunXPlugin.java',
             'main/java/cc/theends6/sfx/internal/command/SfxCommand.java',
             'main/java/cc/theends6/sfx/internal/guide/DefaultSfxGuide.java',
             'main/java/cc/theends6/sfx/internal/guide/SfxGuideResearchUnlockController.java',

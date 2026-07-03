@@ -1,3 +1,7 @@
+plugin:
+  lifecycle:
+    enabled: <gray>[{time}] SlimeFunX has been enabled.</gray>
+    disabled: <gray>[{time}] SlimeFunX has been disabled.</gray>
 machines:
   structure-changed: <red>The structure changed. Machine activation was cancelled.</red>
   missing-dispenser: '<red>Structure incomplete: missing the paired dispenser.</red>'

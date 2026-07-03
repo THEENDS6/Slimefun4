@@ -135,17 +135,18 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         SfxPluginBootstrap.enable(this);
-        notifyOnlineOps("启用");
+        notifyOnlineOps("plugin.lifecycle.enabled");
     }
 
     
 
     @Override
     public void onDisable() {
+        Component disabledMessage = lifecycleMessage("plugin.lifecycle.disabled");
         try {
             SfxPluginBootstrap.disable(this);
         } finally {
-            notifyOnlineOps("禁用");
+            notifyOnlineOps(disabledMessage);
         }
     }
 
@@ -155,8 +156,21 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         return api;
     }
 
-    private void notifyOnlineOps(String state) {
-        Component message = Component.text("[" + LocalDateTime.now().format(OP_LIFECYCLE_TIME) + "] SlimeFunX已经" + state);
+    private void notifyOnlineOps(String key) {
+        notifyOnlineOps(lifecycleMessage(key));
+    }
+
+    private Component lifecycleMessage(String key) {
+        if (localization == null) {
+            return null;
+        }
+        return localization.component(key, java.util.Map.of("time", LocalDateTime.now().format(OP_LIFECYCLE_TIME)));
+    }
+
+    private void notifyOnlineOps(Component message) {
+        if (message == null) {
+            return;
+        }
         for (Player player : getServer().getOnlinePlayers()) {
             if (player.isOp()) {
                 player.sendMessage(message);
