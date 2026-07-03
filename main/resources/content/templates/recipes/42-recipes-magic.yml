@@ -9,7 +9,8 @@ recipes:
     guide-order: 1
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -31,7 +32,8 @@ recipes:
     guide-order: 2
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -53,7 +55,8 @@ recipes:
     guide-order: 3
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -75,7 +78,8 @@ recipes:
     guide-order: 4
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -97,7 +101,8 @@ recipes:
     guide-order: 5
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -119,7 +124,8 @@ recipes:
     guide-order: 6
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -141,7 +147,8 @@ recipes:
     guide-order: 7
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -163,7 +170,8 @@ recipes:
     guide-order: 8
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -185,7 +193,8 @@ recipes:
     guide-order: 9
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -207,7 +216,8 @@ recipes:
     guide-order: 10
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -229,7 +239,8 @@ recipes:
     guide-order: 11
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -251,7 +262,8 @@ recipes:
     guide-order: 12
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -273,7 +285,8 @@ recipes:
     guide-order: 13
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -295,7 +308,8 @@ recipes:
     guide-order: 14
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -317,7 +331,8 @@ recipes:
     guide-order: 15
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -339,7 +354,8 @@ recipes:
     guide-order: 16
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -361,7 +377,8 @@ recipes:
     guide-order: 17
     source: slimefunx-legacy
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -383,7 +400,8 @@ recipes:
     guide-order: 18
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - ENCHANTING_TABLE
@@ -405,7 +423,8 @@ recipes:
     guide-order: 19
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - OBSIDIAN
     - sf:gold_8k
@@ -427,7 +446,8 @@ recipes:
     guide-order: 20
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -449,7 +469,8 @@ recipes:
     guide-order: 21
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -471,7 +492,8 @@ recipes:
     guide-order: 22
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - WITHER_SKELETON_SKULL
@@ -493,7 +515,8 @@ recipes:
     guide-order: 23
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_2
     - empty
@@ -515,7 +538,8 @@ recipes:
     guide-order: 24
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -537,7 +561,8 @@ recipes:
     guide-order: 25
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - NAME_TAG
@@ -559,7 +584,8 @@ recipes:
     guide-order: 26
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_2
     - sf:gold_8k
@@ -581,7 +607,8 @@ recipes:
     guide-order: 27
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - COOKIE
     - sf:elytra_scale
@@ -603,7 +630,8 @@ recipes:
     guide-order: 28
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_2
     - LEATHER
@@ -625,7 +653,8 @@ recipes:
     guide-order: 29
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - STICK
@@ -647,7 +676,8 @@ recipes:
     guide-order: 30
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - TNT
     - sf:synthetic_diamond
@@ -669,7 +699,8 @@ recipes:
     guide-order: 31
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:synthetic_diamond
@@ -691,7 +722,8 @@ recipes:
     guide-order: 32
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -713,7 +745,8 @@ recipes:
     guide-order: 33
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -735,7 +768,8 @@ recipes:
     guide-order: 34
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - empty
@@ -757,7 +791,8 @@ recipes:
     guide-order: 35
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -779,7 +814,8 @@ recipes:
     guide-order: 36
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - STICK
@@ -801,7 +837,8 @@ recipes:
     guide-order: 37
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -823,7 +860,8 @@ recipes:
     guide-order: 38
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -845,7 +883,8 @@ recipes:
     guide-order: 39
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -867,7 +906,8 @@ recipes:
     guide-order: 40
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:synthetic_diamond
     - sf:synthetic_diamond
@@ -889,7 +929,8 @@ recipes:
     guide-order: 41
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_2
     - ENDER_PEARL
@@ -911,7 +952,8 @@ recipes:
     guide-order: 42
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_2
     - sf:gold_dust
@@ -933,7 +975,8 @@ recipes:
     guide-order: 43
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -955,7 +998,8 @@ recipes:
     guide-order: 44
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -977,7 +1021,8 @@ recipes:
     guide-order: 45
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -999,7 +1044,8 @@ recipes:
     guide-order: 46
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ferrosilicon
     - sf:ferrosilicon
@@ -1021,7 +1067,8 @@ recipes:
     guide-order: 47
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - COMPASS
     - sf:synthetic_diamond
@@ -1043,7 +1090,8 @@ recipes:
     guide-order: 48
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - EMERALD_ORE
     - sf:synthetic_diamond
@@ -1065,7 +1113,8 @@ recipes:
     guide-order: 49
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:ender_lump_3
@@ -1087,7 +1136,8 @@ recipes:
     guide-order: 50
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:hardened_metal_ingot
     - sf:hardened_metal_ingot
@@ -1109,7 +1159,8 @@ recipes:
     guide-order: 51
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1131,7 +1182,8 @@ recipes:
     guide-order: 52
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1153,7 +1205,8 @@ recipes:
     guide-order: 53
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1175,7 +1228,8 @@ recipes:
     guide-order: 54
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1197,7 +1251,8 @@ recipes:
     guide-order: 55
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1219,7 +1274,8 @@ recipes:
     guide-order: 56
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1241,7 +1297,8 @@ recipes:
     guide-order: 57
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1263,7 +1320,8 @@ recipes:
     guide-order: 58
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1285,7 +1343,8 @@ recipes:
     guide-order: 59
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1307,7 +1366,8 @@ recipes:
     guide-order: 60
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1329,7 +1389,8 @@ recipes:
     guide-order: 61
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:essence_of_afterlife
@@ -1351,7 +1412,8 @@ recipes:
     guide-order: 62
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - sf:magical_book_cover
@@ -1373,7 +1435,8 @@ recipes:
     guide-order: 63
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - empty
@@ -1395,7 +1458,8 @@ recipes:
     guide-order: 64
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - LILY_PAD
@@ -1417,7 +1481,8 @@ recipes:
     guide-order: 65
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - FEATHER
@@ -1439,7 +1504,8 @@ recipes:
     guide-order: 66
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - empty
     - FEATHER
@@ -1461,7 +1527,8 @@ recipes:
     guide-order: 67
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -1483,7 +1550,8 @@ recipes:
     guide-order: 68
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -1505,7 +1573,8 @@ recipes:
     guide-order: 69
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty
@@ -1527,7 +1596,8 @@ recipes:
     guide-order: 70
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - sf:magical_glass
@@ -1549,7 +1619,8 @@ recipes:
     guide-order: 71
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:ender_lump_3
     - empty
@@ -1571,7 +1642,8 @@ recipes:
     guide-order: 9991
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - GOLD_INGOT
     - sf:magic_lump_2
@@ -1593,7 +1665,8 @@ recipes:
     guide-order: 9992
     source: slimefun-rc37
     runtime: true
-    machine: sf:magic_workbench
+    runtime-machine-tags:
+    - magic-workbench
     matrix:
     - sf:magic_lump_3
     - empty

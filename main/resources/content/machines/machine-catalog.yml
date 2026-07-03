@@ -100,6 +100,7 @@ machines:
     - basic
     - manual
     - magic
+    - magic-workbench
   sf:table_saw:
     category: BASIC
     display-name: sf:table_saw
