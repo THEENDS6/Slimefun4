@@ -49,11 +49,6 @@ public final class SfxLocalization {
         return requiredText(path);
     }
 
-    @Deprecated
-    public String text(String path, String fallback) {
-        return text(path);
-    }
-
     public String requiredText(String path) {
         String value = lookup(path);
         if (value != null) {
@@ -67,30 +62,15 @@ public final class SfxLocalization {
         return applyPlaceholders(requiredText(path), placeholders);
     }
 
-    @Deprecated
-    public String text(String path, String fallback, Map<String, ?> placeholders) {
-        return text(path, placeholders);
-    }
-
     public Component component(String path) {
         return render(requiredText(path));
-    }
-
-    @Deprecated
-    public Component component(String path, String fallback) {
-        return component(path);
     }
 
     public Component component(String path, Map<String, ?> placeholders) {
         return render(applyPlaceholders(requiredText(path), placeholders));
     }
 
-    @Deprecated
-    public Component component(String path, String fallback, Map<String, ?> placeholders) {
-        return component(path, placeholders);
-    }
-
-    public Component categoryName(String categoryId, Component fallback) {
+    public Component categoryName(String categoryId) {
         String path = "categories." + sanitize(categoryId) + ".name";
         return render(requiredText(path));
     }
@@ -100,12 +80,7 @@ public final class SfxLocalization {
         return render(requiredText(path));
     }
 
-    @Deprecated
-    public Component itemName(String itemId, Component fallback) {
-        return itemName(itemId);
-    }
-
-    public Component researchName(String researchId, Component fallback) {
+    public Component researchName(String researchId) {
         String path = "researches." + sanitize(researchId) + ".name";
         return render(requiredText(path));
     }
@@ -119,12 +94,7 @@ public final class SfxLocalization {
         return localized;
     }
 
-    @Deprecated
-    public List<Component> itemLore(String itemId, List<Component> fallback) {
-        return itemLore(itemId);
-    }
-
-    public List<Component> recipeNote(String itemId, int index, Component fallback) {
+    public List<Component> recipeNote(String itemId, int index) {
         String path = "recipes." + sanitize(itemId) + "." + index + ".note";
         String value = lookup(path);
         if (value == null) {
@@ -193,7 +163,7 @@ public final class SfxLocalization {
                 && !"items.sf.bio_reactor_2.lore".equals(path)) {
             return values;
         }
-        String line = text("energy.generator.tier2-fuel-consumption-lore", "&8⇨ &6🔥 &7Fuel consumption: &b1.5x");
+        String line = text("energy.generator.tier2-fuel-consumption-lore");
         if (line == null || line.isBlank() || values.contains(line)) {
             return values;
         }
