@@ -62,23 +62,6 @@ public final class SfxLegacyFoodListener implements Listener {
             "sf:carrot_pie",
             "sf:easter_apple_pie"
     );
-    private static final List<String> DEFAULT_FORTUNES = List.of(
-            "&7Help me, I am trapped in a Fortune Cookie Factory!",
-            "&7You will die tomorrow...     by a Creeper",
-            "&7At some point in your Life something bad will happen!!!",
-            "&7Next week you will notice that this is not the real world, you are in a computer game",
-            "&7This cookie will taste good in a few seconds",
-            "&7The last word you will hear is gonna be \"EXTERMINATE!!!\"",
-            "&7Whatever you do, do not hug a Creeper... I tried it. It feels good, but it's not worth it.",
-            "&742. The answer is 42.",
-            "&7A Walshy a day will keep the troubles away.",
-            "&7Never dig straight down!",
-            "&7Tis but a flesh wound!",
-            "&7Always look on the bright side of life!",
-            "&7This one was actually a Biscuit and not a Cookie",
-            "&7Neon signs are LIT!"
-    );
-
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final SfxItems items;
@@ -123,7 +106,7 @@ public final class SfxLegacyFoodListener implements Listener {
         switch (itemId) {
             case "sf:fortune_cookie" -> player.sendMessage(Text.prefixed(plugin, randomFortune()));
             case "sf:diet_cookie" -> {
-                player.sendMessage(Text.prefixed(plugin, localization.text("messages.diet-cookie", "&eYou are starting to feel very light...")));
+                player.sendMessage(Text.prefixed(plugin, localization.text("messages.diet-cookie")));
                 player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EAT, 1.0f, 1.0f);
                 player.removePotionEffect(resolvePotion("LEVITATION"));
                 player.addPotionEffect(new PotionEffect(resolvePotion("LEVITATION"), 60, 1));
@@ -142,10 +125,7 @@ public final class SfxLegacyFoodListener implements Listener {
     }
 
     private String randomFortune() {
-        List<String> fortunes = localization.list("messages.fortune-cookie");
-        if (fortunes.isEmpty()) {
-            fortunes = DEFAULT_FORTUNES;
-        }
+        List<String> fortunes = localization.requiredList("messages.fortune-cookie");
         return fortunes.get(ThreadLocalRandom.current().nextInt(fortunes.size()));
     }
 
