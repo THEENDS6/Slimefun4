@@ -136,6 +136,12 @@ public final class SfxRecipeYamlLoader {
                 throw new IllegalArgumentException("compiled recipe must not contain expansion helper: " + key);
             }
         }
+        if (entry.containsKey("machine") || entry.containsKey("runtime-machines")) {
+            throw new IllegalArgumentException("compiled recipe must use runtime-machine-tags instead of direct machine references");
+        }
+        if (Boolean.TRUE.equals(entry.get("runtime")) && !entry.containsKey("runtime-machine-tags")) {
+            throw new IllegalArgumentException("compiled runtime recipe must declare runtime-machine-tags");
+        }
     }
 
     private void collectYaml(File dir, List<File> files) {
