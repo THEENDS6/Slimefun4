@@ -1799,6 +1799,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusIconRenderer.java',
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusDefaults.java',
             'main/java/cc/theends6/sfx/internal/cargo/SfxCargoService.java',
+            'main/java/cc/theends6/sfx/internal/gps/SfxGpsService.java',
             'main/java/cc/theends6/sfx/internal/technical/SfxTechnicalGadgetService.java',
             'main/java/cc/theends6/sfx/internal/configurable/SfxConfigurableMachineService.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineService.java',
@@ -1860,11 +1861,12 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             violations << "no bundled language files found under main/resources/lang"
         }
         def literalFallback = ~/(?s)localization\.(?:text|component)\(\s*"[^"]+"\s*,\s*"[^"]+"/
-        def itemFallback = ~/(?s)localization\.(?:itemName|itemLore)\(\s*[^,\r\n]+,\s*/
+        def itemFallback = ~/(?s)localization\.(?:itemName|itemLore)\(\s*"[^"]+"\s*,/
         def literalLanguageCall = ~/localization\.(?:text|component|requiredList|list)\(\s*"([^"]+)"/
         def literalHelperLanguageCall = /(?:^|[^\w.])(?:send|sendMessage|sendActionbar)\(\s*[^,\r\n]+,\s*"([^"]+)"/
         def literalDisplayTextCall = /new\s+DisplayText\(\s*"([^"]+)"/
         def literalCargoLanguageString = /"((?:cargo\.(?:status|message|ui)\.[^"]+))"/
+        def literalGpsLanguageString = /"((?:gps\.(?:ui|messages|resources)\.[^"]+))"/
         coreLocalizationFiles.each { path ->
             def file = layout.projectDirectory.file(path).asFile
             def text = file.getText('UTF-8')
@@ -1923,6 +1925,19 @@ tasks.register('validateSfxCoreLocalizationCalls') {
                 languageKeysByFile.each { languageFile, keys ->
                     if (!keys.contains(key)) {
                         def line = text.substring(0, cargoKeyMatcher.start()).count('\n') + 1
+                        violations << "${path}:${line}: ${languageFile} missing language key ${key}"
+                    }
+                }
+            }
+            def gpsKeyMatcher = (text =~ literalGpsLanguageString)
+            while (gpsKeyMatcher.find()) {
+                def key = gpsKeyMatcher.group(1)
+                if (key.contains("{") || key.contains("+") || key.endsWith(".")) {
+                    continue
+                }
+                languageKeysByFile.each { languageFile, keys ->
+                    if (!keys.contains(key)) {
+                        def line = text.substring(0, gpsKeyMatcher.start()).count('\n') + 1
                         violations << "${path}:${line}: ${languageFile} missing language key ${key}"
                     }
                 }
