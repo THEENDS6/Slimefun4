@@ -1353,6 +1353,11 @@ tasks.register('validateSfxCompiledContent') {
             }
         }
         if (!compiledItemIds.isEmpty()) {
+            catalogMachineIds.each { machineId ->
+                if (!compiledItemIds.contains(machineId)) {
+                    violations << "compiled machine catalog entry ${machineId} has no matching item definition"
+                }
+            }
             recipeItemReferences.each { ref ->
                 if (!compiledItemIds.contains(ref.item)) {
                     violations << "${ref.rel}:${ref.line}: recipe ${ref.recipe} ${ref.section} references unknown item ${ref.item}"
@@ -1483,7 +1488,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, ${recipeMachineReferences.size()} recipe machine reference(s), ${recipeMachineTagReferences.size()} recipe machine tag reference(s), ${recipeItemReferences.size()} recipe item reference(s), ${electricRecipeItemReferences.size()} electric recipe item reference(s), ${itemGuideRecipeItemReferences.size()} item guide recipe item reference(s), and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, ${catalogMachineIds.size()} machine item reference(s), ${recipeMachineReferences.size()} recipe machine reference(s), ${recipeMachineTagReferences.size()} recipe machine tag reference(s), ${recipeItemReferences.size()} recipe item reference(s), ${electricRecipeItemReferences.size()} electric recipe item reference(s), ${itemGuideRecipeItemReferences.size()} item guide recipe item reference(s), and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
     }
 }
 
