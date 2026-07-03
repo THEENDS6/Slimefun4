@@ -179,7 +179,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     @Override
     public void open(Player player, GuideMode mode) {
         if (!accessPolicy.canOpen(player, mode)) {
-            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.no-open", "<red>You do not have permission to open this guide.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.no-open")));
             return;
         }
         GuidePreferences preferences = preferences(player);
@@ -194,7 +194,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     @Override
     public void openSettings(Player player, GuideMode mode) {
         if (!accessPolicy.canOpen(player, mode)) {
-            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.no-settings", "<red>You do not have permission to open the guide settings.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.no-settings")));
             return;
         }
         openSettingsView(player, mode, Navigation.ROOT);
@@ -210,7 +210,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         int pageCount = pageCount(visibleCategories.size());
         int safePage = clampPage(page, pageCount);
 
-        SfxMenu.Builder builder = SfxMenu.builder(title(mode, tr("guide.main.title", "Main Menu"))).rows(6);
+        SfxMenu.Builder builder = SfxMenu.builder(title(mode, tr("guide.main.title"))).rows(6);
         paintFrame(builder, mode, effectiveLayout(preferences(player)));
 
         int from = safePage * CONTENT_SLOTS.length;
@@ -248,7 +248,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         rememberLocation(player, GuideLocation.category(mode, categoryId, page));
         Optional<SfxItemCategory> optionalCategory = LegacySfGuideResolver.resolveCategory(registry, categoryId);
         if (optionalCategory.isEmpty()) {
-            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.missing-category", "<red>This category does not exist.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.missing-category")));
             return;
         }
         SfxItemCategory category = optionalCategory.get();
@@ -276,26 +276,26 @@ public final class DefaultSfxGuide implements SfxGuide {
                 if (manualMachine.isPresent()) {
                     icon = withLore(icon, List.of(
                             Component.empty(),
-                            Text.mm(tr("guide.cheat.machine-pack", "<red>Cheat: click to receive a deploy pack</red>")),
-                            Text.mm(tr("guide.cheat.machine-kit", "<red>Shift click to receive the full structure kit</red>"))
+                            Text.mm(tr("guide.cheat.machine-pack")),
+                            Text.mm(tr("guide.cheat.machine-kit"))
                     ));
                 } else {
                     icon = withLore(icon, List.of(
                             Component.empty(),
-                            Text.mm(tr("guide.cheat.take-one", "<red>Cheat: click to receive 1 item</red>")),
-                            Text.mm(tr("guide.cheat.take-stack", "<red>Shift click to receive 64 items</red>"))
+                            Text.mm(tr("guide.cheat.take-one")),
+                            Text.mm(tr("guide.cheat.take-stack"))
                     ));
                 }
                 builder.button(slot, new SfxMenuButton(icon, click -> giveFromCheatGuide(click.player(), definition, click.clickType())));
             } else if (locked) {
                 builder.button(slot, new SfxMenuButton(icon, click -> unlockResearchAndRefresh(click.player(), mode, category.id(), safePage, definition, research)));
             } else {
-                icon = withLore(icon, List.of(Component.empty(), Text.mm(tr("guide.actions.open-recipe", "<gray>Click to view recipe</gray>"))));
+                icon = withLore(icon, List.of(Component.empty(), Text.mm(tr("guide.actions.open-recipe"))));
                 builder.button(slot, new SfxMenuButton(icon, click -> openRecipe(click.player(), mode, definition.id(), 0, Navigation.OPEN)));
             }
         }
 
-        builder.button(1, new SfxMenuButton(backIcon(tr("guide.actions.back-main", "Back to Main Menu")), click -> goBack(click.player(), mode)));
+        builder.button(1, new SfxMenuButton(backIcon(tr("guide.actions.back-main")), click -> goBack(click.player(), mode)));
         addContentPagination(builder, safePage, pageCount,
                 previous -> openCategory(previous, mode, category.id(), safePage - 1, Navigation.REPLACE),
                 next -> openCategory(next, mode, category.id(), safePage + 1, Navigation.REPLACE));
@@ -311,7 +311,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         rememberLocation(player, GuideLocation.recipe(mode, itemId, recipeIndex));
         Optional<SfxItemDefinition> optional = registry.item(itemId);
         if (optional.isEmpty()) {
-            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.missing-item", "<red>This item does not exist.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.missing-item")));
             return;
         }
         SfxItemDefinition definition = optional.get();
@@ -371,15 +371,15 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private void openLockedResearchView(Player player, GuideMode mode, SfxItemDefinition definition, SfxResearchDefinition research, Navigation navigation) {
         SfxMenu.Builder builder = SfxMenu.builder(title(mode, itemDisplayName(definition))).rows(3);
-        builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-category", "Back to Category")), click -> goBack(click.player(), mode)));
+        builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-category")), click -> goBack(click.player(), mode)));
         builder.button(1, new SfxMenuButton(settingsIcon(), click -> openSettingsView(click.player(), mode, Navigation.OPEN)));
         builder.button(8, new SfxMenuButton(closeIcon(), click -> closeGuide(click.player())));
         builder.button(13, new SfxMenuButton(lockedItemIcon(definition, research), click -> unlockResearchAndOpen(click.player(), mode, definition, research)));
         builder.button(15, new SfxMenuButton(ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
-                .name(tr("guide.research.unlock.name", "<green>Unlock Research</green>"))
+                .name(tr("guide.research.unlock.name"))
                 .lore(
-                        tr("guide.research.unlock.lore.1", "<gray>Spend experience levels to unlock this item.</gray>"),
-                        tr("guide.research.cost", "<gray>Cost: </gray><aqua>{cost} levels</aqua>").replace("{cost}", Integer.toString(research.cost()))
+                        tr("guide.research.unlock.lore.1"),
+                        tr("guide.research.cost").replace("{cost}", Integer.toString(research.cost()))
                 )
                 .build(), click -> unlockResearchAndOpen(click.player(), mode, definition, research)));
         showMenu(player, builder, navigation);
@@ -439,7 +439,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         boolean special = !displayEntries.isEmpty();
         SfxMenu.Builder builder = SfxMenu.builder(title(mode, subjectTitle)).rows(special ? 6 : 3);
 
-        builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-category", "Back to Category")), click -> goBack(click.player(), mode)));
+        builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-category")), click -> goBack(click.player(), mode)));
         builder.button(1, new SfxMenuButton(settingsIcon(), click -> openSettingsView(click.player(), mode, Navigation.OPEN)));
         builder.button(7, new SfxMenuButton(previousRecipeIcon(current.index(), pages.size()), click -> {
             if (current.index() > 0) {
@@ -463,8 +463,8 @@ public final class DefaultSfxGuide implements SfxGuide {
                 }));
             }
             builder.button(CLASSIC_RECIPE_CENTER_SLOT, new SfxMenuButton(ItemBuilder.of(Material.BARRIER)
-                    .name(tr("guide.recipe.no-recipe.name", "<red>No Recipe</red>"))
-                    .lore(tr("guide.recipe.no-recipe.lore", "<gray>This item currently only exists as a registry or system entry.</gray>"))
+                    .name(tr("guide.recipe.no-recipe.name"))
+                    .lore(tr("guide.recipe.no-recipe.lore"))
                     .build(), click -> {
             }));
         }
@@ -472,7 +472,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         builder.button(CLASSIC_SOURCE_SLOT, recipeSourceButton(current, mode));
         builder.button(CLASSIC_OUTPUT_SLOT, new SfxMenuButton(withLore(outputItem, List.of(
                 Component.empty(),
-                Text.mm(tr("guide.recipe.output", "<green>Output</green>"))
+                Text.mm(tr("guide.recipe.output"))
         )), click -> outputAction.accept(click.player(), click.clickType())));
 
         if (special) {
@@ -519,8 +519,8 @@ public final class DefaultSfxGuide implements SfxGuide {
                 }));
             }
             builder.button(recipeCenterSlot, new SfxMenuButton(ItemBuilder.of(Material.BARRIER)
-                    .name(tr("guide.recipe.no-recipe.name", "<red>No Recipe</red>"))
-                    .lore(tr("guide.recipe.no-recipe.lore", "<gray>This item currently only exists as a registry or system entry.</gray>"))
+                    .name(tr("guide.recipe.no-recipe.name"))
+                    .lore(tr("guide.recipe.no-recipe.lore"))
                     .build(), click -> {
             }));
         }
@@ -528,10 +528,10 @@ public final class DefaultSfxGuide implements SfxGuide {
         builder.button(sourceSlot, recipeSourceButton(current, mode));
         builder.button(outputSlot, new SfxMenuButton(withLore(outputItem, List.of(
                 Component.empty(),
-                Text.mm(tr("guide.recipe.output", "<green>Output</green>"))
+                Text.mm(tr("guide.recipe.output"))
         )), click -> outputAction.accept(click.player(), click.clickType())));
 
-        builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-category", "Back to Category")), click -> goBack(click.player(), mode)));
+        builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-category")), click -> goBack(click.player(), mode)));
         builder.button(1, new SfxMenuButton(settingsIcon(), click -> openSettingsView(click.player(), mode, Navigation.OPEN)));
         builder.button(7, new SfxMenuButton(previousRecipeIcon(current.index(), pages.size()), click -> {
             if (current.index() > 0) {
@@ -570,7 +570,7 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private GuideRecipePage createSfxRecipePage(SfxItemDefinition resultDefinition, SfxRecipe recipe, int index) {
         if ("multiblock-structure".equals(recipe.recipeType())) {
-            String sourceName = tr("guide.recipe.multiblock.name", "Multiblock Machine");
+            String sourceName = tr("guide.recipe.multiblock.name");
             ItemStack sourceIcon = multiblockSourceIcon();
             return new GuideRecipePage(index, GuideRecipeOrigin.SFX, resultDefinition.id(), familyKey(resultDefinition.id()), sourceName,
                     null, sourceIcon, normalizeMatrix(recipe.matrix()), recipe.note(), recipe.outputAmount(), false);
@@ -585,7 +585,7 @@ public final class DefaultSfxGuide implements SfxGuide {
 
         Optional<SfxItemDefinition> machineDefinition = registry.item(recipe.recipeType());
         if (machineDefinition.isPresent()) {
-            ItemStack sourceIcon = withLore(items.create(machineDefinition.get(), 1), List.of(Component.empty(), Text.mm(tr("guide.actions.open-recipe", "<gray>Click to view recipe</gray>"))));
+            ItemStack sourceIcon = withLore(items.create(machineDefinition.get(), 1), List.of(Component.empty(), Text.mm(tr("guide.actions.open-recipe"))));
             return new GuideRecipePage(index, GuideRecipeOrigin.SFX, machineDefinition.get().id(), familyKey(machineDefinition.get().id()),
                     itemDisplayName(machineDefinition.get()), machineDefinition.get().id(), sourceIcon, normalizeMatrix(recipe.matrix()), recipe.note(), recipe.outputAmount(),
                     false);
@@ -620,33 +620,33 @@ public final class DefaultSfxGuide implements SfxGuide {
     private GuideRecipePage createVanillaRecipePage(Recipe recipe, int index) {
         if (recipe instanceof ShapedRecipe shaped) {
             return new GuideRecipePage(index, GuideRecipeOrigin.VANILLA, "minecraft:crafting", "minecraft:crafting",
-                    tr("guide.recipe.vanilla.crafting", "Crafting Table"), null,
-                    vanillaSourceIcon(Material.CRAFTING_TABLE, tr("guide.recipe.vanilla.crafting", "Crafting Table")),
+                    tr("guide.recipe.vanilla.crafting"), null,
+                    vanillaSourceIcon(Material.CRAFTING_TABLE, tr("guide.recipe.vanilla.crafting")),
                     normalizeMatrix(fromShapedRecipe(shaped)), null, Math.max(1, shaped.getResult().getAmount()), false);
         }
         if (recipe instanceof ShapelessRecipe shapeless) {
             return new GuideRecipePage(index, GuideRecipeOrigin.VANILLA, "minecraft:crafting", "minecraft:crafting",
-                    tr("guide.recipe.vanilla.crafting", "Crafting Table"), null,
-                    vanillaSourceIcon(Material.CRAFTING_TABLE, tr("guide.recipe.vanilla.crafting", "Crafting Table")),
+                    tr("guide.recipe.vanilla.crafting"), null,
+                    vanillaSourceIcon(Material.CRAFTING_TABLE, tr("guide.recipe.vanilla.crafting")),
                     normalizeMatrix(fromShapelessRecipe(shapeless)), null, Math.max(1, shapeless.getResult().getAmount()), false);
         }
         if (recipe instanceof StonecuttingRecipe stonecutting) {
             return new GuideRecipePage(index, GuideRecipeOrigin.VANILLA, "minecraft:stonecutting", "minecraft:stonecutting",
-                    tr("guide.recipe.vanilla.stonecutting", "Stonecutter"), null,
-                    vanillaSourceIcon(Material.STONECUTTER, tr("guide.recipe.vanilla.stonecutting", "Stonecutter")),
+                    tr("guide.recipe.vanilla.stonecutting"), null,
+                    vanillaSourceIcon(Material.STONECUTTER, tr("guide.recipe.vanilla.stonecutting")),
                     normalizeMatrix(singleChoiceMatrix(stonecutting.getInputChoice())), null, Math.max(1, stonecutting.getResult().getAmount()), false);
         }
         if (recipe instanceof BlastingRecipe blasting) {
-            return cookingPage(index, blasting, Material.BLAST_FURNACE, tr("guide.recipe.vanilla.blasting", "Blast Furnace"));
+            return cookingPage(index, blasting, Material.BLAST_FURNACE, tr("guide.recipe.vanilla.blasting"));
         }
         if (recipe instanceof SmokingRecipe smoking) {
-            return cookingPage(index, smoking, Material.SMOKER, tr("guide.recipe.vanilla.smoking", "Smoker"));
+            return cookingPage(index, smoking, Material.SMOKER, tr("guide.recipe.vanilla.smoking"));
         }
         if (recipe instanceof CampfireRecipe campfire) {
-            return cookingPage(index, campfire, Material.CAMPFIRE, tr("guide.recipe.vanilla.campfire", "Campfire"));
+            return cookingPage(index, campfire, Material.CAMPFIRE, tr("guide.recipe.vanilla.campfire"));
         }
         if (recipe instanceof FurnaceRecipe furnace) {
-            return cookingPage(index, furnace, Material.FURNACE, tr("guide.recipe.vanilla.furnace", "Furnace"));
+            return cookingPage(index, furnace, Material.FURNACE, tr("guide.recipe.vanilla.furnace"));
         }
         return null;
     }
@@ -911,8 +911,8 @@ public final class DefaultSfxGuide implements SfxGuide {
         long totalEnergy = Math.round(seconds * 20.0D * energyPerTick);
         ItemStack icon = withLore(ingredientIcon(slot), List.of(
                 Component.empty(),
-                Text.mm(tr("energy.generator.fuel-duration", "<gray>Duration: </gray><aqua>{seconds}</aqua>").replace("{seconds}", formatDuration(seconds))),
-                Text.mm(tr("energy.generator.fuel-total-energy", "<gray>Total Energy: </gray><aqua>{energy} J</aqua>").replace("{energy}", formatEnergyShort(totalEnergy)))
+                Text.mm(tr("energy.generator.fuel-duration").replace("{seconds}", formatDuration(seconds))),
+                Text.mm(tr("energy.generator.fuel-total-energy").replace("{energy}", formatEnergyShort(totalEnergy)))
         ));
         return DisplayEntry.single(icon, slotLabel(slot) + " " + formatDuration(seconds), priority, handlerForSlot(slot, mode));
     }
@@ -1013,9 +1013,9 @@ public final class DefaultSfxGuide implements SfxGuide {
             GuideRecipePage representative = group.getFirst();
             List<Component> lore = new ArrayList<>();
             lore.add(Component.empty());
-            lore.add(Text.mm(tr("guide.recipe.alternative-source", "<gray>Click to open this recipe source.</gray>")));
+            lore.add(Text.mm(tr("guide.recipe.alternative-source")));
             if (group.size() > 1) {
-                lore.add(Text.mm(tr("guide.recipe.alternative-source-group", "<gray>Also available in:</gray>")));
+                lore.add(Text.mm(tr("guide.recipe.alternative-source-group")));
                 for (GuideRecipePage member : group) {
                     if (member.index() == current.index()) {
                         continue;
@@ -1051,7 +1051,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                     }
                     ItemStack icon = withLore(targetDefinition.map(def -> items.create(def, output.amount())).orElseGet(() -> items.create(target, output.amount())), List.of(
                             Component.empty(),
-                            Text.mm(tr("guide.actions.open-recipe", "<gray>Click to view recipe</gray>"))
+                            Text.mm(tr("guide.actions.open-recipe"))
                     ));
                     entries.putIfAbsent("sfx:" + target, DisplayEntry.single(icon, itemDisplayName(targetDefinition.get()), order,
                             click -> openRecipe(click.player(), mode, target, 0, preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE)));
@@ -1060,8 +1060,8 @@ public final class DefaultSfxGuide implements SfxGuide {
                     ItemStack icon = withLore(new ItemStack(material, output.amount()), List.of(
                             Component.empty(),
                             Text.mm(showVanillaRecipes()
-                                    ? tr("guide.actions.open-vanilla-recipe", "<gray>Click to view vanilla recipes</gray>")
-                                    : tr("guide.recipe.vanilla.disabled", "<dark_gray>Vanilla recipe lookup is disabled.</dark_gray>"))
+                                    ? tr("guide.actions.open-vanilla-recipe")
+                                    : tr("guide.recipe.vanilla.disabled"))
                     ));
                     entries.putIfAbsent("vanilla:" + material.name(), DisplayEntry.single(icon, materialName(material), order,
                             showVanillaRecipes()
@@ -1215,7 +1215,7 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private SfxMenuButton recipeSourceButton(GuideRecipePage current, GuideMode mode) {
         ItemStack icon = current.hasRecipe() ? withRecipeSourceLore(current) : ItemBuilder.of(Material.KNOWLEDGE_BOOK)
-                .name(tr("guide.recipe.no-recipe.name", "<red>No Recipe</red>"))
+                .name(tr("guide.recipe.no-recipe.name"))
                 .build();
         if (current.machineTargetId() != null && machineLinksEnabled()) {
             return new SfxMenuButton(icon, click -> openRecipe(click.player(), mode, current.machineTargetId(), 0,
@@ -1229,7 +1229,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         List<Component> lore = new ArrayList<>();
         if (current.machineTargetId() != null && machineLinksEnabled()) {
             lore.add(Component.empty());
-            lore.add(Text.mm(tr("guide.actions.open-machine", "<gray>Click to open this machine in the guide</gray>")));
+            lore.add(Text.mm(tr("guide.actions.open-machine")));
         }
         if (current.note() != null) {
             lore.add(Component.empty());
@@ -1240,7 +1240,7 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private void giveFromCheatGuide(Player player, SfxItemDefinition definition, ClickType clickType) {
         if (!accessPolicy.canReceiveFromCheatGuide(player, definition)) {
-            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.no-cheat-access", "<red>You cannot use the cheat guide for this item.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.no-cheat-access")));
             return;
         }
 
@@ -1294,16 +1294,16 @@ public final class DefaultSfxGuide implements SfxGuide {
         List<Component> extraLore = new ArrayList<>();
         if (slot.isSfxItem()) {
             extraLore.add(Component.empty());
-            extraLore.add(Text.mm(tr("guide.actions.open-recipe", "<gray>Click to view recipe</gray>")));
+            extraLore.add(Text.mm(tr("guide.actions.open-recipe")));
         } else if (showVanillaRecipes() && slot.material() != null && !vanillaRecipePages(slot.material()).isEmpty()) {
             extraLore.add(Component.empty());
-            extraLore.add(Text.mm(tr("guide.actions.open-vanilla-recipe", "<gray>Click to view vanilla recipes</gray>")));
+            extraLore.add(Text.mm(tr("guide.actions.open-vanilla-recipe")));
         }
         if (slot.amount() > 1) {
             if (extraLore.isEmpty()) {
                 extraLore.add(Component.empty());
             }
-            extraLore.add(Component.text(tr("guide.recipe.amount", "Amount: ") + slot.amount(), NamedTextColor.GRAY));
+            extraLore.add(Component.text(tr("guide.recipe.amount") + slot.amount(), NamedTextColor.GRAY));
         }
         return extraLore.isEmpty() ? icon : withLore(icon, extraLore);
     }
@@ -1319,11 +1319,11 @@ public final class DefaultSfxGuide implements SfxGuide {
     ItemStack modeInfoIcon(GuideMode mode) {
         return ItemBuilder.of(mode == GuideMode.CHEAT ? Material.ENCHANTED_BOOK : Material.BOOK)
                 .name(mode == GuideMode.CHEAT
-                        ? tr("guide.mode.cheat.name", "<dark_red>Slimefun Cheat Guide</dark_red>")
-                        : tr("guide.mode.survival.name", "<dark_green>Slimefun Guide</dark_green>"))
+                        ? tr("guide.mode.cheat.name")
+                        : tr("guide.mode.survival.name"))
                 .lore(mode == GuideMode.CHEAT
-                        ? tr("guide.mode.cheat.lore", "<gray>Click items to obtain them directly.</gray>")
-                        : tr("guide.mode.survival.lore", "<gray>Click items to view recipes.</gray>"))
+                        ? tr("guide.mode.cheat.lore")
+                        : tr("guide.mode.survival.lore"))
                 .build();
     }
 
@@ -1344,7 +1344,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         builder.button(4, new SfxMenuButton(modeInfoIcon(mode), click -> {
         }));
         builder.button(1, new SfxMenuButton(settingsIcon(), click -> openSettingsView(click.player(), mode, Navigation.OPEN)));
-        builder.button(7, new SfxMenuButton(searchIcon(), click -> click.player().sendMessage(Text.prefixed(plugin, tr("guide.actions.search.todo", "<gray>The search entry is reserved for a future chat search page.</gray>")))));
+        builder.button(7, new SfxMenuButton(searchIcon(), click -> click.player().sendMessage(Text.prefixed(plugin, tr("guide.actions.search.todo")))));
     }
 
     private void paintRecipeFrame(SfxMenu.Builder builder, GuideMode mode) {
@@ -1358,7 +1358,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             }));
         }
         builder.button(1, new SfxMenuButton(settingsIcon(), click -> openSettingsView(click.player(), mode, Navigation.OPEN)));
-        builder.button(7, new SfxMenuButton(searchIcon(), click -> click.player().sendMessage(Text.prefixed(plugin, tr("guide.actions.search.todo", "<gray>The search entry is reserved for a future chat search page.</gray>")))));
+        builder.button(7, new SfxMenuButton(searchIcon(), click -> click.player().sendMessage(Text.prefixed(plugin, tr("guide.actions.search.todo")))));
     }
 
     private void paintClassicDivider(SfxMenu.Builder builder, GuideRecipePage current, int pageCount) {
@@ -1447,14 +1447,14 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private ItemStack previousRecipeIcon(int page, int pageCount) {
         return ItemBuilder.of(Material.ARROW)
-                .name(page > 0 ? tr("guide.pagination.prev.active", "<yellow>Previous Page</yellow>") : tr("guide.pagination.prev.inactive", "<dark_gray>Previous Page</dark_gray>"))
+                .name(page > 0 ? tr("guide.pagination.prev.active") : tr("guide.pagination.prev.inactive"))
                 .lore(pageNumberLore(page, pageCount))
                 .build();
     }
 
     private ItemStack nextRecipeIcon(int page, int pageCount) {
         return ItemBuilder.of(Material.ARROW)
-                .name(page + 1 < pageCount ? tr("guide.pagination.next.active", "<yellow>Next Page</yellow>") : tr("guide.pagination.next.inactive", "<dark_gray>Next Page</dark_gray>"))
+                .name(page + 1 < pageCount ? tr("guide.pagination.next.active") : tr("guide.pagination.next.inactive"))
                 .lore(pageNumberLore(page, pageCount))
                 .build();
     }
@@ -1462,28 +1462,28 @@ public final class DefaultSfxGuide implements SfxGuide {
     private ItemStack infoIcon(GuideMode mode, int page, int pageCount) {
         return ItemBuilder.of(Material.NETHER_STAR)
                 .name(mode == GuideMode.CHEAT
-                        ? tr("guide.mode.cheat.name", "<red>Slimefun Cheat Guide</red>")
-                        : tr("guide.mode.survival.name", "<green>Slimefun Guide</green>"))
-                .lore(pageNumberLore(page, pageCount), "", tr("guide.actions.close", "<dark_gray>Click to close.</dark_gray>"))
+                        ? tr("guide.mode.cheat.name")
+                        : tr("guide.mode.survival.name"))
+                .lore(pageNumberLore(page, pageCount), "", tr("guide.actions.close"))
                 .build();
     }
 
     private ItemStack settingsIcon() {
         return ItemBuilder.of(Material.COMPARATOR)
-                .name(tr("guide.actions.settings.name", "<yellow>Guide Settings</yellow>"))
-                .lore(tr("guide.actions.settings.lore", "<gray>You can also Shift + Right Click the guide book.</gray>"))
+                .name(tr("guide.actions.settings.name"))
+                .lore(tr("guide.actions.settings.lore"))
                 .build();
     }
 
     private ItemStack searchIcon() {
         return ItemBuilder.of(Material.NAME_TAG)
-                .name(tr("guide.actions.search.name", "<yellow>Search</yellow>"))
-                .lore(tr("guide.actions.search.lore", "<gray>The search entry is reserved.</gray>"))
+                .name(tr("guide.actions.search.name"))
+                .lore(tr("guide.actions.search.lore"))
                 .build();
     }
 
     ItemStack closeIcon() {
-        return ItemBuilder.of(Material.BARRIER).name(tr("guide.actions.close-menu", "<red>Close</red>")).build();
+        return ItemBuilder.of(Material.BARRIER).name(tr("guide.actions.close-menu")).build();
     }
 
     ItemStack backIcon(String text) {
@@ -1496,11 +1496,11 @@ public final class DefaultSfxGuide implements SfxGuide {
                 .lore(
                         "<gray>" + displayResearchName(research, definition) + "</gray>",
                         "",
-                        tr("guide.research.locked", "<red>Locked</red>"),
+                        tr("guide.research.locked"),
                         "",
-                        tr("guide.research.click-unlock", "<green>Click to unlock</green>"),
+                        tr("guide.research.click-unlock"),
                         "",
-                        tr("guide.research.cost", "<gray>Cost: </gray><aqua>{cost} levels</aqua>").replace("{cost}", Integer.toString(research.cost()))
+                        tr("guide.research.cost").replace("{cost}", Integer.toString(research.cost()))
                 )
                 .build();
     }
@@ -1582,8 +1582,8 @@ public final class DefaultSfxGuide implements SfxGuide {
                 .name(name)
                 .lore(
                         enabled
-                                ? tr("guide.settings.toggle.enabled", "<green>Enabled</green>")
-                                : tr("guide.settings.toggle.disabled", "<red>Disabled</red>"),
+                                ? tr("guide.settings.toggle.enabled")
+                                : tr("guide.settings.toggle.disabled"),
                         lore
                 )
                 .build(), handler::accept);
@@ -1605,14 +1605,14 @@ public final class DefaultSfxGuide implements SfxGuide {
             }
             icon.setItemMeta(meta);
         }
-        return withLore(icon, List.of(Component.empty(), Text.mm(tr("guide.actions.open-category", "<gray>Click to open category</gray>"))));
+        return withLore(icon, List.of(Component.empty(), Text.mm(tr("guide.actions.open-category"))));
     }
 
     private ItemStack lockedCategoryIcon(Player player, SfxItemCategory category) {
         List<Component> lore = new ArrayList<>();
-        lore.add(Text.mm("<white>" + tr("guide.locked-itemgroup.line1", "To unlock this category you will")));
-        lore.add(Text.mm("<white>" + tr("guide.locked-itemgroup.line2", "need to unlock all items from the")));
-        lore.add(Text.mm("<white>" + tr("guide.locked-itemgroup.line3", "following categories")));
+        lore.add(Text.mm("<white>" + tr("guide.locked-itemgroup.line1")));
+        lore.add(Text.mm("<white>" + tr("guide.locked-itemgroup.line2")));
+        lore.add(Text.mm("<white>" + tr("guide.locked-itemgroup.line3")));
         lore.add(Component.empty());
         for (String parentId : LegacySfGuideResolver.parentCategories(category.id())) {
             LegacySfGuideResolver.resolveCategory(registry, parentId)
@@ -1620,7 +1620,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                     .ifPresent(lore::add);
         }
         ItemStack item = ItemBuilder.of(Material.BARRIER)
-                .name("<red>" + tr("guide.locked", "LOCKED") + " <gray>-</gray> <white>" + plainCategoryName(category) + "</white>")
+                .name("<red>" + tr("guide.locked") + " <gray>-</gray> <white>" + plainCategoryName(category) + "</white>")
                 .build();
         return withLore(item, lore);
     }
@@ -1633,10 +1633,10 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private ItemStack multiblockSourceIcon() {
         return ItemBuilder.of(Material.NETHER_BRICK_FENCE)
-                .name(tr("guide.recipe.multiblock.name", "<gold>Multiblock Machine</gold>"))
+                .name(tr("guide.recipe.multiblock.name"))
                 .lore(
-                        tr("guide.recipe.multiblock.lore.1", "<gray>This recipe is crafted in a multiblock machine.</gray>"),
-                        tr("guide.recipe.multiblock.lore.2", "<gray>Build the structure in the world, then interact with its trigger block.</gray>")
+                        tr("guide.recipe.multiblock.lore.1"),
+                        tr("guide.recipe.multiblock.lore.2")
                 )
                 .build();
     }
@@ -1858,7 +1858,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         Optional<SfxPlayerProfile> optional = profiles.find(player.getUniqueId());
         if (optional.isEmpty()) {
             profiles.request(player, profile -> openCategory(player, mode, categoryId, page, Navigation.REPLACE));
-            player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")));
+            player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading")));
             return;
         }
         beginResearchUnlock(player, optional.get(), definition, research,
@@ -1870,7 +1870,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         Optional<SfxPlayerProfile> optional = profiles.find(player.getUniqueId());
         if (optional.isEmpty()) {
             profiles.request(player, profile -> openLockedResearchView(player, mode, definition, research, Navigation.REPLACE));
-            player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")));
+            player.sendMessage(Text.prefixed(plugin, tr("messages.profile.loading")));
             return;
         }
         beginResearchUnlock(player, optional.get(), definition, research,
@@ -1891,7 +1891,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                 launchResearchFirework(player);
             }
             player.sendMessage(Text.prefixed(plugin,
-                    tr("messages.research.unlocked", "<aqua>You have unlocked </aqua><gray>\"{name}\"</gray>")
+                    tr("messages.research.unlocked")
                             .replace("{name}", displayResearchName(research, definition))));
             onSuccess.run();
         }
@@ -1913,7 +1913,7 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     void switchGuideBookMode(Player player, GuideMode mode) {
         if (!accessPolicy.canOpen(player, mode)) {
-            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.no-open", "<red>You do not have permission to open this guide.</red>")));
+            player.sendMessage(Text.prefixed(plugin, tr("guide.errors.no-open")));
             return;
         }
         ItemStack mainHand = player.getInventory().getItemInMainHand();
@@ -1928,14 +1928,14 @@ public final class DefaultSfxGuide implements SfxGuide {
         openMain(player, mode, 0, Navigation.ROOT);
     }
 
-    String tr(String key, String fallback) {
-        return localization.text(key, fallback);
+    String tr(String key) {
+        return localization.text(key);
     }
 
     Component title(GuideMode mode, String suffix) {
         String configured = mode == GuideMode.CHEAT
-                ? plugin.getConfig().getString("guide.cheat-title", tr("guide.mode.cheat.title", "<dark_red>Slimefun Cheat Guide</dark_red>"))
-                : plugin.getConfig().getString("guide.survival-title", tr("guide.mode.survival.title", "<dark_green>Slimefun Guide</dark_green>"));
+                ? plugin.getConfig().getString("guide.cheat-title", tr("guide.mode.cheat.title"))
+                : plugin.getConfig().getString("guide.survival-title", tr("guide.mode.survival.title"));
         return Text.mm(configured + " <dark_gray>|</dark_gray> <gray>" + suffix + "</gray>");
     }
 
@@ -1945,21 +1945,7 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private String materialName(Material material) {
         String key = "materials." + material.name().toLowerCase();
-        return localization.text(key, switch (material) {
-            case CRAFTING_TABLE -> "Crafting Table";
-            case DISPENSER -> "Dispenser";
-            case OAK_FENCE -> "Oak Fence";
-            case NETHER_BRICK_FENCE -> "Nether Brick Fence";
-            case PISTON -> "Piston";
-            case IRON_BARS -> "Iron Bars";
-            case CAULDRON -> "Cauldron";
-            case STONECUTTER -> "Stonecutter";
-            case SMITHING_TABLE -> "Smithing Table";
-            case CAMPFIRE -> "Campfire";
-            case SMOKER -> "Smoker";
-            case BLAST_FURNACE -> "Blast Furnace";
-            default -> material.name().toLowerCase();
-        });
+        return localization.text(key);
     }
 
     private String itemDisplayName(SfxItemDefinition definition) {
@@ -1999,7 +1985,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private String pageNumberLore(int page, int pageCount) {
-        return tr("guide.pagination.page", "<gray>Page {current} / {total}</gray>")
+        return tr("guide.pagination.page")
                 .replace("{current}", Integer.toString(page + 1))
                 .replace("{total}", Integer.toString(pageCount));
     }

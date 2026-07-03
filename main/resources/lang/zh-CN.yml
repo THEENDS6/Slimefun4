@@ -4166,6 +4166,11 @@ materials:
   piston: 活塞
   iron_bars: 铁栏杆
   cauldron: 炼药锅
+  stonecutter: 切石机
+  smithing_table: 锻造台
+  campfire: 营火
+  smoker: 烟熏炉
+  blast_furnace: 高炉
 messages:
   no-tome-yourself: '&c你不能从自己的学识之书中学习。'
   tome-of-knowledge-sharing:
