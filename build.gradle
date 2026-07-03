@@ -1228,6 +1228,41 @@ tasks.register('validateSfxCompiledContent') {
     }
 }
 
+tasks.register('validateSfxCoreLocalizationCalls') {
+    group = 'verification'
+    description = 'Validates migrated core machine UI code uses language keys directly without literal localization fallback arguments.'
+    def coreLocalizationFiles = [
+            'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusIconRenderer.java',
+            'main/java/cc/theends6/sfx/internal/configurable/SfxConfigurableMachineService.java',
+            'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineService.java',
+            'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineStatusIconRenderer.java',
+            'main/java/cc/theends6/sfx/internal/electric/SfxAutoCrafterMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/energy/SfxEnergyBackedElectricMenuService.java',
+            'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java'
+    ]
+    inputs.files(coreLocalizationFiles.collect { layout.projectDirectory.file(it) })
+    doLast {
+        def violations = []
+        def literalFallback = ~/(?s)localization\.(?:text|component)\(\s*"[^"]+"\s*,\s*"[^"]+"/
+        def itemFallback = ~/(?s)localization\.(?:itemName|itemLore)\(\s*[^,\r\n]+,\s*/
+        coreLocalizationFiles.each { path ->
+            def file = layout.projectDirectory.file(path).asFile
+            def text = file.getText('UTF-8')
+            [literalFallback, itemFallback].each { pattern ->
+                def matcher = pattern.matcher(text)
+                while (matcher.find()) {
+                    def line = text.substring(0, matcher.start()).count('\n') + 1
+                    violations << "${path}:${line}: uses localization fallback argument"
+                }
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException("Core localization call validation failed:\n" + violations.join('\n'))
+        }
+        logger.lifecycle("Validated ${coreLocalizationFiles.size()} core machine UI localization file(s) without literal fallback arguments.")
+    }
+}
+
 tasks.named('build') {
     finalizedBy 'exportPluginArtifacts'
 }
@@ -1236,6 +1271,7 @@ tasks.named('check') {
     dependsOn 'validateSfxMachineYaml'
     dependsOn 'validateSfxTemplateCompile'
     dependsOn 'validateSfxCompiledContent'
+    dependsOn 'validateSfxCoreLocalizationCalls'
 }
 
 tasks.register('prepareRuntimeDirs') {

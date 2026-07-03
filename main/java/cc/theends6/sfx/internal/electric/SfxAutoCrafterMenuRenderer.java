@@ -73,7 +73,7 @@ final class SfxAutoCrafterMenuRenderer {
     }
 
     private ItemStack enabledItem(SfxElectricMachineDefinition definition, boolean enabled, String recipeKey) {
-        String recipe = recipeKey == null || recipeKey.isBlank() ? localization.text("electric-ui.auto-crafter.recipe.none", "None") : recipeKey;
+        String recipe = recipeKey == null || recipeKey.isBlank() ? localization.text("electric-ui.auto-crafter.recipe.none") : recipeKey;
         return definition.ui().requiredItem(enabled ? "auto-crafter.enabled" : "auto-crafter.disabled").toItemStack(localization, Map.of("recipe", recipe));
     }
 

@@ -414,7 +414,7 @@ public final class SfxElectricMachineService implements Listener {
         if (autoCrafterSelection) {
             runtime.executeForPlayer(event.getPlayer(), () -> openAutoCrafterSelection(event.getPlayer(), instance, definition, event.getItem(), 0));
         } else if (autoCrafter && (currentState(instance.instanceId(), instance).activeRecipeKey() == null || currentState(instance.instanceId(), instance).activeRecipeKey().isBlank())) {
-            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("electric-ui.auto-crafter.select-a-recipe", "<yellow>Sneak-right-click while holding a target item to select a recipe.</yellow>")));
+            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("electric-ui.auto-crafter.select-a-recipe")));
         } else {
             runtime.executeForPlayer(event.getPlayer(), () -> openMachine(event.getPlayer(), instance));
         }
@@ -880,7 +880,7 @@ public final class SfxElectricMachineService implements Listener {
         }
         SfxElectricMachineSession existing = sessionsByInstance.get(instance.instanceId());
         if (existing != null && !existing.viewerId().equals(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed(plugin, localization.text("machines.busy", "<red>This machine is already open.</red>")));
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.busy")));
             return;
         }
 
@@ -891,7 +891,7 @@ public final class SfxElectricMachineService implements Listener {
         }
 
         SfxElectricMachineState state = currentState(instance.instanceId(), instance);
-        Component title = localization.component(definition.nameKey(), definition.nameKey());
+        Component title = localization.component(definition.nameKey());
         Inventory inventory = plugin.getServer().createInventory(new SfxElectricMachineHolder(instance.instanceId()), definition.ui().inventorySize(), title);
         SfxElectricMachineSession session = new SfxElectricMachineSession(player.getUniqueId(), instance.instanceId(), inventory);
         sessionsByViewer.put(player.getUniqueId(), session);
@@ -1278,18 +1278,16 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         Component text = switch (status) {
-            case CHUNK_NOT_SCANNED -> localization.component("gps.ui.geo-miner-hologram.scan-required", "&4GEO-Scan required!");
-            case NO_GEO_RESOURCE -> localization.component("gps.ui.geo-miner-hologram.finished", "&7Finished");
+            case CHUNK_NOT_SCANNED -> localization.component("gps.ui.geo-miner-hologram.scan-required");
+            case NO_GEO_RESOURCE -> localization.component("gps.ui.geo-miner-hologram.finished");
             case WORKING -> localization.component(
                     "gps.ui.geo-miner-hologram.mining",
-                    "&7Mining: &r{resource}",
                     Map.of("resource", geoMinerResourceName(location)));
             default -> state.hasProgress()
                     ? localization.component(
                     "gps.ui.geo-miner-hologram.mining",
-                    "&7Mining: &r{resource}",
                     Map.of("resource", geoMinerResourceName(location)))
-                    : localization.component("gps.ui.geo-miner-hologram.idling", "&7Idling...");
+                    : localization.component("gps.ui.geo-miner-hologram.idling");
         };
         floatingTextDisplays.update(new SfxFloatingTextProjection(
                 geoMinerFloatingTextKey(location),
@@ -1317,16 +1315,15 @@ public final class SfxElectricMachineService implements Listener {
         SfxGpsExtractionResult result = SfxGpsElectricBridge.peekExtraction(location, false);
         SfxElectricStack output = result.output();
         if (output == null) {
-            return localization.text("gps.ui.geo-miner-hologram.resource-fallback", "GEO Resource");
+            return localization.text("gps.ui.geo-miner-hologram.resource-fallback");
         }
         if (output.isSfxItem()) {
-            Component fallback = Component.text(output.itemId());
-            return PlainTextComponentSerializer.plainText().serialize(localization.itemName(output.itemId(), fallback));
+            return PlainTextComponentSerializer.plainText().serialize(localization.itemName(output.itemId()));
         }
         if (output.material() != null) {
             return output.material().name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
         }
-        return localization.text("gps.ui.geo-miner-hologram.resource-fallback", "GEO Resource");
+        return localization.text("gps.ui.geo-miner-hologram.resource-fallback");
     }
 
     boolean isInstanceChunkLoaded(SfxBlockInstanceRecord instance) {
@@ -1445,14 +1442,14 @@ public final class SfxElectricMachineService implements Listener {
         }
         List<SfxAutoCrafterRecipeChoice> choices = provider.selectionChoices(plugin, hand);
         if (choices.isEmpty()) {
-            player.sendMessage(Text.prefixed(plugin, localization.text("electric-ui.auto-crafter.recipe-not-found", "<red>No matching auto-crafter recipe was found for this item.</red>")));
+            player.sendMessage(Text.prefixed(plugin, localization.text("electric-ui.auto-crafter.recipe-not-found")));
             return;
         }
         openAutoCrafterSelection(player, instance, definition, choices, Math.max(0, Math.min(index, choices.size() - 1)));
     }
 
     private void openAutoCrafterSelection(Player player, SfxBlockInstanceRecord instance, SfxElectricMachineDefinition definition, List<SfxAutoCrafterRecipeChoice> choices, int index) {
-        Component title = localization.component(definition.nameKey(), definition.nameKey());
+        Component title = localization.component(definition.nameKey());
         Inventory inventory = plugin.getServer().createInventory(new SfxAutoCrafterSelectionHolder(instance.instanceId(), choices, index), 54, title);
         autoCrafterMenuRenderer.renderSelection(definition, inventory, choices, index);
         player.openInventory(inventory);
@@ -1490,7 +1487,7 @@ public final class SfxElectricMachineService implements Listener {
         state.activeBaseTicks(SfxAutoCrafterRecipeProvider.WORK_TICKS);
         dirtyInstances.add(instance.instanceId());
         activeInstances.add(instance.instanceId());
-        player.sendMessage(Text.prefixed(plugin, localization.text("electric-ui.auto-crafter.recipe-selected", "<green>Selected recipe: </green><white>{recipe}</white>", Map.of("recipe", choice.key()))));
+        player.sendMessage(Text.prefixed(plugin, localization.text("electric-ui.auto-crafter.recipe-selected", Map.of("recipe", choice.key()))));
         player.closeInventory();
         openMachine(player, instance);
     }
