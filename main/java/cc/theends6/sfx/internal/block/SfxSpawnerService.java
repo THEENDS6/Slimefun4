@@ -254,15 +254,15 @@ public final class SfxSpawnerService implements SfxProgrammaticBlockPlacement {
     private List<Component> brokenSpawnerLore(EntityType type) {
         String pretty = prettyEnumName(type.name());
         return List.of(
-                Text.renderFlexible(localization.text("items.sf.broken_spawner.type-line", "&7Type: &b{type}", Map.of("type", pretty))),
+                Text.renderFlexible(localization.text("items.sf.broken_spawner.type-line", Map.of("type", pretty))),
                 Component.empty(),
-                Text.renderFlexible(localization.text("items.sf.broken_spawner.fractured-line", "&cFractured, must be repaired in an Ancient Altar"))
+                Text.renderFlexible(localization.text("items.sf.broken_spawner.fractured-line"))
         );
     }
 
     private List<Component> reinforcedSpawnerLore(EntityType type) {
         String pretty = prettyEnumName(type.name());
-        return List.of(Text.renderFlexible(localization.text("items.sf.reinforced_spawner.type-line", "&7Type: &b{type}", Map.of("type", pretty))));
+        return List.of(Text.renderFlexible(localization.text("items.sf.reinforced_spawner.type-line", Map.of("type", pretty))));
     }
 
     private DropMode dropMode() {
