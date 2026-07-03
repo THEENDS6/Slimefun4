@@ -65,18 +65,21 @@ public final class SfxCompiledYamlResolver {
                 ? YamlConfiguration.loadConfiguration(baseFile)
                 : new YamlConfiguration();
         Map<String, Object> mergedMap = sectionToMap(base);
-        List<YamlConfiguration> bundledCompiled = loadBundledCompiled(plugin, resourcePath);
-        boolean hasCompiled = !bundledCompiled.isEmpty();
-        for (YamlConfiguration compiled : bundledCompiled) {
-            mergeMap(mergedMap, sectionToMap(compiled));
-        }
         File compiledRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY + "/" + compiledDirectory(resourcePath));
-        if (compiledRoot.isDirectory() && localCompiledIsCurrent(plugin)) {
+        boolean useLocalCompiled = compiledRoot.isDirectory() && localCompiledIsCurrent(plugin);
+        boolean hasCompiled = false;
+        if (useLocalCompiled) {
             List<File> files = listYamlFiles(compiledRoot);
-            hasCompiled = hasCompiled || !files.isEmpty();
+            hasCompiled = !files.isEmpty();
             for (File file : files) {
                 YamlConfiguration compiled = YamlConfiguration.loadConfiguration(file);
                 validateCompiledShape(compiled, "local " + file.getAbsolutePath());
+                mergeMap(mergedMap, sectionToMap(compiled));
+            }
+        } else {
+            List<YamlConfiguration> bundledCompiled = loadBundledCompiled(plugin, resourcePath);
+            hasCompiled = !bundledCompiled.isEmpty();
+            for (YamlConfiguration compiled : bundledCompiled) {
                 mergeMap(mergedMap, sectionToMap(compiled));
             }
         }
@@ -101,14 +104,14 @@ public final class SfxCompiledYamlResolver {
         String normalizedPrefix = normalizeResource(resourcePrefix);
         List<YamlConfiguration> result = new ArrayList<>();
         File compiledRoot = new File(plugin.getDataFolder(), COMPILED_DIRECTORY + "/" + normalizedPrefix);
-        if (compiledRoot.isDirectory() && localCompiledIsCurrent(plugin)) {
+        boolean useLocalCompiled = compiledRoot.isDirectory() && localCompiledIsCurrent(plugin);
+        if (useLocalCompiled) {
             for (File file : listYamlFiles(compiledRoot)) {
                 YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
                 validateCompiledShape(yaml, "local " + file.getAbsolutePath());
                 result.add(yaml);
             }
-        }
-        if (result.isEmpty()) {
+        } else {
             result.addAll(loadBundledCompiledUnder(plugin, normalizedPrefix));
         }
         if (result.isEmpty() && compiledOnly(plugin)) {
@@ -171,9 +174,16 @@ public final class SfxCompiledYamlResolver {
             warnLocalCompiledIgnored(plugin, "unreadable _manifest.yml: " + ex.getMessage());
             return false;
         }
+        if (!localCompiledOutputsMatch(plugin, localRoot, localManifest)) {
+            return false;
+        }
+        if (localCompiledSourcesMatch(plugin, localManifest)) {
+            return true;
+        }
         YamlConfiguration bundledManifest = loadBundledManifest(plugin);
         if (bundledManifest == null) {
-            return true;
+            warnLocalCompiledIgnored(plugin, "source-files do not match current local content");
+            return false;
         }
         for (String key : List.of("compiler", "compiler-version", "template-hash", "content-version")) {
             String localValue = string(localManifest.get(key));
@@ -186,7 +196,37 @@ public final class SfxCompiledYamlResolver {
         if (!manifestOutputsMatch(plugin, localManifest, bundledManifest)) {
             return false;
         }
-        return localCompiledOutputsMatch(plugin, localRoot, localManifest);
+        return true;
+    }
+
+    private static boolean localCompiledSourcesMatch(JavaPlugin plugin, YamlConfiguration manifest) {
+        List<Map<?, ?>> sourceFiles = manifest.getMapList("source-files");
+        if (sourceFiles.isEmpty()) {
+            return false;
+        }
+        Path templateRoot = new File(plugin.getDataFolder(), "content/templates").toPath().toAbsolutePath().normalize();
+        Path contentRoot = new File(plugin.getDataFolder(), "content").toPath().toAbsolutePath().normalize();
+        for (Map<?, ?> source : sourceFiles) {
+            String file = normalizeResource(string(source.get("path")));
+            String expectedSha = string(source.get("sha256"));
+            if (file == null || file.isBlank() || expectedSha == null || expectedSha.isBlank()) {
+                return false;
+            }
+            Path sourcePath = templateRoot.resolve(file).normalize();
+            if (!sourcePath.startsWith(contentRoot) || !Files.isRegularFile(sourcePath)) {
+                return false;
+            }
+            String actualSha;
+            try {
+                actualSha = sha256(sourcePath);
+            } catch (IllegalStateException ex) {
+                return false;
+            }
+            if (!expectedSha.equalsIgnoreCase(actualSha)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static boolean manifestOutputsMatch(JavaPlugin plugin, YamlConfiguration localManifest, YamlConfiguration bundledManifest) {
