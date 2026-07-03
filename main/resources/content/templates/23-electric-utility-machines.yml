@@ -4,7 +4,7 @@ machines:
   "sf:gps_transmitter":
     @cf: templates.machines.no-menu-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.gps_transmitter.name
       speed: 1
       capacity: 320
@@ -13,7 +13,7 @@ machines:
   "sf:gps_transmitter_2":
     @cf: templates.machines.no-menu-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.gps_transmitter_2.name
       speed: 1
       capacity: 1280
@@ -22,7 +22,7 @@ machines:
   "sf:gps_transmitter_3":
     @cf: templates.machines.no-menu-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.gps_transmitter_3.name
       speed: 1
       capacity: 5120
@@ -31,7 +31,7 @@ machines:
   "sf:gps_transmitter_4":
     @cf: templates.machines.no-menu-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.gps_transmitter_4.name
       speed: 1
       capacity: 20480
@@ -40,7 +40,7 @@ machines:
   "sf:geo_miner":
     @cf: templates.machines.geo-miner-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.geo_miner.name
       speed: 1
       capacity: 512
@@ -49,7 +49,7 @@ machines:
   "sf:oil_pump":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.oil_pump.name
       speed: 1
       capacity: 512
@@ -58,7 +58,7 @@ machines:
   "sf:fluid_pump":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.fluid_pump.name
       speed: 1
       capacity: 512

@@ -223,6 +223,9 @@ public final class SfxTemplateCompiler {
             case "@mi" -> "@mergeinto";
             case "@io" -> "@isoutput";
             case "@ot" -> "@outputtarget";
+            case "@d" -> "@define";
+            case "@g" -> "@global";
+            case "@p" -> "@project";
             default -> META_KEYS.contains(normalized) ? normalized : key;
         };
     }

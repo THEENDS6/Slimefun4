@@ -4,7 +4,7 @@ machines:
   "sf:food_fabricator":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.food_fabricator.name
       speed: 1
       capacity: 5120
@@ -13,7 +13,7 @@ machines:
   "sf:food_fabricator_2":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.food_fabricator_2.name
       speed: 6
       capacity: 10240
@@ -22,7 +22,7 @@ machines:
   "sf:food_composter":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.food_composter.name
       speed: 1
       capacity: 5120
@@ -31,7 +31,7 @@ machines:
   "sf:food_composter_2":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.food_composter_2.name
       speed: 10
       capacity: 10240
@@ -40,7 +40,7 @@ machines:
   "sf:produce_collector":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.produce_collector.name
       speed: 1
       capacity: 10240
@@ -49,7 +49,7 @@ machines:
   "sf:auto_breeder":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.auto_breeder.name
       speed: 1
       capacity: 20480
@@ -58,7 +58,7 @@ machines:
   "sf:animal_growth_accelerator":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.animal_growth_accelerator.name
       speed: 1
       capacity: 20480
@@ -67,7 +67,7 @@ machines:
   "sf:crop_growth_accelerator":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.crop_growth_accelerator.name
       speed: 1
       capacity: 40960
@@ -76,7 +76,7 @@ machines:
   "sf:crop_growth_accelerator_2":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.crop_growth_accelerator_2.name
       speed: 1
       capacity: 40960
@@ -85,7 +85,7 @@ machines:
   "sf:tree_growth_accelerator":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.tree_growth_accelerator.name
       speed: 1
       capacity: 40960
@@ -94,7 +94,7 @@ machines:
   "sf:xp_collector":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.xp_collector.name
       speed: 1
       capacity: 20480
