@@ -869,18 +869,13 @@ tasks.register('validateSfxCompiledContent') {
                 violations << "${rel}: recipe ${recipe.key} outputs must contain at least one entry"
             }
             if (recipe.runtime == 'true'
-                    && !recipe.fields.contains('machine')
-                    && !recipe.fields.contains('runtime-machines')
                     && !recipe.fields.contains('runtime-machine-tags')) {
-                violations << "${rel}: recipe ${recipe.key} runtime recipe missing machine/runtime-machines/runtime-machine-tags"
-            }
-            if (recipe.fields.contains('runtime-machines') && recipe.machineRefs.isEmpty()) {
-                violations << "${rel}: recipe ${recipe.key} runtime-machines must list at least one machine"
+                violations << "${rel}: recipe ${recipe.key} runtime recipe missing runtime-machine-tags"
             }
             if (recipe.fields.contains('runtime-machine-tags') && recipe.machineTagRefs.isEmpty()) {
                 violations << "${rel}: recipe ${recipe.key} runtime-machine-tags must list at least one tag"
             }
-            if (!recipe.machineRefs.isEmpty()) {
+            if (recipe.fields.contains('machine') || recipe.fields.contains('runtime-machines')) {
                 violations << "${rel}: recipe ${recipe.key} must use runtime-machine-tags instead of direct machine/runtime-machines references"
             }
             recipe.machineRefs.each { machineId ->
