@@ -1,4 +1,4 @@
-﻿# Shared electric machine definition templates. These compose machine parameters with optional UI fragments.
+# Shared electric machine definition templates. These compose machine parameters with optional UI fragments.
 templates:
   machines:
     electric-definition:
@@ -16,7 +16,7 @@ templates:
     standard-electric-definition:
       @it: true
       @cf: templates.ui.standard-electric-machine
-      @define:
+      @d:
         functions:
         - standard-processing
         input-slots:
@@ -38,7 +38,7 @@ templates:
     standard-electric-ui-definition:
       @it: true
       @cf: templates.machines.standard-electric-definition
-      @define:
+      @d:
         functions:
         - standard-processing
         input-slots:
@@ -60,7 +60,7 @@ templates:
     simple-io-definition:
       @it: true
       @cf: templates.ui.simple-io
-      @define:
+      @d:
         functions:
         - simple-io
         input-slots:
@@ -84,7 +84,7 @@ templates:
         output: "${output-slots}"
     no-menu-definition:
       @it: true
-      @define:
+      @d:
         functions:
         - no-menu
         input-slots: []
@@ -108,7 +108,7 @@ templates:
     auto-brewer-definition:
       @it: true
       @cf: templates.ui.auto-brewer
-      @define:
+      @d:
         functions:
         - auto-brewer
         input-slots:
@@ -132,7 +132,7 @@ templates:
     auto-crafter-definition:
       @it: true
       @cf: templates.ui.auto-crafter
-      @define:
+      @d:
         functions:
         - auto-crafter
         input-slots: []
@@ -150,7 +150,7 @@ templates:
     geo-miner-definition:
       @it: true
       @cf: templates.ui.geo-miner
-      @define:
+      @d:
         functions:
         - geo-miner
         input-slots: []
@@ -178,7 +178,7 @@ templates:
     iron-golem-assembler-definition:
       @it: true
       @cf: templates.ui.iron-golem-assembler
-      @define:
+      @d:
         functions:
         - assembler
         input-slots:
@@ -200,7 +200,7 @@ templates:
     wither-assembler-definition:
       @it: true
       @cf: templates.ui.wither-assembler
-      @define:
+      @d:
         functions:
         - assembler
         input-slots:
@@ -222,7 +222,7 @@ templates:
     assembler-definition:
       @it: true
       @cf: templates.ui.assembler-base
-      @define:
+      @d:
         functions:
         - assembler
         input-slots:

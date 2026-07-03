@@ -83,7 +83,7 @@ templates:
     passive-component-output:
       @cf: templates.energy.component-definition
       @it: true
-      @define:
+      @d:
         generation: 0
         consumption: 0
         burn-rate: 10
@@ -93,7 +93,7 @@ templates:
     generator-output:
       @cf: templates.energy.component-definition
       @it: true
-      @define:
+      @d:
         type: GENERATOR
         consumption: 0
         vanilla-fuel: false
@@ -103,19 +103,19 @@ components:
   "sf:energy_regulator":
     @cf: templates.energy.passive-component-output
     @io: true
-    @define:
+    @d:
       type: REGULATOR
       capacity: 0
   "sf:energy_connector":
     @cf: templates.energy.passive-component-output
     @io: true
-    @define:
+    @d:
       type: CONNECTOR
       capacity: 0
   "sf:charging_bench":
     @cf: templates.energy.component-definition
     @io: true
-    @define:
+    @d:
       type: CHARGER
       capacity: 2560
       generation: 0
@@ -127,43 +127,43 @@ components:
   "sf:small_capacitor":
     @cf: templates.energy.passive-component-output
     @io: true
-    @define:
+    @d:
       type: CAPACITOR
       capacity: 2560
   "sf:medium_capacitor":
     @cf: templates.energy.passive-component-output
     @io: true
-    @define:
+    @d:
       type: CAPACITOR
       capacity: 10240
   "sf:big_capacitor":
     @cf: templates.energy.passive-component-output
     @io: true
-    @define:
+    @d:
       type: CAPACITOR
       capacity: 20480
   "sf:large_capacitor":
     @cf: templates.energy.passive-component-output
     @io: true
-    @define:
+    @d:
       type: CAPACITOR
       capacity: 163840
   "sf:carbonado_edged_capacitor":
     @cf: templates.energy.passive-component-output
     @io: true
-    @define:
+    @d:
       type: CAPACITOR
       capacity: 1310720
   "sf:energized_capacitor":
     @cf: templates.energy.passive-component-output
     @io: true
-    @define:
+    @d:
       type: CAPACITOR
       capacity: 10485760
   "sf:solar_generator":
     @cf: templates.energy.generator-output
     @io: true
-    @define:
+    @d:
       capacity: 0
       generation: 4
       burn-rate: 10
@@ -172,7 +172,7 @@ components:
   "sf:solar_generator_2":
     @cf: templates.energy.generator-output
     @io: true
-    @define:
+    @d:
       capacity: 0
       generation: 16
       burn-rate: 10
@@ -181,7 +181,7 @@ components:
   "sf:solar_generator_3":
     @cf: templates.energy.generator-output
     @io: true
-    @define:
+    @d:
       capacity: 0
       generation: 64
       burn-rate: 10
@@ -190,7 +190,7 @@ components:
   "sf:solar_generator_4":
     @cf: templates.energy.component-definition
     @io: true
-    @define:
+    @d:
       type: GENERATOR
       capacity: 0
       generation: 256
@@ -202,7 +202,7 @@ components:
   "sf:coal_generator":
     @cf: templates.energy.component-definition
     @io: true
-    @define:
+    @d:
       type: GENERATOR
       capacity: 1280
       generation: 16
@@ -214,7 +214,7 @@ components:
   "sf:coal_generator_2":
     @cf: templates.energy.component-definition
     @io: true
-    @define:
+    @d:
       type: GENERATOR
       capacity: 5120
       generation: 30
@@ -226,7 +226,7 @@ components:
   "sf:lava_generator":
     @cf: templates.energy.generator-output
     @io: true
-    @define:
+    @d:
       capacity: 10240
       generation: 20
       burn-rate: 10
@@ -243,7 +243,7 @@ components:
   "sf:lava_generator_2":
     @cf: templates.energy.generator-output
     @io: true
-    @define:
+    @d:
       capacity: 20480
       generation: 40
       burn-rate: 15
@@ -260,7 +260,7 @@ components:
   "sf:combustion_reactor":
     @cf: templates.energy.generator-output
     @io: true
-    @define:
+    @d:
       capacity: 20480
       generation: 64
       burn-rate: 10
@@ -285,7 +285,7 @@ components:
   "sf:magnesium_generator":
     @cf: templates.energy.generator-output
     @io: true
-    @define:
+    @d:
       capacity: 2560
       generation: 36
       burn-rate: 10
@@ -299,7 +299,7 @@ components:
   "sf:bio_reactor":
     @cf: templates.energy.generator-output
     @io: true
-    @define:
+    @d:
       capacity: 2560
       generation: 8
       burn-rate: 10
@@ -758,7 +758,7 @@ components:
   "sf:bio_reactor_2":
     @cf: templates.energy.generator-output
     @io: true
-    @define:
+    @d:
       capacity: 5120
       generation: 20
       burn-rate: 15

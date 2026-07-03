@@ -4,7 +4,7 @@ machines:
   "sf:iron_golem_assembler":
     @cf: templates.machines.iron-golem-assembler-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.iron_golem_assembler.name
       speed: 1
       capacity: 81920
@@ -19,7 +19,7 @@ machines:
   "sf:wither_assembler":
     @cf: templates.machines.wither-assembler-definition
     @io: true
-    @define:
+    @d:
       name-key: items.sf.wither_assembler.name
       speed: 1
       capacity: 81920
