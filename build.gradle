@@ -1686,6 +1686,10 @@ tasks.register('validateSfxBundledCompiledContent') {
         if (!manifestFile.isFile()) {
             throw new GradleException("compiled manifest missing _manifest.yml")
         }
+        def sourceMapFile = new File(root, '_source-map.yml')
+        if (!sourceMapFile.isFile()) {
+            throw new GradleException("compiled source map missing _source-map.yml")
+        }
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
         }
@@ -1697,6 +1701,9 @@ tasks.register('validateSfxBundledCompiledContent') {
                 digest.update(buffer, 0, read)
             }
             digest.digest().collect { String.format('%02x', it & 0xff) }.join()
+        }
+        def sha256File = { File file ->
+            file.withInputStream { stream -> sha256Stream(stream) }
         }
         def manifestText = manifestFile.getText('UTF-8')
         def outputEntries = []
@@ -1724,9 +1731,26 @@ tasks.register('validateSfxBundledCompiledContent') {
         def jarFile = tasks.named('jar').get().archiveFile.get().asFile
         def violations = []
         def declaredJarEntries = outputEntries.collect { "content/compiled/${it.file}".toString() } as Set
+        def expectedManifestSha = sha256File(manifestFile)
+        def expectedSourceMapSha = sha256File(sourceMapFile)
         new java.util.zip.ZipFile(jarFile).withCloseable { zip ->
-            if (zip.getEntry('content/compiled/_manifest.yml') == null) {
+            def manifestEntry = zip.getEntry('content/compiled/_manifest.yml')
+            if (manifestEntry == null) {
                 violations << "${jarFile.name}: missing content/compiled/_manifest.yml"
+            } else {
+                def actualManifestSha = zip.getInputStream(manifestEntry).withCloseable { stream -> sha256Stream(stream) }
+                if (actualManifestSha != expectedManifestSha) {
+                    violations << "${jarFile.name}: content/compiled/_manifest.yml sha256 mismatch"
+                }
+            }
+            def sourceMapEntry = zip.getEntry('content/compiled/_source-map.yml')
+            if (sourceMapEntry == null) {
+                violations << "${jarFile.name}: missing content/compiled/_source-map.yml"
+            } else {
+                def actualSourceMapSha = zip.getInputStream(sourceMapEntry).withCloseable { stream -> sha256Stream(stream) }
+                if (actualSourceMapSha != expectedSourceMapSha) {
+                    violations << "${jarFile.name}: content/compiled/_source-map.yml sha256 mismatch"
+                }
             }
             outputEntries.each { output ->
                 if (output.file == null || output.file.isBlank()) {
