@@ -61,14 +61,7 @@ final class SfxEnergyGeneratorMenuRenderer {
     }
 
     private void fillInventoryFrame(SfxEnergyComponentDefinition definition, Inventory inventory) {
-        for (SfxEnergyComponentUiFrame frame : definition.ui().frame()) {
-            ItemStack item = frame.item().toItemStack(localization);
-            for (int slot : frame.slots()) {
-                if (slot >= 0 && slot < inventory.getSize()) {
-                    inventory.setItem(slot, item);
-                }
-            }
-        }
+        SfxEnergyComponentUiPainter.fillConfiguredSlots(definition.ui(), inventory, localization);
     }
 
     private int displayedEnergy(SfxEnergyNodeState state, SfxEnergyComponentDefinition definition) {
