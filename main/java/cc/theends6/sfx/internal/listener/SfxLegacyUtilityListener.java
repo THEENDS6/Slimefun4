@@ -327,7 +327,7 @@ public final class SfxLegacyUtilityListener implements Listener {
                     block.getWorld().getUID() + ";" + block.getX() + ";" + block.getY() + ";" + block.getZ()
             );
             item.setItemMeta(meta);
-            send(player, "messages.tape-measure.anchor-set", "&aSuccessfully set the anchor:&e {anchor}",
+            send(player, "messages.tape-measure.anchor-set",
                     Map.of("anchor", block.getX() + " | " + block.getY() + " | " + block.getZ()));
             player.playSound(block.getLocation(), Sound.UI_BUTTON_CLICK, 0.7f, 1.5f);
             return;
@@ -336,18 +336,18 @@ public final class SfxLegacyUtilityListener implements Listener {
         ItemMeta meta = item.getItemMeta();
         String raw = meta.getPersistentDataContainer().get(tapeAnchorKey, PersistentDataType.STRING);
         if (raw == null || raw.isBlank()) {
-            send(player, "messages.tape-measure.no-anchor", "&cYou need to set an anchor before you can start to measure!");
+            send(player, "messages.tape-measure.no-anchor");
             return;
         }
 
         String[] parts = raw.split(";");
         if (parts.length != 4) {
-            send(player, "messages.tape-measure.no-anchor", "&cYou need to set an anchor before you can start to measure!");
+            send(player, "messages.tape-measure.no-anchor");
             return;
         }
         UUID worldId = UUID.fromString(parts[0]);
         if (!block.getWorld().getUID().equals(worldId)) {
-            send(player, "messages.tape-measure.wrong-world", "&cYour anchor seems to be in a different world!");
+            send(player, "messages.tape-measure.wrong-world");
             return;
         }
 
@@ -356,7 +356,7 @@ public final class SfxLegacyUtilityListener implements Listener {
         double dz = block.getZ() - Integer.parseInt(parts[3]);
         double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
         player.playSound(block.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 1.2f);
-        send(player, "messages.tape-measure.distance", "&7Measurement taken. &eDistance: {distance}",
+        send(player, "messages.tape-measure.distance",
                 Map.of("distance", distanceFormat.format(distance)));
     }
 
@@ -707,7 +707,7 @@ public final class SfxLegacyUtilityListener implements Listener {
             return;
         }
         if (ownerId.equals(player.getUniqueId())) {
-            send(player, "messages.no-tome-yourself", "<red>You cannot learn from your own Tome of Knowledge.</red>");
+            send(player, "messages.no-tome-yourself");
             return;
         }
         String safeOwnerName = ownerName == null || ownerName.isBlank() ? ownerId.toString() : ownerName;
@@ -718,14 +718,14 @@ public final class SfxLegacyUtilityListener implements Listener {
         meta.getPersistentDataContainer().set(knowledgeTomeOwnerKey, PersistentDataType.STRING, player.getUniqueId().toString());
         meta.getPersistentDataContainer().set(knowledgeTomeOwnerNameKey, PersistentDataType.STRING, player.getName());
         List<Component> lore = new ArrayList<>();
-        lore.add(Text.renderFlexible(localization.text("items.tome-of-knowledge-sharing.owner-line", "&7Owner: &b{name}", Map.of("name", player.getName()))));
+        lore.add(Text.renderFlexible(localization.text("items.tome-of-knowledge-sharing.owner-line", Map.of("name", player.getName()))));
         lore.add(Component.empty());
-        lore.add(Text.renderFlexible(localization.text("items.tome-of-knowledge-sharing.bound-line-1", "&eRight Click&7 to obtain all Researches by")));
-        lore.add(Text.renderFlexible(localization.text("items.tome-of-knowledge-sharing.bound-line-2", "&7the previously assigned Owner")));
+        lore.add(Text.renderFlexible(localization.text("items.tome-of-knowledge-sharing.bound-line-1")));
+        lore.add(Text.renderFlexible(localization.text("items.tome-of-knowledge-sharing.bound-line-2")));
         meta.lore(lore);
         tome.setItemMeta(meta);
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 0.7F, 1.6F);
-        send(player, "messages.tome-of-knowledge-sharing.bound", "<green>This Tome of Knowledge has been bound to you.</green>");
+        send(player, "messages.tome-of-knowledge-sharing.bound");
     }
 
     private void shareKnowledgeTome(Player player, SfxPlayerProfile ownerProfile, SfxPlayerProfile targetProfile, String ownerName) {
@@ -752,7 +752,7 @@ public final class SfxLegacyUtilityListener implements Listener {
             consumeOne(hand, player);
         }
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 0.8F, 1.0F);
-        send(player, "messages.tome-of-knowledge-sharing.shared", "<green>You learned {count} researches from {owner}.</green>", Map.of("count", unlocked, "owner", ownerName));
+        send(player, "messages.tome-of-knowledge-sharing.shared", Map.of("count", unlocked, "owner", ownerName));
     }
 
 
@@ -763,7 +763,7 @@ public final class SfxLegacyUtilityListener implements Listener {
         denyItemUse(event);
         Player player = event.getPlayer();
         if (!consumeFood(player, 2)) {
-            send(player, "messages.hungry", "<red>You are too hungry to use this.</red>");
+            send(player, "messages.hungry");
             return;
         }
         Vector velocity = player.getEyeLocation().getDirection().normalize().multiply(4.0D);
@@ -780,7 +780,7 @@ public final class SfxLegacyUtilityListener implements Listener {
         denyItemUse(event);
         Player player = event.getPlayer();
         player.setFireTicks(0);
-        send(player, "messages.fire-extinguish", "<aqua>You have been extinguished.</aqua>");
+        send(player, "messages.fire-extinguish");
     }
 
     private void useStormStaff(PlayerInteractEvent event) {
@@ -794,11 +794,11 @@ public final class SfxLegacyUtilityListener implements Listener {
             return;
         }
         if (!target.getWorld().getPVP()) {
-            send(player, "messages.no-pvp", "<red>PVP is disabled in this world.</red>");
+            send(player, "messages.no-pvp");
             return;
         }
         if (!consumeFood(player, 4)) {
-            send(player, "messages.hungry", "<red>You are too hungry to use this.</red>");
+            send(player, "messages.hungry");
             return;
         }
         Location strike = target.getLocation();
@@ -826,7 +826,7 @@ public final class SfxLegacyUtilityListener implements Listener {
             String legacy = Text.toLegacy(line);
             return legacy.contains("Uses left") || legacy.contains("剩余使用次数");
         });
-        lore.add(Text.renderFlexible(localization.text("items.staff.storm.uses-left", "&7Uses left: &e{uses}", Map.of("uses", 8 - uses))));
+        lore.add(Text.renderFlexible(localization.text("items.staff.storm.uses-left", Map.of("uses", 8 - uses))));
         meta.lore(lore);
         item.setItemMeta(meta);
     }
@@ -917,12 +917,12 @@ public final class SfxLegacyUtilityListener implements Listener {
         }
     }
 
-    private void send(Player player, String key, String fallback) {
-        player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback)));
+    private void send(Player player, String key) {
+        player.sendMessage(Text.prefixed(plugin, localization.text(key)));
     }
 
-    private void send(Player player, String key, String fallback, Map<String, ?> placeholders) {
-        player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback, placeholders)));
+    private void send(Player player, String key, Map<String, ?> placeholders) {
+        player.sendMessage(Text.prefixed(plugin, localization.text(key, placeholders)));
     }
 
     private ItemStack itemInHand(PlayerInteractEvent event) {
