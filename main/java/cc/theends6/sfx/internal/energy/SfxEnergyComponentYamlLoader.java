@@ -80,6 +80,9 @@ final class SfxEnergyComponentYamlLoader {
         boolean vanillaFuel = requiredBoolean(section, "vanilla-fuel");
         Material progressMaterial = parseMaterial(requiredString(section, "progress-material"));
         requiredList(section, "fuels");
+        if (strict && section.contains("tag-fuels")) {
+            throw new IllegalArgumentException(id + " compiled energy definition must not contain tag-fuels helper; use explicit fuels");
+        }
         List<SfxEnergyComponentDefinition.FuelRule> fuels = parseFuelRules(section);
         SfxEnergyComponentUiDefinition ui = parseUi(id, requiredSection(section, "ui"), strict);
         return new SfxEnergyComponentDefinition(id, type, capacity, energyPerTick, 0, burnRate, vanillaFuel, progressMaterial, fuels, ui);
