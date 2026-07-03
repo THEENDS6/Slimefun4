@@ -1527,6 +1527,32 @@ tasks.register('validateSfxCoreLocalizationCalls') {
     }
 }
 
+tasks.register('validateSfxRuntimeCompiledOnlyConfig') {
+    group = 'verification'
+    description = 'Validates default runtime config keeps compiled-only mode strict and Java fallbacks disabled.'
+    inputs.file(layout.projectDirectory.file('main/resources/config.yml'))
+    doLast {
+        def configText = layout.projectDirectory.file('main/resources/config.yml').asFile.getText('UTF-8')
+        def requiredDefaults = [
+                'content.runtime.compiled-only'                     : /(?m)^\s{4}compiled-only:\s*true\s*$/,
+                'content.runtime.allow-java-ui-fallback'            : /(?m)^\s{4}allow-java-ui-fallback:\s*false\s*$/,
+                'content.runtime.allow-java-recipe-fallback'        : /(?m)^\s{4}allow-java-recipe-fallback:\s*false\s*$/,
+                'content.runtime.allow-legacy-machine-scan'         : /(?m)^\s{4}allow-legacy-machine-scan:\s*false\s*$/,
+                'machines.framework.allow-legacy-candidate-scan'    : /(?m)^\s{4}allow-legacy-candidate-scan:\s*false\s*$/
+        ]
+        def violations = []
+        requiredDefaults.each { path, pattern ->
+            if (!(configText =~ pattern).find()) {
+                violations << "${path} must default to strict compiled-only runtime behavior"
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException("Runtime compiled-only config validation failed:\n" + violations.join('\n'))
+        }
+        logger.lifecycle("Validated default runtime config keeps compiled-only mode strict and Java fallbacks disabled.")
+    }
+}
+
 tasks.named('build') {
     finalizedBy 'exportPluginArtifacts'
 }
@@ -1536,6 +1562,7 @@ tasks.named('check') {
     dependsOn 'validateSfxTemplateCompile'
     dependsOn 'validateSfxCompiledContent'
     dependsOn 'validateSfxCoreLocalizationCalls'
+    dependsOn 'validateSfxRuntimeCompiledOnlyConfig'
 }
 
 tasks.register('prepareRuntimeDirs') {
