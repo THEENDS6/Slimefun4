@@ -4610,6 +4610,7 @@ tools:
       consumer: 用电器
       producer: 发电机
       generator: 发电机
+      charger: 充电器
       capacitor: 电容
       connector: 能量节点
       regulator: 能量调度器
