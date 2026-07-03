@@ -42,7 +42,7 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
         SfxMachineLegacyHookBridge.menuOpen(energy.machineRuntime, definition.id(), instance.instanceId(), energy.toLocation(instance.anchorKey()), "electric-energy-menu", "SfxEnergyBackedElectricMenuService.open");
         SfxEnergyGeneratorSession existing = sessionsByInstance.get(instance.instanceId());
         if (existing != null && !existing.viewerId().equals(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed(energy.plugin, energy.localization.text("machines.busy", "<red>This machine is already open.</red>")));
+            player.sendMessage(Text.prefixed(energy.plugin, energy.localization.text("machines.busy")));
             return;
         }
         SfxEnergyGeneratorSession previous = sessionsByViewer.remove(player.getUniqueId());
@@ -52,7 +52,7 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
         }
 
         SfxEnergyNodeState state = energy.currentState(instance.instanceId(), instance);
-        Component title = energy.localization.itemName(definition.id(), Component.text(definition.id()));
+        Component title = energy.localization.itemName(definition.id());
         Inventory inventory = energy.plugin.getServer().createInventory(new SfxEnergyGeneratorHolder(instance.instanceId()), definition.ui().inventorySize(), title);
         SfxEnergyGeneratorSession session = new SfxEnergyGeneratorSession(player.getUniqueId(), instance.instanceId(), inventory);
         sessionsByViewer.put(player.getUniqueId(), session);

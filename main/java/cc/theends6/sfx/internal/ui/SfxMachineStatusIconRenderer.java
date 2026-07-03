@@ -36,7 +36,6 @@ public final class SfxMachineStatusIconRenderer {
                 lore.add(Component.empty());
                 lore.add(localization.component(
                         "electric-ui.progress.time-left",
-                        "<gray>{time}</gray>",
                         Map.of("time", formatTimeLeft(view.timeLeftTicks()))));
             }
         }
@@ -53,7 +52,6 @@ public final class SfxMachineStatusIconRenderer {
             appendSeparator(lore);
             lore.add(localization.component(
                     "electric-ui.energy-buffer",
-                    "<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>",
                     Map.of("stored", view.storedEnergy(), "capacity", view.energyCapacity())));
         }
         if (view.energyPerTick() != null) {
@@ -62,7 +60,6 @@ public final class SfxMachineStatusIconRenderer {
             }
             lore.add(localization.component(
                     "electric-ui.energy-consumption",
-                    "<gray>Consumption: </gray><yellow>{energy}</yellow><gray> J/t</gray>",
                     Map.of("energy", view.energyPerTick())));
         }
         if (view.generatedPerTick() != null) {
@@ -71,7 +68,6 @@ public final class SfxMachineStatusIconRenderer {
             }
             lore.add(localization.component(
                     "electric-ui.energy-generation",
-                    "<gray>Generation: </gray><yellow>{energy}</yellow><gray> J/t</gray>",
                     Map.of("energy", view.generatedPerTick())));
         }
         lore.addAll(view.extraLore());
@@ -106,9 +102,9 @@ public final class SfxMachineStatusIconRenderer {
         int minutes = seconds / 60;
         int remainingSeconds = seconds - minutes * 60;
         if (minutes > 0) {
-            return localization.text("electric-ui.time.minutes-seconds", "{minutes}m {seconds}s", Map.of("minutes", minutes, "seconds", remainingSeconds));
+            return localization.text("electric-ui.time.minutes-seconds", Map.of("minutes", minutes, "seconds", remainingSeconds));
         }
-        return localization.text("electric-ui.time.seconds", "{seconds}s", Map.of("seconds", remainingSeconds));
+        return localization.text("electric-ui.time.seconds", Map.of("seconds", remainingSeconds));
     }
 
     private void appendSeparator(List<Component> lore) {

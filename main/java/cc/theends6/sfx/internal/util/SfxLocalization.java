@@ -45,8 +45,13 @@ public final class SfxLocalization {
         return lookup(path) != null;
     }
 
-    public String text(String path, String fallback) {
+    public String text(String path) {
         return requiredText(path);
+    }
+
+    @Deprecated
+    public String text(String path, String fallback) {
+        return text(path);
     }
 
     public String requiredText(String path) {
@@ -58,16 +63,31 @@ public final class SfxLocalization {
         return path;
     }
 
-    public String text(String path, String fallback, Map<String, ?> placeholders) {
+    public String text(String path, Map<String, ?> placeholders) {
         return applyPlaceholders(requiredText(path), placeholders);
     }
 
-    public Component component(String path, String fallback) {
+    @Deprecated
+    public String text(String path, String fallback, Map<String, ?> placeholders) {
+        return text(path, placeholders);
+    }
+
+    public Component component(String path) {
         return render(requiredText(path));
     }
 
-    public Component component(String path, String fallback, Map<String, ?> placeholders) {
+    @Deprecated
+    public Component component(String path, String fallback) {
+        return component(path);
+    }
+
+    public Component component(String path, Map<String, ?> placeholders) {
         return render(applyPlaceholders(requiredText(path), placeholders));
+    }
+
+    @Deprecated
+    public Component component(String path, String fallback, Map<String, ?> placeholders) {
+        return component(path, placeholders);
     }
 
     public Component categoryName(String categoryId, Component fallback) {
@@ -75,9 +95,14 @@ public final class SfxLocalization {
         return render(requiredText(path));
     }
 
-    public Component itemName(String itemId, Component fallback) {
+    public Component itemName(String itemId) {
         String path = "items." + sanitize(itemId) + ".name";
         return render(requiredText(path));
+    }
+
+    @Deprecated
+    public Component itemName(String itemId, Component fallback) {
+        return itemName(itemId);
     }
 
     public Component researchName(String researchId, Component fallback) {
@@ -85,13 +110,18 @@ public final class SfxLocalization {
         return render(requiredText(path));
     }
 
-    public List<Component> itemLore(String itemId, List<Component> fallback) {
+    public List<Component> itemLore(String itemId) {
         List<String> lines = requiredList("items." + sanitize(itemId) + ".lore");
         List<Component> localized = new ArrayList<>();
         for (String line : lines) {
             localized.add(render(line));
         }
         return localized;
+    }
+
+    @Deprecated
+    public List<Component> itemLore(String itemId, List<Component> fallback) {
+        return itemLore(itemId);
     }
 
     public List<Component> recipeNote(String itemId, int index, Component fallback) {

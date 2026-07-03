@@ -15,7 +15,6 @@ import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 final class SfxElectricMachineStatusIconRenderer {
     private static final int XP_PER_FLASK = 10;
@@ -57,7 +56,6 @@ final class SfxElectricMachineStatusIconRenderer {
                         .includeDefaultStatusLore(false)
                 .statusLore(localization.component(
                                 "electric-ui.simple-io.xp-progress",
-                                "<gray>Stored XP: </gray><white>{current}</white><gray>/</gray><white>{total}</white>",
                                 Map.of("current", current, "total", XP_PER_FLASK)));
             } else {
                 int totalWork = totalWork(definition, state, recipe);
@@ -88,12 +86,10 @@ final class SfxElectricMachineStatusIconRenderer {
         if (isExtendedUiEnabled(viewerId)) {
             view.extraLore(localization.component(
                     "electric-ui.progress.speed",
-                    "<gray>Speed: </gray><aqua>{speed}x</aqua>",
                     Map.of("speed", definition.speed())));
             if (effectiveStatus == SfxElectricMachineRenderStatus.WORKING && recipe != null && recipe.output() != null) {
                 view.extraLore(localization.component(
                         "electric-ui.progress.recipe",
-                        "<gray>Recipe: </gray><white>{recipe}</white>",
                         Map.of("recipe", displayStackName(recipe.output()))));
             }
         }
@@ -206,16 +202,15 @@ final class SfxElectricMachineStatusIconRenderer {
         Component component = switch (status) {
             case NO_TARGET -> localization.component(
                     "electric-ui.no-target.lore",
-                    "<gray>{target}</gray>",
                     Map.of("target", noTargetText(definition)));
-            case NO_BLAZE_FUEL -> localization.component("electric-ui.auto-brewer.blaze.missing-lore", "<gray>Add blaze powder before brewing.</gray>");
-            case NO_BREWING_INGREDIENT -> localization.component("electric-ui.auto-brewer.ingredient.missing-lore", "<gray>Add a valid brewing ingredient.</gray>");
-            case NO_POTION -> localization.component("electric-ui.auto-brewer.potion.missing-lore", "<gray>Add at least one valid potion bottle.</gray>");
+            case NO_BLAZE_FUEL -> localization.component("electric-ui.auto-brewer.blaze.missing-lore");
+            case NO_BREWING_INGREDIENT -> localization.component("electric-ui.auto-brewer.ingredient.missing-lore");
+            case NO_POTION -> localization.component("electric-ui.auto-brewer.potion.missing-lore");
             case PAUSED -> isAssembler(definition)
-                    ? localization.component("configurable-ui.assembler.paused.lore", "<gray>Enable this assembler to continue.</gray>")
+                    ? localization.component("configurable-ui.assembler.paused.lore")
                     : Component.empty();
             case IDLE -> isExpCollector(definition)
-                    ? localization.component("electric-ui.simple-io.xp-waiting.lore", "<gray>Waiting for nearby experience orbs.</gray>")
+                    ? localization.component("electric-ui.simple-io.xp-waiting.lore")
                     : Component.empty();
             default -> Component.empty();
         };
@@ -224,17 +219,17 @@ final class SfxElectricMachineStatusIconRenderer {
 
     private Component workingLore(SfxElectricMachineDefinition definition) {
         return switch (definition.id()) {
-            case "sf:produce_collector" -> localization.component("electric-ui.action.produce.working", "<gray>Collecting nearby animal products.</gray>");
-            case "sf:auto_breeder" -> localization.component("electric-ui.action.auto-breeder.working", "<gray>Feeding nearby animals.</gray>");
-            case "sf:animal_growth_accelerator" -> localization.component("electric-ui.action.animal-growth.working", "<gray>Accelerating nearby baby animals.</gray>");
-            case "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2" -> localization.component("electric-ui.action.crop-growth.working", "<gray>Accelerating nearby crops.</gray>");
-            case "sf:tree_growth_accelerator" -> localization.component("electric-ui.action.tree-growth.working", "<gray>Accelerating nearby saplings.</gray>");
-            case "sf:xp_collector" -> localization.component("electric-ui.simple-io.xp-working.lore", "<gray>Collecting nearby experience orbs.</gray>");
-            case "sf:fluid_pump" -> localization.component("electric-ui.action.fluid-pump.working", "<gray>Pumping fluid from below.</gray>");
-            case "sf:geo_miner" -> localization.component("electric-ui.action.geo-miner.working", "<gray>Mining GEO resources.</gray>");
-            case "sf:oil_pump" -> localization.component("electric-ui.action.oil-pump.working", "<gray>Pumping oil.</gray>");
-            case "sf:auto_brewer", "sf:auto_brewer_2" -> localization.component("electric-ui.auto-brewer.progress.brewing", "<gray>Brewing potions.</gray>");
-            case "sf:iron_golem_assembler", "sf:wither_assembler" -> localization.component("configurable-ui.assembler.working.lore", "<gray>Assembling entity structure.</gray>");
+            case "sf:produce_collector" -> localization.component("electric-ui.action.produce.working");
+            case "sf:auto_breeder" -> localization.component("electric-ui.action.auto-breeder.working");
+            case "sf:animal_growth_accelerator" -> localization.component("electric-ui.action.animal-growth.working");
+            case "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2" -> localization.component("electric-ui.action.crop-growth.working");
+            case "sf:tree_growth_accelerator" -> localization.component("electric-ui.action.tree-growth.working");
+            case "sf:xp_collector" -> localization.component("electric-ui.simple-io.xp-working.lore");
+            case "sf:fluid_pump" -> localization.component("electric-ui.action.fluid-pump.working");
+            case "sf:geo_miner" -> localization.component("electric-ui.action.geo-miner.working");
+            case "sf:oil_pump" -> localization.component("electric-ui.action.oil-pump.working");
+            case "sf:auto_brewer", "sf:auto_brewer_2" -> localization.component("electric-ui.auto-brewer.progress.brewing");
+            case "sf:iron_golem_assembler", "sf:wither_assembler" -> localization.component("configurable-ui.assembler.working.lore");
             default -> SfxMachineStatusDefaults.lore(localization, SfxMachineStatusKey.WORKING);
         };
     }
@@ -249,16 +244,16 @@ final class SfxElectricMachineStatusIconRenderer {
             case "sf:fluid_pump" -> "fluid-pump";
             default -> "generic";
         };
-        return localization.text("electric-ui.target-text." + key, key);
+        return localization.text("electric-ui.target-text." + key);
     }
 
     private List<Component> autoBrewerIdleLore(SfxElectricMachineState state) {
         List<Component> lore = new ArrayList<>();
         if (state.specialData() <= 0 && state.input(0) == null) {
-            lore.add(localization.component("electric-ui.auto-brewer.blaze.missing-lore", "<gray>Add blaze powder before brewing.</gray>"));
+            lore.add(localization.component("electric-ui.auto-brewer.blaze.missing-lore"));
         }
         if (state.input(1) == null) {
-            lore.add(localization.component("electric-ui.auto-brewer.ingredient.missing-lore", "<gray>Add a valid brewing ingredient.</gray>"));
+            lore.add(localization.component("electric-ui.auto-brewer.ingredient.missing-lore"));
         }
         boolean hasPotion = false;
         for (int slot = 2; slot < 6; slot++) {
@@ -273,7 +268,7 @@ final class SfxElectricMachineStatusIconRenderer {
             }
         }
         if (!hasPotion) {
-            lore.add(localization.component("electric-ui.auto-brewer.potion.missing-lore", "<gray>Add at least one valid potion bottle.</gray>"));
+            lore.add(localization.component("electric-ui.auto-brewer.potion.missing-lore"));
         }
         if (lore.isEmpty()) {
             lore.add(SfxMachineStatusDefaults.lore(localization, SfxMachineStatusKey.IDLE));
@@ -318,10 +313,7 @@ final class SfxElectricMachineStatusIconRenderer {
             return "";
         }
         if (stack.isSfxItem()) {
-            ItemStack item = stack.toItemStack(items);
-            ItemMeta meta = item.getItemMeta();
-            Component fallback = meta != null && meta.hasDisplayName() ? meta.displayName() : Component.text(stack.itemId());
-            return plainText(localization.itemName(stack.itemId(), fallback));
+            return plainText(localization.itemName(stack.itemId()));
         }
         return plainText(Component.translatable(stack.material().translationKey()));
     }

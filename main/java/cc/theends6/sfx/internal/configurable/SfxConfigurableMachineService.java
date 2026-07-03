@@ -70,7 +70,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -1100,13 +1099,13 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private void openAccessPortWithoutReactor(Player player, SfxBlockInstanceRecord accessPort, SfxConfigurableMachineDefinition definition) {
-        Component title = localization.itemName(definition.id(), Component.text(definition.id()));
+        Component title = localization.itemName(definition.id());
         SfxConfigurableMachineUiPanel panel = panelFor(definition, SfxConfigurableMachineHolder.PanelType.ACCESS_PORT);
         Inventory inventory = plugin.getServer().createInventory(new SfxConfigurableMachineHolder(accessPort.instanceId(), accessPort.instanceId(), SfxConfigurableMachineHolder.PanelType.ACCESS_PORT), panel.inventorySize(), title);
         fillPanel(inventory, panel);
         setItemSource(inventory, panel, "reactor.access-port", ItemBuilder.of(Material.RED_WOOL)
-                .name(localization.text("configurable-ui.reactor.access-port.missing.name", "<red>No Reactor</red>"))
-                .lore(localization.text("configurable-ui.reactor.access-port.missing.lore", "<gray>Place this access port 3 blocks above a reactor.</gray>"))
+                .name(localization.text("configurable-ui.reactor.access-port.missing.name"))
+                .lore(localization.text("configurable-ui.reactor.access-port.missing.lore"))
                 .build());
         player.openInventory(inventory);
     }
@@ -1114,7 +1113,7 @@ public final class SfxConfigurableMachineService implements Listener {
     private void openPanel(Player player, UUID panelInstanceId, UUID hostInstanceId, SfxConfigurableMachineHolder.PanelType panelType) {
         SfxConfigurableMachineSession existing = sessionsByHost.get(hostInstanceId);
         if (existing != null && !existing.viewerId().equals(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed(plugin, localization.text("machines.busy", "<red>This machine is already open.</red>")));
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.busy")));
             return;
         }
         SfxConfigurableMachineSession previous = sessionsByViewer.remove(player.getUniqueId());
@@ -1136,7 +1135,7 @@ public final class SfxConfigurableMachineService implements Listener {
                 ? definitions.getOrDefault(panelInstance.typeId(), definition)
                 : definition;
         SfxConfigurableMachineUiPanel panel = panelFor(definition, panelType);
-        Component title = localization.itemName(titleDefinition.id(), Component.text(titleDefinition.id()));
+        Component title = localization.itemName(titleDefinition.id());
         Inventory inventory = plugin.getServer().createInventory(new SfxConfigurableMachineHolder(panelInstanceId, hostInstanceId, panelType), panel.inventorySize(), title);
         SfxConfigurableMachineSession session = new SfxConfigurableMachineSession(player.getUniqueId(), panelInstanceId, hostInstanceId, panelType, inventory);
         sessionsByViewer.put(player.getUniqueId(), session);
@@ -1226,24 +1225,24 @@ public final class SfxConfigurableMachineService implements Listener {
         inventory.setItem(ASSEMBLER_BODY_SLOTS[0], toItemStack(state.input(2)));
         inventory.setItem(ASSEMBLER_BODY_SLOTS[1], toItemStack(state.input(3)));
         inventory.setItem(1, ItemBuilder.of(definition.headMaterial())
-                .name(localization.text("configurable-ui.assembler.head-slot.name", "<aqua>Head Slot</aqua>"))
-                .lore(localization.text("configurable-ui.assembler.required.lore", "<gray>Required: {amount}</gray>", Map.of("amount", definition.headAmount())))
+                .name(localization.text("configurable-ui.assembler.head-slot.name"))
+                .lore(localization.text("configurable-ui.assembler.required.lore", Map.of("amount", definition.headAmount())))
                 .build());
         inventory.setItem(7, ItemBuilder.of(definition.bodyMaterial())
-                .name(localization.text("configurable-ui.assembler.body-slot.name", "<aqua>Body Slot</aqua>"))
-                .lore(localization.text("configurable-ui.assembler.required.lore", "<gray>Required: {amount}</gray>", Map.of("amount", definition.bodyAmount())))
+                .name(localization.text("configurable-ui.assembler.body-slot.name"))
+                .lore(localization.text("configurable-ui.assembler.required.lore", Map.of("amount", definition.bodyAmount())))
                 .build());
         inventory.setItem(ENABLE_SLOT, ItemBuilder.of(state.enabled() ? Material.REDSTONE_TORCH : Material.GUNPOWDER)
                 .name(state.enabled()
-                        ? localization.text("configurable-ui.assembler.enabled.name", "<green>Enabled: ✔</green>")
-                        : localization.text("configurable-ui.assembler.disabled.name", "<red>Enabled: ✘</red>"))
-                .lore(localization.text("configurable-ui.assembler.toggle.lore", "<gray>Click to toggle this assembler.</gray>"))
+                        ? localization.text("configurable-ui.assembler.enabled.name")
+                        : localization.text("configurable-ui.assembler.disabled.name"))
+                .lore(localization.text("configurable-ui.assembler.toggle.lore"))
                 .build());
         inventory.setItem(OFFSET_SLOT, ItemBuilder.of(Material.PISTON)
-                .name(localization.text("configurable-ui.assembler.offset.name", "<yellow>Offset: {offset} Block(s)</yellow>", Map.of("offset", state.offsetTenths() / 10.0D)))
-                .lore(localization.text("configurable-ui.assembler.offset.left", "<gray>Left-click: +0.1</gray>"),
-                        localization.text("configurable-ui.assembler.offset.right", "<gray>Right-click: -0.1</gray>"),
-                        localization.text("configurable-ui.assembler.offset.range", "<gray>Range: -10.0 to 10.0</gray>"))
+                .name(localization.text("configurable-ui.assembler.offset.name", Map.of("offset", state.offsetTenths() / 10.0D)))
+                .lore(localization.text("configurable-ui.assembler.offset.left"),
+                        localization.text("configurable-ui.assembler.offset.right"),
+                        localization.text("configurable-ui.assembler.offset.range"))
                 .build());
         inventory.setItem(ASSEMBLER_STATUS_SLOT, assemblerStatusItem(definition, state));
     }
@@ -1263,28 +1262,28 @@ public final class SfxConfigurableMachineService implements Listener {
         setItemSource(inventory, panel, "reactor.mode", namedIcon(
                 state.mode() == 0 ? items.create(definition.id()) : items.create("sf:plutonium"),
                 state.mode() == 0
-                        ? localization.text("configurable-ui.reactor.focus-electricity.name", "<yellow>Focus: Electricity</yellow>")
-                        : localization.text("configurable-ui.reactor.focus-production.name", "<yellow>Focus: Production</yellow>"),
-                localization.text("configurable-ui.reactor.focus.lore", "<gray>Click to switch reactor focus.</gray>")));
+                        ? localization.text("configurable-ui.reactor.focus-electricity.name")
+                        : localization.text("configurable-ui.reactor.focus-production.name"),
+                localization.text("configurable-ui.reactor.focus.lore")));
         setItemSource(inventory, panel, "reactor.progress", reactorProgressItem(definition, state));
         SfxBlockInstanceRecord accessPort = accessPortAbove(instance);
         boolean hasPort = accessPort != null;
         setItemSource(inventory, panel, "reactor.access-port", ItemBuilder.of(hasPort ? Material.LIME_WOOL : Material.RED_WOOL)
                 .name(hasPort
-                        ? localization.text("configurable-ui.reactor.access-port.detected.name", "<green>Access Port detected</green>")
-                        : localization.text("configurable-ui.reactor.access-port.missing.name", "<red>No Access Port</red>"))
+                        ? localization.text("configurable-ui.reactor.access-port.detected.name")
+                        : localization.text("configurable-ui.reactor.access-port.missing.name"))
                 .lore(hasPort
-                        ? localization.text("configurable-ui.reactor.access-port.detected.lore", "<gray>Click to open the access port.</gray>")
-                        : localization.text("configurable-ui.reactor.access-port.missing.lore", "<gray>Place an access port 3 blocks above this reactor.</gray>"))
+                        ? localization.text("configurable-ui.reactor.access-port.detected.lore")
+                        : localization.text("configurable-ui.reactor.access-port.missing.lore"))
                 .build());
         setItemSource(inventory, panel, "reactor.fuel-slots", namedIcon(
                 representativeFuelIcon(definition),
-                localization.text("configurable-ui.reactor.fuel-slots.name", "<aqua>Fuel Slots</aqua>"),
-                localization.text("configurable-ui.reactor.fuel-slots.lore", "<gray>Insert valid reactor fuel here.</gray>")));
+                localization.text("configurable-ui.reactor.fuel-slots.name"),
+                localization.text("configurable-ui.reactor.fuel-slots.lore")));
         setItemSource(inventory, panel, "reactor.coolant-slots", namedIcon(
                 items.create(definition.coolantItemId()),
-                localization.text("configurable-ui.reactor.coolant-slots.name", "<aqua>Coolant Slots</aqua>"),
-                localization.text("configurable-ui.reactor.coolant-slots.lore", "<red>The reactor will melt down without coolant.</red>")));
+                localization.text("configurable-ui.reactor.coolant-slots.name"),
+                localization.text("configurable-ui.reactor.coolant-slots.lore")));
     }
 
     private void fillPanel(Inventory inventory, SfxConfigurableMachineUiPanel panel) {
@@ -1341,21 +1340,21 @@ public final class SfxConfigurableMachineService implements Listener {
                 .material(working && !paused ? definition.headMaterial() : null)
                 .energy(state.storedEnergy(), definition.capacity())
                 .consumption(definition.energyPerAction())
-                .extraLore(localization.component("configurable-ui.assembler.work-time", "<gray>Work time: {time}</gray>", Map.of("time", statusIcons.formatTimeLeft(ASSEMBLER_WORK_TICKS))))
-                .extraLore(localization.component("configurable-ui.assembler.offset.status", "<gray>Offset: {offset} Block(s)</gray>", Map.of("offset", state.offsetTenths() / 10.0D)));
+                .extraLore(localization.component("configurable-ui.assembler.work-time", Map.of("time", statusIcons.formatTimeLeft(ASSEMBLER_WORK_TICKS))))
+                .extraLore(localization.component("configurable-ui.assembler.offset.status", Map.of("offset", state.offsetTenths() / 10.0D)));
         if (working) {
             int remainingTicks = Math.max(0, state.fuelTotalTicks() - state.fuelProgressTicks());
             view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), remainingTicks, !paused)
                     .includeDefaultStatusLore(false)
                 .statusLore(paused
-                            ? localization.component("configurable-ui.assembler.paused.lore", "<gray>Enable this assembler to continue.</gray>")
-                            : localization.component("configurable-ui.assembler.working.lore", "<gray>Assembling entity structure.</gray>"));
+                            ? localization.component("configurable-ui.assembler.paused.lore")
+                            : localization.component("configurable-ui.assembler.working.lore"));
             if (paused) {
-                view.name(localization.component("configurable-ui.assembler.paused.name", "<yellow>Paused</yellow>"));
+                view.name(localization.component("configurable-ui.assembler.paused.name"));
             }
         } else if (!state.enabled()) {
             view.includeDefaultStatusLore(false)
-                .statusLore(localization.component("configurable-ui.assembler.disabled.lore", "<gray>This assembler is disabled.</gray>"));
+                .statusLore(localization.component("configurable-ui.assembler.disabled.lore"));
         }
         return statusIcons.render(view.build());
     }
@@ -1369,42 +1368,39 @@ public final class SfxConfigurableMachineService implements Listener {
         ItemStack activeIcon = definition.id().equals("sf:netherstar_reactor") ? new ItemStack(Material.NETHER_STAR) : items.create("sf:lava_crystal");
         SfxConfigurableMachineDefinition.ReactorFuel activeFuel = fuelByKey(definition, state.activeFuelKey());
         String byproduct = activeFuel == null || activeFuel.output() == null
-                ? localization.text("configurable-ui.none", "None")
+                ? localization.text("configurable-ui.none")
                 : stackDisplayName(activeFuel.output());
         int fuelRemainingPercent = fuelRemainingPercent(state);
         SfxMachineStatusView.Builder view = SfxMachineStatusView.builder(statusKey)
                 .icon(active && !outputBlocked ? activeIcon : null)
-                .name(active && !outputBlocked ? localization.component("configurable-ui.reactor.progress.name", "<yellow>Reactor Status</yellow>") : null)
+                .name(active && !outputBlocked ? localization.component("configurable-ui.reactor.progress.name") : null)
                 .energy(state.storedEnergy(), definition.capacity())
                 .generation(definition.energyPerTick())
-                .extraLore(localization.component("configurable-ui.reactor.progress.nuclear-fuel", "<gray>Nuclear Fuel: {percent}%</gray>", Map.of("percent", fuelRemainingPercent)))
-                .extraLore(localization.component("configurable-ui.reactor.progress.coolant", "<gray>Coolant: {percent}%</gray>", Map.of("percent", coolantPercent(state))))
-                .extraLore(localization.component("configurable-ui.reactor.progress.mode", "<gray>Mode: {mode}</gray>", Map.of("mode", state.mode() == 0 ? localization.text("configurable-ui.reactor.mode-electricity", "Electricity") : localization.text("configurable-ui.reactor.mode-production", "Production"))))
-                .extraLore(localization.component("configurable-ui.reactor.progress.byproduct", "<gray>Byproduct: {item}</gray>", Map.of("item", byproduct)))
-                .extraLore(localization.component("configurable-ui.reactor.progress.ticks", "<gray>Progress ticks: {current}/{total}</gray>", Map.of("current", state.fuelProgressTicks(), "total", state.fuelTotalTicks())))
-                .extraLore(localization.component("configurable-ui.reactor.progress.coolant-ticks", "<gray>Coolant ticks: {current}/{total}</gray>", Map.of("current", state.coolantProgressTicks(), "total", state.coolantTotalTicks())));
+                .extraLore(localization.component("configurable-ui.reactor.progress.nuclear-fuel", Map.of("percent", fuelRemainingPercent)))
+                .extraLore(localization.component("configurable-ui.reactor.progress.coolant", Map.of("percent", coolantPercent(state))))
+                .extraLore(localization.component("configurable-ui.reactor.progress.mode", Map.of("mode", state.mode() == 0 ? localization.text("configurable-ui.reactor.mode-electricity") : localization.text("configurable-ui.reactor.mode-production"))))
+                .extraLore(localization.component("configurable-ui.reactor.progress.byproduct", Map.of("item", byproduct)))
+                .extraLore(localization.component("configurable-ui.reactor.progress.ticks", Map.of("current", state.fuelProgressTicks(), "total", state.fuelTotalTicks())))
+                .extraLore(localization.component("configurable-ui.reactor.progress.coolant-ticks", Map.of("current", state.coolantProgressTicks(), "total", state.coolantTotalTicks())));
         if (outputBlocked) {
             view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), 0, false);
         } else if (active) {
             view.progress(state.fuelProgressTicks(), state.fuelTotalTicks(), Math.max(0, state.fuelTotalTicks() - state.fuelProgressTicks()), true)
                     .includeDefaultStatusLore(false)
-                .statusLore(localization.component("configurable-ui.reactor.progress.working", "<gray>Reactor is running.</gray>"));
+                .statusLore(localization.component("configurable-ui.reactor.progress.working"));
         } else {
             view.includeDefaultStatusLore(false)
-                .statusLore(localization.component("configurable-ui.reactor.progress.idle", "<gray>Waiting for fuel and coolant.</gray>"));
+                .statusLore(localization.component("configurable-ui.reactor.progress.idle"));
         }
         return statusIcons.render(view.build());
     }
 
     private String stackDisplayName(SfxElectricStack stack) {
         if (stack == null) {
-            return localization.text("configurable-ui.none", "None");
+            return localization.text("configurable-ui.none");
         }
         if (stack.isSfxItem()) {
-            ItemStack item = stack.toItemStack(items);
-            ItemMeta meta = item.getItemMeta();
-            Component fallback = meta != null && meta.hasDisplayName() ? meta.displayName() : Component.text(stack.itemId());
-            return plainText(localization.itemName(stack.itemId(), fallback));
+            return plainText(localization.itemName(stack.itemId()));
         }
         return plainText(Component.translatable(stack.material().translationKey()));
     }
