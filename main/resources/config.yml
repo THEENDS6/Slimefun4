@@ -1,7 +1,9 @@
 language: 'zh-CN'
 
 content:
+  compile-templates-on-startup: false
   sync-bundled-languages-on-startup: false
+  sync-bundled-templates-on-startup: false
   sync-bundled-items-on-startup: false
   sync-bundled-recipes-on-startup: false
   sync-bundled-researches-on-startup: false

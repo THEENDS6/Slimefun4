@@ -20,7 +20,9 @@ final class SfxPluginBootstrap {
         }
         plugin.syncBundledLanguages();
         SfxPluginStorageModule.initialize(plugin);
-        plugin.compileContentTemplates();
+        if (plugin.compileTemplatesOnStartup()) {
+            plugin.compileContentTemplates();
+        }
         plugin.bootstrapContent();
         SfxPluginRuntimeModule.initialize(plugin);
         SfxPluginServices services = SfxPluginServiceModule.create(plugin);

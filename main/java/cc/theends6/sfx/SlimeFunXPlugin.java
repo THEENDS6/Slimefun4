@@ -228,7 +228,15 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     }
 
     public cc.theends6.sfx.internal.template.SfxTemplateCompileReport compileContentTemplates() {
-        return SfxTemplatePrecompiler.compile(this, syncBundledRecipeFiles());
+        return SfxTemplatePrecompiler.compile(this, syncBundledTemplateFiles());
+    }
+
+    boolean compileTemplatesOnStartup() {
+        return getConfig().getBoolean("content.compile-templates-on-startup", false);
+    }
+
+    boolean syncBundledTemplateFiles() {
+        return getConfig().getBoolean("content.sync-bundled-templates-on-startup", false);
     }
 
     boolean syncBundledRecipeFiles() {
