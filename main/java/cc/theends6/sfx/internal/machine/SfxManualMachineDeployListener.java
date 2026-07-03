@@ -55,11 +55,11 @@ public final class SfxManualMachineDeployListener implements Listener {
         DeploymentPlan plan = deploymentPlan(anchor, definition, sideDirection);
         if (!canDeploy(plan.placements(), anchor, true)) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-no-space", "<red>空间不足，无法自动部署这台基础机器。</red>")));
+            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-no-space")));
             return;
         }
         applyDeployment(plan, definition, sideDirection, playerFacing);
-        event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-success", "<green>基础机器已自动部署完成。</green>")));
+        event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-success")));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -83,7 +83,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         }
         Block anchor = clicked.getRelative(face);
         if (!anchor.isEmpty()) {
-            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-no-space", "<red>空间不足，无法自动部署这台基础机器。</red>")));
+            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-no-space")));
             event.setCancelled(true);
             return;
         }
@@ -91,14 +91,14 @@ public final class SfxManualMachineDeployListener implements Listener {
         BlockFace sideDirection = sideDirection(playerFacing);
         DeploymentPlan plan = deploymentPlan(anchor, definition, sideDirection);
         if (!canDeploy(plan.placements(), anchor, false)) {
-            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-no-space", "<red>空间不足，无法自动部署这台基础机器。</red>")));
+            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-no-space")));
             event.setCancelled(true);
             return;
         }
         applyDeployment(plan, definition, sideDirection, playerFacing);
         consumeOne(event.getPlayer(), event.getHand());
         event.setCancelled(true);
-        event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-success", "<green>基础机器已自动部署完成。</green>")));
+        event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-success")));
     }
 
     private ManualMachineDefinition resolveDefinition(ItemStack item) {
