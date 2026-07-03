@@ -68,9 +68,27 @@ Compiled recipes must be self-contained. Each entry must define `id`, `recipe-ty
 
 Compiled output must include `_manifest.yml`. The manifest records compiler identity, compiler version, `compiled-at`, `generated-at`, `template-hash`, `content-version`, source file hashes, and output file hashes.
 
-Runtime may use local `plugins/SlimeFunX/content/compiled` only when its manifest matches the bundled manifest and every declared output file matches its recorded SHA-256. Extra local YAML files that are not listed in the manifest make the local compiled directory stale. In that case runtime ignores local compiled content and falls back to bundled compiled content.
+Runtime loads bundled `content/compiled` from the jar by default. Local `plugins/SlimeFunX/content/compiled` is used only when it is provably current:
+
+- every declared output file exists and matches its recorded SHA-256
+- every local compiled YAML file is listed in `_manifest.yml`
+- `source-files` match the current local `content/templates` and source content files, or the manifest is exactly equivalent to the bundled manifest
+
+When local compiled content is current, it replaces bundled compiled content for that path instead of merging with it. This allows local templates to remove or regroup entries without old bundled entries leaking back into runtime. If the local manifest is stale, malformed, or has extra output files, runtime ignores local compiled content and uses bundled compiled content.
 
 Do not hand-edit compiled files. Change templates or source YAML, re-run the compiler, and keep `_manifest.yml` with the generated output.
+
+## Startup Rules
+
+The jar embeds compiled content, so startup should not need to compile templates.
+
+Defaults:
+
+- `content.compile-templates-on-startup: false`
+- `content.sync-bundled-templates-on-startup: false`
+- `content.runtime.compiled-only: true`
+
+Use `/sfx template compile` or `/sfx template reload` when intentionally regenerating local compiled content. Only enable bundled template syncing while deliberately resetting local template sources from the jar.
 
 ## Machine Tags
 
@@ -112,3 +130,9 @@ Run:
 This compiles templates and verifies explicit compiled output. Add validation before adding new shorthand so compiled-only runtime remains strict.
 
 The validation also verifies `_manifest.yml` output hashes and rejects compiled YAML files that are not declared by the manifest.
+
+For a focused content pipeline check during iterative work, run:
+
+```powershell
+.\gradlew.bat compileJava validateSfxCompiledContent validateSfxRuntimeCompiledOnlyConfig
+```
