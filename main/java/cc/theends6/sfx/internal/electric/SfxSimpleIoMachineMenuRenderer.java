@@ -3,7 +3,6 @@ package cc.theends6.sfx.internal.electric;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import java.util.Map;
 import java.util.UUID;
 import org.bukkit.inventory.Inventory;
 
@@ -36,12 +35,6 @@ final class SfxSimpleIoMachineMenuRenderer {
 
     private void fillBackground(SfxElectricMachineDefinition definition, Inventory inventory) {
         inventory.clear();
-        for (SfxElectricMachineUiFrame frame : definition.ui().frame()) {
-            for (int slot : frame.slots()) {
-                if (slot >= 0 && slot < inventory.getSize()) {
-                    inventory.setItem(slot, frame.item().toItemStack(localization, Map.of()));
-                }
-            }
-        }
+        SfxElectricMachineUiPainter.fillConfiguredSlots(definition.ui(), inventory, localization);
     }
 }
