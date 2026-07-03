@@ -156,7 +156,8 @@ recipes:
     guide-order: 9
     source: slimefun-rc37
     runtime: true
-    machine: sf:grind_stone
+    runtime-machine-tags:
+    - grind-stone
     input: ENDER_EYE
     outputs:
     - sf:ender_lump_1*2
@@ -169,7 +170,8 @@ recipes:
     guide-order: 10
     source: slimefun-rc37
     runtime: true
-    machine: sf:grind_stone
+    runtime-machine-tags:
+    - grind-stone
     input: NETHER_WART
     outputs:
     - sf:magic_lump_1*2
@@ -182,7 +184,8 @@ recipes:
     guide-order: 11
     source: slimefun-rc37
     runtime: true
-    machine: sf:grind_stone
+    runtime-machine-tags:
+    - grind-stone
     input: WHEAT
     outputs:
     - sf:wheat_flour
@@ -327,7 +330,8 @@ recipes:
     guide-order: 21
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_crusher
+    runtime-machine-tags:
+    - ore-crusher
     input: sf:sifted_ore
     outputs:
     - sf:crushed_ore
@@ -340,7 +344,8 @@ recipes:
     guide-order: 22
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_crusher
+    runtime-machine-tags:
+    - ore-crusher
     input: GOLD_ORE
     outputs:
     - sf:gold_dust
@@ -353,7 +358,8 @@ recipes:
     guide-order: 22
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_crusher
+    runtime-machine-tags:
+    - ore-crusher
     input: DEEPSLATE_GOLD_ORE
     outputs:
     - sf:gold_dust
@@ -366,7 +372,8 @@ recipes:
     guide-order: 23
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_crusher
+    runtime-machine-tags:
+    - ore-crusher
     input: IRON_ORE
     outputs:
     - sf:iron_dust
@@ -379,7 +386,8 @@ recipes:
     guide-order: 23
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_crusher
+    runtime-machine-tags:
+    - ore-crusher
     input: DEEPSLATE_IRON_ORE
     outputs:
     - sf:iron_dust
@@ -392,7 +400,8 @@ recipes:
     guide-order: 24
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_crusher
+    runtime-machine-tags:
+    - ore-crusher
     input: sf:crushed_ore
     outputs:
     - sf:pulverized_ore
@@ -405,7 +414,8 @@ recipes:
     guide-order: 25
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_crusher
+    runtime-machine-tags:
+    - ore-crusher
     input:
       type: vanilla
       material: NETHERRACK
@@ -421,7 +431,8 @@ recipes:
     guide-order: 26
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_crusher
+    runtime-machine-tags:
+    - ore-crusher
     input: sf:pure_ore_cluster
     outputs:
     - sf:tiny_uranium
