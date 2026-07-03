@@ -47,7 +47,7 @@ final class SfxEnergyComponentYamlLoader {
                 continue;
             }
             try {
-                SfxEnergyComponentDefinition definition = parse(id, section);
+                SfxEnergyComponentDefinition definition = parse(id, section, strict);
                 result.put(definition.id(), definition);
             } catch (RuntimeException ex) {
                 if (strict) {
@@ -69,7 +69,7 @@ final class SfxEnergyComponentYamlLoader {
         return requireFalse == null || requireFalse.isBlank() || !plugin.getConfig().getBoolean(requireFalse, false);
     }
 
-    private SfxEnergyComponentDefinition parse(String id, ConfigurationSection section) {
+    private SfxEnergyComponentDefinition parse(String id, ConfigurationSection section, boolean strict) {
         SfxEnergyComponentType type = SfxEnergyComponentType.valueOf(requiredString(section, "type").trim().replace('-', '_').toUpperCase(Locale.ROOT));
         ConfigurationSection energy = requiredSection(section, "energy");
         int capacity = requiredInt(energy, "capacity");
@@ -81,17 +81,22 @@ final class SfxEnergyComponentYamlLoader {
         Material progressMaterial = parseMaterial(requiredString(section, "progress-material"));
         requiredList(section, "fuels");
         List<SfxEnergyComponentDefinition.FuelRule> fuels = parseFuelRules(section);
-        SfxEnergyComponentUiDefinition ui = parseUi(id, requiredSection(section, "ui"));
+        SfxEnergyComponentUiDefinition ui = parseUi(id, requiredSection(section, "ui"), strict);
         return new SfxEnergyComponentDefinition(id, type, capacity, energyPerTick, 0, burnRate, vanillaFuel, progressMaterial, fuels, ui);
     }
 
-    private SfxEnergyComponentUiDefinition parseUi(String id, ConfigurationSection section) {
+    private SfxEnergyComponentUiDefinition parseUi(String id, ConfigurationSection section, boolean strict) {
         int inventorySize = requiredInt(section, "inventory-size");
         int statusSlot = requiredInt(section, "status-slot");
+        if (strict && section.contains("frame")) {
+            throw new IllegalArgumentException(id + " compiled energy UI must not contain frame helper; use explicit slots");
+        }
         List<SfxEnergyComponentUiFrame> frames = new ArrayList<>();
-        for (Object rawFrame : section.getList("frame", List.of())) {
-            if (rawFrame instanceof Map<?, ?> map) {
-                frames.add(parseUiFrame(map));
+        if (!strict) {
+            for (Object rawFrame : section.getList("frame", List.of())) {
+                if (rawFrame instanceof Map<?, ?> map) {
+                    frames.add(parseUiFrame(map));
+                }
             }
         }
         Map<Integer, SfxEnergyComponentUiSlot> slots = parseUiSlots(requiredSection(section, "slots"));

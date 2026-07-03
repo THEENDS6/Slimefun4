@@ -53,7 +53,7 @@ final class SfxElectricMachineDefinitionConfig {
                 continue;
             }
             try {
-                parsed.put(id, Entry.parse(section));
+                parsed.put(id, Entry.parse(section, strict));
             } catch (RuntimeException ex) {
                 if (strict) {
                     throw new IllegalStateException("Invalid electric machine YAML entry " + id, ex);
@@ -283,7 +283,7 @@ final class SfxElectricMachineDefinitionConfig {
             SfxElectricMachineUiDefinition ui,
             SfxElectricAssemblerSpec assemblerSpec
     ) {
-        static Entry parse(ConfigurationSection section) {
+        static Entry parse(ConfigurationSection section, boolean strict) {
             ConfigurationSection energy = section.getConfigurationSection("energy");
             return new Entry(
                     section.getString("name-key", null),
@@ -292,7 +292,7 @@ final class SfxElectricMachineDefinitionConfig {
                     optionalInt(energy, "consumption-per-tick"),
                     parseMaterial(section.getString("progress-material", null)),
                     parseFunctionTags(section),
-                    parseUi(section.getConfigurationSection("ui")),
+                    parseUi(section.getConfigurationSection("ui"), strict),
                     parseAssembler(section.getConfigurationSection("assembler")));
         }
     }
@@ -328,7 +328,7 @@ final class SfxElectricMachineDefinitionConfig {
         return Set.copyOf(result);
     }
 
-    private static SfxElectricMachineUiDefinition parseUi(ConfigurationSection section) {
+    private static SfxElectricMachineUiDefinition parseUi(ConfigurationSection section, boolean strict) {
         if (section == null) {
             return null;
         }
@@ -337,14 +337,22 @@ final class SfxElectricMachineDefinitionConfig {
         if (inventorySize == 0 && statusSlot != -1) {
             throw new IllegalArgumentException(section.getCurrentPath() + " status-slot must be -1 when inventory-size is 0");
         }
-        List<SfxElectricMachineUiFrame> frames = new ArrayList<>();
-        for (Object rawFrame : section.getList("frame", List.of())) {
-            if (rawFrame instanceof Map<?, ?> map) {
-                frames.add(parseUiFrame(map));
-            }
+        if (strict && section.contains("frame")) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " compiled UI must not contain frame helper; use explicit slots");
         }
-        if (frames.isEmpty() && section.isConfigurationSection("border")) {
-            frames.add(new SfxElectricMachineUiFrame(parseSlots(section.getList("border.slots", List.of())), parseUiItem(section.getConfigurationSection("border"))));
+        if (strict && section.isConfigurationSection("border")) {
+            throw new IllegalArgumentException(section.getCurrentPath() + " compiled UI must not contain border helper; use explicit slots");
+        }
+        List<SfxElectricMachineUiFrame> frames = new ArrayList<>();
+        if (!strict) {
+            for (Object rawFrame : section.getList("frame", List.of())) {
+                if (rawFrame instanceof Map<?, ?> map) {
+                    frames.add(parseUiFrame(map));
+                }
+            }
+            if (frames.isEmpty() && section.isConfigurationSection("border")) {
+                frames.add(new SfxElectricMachineUiFrame(parseSlots(section.getList("border.slots", List.of())), parseUiItem(section.getConfigurationSection("border"))));
+            }
         }
         Map<String, SfxElectricMachineUiItem> items = new LinkedHashMap<>();
         ConfigurationSection itemSection = section.getConfigurationSection("items");
