@@ -1593,14 +1593,16 @@ tasks.register('validateSfxSlotsFirstUiRendering') {
             'main/java/cc/theends6/sfx/internal/electric/SfxAutoBrewerMenuRenderer.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxGeoMinerMachineMenuRenderer.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricAssemblerMenuRenderer.java',
-            'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java'
+            'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/configurable/SfxConfigurableMachineService.java'
     ]
     inputs.files(rendererFiles.collect { layout.projectDirectory.file(it) })
     doLast {
         def violations = []
         def framePatterns = [
                 ~/definition\.ui\(\)\.frame\(\)/,
-                ~/for\s*\([^)]*Sfx(?:ElectricMachine|EnergyComponent)UiFrame\s+frame/
+                ~/panel\.frame\(\)/,
+                ~/for\s*\([^)]*Sfx(?:ElectricMachine|EnergyComponent|ConfigurableMachine)UiFrame\s+frame/
         ]
         rendererFiles.each { path ->
             def text = layout.projectDirectory.file(path).asFile.getText('UTF-8')

@@ -1288,9 +1288,6 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private void fillPanel(Inventory inventory, SfxConfigurableMachineUiPanel panel) {
         inventory.clear();
-        for (SfxConfigurableMachineUiFrame frame : panel.frame()) {
-            SfxInventoryPainter.setSlots(inventory, frame.item().toItemStack(localization), frame.slots());
-        }
         for (SfxConfigurableMachineUiSlot slot : panel.slots().values()) {
             if (slot.item() != null) {
                 inventory.setItem(slot.slot(), slot.item().toItemStack(localization));

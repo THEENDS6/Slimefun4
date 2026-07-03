@@ -43,7 +43,7 @@ final class SfxConfigurableMachineDefinitions {
                 continue;
             }
             try {
-                SfxConfigurableMachineDefinition definition = parse(id, section);
+                SfxConfigurableMachineDefinition definition = parse(id, section, strict);
                 result.put(definition.id(), definition);
             } catch (RuntimeException ex) {
                 if (strict) {
@@ -56,7 +56,7 @@ final class SfxConfigurableMachineDefinitions {
         return result;
     }
 
-    private static SfxConfigurableMachineDefinition parse(String id, ConfigurationSection section) {
+    private static SfxConfigurableMachineDefinition parse(String id, ConfigurationSection section, boolean strict) {
         SfxConfigurableMachineKind kind = SfxConfigurableMachineKind.valueOf(requiredString(section, "kind").trim().replace('-', '_').toUpperCase(Locale.ROOT));
         ConfigurationSection energy = requiredSection(section, "energy");
         ConfigurationSection assembler = section.getConfigurationSection("assembler");
@@ -80,10 +80,10 @@ final class SfxConfigurableMachineDefinitions {
                 reactor == null ? null : requiredString(reactor, "coolant-item"),
                 parseReactorFuels(reactor),
                 reactor != null && requiredBoolean(reactor, "wither-aura"),
-                parseUi(id, requiredSection(section, "ui")));
+                parseUi(id, requiredSection(section, "ui"), strict));
     }
 
-    private static SfxConfigurableMachineUiDefinition parseUi(String id, ConfigurationSection section) {
+    private static SfxConfigurableMachineUiDefinition parseUi(String id, ConfigurationSection section, boolean strict) {
         ConfigurationSection panels = requiredSection(section, "panels");
         Map<String, SfxConfigurableMachineUiPanel> result = new LinkedHashMap<>();
         for (String key : panels.getKeys(false)) {
@@ -91,7 +91,7 @@ final class SfxConfigurableMachineDefinitions {
             if (panel == null) {
                 throw new IllegalArgumentException(id + " ui.panels." + key + " requires a map");
             }
-            result.put(SfxConfigurableMachineUiDefinition.normalize(key), parsePanel(id, key, panel));
+            result.put(SfxConfigurableMachineUiDefinition.normalize(key), parsePanel(id, key, panel, strict));
         }
         SfxConfigurableMachineUiDefinition ui = new SfxConfigurableMachineUiDefinition(result);
         if (ui.panel("reactor") == null && ui.panel("access-port") == null) {
@@ -100,12 +100,17 @@ final class SfxConfigurableMachineDefinitions {
         return ui;
     }
 
-    private static SfxConfigurableMachineUiPanel parsePanel(String id, String key, ConfigurationSection section) {
+    private static SfxConfigurableMachineUiPanel parsePanel(String id, String key, ConfigurationSection section, boolean strict) {
         int inventorySize = requiredInt(section, "inventory-size");
+        if (strict && section.contains("frame")) {
+            throw new IllegalArgumentException(id + " compiled configurable UI panel " + key + " must not contain frame helper; use explicit slots");
+        }
         List<SfxConfigurableMachineUiFrame> frames = new ArrayList<>();
-        for (Object rawFrame : section.getList("frame", List.of())) {
-            if (rawFrame instanceof Map<?, ?> map) {
-                frames.add(parseUiFrame(map));
+        if (!strict) {
+            for (Object rawFrame : section.getList("frame", List.of())) {
+                if (rawFrame instanceof Map<?, ?> map) {
+                    frames.add(parseUiFrame(map));
+                }
             }
         }
         Map<Integer, SfxConfigurableMachineUiSlot> slots = parseUiSlots(requiredSection(section, "slots"));
