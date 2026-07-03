@@ -1807,7 +1807,8 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/machine/ManualMachineDeployPacks.java',
             'main/java/cc/theends6/sfx/internal/machine/SfxManualMachineDeployListener.java',
             'main/java/cc/theends6/sfx/internal/machine/SfxIndustrialMinerService.java',
-            'main/java/cc/theends6/sfx/internal/block/SfxHologramProjectorService.java'
+            'main/java/cc/theends6/sfx/internal/block/SfxHologramProjectorService.java',
+            'main/java/cc/theends6/sfx/internal/altar/SfxAncientAltarService.java'
     ]
     inputs.files(coreLocalizationFiles.collect { layout.projectDirectory.file(it) })
     inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
@@ -1847,6 +1848,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
 
 
         def literalLanguageCall = ~/localization\.(?:text|component|requiredList|list)\(\s*"([^"]+)"/
+        def literalHelperLanguageCall = /(?:^|[^\w.])(?:send|sendMessage)\(\s*[^,\r\n]+,\s*"([^"]+)"/
         coreLocalizationFiles.each { path ->
             def file = layout.projectDirectory.file(path).asFile
             def text = file.getText('UTF-8')
@@ -1866,6 +1868,19 @@ tasks.register('validateSfxCoreLocalizationCalls') {
                 languageKeysByFile.each { languageFile, keys ->
                     if (!keys.contains(key)) {
                         def line = text.substring(0, keyMatcher.start()).count('\n') + 1
+                        violations << "${path}:${line}: ${languageFile} missing language key ${key}"
+                    }
+                }
+            }
+            def helperKeyMatcher = (text =~ literalHelperLanguageCall)
+            while (helperKeyMatcher.find()) {
+                def key = helperKeyMatcher.group(1)
+                if (key.contains("{") || key.contains("+") || key.endsWith(".")) {
+                    continue
+                }
+                languageKeysByFile.each { languageFile, keys ->
+                    if (!keys.contains(key)) {
+                        def line = text.substring(0, helperKeyMatcher.start()).count('\n') + 1
                         violations << "${path}:${line}: ${languageFile} missing language key ${key}"
                     }
                 }
@@ -2466,12 +2481,12 @@ tasks.register('runPaper') {
                     processInput.flush()
                 }
             } catch (IOException ignored) {
-                // Ignore stdin forwarding errors during shutdown.
+                
             } finally {
                 try {
                     processInput.close()
                 } catch (IOException ignored) {
-                    // Ignore close failure during shutdown.
+                    
                 }
             }
         }
