@@ -1799,6 +1799,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusIconRenderer.java',
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusDefaults.java',
             'main/java/cc/theends6/sfx/internal/cargo/SfxCargoService.java',
+            'main/java/cc/theends6/sfx/internal/technical/SfxTechnicalGadgetService.java',
             'main/java/cc/theends6/sfx/internal/configurable/SfxConfigurableMachineService.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineService.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineStatusIconRenderer.java',
@@ -1859,7 +1860,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
 
 
         def literalLanguageCall = ~/localization\.(?:text|component|requiredList|list)\(\s*"([^"]+)"/
-        def literalHelperLanguageCall = /(?:^|[^\w.])(?:send|sendMessage)\(\s*[^,\r\n]+,\s*"([^"]+)"/
+        def literalHelperLanguageCall = /(?:^|[^\w.])(?:send|sendMessage|sendActionbar)\(\s*[^,\r\n]+,\s*"([^"]+)"/
         def literalDisplayTextCall = /new\s+DisplayText\(\s*"([^"]+)"/
         def literalCargoLanguageString = /"((?:cargo\.(?:status|message|ui)\.[^"]+))"/
         coreLocalizationFiles.each { path ->

@@ -267,8 +267,7 @@ public final class SfxTechnicalGadgetService implements Listener {
         jetBootsDriveModes.put(id, next);
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, SoundCategory.PLAYERS, 0.65F, next == JetBootsDriveMode.ASSIST ? 1.7F : 0.9F);
         sendActionbar(player,
-                next == JetBootsDriveMode.ASSIST ? "technical.jetboots.mode.assist" : "technical.jetboots.mode.thrust",
-                next == JetBootsDriveMode.ASSIST ? "<aqua>Jet Boots: Assist Mode</aqua>" : "<yellow>Jet Boots: Thrust Mode</yellow>");
+                next == JetBootsDriveMode.ASSIST ? "technical.jetboots.mode.assist" : "technical.jetboots.mode.thrust");
         return true;
     }
 
@@ -298,8 +297,7 @@ public final class SfxTechnicalGadgetService implements Listener {
             boolean enabled = hoverEnabled.compute(id, (ignored, current) -> current == null || !current);
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, SoundCategory.PLAYERS, 0.7F, enabled ? 1.6F : 0.8F);
             sendActionbar(player,
-                    enabled ? "technical.jetpack.hover.enabled" : "technical.jetpack.hover.disabled",
-                    enabled ? "<aqua>Jetpack Hover: Enabled</aqua>" : "<gray>Jetpack Hover: Disabled</gray>");
+                    enabled ? "technical.jetpack.hover.enabled" : "technical.jetpack.hover.disabled");
             return;
         }
 
@@ -1087,8 +1085,8 @@ public final class SfxTechnicalGadgetService implements Listener {
     }
 
 
-    private void sendActionbar(Player player, String key, String fallback) {
-        player.sendActionBar(localization.component(key, fallback));
+    private void sendActionbar(Player player, String key) {
+        player.sendActionBar(localization.component(key));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
