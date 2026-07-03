@@ -30,16 +30,10 @@ public final class ManualMachineDeployPacks {
         if (meta == null) {
             return item;
         }
-        String name = localization.text("machines.deploy-pack.name", "<gold>基础机器部署包</gold> <gray>- {machine}</gray>")
-                .replace("{machine}", plain(localization.itemName(definition.id(), definition.name())));
+        String name = localization.text("machines.deploy-pack.name")
+                .replace("{machine}", plain(localization.itemName(definition.id())));
         meta.displayName(Text.noItalic(Text.mm(name)));
-        List<String> loreLines = localization.list("machines.deploy-pack.lore");
-        if (loreLines.isEmpty()) {
-            loreLines = List.of(
-                    "<gray>放置后会自动部署完整基础机器。</gray>",
-                    "<gray>部署前会检查空间是否足够。</gray>",
-                    "<dark_gray>这是 SFX 的作弊辅助物品。</dark_gray>");
-        }
+        List<String> loreLines = localization.requiredList("machines.deploy-pack.lore");
         meta.lore(loreLines.stream().map(line -> Text.noItalic(Text.mm(line))).toList());
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "manual_machine_pack"), PersistentDataType.STRING, definition.id());
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "manual_machine_pack_schema"), PersistentDataType.INTEGER, SCHEMA);

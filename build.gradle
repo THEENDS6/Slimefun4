@@ -1803,7 +1803,9 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/electric/SfxAutoCrafterMenuRenderer.java',
             'main/java/cc/theends6/sfx/internal/energy/SfxEnergyBackedElectricMenuService.java',
             'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java',
-            'main/java/cc/theends6/sfx/internal/machine/ManualMachineService.java'
+            'main/java/cc/theends6/sfx/internal/machine/ManualMachineService.java',
+            'main/java/cc/theends6/sfx/internal/machine/ManualMachineDeployPacks.java',
+            'main/java/cc/theends6/sfx/internal/machine/SfxManualMachineDeployListener.java'
     ]
     inputs.files(coreLocalizationFiles.collect { layout.projectDirectory.file(it) })
     inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
@@ -1842,7 +1844,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
 
 
 
-        def literalLanguageCall = ~/localization\.(?:text|component)\(\s*"([^"]+)"/
+        def literalLanguageCall = ~/localization\.(?:text|component|requiredList|list)\(\s*"([^"]+)"/
         coreLocalizationFiles.each { path ->
             def file = layout.projectDirectory.file(path).asFile
             def text = file.getText('UTF-8')
