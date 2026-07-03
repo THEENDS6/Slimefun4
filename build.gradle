@@ -538,6 +538,7 @@ tasks.register('validateSfxCompiledContent') {
         }.files
         def forbiddenTokens = [
                 'menu-style:',
+                'layout:',
                 '@cf',
                 '@copyfrom',
                 '@d',
