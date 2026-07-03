@@ -1540,7 +1540,9 @@ public final class SfxTemplateCompiler {
         YamlConfiguration manifest = new YamlConfiguration();
         manifest.set("compiler", "sfx-template-v1");
         manifest.set("compiler-version", 2);
-        manifest.set("compiled-at", Instant.now().toString());
+        String generatedAt = Instant.now().toString();
+        manifest.set("compiled-at", generatedAt);
+        manifest.set("generated-at", generatedAt);
         manifest.set("source-root", sourceRoot.toString());
         manifest.set("output-root", publishedOutputRoot.toString());
         List<String> sourceNames = sources.stream().map(path -> sourceRoot.relativize(path).toString().replace('\\', '/')).toList();
