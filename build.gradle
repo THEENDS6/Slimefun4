@@ -567,6 +567,8 @@ tasks.register('validateSfxCompiledContent') {
             include '**/*.yml'
         }.files
         def validRecipeOperations = ['shaped', 'shapeless', 'single', 'hand'] as Set
+        def recipeMachineReferences = []
+        def recipeMachineTagReferences = []
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
         }
@@ -730,6 +732,26 @@ tasks.register('validateSfxCompiledContent') {
                     && !recipe.fields.contains('runtime-machine-tags')) {
                 violations << "${rel}: recipe ${recipe.key} runtime recipe missing machine/runtime-machines/runtime-machine-tags"
             }
+            if (recipe.fields.contains('runtime-machines') && recipe.machineRefs.isEmpty()) {
+                violations << "${rel}: recipe ${recipe.key} runtime-machines must list at least one machine"
+            }
+            if (recipe.fields.contains('runtime-machine-tags') && recipe.machineTagRefs.isEmpty()) {
+                violations << "${rel}: recipe ${recipe.key} runtime-machine-tags must list at least one tag"
+            }
+            recipe.machineRefs.each { machineId ->
+                if (machineId == null || machineId.isBlank()) {
+                    violations << "${rel}: recipe ${recipe.key} contains blank machine reference"
+                } else {
+                    recipeMachineReferences << [rel: rel, recipe: recipe.key, machine: machineId]
+                }
+            }
+            recipe.machineTagRefs.each { tag ->
+                if (tag == null || tag.isBlank()) {
+                    violations << "${rel}: recipe ${recipe.key} contains blank runtime-machine-tags reference"
+                } else {
+                    recipeMachineTagReferences << [rel: rel, recipe: recipe.key, tag: tag]
+                }
+            }
             if (recipe.scalarSlot) {
                 violations << "${rel}: recipe ${recipe.key} contains scalar recipe slot/output shorthand"
             }
@@ -759,6 +781,8 @@ tasks.register('validateSfxCompiledContent') {
                             matrixCount : 0,
                             inputsCount : 0,
                             outputsCount: 0,
+                            machineRefs : [],
+                            machineTagRefs: [],
                             scalarSlot  : false
                     ]
                     return
@@ -778,6 +802,12 @@ tasks.register('validateSfxCompiledContent') {
                         currentRecipe.operation = value
                     } else if (field == 'runtime') {
                         currentRecipe.runtime = value == null ? null : value.toLowerCase(Locale.ROOT)
+                    } else if (field == 'machine') {
+                        currentRecipe.machineRefs << value
+                    } else if (field == 'runtime-machines') {
+                        currentRecipe.section = 'runtime-machines'
+                    } else if (field == 'runtime-machine-tags') {
+                        currentRecipe.section = 'runtime-machine-tags'
                     } else if (field == 'input') {
                         currentRecipe.section = null
                         if (value != null && !value.isBlank()) {
@@ -802,6 +832,10 @@ tasks.register('validateSfxCompiledContent') {
                         currentRecipe.inputsCount++
                     } else if (currentRecipe.section == 'outputs') {
                         currentRecipe.outputsCount++
+                    } else if (currentRecipe.section == 'runtime-machines') {
+                        currentRecipe.machineRefs << cleanScalar(itemText)
+                    } else if (currentRecipe.section == 'runtime-machine-tags') {
+                        currentRecipe.machineTagRefs << cleanScalar(itemText)
                     }
                 }
             }
@@ -825,6 +859,8 @@ tasks.register('validateSfxCompiledContent') {
         }
         def catalogCompiledFile = new File(root, 'content/machines/machine-catalog/catalog.yml')
         def catalogCompiledCount = 0
+        def catalogMachineIds = [] as Set
+        def catalogMachineTags = [] as Set
         if (!catalogCompiledFile.isFile()) {
             violations << "compiled machine catalog output missing content/machines/machine-catalog/catalog.yml"
         } else {
@@ -846,6 +882,46 @@ tasks.register('validateSfxCompiledContent') {
             }
             if (providerDescriptionCount != 368) {
                 violations << "compiled machine catalog expected provider description on every input/output provider, got ${providerDescriptionCount}"
+            }
+            def currentMachine = null
+            def inTags = false
+            catalogText.readLines().each { line ->
+                def machineMatch = line =~ /^  ['"]?(sf:[^'":\s]+)['"]?:\s*$/
+                if (machineMatch.matches()) {
+                    currentMachine = machineMatch[0][1]
+                    catalogMachineIds << currentMachine
+                    inTags = false
+                    return
+                }
+                if (currentMachine == null) {
+                    return
+                }
+                if ((line =~ /^    tags:\s*$/).matches()) {
+                    inTags = true
+                    return
+                }
+                if (inTags && (line =~ /^    [A-Za-z0-9_-]+:\s*/).matches()) {
+                    inTags = false
+                }
+                if (inTags) {
+                    def tagMatch = line =~ /^    -\s*(.+?)\s*$/
+                    if (tagMatch.matches()) {
+                        def tag = cleanScalar(tagMatch[0][1])
+                        if (tag != null && !tag.isBlank()) {
+                            catalogMachineTags << tag
+                        }
+                    }
+                }
+            }
+            recipeMachineReferences.each { ref ->
+                if (!catalogMachineIds.contains(ref.machine)) {
+                    violations << "${ref.rel}: recipe ${ref.recipe} references unknown machine ${ref.machine}"
+                }
+            }
+            recipeMachineTagReferences.each { ref ->
+                if (!catalogMachineTags.contains(ref.tag)) {
+                    violations << "${ref.rel}: recipe ${ref.recipe} references unknown runtime-machine tag ${ref.tag}"
+                }
             }
         }
         def manualCompiledFile = new File(root, 'content/machines/manual-machines/manual-machines.yml')
@@ -1254,7 +1330,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, ${recipeMachineReferences.size()} recipe machine reference(s), ${recipeMachineTagReferences.size()} recipe machine tag reference(s), and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
     }
 }
 
