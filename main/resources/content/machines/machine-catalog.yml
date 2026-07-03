@@ -64,6 +64,7 @@ machines:
     - machine
     - basic
     - manual
+    - grind-stone
     - smeltery
   sf:smeltery:
     category: BASIC
@@ -74,6 +75,7 @@ machines:
     - machine
     - basic
     - manual
+    - ore-crusher
     - smeltery
   sf:pressure_chamber:
     category: BASIC
