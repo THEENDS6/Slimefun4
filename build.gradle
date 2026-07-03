@@ -1798,6 +1798,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
     def coreLocalizationFiles = [
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusIconRenderer.java',
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusDefaults.java',
+            'main/java/cc/theends6/sfx/internal/cargo/SfxCargoService.java',
             'main/java/cc/theends6/sfx/internal/configurable/SfxConfigurableMachineService.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineService.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineStatusIconRenderer.java',
@@ -1860,6 +1861,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
         def literalLanguageCall = ~/localization\.(?:text|component|requiredList|list)\(\s*"([^"]+)"/
         def literalHelperLanguageCall = /(?:^|[^\w.])(?:send|sendMessage)\(\s*[^,\r\n]+,\s*"([^"]+)"/
         def literalDisplayTextCall = /new\s+DisplayText\(\s*"([^"]+)"/
+        def literalCargoLanguageString = /"((?:cargo\.(?:status|message|ui)\.[^"]+))"/
         coreLocalizationFiles.each { path ->
             def file = layout.projectDirectory.file(path).asFile
             def text = file.getText('UTF-8')
@@ -1905,6 +1907,19 @@ tasks.register('validateSfxCoreLocalizationCalls') {
                 languageKeysByFile.each { languageFile, keys ->
                     if (!keys.contains(key)) {
                         def line = text.substring(0, displayTextMatcher.start()).count('\n') + 1
+                        violations << "${path}:${line}: ${languageFile} missing language key ${key}"
+                    }
+                }
+            }
+            def cargoKeyMatcher = (text =~ literalCargoLanguageString)
+            while (cargoKeyMatcher.find()) {
+                def key = cargoKeyMatcher.group(1)
+                if (key.contains("{") || key.contains("+") || key.endsWith(".")) {
+                    continue
+                }
+                languageKeysByFile.each { languageFile, keys ->
+                    if (!keys.contains(key)) {
+                        def line = text.substring(0, cargoKeyMatcher.start()).count('\n') + 1
                         violations << "${path}:${line}: ${languageFile} missing language key ${key}"
                     }
                 }
@@ -2505,12 +2520,12 @@ tasks.register('runPaper') {
                     processInput.flush()
                 }
             } catch (IOException ignored) {
-                // Ignore stdin forwarding errors during shutdown.
+                
             } finally {
                 try {
                     processInput.close()
                 } catch (IOException ignored) {
-                    // Ignore close failure during shutdown.
+                    
                 }
             }
         }
