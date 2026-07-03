@@ -96,10 +96,10 @@ public final class SfxMultimeterListener implements Listener {
     private void inspectClassic(Player player, SfxBlockInstanceRecord instance) {
         EnergyNumbers numbers = energyNumbers(instance);
         if (numbers == null || numbers.capacity() <= 0) {
-            send(player, "tools.multimeter.unsupported", "<red>This block has no readable energy storage.</red>", Map.of());
+            send(player, "tools.multimeter.unsupported", Map.of());
             return;
         }
-        send(player, "tools.multimeter.classic", "<gray>Stored Energy: <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>", Map.of(
+        send(player, "tools.multimeter.classic", Map.of(
                 "stored", numbers.stored(),
                 "capacity", numbers.capacity()));
     }
@@ -113,7 +113,7 @@ public final class SfxMultimeterListener implements Listener {
             EnergyNumbers numbers = energyNumbers(instance);
             sendMachineHeader(player, instance, "consumer");
             sendEnergyLine(player, numbers);
-            send(player, "tools.multimeter.enhanced.consumption", "<gray>Consumption: <yellow>{value}</yellow> J/t</gray>", Map.of(
+            send(player, "tools.multimeter.enhanced.consumption", Map.of(
                     "value", electricMachines.requestedEnergyConsumption(List.of(instance.instanceId()))));
             sendGridSummary(player, instance.instanceId());
             return;
@@ -123,22 +123,22 @@ public final class SfxMultimeterListener implements Listener {
             sendMachineHeader(player, instance, configurableMachines.isProducer(instance.typeId()) ? "producer" : "consumer");
             sendEnergyLine(player, numbers);
             if (configurableMachines.isProducer(instance.typeId())) {
-                send(player, "tools.multimeter.enhanced.generation", "<gray>Generation: <green>{value}</green> J/t</gray>", Map.of(
+                send(player, "tools.multimeter.enhanced.generation", Map.of(
                         "value", configurableMachines.producerPotentialGeneration(instance.instanceId())));
             } else if (configurableMachines.isConsumer(instance.typeId())) {
-                send(player, "tools.multimeter.enhanced.consumption", "<gray>Consumption: <yellow>{value}</yellow> J/t</gray>", Map.of(
+                send(player, "tools.multimeter.enhanced.consumption", Map.of(
                         "value", configurableMachines.requestedEnergyConsumption(List.of(instance.instanceId()))));
             }
             sendGridSummary(player, instance.instanceId());
             return;
         }
-        send(player, "tools.multimeter.unsupported", "<red>This block has no readable energy storage.</red>", Map.of());
+        send(player, "tools.multimeter.unsupported", Map.of());
     }
 
     private void inspectEnergyComponent(Player player, SfxBlockInstanceRecord instance) {
         SfxEnergyInspection inspection = energyService.inspectEnergyComponent(instance.instanceId());
         if (inspection == null) {
-            send(player, "tools.multimeter.unsupported", "<red>This block has no readable energy storage.</red>", Map.of());
+            send(player, "tools.multimeter.unsupported", Map.of());
             return;
         }
         sendMachineHeader(player, instance, inspection.componentType().name().toLowerCase(Locale.ROOT));
@@ -146,23 +146,23 @@ public final class SfxMultimeterListener implements Listener {
             sendEnergyLine(player, new EnergyNumbers(inspection.storedEnergy(), inspection.capacity()));
         }
         if (inspection.generationPerTick() > 0) {
-            send(player, "tools.multimeter.enhanced.generation", "<gray>Generation: <green>{value}</green> J/t</gray>", Map.of("value", inspection.generationPerTick()));
+            send(player, "tools.multimeter.enhanced.generation", Map.of("value", inspection.generationPerTick()));
         }
         send(player, inspection.connected() ? "tools.multimeter.enhanced.connected" : "tools.multimeter.enhanced.disconnected",
-                inspection.connected() ? "<gray>Connection: <green>Connected</green></gray>" : "<gray>Connection: <red>Disconnected</red></gray>", Map.of());
+                Map.of());
         if (inspection.autoPaused()) {
-            send(player, "tools.multimeter.enhanced.auto-paused", "<gray>Auto pause: <yellow>enabled</yellow></gray>", Map.of());
+            send(player, "tools.multimeter.enhanced.auto-paused", Map.of());
         }
         sendGridSummary(player, instance.instanceId());
     }
 
     private void sendMachineHeader(Player player, SfxBlockInstanceRecord instance, String typeKey) {
-        send(player, "tools.multimeter.enhanced.title", "<yellow>Multimeter</yellow>", Map.of());
-        send(player, "tools.multimeter.enhanced.machine", "<gray>Machine: <white>{name}</white></gray>", Map.of(
+        send(player, "tools.multimeter.enhanced.title", Map.of());
+        send(player, "tools.multimeter.enhanced.machine", Map.of(
                 "name", itemName(instance.typeId())));
-        send(player, "tools.multimeter.enhanced.type", "<gray>Type: <white>{type}</white></gray>", Map.of(
+        send(player, "tools.multimeter.enhanced.type", Map.of(
                 "type", localizedType(typeKey)));
-        send(player, "tools.multimeter.enhanced.location", "<gray>Location: <white>{location}</white></gray>", Map.of(
+        send(player, "tools.multimeter.enhanced.location", Map.of(
                 "location", locationString(instance.anchorKey())));
     }
 
@@ -171,7 +171,7 @@ public final class SfxMultimeterListener implements Listener {
             return;
         }
         int percent = (int) Math.floor(numbers.stored() * 100.0D / Math.max(1, numbers.capacity()));
-        send(player, "tools.multimeter.enhanced.energy", "<gray>Energy: {bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>", Map.of(
+        send(player, "tools.multimeter.enhanced.energy", Map.of(
                 "bar", bar(percent),
                 "stored", numbers.stored(),
                 "capacity", numbers.capacity()));
@@ -180,20 +180,20 @@ public final class SfxMultimeterListener implements Listener {
     private void sendGridSummary(Player player, UUID instanceId) {
         SfxEnergyGridInspection grid = energyService.inspectGridForMember(instanceId);
         if (grid == null) {
-            send(player, "tools.multimeter.enhanced.scheduler-missing", "<gray>Scheduler: <red>not connected</red></gray>", Map.of());
+            send(player, "tools.multimeter.enhanced.scheduler-missing", Map.of());
             return;
         }
-        send(player, "tools.multimeter.enhanced.scheduler", "<gray>Scheduler: <white>{location}</white></gray>", Map.of(
+        send(player, "tools.multimeter.enhanced.scheduler", Map.of(
                 "location", locationString(grid.regulatorKey())));
         int percent = grid.capacity() <= 0 ? 0 : (int) Math.floor(grid.storedEnergy() * 100.0D / Math.max(1, grid.capacity()));
-        send(player, "tools.multimeter.enhanced.grid-energy", "<gray>Grid energy: {bar} <yellow>{stored}</yellow><gray>/<yellow>{capacity}</yellow> J</gray>", Map.of(
+        send(player, "tools.multimeter.enhanced.grid-energy", Map.of(
                 "bar", bar(percent),
                 "stored", grid.storedEnergy(),
                 "capacity", grid.capacity()));
-        send(player, "tools.multimeter.enhanced.grid-rates", "<gray>Generation: <green>{generation}</green> J/t <dark_gray>|</dark_gray> Consumption: <yellow>{consumption}</yellow> J/t</gray>", Map.of(
+        send(player, "tools.multimeter.enhanced.grid-rates", Map.of(
                 "generation", grid.generationPerTick(),
                 "consumption", grid.consumptionPerTick()));
-        send(player, "tools.multimeter.enhanced.grid-members", "<gray>Connected: <white>{members}</white> <dark_gray>(G:{generators}, R:{reactors}, C:{capacitors}, N:{connectors}, M:{consumers})</dark_gray></gray>", Map.of(
+        send(player, "tools.multimeter.enhanced.grid-members", Map.of(
                 "members", grid.members(),
                 "generators", grid.generators(),
                 "reactors", grid.reactors(),
@@ -201,7 +201,7 @@ public final class SfxMultimeterListener implements Listener {
                 "connectors", grid.connectors(),
                 "consumers", grid.consumers()));
         if (grid.autoPaused() > 0) {
-            send(player, "tools.multimeter.enhanced.grid-auto-paused", "<gray>Auto-paused generators: <yellow>{amount}</yellow></gray>", Map.of(
+            send(player, "tools.multimeter.enhanced.grid-auto-paused", Map.of(
                     "amount", grid.autoPaused()));
         }
     }
@@ -210,7 +210,6 @@ public final class SfxMultimeterListener implements Listener {
         boolean connected = energyService.isConnectedToOnlineGrid(instanceId);
         send(player,
                 connected ? "energy.messages.connected" : "energy.messages.disconnected",
-                connected ? "<green>Connected</green>" : "<red>Not connected</red>",
                 Map.of());
     }
 
@@ -232,12 +231,12 @@ public final class SfxMultimeterListener implements Listener {
     }
 
     private String itemName(String typeId) {
-        Component name = localization.itemName(typeId, Component.text(typeId));
+        Component name = localization.itemName(typeId);
         return PlainTextComponentSerializer.plainText().serialize(name);
     }
 
     private String localizedType(String typeKey) {
-        return localization.text("tools.multimeter.types." + typeKey, typeKey);
+        return localization.text("tools.multimeter.types." + typeKey);
     }
 
     private String locationString(SfxBlockAnchorKey key) {
@@ -252,8 +251,8 @@ public final class SfxMultimeterListener implements Listener {
         return "<green>" + "|".repeat(filled) + "</green><dark_gray>" + "|".repeat(10 - filled) + "</dark_gray> <gray>" + clamped + "%</gray>";
     }
 
-    private void send(Player player, String path, String fallback, Map<String, ?> placeholders) {
-        player.sendMessage(Text.prefixed(plugin, localization.text(path, fallback, placeholders)));
+    private void send(Player player, String path, Map<String, ?> placeholders) {
+        player.sendMessage(Text.prefixed(plugin, localization.text(path, placeholders)));
     }
 
     private record EnergyNumbers(int stored, int capacity) {

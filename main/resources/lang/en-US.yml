@@ -4644,6 +4644,7 @@ tools:
       consumer: Consumer
       producer: Producer
       generator: Generator
+      charger: Charger
       capacitor: Capacitor
       connector: Energy Node
       regulator: Energy Regulator
