@@ -938,16 +938,40 @@ tasks.register('validateSfxCompiledContent') {
             }
             def currentMachine = null
             def inTags = false
+            def slotList = null
             catalogText.readLines().each { line ->
                 def machineMatch = line =~ /^  ['"]?(sf:[^'":\s]+)['"]?:\s*$/
                 if (machineMatch.matches()) {
                     currentMachine = machineMatch[0][1]
                     catalogMachineIds << currentMachine
                     inTags = false
+                    slotList = null
                     return
                 }
                 if (currentMachine == null) {
                     return
+                }
+                def statusSlotMatch = line =~ /^    status-slot:\s*(-?\d+)\s*$/
+                if (statusSlotMatch.matches() && Integer.parseInt(statusSlotMatch[0][1]) < -1) {
+                    violations << "compiled machine catalog ${currentMachine} status-slot must be -1 or greater"
+                }
+                def topLevelSlotListMatch = line =~ /^    (input-slots|output-slots):\s*$/
+                if (topLevelSlotListMatch.matches()) {
+                    slotList = topLevelSlotListMatch[0][1]
+                    return
+                }
+                if ((line =~ /^      slots:\s*$/).matches()) {
+                    slotList = 'provider.slots'
+                    return
+                }
+                if (slotList != null && (line =~ /^\s{4,6}[A-Za-z0-9_-]+:\s*/).matches()) {
+                    slotList = null
+                }
+                if (slotList != null) {
+                    def slotValueMatch = line =~ /^\s+-\s*(-?\d+)\s*$/
+                    if (slotValueMatch.matches() && Integer.parseInt(slotValueMatch[0][1]) < 0) {
+                        violations << "compiled machine catalog ${currentMachine} ${slotList} contains negative slot ${slotValueMatch[0][1]}"
+                    }
                 }
                 if ((line =~ /^    tags:\s*$/).matches()) {
                     inTags = true
