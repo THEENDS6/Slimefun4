@@ -370,6 +370,7 @@ machines:
     - basic
     - manual
     - magic
+    - magic-workbench
     pattern:
     - type: empty
     - type: empty

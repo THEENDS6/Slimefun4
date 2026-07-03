@@ -9,7 +9,8 @@ recipes:
     guide-order: 1
     source: slimefunx-legacy
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - HOPPER
@@ -31,7 +32,8 @@ recipes:
     guide-order: 2
     source: slimefunx
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:cargo_motor
@@ -53,7 +55,8 @@ recipes:
     guide-order: 2
     source: slimefunx-legacy
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - HOPPER
@@ -75,7 +78,8 @@ recipes:
     guide-order: 3
     source: slimefunx-legacy
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:cargo_motor
@@ -97,7 +101,8 @@ recipes:
     guide-order: 4
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - LAPIS_BLOCK
     - LAPIS_BLOCK
@@ -119,7 +124,8 @@ recipes:
     guide-order: 5
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:plastic_sheet
     - sf:steel_ingot
@@ -141,7 +147,8 @@ recipes:
     guide-order: 6
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:plastic_sheet
     - sf:steel_ingot
@@ -163,7 +170,8 @@ recipes:
     guide-order: 7
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:brass_ingot
     - ORANGE_STAINED_GLASS
@@ -185,7 +193,8 @@ recipes:
     guide-order: 8
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:blistering_ingot_3
@@ -207,7 +216,8 @@ recipes:
     guide-order: 9
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:crafting_motor
@@ -229,7 +239,8 @@ recipes:
     guide-order: 10
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -251,7 +262,8 @@ recipes:
     guide-order: 11
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:steel_plate
     - empty
@@ -273,7 +285,8 @@ recipes:
     guide-order: 12
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - ANVIL
@@ -295,7 +308,8 @@ recipes:
     guide-order: 13
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:auto_anvil
@@ -317,7 +331,8 @@ recipes:
     guide-order: 14
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gold_18k
     - sf:can
@@ -339,7 +354,8 @@ recipes:
     guide-order: 15
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:electric_motor
@@ -361,7 +377,8 @@ recipes:
     guide-order: 16
     source: sfx
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:reinforced_plate
     - sf:electric_motor
@@ -383,7 +400,8 @@ recipes:
     guide-order: 17
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - REDSTONE
     - ANVIL
@@ -405,7 +423,8 @@ recipes:
     guide-order: 17
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:reinforced_plate
     - ANVIL
@@ -427,7 +446,8 @@ recipes:
     guide-order: 18
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -449,7 +469,8 @@ recipes:
     guide-order: 19
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - ENCHANTING_TABLE
@@ -471,7 +492,8 @@ recipes:
     guide-order: 20
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:reinforced_plate
     - sf:big_capacitor
@@ -493,7 +515,8 @@ recipes:
     guide-order: 21
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:rag
     - STRING
@@ -515,7 +538,8 @@ recipes:
     guide-order: 22
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - REDSTONE
@@ -537,7 +561,8 @@ recipes:
     guide-order: 23
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:salt
     - COOKED_BEEF
@@ -559,7 +584,8 @@ recipes:
     guide-order: 24
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:steel_ingot
     - sf:redstone_alloy
@@ -581,7 +607,8 @@ recipes:
     guide-order: 25
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -603,7 +630,8 @@ recipes:
     guide-order: 26
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:billon_ingot
     - empty
@@ -625,7 +653,8 @@ recipes:
     guide-order: 27
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:billon_ingot
     - empty
@@ -647,7 +676,8 @@ recipes:
     guide-order: 28
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:heating_coil
     - sf:composter
@@ -670,7 +700,8 @@ recipes:
     guide-order: 28
     source: sfx-balance
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:heating_coil
     - sf:composter
@@ -692,7 +723,8 @@ recipes:
     guide-order: 29
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gold_4k
     - PISTON
@@ -714,7 +746,8 @@ recipes:
     guide-order: 30
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - ENCHANTING_TABLE
@@ -736,7 +769,8 @@ recipes:
     guide-order: 31
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:heavy_cream
     - sf:salt
@@ -758,7 +792,8 @@ recipes:
     guide-order: 32
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:tin_ingot
     - sf:tin_ingot
@@ -780,7 +815,8 @@ recipes:
     guide-order: 33
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:compressed_carbon
     - sf:compressed_carbon
@@ -802,7 +838,8 @@ recipes:
     guide-order: 34
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:carbon
     - sf:electric_motor
@@ -824,7 +861,8 @@ recipes:
     guide-order: 35
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:carbonado
     - sf:electric_motor
@@ -846,7 +884,8 @@ recipes:
     guide-order: 36
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:carbonado
     - sf:electric_motor
@@ -868,7 +907,8 @@ recipes:
     guide-order: 37
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:carbonado
     - sf:redstone_alloy
@@ -890,7 +930,8 @@ recipes:
     guide-order: 38
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:carbonado
     - sf:basic_circuit_board
@@ -912,7 +953,8 @@ recipes:
     guide-order: 39
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -934,7 +976,8 @@ recipes:
     guide-order: 40
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:carbon_chunk
     - empty
@@ -956,7 +999,8 @@ recipes:
     guide-order: 41
     source: sfx-20260516u
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:steel_ingot
     - empty
@@ -978,7 +1022,8 @@ recipes:
     guide-order: 41
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:carbonado
     - empty
@@ -1000,7 +1045,8 @@ recipes:
     guide-order: 42
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:hologram_projector
@@ -1022,7 +1068,8 @@ recipes:
     guide-order: 43
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:hardened_glass
     - sf:electro_magnet
@@ -1044,7 +1091,8 @@ recipes:
     guide-order: 44
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -1066,7 +1114,8 @@ recipes:
     guide-order: 45
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:electro_magnet
@@ -1088,7 +1137,8 @@ recipes:
     guide-order: 46
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - MILK_BUCKET
     - sf:salt
@@ -1110,7 +1160,8 @@ recipes:
     guide-order: 47
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:salt
     - COOKED_CHICKEN
@@ -1132,7 +1183,8 @@ recipes:
     guide-order: 48
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:apple_juice
     - SUGAR
@@ -1154,7 +1206,8 @@ recipes:
     guide-order: 49
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - SUGAR
     - APPLE
@@ -1176,7 +1229,8 @@ recipes:
     guide-order: 50
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - EGG
     - SUGAR
@@ -1198,7 +1252,8 @@ recipes:
     guide-order: 51
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:christmas_caramel
@@ -1220,7 +1275,8 @@ recipes:
     guide-order: 52
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - COCOA_BEANS
@@ -1242,7 +1298,8 @@ recipes:
     guide-order: 53
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:christmas_milk
     - COCOA_BEANS
@@ -1264,7 +1321,8 @@ recipes:
     guide-order: 54
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - COOKIE
     - SUGAR
@@ -1286,7 +1344,8 @@ recipes:
     guide-order: 55
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:christmas_milk
     - EGG
@@ -1308,7 +1367,8 @@ recipes:
     guide-order: 56
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - EGG
     - APPLE
@@ -1330,7 +1390,8 @@ recipes:
     guide-order: 57
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - MILK_BUCKET
     - GLASS_BOTTLE
@@ -1352,7 +1413,8 @@ recipes:
     guide-order: 58
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:steel_ingot
     - sf:hardened_metal_ingot
@@ -1374,7 +1436,8 @@ recipes:
     guide-order: 59
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - WHITE_WOOL
     - empty
@@ -1396,7 +1459,8 @@ recipes:
     guide-order: 60
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:heating_coil
     - FURNACE
@@ -1418,7 +1482,8 @@ recipes:
     guide-order: 61
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - MAGMA_BLOCK
     - sf:heating_coil
@@ -1440,7 +1505,8 @@ recipes:
     guide-order: 62
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:cobalt_ingot
     - sf:cobalt_ingot
@@ -1463,7 +1529,8 @@ recipes:
     guide-order: 63
     source: sfx-balance
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -1486,7 +1553,8 @@ recipes:
     guide-order: 63
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -1508,7 +1576,8 @@ recipes:
     guide-order: 64
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - OAK_SLAB
     - empty
@@ -1530,7 +1599,8 @@ recipes:
     guide-order: 65
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:cloth
     - sf:cloth
@@ -1552,7 +1622,8 @@ recipes:
     guide-order: 66
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - ICE
     - ICE
@@ -1574,7 +1645,8 @@ recipes:
     guide-order: 67
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -1596,7 +1668,8 @@ recipes:
     guide-order: 68
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - CRAFTING_TABLE
     - sf:blistering_ingot_3
@@ -1618,7 +1691,8 @@ recipes:
     guide-order: 69
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:blistering_ingot_3
@@ -1640,7 +1714,8 @@ recipes:
     guide-order: 70
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:blistering_ingot_3
@@ -1662,7 +1737,8 @@ recipes:
     guide-order: 71
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - TERRACOTTA
     - empty
@@ -1684,7 +1760,8 @@ recipes:
     guide-order: 72
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -1706,7 +1783,8 @@ recipes:
     guide-order: 73
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:damascus_steel_ingot
     - empty
@@ -1728,7 +1806,8 @@ recipes:
     guide-order: 74
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:damascus_steel_ingot
     - empty
@@ -1750,7 +1829,8 @@ recipes:
     guide-order: 75
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:aluminum_dust
     - sf:aluminum_dust
@@ -1772,7 +1852,8 @@ recipes:
     guide-order: 76
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -1794,7 +1875,8 @@ recipes:
     guide-order: 77
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:duralumin_ingot
     - empty
@@ -1816,7 +1898,8 @@ recipes:
     guide-order: 78
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:duralumin_ingot
     - empty
@@ -1838,7 +1921,8 @@ recipes:
     guide-order: 79
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - SUGAR
     - APPLE
@@ -1860,7 +1944,8 @@ recipes:
     guide-order: 80
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -1882,7 +1967,8 @@ recipes:
     guide-order: 81
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - WATER_BUCKET
@@ -1904,7 +1990,8 @@ recipes:
     guide-order: 82
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - WATER_BUCKET
@@ -1926,7 +2013,8 @@ recipes:
     guide-order: 83
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - WATER_BUCKET
@@ -1948,7 +2036,8 @@ recipes:
     guide-order: 84
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - FURNACE
@@ -1970,7 +2059,8 @@ recipes:
     guide-order: 85
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:electric_motor
@@ -1992,7 +2082,8 @@ recipes:
     guide-order: 86
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:electric_motor
@@ -2014,7 +2105,8 @@ recipes:
     guide-order: 87
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:gold_pan
@@ -2036,7 +2128,8 @@ recipes:
     guide-order: 88
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:gold_pan
@@ -2058,7 +2151,8 @@ recipes:
     guide-order: 89
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:gold_pan
@@ -2080,7 +2174,8 @@ recipes:
     guide-order: 90
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - FLINT_AND_STEEL
@@ -2102,7 +2197,8 @@ recipes:
     guide-order: 91
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gilded_iron
     - FLINT_AND_STEEL
@@ -2124,7 +2220,8 @@ recipes:
     guide-order: 92
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gilded_iron
     - FLINT_AND_STEEL
@@ -2146,7 +2243,8 @@ recipes:
     guide-order: 93
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:electric_ore_grinder
@@ -2168,7 +2266,8 @@ recipes:
     guide-order: 94
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:copper_wire
     - sf:copper_wire
@@ -2190,7 +2289,8 @@ recipes:
     guide-order: 95
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - DIAMOND_PICKAXE
@@ -2212,7 +2312,8 @@ recipes:
     guide-order: 96
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - DIAMOND_PICKAXE
@@ -2234,7 +2335,8 @@ recipes:
     guide-order: 97
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:reinforced_plate
     - sf:heating_coil
@@ -2256,7 +2358,8 @@ recipes:
     guide-order: 98
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - PISTON
     - sf:electric_motor
@@ -2278,7 +2381,8 @@ recipes:
     guide-order: 99
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - STICKY_PISTON
     - sf:electric_press
@@ -2300,7 +2404,8 @@ recipes:
     guide-order: 100
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - NETHER_BRICKS
     - sf:electric_motor
@@ -2322,7 +2427,8 @@ recipes:
     guide-order: 101
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:damascus_steel_ingot
     - sf:power_crystal
@@ -2344,7 +2450,8 @@ recipes:
     guide-order: 102
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:lead_ingot
     - sf:crucible
@@ -2366,7 +2473,8 @@ recipes:
     guide-order: 103
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:corinthian_bronze_ingot
     - sf:electrified_crucible
@@ -2388,7 +2496,8 @@ recipes:
     guide-order: 104
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:corinthian_bronze_ingot
     - sf:electrified_crucible_2
@@ -2410,7 +2519,8 @@ recipes:
     guide-order: 105
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:nickel_ingot
     - sf:magnet
@@ -2432,7 +2542,8 @@ recipes:
     guide-order: 106
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - STONE_PRESSURE_PLATE
@@ -2454,7 +2565,8 @@ recipes:
     guide-order: 107
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:ender_lump_1
     - sf:ender_lump_1
@@ -2476,7 +2588,8 @@ recipes:
     guide-order: 108
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:ender_lump_2
     - sf:ender_lump_2
@@ -2498,7 +2611,8 @@ recipes:
     guide-order: 109
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:carbonado
     - sf:redstone_alloy
@@ -2520,7 +2634,8 @@ recipes:
     guide-order: 110
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:carbon
     - sf:copper_wire
@@ -2542,7 +2657,8 @@ recipes:
     guide-order: 111
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:silver_ingot
     - sf:damascus_steel_ingot
@@ -2564,7 +2680,8 @@ recipes:
     guide-order: 112
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:crafting_motor
@@ -2586,7 +2703,8 @@ recipes:
     guide-order: 113
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2608,7 +2726,8 @@ recipes:
     guide-order: 114
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2630,7 +2749,8 @@ recipes:
     guide-order: 115
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2652,7 +2772,8 @@ recipes:
     guide-order: 116
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2674,7 +2795,8 @@ recipes:
     guide-order: 117
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2696,7 +2818,8 @@ recipes:
     guide-order: 118
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2718,7 +2841,8 @@ recipes:
     guide-order: 119
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2740,7 +2864,8 @@ recipes:
     guide-order: 120
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2762,7 +2887,8 @@ recipes:
     guide-order: 121
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2784,7 +2910,8 @@ recipes:
     guide-order: 122
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2806,7 +2933,8 @@ recipes:
     guide-order: 123
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -2828,7 +2956,8 @@ recipes:
     guide-order: 124
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:salt
     - COOKED_COD
@@ -2850,7 +2979,8 @@ recipes:
     guide-order: 125
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:medium_capacitor
@@ -2872,7 +3002,8 @@ recipes:
     guide-order: 126
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:damascus_steel_ingot
     - sf:food_fabricator
@@ -2894,7 +3025,8 @@ recipes:
     guide-order: 127
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:hardened_metal_ingot
     - sf:reinforced_alloy_ingot
@@ -2916,7 +3048,8 @@ recipes:
     guide-order: 128
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:billon_ingot
     - sf:silver_ingot
@@ -2938,7 +3071,8 @@ recipes:
     guide-order: 129
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:hardened_metal_ingot
     - sf:reinforced_alloy_ingot
@@ -2960,7 +3094,8 @@ recipes:
     guide-order: 130
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - COOKIE
     - PAPER
@@ -2982,7 +3117,8 @@ recipes:
     guide-order: 131
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:silver_ingot
@@ -3004,7 +3140,8 @@ recipes:
     guide-order: 132
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:silver_ingot
@@ -3026,7 +3163,8 @@ recipes:
     guide-order: 133
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:reinforced_alloy_ingot
     - sf:reinforced_alloy_ingot
@@ -3048,7 +3186,8 @@ recipes:
     guide-order: 134
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - DIAMOND_PICKAXE
     - sf:medium_capacitor
@@ -3070,7 +3209,8 @@ recipes:
     guide-order: 135
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gold_22k
     - empty
@@ -3092,7 +3232,8 @@ recipes:
     guide-order: 136
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gold_24k
     - sf:gold_24k
@@ -3114,7 +3255,8 @@ recipes:
     guide-order: 137
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gold_24k_block
     - sf:gold_24k_block
@@ -3136,7 +3278,8 @@ recipes:
     guide-order: 138
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -3158,7 +3301,8 @@ recipes:
     guide-order: 139
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:lead_ingot
@@ -3180,7 +3324,8 @@ recipes:
     guide-order: 140
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - STONE_PRESSURE_PLATE
@@ -3202,7 +3347,8 @@ recipes:
     guide-order: 141
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -3224,7 +3370,8 @@ recipes:
     guide-order: 142
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:electro_magnet
@@ -3246,7 +3393,8 @@ recipes:
     guide-order: 143
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -3268,7 +3416,8 @@ recipes:
     guide-order: 144
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:electro_magnet
@@ -3290,7 +3439,8 @@ recipes:
     guide-order: 145
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gps_teleporter_pylon
     - sf:reinforced_alloy_ingot
@@ -3312,7 +3462,8 @@ recipes:
     guide-order: 146
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:zinc_ingot
     - GLASS
@@ -3334,7 +3485,8 @@ recipes:
     guide-order: 147
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -3356,7 +3508,8 @@ recipes:
     guide-order: 148
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gps_transmitter
     - sf:bronze_ingot
@@ -3378,7 +3531,8 @@ recipes:
     guide-order: 149
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gps_transmitter_2
     - sf:corinthian_bronze_ingot
@@ -3400,7 +3554,8 @@ recipes:
     guide-order: 150
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gps_transmitter_3
     - sf:blistering_ingot_3
@@ -3422,7 +3577,8 @@ recipes:
     guide-order: 151
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - LEATHER
     - OAK_LOG
@@ -3444,7 +3600,8 @@ recipes:
     guide-order: 152
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -3466,7 +3623,8 @@ recipes:
     guide-order: 153
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - GLASS
     - GLASS
@@ -3488,7 +3646,8 @@ recipes:
     guide-order: 154
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:lead_ingot
     - sf:electric_motor
@@ -3510,7 +3669,8 @@ recipes:
     guide-order: 155
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:lead_ingot
     - sf:electric_motor
@@ -3532,7 +3692,8 @@ recipes:
     guide-order: 156
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:copper_wire
     - sf:copper_wire
@@ -3554,7 +3715,8 @@ recipes:
     guide-order: 157
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - MILK_BUCKET
     - empty
@@ -3576,7 +3738,8 @@ recipes:
     guide-order: 158
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:power_crystal
@@ -3598,7 +3761,8 @@ recipes:
     guide-order: 159
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:steel_ingot
@@ -3620,7 +3784,8 @@ recipes:
     guide-order: 160
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - IRON_INGOT
     - FLINT_AND_STEEL
@@ -3642,7 +3807,8 @@ recipes:
     guide-order: 161
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:blistering_ingot_3
     - sf:advanced_circuit_board
@@ -3664,7 +3830,8 @@ recipes:
     guide-order: 162
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - DRIED_KELP
@@ -3686,7 +3853,8 @@ recipes:
     guide-order: 163
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - LEATHER
     - empty
@@ -3708,7 +3876,8 @@ recipes:
     guide-order: 164
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:reinforced_alloy_ingot
     - sf:redstone_alloy
@@ -3730,7 +3899,8 @@ recipes:
     guide-order: 165
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:magic_lump_1
     - BLAZE_POWDER
@@ -3752,7 +3922,8 @@ recipes:
     guide-order: 166
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:gold_16k
@@ -3774,7 +3945,8 @@ recipes:
     guide-order: 167
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:corinthian_bronze_ingot
     - sf:corinthian_bronze_ingot
@@ -3796,7 +3968,8 @@ recipes:
     guide-order: 168
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:magic_lump_1
     - sf:magic_lump_1
@@ -3818,7 +3991,8 @@ recipes:
     guide-order: 169
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:magic_lump_2
     - sf:magic_lump_2
@@ -3840,7 +4014,8 @@ recipes:
     guide-order: 170
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - SUGAR
     - REDSTONE
@@ -3862,7 +4037,8 @@ recipes:
     guide-order: 171
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:magic_lump_2
@@ -3884,7 +4060,8 @@ recipes:
     guide-order: 172
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:electric_motor
@@ -3906,7 +4083,8 @@ recipes:
     guide-order: 173
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:vitamins
     - GLASS_BOTTLE
@@ -3928,7 +4106,8 @@ recipes:
     guide-order: 174
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - LEATHER
     - empty
@@ -3950,7 +4129,8 @@ recipes:
     guide-order: 175
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:billon_ingot
     - sf:redstone_alloy
@@ -3972,7 +4152,8 @@ recipes:
     guide-order: 176
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:salt
     - ROTTEN_FLESH
@@ -3994,7 +4175,8 @@ recipes:
     guide-order: 177
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:copper_ingot
     - empty
@@ -4016,7 +4198,8 @@ recipes:
     guide-order: 178
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:salt
     - COOKED_MUTTON
@@ -4038,7 +4221,8 @@ recipes:
     guide-order: 179
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -4060,7 +4244,8 @@ recipes:
     guide-order: 180
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:boosted_uranium
     - sf:carbonado_edged_capacitor
@@ -4082,7 +4267,8 @@ recipes:
     guide-order: 181
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:blistering_ingot_3
     - sf:carbonado_edged_capacitor
@@ -4104,7 +4290,8 @@ recipes:
     guide-order: 182
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:steel_ingot
     - sf:medium_capacitor
@@ -4126,7 +4313,8 @@ recipes:
     guide-order: 183
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:lead_ingot
     - HOPPER
@@ -4148,7 +4336,8 @@ recipes:
     guide-order: 184
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:cloth
     - sf:cloth
@@ -4170,7 +4359,8 @@ recipes:
     guide-order: 185
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:salt
     - COOKED_PORKCHOP
@@ -4192,7 +4382,8 @@ recipes:
     guide-order: 186
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - BOOK
     - CRAFTING_TABLE
@@ -4214,7 +4405,8 @@ recipes:
     guide-order: 187
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - IRON_INGOT
     - IRON_INGOT
@@ -4236,7 +4428,8 @@ recipes:
     guide-order: 188
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:electro_magnet
     - COMPASS
@@ -4258,7 +4451,8 @@ recipes:
     guide-order: 189
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:electro_magnet
     - sf:gps_transmitter_3
@@ -4280,7 +4474,8 @@ recipes:
     guide-order: 190
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - REDSTONE
     - sf:synthetic_sapphire
@@ -4302,7 +4497,8 @@ recipes:
     guide-order: 191
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - HAY_BLOCK
@@ -4324,7 +4520,8 @@ recipes:
     guide-order: 192
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:plastic_sheet
     - sf:android_memory_core
@@ -4346,7 +4543,8 @@ recipes:
     guide-order: 193
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:plastic_sheet
     - sf:android_memory_core
@@ -4368,7 +4566,8 @@ recipes:
     guide-order: 194
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:gps_transmitter
@@ -4390,7 +4589,8 @@ recipes:
     guide-order: 195
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:gps_transmitter
@@ -4412,7 +4612,8 @@ recipes:
     guide-order: 196
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -4434,7 +4635,8 @@ recipes:
     guide-order: 197
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:plastic_sheet
     - sf:android_memory_core
@@ -4456,7 +4658,8 @@ recipes:
     guide-order: 198
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:gps_transmitter_3
@@ -4478,7 +4681,8 @@ recipes:
     guide-order: 199
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -4500,7 +4704,8 @@ recipes:
     guide-order: 200
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:gps_transmitter
@@ -4522,7 +4727,8 @@ recipes:
     guide-order: 201
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -4544,7 +4750,8 @@ recipes:
     guide-order: 202
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -4566,7 +4773,8 @@ recipes:
     guide-order: 203
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -4588,7 +4796,8 @@ recipes:
     guide-order: 204
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -4610,7 +4819,8 @@ recipes:
     guide-order: 205
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:salt
     - COOKED_RABBIT
@@ -4632,7 +4842,8 @@ recipes:
     guide-order: 206
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:gold_24k
     - empty
@@ -4654,7 +4865,8 @@ recipes:
     guide-order: 207
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:cloth
     - sf:cloth
@@ -4676,7 +4888,8 @@ recipes:
     guide-order: 208
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:blistering_ingot_3
@@ -4698,7 +4911,8 @@ recipes:
     guide-order: 209
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:hardened_glass
     - sf:redstone_alloy
@@ -4720,7 +4934,8 @@ recipes:
     guide-order: 210
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -4742,7 +4957,8 @@ recipes:
     guide-order: 211
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:reinforced_alloy_ingot
     - empty
@@ -4764,7 +4980,8 @@ recipes:
     guide-order: 212
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:reinforced_alloy_ingot
     - empty
@@ -4786,7 +5003,8 @@ recipes:
     guide-order: 213
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:cloth
@@ -4808,7 +5026,8 @@ recipes:
     guide-order: 214
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:reinforced_alloy_ingot
     - sf:basic_circuit_board
@@ -4830,7 +5049,8 @@ recipes:
     guide-order: 215
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - LEATHER
     - empty
@@ -4852,7 +5072,8 @@ recipes:
     guide-order: 216
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:duralumin_ingot
     - sf:sulfate
@@ -4874,7 +5095,8 @@ recipes:
     guide-order: 217
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:tiny_uranium
     - sf:tiny_uranium
@@ -4896,7 +5118,8 @@ recipes:
     guide-order: 218
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:lava_crystal
     - sf:lava_crystal
@@ -4918,7 +5141,8 @@ recipes:
     guide-order: 219
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:solar_panel
     - sf:solar_panel
@@ -4940,7 +5164,8 @@ recipes:
     guide-order: 220
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:solar_generator
     - sf:aluminum_ingot
@@ -4962,7 +5187,8 @@ recipes:
     guide-order: 221
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:solar_generator_2
     - sf:aluminum_ingot
@@ -4984,7 +5210,8 @@ recipes:
     guide-order: 222
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:solar_generator_3
     - sf:blistering_ingot_3
@@ -5006,7 +5233,8 @@ recipes:
     guide-order: 223
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:reinforced_alloy_ingot
     - sf:solar_panel
@@ -5028,7 +5256,8 @@ recipes:
     guide-order: 224
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - GLASS
     - GLASS
@@ -5050,7 +5279,8 @@ recipes:
     guide-order: 225
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -5072,7 +5302,8 @@ recipes:
     guide-order: 226
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:solder_ingot
     - empty
@@ -5094,7 +5325,8 @@ recipes:
     guide-order: 227
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:solder_ingot
     - empty
@@ -5116,7 +5348,8 @@ recipes:
     guide-order: 228
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - IRON_INGOT
@@ -5138,7 +5371,8 @@ recipes:
     guide-order: 229
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - empty
@@ -5160,7 +5394,8 @@ recipes:
     guide-order: 230
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:steel_ingot
     - empty
@@ -5182,7 +5417,8 @@ recipes:
     guide-order: 231
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:steel_ingot
     - empty
@@ -5204,7 +5440,8 @@ recipes:
     guide-order: 232
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - REDSTONE
@@ -5226,7 +5463,8 @@ recipes:
     guide-order: 233
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - EMERALD
@@ -5248,7 +5486,8 @@ recipes:
     guide-order: 234
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:silicon
     - YELLOW_DYE
@@ -5270,7 +5509,8 @@ recipes:
     guide-order: 235
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:portable_dustbin
@@ -5292,7 +5532,8 @@ recipes:
     guide-order: 236
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:carbonado
@@ -5314,7 +5555,8 @@ recipes:
     guide-order: 237
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:small_uranium
     - sf:small_uranium
@@ -5336,7 +5578,8 @@ recipes:
     guide-order: 238
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:cargo_motor
@@ -5358,7 +5601,8 @@ recipes:
     guide-order: 239
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:can
     - APPLE
@@ -5380,7 +5624,8 @@ recipes:
     guide-order: 240
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:blistering_ingot_3
     - NETHER_STAR
@@ -5402,7 +5647,8 @@ recipes:
     guide-order: 241
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:lead_ingot
     - sf:wither_proof_obsidian
@@ -5424,7 +5670,8 @@ recipes:
     guide-order: 242
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:lead_ingot
     - OBSIDIAN
@@ -5446,7 +5693,8 @@ recipes:
     guide-order: 243
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:cloth
     - empty
@@ -5468,7 +5716,8 @@ recipes:
     guide-order: 244
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - sf:blistering_ingot_3
@@ -5490,7 +5739,8 @@ recipes:
     guide-order: 9991
     source: slimefunx-legacy
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - OAK_LOG
@@ -5512,7 +5762,8 @@ recipes:
     guide-order: 9992
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - empty
     - TORCH
@@ -5534,7 +5785,8 @@ recipes:
     guide-order: 9993
     source: slimefun-rc37
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - SUGAR
     - CARROT
@@ -5556,7 +5808,8 @@ recipes:
     guide-order: 9994
     source: slimefunx-legacy
     runtime: true
-    machine: sf:enhanced_crafting_table
+    runtime-machine-tags:
+    - enhanced-crafting
     matrix:
     - sf:bronze_ingot
     - sf:silver_ingot
