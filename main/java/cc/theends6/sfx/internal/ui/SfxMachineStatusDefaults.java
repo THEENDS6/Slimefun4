@@ -27,24 +27,24 @@ public final class SfxMachineStatusDefaults {
             return Component.text(" ");
         }
         return switch (status) {
-            case IDLE -> localization.component("machine-status.idle.name", "<gray>Idle</gray>");
-            case WORKING -> localization.component("machine-status.working.name", "<yellow>Working</yellow>");
-            case NO_POWER -> localization.component("machine-status.no-power.name", "<red>No Power</red>");
-            case PAUSED -> localization.component("machine-status.paused.name", "<yellow>Paused</yellow>");
-            case DISABLED -> localization.component("machine-status.disabled.name", "<gray>Disabled</gray>");
-            case NO_INPUT -> localization.component("machine-status.no-input.name", "<gray>No Input</gray>");
-            case NO_RECIPE -> localization.component("machine-status.no-recipe.name", "<gray>No Recipe</gray>");
-            case NO_TARGET -> localization.component("machine-status.no-target.name", "<red>No Target</red>");
-            case CHUNK_NOT_SCANNED -> localization.component("machine-status.chunk-not-scanned.name", "<red>Unscanned Area</red>");
-            case NO_GEO_RESOURCE -> localization.component("machine-status.no-geo-resource.name", "<gray>No Mineable Resource</gray>");
-            case OUTPUT_FULL -> localization.component("machine-status.output-full.name", "<red>Output Full</red>");
-            case BLOCKED_OUTPUT -> localization.component("machine-status.blocked-output.name", "<red>Blocked</red>");
-            case INVALID_INPUT -> localization.component("machine-status.invalid-input.name", "<red>Invalid Input</red>");
-            case FULL -> localization.component("machine-status.full.name", "<green>Full</green>");
-            case NO_NETWORK -> localization.component("machine-status.no-network.name", "<red>Not Connected</red>");
-            case NETWORK_CONFLICT -> localization.component("machine-status.network-conflict.name", "<red>Network Conflict</red>");
-            case AREA_CONFLICT -> localization.component("machine-status.area-conflict.name", "<red>Work Area Conflict</red>");
-            case MISSING_RESOURCE -> localization.component("machine-status.missing-resource.name", "<red>Missing Resource</red>");
+            case IDLE -> localization.component("machine-status.idle.name");
+            case WORKING -> localization.component("machine-status.working.name");
+            case NO_POWER -> localization.component("machine-status.no-power.name");
+            case PAUSED -> localization.component("machine-status.paused.name");
+            case DISABLED -> localization.component("machine-status.disabled.name");
+            case NO_INPUT -> localization.component("machine-status.no-input.name");
+            case NO_RECIPE -> localization.component("machine-status.no-recipe.name");
+            case NO_TARGET -> localization.component("machine-status.no-target.name");
+            case CHUNK_NOT_SCANNED -> localization.component("machine-status.chunk-not-scanned.name");
+            case NO_GEO_RESOURCE -> localization.component("machine-status.no-geo-resource.name");
+            case OUTPUT_FULL -> localization.component("machine-status.output-full.name");
+            case BLOCKED_OUTPUT -> localization.component("machine-status.blocked-output.name");
+            case INVALID_INPUT -> localization.component("machine-status.invalid-input.name");
+            case FULL -> localization.component("machine-status.full.name");
+            case NO_NETWORK -> localization.component("machine-status.no-network.name");
+            case NETWORK_CONFLICT -> localization.component("machine-status.network-conflict.name");
+            case AREA_CONFLICT -> localization.component("machine-status.area-conflict.name");
+            case MISSING_RESOURCE -> localization.component("machine-status.missing-resource.name");
             case CUSTOM -> Component.text(" ");
         };
     }
@@ -54,24 +54,24 @@ public final class SfxMachineStatusDefaults {
             return Component.empty();
         }
         return switch (status) {
-            case IDLE -> localization.component("machine-status.idle.lore", "<gray>Waiting for input.</gray>");
-            case WORKING -> localization.component("machine-status.working.lore", "<gray>The machine is working.</gray>");
-            case NO_POWER -> localization.component("machine-status.no-power.lore", "<gray>Charge this machine to continue.</gray>");
-            case PAUSED -> localization.component("machine-status.paused.lore", "<gray>This machine is paused.</gray>");
-            case DISABLED -> localization.component("machine-status.disabled.lore", "<gray>This machine is disabled.</gray>");
-            case NO_INPUT -> localization.component("machine-status.no-input.lore", "<gray>Waiting for input.</gray>");
-            case NO_RECIPE -> localization.component("machine-status.no-recipe.lore", "<gray>The current input has no matching recipe.</gray>");
-            case NO_TARGET -> localization.component("machine-status.no-target.lore", "<gray>No valid target was found.</gray>");
-            case CHUNK_NOT_SCANNED -> localization.component("machine-status.chunk-not-scanned.lore", "<gray>This chunk has not been GEO-scanned yet.</gray>");
-            case NO_GEO_RESOURCE -> localization.component("machine-status.no-geo-resource.lore", "<gray>No usable GEO resource remains in this chunk.</gray>");
-            case OUTPUT_FULL -> localization.component("machine-status.output-full.lore", "<gray>Free an output slot to continue.</gray>");
-            case BLOCKED_OUTPUT -> localization.component("machine-status.blocked-output.lore", "<gray>The output is full. Free a slot to commit the finished item.</gray>");
-            case INVALID_INPUT -> localization.component("machine-status.invalid-input.lore", "<gray>The inserted item cannot be processed here.</gray>");
-            case FULL -> localization.component("machine-status.full.lore", "<gray>This machine is full.</gray>");
-            case NO_NETWORK -> localization.component("machine-status.no-network.lore", "<gray>This machine is not connected to an energy network.</gray>");
-            case NETWORK_CONFLICT -> localization.component("machine-status.network-conflict.lore", "<gray>Resolve regulator or shared-node conflicts first.</gray>");
-            case AREA_CONFLICT -> localization.component("machine-status.area-conflict.lore", "<gray>Machines of the same type cannot have overlapping work areas.</gray>");
-            case MISSING_RESOURCE -> localization.component("machine-status.missing-resource.lore", "<gray>Add the missing resource to continue.</gray>");
+            case IDLE -> localization.component("machine-status.idle.lore");
+            case WORKING -> localization.component("machine-status.working.lore");
+            case NO_POWER -> localization.component("machine-status.no-power.lore");
+            case PAUSED -> localization.component("machine-status.paused.lore");
+            case DISABLED -> localization.component("machine-status.disabled.lore");
+            case NO_INPUT -> localization.component("machine-status.no-input.lore");
+            case NO_RECIPE -> localization.component("machine-status.no-recipe.lore");
+            case NO_TARGET -> localization.component("machine-status.no-target.lore");
+            case CHUNK_NOT_SCANNED -> localization.component("machine-status.chunk-not-scanned.lore");
+            case NO_GEO_RESOURCE -> localization.component("machine-status.no-geo-resource.lore");
+            case OUTPUT_FULL -> localization.component("machine-status.output-full.lore");
+            case BLOCKED_OUTPUT -> localization.component("machine-status.blocked-output.lore");
+            case INVALID_INPUT -> localization.component("machine-status.invalid-input.lore");
+            case FULL -> localization.component("machine-status.full.lore");
+            case NO_NETWORK -> localization.component("machine-status.no-network.lore");
+            case NETWORK_CONFLICT -> localization.component("machine-status.network-conflict.lore");
+            case AREA_CONFLICT -> localization.component("machine-status.area-conflict.lore");
+            case MISSING_RESOURCE -> localization.component("machine-status.missing-resource.lore");
             case CUSTOM -> Component.empty();
         };
     }
