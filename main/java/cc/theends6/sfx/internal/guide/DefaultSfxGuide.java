@@ -1597,7 +1597,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         };
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
-            meta.displayName(Text.noItalic(localization.categoryName(category.id(), category.name())));
+            meta.displayName(Text.noItalic(localization.categoryName(category.id())));
             if ("guide:sf:magical_gadgets".equals(category.id())
                     || "guide:sf:magical_armor".equals(category.id())
                     || "guide:sf:armor".equals(category.id())) {
@@ -1616,7 +1616,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         lore.add(Component.empty());
         for (String parentId : LegacySfGuideResolver.parentCategories(category.id())) {
             LegacySfGuideResolver.resolveCategory(registry, parentId)
-                    .map(parent -> localization.categoryName(parent.id(), parent.name()))
+                    .map(parent -> localization.categoryName(parent.id()))
                     .ifPresent(lore::add);
         }
         ItemStack item = ItemBuilder.of(Material.BARRIER)
@@ -1940,7 +1940,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private String plainCategoryName(SfxItemCategory category) {
-        return plainText(localization.categoryName(category.id(), category.name()));
+        return plainText(localization.categoryName(category.id()));
     }
 
     private String materialName(Material material) {

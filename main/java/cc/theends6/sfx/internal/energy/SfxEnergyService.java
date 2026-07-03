@@ -241,9 +241,7 @@ public final class SfxEnergyService implements Listener {
             return;
         }
         if (definition.componentType() == SfxEnergyComponentType.REGULATOR) {
-            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text(
-                    "energy.messages.regulator-status",
-                    "<yellow>Energy regulator active.</yellow>")));
+            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("energy.messages.regulator-status")));
         }
     }
 

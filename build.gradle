@@ -1811,6 +1811,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineStatusIconRenderer.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxAutoCrafterMenuRenderer.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricAssemblerMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/energy/SfxEnergyService.java',
             'main/java/cc/theends6/sfx/internal/energy/SfxEnergyBackedElectricMenuService.java',
             'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java',
             'main/java/cc/theends6/sfx/internal/machine/ManualMachineService.java',
@@ -1831,9 +1832,24 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/listener/SfxBackpackListener.java'
     ]
     inputs.files(coreLocalizationFiles.collect { layout.projectDirectory.file(it) })
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/util/SfxLocalization.java'))
     inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
     doLast {
         def violations = []
+        def localizationApi = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/util/SfxLocalization.java').asFile.getText('UTF-8')
+        [
+                'String text(String path, String fallback',
+                'Component component(String path, String fallback',
+                'Component categoryName(String categoryId, Component',
+                'Component itemName(String itemId, Component',
+                'Component researchName(String researchId, Component',
+                'List<Component> itemLore(String itemId, List<Component>',
+                'List<Component> recipeNote(String itemId, int index, Component'
+        ].each { forbiddenSignature ->
+            if (localizationApi.contains(forbiddenSignature)) {
+                violations << "SfxLocalization exposes fallback overload: ${forbiddenSignature}"
+            }
+        }
         def flattenLanguageKeys = { File file ->
             def keys = [] as Set
             def stack = []
