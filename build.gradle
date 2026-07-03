@@ -1800,6 +1800,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusDefaults.java',
             'main/java/cc/theends6/sfx/internal/cargo/SfxCargoService.java',
             'main/java/cc/theends6/sfx/internal/gps/SfxGpsService.java',
+            'main/java/cc/theends6/sfx/internal/android/SfxAndroidService.java',
             'main/java/cc/theends6/sfx/internal/technical/SfxTechnicalGadgetService.java',
             'main/java/cc/theends6/sfx/internal/configurable/SfxConfigurableMachineService.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineService.java',
@@ -1867,6 +1868,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
         def literalDisplayTextCall = /new\s+DisplayText\(\s*"([^"]+)"/
         def literalCargoLanguageString = /"((?:cargo\.(?:status|message|ui)\.[^"]+))"/
         def literalGpsLanguageString = /"((?:gps\.(?:ui|messages|resources)\.[^"]+))"/
+        def literalAndroidLanguageString = /"((?:android\.(?:messages|menu|instructions)\.[^"]+))"/
         coreLocalizationFiles.each { path ->
             def file = layout.projectDirectory.file(path).asFile
             def text = file.getText('UTF-8')
@@ -1938,6 +1940,19 @@ tasks.register('validateSfxCoreLocalizationCalls') {
                 languageKeysByFile.each { languageFile, keys ->
                     if (!keys.contains(key)) {
                         def line = text.substring(0, gpsKeyMatcher.start()).count('\n') + 1
+                        violations << "${path}:${line}: ${languageFile} missing language key ${key}"
+                    }
+                }
+            }
+            def androidKeyMatcher = (text =~ literalAndroidLanguageString)
+            while (androidKeyMatcher.find()) {
+                def key = androidKeyMatcher.group(1)
+                if (key.contains("{") || key.contains("+") || key.endsWith(".")) {
+                    continue
+                }
+                languageKeysByFile.each { languageFile, keys ->
+                    if (!keys.contains(key)) {
+                        def line = text.substring(0, androidKeyMatcher.start()).count('\n') + 1
                         violations << "${path}:${line}: ${languageFile} missing language key ${key}"
                     }
                 }

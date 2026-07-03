@@ -5095,6 +5095,10 @@ android:
       title: <dark_gray>选择指令</dark_gray>
     downloader:
       title: <dark_gray>下载机器人脚本</dark_gray>
+      error:
+        name: <red>读取脚本失败</red>
+        lore:
+        - '<gray>{reason}</gray>'
       entry:
         author: '<gray>作者: <white>{author}</white></gray>'
         length: '<gray>脚本长度: <white>{length}/54</white></gray>'

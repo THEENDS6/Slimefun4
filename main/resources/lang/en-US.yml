@@ -5132,6 +5132,10 @@ android:
       title: <dark_gray>Select Instruction</dark_gray>
     downloader:
       title: <dark_gray>Download Android Scripts</dark_gray>
+      error:
+        name: <red>Failed to read scripts</red>
+        lore:
+        - '<gray>{reason}</gray>'
       entry:
         author: '<gray>Author: <white>{author}</white></gray>'
         length: '<gray>Length: <white>{length}/54</white></gray>'
