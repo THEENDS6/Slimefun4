@@ -1797,6 +1797,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
     description = 'Validates migrated core machine UI code uses language keys directly without literal localization fallback arguments.'
     def coreLocalizationFiles = [
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusIconRenderer.java',
+            'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusDefaults.java',
             'main/java/cc/theends6/sfx/internal/configurable/SfxConfigurableMachineService.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineService.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineStatusIconRenderer.java',
