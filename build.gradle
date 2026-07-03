@@ -1802,13 +1802,47 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineStatusIconRenderer.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxAutoCrafterMenuRenderer.java',
             'main/java/cc/theends6/sfx/internal/energy/SfxEnergyBackedElectricMenuService.java',
-            'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java'
+            'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java',
+            'main/java/cc/theends6/sfx/internal/machine/ManualMachineService.java'
     ]
     inputs.files(coreLocalizationFiles.collect { layout.projectDirectory.file(it) })
+    inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
     doLast {
         def violations = []
-        def literalFallback = ~/(?s)localization\.(?:text|component)\(\s*"[^"]+"\s*,\s*"[^"]+"/
-        def itemFallback = ~/(?s)localization\.(?:itemName|itemLore)\(\s*[^,\r\n]+,\s*/
+        def flattenLanguageKeys = { File file ->
+            def keys = [] as Set
+            def stack = []
+            file.readLines('UTF-8').each { line ->
+                if (line.trim().isEmpty() || line.trim().startsWith('#') || line.trim().startsWith('-')) {
+                    return
+                }
+                def matcher = line =~ /^(\s*)(['"]?)([^:'"]+)\2:\s*(.*)$/
+                if (!matcher.matches()) {
+                    return
+                }
+                int indent = matcher[0][1].length()
+                String key = matcher[0][3].trim()
+                while (!stack.isEmpty() && stack[-1].indent >= indent) {
+                    stack.remove(stack.size() - 1)
+                }
+                def path = (stack.collect { it.key } + key).join('.')
+                keys << path
+                stack << [indent: indent, key: key]
+            }
+            keys
+        }
+        def languageFiles = fileTree(layout.projectDirectory.dir('main/resources/lang')) {
+            include '**
+
+
+
+
+
+
+
+
+
+        def literalLanguageCall = ~/localization\.(?:text|component)\(\s*"([^"]+)"/
         coreLocalizationFiles.each { path ->
             def file = layout.projectDirectory.file(path).asFile
             def text = file.getText('UTF-8')
@@ -1819,11 +1853,24 @@ tasks.register('validateSfxCoreLocalizationCalls') {
                     violations << "${path}:${line}: uses localization fallback argument"
                 }
             }
+            def keyMatcher = literalLanguageCall.matcher(text)
+            while (keyMatcher.find()) {
+                def key = keyMatcher.group(1)
+                if (key.contains("{") || key.contains("+") || key.endsWith(".")) {
+                    continue
+                }
+                languageKeysByFile.each { languageFile, keys ->
+                    if (!keys.contains(key)) {
+                        def line = text.substring(0, keyMatcher.start()).count('\n') + 1
+                        violations << "${path}:${line}: ${languageFile} missing language key ${key}"
+                    }
+                }
+            }
         }
         if (!violations.isEmpty()) {
             throw new GradleException("Core localization call validation failed:\n" + violations.join('\n'))
         }
-        logger.lifecycle("Validated ${coreLocalizationFiles.size()} core machine UI localization file(s) without literal fallback arguments.")
+        logger.lifecycle("Validated ${coreLocalizationFiles.size()} core machine UI localization file(s) without literal fallback arguments and with bundled language keys.")
     }
 }
 

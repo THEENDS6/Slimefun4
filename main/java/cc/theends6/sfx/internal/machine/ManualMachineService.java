@@ -78,12 +78,12 @@ public final class ManualMachineService {
 
     private void runMachine(Player player, Block clickedBlock, ManualMachineDefinition definition) {
         if (!definition.matches(clickedBlock)) {
-            message(player, localization.text("machines.structure-changed", "<red>结构已经变化，机器触发已取消。</red>"));
+            message(player, localization.text("machines.structure-changed"));
             return;
         }
 
         if (requiresIgnitionFire(definition) && !hasIgnitionFire(definition, clickedBlock)) {
-            message(player, localization.text("machines.smeltery-not-lit", "<red>这台冶炼炉还没有点火，请在发射器下方点燃火焰或灵魂火。</red>"));
+            message(player, localization.text("machines.smeltery-not-lit"));
             return;
         }
 
@@ -94,7 +94,7 @@ public final class ManualMachineService {
 
         Dispenser dispenser = resolveInputDispenser(definition, clickedBlock);
         if (dispenser == null) {
-            message(player, localization.text("machines.missing-dispenser", "<red>结构不完整：未找到机器对应的发射器。</red>"));
+            message(player, localization.text("machines.missing-dispenser"));
             return;
         }
 
@@ -102,7 +102,7 @@ public final class ManualMachineService {
         Inventory output = resolveOutputInventory(definition, clickedBlock, dispenser, input);
         Collection<ManualMachineRecipe> recipes = registry.recipesFor(definition.id());
         if (recipes.isEmpty()) {
-            message(player, localization.text("machines.no-recipes", "<gray>这台机器已经识别，但当前还没有注册可执行配方。</gray>"));
+            message(player, localization.text("machines.no-recipes"));
             return;
         }
 
@@ -155,7 +155,7 @@ public final class ManualMachineService {
         }
 
         if (outputBlocked && matchedInput) {
-            message(player, localization.text("machines.output-full", "<red>输出位置空间不足，无法产出物品。</red>"));
+            message(player, localization.text("machines.output-full"));
             return;
         }
 
@@ -193,7 +193,7 @@ public final class ManualMachineService {
 
         ManualMachineRecipe recipe = best.recipe();
         if (!canFitAfterShapelessConsume(input, output, best)) {
-            message(player, localization.text("machines.output-full", "<red>输出位置空间不足，无法产出物品。</red>"));
+            message(player, localization.text("machines.output-full"));
             return;
         }
 
@@ -261,22 +261,22 @@ public final class ManualMachineService {
 
     private String emptyMessage(ManualMachineDefinition definition) {
         if (definition.operation() == ManualMachineOperation.SHAPED_3X3) {
-            return localization.text("machines.inventory-empty", "<gray>发射器中没有 3x3 配方输入。</gray>");
+            return localization.text("machines.inventory-empty");
         }
         if (definition.operation() == ManualMachineOperation.HAND_INPUT) {
-            return localization.text("machines.empty", "<gray>手中没有可处理的物品。</gray>");
+            return localization.text("machines.empty");
         }
-        return localization.text("machines.empty", "<gray>发射器里没有可处理的物品。</gray>");
+        return localization.text("machines.empty");
     }
 
     private String noMatchMessage(ManualMachineDefinition definition) {
         if (definition.operation() == ManualMachineOperation.SHAPED_3X3) {
-            return localization.text("machines.pattern-not-found", "<red>输入物品存在，但没有匹配的 3x3 配方。</red>");
+            return localization.text("machines.pattern-not-found");
         }
         if (definition.operation() == ManualMachineOperation.HAND_INPUT) {
-            return localization.text("machines.unknown-material", "<red>手中的物品不能由这台机器处理。</red>");
+            return localization.text("machines.unknown-material");
         }
-        return localization.text("machines.unknown-material", "<red>没有找到这台机器可以处理的材料。</red>");
+        return localization.text("machines.unknown-material");
     }
 
     private ShapedMatchPlan planShaped(Inventory input, ManualMachineRecipe recipe) {
@@ -358,7 +358,7 @@ public final class ManualMachineService {
     private void runHandMachine(Player player, Block clickedBlock, ManualMachineDefinition definition) {
         Collection<ManualMachineRecipe> recipes = registry.recipesFor(definition.id());
         if (recipes.isEmpty()) {
-            message(player, localization.text("machines.no-recipes", "<gray>这台机器已经识别，但当前还没有注册可执行配方。</gray>"));
+            message(player, localization.text("machines.no-recipes"));
             return;
         }
 
@@ -385,7 +385,7 @@ public final class ManualMachineService {
         List<ManualMachineOutput> outputs = selectedOutputs(recipe);
         Inventory output = resolveHandOutputInventory(definition, clickedBlock);
         if (output != null && !canFitAll(cloneContents(output), outputs)) {
-            message(player, localization.text("machines.output-full", "<red>输出位置空间不足，无法产出物品。</red>"));
+            message(player, localization.text("machines.output-full"));
             return;
         }
 
