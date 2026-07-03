@@ -1805,7 +1805,8 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java',
             'main/java/cc/theends6/sfx/internal/machine/ManualMachineService.java',
             'main/java/cc/theends6/sfx/internal/machine/ManualMachineDeployPacks.java',
-            'main/java/cc/theends6/sfx/internal/machine/SfxManualMachineDeployListener.java'
+            'main/java/cc/theends6/sfx/internal/machine/SfxManualMachineDeployListener.java',
+            'main/java/cc/theends6/sfx/internal/machine/SfxIndustrialMinerService.java'
     ]
     inputs.files(coreLocalizationFiles.collect { layout.projectDirectory.file(it) })
     inputs.dir(layout.projectDirectory.dir('main/resources/lang'))

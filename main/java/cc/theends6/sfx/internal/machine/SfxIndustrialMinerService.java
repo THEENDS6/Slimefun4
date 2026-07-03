@@ -165,7 +165,7 @@ public final class SfxIndustrialMinerService implements Listener {
         Player player = event.getPlayer();
         String key = locationKey(structure.blastFurnace().getLocation());
         if (active.containsKey(key)) {
-            send(player, "machines.industrial-miner.already-running", "<yellow>This Industrial Miner is already running.</yellow>");
+            send(player, "machines.industrial-miner.already-running");
             return;
         }
         MiningTask task = new MiningTask(key, structure, player.getUniqueId());
@@ -173,13 +173,12 @@ public final class SfxIndustrialMinerService implements Listener {
         if (frameworkInstance != null) {
             Map<String, Object> framework = frameworkAttributes(task, frameworkInstance);
             if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, frameworkInstance.instanceId(), structure.blastFurnace().getLocation(), new SfxMachineTickContext(0L, 1L, false), null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
-                send(player, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
+                send(player, "machines.industrial-miner.structure-changed");
                 return;
             }
         }
         active.put(key, task);
-        send(player, structure.profile().advanced() ? "machines.industrial-miner.started-advanced" : "machines.industrial-miner.started",
-                structure.profile().advanced() ? "<green>Advanced Industrial Miner started.</green>" : "<green>Industrial Miner started.</green>");
+        send(player, structure.profile().advanced() ? "machines.industrial-miner.started-advanced" : "machines.industrial-miner.started");
         warmUp(task);
     }
 
@@ -220,12 +219,12 @@ public final class SfxIndustrialMinerService implements Listener {
             }
             Inventory inventory = chestInventory(task);
             if (inventory == null) {
-                stop(task, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
+                stop(task, "machines.industrial-miner.structure-changed");
                 return;
             }
             task.fuelRemaining(consumeFuel(inventory, task.structure().profile()));
             if (task.fuelRemaining() <= 0) {
-                stop(task, "machines.industrial-miner.no-fuel", "<red>Industrial Miner stopped: no fuel.</red>");
+                stop(task, "machines.industrial-miner.no-fuel");
             }
         });
         delay += 1;
@@ -280,26 +279,26 @@ public final class SfxIndustrialMinerService implements Listener {
         SfxMachineTickContext tickContext = new SfxMachineTickContext(0L, 1L, false);
         try {
             if (frameworkInstance != null && !SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
-                stop(task, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
+                stop(task, "machines.industrial-miner.structure-changed");
                 return;
             }
             if (!isStructureValid(task.structure())) {
-                stop(task, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
+                stop(task, "machines.industrial-miner.structure-changed");
                 return;
             }
             Inventory inventory = chestInventory(task);
             if (inventory == null) {
-                stop(task, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
+                stop(task, "machines.industrial-miner.structure-changed");
                 return;
             }
             if (frameworkInstance != null && !SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.BEFORE_INPUT, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_INPUT.name())) {
-                stop(task, "machines.industrial-miner.no-fuel", "<red>Industrial Miner stopped: no fuel.</red>");
+                stop(task, "machines.industrial-miner.no-fuel");
                 return;
             }
             if (task.fuelRemaining() <= 0) {
                 int gained = consumeFuel(inventory, task.structure().profile());
                 if (gained <= 0) {
-                    stop(task, "machines.industrial-miner.no-fuel", "<red>Industrial Miner stopped: no fuel.</red>");
+                    stop(task, "machines.industrial-miner.no-fuel");
                     return;
                 }
                 task.fuelRemaining(gained);
@@ -310,13 +309,13 @@ public final class SfxIndustrialMinerService implements Listener {
                 Player player = plugin.getServer().getPlayer(task.ownerId());
                 if (player != null && player.isOnline()) {
                     player.playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.4F, 1F);
-                    send(player, "machines.industrial-miner.finished", "<green>Industrial Miner finished. Mined {ores} ores.</green>", Map.of("ores", task.oresMined()));
+                    send(player, "machines.industrial-miner.finished", Map.of("ores", task.oresMined()));
                 }
                 return;
             }
             List<ItemStack> drops = dropsFor(ore, task.structure().profile());
             if (!canInsertAll(inventory, drops)) {
-                stop(task, "machines.industrial-miner.chest-full", "<red>Industrial Miner stopped: chest is full.</red>");
+                stop(task, "machines.industrial-miner.chest-full");
                 return;
             }
             for (ItemStack drop : drops) {
@@ -454,16 +453,16 @@ public final class SfxIndustrialMinerService implements Listener {
                 return;
             }
             if (block.getType() != Material.PISTON || !(block.getBlockData() instanceof Piston piston)) {
-                stop(task, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
+                stop(task, "machines.industrial-miner.structure-changed");
                 return;
             }
             Block above = block.getRelative(BlockFace.UP);
             if (!above.isEmpty() && above.getType() != Material.PISTON_HEAD) {
-                stop(task, "machines.industrial-miner.piston-no-space", "<red>Industrial Miner stopped: piston has no space above.</red>");
+                stop(task, "machines.industrial-miner.piston-no-space");
                 return;
             }
             if (piston.getFacing() != BlockFace.UP) {
-                stop(task, "machines.industrial-miner.piston-wrong-direction", "<red>Industrial Miner stopped: pistons must face upwards.</red>");
+                stop(task, "machines.industrial-miner.piston-wrong-direction");
                 return;
             }
             piston.setExtended(extended);
@@ -478,24 +477,24 @@ public final class SfxIndustrialMinerService implements Listener {
             block.getWorld().playSound(block.getLocation(), extended ? Sound.BLOCK_PISTON_EXTEND : Sound.BLOCK_PISTON_CONTRACT, SoundCategory.BLOCKS, 0.1F, 1.0F);
         } catch (RuntimeException exception) {
             plugin.getLogger().warning("Industrial Miner piston animation failed: " + exception.getMessage());
-            stop(task, "machines.industrial-miner.structure-changed", "<red>Industrial Miner stopped: structure changed.</red>");
+            stop(task, "machines.industrial-miner.structure-changed");
         }
     }
 
-    private void stop(MiningTask task, String key, String fallback) {
+    private void stop(MiningTask task, String key) {
         active.remove(task.key());
         Player player = plugin.getServer().getPlayer(task.ownerId());
         if (player != null && player.isOnline()) {
-            send(player, key, fallback);
+            send(player, key);
         }
     }
 
-    private void send(Player player, String key, String fallback) {
-        player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback)));
+    private void send(Player player, String key) {
+        player.sendMessage(Text.prefixed(plugin, localization.text(key)));
     }
 
-    private void send(Player player, String key, String fallback, Map<String, ?> placeholders) {
-        player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback, placeholders)));
+    private void send(Player player, String key, Map<String, ?> placeholders) {
+        player.sendMessage(Text.prefixed(plugin, localization.text(key, placeholders)));
     }
 
     private String locationKey(Location location) {
