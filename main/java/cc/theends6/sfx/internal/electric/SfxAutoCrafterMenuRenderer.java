@@ -51,13 +51,7 @@ final class SfxAutoCrafterMenuRenderer {
     }
 
     private void drawConfiguredBackground(SfxElectricMachineDefinition definition, Inventory inventory) {
-        for (SfxElectricMachineUiFrame frame : definition.ui().frame()) {
-            for (int slot : frame.slots()) {
-                if (slot >= 0 && slot < inventory.getSize()) {
-                    inventory.setItem(slot, frame.item().toItemStack(localization, Map.of()));
-                }
-            }
-        }
+        SfxElectricMachineUiPainter.fillConfiguredSlots(definition.ui(), inventory, localization);
     }
 
     private void drawRecipePreview(SfxElectricMachineDefinition definition, Inventory inventory, SfxAutoCrafterRecipeChoice choice) {

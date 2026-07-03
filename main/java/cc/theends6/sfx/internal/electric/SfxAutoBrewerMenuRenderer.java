@@ -40,13 +40,7 @@ final class SfxAutoBrewerMenuRenderer {
 
     private void fillFrame(SfxElectricMachineDefinition definition, Inventory inventory) {
         inventory.clear();
-        for (SfxElectricMachineUiFrame frame : definition.ui().frame()) {
-            for (int slot : frame.slots()) {
-                if (slot >= 0 && slot < inventory.getSize()) {
-                    inventory.setItem(slot, frame.item().toItemStack(localization, Map.of()));
-                }
-            }
-        }
+        SfxElectricMachineUiPainter.fillConfiguredSlots(definition.ui(), inventory, localization);
     }
 
     private ItemStack fuelDisplay(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {

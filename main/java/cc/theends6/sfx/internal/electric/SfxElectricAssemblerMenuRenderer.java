@@ -2,7 +2,6 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
-import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +42,7 @@ final class SfxElectricAssemblerMenuRenderer {
     private void fillFrame(Inventory inventory, SfxElectricMachineDefinition definition) {
         inventory.clear();
         SfxElectricAssemblerSpec spec = definition.assemblerSpec();
-        for (SfxElectricMachineUiFrame frame : definition.ui().frame()) {
-            SfxInventoryPainter.setSlots(inventory, frame.item().toItemStack(localization, Map.of()), frame.slots());
-        }
+        SfxElectricMachineUiPainter.fillConfiguredSlots(definition.ui(), inventory, localization);
         if (spec != null) {
             inventory.setItem(1, displayMaterial(definition, "assembler.head.display", spec.headMaterial(), spec.headAmount(), List.of(spec.headMaterial())));
             inventory.setItem(7, displayMaterial(definition, "assembler.body.display", spec.primaryBodyMaterial(), spec.bodyAmount(), new ArrayList<>(spec.bodyMaterials())));
