@@ -529,6 +529,7 @@ tasks.register('validateSfxCompiledContent') {
     description = 'Validates compiled SFX content is explicit runtime data without template or layout fallback tokens.'
     dependsOn 'validateSfxTemplateCompile'
     inputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
+    inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
     doLast {
         def root = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
         def compiledFiles = fileTree(root) {
@@ -562,23 +563,79 @@ tasks.register('validateSfxCompiledContent') {
                 'profile:'
         ]
         def violations = []
-        compiledFiles.each { file ->
-            def text = file.getText('UTF-8')
-            forbiddenTokens.each { token ->
-                if (text.contains(token)) {
-                    violations << "${root.toPath().relativize(file.toPath())}: contains ${token}"
-                }
-            }
-            if ((text =~ /(?m)^\s*layout\s*:/).find()) {
-                violations << "${root.toPath().relativize(file.toPath())}: contains runtime layout token"
-            }
-        }
         def recipeFiles = fileTree(new File(root, 'content/recipes')) {
             include '**/*.yml'
         }.files
         def validRecipeOperations = ['shaped', 'shapeless', 'single', 'hand'] as Set
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
+        }
+        def flattenLanguageKeys = { File file ->
+            def keys = [] as Set
+            def stack = []
+            file.readLines('UTF-8').each { line ->
+                if (line.trim().isEmpty() || line.trim().startsWith('#') || line.trim().startsWith('-')) {
+                    return
+                }
+                def matcher = line =~ /^(\s*)(['"]?)([^:'"]+)\2:\s*(.*)$/
+                if (!matcher.matches()) {
+                    return
+                }
+                int indent = matcher[0][1].length()
+                String key = matcher[0][3].trim()
+                while (!stack.isEmpty() && stack[-1].indent >= indent) {
+                    stack.remove(stack.size() - 1)
+                }
+                def path = (stack.collect { it.key } + key).join('.')
+                keys << path
+                stack << [indent: indent, key: key]
+            }
+            keys
+        }
+        def languageFiles = fileTree(layout.projectDirectory.dir('main/resources/lang')) {
+            include '**/*.yml'
+        }.files.sort { it.name }
+        def languageKeysByFile = languageFiles.collectEntries { file ->
+            [(file.name): flattenLanguageKeys(file)]
+        }
+        if (languageKeysByFile.isEmpty()) {
+            violations << "no bundled language files found under main/resources/lang"
+        }
+        def referencedLanguageKeys = [] as Set
+        def validateLanguageReferences = { String text, String rel ->
+            def missing = [] as Set
+            def lines = text.readLines()
+            for (int index = 0; index < lines.size(); index++) {
+                def matcher = lines[index] =~ /^\s+[A-Za-z0-9_.-]+-key:\s*(.+?)\s*$/
+                if (!matcher.matches()) {
+                    continue
+                }
+                def key = cleanScalar(matcher[0][1])
+                if (key == null || key.isBlank()) {
+                    violations << "${rel}:${index + 1}: blank language key reference"
+                    continue
+                }
+                referencedLanguageKeys << key
+                languageKeysByFile.each { languageFile, keys ->
+                    if (!keys.contains(key)) {
+                        missing << "${rel}:${index + 1}: ${languageFile} missing language key ${key}"
+                    }
+                }
+            }
+            violations.addAll(missing)
+        }
+        compiledFiles.each { file ->
+            def text = file.getText('UTF-8')
+            def rel = root.toPath().relativize(file.toPath()).toString()
+            forbiddenTokens.each { token ->
+                if (text.contains(token)) {
+                    violations << "${rel}: contains ${token}"
+                }
+            }
+            if ((text =~ /(?m)^\s*layout\s*:/).find()) {
+                violations << "${rel}: contains runtime layout token"
+            }
+            validateLanguageReferences(text, rel)
         }
         def validateNoLiteralUiText = { String text, String rel, String label ->
             def lines = text.readLines()
@@ -1197,7 +1254,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, and ${compiledResearchCount} researches.")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
     }
 }
 
