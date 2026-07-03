@@ -2109,7 +2109,7 @@ tasks.register('prepareRuntimeDirs') {
 tasks.register('deployToPaperRuntime', Copy) {
     group = 'deployment'
     description = 'Builds the plugin and copies it to run-paper-1.21.8/plugins.'
-    dependsOn 'prepareRuntimeDirs', 'jar'
+    dependsOn 'prepareRuntimeDirs', 'validateSfxBundledCompiledContent'
     finalizedBy 'exportPluginArtifacts'
     from(tasks.named('jar').flatMap { it.archiveFile })
     into(layout.projectDirectory.dir('run-paper-1.21.8/plugins'))
@@ -2167,7 +2167,7 @@ tasks.register('ensurePaperRuntimeTestConfig') {
 tasks.register('stagePaperRuntimeUpdate', Copy) {
     group = 'deployment'
     description = 'Builds SlimeFunX and stages the jar in run-paper-1.21.8/plugins/update for the next restart or external plugin loader.'
-    dependsOn 'ensurePaperRuntimeTestConfig', 'jar'
+    dependsOn 'ensurePaperRuntimeTestConfig', 'validateSfxBundledCompiledContent'
     from(tasks.named('jar').flatMap { it.archiveFile })
     into(layout.projectDirectory.dir('run-paper-1.21.8/plugins/update'))
     rename { rootProject.ext.pluginJarName }
@@ -2460,7 +2460,7 @@ if (Test-Path \$preferredJava) {
 tasks.register('deployToPaper261Runtime', Copy) {
     group = 'deployment'
     description = 'Builds the plugin and copies it to run-paper-26.1/plugins.'
-    dependsOn 'preparePaper261Runtime', 'jar'
+    dependsOn 'preparePaper261Runtime', 'validateSfxBundledCompiledContent'
     from(tasks.named('jar').flatMap { it.archiveFile })
     into(layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName + '/plugins'))
     rename { rootProject.ext.pluginJarName }
@@ -2469,7 +2469,7 @@ tasks.register('deployToPaper261Runtime', Copy) {
 tasks.register('deployToFoliaRuntime', Copy) {
     group = 'deployment'
     description = 'Builds the plugin and copies it to run-folia-1.21.8/plugins.'
-    dependsOn 'prepareRuntimeDirs', 'jar'
+    dependsOn 'prepareRuntimeDirs', 'validateSfxBundledCompiledContent'
     from(tasks.named('jar').flatMap { it.archiveFile })
     into(layout.projectDirectory.dir('run-folia-1.21.8/plugins'))
     rename { rootProject.ext.pluginJarName }
