@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.configurable;
 
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import java.util.List;
+import java.util.Objects;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 
@@ -19,6 +20,7 @@ final class SfxConfigurableMachineDefinition {
     private final String coolantItemId;
     private final List<ReactorFuel> fuels;
     private final boolean witherAura;
+    private final SfxConfigurableMachineUiDefinition ui;
 
     SfxConfigurableMachineDefinition(
             String id,
@@ -33,7 +35,8 @@ final class SfxConfigurableMachineDefinition {
             EntityType spawnType,
             String coolantItemId,
             List<ReactorFuel> fuels,
-            boolean witherAura
+            boolean witherAura,
+            SfxConfigurableMachineUiDefinition ui
     ) {
         this.id = id;
         this.kind = kind;
@@ -48,94 +51,7 @@ final class SfxConfigurableMachineDefinition {
         this.coolantItemId = coolantItemId;
         this.fuels = fuels == null ? List.of() : List.copyOf(fuels);
         this.witherAura = witherAura;
-    }
-
-    static SfxConfigurableMachineDefinition ironGolemAssembler() {
-        return new SfxConfigurableMachineDefinition(
-                "sf:iron_golem_assembler",
-                SfxConfigurableMachineKind.ASSEMBLER,
-                81920,
-                75,
-                0,
-                Material.CARVED_PUMPKIN,
-                1,
-                Material.IRON_BLOCK,
-                4,
-                EntityType.IRON_GOLEM,
-                null,
-                List.of(),
-                false);
-    }
-
-    static SfxConfigurableMachineDefinition witherAssembler() {
-        return new SfxConfigurableMachineDefinition(
-                "sf:wither_assembler",
-                SfxConfigurableMachineKind.ASSEMBLER,
-                81920,
-                150,
-                0,
-                Material.WITHER_SKELETON_SKULL,
-                3,
-                Material.SOUL_SAND,
-                4,
-                EntityType.WITHER,
-                null,
-                List.of(),
-                false);
-    }
-
-    static SfxConfigurableMachineDefinition nuclearReactor() {
-        return new SfxConfigurableMachineDefinition(
-                "sf:nuclear_reactor",
-                SfxConfigurableMachineKind.REACTOR,
-                327680,
-                0,
-                500,
-                null,
-                0,
-                null,
-                0,
-                null,
-                "sf:reactor_coolant_cell",
-                List.of(
-                        new ReactorFuel("sf:uranium", null, 1, 1200, SfxElectricStack.sfx("sf:neptunium", 1)),
-                        new ReactorFuel("sf:neptunium", null, 1, 600, SfxElectricStack.sfx("sf:plutonium", 1)),
-                        new ReactorFuel("sf:boosted_uranium", null, 1, 1500, null)),
-                false);
-    }
-
-    static SfxConfigurableMachineDefinition netherStarReactor(int energyPerTick) {
-        return new SfxConfigurableMachineDefinition(
-                "sf:netherstar_reactor",
-                SfxConfigurableMachineKind.REACTOR,
-                655360,
-                0,
-                Math.max(1, energyPerTick),
-                null,
-                0,
-                null,
-                0,
-                null,
-                "sf:nether_ice_coolant_cell",
-                List.of(new ReactorFuel("nether_star", Material.NETHER_STAR, 1, 1800, null)),
-                true);
-    }
-
-    static SfxConfigurableMachineDefinition reactorAccessPort() {
-        return new SfxConfigurableMachineDefinition(
-                "sf:reactor_access_port",
-                SfxConfigurableMachineKind.ACCESS_PORT,
-                0,
-                0,
-                0,
-                null,
-                0,
-                null,
-                0,
-                null,
-                null,
-                List.of(),
-                false);
+        this.ui = Objects.requireNonNull(ui, "ui");
     }
 
     String id() {
@@ -188,6 +104,10 @@ final class SfxConfigurableMachineDefinition {
 
     boolean witherAura() {
         return witherAura;
+    }
+
+    SfxConfigurableMachineUiDefinition ui() {
+        return ui;
     }
 
     boolean isConsumer() {
