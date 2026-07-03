@@ -891,6 +891,7 @@ public final class SfxTemplateCompiler {
         int inventorySize = intValue(ui.get("inventory-size"), 0);
         if (inventorySize <= 0) {
             ui.putIfAbsent("slots", new LinkedHashMap<String, Object>());
+            ui.remove("frame");
             machine.remove("slots");
             return;
         }
@@ -943,6 +944,7 @@ public final class SfxTemplateCompiler {
         machine.remove("slots");
         ui.put("slots", slotDefinitions);
         completeElectricUiDefaults(ui);
+        ui.remove("frame");
     }
 
     @SuppressWarnings("unchecked")
