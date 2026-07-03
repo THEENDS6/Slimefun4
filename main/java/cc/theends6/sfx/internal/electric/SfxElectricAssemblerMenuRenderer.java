@@ -63,7 +63,7 @@ final class SfxElectricAssemblerMenuRenderer {
         ItemStack stack = definition.ui().requiredItem(key).toItemStack(material, localization, Map.of("amount", amount));
         if (acceptedMaterials.size() > 1) {
             List<Component> lore = stack.lore() == null ? new ArrayList<>() : new ArrayList<>(stack.lore());
-            lore.add(localization.component("configurable-ui.assembler.accepted.lore", "<gray>Accepted materials:</gray>"));
+            lore.add(localization.component("configurable-ui.assembler.accepted.lore"));
             for (Material accepted : acceptedMaterials) {
                 lore.add(Component.text(" - ").append(Component.translatable(accepted.translationKey())));
             }
