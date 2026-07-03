@@ -83,7 +83,7 @@ public final class DefaultSfxItems implements SfxItems {
                 HeadTextures.apply(meta, definition.headTextureHash());
             }
             applyDefinitionMeta(meta, definition);
-            meta.displayName(Text.noItalic(localization.component(definition.nameKey(), definition.nameKey())));
+            meta.displayName(Text.noItalic(localization.component(definition.nameKey())));
             List<net.kyori.adventure.text.Component> lore = definition.loreKey() == null
                     ? List.of()
                     : localization.requiredList(definition.loreKey()).stream()

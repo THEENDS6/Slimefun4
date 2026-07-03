@@ -1817,6 +1817,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/energy/SfxEnergyDisplayController.java',
             'main/java/cc/theends6/sfx/internal/block/SfxBasicMachineBlockListener.java',
             'main/java/cc/theends6/sfx/internal/block/SfxSpawnerService.java',
+            'main/java/cc/theends6/sfx/internal/item/DefaultSfxItems.java',
             'main/java/cc/theends6/sfx/internal/listener/SfxItemUseDispatcher.java',
             'main/java/cc/theends6/sfx/internal/listener/SfxLegacyFoodListener.java',
             'main/java/cc/theends6/sfx/internal/listener/SfxLegacyCombatToolListener.java',
