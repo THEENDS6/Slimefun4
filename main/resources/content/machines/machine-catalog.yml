@@ -18,6 +18,7 @@ machines:
     - machine
     - basic
     - manual
+    - grind-stone
   sf:compressor:
     category: BASIC
     display-name: sf:compressor
@@ -27,6 +28,7 @@ machines:
     - machine
     - basic
     - manual
+    - compressor
   sf:ore_crusher:
     category: BASIC
     display-name: sf:ore_crusher
@@ -36,6 +38,7 @@ machines:
     - machine
     - basic
     - manual
+    - ore-crusher
   sf:ore_washer:
     category: BASIC
     display-name: sf:ore_washer
@@ -45,6 +48,7 @@ machines:
     - machine
     - basic
     - manual
+    - ore-washer
   sf:armor_forge:
     category: BASIC
     display-name: sf:armor_forge
@@ -64,7 +68,6 @@ machines:
     - machine
     - basic
     - manual
-    - grind-stone
     - smeltery
   sf:smeltery:
     category: BASIC
@@ -75,7 +78,6 @@ machines:
     - machine
     - basic
     - manual
-    - ore-crusher
     - smeltery
   sf:pressure_chamber:
     category: BASIC
@@ -86,6 +88,7 @@ machines:
     - machine
     - basic
     - manual
+    - pressure-chamber
   sf:magic_workbench:
     category: BASIC
     display-name: sf:magic_workbench
@@ -116,6 +119,7 @@ machines:
     - machine
     - basic
     - manual
+    - juicer
   sf:automated_panning_machine:
     category: BASIC
     display-name: sf:automated_panning_machine

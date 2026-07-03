@@ -10,7 +10,6 @@ machines:
     - machine
     - basic
     - manual
-    - grind-stone
     - enhanced-crafting
     pattern:
     - type: empty
@@ -47,7 +46,7 @@ machines:
     - machine
     - basic
     - manual
-    - ore-crusher
+    - grind-stone
     pattern:
     - type: empty
     - type: empty
@@ -83,6 +82,7 @@ machines:
     - machine
     - basic
     - manual
+    - compressor
     pattern:
     - type: empty
     - type: empty
@@ -122,6 +122,7 @@ machines:
     - machine
     - basic
     - manual
+    - ore-crusher
     pattern:
     - type: empty
     - type: empty
@@ -161,6 +162,7 @@ machines:
     - machine
     - basic
     - manual
+    - ore-washer
     pattern:
     - type: empty
     - type: material
@@ -316,6 +318,7 @@ machines:
     - machine
     - basic
     - manual
+    - pressure-chamber
     pattern:
     - type: material
       material: SMOOTH_STONE_SLAB
@@ -402,8 +405,8 @@ machines:
     tags:
     - machine
     - basic
-    - manual
     - hand-input-transform
+    - manual
     pattern:
     - type: empty
     - type: empty
@@ -443,6 +446,7 @@ machines:
     - machine
     - basic
     - manual
+    - juicer
     pattern:
     - type: empty
     - type: material
@@ -479,8 +483,8 @@ machines:
     tags:
     - machine
     - basic
-    - manual
     - hand-input-transform
+    - manual
     pattern:
     - type: empty
     - type: empty

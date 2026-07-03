@@ -72,7 +72,8 @@ recipes:
     guide-order: 4
     source: slimefun-rc37
     runtime: true
-    machine: sf:compressor
+    runtime-machine-tags:
+    - compressor
     input:
       type: vanilla
       material: COAL
@@ -88,7 +89,8 @@ recipes:
     guide-order: 5
     source: slimefun-rc37
     runtime: true
-    machine: sf:compressor
+    runtime-machine-tags:
+    - compressor
     input:
       type: sfx
       id: sf:carbon
@@ -104,7 +106,8 @@ recipes:
     guide-order: 6
     source: slimefun-rc37
     runtime: true
-    machine: sf:compressor
+    runtime-machine-tags:
+    - compressor
     input:
       type: sfx
       id: sf:reinforced_alloy_ingot
@@ -120,7 +123,8 @@ recipes:
     guide-order: 7
     source: slimefun-rc37
     runtime: true
-    machine: sf:compressor
+    runtime-machine-tags:
+    - compressor
     input:
       type: sfx
       id: sf:steel_ingot
@@ -218,7 +222,8 @@ recipes:
     guide-order: 13
     source: slimefun-rc37
     runtime: true
-    machine: sf:juicer
+    runtime-machine-tags:
+    - juicer
     input: APPLE
     outputs:
     - sf:apple_juice
@@ -231,7 +236,8 @@ recipes:
     guide-order: 14
     source: slimefun-rc37
     runtime: true
-    machine: sf:juicer
+    runtime-machine-tags:
+    - juicer
     input: CARROT
     outputs:
     - sf:carrot_juice
@@ -244,7 +250,8 @@ recipes:
     guide-order: 15
     source: slimefun-rc37
     runtime: true
-    machine: sf:juicer
+    runtime-machine-tags:
+    - juicer
     input: GLOW_BERRIES
     outputs:
     - sf:glow_berry_juice
@@ -257,7 +264,8 @@ recipes:
     guide-order: 16
     source: slimefun-rc37
     runtime: true
-    machine: sf:juicer
+    runtime-machine-tags:
+    - juicer
     input: GOLDEN_APPLE
     outputs:
     - sf:golden_apple_juice
@@ -270,7 +278,8 @@ recipes:
     guide-order: 17
     source: slimefun-rc37
     runtime: true
-    machine: sf:juicer
+    runtime-machine-tags:
+    - juicer
     input: MELON_SLICE
     outputs:
     - sf:melon_juice
@@ -283,7 +292,8 @@ recipes:
     guide-order: 18
     source: slimefun-rc37
     runtime: true
-    machine: sf:juicer
+    runtime-machine-tags:
+    - juicer
     input: PUMPKIN
     outputs:
     - sf:pumpkin_juice
@@ -296,7 +306,8 @@ recipes:
     guide-order: 19
     source: slimefun-rc37
     runtime: true
-    machine: sf:juicer
+    runtime-machine-tags:
+    - juicer
     input: SWEET_BERRIES
     outputs:
     - sf:sweet_berry_juice
@@ -445,7 +456,8 @@ recipes:
     guide-order: 27
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_washer
+    runtime-machine-tags:
+    - ore-washer
     input: sf:sifted_ore
     outputs:
     - sf:aluminum_dust
@@ -458,7 +470,8 @@ recipes:
     guide-order: 28
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_washer
+    runtime-machine-tags:
+    - ore-washer
     input: sf:sifted_ore
     outputs:
     - sf:copper_dust
@@ -471,7 +484,8 @@ recipes:
     guide-order: 29
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_washer
+    runtime-machine-tags:
+    - ore-washer
     input: sf:sifted_ore
     outputs:
     - sf:lead_dust
@@ -484,7 +498,8 @@ recipes:
     guide-order: 30
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_washer
+    runtime-machine-tags:
+    - ore-washer
     input: sf:sifted_ore
     outputs:
     - sf:magnesium_dust
@@ -497,7 +512,8 @@ recipes:
     guide-order: 31
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_washer
+    runtime-machine-tags:
+    - ore-washer
     input: sf:pulverized_ore
     outputs:
     - sf:pure_ore_cluster
@@ -510,7 +526,8 @@ recipes:
     guide-order: 32
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_washer
+    runtime-machine-tags:
+    - ore-washer
     input:
       type: vanilla
       material: SAND
@@ -526,7 +543,8 @@ recipes:
     guide-order: 33
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_washer
+    runtime-machine-tags:
+    - ore-washer
     input: sf:sifted_ore
     outputs:
     - sf:silver_dust
@@ -539,7 +557,8 @@ recipes:
     guide-order: 34
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_washer
+    runtime-machine-tags:
+    - ore-washer
     input: sf:sifted_ore
     outputs:
     - sf:stone_chunk
@@ -552,7 +571,8 @@ recipes:
     guide-order: 35
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_washer
+    runtime-machine-tags:
+    - ore-washer
     input: sf:sifted_ore
     outputs:
     - sf:tin_dust
@@ -565,7 +585,8 @@ recipes:
     guide-order: 36
     source: slimefun-rc37
     runtime: true
-    machine: sf:ore_washer
+    runtime-machine-tags:
+    - ore-washer
     input: sf:sifted_ore
     outputs:
     - sf:zinc_dust
