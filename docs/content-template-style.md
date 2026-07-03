@@ -18,7 +18,7 @@ Use directives at the largest practical scope.
 - `@p` / `@project`: Define project variables for broad content defaults.
 - `${...}`: Do not wrap one-off values just to make them look templated.
 
-Short directive names are preferred in maintained template files, but the long names remain valid aliases.
+Short directive names may be used where they keep nearby template style consistent, but this is only a readability choice. Do not rewrite files only to change directive spelling; the long names remain valid aliases.
 
 ## Compiled Rules
 

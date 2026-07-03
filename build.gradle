@@ -569,8 +569,20 @@ tasks.register('validateSfxCompiledContent') {
         def validRecipeOperations = ['shaped', 'shapeless', 'single', 'hand'] as Set
         def recipeMachineReferences = []
         def recipeMachineTagReferences = []
+        def recipeItemReferences = []
+        def electricRecipeItemReferences = []
+        def compiledItemIds = [] as Set
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
+        }
+        def addRecipeItemReference = { File file, recipe, String section, Object rawId, int lineNumber ->
+            def rel = root.toPath().relativize(file.toPath()).toString()
+            def id = cleanScalar(String.valueOf(rawId))
+            if (id == null || id.isBlank()) {
+                violations << "${rel}:${lineNumber}: recipe ${recipe.key} ${section} contains blank sfx item reference"
+            } else {
+                recipeItemReferences << [rel: rel, line: lineNumber, recipe: recipe.key, section: section, item: id]
+            }
         }
         def flattenLanguageKeys = { File file ->
             def keys = [] as Set
@@ -761,13 +773,23 @@ tasks.register('validateSfxCompiledContent') {
         }
         int recipeEntryCount = 0
         recipeFiles.each { file ->
+            def rel = root.toPath().relativize(file.toPath()).toString()
             def text = file.getText('UTF-8')
             recipeEntryCount += (text =~ /(?m)^  ['"]?[^#\s][^\r\n]*['"]?:\s*$/).count
             def currentRecipe = null
+            def flushPendingSfxSlot = {
+                if (currentRecipe != null && currentRecipe.pendingSfxSection != null) {
+                    violations << "${rel}:${currentRecipe.pendingSfxLine}: recipe ${currentRecipe.key} ${currentRecipe.pendingSfxSection} sfx stack missing id"
+                    currentRecipe.pendingSfxSection = null
+                    currentRecipe.pendingSfxLine = null
+                }
+            }
             def flushRecipe = {
+                flushPendingSfxSlot()
                 validateRecipeEntry(file, currentRecipe)
             }
-            text.readLines().each { line ->
+            text.readLines().eachWithIndex { line, lineIndex ->
+                int lineNumber = lineIndex + 1
                 def recipeMatch = line =~ /^  ['"]?([^'"#\s][^'"]*?)['"]?:\s*$/
                 if (recipeMatch.matches()) {
                     flushRecipe()
@@ -783,7 +805,9 @@ tasks.register('validateSfxCompiledContent') {
                             outputsCount: 0,
                             machineRefs : [],
                             machineTagRefs: [],
-                            scalarSlot  : false
+                            scalarSlot  : false,
+                            pendingSfxSection: null,
+                            pendingSfxLine: null
                     ]
                     return
                 }
@@ -792,10 +816,11 @@ tasks.register('validateSfxCompiledContent') {
                 }
                 def fieldMatch = line =~ /^    ([A-Za-z0-9_-]+):(?:\s*(.*))?$/
                 if (fieldMatch.matches()) {
+                    flushPendingSfxSlot()
                     def field = fieldMatch[0][1]
                     def value = cleanScalar(fieldMatch[0][2])
                     currentRecipe.fields.add(field)
-                    currentRecipe.section = ['matrix', 'inputs', 'outputs'].contains(field) ? field : null
+                    currentRecipe.section = ['matrix', 'inputs', 'input', 'outputs', 'random-outputs'].contains(field) ? field : null
                     if (field == 'id') {
                         currentRecipe.id = value
                     } else if (field == 'operation') {
@@ -809,7 +834,6 @@ tasks.register('validateSfxCompiledContent') {
                     } else if (field == 'runtime-machine-tags') {
                         currentRecipe.section = 'runtime-machine-tags'
                     } else if (field == 'input') {
-                        currentRecipe.section = null
                         if (value != null && !value.isBlank()) {
                             currentRecipe.scalarSlot = true
                         }
@@ -826,6 +850,16 @@ tasks.register('validateSfxCompiledContent') {
                             && !itemText.startsWith('type:')) {
                         currentRecipe.scalarSlot = true
                     }
+                    def inlineTypeMatch = itemText =~ /^type:\s*(.+?)\s*$/
+                    if (['matrix', 'inputs', 'outputs', 'random-outputs'].contains(currentRecipe.section)
+                            && inlineTypeMatch.matches()) {
+                        flushPendingSfxSlot()
+                        def type = cleanScalar(inlineTypeMatch[0][1])
+                        if (type != null && type.equalsIgnoreCase('sfx')) {
+                            currentRecipe.pendingSfxSection = currentRecipe.section
+                            currentRecipe.pendingSfxLine = lineNumber
+                        }
+                    }
                     if (currentRecipe.section == 'matrix') {
                         currentRecipe.matrixCount++
                     } else if (currentRecipe.section == 'inputs') {
@@ -837,6 +871,24 @@ tasks.register('validateSfxCompiledContent') {
                     } else if (currentRecipe.section == 'runtime-machine-tags') {
                         currentRecipe.machineTagRefs << cleanScalar(itemText)
                     }
+                    return
+                }
+                def nestedTypeMatch = line =~ /^      type:\s*(.+?)\s*$/
+                if (['input', 'matrix', 'inputs', 'outputs', 'random-outputs'].contains(currentRecipe.section)
+                        && nestedTypeMatch.matches()) {
+                    flushPendingSfxSlot()
+                    def type = cleanScalar(nestedTypeMatch[0][1])
+                    if (type != null && type.equalsIgnoreCase('sfx')) {
+                        currentRecipe.pendingSfxSection = currentRecipe.section
+                        currentRecipe.pendingSfxLine = lineNumber
+                    }
+                    return
+                }
+                def nestedIdMatch = line =~ /^      id:\s*(.+?)\s*$/
+                if (currentRecipe.pendingSfxSection != null && nestedIdMatch.matches()) {
+                    addRecipeItemReference(file, currentRecipe, currentRecipe.pendingSfxSection, nestedIdMatch[0][1], lineNumber)
+                    currentRecipe.pendingSfxSection = null
+                    currentRecipe.pendingSfxLine = null
                 }
             }
             flushRecipe()
@@ -1115,6 +1167,37 @@ tasks.register('validateSfxCompiledContent') {
         if (!new File(root, 'content/items/items.yml').isFile()) {
             violations << "compiled item override output missing content/items/items.yml"
         }
+        def compiledItemContentFiles = fileTree(new File(root, 'content/items')) {
+            include '**/*.yml'
+        }.files
+        compiledItemContentFiles.each { itemFile ->
+            def rel = root.toPath().relativize(itemFile.toPath()).toString()
+            def inItems = false
+            itemFile.readLines('UTF-8').eachWithIndex { line, lineIndex ->
+                def itemsRootMatch = line =~ /^items:\s*(.*)$/
+                if (itemsRootMatch.matches()) {
+                    def value = cleanScalar(itemsRootMatch[0][1])
+                    inItems = value == null || value.isBlank()
+                    return
+                }
+                if ((line =~ /^[A-Za-z0-9_-]+:\s*/).matches()) {
+                    inItems = false
+                    return
+                }
+                if (!inItems) {
+                    return
+                }
+                def idMatch = line =~ /^- id:\s*(.+?)\s*$/
+                if (idMatch.matches()) {
+                    def id = cleanScalar(idMatch[0][1])
+                    if (id == null || id.isBlank()) {
+                        violations << "${rel}:${lineIndex + 1}: blank compiled item id"
+                    } else if (!compiledItemIds.add(id)) {
+                        violations << "${rel}:${lineIndex + 1}: duplicate compiled item id ${id}"
+                    }
+                }
+            }
+        }
         def compiledResearchFile = new File(root, 'content/researches/10-legacy-slimefun.yml')
         if (!compiledResearchFile.isFile()) {
             violations << "compiled research output missing content/researches/10-legacy-slimefun.yml"
@@ -1214,6 +1297,29 @@ tasks.register('validateSfxCompiledContent') {
             def electricAmountCount = (electricRecipeText =~ /(?m)^\s+amount:\s*/).count
             if (electricSlotCount != electricAmountCount) {
                 violations << "compiled electric recipe slots must explicitly include amount: slots=${electricSlotCount}, amounts=${electricAmountCount}"
+            }
+            electricRecipeText.readLines().eachWithIndex { line, lineIndex ->
+                def itemMatch = line =~ /^\s+-\s*item:\s*(.+?)\s*$/
+                if (itemMatch.matches()) {
+                    def id = cleanScalar(itemMatch[0][1])
+                    if (id == null || id.isBlank()) {
+                        violations << "content/machines/electric-recipes/electric-recipes.yml:${lineIndex + 1}: blank electric recipe item reference"
+                    } else {
+                        electricRecipeItemReferences << [rel: 'content/machines/electric-recipes/electric-recipes.yml', line: lineIndex + 1, item: id]
+                    }
+                }
+            }
+        }
+        if (!compiledItemIds.isEmpty()) {
+            recipeItemReferences.each { ref ->
+                if (!compiledItemIds.contains(ref.item)) {
+                    violations << "${ref.rel}:${ref.line}: recipe ${ref.recipe} ${ref.section} references unknown item ${ref.item}"
+                }
+            }
+            electricRecipeItemReferences.each { ref ->
+                if (!compiledItemIds.contains(ref.item)) {
+                    violations << "${ref.rel}:${ref.line}: electric recipe references unknown item ${ref.item}"
+                }
             }
         }
         def electricFiles = fileTree(new File(root, 'content/machines/electric-machines')) {
@@ -1330,7 +1436,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, ${recipeMachineReferences.size()} recipe machine reference(s), ${recipeMachineTagReferences.size()} recipe machine tag reference(s), and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, ${recipeMachineReferences.size()} recipe machine reference(s), ${recipeMachineTagReferences.size()} recipe machine tag reference(s), ${recipeItemReferences.size()} recipe item reference(s), ${electricRecipeItemReferences.size()} electric recipe item reference(s), and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
     }
 }
 
