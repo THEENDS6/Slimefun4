@@ -201,6 +201,7 @@ machines:
     - basic
     - manual
     - armor
+    - armor-forge
     pattern:
     - type: empty
     - type: empty

@@ -9,7 +9,8 @@ recipes:
     guide-order: 1
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -31,7 +32,8 @@ recipes:
     guide-order: 2
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - SLIME_BALL
     - empty
@@ -53,7 +55,8 @@ recipes:
     guide-order: 3
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - SLIME_BALL
     - sf:steel_plate
@@ -75,7 +78,8 @@ recipes:
     guide-order: 4
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - SLIME_BALL
     - sf:steel_plate
@@ -97,7 +101,8 @@ recipes:
     guide-order: 5
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -119,7 +124,8 @@ recipes:
     guide-order: 6
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:gold_8k
     - HONEY_BLOCK
@@ -141,7 +147,8 @@ recipes:
     guide-order: 7
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:gold_8k
     - HONEY_BLOCK
@@ -163,7 +170,8 @@ recipes:
     guide-order: 8
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:gold_8k
     - empty
@@ -185,7 +193,8 @@ recipes:
     guide-order: 9
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -207,7 +216,8 @@ recipes:
     guide-order: 10
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - SLIME_BALL
     - SLIME_BALL
@@ -229,7 +239,8 @@ recipes:
     guide-order: 11
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -251,7 +262,8 @@ recipes:
     guide-order: 12
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:ender_lump_1
     - empty
@@ -273,7 +285,8 @@ recipes:
     guide-order: 13
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:ender_lump_1
     - ENDER_EYE
@@ -295,7 +308,8 @@ recipes:
     guide-order: 14
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:ender_lump_1
     - ENDER_EYE
@@ -317,7 +331,8 @@ recipes:
     guide-order: 15
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -339,7 +354,8 @@ recipes:
     guide-order: 16
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - ORANGE_WOOL
     - empty
@@ -361,7 +377,8 @@ recipes:
     guide-order: 17
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - BLACK_WOOL
     - sf:reinforced_cloth
@@ -383,7 +400,8 @@ recipes:
     guide-order: 18
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - COAL_BLOCK
     - COAL_BLOCK
@@ -405,7 +423,8 @@ recipes:
     guide-order: 19
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -427,7 +446,8 @@ recipes:
     guide-order: 20
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:rainbow_leather
     - empty
@@ -449,7 +469,8 @@ recipes:
     guide-order: 21
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:rainbow_leather
     - sf:rainbow_leather
@@ -471,7 +492,8 @@ recipes:
     guide-order: 22
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:reinforced_cloth
     - empty
@@ -493,7 +515,8 @@ recipes:
     guide-order: 23
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - ORANGE_WOOL
     - sf:reinforced_cloth
@@ -515,7 +538,8 @@ recipes:
     guide-order: 24
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -537,7 +561,8 @@ recipes:
     guide-order: 25
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - SLIME_BALL
     - empty
@@ -559,7 +584,8 @@ recipes:
     guide-order: 26
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - SLIME_BALL
     - IRON_INGOT
@@ -581,7 +607,8 @@ recipes:
     guide-order: 27
     source: slimefun-rc37
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - SLIME_BALL
     - IRON_INGOT
@@ -603,7 +630,8 @@ recipes:
     guide-order: 9901
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - CACTUS
     - CACTUS
@@ -625,7 +653,8 @@ recipes:
     guide-order: 9902
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - CACTUS
     - empty
@@ -647,7 +676,8 @@ recipes:
     guide-order: 9903
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - CACTUS
     - CACTUS
@@ -669,7 +699,8 @@ recipes:
     guide-order: 9904
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -691,7 +722,8 @@ recipes:
     guide-order: 9901
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:damascus_steel_ingot
     - sf:damascus_steel_ingot
@@ -713,7 +745,8 @@ recipes:
     guide-order: 9902
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:damascus_steel_ingot
     - empty
@@ -735,7 +768,8 @@ recipes:
     guide-order: 9903
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:damascus_steel_ingot
     - sf:damascus_steel_ingot
@@ -757,7 +791,8 @@ recipes:
     guide-order: 9904
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -779,7 +814,8 @@ recipes:
     guide-order: 9901
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:reinforced_alloy_ingot
     - sf:reinforced_alloy_ingot
@@ -801,7 +837,8 @@ recipes:
     guide-order: 9902
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:reinforced_alloy_ingot
     - empty
@@ -823,7 +860,8 @@ recipes:
     guide-order: 9903
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:reinforced_alloy_ingot
     - sf:reinforced_alloy_ingot
@@ -845,7 +883,8 @@ recipes:
     guide-order: 9904
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -867,7 +906,8 @@ recipes:
     guide-order: 9901
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:gilded_iron
     - sf:gilded_iron
@@ -889,7 +929,8 @@ recipes:
     guide-order: 9902
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:gilded_iron
     - empty
@@ -911,7 +952,8 @@ recipes:
     guide-order: 9903
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:gilded_iron
     - sf:gilded_iron
@@ -933,7 +975,8 @@ recipes:
     guide-order: 9904
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -955,7 +998,8 @@ recipes:
     guide-order: 9901
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:gold_12k
     - sf:gold_12k
@@ -977,7 +1021,8 @@ recipes:
     guide-order: 9902
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:gold_12k
     - empty
@@ -999,7 +1044,8 @@ recipes:
     guide-order: 9903
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:gold_12k
     - sf:gold_12k
@@ -1021,7 +1067,8 @@ recipes:
     guide-order: 9904
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -1043,7 +1090,8 @@ recipes:
     guide-order: 9901
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - GLOWSTONE
     - GLOWSTONE
@@ -1065,7 +1113,8 @@ recipes:
     guide-order: 9902
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - GLOWSTONE
     - empty
@@ -1087,7 +1136,8 @@ recipes:
     guide-order: 9903
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - GLOWSTONE
     - GLOWSTONE
@@ -1109,7 +1159,8 @@ recipes:
     guide-order: 9904
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
@@ -1131,7 +1182,8 @@ recipes:
     guide-order: 9901
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:rainbow_leather
     - sf:rainbow_leather
@@ -1153,7 +1205,8 @@ recipes:
     guide-order: 9902
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:rainbow_leather
     - empty
@@ -1175,7 +1228,8 @@ recipes:
     guide-order: 9903
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - sf:rainbow_leather
     - sf:rainbow_leather
@@ -1197,7 +1251,8 @@ recipes:
     guide-order: 9904
     source: slimefunx-legacy
     runtime: true
-    machine: sf:armor_forge
+    runtime-machine-tags:
+    - armor-forge
     matrix:
     - empty
     - empty
