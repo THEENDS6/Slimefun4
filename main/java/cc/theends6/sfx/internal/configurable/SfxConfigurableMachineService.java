@@ -76,21 +76,14 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxConfigurableMachineService implements Listener {
-    private static final int INVENTORY_SIZE = 54;
     private static final long FLUSH_INTERVAL = 20L;
     private static final int[] ASSEMBLER_HEAD_SLOTS = {19, 28};
     private static final int[] ASSEMBLER_BODY_SLOTS = {25, 34};
     private static final int[] ASSEMBLER_HEAD_STATE_SLOTS = {0, 1};
     private static final int[] ASSEMBLER_BODY_STATE_SLOTS = {2, 3};
-    private static final int[] REACTOR_FUEL_SLOTS = {19, 28, 37};
-    private static final int[] REACTOR_COOLANT_SLOTS = {25, 34, 43};
-    private static final int[] REACTOR_OUTPUT_SLOTS = {40};
     private static final int ENABLE_SLOT = 13;
     private static final int OFFSET_SLOT = 31;
     private static final int ASSEMBLER_STATUS_SLOT = 22;
-    private static final int REACTOR_MODE_SLOT = 4;
-    private static final int REACTOR_PROGRESS_SLOT = 22;
-    private static final int REACTOR_STATUS_SLOT = 49;
     private static final int ASSEMBLER_WORK_TICKS = 30 * 20;
     private static final int REACTOR_COOLANT_TICKS = 300;
     private static final int HOLOGRAM_VIEW_DISTANCE_SQUARED = 32 * 32;
@@ -151,18 +144,10 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private void registerDefinitions() {
         Map<String, SfxConfigurableMachineDefinition> yamlDefinitions = SfxConfigurableMachineDefinitions.load(plugin);
-        if (!yamlDefinitions.isEmpty()) {
-            yamlDefinitions.values().forEach(this::register);
-        } else {
-            if (plugin.getConfig().getBoolean("content.runtime.compiled-only", true)) {
-                throw new IllegalStateException("Compiled-only content runtime is enabled, but no configurable machine definitions were loaded.");
-            }
-            boolean sfxGeneratorBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
-            int netherStarEnergy = sfxGeneratorBalance ? 2048 : 1024;
-            register(SfxConfigurableMachineDefinition.nuclearReactor());
-            register(SfxConfigurableMachineDefinition.netherStarReactor(netherStarEnergy));
-            register(SfxConfigurableMachineDefinition.reactorAccessPort());
+        if (yamlDefinitions.isEmpty()) {
+            throw new IllegalStateException("No compiled configurable machine definitions were loaded; Java fallback definitions are disabled.");
         }
+        yamlDefinitions.values().forEach(this::register);
         machineRuntime.registerDefinitions(SfxConfigurableMachineFrameworkBridge.definitions(definitions));
     }
 
@@ -374,13 +359,13 @@ public final class SfxConfigurableMachineService implements Listener {
         boolean topSlot = event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize();
         if (topSlot) {
             int raw = event.getRawSlot();
-            boolean managedInput = contains(editableInputSlots(holder.panelType()), raw);
-            boolean managedOutput = contains(editableOutputSlots(holder.panelType()), raw);
+            boolean managedInput = contains(editableInputSlots(holder.panelType(), definition), raw);
+            boolean managedOutput = contains(editableOutputSlots(holder.panelType(), definition), raw);
             if (SfxMachineMenuTransactions.handleManagedHotbarOrOffhand(event, event.getView().getTopInventory(), raw, player, managedInput, managedOutput, stack -> isValidInputItem(holder.panelType(), raw, stack, definition))) {
                 runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
                 return;
             }
-            if ((managedInput || managedOutput) && SfxMachineMenuTransactions.handleManagedDoubleClick(event, event.getView().getTopInventory(), player, slot -> contains(managedOutput ? editableOutputSlots(holder.panelType()) : editableInputSlots(holder.panelType()), slot))) {
+            if ((managedInput || managedOutput) && SfxMachineMenuTransactions.handleManagedDoubleClick(event, event.getView().getTopInventory(), player, slot -> contains(managedOutput ? editableOutputSlots(holder.panelType(), definition) : editableInputSlots(holder.panelType(), definition), slot))) {
                 runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
                 return;
             }
@@ -389,8 +374,8 @@ public final class SfxConfigurableMachineService implements Listener {
             return;
         }
         if (event.isShiftClick() && !topSlot) {
-            int[] targetSlots = editableInputSlots(holder.panelType());
-            if (moveShiftClickedStack(event.getView().getTopInventory(), event.getCurrentItem(), targetSlots, definition)) {
+            int[] targetSlots = editableInputSlots(holder.panelType(), definition);
+            if (moveShiftClickedStack(event.getView().getTopInventory(), event.getCurrentItem(), targetSlots, definition, holder.panelType())) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getAmount() <= 0) {
                     event.setCurrentItem(null);
                 }
@@ -401,12 +386,12 @@ public final class SfxConfigurableMachineService implements Listener {
         }
         if (topSlot) {
             int raw = event.getRawSlot();
-            if (isButtonSlot(holder.panelType(), raw)) {
+            if (isButtonSlot(holder.panelType(), definition, raw)) {
                 event.setCancelled(true);
                 handleButtonClick(player, holder, host, definition, raw, event.getClick());
                 return;
             }
-            if (contains(editableOutputSlots(holder.panelType()), raw)) {
+            if (contains(editableOutputSlots(holder.panelType(), definition), raw)) {
                 if (!SfxMachineMenuTransactions.isTakingFromOutput(event)) {
                     event.setCancelled(true);
                     return;
@@ -417,7 +402,7 @@ public final class SfxConfigurableMachineService implements Listener {
                 runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.hostInstanceId()));
                 return;
             }
-            if (!contains(editableInputSlots(holder.panelType()), raw)) {
+            if (!contains(editableInputSlots(holder.panelType(), definition), raw)) {
                 event.setCancelled(true);
                 return;
             }
@@ -463,7 +448,7 @@ public final class SfxConfigurableMachineService implements Listener {
             event.setCancelled(true);
             return;
         }
-        int[] allowed = editableInputSlots(holder.panelType());
+        int[] allowed = editableInputSlots(holder.panelType(), definition);
         boolean valid = true;
         for (Map.Entry<Integer, ItemStack> entry : event.getNewItems().entrySet()) {
             int slot = entry.getKey();
@@ -1116,9 +1101,10 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private void openAccessPortWithoutReactor(Player player, SfxBlockInstanceRecord accessPort, SfxConfigurableMachineDefinition definition) {
         Component title = localization.itemName(definition.id(), Component.text(definition.id()));
-        Inventory inventory = plugin.getServer().createInventory(new SfxConfigurableMachineHolder(accessPort.instanceId(), accessPort.instanceId(), SfxConfigurableMachineHolder.PanelType.ACCESS_PORT), INVENTORY_SIZE, title);
-        fillReactorPanel(inventory);
-        inventory.setItem(REACTOR_STATUS_SLOT, ItemBuilder.of(Material.RED_WOOL)
+        SfxConfigurableMachineUiPanel panel = panelFor(definition, SfxConfigurableMachineHolder.PanelType.ACCESS_PORT);
+        Inventory inventory = plugin.getServer().createInventory(new SfxConfigurableMachineHolder(accessPort.instanceId(), accessPort.instanceId(), SfxConfigurableMachineHolder.PanelType.ACCESS_PORT), panel.inventorySize(), title);
+        fillPanel(inventory, panel);
+        setItemSource(inventory, panel, "reactor.access-port", ItemBuilder.of(Material.RED_WOOL)
                 .name(localization.text("configurable-ui.reactor.access-port.missing.name", "<red>No Reactor</red>"))
                 .lore(localization.text("configurable-ui.reactor.access-port.missing.lore", "<gray>Place this access port 3 blocks above a reactor.</gray>"))
                 .build());
@@ -1149,8 +1135,9 @@ public final class SfxConfigurableMachineService implements Listener {
         SfxConfigurableMachineDefinition titleDefinition = panelType == SfxConfigurableMachineHolder.PanelType.ACCESS_PORT
                 ? definitions.getOrDefault(panelInstance.typeId(), definition)
                 : definition;
+        SfxConfigurableMachineUiPanel panel = panelFor(definition, panelType);
         Component title = localization.itemName(titleDefinition.id(), Component.text(titleDefinition.id()));
-        Inventory inventory = plugin.getServer().createInventory(new SfxConfigurableMachineHolder(panelInstanceId, hostInstanceId, panelType), INVENTORY_SIZE, title);
+        Inventory inventory = plugin.getServer().createInventory(new SfxConfigurableMachineHolder(panelInstanceId, hostInstanceId, panelType), panel.inventorySize(), title);
         SfxConfigurableMachineSession session = new SfxConfigurableMachineSession(player.getUniqueId(), panelInstanceId, hostInstanceId, panelType, inventory);
         sessionsByViewer.put(player.getUniqueId(), session);
         sessionsByHost.put(hostInstanceId, session);
@@ -1208,15 +1195,15 @@ public final class SfxConfigurableMachineService implements Listener {
             }
             return;
         }
-        state.input(0, SfxElectricStack.fromItemStack(items, inventory.getItem(REACTOR_FUEL_SLOTS[0])));
-        state.input(1, SfxElectricStack.fromItemStack(items, inventory.getItem(REACTOR_FUEL_SLOTS[1])));
-        state.input(2, SfxElectricStack.fromItemStack(items, inventory.getItem(REACTOR_FUEL_SLOTS[2])));
-        state.input(3, SfxElectricStack.fromItemStack(items, inventory.getItem(REACTOR_COOLANT_SLOTS[0])));
-        state.input(4, SfxElectricStack.fromItemStack(items, inventory.getItem(REACTOR_COOLANT_SLOTS[1])));
-        state.input(5, SfxElectricStack.fromItemStack(items, inventory.getItem(REACTOR_COOLANT_SLOTS[2])));
-        state.output(0, SfxElectricStack.fromItemStack(items, inventory.getItem(REACTOR_OUTPUT_SLOTS[0])));
-        state.output(1, null);
-        state.output(2, null);
+        SfxConfigurableMachineUiPanel panel = panelFor(definition, panelType);
+        int[] inputSlots = panel.inputSlots();
+        for (int i = 0; i < state.inputCapacity(); i++) {
+            state.input(i, i < inputSlots.length ? SfxElectricStack.fromItemStack(items, inventory.getItem(inputSlots[i])) : null);
+        }
+        int[] outputSlots = panel.outputSlots();
+        for (int i = 0; i < state.outputCapacity(); i++) {
+            state.output(i, i < outputSlots.length ? SfxElectricStack.fromItemStack(items, inventory.getItem(outputSlots[i])) : null);
+        }
     }
 
     private void render(SfxConfigurableMachineSession session, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state) {
@@ -1262,25 +1249,27 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private void renderReactor(Inventory inventory, SfxBlockInstanceRecord instance, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineState state, SfxConfigurableMachineHolder.PanelType panelType) {
-        fillReactorPanel(inventory);
-        for (int i = 0; i < REACTOR_FUEL_SLOTS.length; i++) {
-            inventory.setItem(REACTOR_FUEL_SLOTS[i], toItemStack(state.input(i)));
+        SfxConfigurableMachineUiPanel panel = panelFor(definition, panelType);
+        fillPanel(inventory, panel);
+        int[] inputSlots = panel.inputSlots();
+        for (int i = 0; i < inputSlots.length; i++) {
+            inventory.setItem(inputSlots[i], toItemStack(state.input(i)));
         }
-        for (int i = 0; i < REACTOR_COOLANT_SLOTS.length; i++) {
-            inventory.setItem(REACTOR_COOLANT_SLOTS[i], toItemStack(state.input(3 + i)));
+        int[] outputSlots = panel.outputSlots();
+        for (int i = 0; i < outputSlots.length; i++) {
+            inventory.setItem(outputSlots[i], toItemStack(state.output(i)));
         }
-        inventory.setItem(REACTOR_OUTPUT_SLOTS[0], toItemStack(state.output(0)));
 
-        inventory.setItem(REACTOR_MODE_SLOT, namedIcon(
+        setItemSource(inventory, panel, "reactor.mode", namedIcon(
                 state.mode() == 0 ? items.create(definition.id()) : items.create("sf:plutonium"),
                 state.mode() == 0
                         ? localization.text("configurable-ui.reactor.focus-electricity.name", "<yellow>Focus: Electricity</yellow>")
                         : localization.text("configurable-ui.reactor.focus-production.name", "<yellow>Focus: Production</yellow>"),
                 localization.text("configurable-ui.reactor.focus.lore", "<gray>Click to switch reactor focus.</gray>")));
-        inventory.setItem(REACTOR_PROGRESS_SLOT, reactorProgressItem(definition, state));
+        setItemSource(inventory, panel, "reactor.progress", reactorProgressItem(definition, state));
         SfxBlockInstanceRecord accessPort = accessPortAbove(instance);
         boolean hasPort = accessPort != null;
-        inventory.setItem(REACTOR_STATUS_SLOT, ItemBuilder.of(hasPort ? Material.LIME_WOOL : Material.RED_WOOL)
+        setItemSource(inventory, panel, "reactor.access-port", ItemBuilder.of(hasPort ? Material.LIME_WOOL : Material.RED_WOOL)
                 .name(hasPort
                         ? localization.text("configurable-ui.reactor.access-port.detected.name", "<green>Access Port detected</green>")
                         : localization.text("configurable-ui.reactor.access-port.missing.name", "<red>No Access Port</red>"))
@@ -1288,27 +1277,37 @@ public final class SfxConfigurableMachineService implements Listener {
                         ? localization.text("configurable-ui.reactor.access-port.detected.lore", "<gray>Click to open the access port.</gray>")
                         : localization.text("configurable-ui.reactor.access-port.missing.lore", "<gray>Place an access port 3 blocks above this reactor.</gray>"))
                 .build());
-        inventory.setItem(1, namedIcon(
+        setItemSource(inventory, panel, "reactor.fuel-slots", namedIcon(
                 representativeFuelIcon(definition),
                 localization.text("configurable-ui.reactor.fuel-slots.name", "<aqua>Fuel Slots</aqua>"),
                 localization.text("configurable-ui.reactor.fuel-slots.lore", "<gray>Insert valid reactor fuel here.</gray>")));
-        inventory.setItem(7, namedIcon(
+        setItemSource(inventory, panel, "reactor.coolant-slots", namedIcon(
                 items.create(definition.coolantItemId()),
                 localization.text("configurable-ui.reactor.coolant-slots.name", "<aqua>Coolant Slots</aqua>"),
                 localization.text("configurable-ui.reactor.coolant-slots.lore", "<red>The reactor will melt down without coolant.</red>")));
     }
 
-    private void fillReactorPanel(Inventory inventory) {
+    private void fillPanel(Inventory inventory, SfxConfigurableMachineUiPanel panel) {
         inventory.clear();
-        setSlots(inventory, Material.GRAY_STAINED_GLASS_PANE, 0, 1, 2, 3, 5, 6, 7, 8, 12, 13, 14, 21, 23);
-        setSlots(inventory, Material.LIME_STAINED_GLASS_PANE, 9, 10, 11, 18, 20, 27, 29, 36, 38, 45, 46, 47);
-        setSlots(inventory, Material.CYAN_STAINED_GLASS_PANE, 15, 16, 17, 24, 26, 33, 35, 42, 44, 51, 52, 53);
-        setSlots(inventory, Material.GREEN_STAINED_GLASS_PANE, 30, 31, 32, 39, 41, 48, 50);
-        setSlots(inventory, Material.BLACK_STAINED_GLASS_PANE, REACTOR_PROGRESS_SLOT);
+        for (SfxConfigurableMachineUiFrame frame : panel.frame()) {
+            SfxInventoryPainter.setSlots(inventory, frame.item().toItemStack(localization), frame.slots());
+        }
+        for (SfxConfigurableMachineUiSlot slot : panel.slots().values()) {
+            if (slot.item() != null) {
+                inventory.setItem(slot.slot(), slot.item().toItemStack(localization));
+            }
+        }
     }
 
     private void setSlots(Inventory inventory, Material material, int... slots) {
         SfxInventoryPainter.setSlots(inventory, material, slots);
+    }
+
+    private void setItemSource(Inventory inventory, SfxConfigurableMachineUiPanel panel, String itemSource, ItemStack stack) {
+        int slot = panel.slotByItemSource(itemSource);
+        if (slot >= 0) {
+            inventory.setItem(slot, stack);
+        }
     }
 
     private ItemStack representativeFuelIcon(SfxConfigurableMachineDefinition definition) {
@@ -1435,7 +1434,9 @@ public final class SfxConfigurableMachineService implements Listener {
             refreshSession(host.instanceId());
             return;
         }
-        if (slot == REACTOR_MODE_SLOT) {
+        SfxConfigurableMachineUiPanel panel = panelFor(definition, holder.panelType());
+        SfxConfigurableMachineUiSlot uiSlot = panel.slot(slot);
+        if (uiSlot != null && uiSlot.actionIs("reactor-toggle-mode")) {
             state.mode(state.mode() == 0 ? 1 : 0);
             autoPausedProducers.remove(host.instanceId());
             dirtyInstances.add(host.instanceId());
@@ -1443,7 +1444,7 @@ public final class SfxConfigurableMachineService implements Listener {
             refreshSession(host.instanceId());
             return;
         }
-        if (slot == REACTOR_STATUS_SLOT) {
+        if (uiSlot != null && uiSlot.actionIs("reactor-access-port")) {
             if (holder.panelType() == SfxConfigurableMachineHolder.PanelType.ACCESS_PORT) {
                 openPanel(player, host.instanceId(), host.instanceId(), SfxConfigurableMachineHolder.PanelType.REACTOR);
                 return;
@@ -1728,39 +1729,40 @@ public final class SfxConfigurableMachineService implements Listener {
         SfxInventoryPainter.fill(inventory, SfxUiItems.blankPane(material));
     }
 
-    private int[] editableInputSlots(SfxConfigurableMachineHolder.PanelType panelType) {
+    private SfxConfigurableMachineUiPanel panelFor(SfxConfigurableMachineDefinition definition, SfxConfigurableMachineHolder.PanelType panelType) {
+        SfxConfigurableMachineUiPanel panel = definition.ui().panel(panelType);
+        if (panel == null) {
+            throw new IllegalStateException("Missing compiled configurable UI panel " + panelType + " for " + definition.id());
+        }
+        return panel;
+    }
+
+    private int[] editableInputSlots(SfxConfigurableMachineHolder.PanelType panelType, SfxConfigurableMachineDefinition definition) {
         if (panelType == SfxConfigurableMachineHolder.PanelType.ASSEMBLER) {
             return new int[] {ASSEMBLER_HEAD_SLOTS[0], ASSEMBLER_HEAD_SLOTS[1], ASSEMBLER_BODY_SLOTS[0], ASSEMBLER_BODY_SLOTS[1]};
         }
-        return new int[] {19, 28, 37, 25, 34, 43};
+        return panelFor(definition, panelType).inputSlots();
     }
 
-    private int[] editableOutputSlots(SfxConfigurableMachineHolder.PanelType panelType) {
+    private int[] editableOutputSlots(SfxConfigurableMachineHolder.PanelType panelType, SfxConfigurableMachineDefinition definition) {
         if (panelType == SfxConfigurableMachineHolder.PanelType.ASSEMBLER) {
             return new int[0];
         }
-        return REACTOR_OUTPUT_SLOTS;
+        return panelFor(definition, panelType).outputSlots();
     }
 
-    private boolean isButtonSlot(SfxConfigurableMachineHolder.PanelType panelType, int slot) {
+    private boolean isButtonSlot(SfxConfigurableMachineHolder.PanelType panelType, SfxConfigurableMachineDefinition definition, int slot) {
         if (panelType == SfxConfigurableMachineHolder.PanelType.ASSEMBLER) {
             return slot == ENABLE_SLOT || slot == OFFSET_SLOT || slot == ASSEMBLER_STATUS_SLOT;
         }
-        return slot == REACTOR_MODE_SLOT || slot == REACTOR_PROGRESS_SLOT || slot == REACTOR_STATUS_SLOT;
+        return panelFor(definition, panelType).isActionSlot(slot);
     }
 
-    private boolean moveShiftClickedStack(Inventory inventory, ItemStack current, int[] targetSlots, SfxConfigurableMachineDefinition definition) {
-        return SfxInventorySlots.moveStackToSlots(inventory, targetSlots, current, (slot, stack) -> isValidInputItem(slot, stack, definition));
+    private boolean moveShiftClickedStack(Inventory inventory, ItemStack current, int[] targetSlots, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineHolder.PanelType panelType) {
+        return SfxInventorySlots.moveStackToSlots(inventory, targetSlots, current, (slot, stack) -> isValidInputItem(panelType, slot, stack, definition));
     }
 
     private boolean isValidInputItem(SfxConfigurableMachineHolder.PanelType panelType, int slot, ItemStack item, SfxConfigurableMachineDefinition definition) {
-        if (item == null || item.getType().isAir()) {
-            return true;
-        }
-        return isValidInputItem(slot, item, definition);
-    }
-
-    private boolean isValidInputItem(int slot, ItemStack item, SfxConfigurableMachineDefinition definition) {
         if (item == null || item.getType().isAir()) {
             return true;
         }
@@ -1774,7 +1776,8 @@ public final class SfxConfigurableMachineService implements Listener {
             }
             return false;
         }
-        if (contains(REACTOR_FUEL_SLOTS, slot)) {
+        SfxConfigurableMachineUiSlot uiSlot = panelFor(definition, panelType).slot(slot);
+        if (uiSlot != null && uiSlot.accepts("reactor-fuel")) {
             for (SfxConfigurableMachineDefinition.ReactorFuel fuel : definition.fuels()) {
                 if (fuel.matches(stack)) {
                     return true;
@@ -1782,7 +1785,7 @@ public final class SfxConfigurableMachineService implements Listener {
             }
             return false;
         }
-        if (contains(REACTOR_COOLANT_SLOTS, slot)) {
+        if (uiSlot != null && uiSlot.accepts("reactor-coolant")) {
             return stack != null && stack.isSfxItem() && definition.coolantItemId().equals(stack.itemId());
         }
         return false;

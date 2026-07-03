@@ -450,6 +450,42 @@ tasks.register('validateSfxMachineYaml') {
                 configurableViolations << "configurable reactor entries missing ${token}"
             }
         }
+        if ((configurableText =~ /(?m)^    ui:\s*$/).count != 3) {
+            configurableViolations << "configurable machines must declare ui on every entry"
+        }
+        if ((configurableText =~ /(?m)^      panels:\s*$/).count != 3) {
+            configurableViolations << "configurable machines must declare ui.panels on every entry"
+        }
+        if ((configurableText =~ /(?m)^        (reactor|access-port):\s*$/).count != 5) {
+            configurableViolations << "configurable machine ui panel count expected 5"
+        }
+        if ((configurableText =~ /(?m)^          inventory-size:\s*54\s*$/).count != 5) {
+            configurableViolations << "configurable machine ui panels must explicitly declare inventory-size 54"
+        }
+        if ((configurableText =~ /(?m)^          frame:\s*$/).count != 5) {
+            configurableViolations << "configurable machine source ui panels must use frame helpers before compilation"
+        }
+        if ((configurableText =~ /(?m)^          inputs:\s*$/).count != 4) {
+            configurableViolations << "configurable reactor ui source panels must declare four input helper groups"
+        }
+        if ((configurableText =~ /(?m)^          outputs:\s*$/).count != 4) {
+            configurableViolations << "configurable reactor ui source panels must declare four output helper groups"
+        }
+        if ((configurableText =~ /(?m)^          buttons:\s*$/).count != 4) {
+            configurableViolations << "configurable reactor ui source panels must declare four button helper groups"
+        }
+        if ((configurableText =~ /(?m)^          status:\s*$/).count != 5) {
+            configurableViolations << "configurable source ui panels must declare status helpers"
+        }
+        if ((configurableText =~ /(?m)^          display:\s*$/).count != 4) {
+            configurableViolations << "configurable reactor ui source panels must declare four display helper groups"
+        }
+        if ((configurableText =~ /reactor-fuel/).count != 12 || (configurableText =~ /reactor-coolant/).count != 12) {
+            configurableViolations << "configurable reactor ui source panels must tag all fuel and coolant input slots"
+        }
+        if ((configurableText =~ /reactor-toggle-mode/).count != 4 || (configurableText =~ /reactor-access-port/).count != 4) {
+            configurableViolations << "configurable reactor ui source panels must declare reactor button actions"
+        }
         if (!configurableViolations.isEmpty()) {
             throw new GradleException("Configurable machine YAML validation failed:\n" + configurableViolations.join('\n'))
         }
@@ -769,6 +805,52 @@ tasks.register('validateSfxCompiledContent') {
             def configurableScalarOutput = configurableText =~ /(?m)^\s+output:\s+[A-Za-z0-9_:.-]+(?:\*[0-9]+)?\s*$/
             if (configurableScalarOutput.find()) {
                 violations << "compiled configurable machines contain scalar reactor output shorthand: ${configurableScalarOutput.group(0).trim()}"
+            }
+            def configurablePanelCount = (configurableText =~ /(?m)^        (reactor|access-port):\s*$/).count
+            if (configurablePanelCount != 5) {
+                violations << "compiled configurable machine ui panel count expected 5, got ${configurablePanelCount}"
+            }
+            def configurableInventorySizeCount = (configurableText =~ /(?m)^          inventory-size:\s*54\s*$/).count
+            if (configurableInventorySizeCount != 5) {
+                violations << "compiled configurable machine ui panels expected inventory-size 54 on every panel, got ${configurableInventorySizeCount}"
+            }
+            def configurableSlotsSectionCount = (configurableText =~ /(?m)^          slots:\s*$/).count
+            if (configurableSlotsSectionCount != 5) {
+                violations << "compiled configurable machine ui panels expected explicit slots section on every panel, got ${configurableSlotsSectionCount}"
+            }
+            def configurableSlotCount = (configurableText =~ /(?m)^            ['"]?[0-9]+['"]?:\s*$/).count
+            if (configurableSlotCount != 270) {
+                violations << "compiled configurable machine ui explicit slot count expected 270, got ${configurableSlotCount}"
+            }
+            def configurableSlotRoleCount = (configurableText =~ /(?m)^              role:\s*/).count
+            def configurableSlotBehaviorCount = (configurableText =~ /(?m)^              behavior:\s*/).count
+            if (configurableSlotRoleCount != 270 || configurableSlotBehaviorCount != 270) {
+                violations << "compiled configurable machine ui slots expected role/behavior on every slot, got role=${configurableSlotRoleCount}, behavior=${configurableSlotBehaviorCount}"
+            }
+            def configurableInputCount = (configurableText =~ /(?m)^              role:\s*input\s*$/).count
+            def configurableOutputCount = (configurableText =~ /(?m)^              role:\s*output\s*$/).count
+            if (configurableInputCount != 24 || configurableOutputCount != 4) {
+                violations << "compiled configurable machine ui expected 24 input and 4 output slots, got input=${configurableInputCount}, output=${configurableOutputCount}"
+            }
+            def configurableStateIndexCount = (configurableText =~ /(?m)^              state-index:\s*/).count
+            if (configurableStateIndexCount != 28) {
+                violations << "compiled configurable machine ui state-index count expected 28, got ${configurableStateIndexCount}"
+            }
+            def configurableAcceptsCount = (configurableText =~ /(?m)^              accepts:\s*/).count
+            if (configurableAcceptsCount != 24) {
+                violations << "compiled configurable machine ui accepts count expected 24, got ${configurableAcceptsCount}"
+            }
+            def configurableActionCount = (configurableText =~ /(?m)^              action:\s*/).count
+            if (configurableActionCount != 8) {
+                violations << "compiled configurable machine ui action count expected 8, got ${configurableActionCount}"
+            }
+            def configurableItemSourceCount = (configurableText =~ /(?m)^              item-source:\s*/).count
+            if (configurableItemSourceCount != 21) {
+                violations << "compiled configurable machine ui item-source count expected 21, got ${configurableItemSourceCount}"
+            }
+            def configurablePanelHelper = configurableText =~ /(?m)^          (frame|inputs|outputs|buttons|status|display):\s*$/
+            if (configurablePanelHelper.find()) {
+                violations << "compiled configurable machine ui panels contain helper section: ${configurablePanelHelper.group(1)}"
             }
         }
         def compiledCategoryCount = 0
@@ -1666,12 +1748,12 @@ tasks.register('runPaper') {
                     processInput.flush()
                 }
             } catch (IOException ignored) {
-                
+                // Ignore stdin forwarding errors during shutdown.
             } finally {
                 try {
                     processInput.close()
                 } catch (IOException ignored) {
-                    
+                    // Ignore close failure during shutdown.
                 }
             }
         }

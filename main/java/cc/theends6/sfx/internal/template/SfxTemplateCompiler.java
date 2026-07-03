@@ -605,7 +605,12 @@ public final class SfxTemplateCompiler {
         if (machinesRaw instanceof Map<?, ?> rawMachines) {
             for (Object value : rawMachines.values()) {
                 if (value instanceof Map<?, ?> rawMachine) {
-                    enrichElectricMachineUiSlots((Map<String, Object>) rawMachine);
+                    Map<String, Object> machine = (Map<String, Object>) rawMachine;
+                    if (isConfigurableUiMachine(machine)) {
+                        enrichConfigurableMachineUiPanels(machine);
+                    } else {
+                        enrichElectricMachineUiSlots(machine);
+                    }
                 }
             }
         }
@@ -630,6 +635,110 @@ public final class SfxTemplateCompiler {
                     enrichRecipeEntry(null, (Map<String, Object>) rawRecipe);
                 }
             }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean isConfigurableUiMachine(Map<String, Object> machine) {
+        Object uiRaw = machine.get("ui");
+        if (!(uiRaw instanceof Map<?, ?> rawUi)) {
+            return false;
+        }
+        return ((Map<String, Object>) rawUi).get("panels") instanceof Map<?, ?>;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void enrichConfigurableMachineUiPanels(Map<String, Object> machine) {
+        Object uiRaw = machine.get("ui");
+        if (!(uiRaw instanceof Map<?, ?> rawUi)) {
+            return;
+        }
+        Object panelsRaw = ((Map<String, Object>) rawUi).get("panels");
+        if (!(panelsRaw instanceof Map<?, ?> rawPanels)) {
+            return;
+        }
+        for (Object panelRaw : rawPanels.values()) {
+            if (panelRaw instanceof Map<?, ?> rawPanel) {
+                enrichConfigurableUiPanel((Map<String, Object>) rawPanel);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void enrichConfigurableUiPanel(Map<String, Object> panel) {
+        int inventorySize = intValue(panel.get("inventory-size"), 0);
+        if (inventorySize <= 0) {
+            panel.putIfAbsent("slots", new LinkedHashMap<String, Object>());
+            return;
+        }
+        Map<String, Object> slotDefinitions = new LinkedHashMap<>();
+        for (int slot = 0; slot < inventorySize; slot++) {
+            slotDefinitions.put(String.valueOf(slot), slot("empty", "locked"));
+        }
+        Object framesRaw = panel.get("frame");
+        if (framesRaw instanceof List<?> frames) {
+            for (Object frameRaw : frames) {
+                if (!(frameRaw instanceof Map<?, ?> rawFrame)) {
+                    continue;
+                }
+                Map<String, Object> frame = (Map<String, Object>) rawFrame;
+                Object item = deepCopyValue(frame.get("item"));
+                for (Integer slot : ints(frame.get("slots"))) {
+                    if (slot >= 0 && slot < inventorySize) {
+                        Map<String, Object> definition = slot("decoration", "locked");
+                        if (item != null) {
+                            definition.put("item", deepCopyValue(item));
+                        }
+                        slotDefinitions.put(String.valueOf(slot), definition);
+                    }
+                }
+            }
+        }
+        putConfigurableSlotEntries(slotDefinitions, inventorySize, panel.get("inputs"), "input", "input-filtered");
+        putConfigurableSlotEntries(slotDefinitions, inventorySize, panel.get("outputs"), "output", "output-only");
+        putConfigurableSlotEntries(slotDefinitions, inventorySize, panel.get("buttons"), "button", "button-click");
+        putConfigurableSlotEntries(slotDefinitions, inventorySize, panel.get("status"), "status", "status-display");
+        putConfigurableSlotEntries(slotDefinitions, inventorySize, panel.get("display"), "preview", "preview-only");
+        panel.remove("frame");
+        panel.remove("inputs");
+        panel.remove("outputs");
+        panel.remove("buttons");
+        panel.remove("status");
+        panel.remove("display");
+        panel.put("slots", slotDefinitions);
+        completeElectricUiDefaults(panel);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void putConfigurableSlotEntries(Map<String, Object> slots, int inventorySize, Object rawEntries, String role, String defaultBehavior) {
+        if (!(rawEntries instanceof List<?> entries)) {
+            return;
+        }
+        for (Object rawEntry : entries) {
+            if (!(rawEntry instanceof Map<?, ?> rawMap)) {
+                continue;
+            }
+            Map<String, Object> entry = (Map<String, Object>) rawMap;
+            int rawSlot = intValue(entry.get("slot"), -1);
+            if (rawSlot < 0 || rawSlot >= inventorySize) {
+                continue;
+            }
+            Map<String, Object> definition = slot(role, String.valueOf(entry.getOrDefault("behavior", defaultBehavior)));
+            copyIfPresent(entry, definition, "accepts");
+            copyIfPresent(entry, definition, "action");
+            copyIfPresent(entry, definition, "item-source");
+            copyIfPresent(entry, definition, "state-index");
+            Object itemRaw = entry.get("item");
+            if (itemRaw != null) {
+                definition.put("item", deepCopyValue(itemRaw));
+            }
+            slots.put(String.valueOf(rawSlot), definition);
+        }
+    }
+
+    private void copyIfPresent(Map<String, Object> source, Map<String, Object> target, String key) {
+        if (source.containsKey(key)) {
+            target.put(key, deepCopyValue(source.get(key)));
         }
     }
 

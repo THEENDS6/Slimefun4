@@ -79,7 +79,146 @@ final class SfxConfigurableMachineDefinitions {
                 parseEntityType(assembler == null ? null : assembler.getString("spawn-type", null)),
                 reactor == null ? null : requiredString(reactor, "coolant-item"),
                 parseReactorFuels(reactor),
-                reactor != null && requiredBoolean(reactor, "wither-aura"));
+                reactor != null && requiredBoolean(reactor, "wither-aura"),
+                parseUi(id, requiredSection(section, "ui")));
+    }
+
+    private static SfxConfigurableMachineUiDefinition parseUi(String id, ConfigurationSection section) {
+        ConfigurationSection panels = requiredSection(section, "panels");
+        Map<String, SfxConfigurableMachineUiPanel> result = new LinkedHashMap<>();
+        for (String key : panels.getKeys(false)) {
+            ConfigurationSection panel = panels.getConfigurationSection(key);
+            if (panel == null) {
+                throw new IllegalArgumentException(id + " ui.panels." + key + " requires a map");
+            }
+            result.put(SfxConfigurableMachineUiDefinition.normalize(key), parsePanel(id, key, panel));
+        }
+        SfxConfigurableMachineUiDefinition ui = new SfxConfigurableMachineUiDefinition(result);
+        if (ui.panel("reactor") == null && ui.panel("access-port") == null) {
+            throw new IllegalArgumentException(id + " configurable ui requires reactor or access-port panel");
+        }
+        return ui;
+    }
+
+    private static SfxConfigurableMachineUiPanel parsePanel(String id, String key, ConfigurationSection section) {
+        int inventorySize = requiredInt(section, "inventory-size");
+        List<SfxConfigurableMachineUiFrame> frames = new ArrayList<>();
+        for (Object rawFrame : section.getList("frame", List.of())) {
+            if (rawFrame instanceof Map<?, ?> map) {
+                frames.add(parseUiFrame(map));
+            }
+        }
+        Map<Integer, SfxConfigurableMachineUiSlot> slots = parseUiSlots(requiredSection(section, "slots"));
+        SfxConfigurableMachineUiPanel panel = new SfxConfigurableMachineUiPanel(inventorySize, frames, slots);
+        validatePanel(id, key, panel);
+        return panel;
+    }
+
+    private static void validatePanel(String id, String key, SfxConfigurableMachineUiPanel panel) {
+        if (panel.inventorySize() <= 0) {
+            throw new IllegalArgumentException(id + " ui.panels." + key + ".inventory-size must be positive");
+        }
+        if (panel.slots().size() != panel.inventorySize()) {
+            throw new IllegalArgumentException(id + " ui.panels." + key + ".slots must explicitly define every slot");
+        }
+        for (int slot = 0; slot < panel.inventorySize(); slot++) {
+            if (!panel.slots().containsKey(slot)) {
+                throw new IllegalArgumentException(id + " ui.panels." + key + ".slots missing slot " + slot);
+            }
+        }
+        validateRoleStateIndexes(id, key, panel, "input");
+        validateRoleStateIndexes(id, key, panel, "output");
+    }
+
+    private static void validateRoleStateIndexes(String id, String panelKey, SfxConfigurableMachineUiPanel panel, String role) {
+        int count = 0;
+        List<Integer> indexes = new ArrayList<>();
+        for (SfxConfigurableMachineUiSlot slot : panel.slots().values()) {
+            if (!slot.isRole(role)) {
+                continue;
+            }
+            count++;
+            if (slot.stateIndex() == null) {
+                throw new IllegalArgumentException(id + " ui.panels." + panelKey + "." + role + " slot " + slot.slot() + " missing state-index");
+            }
+            indexes.add(slot.stateIndex());
+        }
+        for (int index = 0; index < count; index++) {
+            if (!indexes.contains(index)) {
+                throw new IllegalArgumentException(id + " ui.panels." + panelKey + "." + role + " slots missing state-index " + index);
+            }
+        }
+    }
+
+    private static SfxConfigurableMachineUiFrame parseUiFrame(Map<?, ?> map) {
+        int[] slots = parseSlots(asList(map.get("slots")));
+        Object itemRaw = map.get("item");
+        if (!(itemRaw instanceof Map<?, ?> itemMap)) {
+            throw new IllegalArgumentException("configurable ui.frame item requires a map");
+        }
+        return new SfxConfigurableMachineUiFrame(slots, parseUiItem(itemMap));
+    }
+
+    private static Map<Integer, SfxConfigurableMachineUiSlot> parseUiSlots(ConfigurationSection section) {
+        Map<Integer, SfxConfigurableMachineUiSlot> slots = new LinkedHashMap<>();
+        for (String key : section.getKeys(false)) {
+            int slot;
+            try {
+                slot = Integer.parseInt(key);
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("configurable ui.slots key must be numeric: " + key, ex);
+            }
+            ConfigurationSection child = section.getConfigurationSection(key);
+            if (child == null) {
+                throw new IllegalArgumentException("configurable ui.slots." + key + " requires a map");
+            }
+            ConfigurationSection item = child.getConfigurationSection("item");
+            slots.put(slot, new SfxConfigurableMachineUiSlot(
+                    slot,
+                    requiredString(child, "role"),
+                    requiredString(child, "behavior"),
+                    child.getString("accepts", null),
+                    child.getString("action", null),
+                    child.getString("item-source", null),
+                    optionalInt(child, "state-index"),
+                    item == null ? null : parseUiItem(item)));
+        }
+        return Map.copyOf(slots);
+    }
+
+    private static SfxConfigurableMachineUiItem parseUiItem(ConfigurationSection section) {
+        String name = optionalPresentString(section, "name");
+        String nameKey = section.getString("name-key", null);
+        requireTextReference(section.getCurrentPath(), "name", name, nameKey);
+        List<String> lore = section.contains("lore") ? section.getStringList("lore") : null;
+        String loreKey = section.getString("lore-key", null);
+        requireTextReference(section.getCurrentPath(), "lore", lore, loreKey);
+        return new SfxConfigurableMachineUiItem(
+                parseMaterial(requiredString(section, "material")),
+                name,
+                lore,
+                nameKey,
+                loreKey,
+                requiredBoolean(section, "glint"));
+    }
+
+    private static SfxConfigurableMachineUiItem parseUiItem(Map<?, ?> map) {
+        Object name = map.get("name");
+        Object nameKey = map.get("name-key");
+        requireTextReference("configurable ui item", "name", name, nameKey);
+        Object lore = map.get("lore");
+        Object loreKey = map.get("lore-key");
+        requireTextReference("configurable ui item", "lore", lore, loreKey);
+        if (!map.containsKey("glint")) {
+            throw new IllegalArgumentException("configurable ui item requires glint");
+        }
+        return new SfxConfigurableMachineUiItem(
+                parseMaterial(requiredString(map, "material")),
+                string(name),
+                strings(lore),
+                string(nameKey),
+                string(loreKey),
+                Boolean.parseBoolean(String.valueOf(map.get("glint"))));
     }
 
     private static List<SfxConfigurableMachineDefinition.ReactorFuel> parseReactorFuels(ConfigurationSection reactor) {
@@ -154,6 +293,74 @@ final class SfxConfigurableMachineDefinitions {
             throw new IllegalArgumentException(section.getCurrentPath() + " requires " + path);
         }
         return value;
+    }
+
+    private static Integer optionalInt(ConfigurationSection section, String path) {
+        if (section == null || !section.contains(path)) {
+            return null;
+        }
+        return section.getInt(path);
+    }
+
+    private static String optionalPresentString(ConfigurationSection section, String path) {
+        return section.contains(path) ? section.getString(path, "") : null;
+    }
+
+    private static int[] parseSlots(List<?> raw) {
+        List<Integer> values = new ArrayList<>();
+        for (Object value : raw) {
+            if (value instanceof Number number) {
+                values.add(number.intValue());
+            } else if (value != null && !String.valueOf(value).isBlank()) {
+                values.add(Integer.parseInt(String.valueOf(value).trim()));
+            }
+        }
+        int[] result = new int[values.size()];
+        for (int index = 0; index < values.size(); index++) {
+            result[index] = values.get(index);
+        }
+        return result;
+    }
+
+    private static List<?> asList(Object value) {
+        return value instanceof List<?> list ? list : List.of();
+    }
+
+    private static List<String> strings(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        List<String> result = new ArrayList<>();
+        for (Object entry : list) {
+            if (entry != null) {
+                result.add(String.valueOf(entry));
+            }
+        }
+        return result;
+    }
+
+    private static void requireTextReference(String context, String field, Object literal, Object key) {
+        if (literal == null && string(key) == null) {
+            throw new IllegalArgumentException(context + " requires " + field + " or " + field + "-key");
+        }
+        if (containsNonBlankLiteral(literal)) {
+            throw new IllegalArgumentException(context + " uses literal " + field + "; use " + field + "-key");
+        }
+    }
+
+    private static boolean containsNonBlankLiteral(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof List<?> list) {
+            for (Object entry : list) {
+                if (entry != null && !String.valueOf(entry).isBlank()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return !String.valueOf(value).isBlank();
     }
 
     private static Object requiredValue(Map<?, ?> map, String key) {
