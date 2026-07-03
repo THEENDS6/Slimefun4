@@ -64,6 +64,14 @@ Prefer `runtime-machines` when a recipe truly belongs to specific machine ids. P
 
 Compiled recipes must be self-contained. Each entry must define `id`, `recipe-type`, `operation`, and `outputs`. Shaped recipes must provide a 9-entry `matrix`; shapeless recipes must provide 1-9 `inputs`; single and hand recipes must provide `input`. Java runtime must not treat missing or unknown operations as shaped recipes.
 
+## Manifest Rules
+
+Compiled output must include `_manifest.yml`. The manifest records compiler identity, compiler version, `compiled-at`, `generated-at`, `template-hash`, `content-version`, source file hashes, and output file hashes.
+
+Runtime may use local `plugins/SlimeFunX/content/compiled` only when its manifest matches the bundled manifest and every declared output file matches its recorded SHA-256. Extra local YAML files that are not listed in the manifest make the local compiled directory stale. In that case runtime ignores local compiled content and falls back to bundled compiled content.
+
+Do not hand-edit compiled files. Change templates or source YAML, re-run the compiler, and keep `_manifest.yml` with the generated output.
+
 ## Machine Tags
 
 Manual machines get default tags:
@@ -102,3 +110,5 @@ Run:
 ```
 
 This compiles templates and verifies explicit compiled output. Add validation before adding new shorthand so compiled-only runtime remains strict.
+
+The validation also verifies `_manifest.yml` output hashes and rejects compiled YAML files that are not declared by the manifest.
