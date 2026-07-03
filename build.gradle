@@ -1799,6 +1799,9 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusIconRenderer.java',
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusDefaults.java',
             'main/java/cc/theends6/sfx/internal/command/SfxCommand.java',
+            'main/java/cc/theends6/sfx/internal/guide/DefaultSfxGuide.java',
+            'main/java/cc/theends6/sfx/internal/guide/SfxGuideResearchUnlockController.java',
+            'main/java/cc/theends6/sfx/internal/guide/SfxGuideSettingsView.java',
             'main/java/cc/theends6/sfx/internal/cargo/SfxCargoService.java',
             'main/java/cc/theends6/sfx/internal/gps/SfxGpsService.java',
             'main/java/cc/theends6/sfx/internal/android/SfxAndroidService.java',
@@ -1855,6 +1858,20 @@ tasks.register('validateSfxCoreLocalizationCalls') {
         }
         def languageFiles = fileTree(layout.projectDirectory.dir('main/resources/lang')) {
             include '**
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

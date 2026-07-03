@@ -19,7 +19,7 @@ final class SfxGuideResearchUnlockController {
             return;
         }
         if (!guide.canAffordResearch(player, research)) {
-            player.sendMessage(Text.prefixed(guide.plugin, guide.tr("messages.not-enough-xp", "<red>You do not have enough levels to unlock this research.</red>")));
+            player.sendMessage(Text.prefixed(guide.plugin, guide.tr("messages.not-enough-xp")));
             onFailure.run();
             return;
         }
@@ -37,7 +37,7 @@ final class SfxGuideResearchUnlockController {
         }
 
         player.sendMessage(Text.prefixed(guide.plugin,
-                guide.tr("messages.research.start", "<gray>The Ancient Spirits whisper mysterious words into your ear!</gray>")));
+                guide.tr("messages.research.start")));
 
         guide.runtime.executeForPlayerLater(player, 5L, () -> {
             if (!player.isOnline()) {
@@ -46,7 +46,7 @@ final class SfxGuideResearchUnlockController {
             }
                 guide.playResearchSound(player);
                 player.sendMessage(Text.prefixed(guide.plugin,
-                    guide.tr("messages.research.progress", "<gray>You start to wonder about </gray><aqua>{name}</aqua><gray> ({progress})</gray>")
+                    guide.tr("messages.research.progress")
                             .replace("{name}", researchName)
                             .replace("{progress}", "0%")));
         });
@@ -60,7 +60,7 @@ final class SfxGuideResearchUnlockController {
                 }
                 guide.playResearchSound(player);
                 player.sendMessage(Text.prefixed(guide.plugin,
-                        guide.tr("messages.research.progress", "<gray>You start to wonder about </gray><aqua>{name}</aqua><gray> ({progress})</gray>")
+                        guide.tr("messages.research.progress")
                                 .replace("{name}", researchName)
                                 .replace("{progress}", progress + "%")));
             });

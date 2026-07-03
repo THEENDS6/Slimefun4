@@ -4209,6 +4209,11 @@ materials:
   piston: Piston
   iron_bars: Iron Bars
   cauldron: Cauldron
+  stonecutter: Stonecutter
+  smithing_table: Smithing Table
+  campfire: Campfire
+  smoker: Smoker
+  blast_furnace: Blast Furnace
 messages:
   no-tome-yourself: '&cYou cannot learn from your own Tome of Knowledge.'
   tome-of-knowledge-sharing:
