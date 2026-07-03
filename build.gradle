@@ -1810,7 +1810,8 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/block/SfxHologramProjectorService.java',
             'main/java/cc/theends6/sfx/internal/altar/SfxAncientAltarService.java',
             'main/java/cc/theends6/sfx/internal/energy/SfxMultimeterListener.java',
-            'main/java/cc/theends6/sfx/internal/block/SfxBasicMachineBlockListener.java'
+            'main/java/cc/theends6/sfx/internal/block/SfxBasicMachineBlockListener.java',
+            'main/java/cc/theends6/sfx/internal/block/SfxSpawnerService.java'
     ]
     inputs.files(coreLocalizationFiles.collect { layout.projectDirectory.file(it) })
     inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
