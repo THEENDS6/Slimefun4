@@ -29,6 +29,8 @@ public final class SfxCompiledYamlResolver {
     private static final Set<String> FORBIDDEN_COMPILED_KEYS = Set.of(
             "menu-style",
             "layout",
+            "frame",
+            "border",
             "tag-fuels",
             "expand",
             "id-prefix",
@@ -372,7 +374,7 @@ public final class SfxCompiledYamlResolver {
                 String childPath = path.equals("$") ? key : path + "." + key;
                 if (normalized.startsWith("@") || FORBIDDEN_COMPILED_KEYS.contains(normalized)) {
                     throw new IllegalStateException("Compiled SFX content " + sourceName
-                            + " contains template or layout helper key at " + childPath + ": " + key);
+                            + " contains template or runtime helper key at " + childPath + ": " + key);
                 }
                 validateCompiledNode(entry.getValue(), sourceName, childPath);
             }
