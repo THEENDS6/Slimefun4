@@ -59,7 +59,7 @@ public final class SfxMachineCatalogYamlLoader {
                 continue;
             }
             try {
-                SfxMachineDefinition definition = parse(id, section);
+                SfxMachineDefinition definition = parse(id, section, strict);
                 if (engine.definition(definition.id()).isEmpty()) {
                     engine.registerDefinitionIfAbsent(definition);
                 } else {
@@ -77,8 +77,14 @@ public final class SfxMachineCatalogYamlLoader {
         return loaded;
     }
 
-    private SfxMachineDefinition parse(String id, ConfigurationSection section) {
+    private SfxMachineDefinition parse(String id, ConfigurationSection section, boolean strict) {
         SfxMachineCategory category = parseCategory(requiredString(section, "category"));
+        List<Integer> inputSlots = requiredSlotList(section, "input-slots");
+        List<Integer> outputSlots = requiredSlotList(section, "output-slots");
+        int statusSlot = requiredInt(section, "status-slot");
+        if (statusSlot < -1) {
+            throw new IllegalArgumentException("machine catalog field must be -1 or greater: status-slot");
+        }
         Set<String> tags = stringSet(requiredList(section, "tags"));
         if (tags.isEmpty()) {
             throw new IllegalArgumentException("machine catalog field must not be empty: tags");
@@ -86,17 +92,21 @@ public final class SfxMachineCatalogYamlLoader {
         SfxMachineDefinition.Builder builder = SfxMachineDefinition.builder(id)
                 .displayName(requiredString(section, "display-name"))
                 .category(category)
-                .inputSlots(integerList(requiredList(section, "input-slots")))
-                .outputSlots(integerList(requiredList(section, "output-slots")))
-                .statusSlot(requiredInt(section, "status-slot"))
+                .inputSlots(inputSlots)
+                .outputSlots(outputSlots)
+                .statusSlot(statusSlot)
                 .tickInterval(requiredPositiveInt(section, "tick-interval"))
                 .tags(tags);
 
-        SfxMachineInputProvider inputProvider = parseInputProvider(section.getConfigurationSection("input-provider"));
+        SfxMachineInputProvider inputProvider = parseInputProvider(strict
+                ? requiredSection(section, "input-provider")
+                : section.getConfigurationSection("input-provider"));
         if (inputProvider != null) {
             builder.inputProvider(inputProvider);
         }
-        SfxMachineOutputProvider outputProvider = parseOutputProvider(section.getConfigurationSection("output-provider"));
+        SfxMachineOutputProvider outputProvider = parseOutputProvider(strict
+                ? requiredSection(section, "output-provider")
+                : section.getConfigurationSection("output-provider"));
         if (outputProvider != null) {
             builder.outputProvider(outputProvider);
         }
@@ -147,6 +157,14 @@ public final class SfxMachineCatalogYamlLoader {
         return value;
     }
 
+    private ConfigurationSection requiredSection(ConfigurationSection section, String path) {
+        ConfigurationSection value = section.getConfigurationSection(path);
+        if (value == null) {
+            throw new IllegalArgumentException("machine catalog section is required: " + path);
+        }
+        return value;
+    }
+
     private List<?> requiredList(ConfigurationSection section, String path) {
         List<?> value = section.getList(path);
         if (value == null) {
@@ -175,7 +193,7 @@ public final class SfxMachineCatalogYamlLoader {
             return null;
         }
         SfxMachineInputProvider.Kind kind = SfxMachineInputProvider.Kind.valueOf(requiredString(section, "kind").trim().replace('-', '_').toUpperCase(Locale.ROOT));
-        return new SfxMachineInputProvider(kind, integerList(requiredList(section, "slots")), requiredString(section, "description"));
+        return new SfxMachineInputProvider(kind, requiredSlotList(section, "slots"), requiredString(section, "description"));
     }
 
     private SfxMachineOutputProvider parseOutputProvider(ConfigurationSection section) {
@@ -183,7 +201,17 @@ public final class SfxMachineCatalogYamlLoader {
             return null;
         }
         SfxMachineOutputProvider.Kind kind = SfxMachineOutputProvider.Kind.valueOf(requiredString(section, "kind").trim().replace('-', '_').toUpperCase(Locale.ROOT));
-        return new SfxMachineOutputProvider(kind, integerList(requiredList(section, "slots")), requiredString(section, "description"));
+        return new SfxMachineOutputProvider(kind, requiredSlotList(section, "slots"), requiredString(section, "description"));
+    }
+
+    private List<Integer> requiredSlotList(ConfigurationSection section, String path) {
+        List<Integer> result = integerList(requiredList(section, path));
+        for (Integer slot : result) {
+            if (slot == null || slot < 0) {
+                throw new IllegalArgumentException("machine catalog list " + path + " must contain non-negative slot numbers");
+            }
+        }
+        return result;
     }
 
     private Set<SfxMachineCapability> parseCapabilities(List<?> raw) {
