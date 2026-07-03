@@ -576,6 +576,94 @@ tasks.register('validateSfxCompiledContent') {
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
         }
+        def sha256File = { File file ->
+            def digest = java.security.MessageDigest.getInstance('SHA-256')
+            file.withInputStream { stream ->
+                byte[] buffer = new byte[8192]
+                int read
+                while ((read = stream.read(buffer)) != -1) {
+                    digest.update(buffer, 0, read)
+                }
+            }
+            digest.digest().collect { String.format('%02x', it & 0xff) }.join()
+        }
+        def validateManifestOutputs = {
+            def manifestFile = new File(root, '_manifest.yml')
+            if (!manifestFile.isFile()) {
+                violations << "compiled manifest missing _manifest.yml"
+                return
+            }
+            def manifestText = manifestFile.getText('UTF-8')
+            ['compiler:', 'compiler-version:', 'compiled-at:', 'generated-at:', 'template-hash:', 'content-version:', 'source-files:', 'outputs:'].each { field ->
+                if (!manifestText.contains(field)) {
+                    violations << "_manifest.yml missing ${field}"
+                }
+            }
+            def outputEntries = []
+            def currentOutput = null
+            boolean inOutputs = false
+            manifestText.readLines().each { line ->
+                if (line == 'outputs:') {
+                    inOutputs = true
+                    return
+                }
+                if (!inOutputs) {
+                    return
+                }
+                def fileMatch = line =~ /^- file:\s*(.+?)\s*$/
+                if (fileMatch.matches()) {
+                    currentOutput = [file: cleanScalar(fileMatch[0][1]), sha256: null]
+                    outputEntries << currentOutput
+                    return
+                }
+                def shaMatch = line =~ /^  sha256:\s*([0-9a-fA-F]{64})\s*$/
+                if (shaMatch.matches() && currentOutput != null) {
+                    currentOutput.sha256 = shaMatch[0][1].toLowerCase(Locale.ROOT)
+                }
+            }
+            def actualOutputs = compiledFiles.findAll { !it.name.startsWith('_') }
+            def actualOutputPaths = actualOutputs.collect {
+                root.toPath().relativize(it.toPath()).toString().replace('\\', '/')
+            } as Set
+            def declaredOutputPaths = [] as Set
+            outputEntries.each { entry ->
+                if (entry.file == null || entry.file.isBlank()) {
+                    violations << "_manifest.yml contains output without file"
+                    return
+                }
+                declaredOutputPaths << entry.file
+                if (entry.sha256 == null) {
+                    violations << "_manifest.yml output ${entry.file} missing sha256"
+                    return
+                }
+                def outputFile = new File(root, entry.file)
+                def rootPath = root.canonicalFile.toPath()
+                def outputPath = outputFile.canonicalFile.toPath()
+                if (!outputPath.startsWith(rootPath)) {
+                    violations << "_manifest.yml output escapes compiled root: ${entry.file}"
+                    return
+                }
+                if (!outputFile.isFile()) {
+                    violations << "_manifest.yml output missing from compiled directory: ${entry.file}"
+                    return
+                }
+                def actualSha = sha256File(outputFile)
+                if (actualSha != entry.sha256) {
+                    violations << "_manifest.yml sha256 mismatch for ${entry.file}"
+                }
+            }
+            actualOutputPaths.each { path ->
+                if (!declaredOutputPaths.contains(path)) {
+                    violations << "compiled output is not listed in _manifest.yml: ${path}"
+                }
+            }
+            declaredOutputPaths.each { path ->
+                if (!actualOutputPaths.contains(path)) {
+                    violations << "_manifest.yml declares missing compiled output: ${path}"
+                }
+            }
+        }
+        validateManifestOutputs()
         def addRecipeItemReference = { File file, recipe, String section, Object rawId, int lineNumber ->
             def rel = root.toPath().relativize(file.toPath()).toString()
             def id = cleanScalar(String.valueOf(rawId))
