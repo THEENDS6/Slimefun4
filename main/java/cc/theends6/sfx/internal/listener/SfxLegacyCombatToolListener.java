@@ -328,7 +328,7 @@ public final class SfxLegacyCombatToolListener implements Listener {
         }
 
         if (closest == null) {
-            send(player, "messages.pickaxe-of-the-seeker.no-ores", "&cCannot find any nearby ores!");
+            send(player, "messages.pickaxe-of-the-seeker.no-ores");
             return;
         }
 
@@ -350,7 +350,7 @@ public final class SfxLegacyCombatToolListener implements Listener {
 
     private void useClimbingPick(PlayerInteractEvent event) {
         if (event.getAction() == Action.RIGHT_CLICK_AIR) {
-            send(event.getPlayer(), "messages.climbing-pick.no-surface", "&cAim at a wall to use your Climbing Picks.");
+            send(event.getPlayer(), "messages.climbing-pick.no-surface");
             return;
         }
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) {
@@ -361,7 +361,7 @@ public final class SfxLegacyCombatToolListener implements Listener {
         BlockFace face = event.getBlockFace();
         if (face == BlockFace.UP || face == BlockFace.DOWN) {
             denyItemUse(event);
-            send(player, "messages.climbing-pick.wrong-face", "&cYou need to click the side of a wall to climb.");
+            send(player, "messages.climbing-pick.wrong-face");
             return;
         }
 
@@ -375,13 +375,13 @@ public final class SfxLegacyCombatToolListener implements Listener {
         ItemStack off = player.getInventory().getItemInOffHand();
         boolean needsDualWield = behaviorConfig.climbingPickDualWielding();
         if (needsDualWield && !(matchesId(main, "sf:climbing_pick") && matchesId(off, "sf:climbing_pick"))) {
-            send(player, "messages.climbing-pick.dual-wielding", "&4You need to hold Climbing Picks in both hands to use them!");
+            send(player, "messages.climbing-pick.dual-wielding");
             return;
         }
 
         double power = climbPower(event.getItem(), block.getType());
         if (power <= 0.05D) {
-            send(player, "messages.climbing-pick.wrong-material", "&cYou cannot climb this surface. Check your Slimefun Guide for more info!");
+            send(player, "messages.climbing-pick.wrong-material");
             return;
         }
 
@@ -634,9 +634,9 @@ public final class SfxLegacyCombatToolListener implements Listener {
         }
 
         meta.lore(List.of(
-                Text.renderFlexible(localization.text("items.sf.broken_spawner.type-line", "&7Type: &b{type}", Map.of("type", entityName))),
+                Text.renderFlexible(localization.text("items.sf.broken_spawner.type-line", Map.of("type", entityName))),
                 Component.empty(),
-                Text.renderFlexible(localization.text("items.sf.broken_spawner.fractured-line", "&cFractured, must be repaired in an Ancient Altar"))
+                Text.renderFlexible(localization.text("items.sf.broken_spawner.fractured-line"))
         ));
         stack.setItemMeta(meta);
         return stack;
@@ -850,8 +850,8 @@ public final class SfxLegacyCombatToolListener implements Listener {
         }
     }
 
-    private void send(Player player, String key, String fallback) {
-        player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback)));
+    private void send(Player player, String key) {
+        player.sendMessage(Text.prefixed(plugin, localization.text(key)));
     }
 
     private ItemStack itemInHand(PlayerInteractEvent event) {

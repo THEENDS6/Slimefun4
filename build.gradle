@@ -1813,7 +1813,8 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/block/SfxBasicMachineBlockListener.java',
             'main/java/cc/theends6/sfx/internal/block/SfxSpawnerService.java',
             'main/java/cc/theends6/sfx/internal/listener/SfxItemUseDispatcher.java',
-            'main/java/cc/theends6/sfx/internal/listener/SfxLegacyFoodListener.java'
+            'main/java/cc/theends6/sfx/internal/listener/SfxLegacyFoodListener.java',
+            'main/java/cc/theends6/sfx/internal/listener/SfxLegacyCombatToolListener.java'
     ]
     inputs.files(coreLocalizationFiles.collect { layout.projectDirectory.file(it) })
     inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
