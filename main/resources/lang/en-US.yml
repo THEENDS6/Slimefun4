@@ -53,6 +53,23 @@ machines:
   wrong-item: <red>This item cannot be processed by this machine.</red>
   busy: <red>This machine is already working.</red>
   crucible-blocked: <red>The space above the Crucible is blocked.</red>
+radiation:
+  messages:
+    death: '{player} died from radiation'
+    exposure-warning: <yellow>You are being exposed to radiation.</yellow>
+    recovered: <green>Radiation sickness symptoms have faded.</green>
+    stage-prefix: 'Radiation Sickness '
+  stages:
+    i:
+      description: You feel a little strange
+    ii:
+      description: You feel unwell
+    iii:
+      description: You feel intense discomfort
+    iv:
+      description: Your body is weakening
+    v:
+      description: Your body is being destroyed by radiation
 guide:
   errors:
     no-open: <red>You do not have permission to open this guide.</red>

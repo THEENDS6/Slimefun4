@@ -6,6 +6,7 @@ import cc.theends6.sfx.api.item.SfxItemRegistry;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
+import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -45,6 +46,7 @@ public final class SfxRadiationService implements Listener {
     private final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxItemRegistry registry;
+    private final SfxLocalization localization;
     private final SfxPlayerDataService playerData;
     private final Map<String, SfxRadiationLevel> radioactiveItems = new HashMap<>();
     private final Map<UUID, Integer> cachedExposure = new ConcurrentHashMap<>();
@@ -55,11 +57,12 @@ public final class SfxRadiationService implements Listener {
     private final Map<UUID, Long> lastRadiationDamageMillis = new ConcurrentHashMap<>();
     private boolean running;
 
-    public SfxRadiationService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxItemRegistry registry, SfxPlayerDataService playerData) {
+    public SfxRadiationService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxItemRegistry registry, SfxLocalization localization, SfxPlayerDataService playerData) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.registry = Objects.requireNonNull(registry, "registry");
+        this.localization = Objects.requireNonNull(localization, "localization");
         this.playerData = Objects.requireNonNull(playerData, "playerData");
         rebuildRadioactiveItemIndex();
     }
@@ -117,7 +120,7 @@ public final class SfxRadiationService implements Listener {
         Player player = event.getEntity();
         UUID playerId = player.getUniqueId();
         if (isRadiationDeath(player)) {
-            event.setDeathMessage(player.getName() + " 死于辐射");
+            event.setDeathMessage(localization.text("radiation.messages.death", Map.of("player", player.getName())));
         }
         awaitingRespawn.add(playerId);
         clearExposure(player);
@@ -290,7 +293,7 @@ public final class SfxRadiationService implements Listener {
         if (!currentlyAffectedByRadiation.add(player.getUniqueId())) {
             return;
         }
-        player.sendMessage(Component.text("你正在受到辐射影响", NamedTextColor.YELLOW));
+        player.sendMessage(localization.component("radiation.messages.exposure-warning"));
     }
 
     private void announceStageChange(Player player, SfxRadiationStage stage) {
@@ -301,7 +304,7 @@ public final class SfxRadiationService implements Listener {
         }
         if (stage == SfxRadiationStage.NONE) {
             if (previous != null && previous != SfxRadiationStage.NONE) {
-                player.sendMessage(Component.text("辐射病症状已经消退", NamedTextColor.GREEN));
+                player.sendMessage(localization.component("radiation.messages.recovered"));
             }
             lastAnnouncedStage.put(playerId, SfxRadiationStage.NONE);
             return;
@@ -311,7 +314,7 @@ public final class SfxRadiationService implements Listener {
     }
 
     private Component stageMessage(SfxRadiationStage stage) {
-        return Component.text("辐射病 ", NamedTextColor.RED)
+        return Component.text(localization.text("radiation.messages.stage-prefix"), NamedTextColor.RED)
                 .append(Component.text(stageNumeral(stage), stageNumeralColor(stage)))
                 .append(Component.text(" " + stageDescription(stage), NamedTextColor.GRAY));
     }
@@ -329,11 +332,11 @@ public final class SfxRadiationService implements Listener {
 
     private String stageDescription(SfxRadiationStage stage) {
         return switch (stage) {
-            case I -> "你感觉有些奇怪";
-            case II -> "你感觉不太舒服";
-            case III -> "你感到强烈的不适";
-            case IV -> "你感到身体正在衰弱";
-            case V -> "你的身体正在被辐射摧毁";
+            case I -> localization.text("radiation.stages.i.description");
+            case II -> localization.text("radiation.stages.ii.description");
+            case III -> localization.text("radiation.stages.iii.description");
+            case IV -> localization.text("radiation.stages.iv.description");
+            case V -> localization.text("radiation.stages.v.description");
             case NONE -> "";
         };
     }
