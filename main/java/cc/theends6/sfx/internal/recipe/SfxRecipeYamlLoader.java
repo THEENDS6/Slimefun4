@@ -71,6 +71,9 @@ public final class SfxRecipeYamlLoader {
                 if (!isFeatureEnabled(entry)) {
                     continue;
                 }
+                if (strict) {
+                    validateCompiledRecipeEntry(entry);
+                }
                 registry.register(parseRecipe(entry));
             } catch (Exception ex) {
                 if (strict) {
@@ -118,6 +121,21 @@ public final class SfxRecipeYamlLoader {
             return false;
         }
         return true;
+    }
+
+    private void validateCompiledRecipeEntry(Map<?, ?> entry) {
+        for (Object keyRaw : entry.keySet()) {
+            String key = String.valueOf(keyRaw);
+            if (key.startsWith("@")) {
+                throw new IllegalArgumentException("compiled recipe must not contain template directive: " + key);
+            }
+            if (key.equals("expand")
+                    || key.equals("id-prefix")
+                    || key.equals("input-prefix")
+                    || key.equals("input-amount")) {
+                throw new IllegalArgumentException("compiled recipe must not contain expansion helper: " + key);
+            }
+        }
     }
 
     private void collectYaml(File dir, List<File> files) {
