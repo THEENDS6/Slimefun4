@@ -64,6 +64,7 @@ machines:
     - machine
     - basic
     - manual
+    - smeltery
   sf:smeltery:
     category: BASIC
     display-name: sf:smeltery
@@ -73,6 +74,7 @@ machines:
     - machine
     - basic
     - manual
+    - smeltery
   sf:pressure_chamber:
     category: BASIC
     display-name: sf:pressure_chamber

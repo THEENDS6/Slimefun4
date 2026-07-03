@@ -9,9 +9,8 @@ recipes:
     guide-order: 1
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:aluminum_dust
     - sf:brass_ingot
@@ -27,9 +26,8 @@ recipes:
     guide-order: 2
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:aluminum_dust
     - sf:bronze_ingot
@@ -45,9 +43,8 @@ recipes:
     guide-order: 3
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:aluminum_dust
     outputs:
@@ -61,9 +58,8 @@ recipes:
     guide-order: 4
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:silver_dust
     - sf:copper_dust
@@ -79,9 +75,8 @@ recipes:
     guide-order: 5
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:copper_dust
     - sf:zinc_dust
@@ -97,9 +92,8 @@ recipes:
     guide-order: 6
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:copper_dust
     - sf:tin_dust
@@ -115,9 +109,8 @@ recipes:
     guide-order: 7
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - SUGAR
     - SUGAR
@@ -132,9 +125,8 @@ recipes:
     guide-order: 8
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:christmas_chocolate_milk
     outputs:
@@ -148,9 +140,8 @@ recipes:
     guide-order: 9
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:iron_dust
     - sf:copper_dust
@@ -166,9 +157,8 @@ recipes:
     guide-order: 10
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:copper_dust
     outputs:
@@ -182,9 +172,8 @@ recipes:
     guide-order: 11
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:silver_dust
     - sf:gold_dust
@@ -201,9 +190,8 @@ recipes:
     guide-order: 12
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:steel_ingot
     - sf:iron_dust
@@ -220,9 +208,8 @@ recipes:
     guide-order: 13
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:aluminum_dust
     - sf:copper_dust
@@ -238,9 +225,8 @@ recipes:
     guide-order: 14
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - IRON_INGOT
     - sf:iron_dust
@@ -256,9 +242,8 @@ recipes:
     guide-order: 15
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_24k
     - sf:iron_dust
@@ -273,9 +258,8 @@ recipes:
     guide-order: 16
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_8k
@@ -290,9 +274,8 @@ recipes:
     guide-order: 17
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_10k
@@ -307,9 +290,8 @@ recipes:
     guide-order: 18
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_12k
@@ -324,9 +306,8 @@ recipes:
     guide-order: 19
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_14k
@@ -341,9 +322,8 @@ recipes:
     guide-order: 20
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_16k
@@ -358,9 +338,8 @@ recipes:
     guide-order: 21
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_18k
@@ -375,9 +354,8 @@ recipes:
     guide-order: 22
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_20k
@@ -392,9 +370,8 @@ recipes:
     guide-order: 23
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_22k
@@ -409,9 +386,8 @@ recipes:
     guide-order: 24
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     outputs:
@@ -425,9 +401,8 @@ recipes:
     guide-order: 25
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_4k
@@ -442,9 +417,8 @@ recipes:
     guide-order: 26
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_6k
@@ -459,9 +433,8 @@ recipes:
     guide-order: 27
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:damascus_steel_ingot
     - sf:duralumin_ingot
@@ -478,9 +451,8 @@ recipes:
     guide-order: 28
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:lead_dust
     outputs:
@@ -494,9 +466,8 @@ recipes:
     guide-order: 29
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:magnesium_dust
     outputs:
@@ -510,9 +481,8 @@ recipes:
     guide-order: 30
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:nickel_ingot
     - sf:aluminum_dust
@@ -529,9 +499,8 @@ recipes:
     guide-order: 31
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:iron_dust
     - IRON_INGOT
@@ -547,9 +516,8 @@ recipes:
     guide-order: 32
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:synthetic_diamond
     - sf:carbon_chunk
@@ -565,9 +533,8 @@ recipes:
     guide-order: 33
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - REDSTONE
     - REDSTONE_BLOCK
@@ -584,9 +551,8 @@ recipes:
     guide-order: 34
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - QUARTZ_BLOCK
     outputs:
@@ -600,9 +566,8 @@ recipes:
     guide-order: 35
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:silver_dust
     outputs:
@@ -616,9 +581,8 @@ recipes:
     guide-order: 36
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:lead_dust
     - sf:tin_dust
@@ -634,9 +598,8 @@ recipes:
     guide-order: 37
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:iron_dust
     - sf:carbon
@@ -652,9 +615,8 @@ recipes:
     guide-order: 38
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:synthetic_sapphire
     - sf:aluminum_dust
@@ -671,9 +633,8 @@ recipes:
     guide-order: 39
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:aluminum_dust
     - GLASS
@@ -691,9 +652,8 @@ recipes:
     guide-order: 40
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:tin_dust
     outputs:
@@ -707,9 +667,8 @@ recipes:
     guide-order: 41
     source: slimefun-rc37
     runtime: true
-    runtime-machines:
-    - sf:makeshift_smeltery
-    - sf:smeltery
+    runtime-machine-tags:
+    - smeltery
     inputs:
     - sf:zinc_dust
     outputs:
