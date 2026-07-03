@@ -1,3 +1,7 @@
+plugin:
+  lifecycle:
+    enabled: <gray>[{time}] SlimeFunX 已启用。</gray>
+    disabled: <gray>[{time}] SlimeFunX 已禁用。</gray>
 machines:
   structure-changed: <red>结构已经变化，机器触发已取消。</red>
   missing-dispenser: <red>结构不完整：未找到机器对应的发射器。</red>
