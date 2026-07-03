@@ -2020,6 +2020,8 @@ tasks.register('validateSfxRuntimeCompiledOnlyConfig') {
     doLast {
         def configText = layout.projectDirectory.file('main/resources/config.yml').asFile.getText('UTF-8')
         def requiredDefaults = [
+                'content.compile-templates-on-startup'              : /(?m)^\s{2}compile-templates-on-startup:\s*false\s*$/,
+                'content.sync-bundled-templates-on-startup'         : /(?m)^\s{2}sync-bundled-templates-on-startup:\s*false\s*$/,
                 'content.runtime.compiled-only'                     : /(?m)^\s{4}compiled-only:\s*true\s*$/,
                 'content.runtime.allow-java-ui-fallback'            : /(?m)^\s{4}allow-java-ui-fallback:\s*false\s*$/,
                 'content.runtime.allow-java-recipe-fallback'        : /(?m)^\s{4}allow-java-recipe-fallback:\s*false\s*$/,
