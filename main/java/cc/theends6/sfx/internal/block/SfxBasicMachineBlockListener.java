@@ -480,7 +480,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             int slot = inventory.first(Material.FLINT_AND_STEEL);
             if (slot < 0) {
                 if (player != null) {
-                    player.sendMessage(Text.prefixed(plugin, localization.text("machines.ignition-chamber-no-flint", "<red>自动点火室中没有打火石。</red>")));
+                    player.sendMessage(Text.prefixed(plugin, localization.text("machines.ignition-chamber-no-flint")));
                 }
                 return false;
             }
@@ -508,12 +508,12 @@ public final class SfxBasicMachineBlockListener implements Listener {
         Player player = event.getPlayer();
         ItemStack input = itemInHand(event);
         if (input == null || input.getType().isAir()) {
-            player.sendMessage(Text.prefixed(plugin, localization.text("machines.empty", "<gray>手中没有可处理的物品。</gray>")));
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.empty")));
             return;
         }
         ItemStack output = composterOutput(input);
         if (output == null) {
-            player.sendMessage(Text.prefixed(plugin, localization.text("machines.wrong-item", "<red>这个物品不能被这台机器处理。</red>")));
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.wrong-item")));
             return;
         }
         consumeFromHand(player, event, input, requiredComposterAmount(input.getType()));
@@ -527,22 +527,22 @@ public final class SfxBasicMachineBlockListener implements Listener {
         Player player = event.getPlayer();
         SfxBlockAnchorKey anchorKey = SfxBlockAnchorKey.fromLocation(block.getLocation());
         if (activeCrucibles.containsKey(anchorKey)) {
-            player.sendMessage(Text.prefixed(plugin, localization.text("machines.busy", "<red>This machine is already working.</red>")));
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.busy")));
             return;
         }
         ItemStack input = itemInHand(event);
         if (input == null || input.getType().isAir()) {
-            player.sendMessage(Text.prefixed(plugin, localization.text("machines.empty", "<gray>手中没有可处理的物品。</gray>")));
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.empty")));
             return;
         }
         CruciblePlan plan = cruciblePlan(input.getType());
         if (plan == null) {
-            player.sendMessage(Text.prefixed(plugin, localization.text("machines.wrong-item", "<red>这个物品不能被这台机器处理。</red>")));
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.wrong-item")));
             return;
         }
         Block outputBlock = block.getRelative(BlockFace.UP);
         if (!canStartCrucible(outputBlock, plan.water())) {
-            player.sendMessage(Text.prefixed(plugin, localization.text("machines.crucible-blocked", "<red>The space above the Crucible is blocked.</red>")));
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.crucible-blocked")));
             return;
         }
         consumeFromHand(player, event, input, plan.inputAmount());
