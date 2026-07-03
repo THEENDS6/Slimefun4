@@ -880,6 +880,9 @@ tasks.register('validateSfxCompiledContent') {
             if (recipe.fields.contains('runtime-machine-tags') && recipe.machineTagRefs.isEmpty()) {
                 violations << "${rel}: recipe ${recipe.key} runtime-machine-tags must list at least one tag"
             }
+            if (!recipe.machineRefs.isEmpty()) {
+                violations << "${rel}: recipe ${recipe.key} must use runtime-machine-tags instead of direct machine/runtime-machines references"
+            }
             recipe.machineRefs.each { machineId ->
                 if (machineId == null || machineId.isBlank()) {
                     violations << "${rel}: recipe ${recipe.key} contains blank machine reference"
