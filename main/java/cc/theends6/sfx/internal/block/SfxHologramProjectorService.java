@@ -86,7 +86,7 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
                 return SfxMachinePhaseResult.blocked(SfxMachineStatus.BLOCKED, "hologram editor context missing");
             }
             if (!canEdit(player, instance)) {
-                send(player, "machines.hologram-projector.not-owner", "<red>Only the owner can edit this Hologram Projector.</red>");
+                send(player, "machines.hologram-projector.not-owner");
                 return SfxMachinePhaseResult.blocked(SfxMachineStatus.BLOCKED, "player cannot edit this hologram");
             }
             openEditor(player, instance.instanceId());
@@ -218,7 +218,7 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
         if (event.getRawSlot() == 0) {
             player.closeInventory();
             pendingEdits.put(player.getUniqueId(), instance.instanceId());
-            send(player, "machines.hologram-projector.enter-text", "<yellow>Please enter your desired hologram text in chat.</yellow>");
+            send(player, "machines.hologram-projector.enter-text");
             return;
         }
         if (event.getRawSlot() == 1) {
@@ -238,7 +238,7 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
         event.setCancelled(true);
         String message = event.getMessage();
         if (message == null || message.equalsIgnoreCase("cancel")) {
-            runtime.executeForPlayer(event.getPlayer(), () -> send(event.getPlayer(), "machines.hologram-projector.edit-cancelled", "<gray>Hologram edit cancelled.</gray>"));
+            runtime.executeForPlayer(event.getPlayer(), () -> send(event.getPlayer(), "machines.hologram-projector.edit-cancelled"));
             return;
         }
         runtime.executeForPlayer(event.getPlayer(), () -> {
@@ -248,7 +248,7 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
             }
             HologramState old = HologramState.decode(instance.stateBlob());
             persist(instance, new HologramState(message, old.offset()));
-            send(event.getPlayer(), "machines.hologram-projector.updated", "<green>Hologram updated.</green>");
+            send(event.getPlayer(), "machines.hologram-projector.updated");
             openEditor(event.getPlayer(), instance.instanceId());
         });
     }
@@ -259,17 +259,17 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
             return;
         }
         HologramState state = HologramState.decode(instance.stateBlob());
-        Component title = localization.component("machines.hologram-projector.inventory-title", "Hologram Projector");
+        Component title = localization.component("machines.hologram-projector.inventory-title");
         Inventory inventory = plugin.getServer().createInventory(new HologramEditorHolder(instanceId), 9, title);
         inventory.setItem(0, SfxUiItems.named(Material.NAME_TAG,
-                Text.renderFlexible(localization.text("machines.hologram-projector.text-item-name", "&7Text &e(Click to edit)")),
+                Text.renderFlexible(localization.text("machines.hologram-projector.text-item-name")),
                 List.of(Component.empty(), Text.renderFlexible("&f" + state.text()))));
         String offsetLabel = String.format(Locale.ROOT, "%.1f", state.offset() + 1.0D);
         inventory.setItem(1, SfxUiItems.named(Material.CLOCK,
-                Text.renderFlexible(localization.text("machines.hologram-projector.offset-item-name", "&7Offset: &e{offset}", Map.of("offset", offsetLabel))),
+                Text.renderFlexible(localization.text("machines.hologram-projector.offset-item-name", Map.of("offset", offsetLabel))),
                 List.of(Component.empty(),
-                        Text.renderFlexible(localization.text("machines.hologram-projector.offset-left", "&fLeft Click: &7+0.1")),
-                        Text.renderFlexible(localization.text("machines.hologram-projector.offset-right", "&fRight Click: &7-0.1")))));
+                        Text.renderFlexible(localization.text("machines.hologram-projector.offset-left")),
+                        Text.renderFlexible(localization.text("machines.hologram-projector.offset-right")))));
         player.openInventory(inventory);
     }
 
@@ -310,8 +310,8 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
         return new SfxFloatingTextKey("hologram_projector", anchorKey.worldId(), anchorKey.x(), anchorKey.y(), anchorKey.z());
     }
 
-    private void send(Player player, String key, String fallback) {
-        player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback)));
+    private void send(Player player, String key) {
+        player.sendMessage(Text.prefixed(plugin, localization.text(key)));
     }
 
     private double round1(double value) {
