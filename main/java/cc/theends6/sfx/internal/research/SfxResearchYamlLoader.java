@@ -63,6 +63,9 @@ public final class SfxResearchYamlLoader {
     private void loadYamlInto(SfxResearchRegistry registry, YamlConfiguration yaml, String sourceName, boolean strict) {
         for (Map<?, ?> entry : yaml.getMapList("researches")) {
             try {
+                if (strict) {
+                    validateCompiledResearchEntry(entry);
+                }
                 registry.register(parseResearch(entry, strict));
             } catch (Exception ex) {
                 if (strict) {
@@ -95,6 +98,22 @@ public final class SfxResearchYamlLoader {
         List<String> items = strict ? requiredStringList(entry, "items") : stringList(entry.get("items"));
         items = filterFeatureItems(items);
         return new SfxResearchDefinition(id, nameKey, cost, order, new LinkedHashSet<>(items));
+    }
+
+    private static void validateCompiledResearchEntry(Map<?, ?> entry) {
+        for (Object keyRaw : entry.keySet()) {
+            String key = String.valueOf(keyRaw);
+            if (key.startsWith("@")) {
+                throw new IllegalArgumentException("compiled research must not contain template directive: " + key);
+            }
+            if (key.equals("profile")
+                    || key.equals("expand")
+                    || key.equals("id-prefix")
+                    || key.equals("input-prefix")
+                    || key.equals("input-amount")) {
+                throw new IllegalArgumentException("compiled research must not contain helper field: " + key);
+            }
+        }
     }
 
     private List<String> filterFeatureItems(List<String> items) {
