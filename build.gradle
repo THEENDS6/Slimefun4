@@ -577,6 +577,10 @@ tasks.register('validateSfxCompiledContent') {
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
         }
+        def cleanTag = { value ->
+            def cleaned = cleanScalar(value)
+            cleaned == null ? null : cleaned.trim().replace('_', '-').toLowerCase(Locale.ROOT)
+        }
         def sha256File = { File file ->
             def digest = java.security.MessageDigest.getInstance('SHA-256')
             file.withInputStream { stream ->
@@ -887,7 +891,7 @@ tasks.register('validateSfxCompiledContent') {
                 if (tag == null || tag.isBlank()) {
                     violations << "${rel}: recipe ${recipe.key} contains blank runtime-machine-tags reference"
                 } else {
-                    recipeMachineTagReferences << [rel: rel, recipe: recipe.key, tag: tag]
+                    recipeMachineTagReferences << [rel: rel, recipe: recipe.key, tag: cleanTag(tag)]
                 }
             }
             if (recipe.scalarSlot) {
@@ -1110,7 +1114,7 @@ tasks.register('validateSfxCompiledContent') {
                     if (tagMatch.matches()) {
                         def tag = cleanScalar(tagMatch[0][1])
                         if (tag != null && !tag.isBlank()) {
-                            catalogMachineTags << tag
+                            catalogMachineTags << cleanTag(tag)
                         }
                     }
                 }
@@ -1128,6 +1132,7 @@ tasks.register('validateSfxCompiledContent') {
         }
         def manualCompiledFile = new File(root, 'content/machines/manual-machines/manual-machines.yml')
         def manualCompiledCount = 0
+        def manualMachineTags = [] as Set
         if (!manualCompiledFile.isFile()) {
             violations << "compiled manual machine output missing content/machines/manual-machines/manual-machines.yml"
         } else {
@@ -1136,7 +1141,7 @@ tasks.register('validateSfxCompiledContent') {
             if (manualCompiledCount != 13) {
                 violations << "compiled manual machine entry count expected 13, got ${manualCompiledCount}"
             }
-            ['name-key:', 'icon:', 'operation:', 'trigger-face:', 'inventory-face:', 'deployable:', 'pattern:', 'display-pattern:'].each { token ->
+            ['name-key:', 'icon:', 'operation:', 'trigger-face:', 'inventory-face:', 'deployable:', 'tags:', 'pattern:', 'display-pattern:'].each { token ->
                 def count = (manualText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count
                 if (count < 13) {
                     violations << "compiled manual machines expected ${token} on every entry, got ${count}"
@@ -1150,19 +1155,43 @@ tasks.register('validateSfxCompiledContent') {
                 violations << "compiled manual machine pattern slots expected explicit type on every slot, got ${manualPatternSlotTypeCount}"
             }
             def inManualPattern = false
+            def inManualTags = false
             manualText.readLines().each { line ->
                 if ((line =~ /^    (pattern|display-pattern):\s*$/).matches()) {
                     inManualPattern = true
+                    inManualTags = false
                     return
                 }
                 if (inManualPattern && (line =~ /^    [A-Za-z0-9_-]+:/).matches()) {
                     inManualPattern = false
+                }
+                if ((line =~ /^    tags:\s*$/).matches()) {
+                    inManualTags = true
+                    inManualPattern = false
+                    return
+                }
+                if (inManualTags && (line =~ /^    [A-Za-z0-9_-]+:/).matches()) {
+                    inManualTags = false
+                }
+                if (inManualTags) {
+                    def tagMatch = line =~ /^    -\s*(.+?)\s*$/
+                    if (tagMatch.matches()) {
+                        def tag = cleanTag(tagMatch[0][1])
+                        if (tag != null && !tag.isBlank()) {
+                            manualMachineTags << tag
+                        }
+                    }
                 }
                 if (inManualPattern) {
                     def scalarSlot = line =~ /^    -\s*(.+?)\s*$/
                     if (scalarSlot.matches() && !scalarSlot.group(1).startsWith('type:')) {
                         violations << "compiled manual machine pattern contains scalar slot shorthand: ${scalarSlot.group(1)}"
                     }
+                }
+            }
+            recipeMachineTagReferences.each { ref ->
+                if (!manualMachineTags.contains(ref.tag)) {
+                    violations << "${ref.rel}: recipe ${ref.recipe} references runtime-machine tag ${ref.tag} that matches no manual machine"
                 }
             }
         }
