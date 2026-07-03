@@ -1799,6 +1799,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusIconRenderer.java',
             'main/java/cc/theends6/sfx/internal/ui/SfxMachineStatusDefaults.java',
             'main/java/cc/theends6/sfx/internal/cargo/SfxCargoService.java',
+            'main/java/cc/theends6/sfx/internal/gps/SfxGpsService.java',
             'main/java/cc/theends6/sfx/internal/technical/SfxTechnicalGadgetService.java',
             'main/java/cc/theends6/sfx/internal/configurable/SfxConfigurableMachineService.java',
             'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineService.java',
@@ -1861,734 +1862,748 @@ tasks.register('validateSfxCoreLocalizationCalls') {
 
 
 
-        def literalLanguageCall = ~/localization\.(?:text|component|requiredList|list)\(\s*"([^"]+)"/
-        def literalHelperLanguageCall = /(?:^|[^\w.])(?:send|sendMessage|sendActionbar)\(\s*[^,\r\n]+,\s*"([^"]+)"/
-        def literalDisplayTextCall = /new\s+DisplayText\(\s*"([^"]+)"/
-        def literalCargoLanguageString = /"((?:cargo\.(?:status|message|ui)\.[^"]+))"/
-        coreLocalizationFiles.each { path ->
-            def file = layout.projectDirectory.file(path).asFile
-            def text = file.getText('UTF-8')
-            [literalFallback, itemFallback].each { pattern ->
-                def matcher = pattern.matcher(text)
-                while (matcher.find()) {
-                    def line = text.substring(0, matcher.start()).count('\n') + 1
-                    violations << "${path}:${line}: uses localization fallback argument"
-                }
-            }
-            def keyMatcher = literalLanguageCall.matcher(text)
-            while (keyMatcher.find()) {
-                def key = keyMatcher.group(1)
-                if (key.contains("{") || key.contains("+") || key.endsWith(".")) {
-                    continue
-                }
-                languageKeysByFile.each { languageFile, keys ->
-                    if (!keys.contains(key)) {
-                        def line = text.substring(0, keyMatcher.start()).count('\n') + 1
-                        violations << "${path}:${line}: ${languageFile} missing language key ${key}"
-                    }
-                }
-            }
-            def helperKeyMatcher = (text =~ literalHelperLanguageCall)
-            while (helperKeyMatcher.find()) {
-                def key = helperKeyMatcher.group(1)
-                if (key.contains("{") || key.contains("+") || key.endsWith(".")) {
-                    continue
-                }
-                languageKeysByFile.each { languageFile, keys ->
-                    if (!keys.contains(key)) {
-                        def line = text.substring(0, helperKeyMatcher.start()).count('\n') + 1
-                        violations << "${path}:${line}: ${languageFile} missing language key ${key}"
-                    }
-                }
-            }
-            def displayTextMatcher = (text =~ literalDisplayTextCall)
-            while (displayTextMatcher.find()) {
-                def key = displayTextMatcher.group(1)
-                if (key.contains("{") || key.contains("+") || key.endsWith(".")) {
-                    continue
-                }
-                languageKeysByFile.each { languageFile, keys ->
-                    if (!keys.contains(key)) {
-                        def line = text.substring(0, displayTextMatcher.start()).count('\n') + 1
-                        violations << "${path}:${line}: ${languageFile} missing language key ${key}"
-                    }
-                }
-            }
-            def cargoKeyMatcher = (text =~ literalCargoLanguageString)
-            while (cargoKeyMatcher.find()) {
-                def key = cargoKeyMatcher.group(1)
-                if (key.contains("{") || key.contains("+") || key.endsWith(".")) {
-                    continue
-                }
-                languageKeysByFile.each { languageFile, keys ->
-                    if (!keys.contains(key)) {
-                        def line = text.substring(0, cargoKeyMatcher.start()).count('\n') + 1
-                        violations << "${path}:${line}: ${languageFile} missing language key ${key}"
-                    }
-                }
-            }
-        }
-        if (!violations.isEmpty()) {
-            throw new GradleException("Core localization call validation failed:\n" + violations.join('\n'))
-        }
-        logger.lifecycle("Validated ${coreLocalizationFiles.size()} core machine UI localization file(s) without literal fallback arguments and with bundled language keys.")
-    }
-}
 
-tasks.register('validateSfxRuntimeCompiledOnlyConfig') {
-    group = 'verification'
-    description = 'Validates default runtime config keeps compiled-only mode strict and Java fallbacks disabled.'
-    inputs.file(layout.projectDirectory.file('main/resources/config.yml'))
-    doLast {
-        def configText = layout.projectDirectory.file('main/resources/config.yml').asFile.getText('UTF-8')
-        def requiredDefaults = [
-                'content.runtime.compiled-only'                     : /(?m)^\s{4}compiled-only:\s*true\s*$/,
-                'content.runtime.allow-java-ui-fallback'            : /(?m)^\s{4}allow-java-ui-fallback:\s*false\s*$/,
-                'content.runtime.allow-java-recipe-fallback'        : /(?m)^\s{4}allow-java-recipe-fallback:\s*false\s*$/,
-                'content.runtime.allow-legacy-machine-scan'         : /(?m)^\s{4}allow-legacy-machine-scan:\s*false\s*$/,
-                'machines.framework.allow-legacy-candidate-scan'    : /(?m)^\s{4}allow-legacy-candidate-scan:\s*false\s*$/
-        ]
-        def violations = []
-        requiredDefaults.each { path, pattern ->
-            if (!(configText =~ pattern).find()) {
-                violations << "${path} must default to strict compiled-only runtime behavior"
-            }
-        }
-        if (!violations.isEmpty()) {
-            throw new GradleException("Runtime compiled-only config validation failed:\n" + violations.join('\n'))
-        }
-        logger.lifecycle("Validated default runtime config keeps compiled-only mode strict and Java fallbacks disabled.")
-    }
-}
 
-tasks.register('validateSfxSlotsFirstUiRendering') {
-    group = 'verification'
-    description = 'Validates machine menu renderers draw configured UI from compiled ui.slots instead of frame helpers.'
-    def rendererFiles = [
-            'main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineMenuRenderer.java',
-            'main/java/cc/theends6/sfx/internal/electric/SfxSimpleIoMachineMenuRenderer.java',
-            'main/java/cc/theends6/sfx/internal/electric/SfxAutoCrafterMenuRenderer.java',
-            'main/java/cc/theends6/sfx/internal/electric/SfxAutoBrewerMenuRenderer.java',
-            'main/java/cc/theends6/sfx/internal/electric/SfxGeoMinerMachineMenuRenderer.java',
-            'main/java/cc/theends6/sfx/internal/electric/SfxElectricAssemblerMenuRenderer.java',
-            'main/java/cc/theends6/sfx/internal/energy/SfxEnergyGeneratorMenuRenderer.java',
-            'main/java/cc/theends6/sfx/internal/configurable/SfxConfigurableMachineService.java'
-    ]
-    inputs.files(rendererFiles.collect { layout.projectDirectory.file(it) })
-    doLast {
-        def violations = []
-        def framePatterns = [
-                ~/definition\.ui\(\)\.frame\(\)/,
-                ~/panel\.frame\(\)/,
-                ~/for\s*\([^)]*Sfx(?:ElectricMachine|EnergyComponent|ConfigurableMachine)UiFrame\s+frame/
-        ]
-        rendererFiles.each { path ->
-            def text = layout.projectDirectory.file(path).asFile.getText('UTF-8')
-            framePatterns.each { pattern ->
-                def matcher = pattern.matcher(text)
-                while (matcher.find()) {
-                    def line = text.substring(0, matcher.start()).count('\n') + 1
-                    violations << "${path}:${line}: renderer must use ui.slots, not ui.frame"
-                }
-            }
-        }
-        if (!violations.isEmpty()) {
-            throw new GradleException("Slots-first UI rendering validation failed:\n" + violations.join('\n'))
-        }
-        logger.lifecycle("Validated ${rendererFiles.size()} machine menu renderer file(s) render configured UI from compiled ui.slots.")
-    }
-}
 
-tasks.named('build') {
-    finalizedBy 'exportPluginArtifacts'
-}
 
-tasks.named('check') {
-    dependsOn 'validateSfxMachineYaml'
-    dependsOn 'validateSfxTemplateCompile'
-    dependsOn 'validateSfxCompiledContent'
-    dependsOn 'validateSfxBundledCompiledContent'
-    dependsOn 'validateSfxCoreLocalizationCalls'
-    dependsOn 'validateSfxRuntimeCompiledOnlyConfig'
-    dependsOn 'validateSfxSlotsFirstUiRendering'
-}
 
-tasks.register('prepareRuntimeDirs') {
-    group = 'application'
-    description = 'Creates runtime plugin directories for Paper, Folia, and legacy Slimefun.'
-    doLast {
-        file('run-paper-1.21.8/plugins').mkdirs()
-        file("${rootProject.ext.paper261RuntimeDirName}/plugins").mkdirs()
-        file('run-folia-1.21.8/plugins').mkdirs()
-        file("${rootProject.ext.legacyRuntimeDirName}/plugins").mkdirs()
-    }
-}
 
-tasks.register('deployToPaperRuntime', Copy) {
-    group = 'deployment'
-    description = 'Builds the plugin and copies it to run-paper-1.21.8/plugins.'
-    dependsOn 'prepareRuntimeDirs', 'jar'
-    finalizedBy 'exportPluginArtifacts'
-    from(tasks.named('jar').flatMap { it.archiveFile })
-    into(layout.projectDirectory.dir('run-paper-1.21.8/plugins'))
-    rename { rootProject.ext.pluginJarName }
-}
 
-tasks.register('installPaperRuntimePlugManX') {
-    group = 'deployment'
-    description = 'Downloads PlugManX into run-paper-1.21.8/plugins for local Paper hot-reload testing.'
-    dependsOn 'prepareRuntimeDirs'
-    outputs.file(layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.plugManXJarName}"))
-    doLast {
-        def target = layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.plugManXJarName}").asFile
-        if (target.exists() && target.length() > 0) {
-            logger.lifecycle("PlugManX already installed: ${target}")
-            return
-        }
-        new URL(rootProject.ext.plugManXDownloadUrl).withInputStream { input ->
-            target.withOutputStream { output -> output << input }
-        }
-        logger.lifecycle("Installed PlugManX ${rootProject.ext.plugManXVersion}: ${target}")
-    }
-}
 
-def configurePaperTestServerProperties = {
-    def propertiesFile = layout.projectDirectory.file('run-paper-1.21.8/server.properties').asFile
-    propertiesFile.parentFile.mkdirs()
-    def properties = new Properties()
-    if (propertiesFile.exists()) {
-        propertiesFile.withInputStream { input -> properties.load(input) }
-    }
-    properties.setProperty('pause-when-empty-seconds', '-1')
-    properties.setProperty('player-idle-timeout', '0')
-    properties.setProperty('enable-rcon', 'true')
-    properties.setProperty('rcon.port', rootProject.ext.paperRuntimeRconPort.toString())
-    properties.setProperty('rcon.password', rootProject.ext.paperRuntimeRconPassword)
-    properties.setProperty('enable-command-block', 'true')
-    properties.setProperty('online-mode', 'false')
-    properties.setProperty('motd', 'SlimeFunX Paper 1.21.8')
-    propertiesFile.withOutputStream { output ->
-        properties.store(output, 'SlimeFunX Paper 1.21.8 test runtime')
-    }
-}
 
-tasks.register('ensurePaperRuntimeTestConfig') {
-    group = 'verification'
-    description = 'Keeps the Paper 1.21.8 test server alive when empty and enables local RCON for SFX reload commands.'
-    dependsOn 'prepareRuntimeDirs'
-    doLast {
-        configurePaperTestServerProperties()
-        logger.lifecycle("Paper 1.21.8 test config ready: pause-when-empty-seconds=-1, player-idle-timeout=0, RCON ${rootProject.ext.paperRuntimeRconHost}:${rootProject.ext.paperRuntimeRconPort}")
-    }
-}
 
-tasks.register('stagePaperRuntimeUpdate', Copy) {
-    group = 'deployment'
-    description = 'Builds SlimeFunX and stages the jar in run-paper-1.21.8/plugins/update for the next restart or external plugin loader.'
-    dependsOn 'ensurePaperRuntimeTestConfig', 'jar'
-    from(tasks.named('jar').flatMap { it.archiveFile })
-    into(layout.projectDirectory.dir('run-paper-1.21.8/plugins/update'))
-    rename { rootProject.ext.pluginJarName }
-}
 
-def readLittleEndianInt = { InputStream input ->
-    byte[] data = new byte[4]
-    new DataInputStream(input).readFully(data)
-    java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN).getInt()
-}
 
-def writeLittleEndianInt = { OutputStream output, int value ->
-    output.write(value & 0xff)
-    output.write((value >>> 8) & 0xff)
-    output.write((value >>> 16) & 0xff)
-    output.write((value >>> 24) & 0xff)
-}
 
-def sendRconPacket = { OutputStream output, int requestId, int type, String payload ->
-    def body = new ByteArrayOutputStream()
-    writeLittleEndianInt(body, requestId)
-    writeLittleEndianInt(body, type)
-    body.write(payload.getBytes(StandardCharsets.UTF_8))
-    body.write(0)
-    body.write(0)
-    writeLittleEndianInt(output, body.size())
-    body.writeTo(output)
-    output.flush()
-}
 
-def readRconPacket = { InputStream input ->
-    int length = readLittleEndianInt(input)
-    byte[] data = new byte[length]
-    new DataInputStream(input).readFully(data)
-    def buffer = java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN)
-    int requestId = buffer.getInt()
-    int type = buffer.getInt()
-    int payloadLength = Math.max(0, length - 10)
-    byte[] payload = new byte[payloadLength]
-    buffer.get(payload)
-    [id: requestId, type: type, payload: new String(payload, StandardCharsets.UTF_8)]
-}
 
-def sendPaperRconCommand = { String commandText ->
-    def output = new ByteArrayOutputStream()
-    def script = layout.projectDirectory.file('tools/paper-rcon.ps1').asFile
-    def result = exec {
-        executable = 'powershell.exe'
-        args = [
-                '-NoProfile',
-                '-ExecutionPolicy', 'Bypass',
-                '-File', script.absolutePath,
-                '-HostName', rootProject.ext.paperRuntimeRconHost,
-                '-Port', rootProject.ext.paperRuntimeRconPort.toString(),
-                '-Password', rootProject.ext.paperRuntimeRconPassword,
-                '-CommandText', commandText,
-                '-TimeoutMs', '5000'
-        ]
-        standardOutput = output
-        errorOutput = output
-        ignoreExitValue = true
-    }
-    def responseText = output.toString(StandardCharsets.UTF_8.name()).trim()
-    if (responseText != null && !responseText.isBlank()) {
-        logger.lifecycle(responseText)
-    }
-    if (result.exitValue != 0) {
-        throw new IOException(responseText.isBlank() ? "RCON command failed: ${commandText}" : responseText)
-    }
-    responseText
-}
 
-def sendPaperRconCommandWithRetry = { String commandText, int attempts = 3, long delayMs = 1000L ->
-    IOException lastIo = null
-    for (int attempt = 1; attempt <= attempts; attempt++) {
-        try {
-            return sendPaperRconCommand(commandText)
-        } catch (IOException exception) {
-            lastIo = exception
-            if (attempt < attempts) {
-                Thread.sleep(delayMs)
-            }
-        }
-    }
-    throw lastIo
-}
 
-def readNewLogText = { logFile, offset ->
-    if (!logFile.exists() || logFile.length() <= offset) {
-        return ''
-    }
-    def stream = new RandomAccessFile(logFile, 'r')
-    stream.withCloseable {
-        it.seek(offset as long)
-        byte[] data = new byte[(int) Math.min(Integer.MAX_VALUE, it.length() - offset)]
-        it.readFully(data)
-        return new String(data, StandardCharsets.UTF_8)
-    }
-}
 
-def waitForLogMatch = { logFile, offset, needles, timeoutMs ->
-    long deadline = System.currentTimeMillis() + timeoutMs
-    while (System.currentTimeMillis() <= deadline) {
-        def text = readNewLogText(logFile, offset)
-        if (needles.any { text.contains(it) }) {
-            return true
-        }
-        Thread.sleep(250L)
-    }
-    false
-}
 
-def waitForSfxEnable = { logFile, offset, timeoutMs ->
-    long deadline = System.currentTimeMillis() + timeoutMs
-    while (System.currentTimeMillis() <= deadline) {
-        def text = readNewLogText(logFile, offset)
-        if (text.contains('[SlimeFunX] SlimeFunX failed to start:')
-                || text.contains('Cannot execute command') && text.contains('plugin is disabled')) {
-            return false
-        }
-        if (text.contains('[SlimeFunX] SFX enabled.')) {
-            return true
-        }
-        Thread.sleep(250L)
-    }
-    false
-}
 
-tasks.register('paperRcon') {
-    group = 'application'
-    description = 'Sends an arbitrary command to the running Paper 1.21.8 test server over local RCON. Use -Pcmd="command".'
-    dependsOn 'ensurePaperRuntimeTestConfig'
-    doLast {
-        def commandText = project.findProperty('cmd')?.toString()
-        if (commandText == null || commandText.isBlank()) {
-            throw new GradleException('Missing command. Use: .\\gradlew.bat paperRcon -Pcmd="say test"')
-        }
-        try {
-            sendPaperRconCommandWithRetry(commandText)
-        } catch (IOException exception) {
-            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled yet. Start it with runPaper after ensurePaperRuntimeTestConfig.', exception)
-        }
-    }
-}
 
-tasks.register('reloadPaperRuntime') {
-    group = 'application'
-    description = 'Sends /sfx reload runtime to the running Paper 1.21.8 test server over local RCON.'
-    dependsOn 'ensurePaperRuntimeTestConfig'
-    doLast {
-        try {
-            sendPaperRconCommandWithRetry('sfx reload runtime')
-            logger.lifecycle('Requested SFX runtime reload on Paper 1.21.8.')
-        } catch (IOException exception) {
-            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled yet. Start it with runPaper after ensurePaperRuntimeTestConfig.', exception)
-        }
-    }
-}
 
-tasks.register('stageAndReloadPaperRuntime') {
-    group = 'application'
-    description = 'Stages the jar for the next restart and reloads the current SFX runtime/config over RCON. Bytecode changes still require restart or an external plugin loader.'
-    dependsOn 'stagePaperRuntimeUpdate', 'reloadPaperRuntime'
-}
 
-tasks.register('plugmanReloadPaperRuntime') {
-    group = 'application'
-    description = 'Builds SlimeFunX, unloads it with PlugManX, replaces the Paper 1.21.8 plugin jar, then loads it again.'
-    dependsOn 'ensurePaperRuntimeTestConfig', 'installPaperRuntimePlugManX', 'jar'
-    doLast {
-        try {
-            sendPaperRconCommandWithRetry('list')
-            def logFile = layout.projectDirectory.file('run-paper-1.21.8/logs/latest.log').asFile
-            long unloadLogOffset = logFile.exists() ? logFile.length() : 0L
-            def unloadResponse = sendPaperRconCommandWithRetry('plugman unload SlimeFunX')
-            if (!String.valueOf(unloadResponse).contains('SlimeFunX has been unloaded')
-                    && !String.valueOf(unloadResponse).contains('That is not a valid plugin')
-                    && !waitForLogMatch(logFile, unloadLogOffset, ['[SlimeFunX] Disabling SlimeFunX'], 10000L)) {
-                throw new GradleException('PlugManX unload command was sent, but SlimeFunX disable was not observed in latest.log.')
-            }
-            def builtJar = tasks.named('jar').get().archiveFile.get().asFile
-            def targetJar = layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.pluginJarName}").asFile
-            java.nio.file.Files.copy(builtJar.toPath(), targetJar.toPath(), StandardCopyOption.REPLACE_EXISTING)
-            logger.lifecycle("Copied ${builtJar.name} to ${targetJar}")
-            Thread.sleep(1500L)
-            long loadLogOffset = logFile.exists() ? logFile.length() : 0L
-            sendPaperRconCommandWithRetry('plugman load SlimeFunX', 5, 1500L)
-            if (!waitForSfxEnable(logFile, loadLogOffset, 20000L)) {
-                throw new GradleException('PlugManX load command was sent, but SlimeFunX enable was not observed in latest.log.')
-            }
-            logger.lifecycle('Requested PlugManX unload/load for SlimeFunX on Paper 1.21.8.')
-        } catch (IOException exception) {
-            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled. Start it with runPaper first.', exception)
-        }
-    }
-}
 
-tasks.named('reloadPaperRuntime') {
-    mustRunAfter 'stagePaperRuntimeUpdate'
-}
 
-tasks.register('preparePaper261Runtime') {
-    group = 'deployment'
-    description = 'Prepares a dedicated Paper 26.1 runtime directory for SFX testing.'
-    dependsOn 'prepareRuntimeDirs'
-    doLast {
-        def sourceDir = layout.projectDirectory.dir('run-paper-1.21.8').asFile
-        def targetDir = layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName).asFile
 
-        targetDir.mkdirs()
-        ['plugins', 'logs'].each { child ->
-            new File(targetDir, child).mkdirs()
-        }
 
-        [
-                'eula.txt',
-                'server.properties',
-                'ops.json',
-                'bukkit.yml',
-                'spigot.yml',
-                'commands.yml',
-                'help.yml',
-                'permissions.yml'
-        ].each { fileName ->
-            def sourceFile = new File(sourceDir, fileName)
-            def targetFile = new File(targetDir, fileName)
-            if (sourceFile.exists() && !targetFile.exists()) {
-                copy {
-                    from sourceFile
-                    into targetDir
-                }
-            }
-        }
 
-        def sourceConfigDir = new File(sourceDir, 'config')
-        def targetConfigDir = new File(targetDir, 'config')
-        if (sourceConfigDir.exists()) {
-            sourceConfigDir.mkdirs()
-            copy {
-                from sourceConfigDir
-                into targetConfigDir
-                include 'paper-global.yml', 'paper-world-defaults.yml'
-            }
-        }
 
-        def sourcePacketEvents = new File(sourceDir, 'plugins/packetevents-spigot-2.12.1.jar')
-        if (sourcePacketEvents.exists()) {
-            copy {
-                from sourcePacketEvents
-                into new File(targetDir, 'plugins')
-            }
-        }
 
-        def sourceReadme = new File(sourceDir, 'README.md')
-        def targetReadme = new File(targetDir, 'README.md')
-        if (!targetReadme.exists()) {
-            targetReadme.text = """Place a Paper 26.1 server jar here as ${rootProject.ext.paper261RuntimeJarName}.
-Paper 26.1+ requires Java 25 according to PaperMC documentation.
 
-${sourceReadme.exists() ? sourceReadme.text : ''}
-""".stripIndent()
-        }
 
-        new File(targetDir, 'start-paper.ps1').text = """\$ErrorActionPreference = 'Stop'
-Set-Location \$PSScriptRoot
-chcp 65001 > \$null
-[Console]::InputEncoding = [System.Text.UTF8Encoding]::new()
-[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 
-\$javaCmd = 'java'
-\$preferredJava = 'D:\\MyApp\\java\\jdk-25\\bin\\java.exe'
-if (-not (Test-Path \$preferredJava)) {
-    \$preferredJava = 'C:\\Program Files\\Java\\jdk-25\\bin\\java.exe'
-}
-if (-not (Test-Path \$preferredJava)) {
-    \$preferredJava = 'C:\\Program Files\\Java\\jdk-25.0.1\\bin\\java.exe'
-}
-if (-not (Test-Path \$preferredJava)) {
-    \$preferredJava = 'C:\\Program Files\\Java\\jdk-25.0.2\\bin\\java.exe'
-}
-if (Test-Path \$preferredJava) {
-    \$javaCmd = \$preferredJava
-}
 
-& \$javaCmd -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -Xms1G -Xmx2G -jar .\\${rootProject.ext.paper261RuntimeJarName} nogui
-""".stripIndent()
-    }
-}
 
-tasks.register('deployToPaper261Runtime', Copy) {
-    group = 'deployment'
-    description = 'Builds the plugin and copies it to run-paper-26.1/plugins.'
-    dependsOn 'preparePaper261Runtime', 'jar'
-    from(tasks.named('jar').flatMap { it.archiveFile })
-    into(layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName + '/plugins'))
-    rename { rootProject.ext.pluginJarName }
-}
 
-tasks.register('deployToFoliaRuntime', Copy) {
-    group = 'deployment'
-    description = 'Builds the plugin and copies it to run-folia-1.21.8/plugins.'
-    dependsOn 'prepareRuntimeDirs', 'jar'
-    from(tasks.named('jar').flatMap { it.archiveFile })
-    into(layout.projectDirectory.dir('run-folia-1.21.8/plugins'))
-    rename { rootProject.ext.pluginJarName }
-}
 
-tasks.register('fetchLegacySlimefun') {
-    group = 'deployment'
-    description = 'Downloads the classic Slimefun4-compatible 1.21.x jar used by the legacy runtime.'
-    def outputFile = layout.buildDirectory.file("legacy-runtime/${rootProject.ext.legacySlimefunJarName}")
-    outputs.file(outputFile)
-    doLast {
-        def target = outputFile.get().asFile
-        target.parentFile.mkdirs()
-        if (target.exists() && target.length() > 0L) {
-            logger.lifecycle("Using cached legacy Slimefun jar: ${target}")
-            return
-        }
 
-        logger.lifecycle("Downloading legacy Slimefun from ${rootProject.ext.legacySlimefunDownloadUrl}")
-        new URL(rootProject.ext.legacySlimefunDownloadUrl).withInputStream { input ->
-            target.withOutputStream { output -> output << input }
-        }
-    }
-}
 
-tasks.register('prepareLegacySlimefunRuntime') {
-    group = 'deployment'
-    description = 'Prepares a dedicated Paper 1.21.8 runtime directory for classic Slimefun.'
-    dependsOn 'prepareRuntimeDirs'
-    doLast {
-        def sourceDir = layout.projectDirectory.dir('run-paper-1.21.8').asFile
-        def targetDir = layout.projectDirectory.dir(rootProject.ext.legacyRuntimeDirName).asFile
-        def sourcePaperJar = new File(sourceDir, rootProject.ext.paperRuntimeJarName)
-        if (!sourcePaperJar.exists()) {
-            throw new GradleException("Missing Paper runtime jar: ${sourcePaperJar}. Prepare run-paper-1.21.8 first.")
-        }
 
-        copy {
-            from sourcePaperJar
-            into targetDir
-        }
 
-        [
-                'eula.txt',
-                'server.properties',
-                'ops.json',
-                'bukkit.yml',
-                'spigot.yml',
-                'commands.yml',
-                'help.yml',
-                'permissions.yml'
-        ].each { fileName ->
-            def sourceFile = new File(sourceDir, fileName)
-            def targetFile = new File(targetDir, fileName)
-            if (sourceFile.exists() && !targetFile.exists()) {
-                copy {
-                    from sourceFile
-                    into targetDir
-                }
-            }
-        }
 
-        new File(targetDir, 'plugins').mkdirs()
-        new File(targetDir, 'logs').mkdirs()
-    }
-}
 
-tasks.register('deployLegacySlimefunRuntime', Copy) {
-    group = 'deployment'
-    description = 'Downloads a classic Slimefun4-compatible 1.21.x jar, deploys it to the legacy Paper runtime, and removes SlimeFunX from that runtime.'
-    dependsOn 'fetchLegacySlimefun', 'prepareLegacySlimefunRuntime'
-    from(layout.buildDirectory.file("legacy-runtime/${rootProject.ext.legacySlimefunJarName}"))
-    into(layout.projectDirectory.dir("${rootProject.ext.legacyRuntimeDirName}/plugins"))
-    rename { rootProject.ext.legacySlimefunJarName }
-    doLast {
-        def pluginsDir = layout.projectDirectory.dir("${rootProject.ext.legacyRuntimeDirName}/plugins").asFile
-        pluginsDir.listFiles()?.findAll { it.isFile() && it.name.toLowerCase(Locale.ROOT).startsWith('slimefun') && it.name != rootProject.ext.legacySlimefunJarName }?.each { jarFile ->
-            jarFile.delete()
-        }
 
-        def sfxJar = new File(pluginsDir, rootProject.ext.pluginJarName)
-        if (sfxJar.exists()) {
-            sfxJar.delete()
-        }
 
-        def sfxDataDir = new File(pluginsDir, 'SlimeFunX')
-        if (sfxDataDir.exists()) {
-            delete(sfxDataDir)
-        }
-    }
-}
 
-def preferredJavaExecutable = {
-    def java21 = file('C:/Program Files/Java/jdk-21/bin/java.exe')
-    java21.exists() ? java21.absolutePath : 'java'
-}
 
-def preferredJava25Executable = {
-    def java25Candidates = [
-            file('D:/MyApp/java/jdk-25/bin/java.exe'),
-            file('C:/Program Files/Java/jdk-25/bin/java.exe'),
-            file('C:/Program Files/Java/jdk-25.0.1/bin/java.exe'),
-            file('C:/Program Files/Java/jdk-25.0.2/bin/java.exe')
-    ]
-    def java25 = java25Candidates.find { it.exists() }
-    java25 != null ? java25.absolutePath : 'java'
-}
 
-tasks.register('runPaper') {
-    group = 'application'
-    description = 'Builds the plugin, deploys it to the Paper runtime, and starts Paper 1.21.8.'
-    dependsOn 'ensurePaperRuntimeTestConfig', 'deployToPaperRuntime'
-    doLast {
-        def workingDirFile = layout.projectDirectory.dir('run-paper-1.21.8').asFile
-        def command = [preferredJavaExecutable()]
-        command.addAll(rootProject.ext.serverEncodingJvmArgs)
-        command.addAll(['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui'])
 
-        logger.lifecycle('Starting Paper 1.21.8 with heartbeat output to avoid idle timeout false positives.')
 
-        def process = new ProcessBuilder(command)
-                .directory(workingDirFile)
-                .redirectErrorStream(true)
-                .start()
 
-        def inputThread = Thread.startDaemon('runPaper-input-forwarder') {
-            def processInput = process.outputStream
-            try {
-                byte[] buffer = new byte[1024]
-                int read
-                while (process.isAlive() && (read = System.in.read(buffer)) != -1) {
-                    processInput.write(buffer, 0, read)
-                    processInput.flush()
-                }
-            } catch (IOException ignored) {
-                
-            } finally {
-                try {
-                    processInput.close()
-                } catch (IOException ignored) {
-                    
-                }
-            }
-        }
 
-        def forwardThread = Thread.startDaemon('runPaper-output-forwarder') {
-            process.inputStream.withReader(StandardCharsets.UTF_8.name()) { reader ->
-                String line
-                while ((line = reader.readLine()) != null) {
-                    println line
-                }
-            }
-        }
 
-        try {
-            while (process.isAlive()) {
-                if (!process.waitFor(30, TimeUnit.SECONDS)) {
-                    logger.lifecycle('[runPaper] still running...')
-                }
-            }
-            inputThread.join(1000)
-            forwardThread.join(1000)
-        } finally {
-            if (process.isAlive()) {
-                process.destroy()
-            }
-        }
 
-        def exitCode = process.exitValue()
-        if (exitCode != 0) {
-            throw new GradleException("Paper 1.21.8 exited with code ${exitCode}.")
-        }
-    }
-}
 
-tasks.register('runPaper261', Exec) {
-    group = 'application'
-    description = 'Builds the plugin, deploys it to the Paper 26.1 runtime, and starts Paper 26.1 using Java 25 when available.'
-    dependsOn 'deployToPaper261Runtime'
-    workingDir layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName).asFile
-    executable preferredJava25Executable()
-    standardInput = System.in
-    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paper261RuntimeJarName, 'nogui']
-}
 
-tasks.register('runFolia', Exec) {
-    group = 'application'
-    description = 'Builds the plugin, deploys it to the Folia runtime, and starts Folia 1.21.8.'
-    dependsOn 'deployToFoliaRuntime'
-    workingDir layout.projectDirectory.dir('run-folia-1.21.8').asFile
-    executable preferredJavaExecutable()
-    standardInput = System.in
-    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.foliaRuntimeJarName, 'nogui']
-}
 
-tasks.register('runLegacySlimefun', Exec) {
-    group = 'application'
-    description = 'Deploys a classic Slimefun4-compatible plugin to a dedicated Paper 1.21.8 runtime and starts it.'
-    dependsOn 'deployLegacySlimefunRuntime'
-    workingDir layout.projectDirectory.dir(rootProject.ext.legacyRuntimeDirName).asFile
-    executable preferredJavaExecutable()
-    standardInput = System.in
-    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui']
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
