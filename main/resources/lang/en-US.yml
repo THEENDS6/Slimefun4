@@ -49,8 +49,8 @@ machines:
     updated: <green>Hologram updated.</green>
     edit-cancelled: <gray>Hologram edit cancelled.</gray>
     not-owner: <red>Only the owner can edit this Hologram Projector.</red>
-  ignition-chamber-no-flint: <red>自动点火室中没有打火石。</red>
-  wrong-item: <red>这个物品不能被这台机器处理。</red>
+  ignition-chamber-no-flint: <red>The Ignition Chamber has no Flint and Steel.</red>
+  wrong-item: <red>This item cannot be processed by this machine.</red>
   busy: <red>This machine is already working.</red>
   crucible-blocked: <red>The space above the Crucible is blocked.</red>
 guide:
