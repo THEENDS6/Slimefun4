@@ -60,7 +60,7 @@ Examples:
 - armor crafting belongs in armor groups
 - electric processing belongs in electric process groups
 
-Prefer `runtime-machines` when a recipe truly belongs to specific machine ids. Prefer `runtime-machine-tags` when the recipe belongs to every machine that has a capability tag. Multiple tags are treated as an all-tags requirement.
+Recipes should use `runtime-machine-tags` to express required machine capabilities. Multiple tags are treated as an all-tags requirement. Do not use direct `machine` or `runtime-machines` fields in template or compiled recipes; compiled validation rejects them.
 
 Compiled recipes must be self-contained. Each entry must define `id`, `recipe-type`, `operation`, and `outputs`. Shaped recipes must provide a 9-entry `matrix`; shapeless recipes must provide 1-9 `inputs`; single and hand recipes must provide `input`. Java runtime must not treat missing or unknown operations as shaped recipes.
 
