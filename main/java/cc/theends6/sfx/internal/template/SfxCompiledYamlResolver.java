@@ -3,9 +3,15 @@ package cc.theends6.sfx.internal.template;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -144,7 +150,68 @@ public final class SfxCompiledYamlResolver {
                 return false;
             }
         }
+        return localCompiledOutputsMatch(plugin, localRoot, localManifest);
+    }
+
+    private static boolean localCompiledOutputsMatch(JavaPlugin plugin, File localRoot, YamlConfiguration manifest) {
+        Set<String> expectedFiles = new LinkedHashSet<>();
+        Path rootPath = localRoot.toPath().toAbsolutePath().normalize();
+        for (Map<?, ?> output : manifest.getMapList("outputs")) {
+            String file = normalizeResource(string(output.get("file")));
+            String expectedSha = string(output.get("sha256"));
+            if (file == null || file.isBlank()) {
+                warnLocalCompiledIgnored(plugin, "_manifest.yml output missing file");
+                return false;
+            }
+            if (expectedSha == null || expectedSha.isBlank()) {
+                warnLocalCompiledIgnored(plugin, "_manifest.yml output missing sha256 for " + file);
+                return false;
+            }
+            expectedFiles.add(file);
+            Path outputPath = rootPath.resolve(file).normalize();
+            if (!outputPath.startsWith(rootPath)) {
+                warnLocalCompiledIgnored(plugin, "_manifest.yml output escapes compiled root: " + file);
+                return false;
+            }
+            File outputFile = outputPath.toFile();
+            if (!outputFile.isFile()) {
+                warnLocalCompiledIgnored(plugin, "_manifest.yml output missing from local compiled content: " + file);
+                return false;
+            }
+            String actualSha;
+            try {
+                actualSha = sha256(outputPath);
+            } catch (IllegalStateException ex) {
+                warnLocalCompiledIgnored(plugin, ex.getMessage());
+                return false;
+            }
+            if (!expectedSha.equalsIgnoreCase(actualSha)) {
+                warnLocalCompiledIgnored(plugin, "_manifest.yml sha256 mismatch for " + file);
+                return false;
+            }
+        }
+        for (File file : listYamlFiles(localRoot)) {
+            String relative = normalizeResource(rootPath.relativize(file.toPath().toAbsolutePath().normalize()).toString());
+            if (!expectedFiles.contains(relative)) {
+                warnLocalCompiledIgnored(plugin, "local compiled output is not listed in _manifest.yml: " + relative);
+                return false;
+            }
+        }
         return true;
+    }
+
+    private static String sha256(Path file) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(Files.readAllBytes(file));
+            StringBuilder result = new StringBuilder(hash.length * 2);
+            for (byte value : hash) {
+                result.append(String.format("%02x", value & 0xff));
+            }
+            return result.toString();
+        } catch (IOException | NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("Cannot hash compiled output " + file + ": " + ex.getMessage(), ex);
+        }
     }
 
     private static YamlConfiguration loadBundledManifest(JavaPlugin plugin) {
