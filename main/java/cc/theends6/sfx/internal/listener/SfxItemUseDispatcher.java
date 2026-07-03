@@ -73,7 +73,7 @@ public final class SfxItemUseDispatcher implements Listener {
             SfxEventGuards.denyBlockAndItemUse(event);
             event.getPlayer().sendMessage(Text.prefixed(
                     org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(getClass()),
-                    localization.text("messages.profile.loading", "<yellow>Your SFX player data is still loading. Try again in a moment.</yellow>")
+                    localization.text("messages.profile.loading")
             ));
             return;
         }
@@ -82,7 +82,7 @@ public final class SfxItemUseDispatcher implements Listener {
             SfxEventGuards.denyBlockAndItemUse(event);
             event.getPlayer().sendMessage(Text.prefixed(
                     org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(getClass()),
-                    localization.text("messages.not-researched-item", "<red>You have not unlocked this item yet.</red>")
+                    localization.text("messages.not-researched-item")
             ));
             return;
         }
