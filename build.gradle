@@ -662,6 +662,42 @@ tasks.register('validateSfxCompiledContent') {
                     violations << "_manifest.yml declares missing compiled output: ${path}"
                 }
             }
+            def sourceMapFile = new File(root, '_source-map.yml')
+            if (!sourceMapFile.isFile()) {
+                violations << "compiled source map missing _source-map.yml"
+            } else {
+                def sourceMapText = sourceMapFile.getText('UTF-8')
+                ['origins:', 'outputs:'].each { field ->
+                    if (!sourceMapText.contains(field)) {
+                        violations << "_source-map.yml missing ${field}"
+                    }
+                }
+                def sourceMapOutputs = [] as Set
+                boolean inSourceMapOutputs = false
+                sourceMapText.readLines().each { line ->
+                    if (line == 'outputs:') {
+                        inSourceMapOutputs = true
+                        return
+                    }
+                    if (!inSourceMapOutputs) {
+                        return
+                    }
+                    def fileMatch = line =~ /^- file:\s*(.+?)\s*$/
+                    if (fileMatch.matches()) {
+                        sourceMapOutputs << cleanScalar(fileMatch[0][1])
+                    }
+                }
+                declaredOutputPaths.each { path ->
+                    if (!sourceMapOutputs.contains(path)) {
+                        violations << "_source-map.yml missing output mapping for ${path}"
+                    }
+                }
+                sourceMapOutputs.each { path ->
+                    if (!declaredOutputPaths.contains(path)) {
+                        violations << "_source-map.yml contains output not listed in _manifest.yml: ${path}"
+                    }
+                }
+            }
         }
         validateManifestOutputs()
         def addRecipeItemReference = { File file, recipe, String section, Object rawId, int lineNumber ->

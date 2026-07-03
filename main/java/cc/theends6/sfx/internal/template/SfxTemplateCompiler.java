@@ -109,7 +109,7 @@ public final class SfxTemplateCompiler {
             clearOutputDirectory();
             writeOutputs(outputs);
             writeManifest(manifestSources, outputs);
-            writeSourceMap();
+            writeSourceMap(outputs);
         } catch (SfxTemplateCompileException ex) {
             errors.add(ex.getMessage());
         } catch (RuntimeException | IOException ex) {
@@ -1617,7 +1617,7 @@ public final class SfxTemplateCompiler {
         return builder.toString();
     }
 
-    private void writeSourceMap() throws IOException {
+    private void writeSourceMap(List<OutputNode> outputs) throws IOException {
         YamlConfiguration sourceMap = new YamlConfiguration();
         for (Map.Entry<String, Origin> entry : origins.entrySet()) {
             String key = entry.getKey().replace('$', '_').replace(':', '_').replace('#', '_').replace('[', '_').replace(']', '_');
@@ -1625,6 +1625,21 @@ public final class SfxTemplateCompiler {
             sourceMap.set("origins." + key + ".path", entry.getValue().path());
             sourceMap.set("origins." + key + ".operation", entry.getValue().operation());
         }
+        List<Map<String, Object>> outputEntries = new ArrayList<>();
+        for (OutputNode output : outputs) {
+            String file = outputDirectory(output.targetResource()) + "/" + outputFileName(output);
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("file", file);
+            entry.put("target", output.targetResource() == null ? "" : output.targetResource());
+            entry.put("source-path", output.path());
+            Origin origin = origins.get(output.path());
+            if (origin != null) {
+                entry.put("source", origin.source());
+                entry.put("operation", origin.operation());
+            }
+            outputEntries.add(entry);
+        }
+        sourceMap.set("outputs", outputEntries);
         Files.writeString(outputRoot.resolve("_source-map.yml"), sourceMap.saveToString(), StandardCharsets.UTF_8);
     }
 
