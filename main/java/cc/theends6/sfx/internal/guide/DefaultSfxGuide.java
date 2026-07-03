@@ -1255,7 +1255,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         runtime.executeForPlayer(player, () -> {
             items.give(player, items.create(definition, amount));
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.7f, 1.2f);
-            player.sendMessage(Text.prefixed(plugin, localization.text("machines.cheat-item", "<green>Received:</green><gray>{item} x{amount}</gray>")
+            player.sendMessage(Text.prefixed(plugin, localization.text("machines.cheat-item")
                     .replace("{item}", itemDisplayName(definition))
                     .replace("{amount}", Integer.toString(amount))));
         });
@@ -1272,17 +1272,14 @@ public final class DefaultSfxGuide implements SfxGuide {
                         .reduce((left, right) -> left + ", " + right)
                         .orElse(materialName(definition.triggerMaterial()));
                 String key = definition.deployable() ? "machines.cheat-machine-kit" : "machines.deploy-pack-unsupported";
-                String fallback = definition.deployable()
-                        ? "<green>Received full machine kit:</green><gray>{item}</gray>"
-                        : "<yellow>This machine does not support deploy packs yet, a full structure kit was given instead:</yellow><gray>{item}</gray>";
-                player.sendMessage(Text.prefixed(plugin, localization.text(key, fallback).replace("{item}", parts)));
+                player.sendMessage(Text.prefixed(plugin, localization.text(key).replace("{item}", parts)));
             } else {
                 ItemStack deployPack = cc.theends6.sfx.internal.machine.ManualMachineDeployPacks.create(plugin, definition, localization);
                 items.give(player, deployPack);
                 String itemName = deployPack.hasItemMeta() && deployPack.getItemMeta() != null && deployPack.getItemMeta().hasDisplayName()
                         ? net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(deployPack.getItemMeta().displayName())
                         : machineDisplayName(definition);
-                player.sendMessage(Text.prefixed(plugin, localization.text("machines.cheat-machine-pack", "<green>Received machine deploy pack:</green><gray>{item}</gray>")
+                player.sendMessage(Text.prefixed(plugin, localization.text("machines.cheat-machine-pack")
                         .replace("{item}", itemName)));
             }
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.7f, 1.2f);
@@ -1509,7 +1506,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     String displayResearchName(SfxResearchDefinition research, SfxItemDefinition definition) {
-        return PlainTextComponentSerializer.plainText().serialize(localization.component(research.nameKey(), research.nameKey()));
+        return PlainTextComponentSerializer.plainText().serialize(localization.component(research.nameKey()));
     }
 
     private List<SfxItemCategory> visibleCategoriesFor(Player player, GuideMode mode) {
@@ -1966,11 +1963,11 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private String itemDisplayName(SfxItemDefinition definition) {
-        return plainText(localization.itemName(definition.id(), definition.name()));
+        return plainText(localization.itemName(definition.id()));
     }
 
     private String machineDisplayName(ManualMachineDefinition definition) {
-        return plainText(localization.itemName(definition.id(), definition.name()));
+        return plainText(localization.itemName(definition.id()));
     }
 
     private String plainText(Component component) {

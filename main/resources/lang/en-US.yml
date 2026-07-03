@@ -28,7 +28,7 @@ machines:
   ancient-pedestal:
     obstructed: <red>The Ancient Pedestal is obstructed.</red>
     hold-item: <red>Hold an item to place it on the Ancient Pedestal.</red>
-  deploy-pack-unsupported: <yellow>This machine does not support deploy packs yet, a full structure kit was given instead:"</yellow><gray>{item}</gray>"
+  deploy-pack-unsupported: <yellow>This machine does not support deploy packs yet, a full structure kit was given instead:</yellow><gray>{item}</gray>
   industrial-miner:
     started: <green>Industrial Miner started.</green>
     started-advanced: <green>Advanced Industrial Miner started.</green>
