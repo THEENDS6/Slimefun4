@@ -1829,7 +1829,8 @@ tasks.register('validateSfxCoreLocalizationCalls') {
             'main/java/cc/theends6/sfx/internal/listener/SfxLegacyFoodListener.java',
             'main/java/cc/theends6/sfx/internal/listener/SfxLegacyCombatToolListener.java',
             'main/java/cc/theends6/sfx/internal/listener/SfxLegacyUtilityListener.java',
-            'main/java/cc/theends6/sfx/internal/listener/SfxBackpackListener.java'
+            'main/java/cc/theends6/sfx/internal/listener/SfxBackpackListener.java',
+            'main/java/cc/theends6/sfx/internal/radiation/SfxRadiationService.java'
     ]
     inputs.files(coreLocalizationFiles.collect { layout.projectDirectory.file(it) })
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/util/SfxLocalization.java'))

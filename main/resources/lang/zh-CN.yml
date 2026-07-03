@@ -53,6 +53,23 @@ machines:
   wrong-item: <red>这个物品不能被这台机器处理。</red>
   busy: <red>这台机器正在工作。</red>
   crucible-blocked: <red>坩埚上方空间被阻挡。</red>
+radiation:
+  messages:
+    death: '{player} 死于辐射'
+    exposure-warning: <yellow>你正在受到辐射影响</yellow>
+    recovered: <green>辐射病症状已经消退</green>
+    stage-prefix: '辐射病 '
+  stages:
+    i:
+      description: 你感觉有些奇怪
+    ii:
+      description: 你感觉不太舒服
+    iii:
+      description: 你感到强烈的不适
+    iv:
+      description: 你感到身体正在衰弱
+    v:
+      description: 你的身体正在被辐射摧毁
 items:
   tome-of-knowledge-sharing:
     owner-line: '&7拥有者：&b{name}'

@@ -55,7 +55,7 @@ final class SfxPluginServiceModule {
         SfxPluginFrameworkWiring.Stats frameworkStats = SfxPluginFrameworkWiring.wire(plugin);
         SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(plugin.api.items(), plugin.blockDataService, plugin.basicMachineBlockListener, plugin.electricMachineService, plugin.configurableMachineService, plugin.energyService, plugin.cargoService, plugin.decorationService, plugin.gpsService, plugin.ancientAltarService, plugin.androidService, plugin.spawnerService, plugin.blockPlacerService, plugin.infusedHopperService, plugin.hologramProjectorService, plugin.api.runtime(), plugin.machineRuntime);
         plugin.blockPersistenceListener = new SfxBlockPersistenceListener(plugin, plugin.api.runtime(), plugin.blockDataService, plugin.gpsService);
-        plugin.radiationService = new SfxRadiationService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.itemRegistry(), plugin.playerDataService);
+        plugin.radiationService = new SfxRadiationService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.itemRegistry(), plugin.localization, plugin.playerDataService);
         plugin.listenerRegistrar = new SfxListenerRegistrar(plugin);
         plugin.moduleManager = SfxPluginLifecycleWiring.create(plugin);
         return new SfxPluginServices(manualMachineService, placeableBlockListener, frameworkStats, plugin.moduleManager);
