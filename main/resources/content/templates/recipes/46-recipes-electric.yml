@@ -445,7 +445,8 @@ recipes:
     guide-order: 35
     source: slimefun-rc37
     runtime: true
-    machine: sf:pressure_chamber
+    runtime-machine-tags:
+    - pressure-chamber
     input: sf:raw_carbonado
     outputs:
     - sf:carbonado
@@ -458,7 +459,8 @@ recipes:
     guide-order: 36
     source: slimefun-rc37
     runtime: true
-    machine: sf:pressure_chamber
+    runtime-machine-tags:
+    - pressure-chamber
     input: sf:carbon_chunk
     outputs:
     - sf:synthetic_diamond
