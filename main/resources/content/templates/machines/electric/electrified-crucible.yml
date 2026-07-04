@@ -1,44 +1,76 @@
 
 items:
   "sf:electrified_crucible":
+    @d:
+      suffix: ""
     category: sf:electricity
     material: RED_TERRACOTTA
-    name-key: items.sf.electrified_crucible.name
+    name-key: items.sf.electrified_crucible${suffix}.name
     priority: 412
-    lore-key: items.sf.electrified_crucible.lore
-    flags: [legacy-sf]
+    lore-key: items.sf.electrified_crucible${suffix}.lore
+    flags:
+    - legacy-sf
   "sf:electrified_crucible_2":
     @cf: items.sf:electrified_crucible
-    name-key: items.sf.electrified_crucible_2.name
+    @d:
+      suffix: "_2"
     priority: 413
-    lore-key: items.sf.electrified_crucible_2.lore
   "sf:electrified_crucible_3":
     @cf: items.sf:electrified_crucible
-    name-key: items.sf.electrified_crucible_3.name
+    @d:
+      suffix: "_3"
     priority: 414
-    lore-key: items.sf.electrified_crucible_3.lore
 machine-catalog:
-  "sf:electrified_crucible": {category: ELECTRIC, display-name: sf:electrified_crucible, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:electrified_crucible":
+    @d:
+      suffix: ""
+    category: ELECTRIC
+    display-name: sf:electrified_crucible${suffix}
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
   "sf:electrified_crucible_2":
     @cf: machine-catalog.sf:electrified_crucible
-    display-name: sf:electrified_crucible_2
+    @d:
+      suffix: "_2"
   "sf:electrified_crucible_3":
     @cf: machine-catalog.sf:electrified_crucible
-    display-name: sf:electrified_crucible_3
+    @d:
+      suffix: "_3"
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:electrified_crucible":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.electrified_crucible.name, speed: 1, capacity: 20480, consumption: 72, progress-material: FLINT_AND_STEEL}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [crucible-melting]}, include-recipes: [], exclude-recipes: []}
+    @d:
+      suffix: ""
+      speed: 1
+      capacity: 20480
+      consumption: 72
+      progress-material: FLINT_AND_STEEL
+    name-key: items.sf.electrified_crucible${suffix}.name
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - crucible-melting
+      include-recipes: []
+      exclude-recipes: []
   "sf:electrified_crucible_2":
     @cf: machines.sf:electrified_crucible
-    name-key: items.sf.electrified_crucible_2.name
+    @d:
+      suffix: "_2"
     speed: 2
-    energy: {capacity: 40960, consumption-per-tick: 120}
+    energy:
+      capacity: 40960
+      consumption-per-tick: 120
   "sf:electrified_crucible_3":
     @cf: machines.sf:electrified_crucible
-    name-key: items.sf.electrified_crucible_3.name
+    @d:
+      suffix: "_3"
     speed: 4
-    energy: {capacity: 81920, consumption-per-tick: 180}
+    energy:
+      capacity: 81920
+      consumption-per-tick: 180
