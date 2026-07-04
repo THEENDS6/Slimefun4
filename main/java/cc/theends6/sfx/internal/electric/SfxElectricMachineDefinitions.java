@@ -79,92 +79,18 @@ final class SfxElectricMachineDefinitions {
         specialProviders.put("sf:iron_golem_assembler", ironGolemAssemblerRecipes);
         specialProviders.put("sf:wither_assembler", witherAssemblerRecipes);
 
-        register(result, config, "sf:electric_furnace", staticRecipes, specialProviders);
-        register(result, config, "sf:electric_furnace_2", staticRecipes, specialProviders);
-        register(result, config, "sf:electric_furnace_3", staticRecipes, specialProviders);
-        register(result, config, "sf:electric_ore_grinder", staticRecipes, specialProviders);
-        register(result, config, "sf:electric_ore_grinder_2", staticRecipes, specialProviders);
-        register(result, config, "sf:electric_ore_grinder_3", staticRecipes, specialProviders);
-
-        register(result, config, "sf:auto_drier", staticRecipes);
-        if (sfxAutoBrewer) {
-            register(result, config, "sf:auto_brewer", staticRecipes, specialProviders);
-            register(result, config, "sf:auto_brewer_2", staticRecipes, specialProviders);
-        } else {
+        for (String compiledEntryId : config.entryIds()) {
+            if (compiledEntryId.contains("#")) {
+                continue;
+            }
+            if (!sfxAutoBrewer && ("sf:auto_brewer".equals(compiledEntryId) || "sf:auto_brewer_2".equals(compiledEntryId))) {
+                continue;
+            }
+            register(result, config, compiledEntryId, staticRecipes, specialProviders);
+        }
+        if (!sfxAutoBrewer) {
             register(result, config, "sf:auto_brewer", "sf:auto_brewer#legacy", staticRecipes, specialProviders);
         }
-
-        register(result, config, "sf:vanilla_auto_crafter", staticRecipes, specialProviders);
-        register(result, config, "sf:enhanced_auto_crafter", staticRecipes, specialProviders);
-        register(result, config, "sf:armor_auto_crafter", staticRecipes, specialProviders);
-
-        register(result, config, "sf:electric_ingot_factory", staticRecipes);
-        register(result, config, "sf:electric_ingot_factory_2", staticRecipes);
-        register(result, config, "sf:electric_ingot_factory_3", staticRecipes);
-
-        register(result, config, "sf:carbon_press", staticRecipes);
-        register(result, config, "sf:carbon_press_2", staticRecipes);
-        register(result, config, "sf:carbon_press_3", staticRecipes);
-
-        register(result, config, "sf:electric_press", staticRecipes);
-        register(result, config, "sf:electric_press_2", staticRecipes);
-
-        register(result, config, "sf:electrified_crucible", staticRecipes);
-        register(result, config, "sf:electrified_crucible_2", staticRecipes);
-        register(result, config, "sf:electrified_crucible_3", staticRecipes);
-
-        register(result, config, "sf:freezer", staticRecipes);
-        register(result, config, "sf:freezer_2", staticRecipes);
-        register(result, config, "sf:freezer_3", staticRecipes);
-
-        register(result, config, "sf:heated_pressure_chamber", staticRecipes);
-        register(result, config, "sf:heated_pressure_chamber_2", staticRecipes);
-
-        register(result, config, "sf:food_fabricator", staticRecipes);
-        register(result, config, "sf:food_fabricator_2", staticRecipes);
-        register(result, config, "sf:food_composter", staticRecipes);
-        register(result, config, "sf:food_composter_2", staticRecipes);
-
-        register(result, config, "sf:refinery", staticRecipes);
-
-        register(result, config, "sf:electric_ingot_pulverizer", staticRecipes);
-        register(result, config, "sf:electric_smeltery", staticRecipes, specialProviders);
-        register(result, config, "sf:electric_smeltery_2", staticRecipes, specialProviders);
-
-        register(result, config, "sf:auto_enchanter", staticRecipes, specialProviders);
-        register(result, config, "sf:auto_enchanter_2", staticRecipes, specialProviders);
-        register(result, config, "sf:auto_disenchanter", staticRecipes, specialProviders);
-        register(result, config, "sf:auto_disenchanter_2", staticRecipes, specialProviders);
-        register(result, config, "sf:book_binder", staticRecipes, specialProviders);
-        register(result, config, "sf:auto_anvil", staticRecipes, specialProviders);
-        register(result, config, "sf:auto_anvil_2", staticRecipes, specialProviders);
-
-        register(result, config, "sf:produce_collector", staticRecipes, specialProviders);
-        register(result, config, "sf:auto_breeder", staticRecipes, specialProviders);
-        register(result, config, "sf:animal_growth_accelerator", staticRecipes, specialProviders);
-        register(result, config, "sf:crop_growth_accelerator", staticRecipes, specialProviders);
-        register(result, config, "sf:crop_growth_accelerator_2", staticRecipes, specialProviders);
-        register(result, config, "sf:tree_growth_accelerator", staticRecipes, specialProviders);
-        register(result, config, "sf:xp_collector", staticRecipes, specialProviders);
-
-        register(result, config, "sf:gps_transmitter", staticRecipes, specialProviders);
-        register(result, config, "sf:gps_transmitter_2", staticRecipes, specialProviders);
-        register(result, config, "sf:gps_transmitter_3", staticRecipes, specialProviders);
-        register(result, config, "sf:gps_transmitter_4", staticRecipes, specialProviders);
-        register(result, config, "sf:geo_miner", staticRecipes, specialProviders);
-        register(result, config, "sf:oil_pump", staticRecipes, specialProviders);
-
-        register(result, config, "sf:fluid_pump", staticRecipes, specialProviders);
-        register(result, config, "sf:iron_golem_assembler", staticRecipes, specialProviders);
-        register(result, config, "sf:wither_assembler", staticRecipes, specialProviders);
-
-        register(result, config, "sf:electric_gold_pan", staticRecipes);
-        register(result, config, "sf:electric_gold_pan_2", staticRecipes);
-        register(result, config, "sf:electric_gold_pan_3", staticRecipes);
-
-        register(result, config, "sf:electric_dust_washer", staticRecipes);
-        register(result, config, "sf:electric_dust_washer_2", staticRecipes);
-        register(result, config, "sf:electric_dust_washer_3", staticRecipes);
         return result;
     }
 
@@ -179,23 +105,11 @@ final class SfxElectricMachineDefinitions {
                 30 * 20);
     }
 
-    private static void register(SfxElectricMachineRegistry registry, SfxElectricMachineDefinitionConfig config, String id, SfxElectricRecipeProvider provider) {
-        register(registry, config, id, id, provider);
-    }
-
-    private static void register(SfxElectricMachineRegistry registry, SfxElectricMachineDefinitionConfig config, String id, SfxElectricRecipeYamlLoader staticRecipes) {
-        registry.register(config.create(id, id, staticRecipes));
-    }
-
     private static void register(SfxElectricMachineRegistry registry, SfxElectricMachineDefinitionConfig config, String id, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> specialProviders) {
         registry.register(config.create(id, id, staticRecipes, specialProviders));
     }
 
     private static void register(SfxElectricMachineRegistry registry, SfxElectricMachineDefinitionConfig config, String id, String compiledEntryId, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> specialProviders) {
         registry.register(config.create(id, compiledEntryId, staticRecipes, specialProviders));
-    }
-
-    private static void register(SfxElectricMachineRegistry registry, SfxElectricMachineDefinitionConfig config, String id, String compiledEntryId, SfxElectricRecipeProvider provider) {
-        registry.register(config.create(id, compiledEntryId, provider));
     }
 }
