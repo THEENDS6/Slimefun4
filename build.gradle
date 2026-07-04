@@ -526,10 +526,27 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     }
 }
 
+tasks.register('validateSfxCompiledRecipeRuntimeShapes', JavaExec) {
+    group = 'verification'
+    description = 'Validates compiled recipe YAML with the same Bukkit section-style shape used by runtime loading.'
+    dependsOn 'classes', 'validateSfxTemplateCompile'
+    inputs.dir(layout.buildDirectory.dir('sfx-template-compiled/content/recipes'))
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.recipe.SfxCompiledRecipeShapeValidator')
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
+    doFirst {
+        args = [
+                layout.buildDirectory.dir('sfx-template-compiled/content/recipes').get().asFile.absolutePath
+        ]
+    }
+}
+
 tasks.register('validateSfxCompiledContent') {
     group = 'verification'
     description = 'Validates compiled SFX content is explicit runtime data without template or layout fallback tokens.'
-    dependsOn 'validateSfxTemplateCompile'
+    dependsOn 'validateSfxTemplateCompile', 'validateSfxCompiledRecipeRuntimeShapes'
     inputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
     inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
     doLast {
