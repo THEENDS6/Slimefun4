@@ -10,21 +10,15 @@ items:
     flags:
     - legacy-sf
   "sf:carbon_press_2":
-    category: sf:electricity
-    material: BLACK_STAINED_GLASS
+    @cf: items.sf:carbon_press
     name-key: items.sf.carbon_press_2.name
     priority: 416
     lore-key: items.sf.carbon_press_2.lore
-    flags:
-    - legacy-sf
   "sf:carbon_press_3":
-    category: sf:electricity
-    material: BLACK_STAINED_GLASS
+    @cf: items.sf:carbon_press
     name-key: items.sf.carbon_press_3.name
     priority: 417
     lore-key: items.sf.carbon_press_3.lore
-    flags:
-    - legacy-sf
 machine-catalog:
   "sf:carbon_press":
     category: ELECTRIC
@@ -35,21 +29,11 @@ machine-catalog:
     - machine
     - electric
   "sf:carbon_press_2":
-    category: ELECTRIC
+    @cf: machine-catalog.sf:carbon_press
     display-name: sf:carbon_press_2
-    status-slot: -1
-    tick-interval: 1
-    tags:
-    - machine
-    - electric
   "sf:carbon_press_3":
-    category: ELECTRIC
+    @cf: machine-catalog.sf:carbon_press
     display-name: sf:carbon_press_3
-    status-slot: -1
-    tick-interval: 1
-    tags:
-    - machine
-    - electric
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:carbon_press":
@@ -69,34 +53,16 @@ machines:
       include-recipes: []
       exclude-recipes: []
   "sf:carbon_press_2":
-    @cf: templates.machines.standard-electric-definition
-    @io: true
-    @d:
-      name-key: items.sf.carbon_press_2.name
-      speed: 3
+    @cf: machines.sf:carbon_press
+    name-key: items.sf.carbon_press_2.name
+    speed: 3
+    energy:
       capacity: 81920
-      consumption: 50
-      progress-material: DIAMOND_PICKAXE
-    runtime:
-      executor: sf:electric_processing
-      accepts:
-        recipe-tags:
-        - carbon-pressing
-      include-recipes: []
-      exclude-recipes: []
+      consumption-per-tick: 50
   "sf:carbon_press_3":
-    @cf: templates.machines.standard-electric-definition
-    @io: true
-    @d:
-      name-key: items.sf.carbon_press_3.name
-      speed: 15
+    @cf: machines.sf:carbon_press
+    name-key: items.sf.carbon_press_3.name
+    speed: 15
+    energy:
       capacity: 327680
-      consumption: 180
-      progress-material: DIAMOND_PICKAXE
-    runtime:
-      executor: sf:electric_processing
-      accepts:
-        recipe-tags:
-        - carbon-pressing
-      include-recipes: []
-      exclude-recipes: []
+      consumption-per-tick: 180
