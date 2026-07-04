@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -84,24 +85,39 @@ public final class SfxRecipeYamlLoader {
         }
     }
 
-    private List<Map<?, ?>> recipeEntries(YamlConfiguration yaml) {
-        Object raw = yaml.get("recipes");
-        if (raw instanceof List<?>) {
-            return yaml.getMapList("recipes");
+    static void validateCompiledYamlShape(YamlConfiguration yaml, String sourceName) {
+        for (Map<?, ?> entry : recipeEntries(yaml)) {
+            try {
+                validateCompiledRecipeEntry(entry);
+                SfxRecipeOperation operation = SfxRecipeOperation.parse(string(entry.get("operation")));
+                parseInputs(operation, entry);
+                parseOutputs(entry.get("outputs"), false);
+                parseOutputs(entry.get("random-outputs"), true);
+            } catch (Exception ex) {
+                throw new IllegalStateException("Failed to parse compiled recipe shape from YAML " + sourceName + ": " + ex.getMessage(), ex);
+            }
         }
-        if (raw instanceof org.bukkit.configuration.ConfigurationSection section) {
+    }
+
+    private static List<Map<?, ?>> recipeEntries(YamlConfiguration yaml) {
+        Object raw = yaml.get("recipes");
+        if (raw instanceof List<?> list) {
+            List<Map<?, ?>> result = new ArrayList<>();
+            for (Object entry : list) {
+                result.add(requiredMap(entry, "recipe entry"));
+            }
+            return result;
+        }
+        if (raw instanceof ConfigurationSection section) {
             List<Map<?, ?>> result = new ArrayList<>();
             for (String key : section.getKeys(false)) {
                 Object value = section.get(key);
-                if (value instanceof org.bukkit.configuration.ConfigurationSection child) {
-                    Map<String, Object> map = new LinkedHashMap<>();
-                    for (String childKey : child.getKeys(false)) {
-                        map.put(childKey, child.get(childKey));
-                    }
+                if (value instanceof ConfigurationSection child) {
+                    Map<Object, Object> map = new LinkedHashMap<>(sectionToMap(child));
                     map.putIfAbsent("id", key);
                     result.add(map);
                 } else if (value instanceof Map<?, ?> map) {
-                    Map<Object, Object> copy = new LinkedHashMap<>(map);
+                    Map<Object, Object> copy = new LinkedHashMap<>(normalizeMap(map));
                     copy.putIfAbsent("id", key);
                     result.add(copy);
                 }
@@ -123,7 +139,7 @@ public final class SfxRecipeYamlLoader {
         return true;
     }
 
-    private void validateCompiledRecipeEntry(Map<?, ?> entry) {
+    private static void validateCompiledRecipeEntry(Map<?, ?> entry) {
         for (Object keyRaw : entry.keySet()) {
             String key = String.valueOf(keyRaw);
             if (key.startsWith("@")) {
@@ -192,7 +208,7 @@ public final class SfxRecipeYamlLoader {
         return builder.build();
     }
 
-    private List<SfxRecipeSlot> parseInputs(SfxRecipeOperation operation, Map<?, ?> entry) {
+    private static List<SfxRecipeSlot> parseInputs(SfxRecipeOperation operation, Map<?, ?> entry) {
         return switch (operation) {
             case SHAPED -> parseMatrix(entry.get("matrix"));
             case SHAPELESS -> parseList(entry.get("inputs"));
@@ -200,7 +216,7 @@ public final class SfxRecipeYamlLoader {
         };
     }
 
-    private List<SfxRecipeSlot> parseMatrix(Object raw) {
+    private static List<SfxRecipeSlot> parseMatrix(Object raw) {
         if (!(raw instanceof List<?> entries) || entries.size() != 9) {
             throw new IllegalArgumentException("recipe matrix must contain exactly 9 entries");
         }
@@ -211,7 +227,7 @@ public final class SfxRecipeYamlLoader {
         return matrix;
     }
 
-    private List<SfxRecipeSlot> parseList(Object raw) {
+    private static List<SfxRecipeSlot> parseList(Object raw) {
         if (!(raw instanceof List<?> entries) || entries.isEmpty()) {
             throw new IllegalArgumentException("recipe inputs must contain at least one entry");
         }
@@ -222,10 +238,8 @@ public final class SfxRecipeYamlLoader {
         return inputs;
     }
 
-    private SfxRecipeSlot parseSlot(Object raw) {
-        if (!(raw instanceof Map<?, ?> map)) {
-            throw new IllegalArgumentException("recipe slot must be an explicit map");
-        }
+    private static SfxRecipeSlot parseSlot(Object raw) {
+        Map<?, ?> map = requiredMap(raw, "recipe slot");
         String type = requiredString(map, "type");
         int amount = requiredInteger(map, "amount");
         if (type.equalsIgnoreCase("empty")) {
@@ -257,7 +271,7 @@ public final class SfxRecipeYamlLoader {
         return localization.requiredText(key);
     }
 
-    private List<SfxRecipeOutputDefinition> parseOutputs(Object raw, boolean random) {
+    private static List<SfxRecipeOutputDefinition> parseOutputs(Object raw, boolean random) {
         List<SfxRecipeOutputDefinition> outputs = new ArrayList<>();
         if (!(raw instanceof List<?> entries)) {
             return outputs;
@@ -268,10 +282,8 @@ public final class SfxRecipeYamlLoader {
         return outputs;
     }
 
-    private SfxRecipeOutputDefinition parseOutput(Object raw, boolean random) {
-        if (!(raw instanceof Map<?, ?> map)) {
-            throw new IllegalArgumentException("recipe output must be an explicit map");
-        }
+    private static SfxRecipeOutputDefinition parseOutput(Object raw, boolean random) {
+        Map<?, ?> map = requiredMap(raw, "recipe output");
         String type = requiredString(map, "type");
         int amount = requiredInteger(map, "amount");
         if (amount <= 0) {
@@ -290,7 +302,7 @@ public final class SfxRecipeYamlLoader {
         throw new IllegalArgumentException("unsupported recipe output type: " + type);
     }
 
-    private Material parseMaterial(String input) {
+    private static Material parseMaterial(String input) {
         Material material = Material.matchMaterial(input);
         if (material == null) {
             throw new IllegalArgumentException("Unknown material: " + input);
@@ -358,6 +370,49 @@ public final class SfxRecipeYamlLoader {
             throw new IllegalArgumentException("required string value missing");
         }
         return String.valueOf(raw);
+    }
+
+    private static Map<?, ?> requiredMap(Object raw, String label) {
+        if (raw instanceof ConfigurationSection section) {
+            return sectionToMap(section);
+        }
+        if (raw instanceof Map<?, ?> map) {
+            return normalizeMap(map);
+        }
+        throw new IllegalArgumentException(label + " must be an explicit map");
+    }
+
+    private static Map<Object, Object> sectionToMap(ConfigurationSection section) {
+        Map<Object, Object> result = new LinkedHashMap<>();
+        for (String key : section.getKeys(false)) {
+            result.put(key, normalizeYamlValue(section.get(key)));
+        }
+        return result;
+    }
+
+    private static Map<Object, Object> normalizeMap(Map<?, ?> map) {
+        Map<Object, Object> result = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            result.put(entry.getKey(), normalizeYamlValue(entry.getValue()));
+        }
+        return result;
+    }
+
+    private static Object normalizeYamlValue(Object raw) {
+        if (raw instanceof ConfigurationSection section) {
+            return sectionToMap(section);
+        }
+        if (raw instanceof Map<?, ?> map) {
+            return normalizeMap(map);
+        }
+        if (raw instanceof List<?> list) {
+            List<Object> result = new ArrayList<>(list.size());
+            for (Object entry : list) {
+                result.add(normalizeYamlValue(entry));
+            }
+            return result;
+        }
+        return raw;
     }
 
     private void syncBundledFile(String resourcePath, boolean overwriteExisting) {
