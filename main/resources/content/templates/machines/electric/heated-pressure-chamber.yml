@@ -2,31 +2,59 @@
 
 items:
   "sf:heated_pressure_chamber":
+    @d:
+      suffix: ""
     category: sf:electricity
     material: LIGHT_GRAY_STAINED_GLASS
-    name-key: items.sf.heated_pressure_chamber.name
+    name-key: items.sf.heated_pressure_chamber${suffix}.name
     priority: 406
-    lore-key: items.sf.heated_pressure_chamber.lore
-    flags: [legacy-sf]
+    lore-key: items.sf.heated_pressure_chamber${suffix}.lore
+    flags:
+    - legacy-sf
   "sf:heated_pressure_chamber_2":
-    category: sf:electricity
-    material: LIGHT_GRAY_STAINED_GLASS
-    name-key: items.sf.heated_pressure_chamber_2.name
+    @cf: items.sf:heated_pressure_chamber
+    @d:
+      suffix: "_2"
     priority: 407
-    lore-key: items.sf.heated_pressure_chamber_2.lore
-    flags: [legacy-sf]
 machine-catalog:
-  "sf:heated_pressure_chamber": {category: ELECTRIC, display-name: sf:heated_pressure_chamber, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
-  "sf:heated_pressure_chamber_2": {category: ELECTRIC, display-name: sf:heated_pressure_chamber_2, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:heated_pressure_chamber":
+    @d:
+      suffix: ""
+    category: ELECTRIC
+    display-name: sf:heated_pressure_chamber${suffix}
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
+  "sf:heated_pressure_chamber_2":
+    @cf: machine-catalog.sf:heated_pressure_chamber
+    @d:
+      suffix: "_2"
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:heated_pressure_chamber":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.heated_pressure_chamber.name, speed: 1, capacity: 20480, consumption: 10, progress-material: FLINT_AND_STEEL}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [heated-pressure-processing]}, include-recipes: [], exclude-recipes: []}
+    @d:
+      suffix: ""
+      speed: 1
+      capacity: 20480
+      consumption: 10
+      progress-material: FLINT_AND_STEEL
+    name-key: items.sf.heated_pressure_chamber${suffix}.name
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - heated-pressure-processing
+      include-recipes: []
+      exclude-recipes: []
   "sf:heated_pressure_chamber_2":
-    @cf: templates.machines.standard-electric-definition
-    @io: true
-    @d: {name-key: items.sf.heated_pressure_chamber_2.name, speed: 5, capacity: 81920, consumption: 44, progress-material: FLINT_AND_STEEL}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [heated-pressure-processing]}, include-recipes: [], exclude-recipes: []}
+    @cf: machines.sf:heated_pressure_chamber
+    @d:
+      suffix: "_2"
+    speed: 5
+    energy:
+      capacity: 81920
+      consumption-per-tick: 44
