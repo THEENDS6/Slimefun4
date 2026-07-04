@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -140,6 +141,9 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
             28, 29, 30, 31, 32, 33, 34,
             37, 38, 39, 40, 41, 42, 43
     };
+    private static final String CONFIG_TRANSMITTER_GUI_ENABLED = "gps.sfx-extensions.transmitter-gui.enabled";
+    private static final int TRANSMITTER_GUI_STATUS_SLOT = 11;
+    private static final int TRANSMITTER_GUI_INFO_SLOT = 15;
     private static final String HEAD_GLOBE_OVERWORLD = "c9c8881e42915a9d29bb61a16fb26d059913204d265df5b439b3d792acd56";
     private static final String HEAD_MINECRAFT_CHUNK = "8449b9318e33158e64a46ab0de121c3d40000e3332c1574932b3c849d8fa0dc2";
 
@@ -398,6 +402,13 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
 
     private boolean handleGpsBlockRightClick(Player player, Block block, SfxBlockInstanceRecord instance) {
         return switch (instance.typeId()) {
+            case "sf:gps_transmitter", "sf:gps_transmitter_2", "sf:gps_transmitter_3", "sf:gps_transmitter_4" -> {
+                if (!transmitterGuiEnabled()) {
+                    yield false;
+                }
+                openTransmitterGui(player, block, instance);
+                yield true;
+            }
             case "sf:gps_control_panel" -> {
                 openControlPanel(player);
                 yield true;
@@ -527,6 +538,65 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         Location location = block.getLocation();
         UUID worldId = location.getWorld() == null ? new UUID(0L, 0L) : location.getWorld().getUID();
         return player.getUniqueId() + ":" + worldId + ":" + location.getBlockX() + ":" + location.getBlockY() + ":" + location.getBlockZ();
+    }
+
+    private boolean transmitterGuiEnabled() {
+        return plugin.getConfig().getBoolean(CONFIG_TRANSMITTER_GUI_ENABLED, true);
+    }
+
+    private void openTransmitterGui(Player player, Block block, SfxBlockInstanceRecord instance) {
+        Location location = block.getLocation();
+        UUID owner = instance.ownerId();
+        int requiredEnergy = Math.max(1, TRANSMITTER_CONSUMPTION.getOrDefault(instance.typeId(), 1));
+        int storedEnergy = electricMachines.consumerStoredEnergy(instance.instanceId());
+        boolean online = storedEnergy >= requiredEnergy;
+        int strength = transmitterStrength(instance, blockData.findAnchor(location).orElse(null));
+        int complexity = networkComplexity(owner);
+
+        SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.transmitter.title")).rows(3);
+        ItemStack background = namedItem(
+                ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE).build(),
+                component("gps.ui.transmitter.background"),
+                List.of());
+        for (int slot = 0; slot < 27; slot++) {
+            builder.button(slot, new SfxMenuButton(background, click -> openTransmitterGui(click.player(), block, instance)));
+        }
+
+        builder.button(TRANSMITTER_GUI_STATUS_SLOT, new SfxMenuButton(namedItem(
+                ItemBuilder.of(online ? Material.LIME_STAINED_GLASS : Material.RED_STAINED_GLASS).build(),
+                component("gps.ui.transmitter.status.name"),
+                List.of(
+                        component(online ? "gps.ui.transmitter.status.online" : "gps.ui.transmitter.status.offline"),
+                        component("gps.ui.transmitter.status.energy", Map.of("stored", storedEnergy, "required", requiredEnergy)),
+                        component("gps.ui.transmitter.status.strength", Map.of("strength", strength)),
+                        component("gps.ui.transmitter.status.network", Map.of("complexity", complexity))
+                )), click -> openTransmitterGui(click.player(), block, instance)));
+
+        builder.button(TRANSMITTER_GUI_INFO_SLOT, new SfxMenuButton(namedItem(
+                itemIcon(instance.typeId(), Material.COMPASS),
+                component("gps.ui.transmitter.info.name"),
+                List.of(
+                        component("gps.ui.transmitter.info.type", Map.of("type", escape(plain(localization.itemName(instance.typeId()))))),
+                        component("gps.ui.transmitter.info.owner", Map.of("owner", escape(ownerDisplayName(owner)))),
+                        component("gps.ui.transmitter.info.owner-uuid", Map.of("uuid", owner == null ? "-" : owner.toString())),
+                        component("gps.ui.transmitter.info.location", Map.of("world", escape(location.getWorld() == null ? "world" : location.getWorld().getName()), "x", location.getBlockX(), "y", location.getBlockY(), "z", location.getBlockZ())),
+                        component("gps.ui.transmitter.info.transmitters", Map.of("count", countTransmitters(owner)))
+                )), click -> openTransmitterGui(click.player(), block, instance)));
+
+        menus.openRoot(player, builder.build());
+    }
+
+    private String ownerDisplayName(UUID owner) {
+        if (owner == null) {
+            return localization.text("gps.ui.transmitter.info.owner-unknown");
+        }
+        org.bukkit.OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(owner);
+        String name = offlinePlayer.getName();
+        return name == null || name.isBlank() ? owner.toString() : name;
+    }
+
+    private String plain(Component component) {
+        return PlainTextComponentSerializer.plainText().serialize(component);
     }
 
     private void openControlPanel(Player player) {
@@ -1161,6 +1231,9 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
     }
 
     private int countTransmitters(UUID owner) {
+        if (owner == null) {
+            return 0;
+        }
         int count = 0;
         for (SfxAnchorRecord anchor : blockData.anchors()) {
             SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
