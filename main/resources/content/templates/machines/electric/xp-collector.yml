@@ -1,0 +1,41 @@
+
+items:
+  "sf:xp_collector":
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.xp_collector.name
+    priority: 531
+    headTexture: 1762a15b04692a2e4b3fb3663bd4b78434dce1732b8eb1c7a9f7c0fbf6f
+    lore-key: items.sf.xp_collector.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:xp_collector":
+    category: ELECTRIC
+    display-name: sf:xp_collector
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, electric, xp-collector]
+    profile: xp_collector
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:xp_collector":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @d:
+      name-key: items.sf.xp_collector.name
+      speed: 1
+      capacity: 20480
+      consumption: 20
+      progress-material: EXPERIENCE_BOTTLE
+      input-slots: []
+      output-slots: [10, 11, 12, 13, 14, 15, 16]
+    runtime: {executor: sf:special_provider, provider: sf:xp_collector}
+    ui:
+      inventory-size: 27
+      status-slot: 4
+      frame:
+      - slots: [0, 1, 2, 3, 5, 6, 7, 8, 9, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+        item:
+          material: GRAY_STAINED_GLASS_PANE
+          name: " "
+          lore: []

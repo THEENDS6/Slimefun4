@@ -1,0 +1,47 @@
+
+items:
+  "sf:vanilla_auto_crafter":
+    category: sf:cargo
+    material: PLAYER_HEAD
+    name-key: items.sf.vanilla_auto_crafter.name
+    priority: 453
+    headTexture: 80a4334f6a61e40c0c63deb665fa7b581e6eb259f7a3207ced7a1ff8bdc8a9f9
+    lore-key: items.sf.vanilla_auto_crafter.lore
+    flags: [legacy-sf]
+  "sf:enhanced_auto_crafter":
+    category: sf:cargo
+    material: PLAYER_HEAD
+    name-key: items.sf.enhanced_auto_crafter.name
+    priority: 454
+    headTexture: 5038298306a5e28584df39e88896917c38d40a326226d8c83070723c95798b24
+    lore-key: items.sf.enhanced_auto_crafter.lore
+    flags: [legacy-sf]
+  "sf:armor_auto_crafter":
+    category: sf:cargo
+    material: PLAYER_HEAD
+    name-key: items.sf.armor_auto_crafter.name
+    priority: 455
+    headTexture: 5cbd9f5ec1ed007259996491e69ff649a3106cf920227b1bb3a71ee7a89863f
+    lore-key: items.sf.armor_auto_crafter.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:vanilla_auto_crafter": {category: ELECTRIC, display-name: sf:vanilla_auto_crafter, status-slot: -1, tick-interval: 1, tags: [machine, electric, auto-crafter], profile: auto_crafter}
+  "sf:enhanced_auto_crafter": {category: ELECTRIC, display-name: sf:enhanced_auto_crafter, status-slot: -1, tick-interval: 1, tags: [machine, electric, auto-crafter], profile: auto_crafter}
+  "sf:armor_auto_crafter": {category: ELECTRIC, display-name: sf:armor_auto_crafter, status-slot: -1, tick-interval: 1, tags: [machine, electric, auto-crafter], profile: auto_crafter}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:vanilla_auto_crafter":
+    @cf: templates.machines.auto-crafter-definition
+    @io: true
+    @d: {name-key: items.sf.vanilla_auto_crafter.name, speed: 1, capacity: 5120, consumption: 32, progress-material: CRAFTING_TABLE}
+    runtime: {executor: sf:special_provider, provider: sf:vanilla_auto_crafter}
+  "sf:enhanced_auto_crafter":
+    @cf: templates.machines.auto-crafter-definition
+    @io: true
+    @d: {name-key: items.sf.enhanced_auto_crafter.name, speed: 1, capacity: 5120, consumption: 32, progress-material: CRAFTING_TABLE}
+    runtime: {executor: sf:special_provider, provider: sf:enhanced_auto_crafter}
+  "sf:armor_auto_crafter":
+    @cf: templates.machines.auto-crafter-definition
+    @io: true
+    @d: {name-key: items.sf.armor_auto_crafter.name, speed: 1, capacity: 5120, consumption: 64, progress-material: ANVIL}
+    runtime: {executor: sf:special_provider, provider: sf:armor_auto_crafter}

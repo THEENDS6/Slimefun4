@@ -169,13 +169,13 @@ tasks.register('validateSfxMachineYaml') {
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/electric-recipes.yml'))
-    inputs.file(layout.projectDirectory.file('main/resources/content/machines/configurable-machines.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/templates/machines/configurable/reactors.yml'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java'))
     doLast {
         def catalogFile = layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml').asFile
         def manualFile = layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml').asFile
         def electricRecipeFile = layout.projectDirectory.file('main/resources/content/machines/electric-recipes.yml').asFile
-        def configurableFile = layout.projectDirectory.file('main/resources/content/machines/configurable-machines.yml').asFile
+        def configurableFile = layout.projectDirectory.file('main/resources/content/templates/machines/configurable/reactors.yml').asFile
         def profilesFile = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/machine/SfxMachineSpecialProfiles.java').asFile
         def catalogLines = catalogFile.readLines('UTF-8')
         def firstCatalogContent = catalogLines.find { line ->
@@ -433,57 +433,59 @@ tasks.register('validateSfxMachineYaml') {
 
         def configurableText = configurableFile.getText('UTF-8')
         def configurableViolations = []
-        def configurableCount = (configurableText =~ /(?m)^  ["']?sf:[^"'\r\n]+["']?:\s*$/).count
+        def configurableMachinesStart = configurableText.indexOf('\nmachines:')
+        def configurableMachineText = configurableMachinesStart >= 0 ? configurableText.substring(configurableMachinesStart + 1) : configurableText
+        def configurableCount = (configurableMachineText =~ /(?m)^  ["']?sf:[^"'\r\n]+["']?:\s*$/).count
         if (configurableCount != 3) {
             configurableViolations << "configurable machine count expected 3, got ${configurableCount}"
         }
         ['kind:', 'energy:', 'capacity:', 'energy-per-action:', 'energy-per-tick:'].each { token ->
-            if (!configurableText.contains(token)) {
+            if (!configurableMachineText.contains(token)) {
                 configurableViolations << "configurable machines missing ${token}"
             }
         }
-        if ((configurableText =~ /(?m)^    reactor:\s*$/).count != 2) {
+        if ((configurableMachineText =~ /(?m)^    reactor:\s*$/).count != 2) {
             configurableViolations << "configurable reactor section count expected 2"
         }
         ['coolant-item:', 'wither-aura:', 'fuels:'].each { token ->
-            if ((configurableText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count < 2) {
+            if ((configurableMachineText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count < 2) {
                 configurableViolations << "configurable reactor entries missing ${token}"
             }
         }
-        if ((configurableText =~ /(?m)^    ui:\s*$/).count != 3) {
+        if ((configurableMachineText =~ /(?m)^    ui:\s*$/).count != 3) {
             configurableViolations << "configurable machines must declare ui on every entry"
         }
-        if ((configurableText =~ /(?m)^      panels:\s*$/).count != 3) {
+        if ((configurableMachineText =~ /(?m)^      panels:\s*$/).count != 3) {
             configurableViolations << "configurable machines must declare ui.panels on every entry"
         }
-        if ((configurableText =~ /(?m)^        (reactor|access-port):\s*$/).count != 5) {
+        if ((configurableMachineText =~ /(?m)^        (reactor|access-port):\s*$/).count != 5) {
             configurableViolations << "configurable machine ui panel count expected 5"
         }
-        if ((configurableText =~ /(?m)^          inventory-size:\s*54\s*$/).count != 5) {
+        if ((configurableMachineText =~ /(?m)^          inventory-size:\s*54\s*$/).count != 5) {
             configurableViolations << "configurable machine ui panels must explicitly declare inventory-size 54"
         }
-        if ((configurableText =~ /(?m)^          frame:\s*$/).count != 5) {
+        if ((configurableMachineText =~ /(?m)^          frame:\s*$/).count != 5) {
             configurableViolations << "configurable machine source ui panels must use frame helpers before compilation"
         }
-        if ((configurableText =~ /(?m)^          inputs:\s*$/).count != 4) {
+        if ((configurableMachineText =~ /(?m)^          inputs:\s*$/).count != 4) {
             configurableViolations << "configurable reactor ui source panels must declare four input helper groups"
         }
-        if ((configurableText =~ /(?m)^          outputs:\s*$/).count != 4) {
+        if ((configurableMachineText =~ /(?m)^          outputs:\s*$/).count != 4) {
             configurableViolations << "configurable reactor ui source panels must declare four output helper groups"
         }
-        if ((configurableText =~ /(?m)^          buttons:\s*$/).count != 4) {
+        if ((configurableMachineText =~ /(?m)^          buttons:\s*$/).count != 4) {
             configurableViolations << "configurable reactor ui source panels must declare four button helper groups"
         }
-        if ((configurableText =~ /(?m)^          status:\s*$/).count != 5) {
+        if ((configurableMachineText =~ /(?m)^          status:\s*$/).count != 5) {
             configurableViolations << "configurable source ui panels must declare status helpers"
         }
-        if ((configurableText =~ /(?m)^          display:\s*$/).count != 4) {
+        if ((configurableMachineText =~ /(?m)^          display:\s*$/).count != 4) {
             configurableViolations << "configurable reactor ui source panels must declare four display helper groups"
         }
-        if ((configurableText =~ /reactor-fuel/).count != 12 || (configurableText =~ /reactor-coolant/).count != 12) {
+        if ((configurableMachineText =~ /reactor-fuel/).count != 12 || (configurableMachineText =~ /reactor-coolant/).count != 12) {
             configurableViolations << "configurable reactor ui source panels must tag all fuel and coolant input slots"
         }
-        if ((configurableText =~ /reactor-toggle-mode/).count != 4 || (configurableText =~ /reactor-access-port/).count != 4) {
+        if ((configurableMachineText =~ /reactor-toggle-mode/).count != 4 || (configurableMachineText =~ /reactor-access-port/).count != 4) {
             configurableViolations << "configurable reactor ui source panels must declare reactor button actions"
         }
         if (!configurableViolations.isEmpty()) {
@@ -500,7 +502,7 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     inputs.dir(layout.projectDirectory.dir('main/resources/content/templates'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
-    inputs.file(layout.projectDirectory.file('main/resources/content/machines/configurable-machines.yml'))
+    inputs.file(layout.projectDirectory.file('main/resources/content/templates/machines/configurable/reactors.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/electric-recipes.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/items.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/items/10-legacy-categories.yml'))
@@ -574,6 +576,15 @@ tasks.register('validateSfxCompiledContent') {
         def electricRecipeItemReferences = []
         def itemGuideRecipeItemReferences = []
         def compiledItemIds = [] as Set
+        def compiledRuntimeRecipeTypes = [] as Set
+        def compiledRuntimeRecipeTagsByType = [:].withDefault { [] as Set }
+        def electricRecipeIds = [] as Set
+        def electricRecipeTypes = [:]
+        def electricRecipeTagsById = [:].withDefault { [] as Set }
+        def electricMachineIds = [] as Set
+        def basicMachineIds = [] as Set
+        def electricMachineRuntimeTagsById = [:]
+        def electricMachineRuntimeExecutorById = [:]
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
         }
@@ -892,6 +903,14 @@ tasks.register('validateSfxCompiledContent') {
                     recipeMachineTagReferences << [rel: rel, recipe: recipe.key, tag: cleanTag(tag)]
                 }
             }
+            if (recipe.runtime == 'true' && recipe.recipeType != null && !recipe.recipeType.isBlank()) {
+                compiledRuntimeRecipeTypes << recipe.recipeType
+                recipe.machineTagRefs.each { tag ->
+                    if (tag != null && !tag.isBlank()) {
+                        compiledRuntimeRecipeTagsByType[recipe.recipeType] << cleanTag(tag)
+                    }
+                }
+            }
             if (recipe.scalarSlot) {
                 violations << "${rel}: recipe ${recipe.key} contains scalar recipe slot/output shorthand"
             }
@@ -926,6 +945,7 @@ tasks.register('validateSfxCompiledContent') {
                             fields      : [] as Set,
                             section     : null,
                             id          : null,
+                            recipeType  : null,
                             operation   : null,
                             runtime     : null,
                             matrixCount : 0,
@@ -951,6 +971,8 @@ tasks.register('validateSfxCompiledContent') {
                     currentRecipe.section = ['matrix', 'inputs', 'input', 'outputs', 'random-outputs'].contains(field) ? field : null
                     if (field == 'id') {
                         currentRecipe.id = value
+                    } else if (field == 'recipe-type') {
+                        currentRecipe.recipeType = value
                     } else if (field == 'operation') {
                         currentRecipe.operation = value
                     } else if (field == 'runtime') {
@@ -1031,31 +1053,35 @@ tasks.register('validateSfxCompiledContent') {
                 'content/recipes/recipes',
                 'content/machines/electric-machines/machines',
                 'content/machines/energy-components/components',
+                'content/machines/cargo-components/cargo-components',
                 'content/machines/machine-catalog/machines'
         ].each { repeatedPath ->
             if (new File(root, repeatedPath).exists()) {
                 violations << "compiled output path still contains repeated root section: ${repeatedPath}"
             }
         }
-        def catalogCompiledFile = new File(root, 'content/machines/machine-catalog/catalog.yml')
+        def catalogCompiledFiles = fileTree(new File(root, 'content/machines/machine-catalog')) {
+            include '**/*.yml'
+        }.files.sort { it.name }
         def catalogCompiledCount = 0
         def catalogMachineIds = [] as Set
         def catalogMachineTags = [] as Set
-        if (!catalogCompiledFile.isFile()) {
-            violations << "compiled machine catalog output missing content/machines/machine-catalog/catalog.yml"
-        } else {
-            def catalogText = catalogCompiledFile.getText('UTF-8')
-            catalogCompiledCount = (catalogText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
-            if (catalogCompiledCount != 184) {
-                violations << "compiled machine catalog entry count expected 184, got ${catalogCompiledCount}"
-            }
-            ['category:', 'display-name:', 'input-slots:', 'output-slots:', 'status-slot:', 'tick-interval:', 'tags:', 'capabilities:', 'input-provider:', 'output-provider:', 'policies:', 'effects:'].each { token ->
-                def count = (catalogText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count
-                if (count < 184) {
-                    violations << "compiled machine catalog expected ${token} on every entry, got ${count}"
-                }
-            }
-            def providerSlotCount = (catalogText =~ /(?m)^      slots:\s*/).count
+        def catalogMachineTagsById = [:].withDefault { [] as Set }
+        if (catalogCompiledFiles.isEmpty()) {
+            violations << "compiled machine catalog output missing content/machines/machine-catalog
+
+
+
+
+
+
+
+
+
+
+
+
+).count
             def providerDescriptionCount = (catalogText =~ /(?m)^      description:\s*/).count
             if (providerSlotCount != 368) {
                 violations << "compiled machine catalog expected provider slots on every input/output provider, got ${providerSlotCount}"
@@ -1070,6 +1096,9 @@ tasks.register('validateSfxCompiledContent') {
                 def machineMatch = line =~ /^  ['"]?(sf:[^'":\s]+)['"]?:\s*$/
                 if (machineMatch.matches()) {
                     currentMachine = machineMatch[0][1]
+                    if (catalogMachineIds.contains(currentMachine)) {
+                        violations << "compiled machine catalog contains duplicate machine id ${currentMachine}"
+                    }
                     catalogMachineIds << currentMachine
                     inTags = false
                     slotList = null
@@ -1112,7 +1141,9 @@ tasks.register('validateSfxCompiledContent') {
                     if (tagMatch.matches()) {
                         def tag = cleanScalar(tagMatch[0][1])
                         if (tag != null && !tag.isBlank()) {
-                            catalogMachineTags << cleanTag(tag)
+                            def cleanedTag = cleanTag(tag)
+                            catalogMachineTags << cleanedTag
+                            catalogMachineTagsById[currentMachine] << cleanedTag
                         }
                     }
                 }
@@ -1193,12 +1224,122 @@ tasks.register('validateSfxCompiledContent') {
                 }
             }
         }
-        def configurableCompiledFile = new File(root, 'content/machines/configurable-machines/configurable-machines.yml')
-        def configurableCompiledCount = 0
-        if (!configurableCompiledFile.isFile()) {
-            violations << "compiled configurable machine output missing content/machines/configurable-machines/configurable-machines.yml"
+        def basicCompiledFiles = fileTree(new File(root, 'content/machines/basic-machines')) {
+            include '**/*.yml'
+        }.files.sort { it.name }
+        def basicCompiledCount = 0
+        if (basicCompiledFiles.isEmpty()) {
+            violations << "compiled basic machine output missing content/machines/basic-machines/*.yml"
         } else {
-            def configurableText = configurableCompiledFile.getText('UTF-8')
+            def basicText = basicCompiledFiles.collect { it.getText('UTF-8') }.join('\n')
+            basicCompiledCount = (basicText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
+            if (basicCompiledCount != 30) {
+                violations << "compiled basic machine entry count expected 30, got ${basicCompiledCount}"
+            }
+            def currentBasicMachine = null
+            def currentBasicExecutor = null
+            def sawExecutor = false
+            def sawStats = false
+            def basicStatsKeys = [] as Set
+            def currentAcceptedRecipeTypes = [] as Set
+            def inBasicRecipeTypes = false
+            def validateBasicRuntime = {
+                if (currentBasicMachine != null) {
+                    if (!sawExecutor) {
+                        violations << "compiled basic machine ${currentBasicMachine} missing runtime.executor"
+                    } else if (!['sf:basic_hand_input', 'sf:enhanced_furnace', 'sf:manual_machine'].contains(currentBasicExecutor)) {
+                        violations << "compiled basic machine ${currentBasicMachine} has unsupported runtime.executor ${currentBasicExecutor}"
+                    }
+                    if (currentBasicExecutor == 'sf:enhanced_furnace') {
+                        if (!sawStats) violations << "compiled basic machine ${currentBasicMachine} missing runtime.stats"
+                        ['processing-speed', 'fuel-efficiency', 'fortune-level'].each { key ->
+                            if (!basicStatsKeys.contains(key)) violations << "compiled basic machine ${currentBasicMachine} missing runtime.stats.${key}"
+                        }
+                    } else if (currentBasicExecutor == 'sf:manual_machine') {
+                        currentAcceptedRecipeTypes.each { recipeType ->
+                            if (!compiledRuntimeRecipeTypes.contains(recipeType)) {
+                                violations << "compiled basic machine ${currentBasicMachine} accepts unknown runtime recipe-type ${recipeType}"
+                            }
+                            def matchingTags = compiledRuntimeRecipeTagsByType[recipeType].intersect(catalogMachineTagsById[currentBasicMachine])
+                            if (compiledRuntimeRecipeTypes.contains(recipeType) && matchingTags.isEmpty()) {
+                                violations << "compiled basic machine ${currentBasicMachine} accepts recipe-type ${recipeType} but no runtime recipe tag matches its machine catalog tags"
+                            }
+                        }
+                    }
+                }
+            }
+            basicText.readLines().each { line ->
+                def machineMatch = line =~ /^  ['"]?(sf:[^'":\s]+)['"]?:\s*$/
+                if (machineMatch.matches()) {
+                    validateBasicRuntime()
+                    currentBasicMachine = machineMatch[0][1]
+                    basicMachineIds << currentBasicMachine
+                    if (!catalogMachineIds.contains(currentBasicMachine)) {
+                        violations << "compiled basic machine ${currentBasicMachine} references unknown machine catalog id"
+                    }
+                    currentBasicExecutor = null
+                    sawExecutor = false
+                    sawStats = false
+                    basicStatsKeys.clear()
+                    currentAcceptedRecipeTypes.clear()
+                    inBasicRecipeTypes = false
+                    return
+                }
+                if (currentBasicMachine == null) {
+                    return
+                }
+                def executorMatch = line =~ /^      executor:\s*(sf:[A-Za-z0-9_-]+)\s*$/
+                if (executorMatch.matches()) {
+                    currentBasicExecutor = executorMatch[0][1]
+                    sawExecutor = true
+                    inBasicRecipeTypes = false
+                }
+                if ((line =~ /^      stats:\s*$/).matches()) {
+                    sawStats = true
+                    inBasicRecipeTypes = false
+                }
+                def inlineRecipeTypesMatch = line =~ /^        recipe-types:\s*\[(.*?)\]\s*$/
+                if (inlineRecipeTypesMatch.matches()) {
+                    inBasicRecipeTypes = false
+                    inlineRecipeTypesMatch[0][1].split(',').each { rawType ->
+                        def recipeType = cleanScalar(rawType)
+                        if (recipeType != null && !recipeType.isBlank()) {
+                            currentAcceptedRecipeTypes << recipeType
+                        }
+                    }
+                }
+                if ((line =~ /^        recipe-types:\s*$/).matches()) {
+                    inBasicRecipeTypes = true
+                    return
+                }
+                if (inBasicRecipeTypes) {
+                    def acceptedTypeMatch = line =~ /^        -\s*(sf:[A-Za-z0-9_:-]+)\s*$/
+                    if (acceptedTypeMatch.matches()) {
+                        currentAcceptedRecipeTypes << acceptedTypeMatch[0][1]
+                        return
+                    }
+                    if ((line =~ /^\s{4,8}[A-Za-z0-9_-]+:\s*/).matches()) {
+                        inBasicRecipeTypes = false
+                    }
+                }
+                def statMatch = line =~ /^        (processing-speed|fuel-efficiency|fortune-level):\s*(\d+)\s*$/
+                if (statMatch.matches()) {
+                    basicStatsKeys << statMatch[0][1]
+                    if (Integer.parseInt(statMatch[0][2]) <= 0) {
+                        violations << "compiled basic machine ${currentBasicMachine} runtime.stats.${statMatch[0][1]} must be positive"
+                    }
+                }
+            }
+            validateBasicRuntime()
+        }
+        def configurableCompiledFiles = fileTree(new File(root, 'content/machines/configurable-machines')) {
+            include '**/*.yml'
+        }.files.sort { it.name }
+        def configurableCompiledCount = 0
+        if (configurableCompiledFiles.isEmpty()) {
+            violations << "compiled configurable machine output missing content/machines/configurable-machines/*.yml"
+        } else {
+            def configurableText = configurableCompiledFiles.collect { it.getText('UTF-8') }.join('\n')
             configurableCompiledCount = (configurableText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
             if (configurableCompiledCount != 3) {
                 violations << "compiled configurable machine entry count expected 3, got ${configurableCompiledCount}"
@@ -1258,7 +1399,7 @@ tasks.register('validateSfxCompiledContent') {
             if (configurablePanelHelper.find()) {
                 violations << "compiled configurable machine ui panels contain helper section: ${configurablePanelHelper.group(1)}"
             }
-            validateNoLiteralUiText(configurableText, 'content/machines/configurable-machines/configurable-machines.yml', 'configurable ui')
+            validateNoLiteralUiText(configurableText, 'content/machines/configurable-machines/*.yml', 'configurable ui')
         }
         def compiledCategoryCount = 0
         def compiledItemCount = 0
@@ -1287,20 +1428,23 @@ tasks.register('validateSfxCompiledContent') {
                 violations << "compiled item categories must not contain literal name fields"
             }
         }
-        def compiledItemFile = new File(root, 'content/items/20-legacy-items.yml')
-        if (!compiledItemFile.isFile()) {
-            violations << "compiled item output missing content/items/20-legacy-items.yml"
-        } else {
-            def itemText = compiledItemFile.getText('UTF-8')
-            compiledItemCount = (itemText =~ /(?m)^- id:\s*/).count
+        def compiledItemFiles = fileTree(new File(root, 'content/items')) {
+            include '**/*.yml'
+            exclude '10-legacy-categories.yml'
+        }.files.sort { it.name }
+        if (compiledItemFiles.isEmpty()) {
+            violations << "compiled item output missing content/items
+
+
+).count
             if (compiledItemCount != 556) {
                 violations << "compiled item count expected 556, got ${compiledItemCount}"
             }
             [
-                    'category'      : (itemText =~ /(?m)^  category:\s*/).count,
-                    'material'      : (itemText =~ /(?m)^  material:\s*/).count,
-                    'name-key'      : (itemText =~ /(?m)^  name-key:\s*/).count,
-                    'priority/order': (itemText =~ /(?m)^  (priority|order|pos):\s*/).count
+                    'category'      : (itemText =~ /(?m)^(?:  category:|- category:)\s*/).count,
+                    'material'      : (itemText =~ /(?m)^(?:  material:|- material:)\s*/).count,
+                    'name-key'      : (itemText =~ /(?m)^(?:  name-key:|- name-key:)\s*/).count,
+                    'priority/order': (itemText =~ /(?m)^(?:  (priority|order|pos):|- (priority|order|pos):)\s*/).count
             ].each { field, count ->
                 if (count != 556) {
                     violations << "compiled items expected ${field} on every entry, got ${count}"
@@ -1328,7 +1472,7 @@ tasks.register('validateSfxCompiledContent') {
             def inItemGuideMatrix = false
             def pendingItemGuideSfxLine = null
             itemText.readLines().eachWithIndex { line, lineIndex ->
-                def itemIdMatch = line =~ /^- id:\s*(.+?)\s*$/
+                def itemIdMatch = line =~ /^(?:- id:|  id:)\s*(.+?)\s*$/
                 if (itemIdMatch.matches()) {
                     if (pendingItemGuideSfxLine != null) {
                         violations << "content/items/20-legacy-items.yml:${pendingItemGuideSfxLine}: item ${currentItemId} guide recipe sfx matrix slot missing id"
@@ -1386,26 +1530,26 @@ tasks.register('validateSfxCompiledContent') {
             violations << "compiled item override output missing content/items/items.yml"
         }
         def compiledItemContentFiles = fileTree(new File(root, 'content/items')) {
-            include '**
-
-
-
-
-
-
-
-
-
-
-
-).matches()) {
+            include '**/*.yml'
+        }.files
+        compiledItemContentFiles.each { itemFile ->
+            def rel = root.toPath().relativize(itemFile.toPath()).toString()
+            def inItems = false
+            itemFile.readLines('UTF-8').eachWithIndex { line, lineIndex ->
+                def itemsRootMatch = line =~ /^items:\s*(.*)$/
+                if (itemsRootMatch.matches()) {
+                    def value = cleanScalar(itemsRootMatch[0][1])
+                    inItems = value == null || value.isBlank()
+                    return
+                }
+                if ((line =~ /^[A-Za-z0-9_-]+:\s*/).matches()) {
                     inItems = false
                     return
                 }
                 if (!inItems) {
                     return
                 }
-                def idMatch = line =~ /^- id:\s*(.+?)\s*$/
+                def idMatch = line =~ /^(?:- id:|  id:)\s*(.+?)\s*$/
                 if (idMatch.matches()) {
                     def id = cleanScalar(idMatch[0][1])
                     if (id == null || id.isBlank()) {
@@ -1414,6 +1558,66 @@ tasks.register('validateSfxCompiledContent') {
                         violations << "${rel}:${lineIndex + 1}: duplicate compiled item id ${id}"
                     }
                 }
+            }
+        }
+        basicMachineIds.each { id ->
+            if (!compiledItemIds.contains(id)) {
+                violations << "compiled basic machine ${id} has no matching item definition"
+            }
+        }
+        def cargoFiles = fileTree(new File(root, 'content/machines/cargo-components')) {
+            include '**/*.yml'
+        }.files
+        def cargoComponentIds = [] as Set
+        def cargoComponentTypes = [:]
+        if (cargoFiles.size() != 8) {
+            violations << "compiled cargo component file count expected 8, got ${cargoFiles.size()}"
+        }
+        cargoFiles.each { file ->
+            def rel = root.toPath().relativize(file.toPath()).toString()
+            def text = file.getText('UTF-8')
+            if (!text.contains('cargo-components:') || !text.contains('type:')) {
+                violations << "${rel}: cargo component output missing cargo-components/type"
+            }
+            def currentCargoId = null
+            text.readLines().eachWithIndex { line, lineIndex ->
+                def idMatch = line =~ /^  ['"]?(sf:[^'":\s]+)['"]?:\s*$/
+                if (idMatch.matches()) {
+                    currentCargoId = idMatch[0][1]
+                    if (!cargoComponentIds.add(currentCargoId)) {
+                        violations << "${rel}:${lineIndex + 1}: duplicate cargo component id ${currentCargoId}"
+                    }
+                    return
+                }
+                if (currentCargoId != null) {
+                    def typeMatch = line =~ /^    type:\s*(.+?)\s*$/
+                    if (typeMatch.matches()) {
+                        cargoComponentTypes[currentCargoId] = cleanScalar(typeMatch[0][1])
+                    }
+                }
+            }
+        }
+        [
+                'sf:cargo_manager'              : 'MANAGER',
+                'sf:cargo_node'                 : 'CONNECTOR',
+                'sf:cargo_node_input'           : 'INPUT_NODE',
+                'sf:cargo_node_input_advanced'  : 'ADVANCED_INPUT_NODE',
+                'sf:cargo_node_output'          : 'OUTPUT_NODE',
+                'sf:cargo_node_output_advanced' : 'ADVANCED_OUTPUT_NODE',
+                'sf:trash_can_block'            : 'TRASH_CAN',
+                'sf:reactor_access_port'        : 'REACTOR_ACCESS_PORT'
+        ].each { id, expectedType ->
+            if (!cargoComponentIds.contains(id)) {
+                violations << "compiled cargo components missing ${id}"
+            }
+            if (cargoComponentTypes[id] != expectedType) {
+                violations << "compiled cargo component ${id} expected type ${expectedType}, got ${cargoComponentTypes[id]}"
+            }
+            if (!compiledItemIds.contains(id)) {
+                violations << "compiled cargo component ${id} has no matching item definition"
+            }
+            if (!catalogMachineIds.contains(id)) {
+                violations << "compiled cargo component ${id} has no matching machine catalog definition"
             }
         }
         def compiledResearchFile = new File(root, 'content/researches/10-legacy-slimefun.yml')
@@ -1488,17 +1692,18 @@ tasks.register('validateSfxCompiledContent') {
             }
         }
         def electricRecipeCompiledFile = new File(root, 'content/machines/electric-recipes/electric-recipes.yml')
-        def electricRecipeCompiledProviderCount = 0
         def electricRecipeCompiledEntryCount = 0
         if (!electricRecipeCompiledFile.isFile()) {
-            violations << "compiled electric recipe provider output missing content/machines/electric-recipes/electric-recipes.yml"
+            violations << "compiled electric recipe output missing content/machines/electric-recipes/electric-recipes.yml"
         } else {
             def electricRecipeText = electricRecipeCompiledFile.getText('UTF-8')
-            electricRecipeCompiledProviderCount = (electricRecipeText =~ /(?m)^  [a-z0-9_]+:\s*$/).count
-            electricRecipeCompiledEntryCount = (electricRecipeText =~ /(?m)^    - id:\s*/).count
-            if (electricRecipeCompiledProviderCount != 13) {
-                violations << "compiled electric recipe provider count expected 13, got ${electricRecipeCompiledProviderCount}"
+            if (!(electricRecipeText =~ /(?m)^electric-recipes:\s*$/).find()) {
+                violations << "compiled electric recipes must use electric-recipes root"
             }
+            if ((electricRecipeText =~ /(?m)^providers:\s*$/).find()) {
+                violations << "compiled electric recipes must not use provider grouping"
+            }
+            electricRecipeCompiledEntryCount = (electricRecipeText =~ /(?m)^- id:\s*/).count
             if (electricRecipeCompiledEntryCount != 182) {
                 violations << "compiled electric recipe entry count expected 182, got ${electricRecipeCompiledEntryCount}"
             }
@@ -1507,16 +1712,68 @@ tasks.register('validateSfxCompiledContent') {
                     violations << "compiled electric recipes missing ${token}"
                 }
             }
-            def electricScalarSlot = electricRecipeText =~ /(?m)^\s+-\s+(?!id:|item:|material:)[A-Za-z0-9_:.-]+(?:\*[0-9]+)?\s*$/
-            if (electricScalarSlot.find()) {
-                violations << "compiled electric recipes contain scalar input/output shorthand: ${electricScalarSlot.group(0).trim()}"
-            }
             def electricSlotCount = (electricRecipeText =~ /(?m)^\s+-\s+(item|material):\s*/).count
             def electricAmountCount = (electricRecipeText =~ /(?m)^\s+amount:\s*/).count
             if (electricSlotCount != electricAmountCount) {
                 violations << "compiled electric recipe slots must explicitly include amount: slots=${electricSlotCount}, amounts=${electricAmountCount}"
             }
+            def currentElectricRecipeId = null
+            def inElectricRecipeTags = false
+            def electricRecipeSlotSection = null
             electricRecipeText.readLines().eachWithIndex { line, lineIndex ->
+                def recipeStart = line =~ /^- id:\s*(.+?)\s*$/
+                if (recipeStart.matches()) {
+                    def recipeId = cleanScalar(recipeStart[0][1])
+                    if (recipeId == null || recipeId.isBlank()) {
+                        violations << "content/machines/electric-recipes/electric-recipes.yml:${lineIndex + 1}: blank electric recipe id"
+                    } else if (!electricRecipeIds.add(recipeId)) {
+                        violations << "content/machines/electric-recipes/electric-recipes.yml:${lineIndex + 1}: duplicate electric recipe id ${recipeId}"
+                    }
+                    currentElectricRecipeId = recipeId
+                    inElectricRecipeTags = false
+                    electricRecipeSlotSection = null
+                    return
+                }
+                if (currentElectricRecipeId != null) {
+                    def typeMatch = line =~ /^  recipe-type:\s*(.+?)\s*$/
+                    if (typeMatch.matches()) {
+                        electricRecipeTypes[currentElectricRecipeId] = cleanScalar(typeMatch[0][1])
+                        inElectricRecipeTags = false
+                        electricRecipeSlotSection = null
+                        return
+                    }
+                    if ((line =~ /^  recipe-tags:\s*$/).matches()) {
+                        inElectricRecipeTags = true
+                        electricRecipeSlotSection = null
+                        return
+                    }
+                    def electricSlotSectionMatch = line =~ /^  (inputs|outputs|random-outputs):\s*$/
+                    if (electricSlotSectionMatch.matches()) {
+                        electricRecipeSlotSection = electricSlotSectionMatch[0][1]
+                        inElectricRecipeTags = false
+                        return
+                    }
+                    if ((line =~ /^  ticks:/).find()) {
+                        inElectricRecipeTags = false
+                        electricRecipeSlotSection = null
+                    }
+                    if (inElectricRecipeTags) {
+                        def tagMatch = line =~ /^  -\s*(.+?)\s*$/
+                        if (tagMatch.matches()) {
+                            electricRecipeTagsById[currentElectricRecipeId].add(cleanTag(tagMatch[0][1]))
+                            return
+                        }
+                    }
+                    if (electricRecipeSlotSection != null) {
+                        def scalarSlot = line =~ /^  -\s+(?!item:|material:)(.+?)\s*$/
+                        if (scalarSlot.matches()) {
+                            violations << "content/machines/electric-recipes/electric-recipes.yml:${lineIndex + 1}: electric recipe ${currentElectricRecipeId} ${electricRecipeSlotSection} contains scalar input/output shorthand: ${scalarSlot[0][1]}"
+                        }
+                        if ((line =~ /^  [A-Za-z0-9_-]+:/).matches()) {
+                            electricRecipeSlotSection = null
+                        }
+                    }
+                }
                 def itemMatch = line =~ /^\s+-\s*item:\s*(.+?)\s*$/
                 if (itemMatch.matches()) {
                     def id = cleanScalar(itemMatch[0][1])
@@ -1553,12 +1810,128 @@ tasks.register('validateSfxCompiledContent') {
         def electricFiles = fileTree(new File(root, 'content/machines/electric-machines')) {
             include '**/*.yml'
         }.files
+        def specialElectricProviders = [
+                'sf:vanilla_furnace',
+                'sf:classic_ore_grinder',
+                'sf:electric_smeltery',
+                'sf:auto_brewer',
+                'sf:auto_brewer_legacy',
+                'sf:vanilla_auto_crafter',
+                'sf:enhanced_auto_crafter',
+                'sf:armor_auto_crafter',
+                'sf:auto_enchanter',
+                'sf:auto_disenchanter',
+                'sf:book_binder',
+                'sf:auto_anvil',
+                'sf:auto_anvil_2',
+                'sf:produce_collector',
+                'sf:auto_breeder',
+                'sf:animal_growth_accelerator',
+                'sf:crop_growth_accelerator',
+                'sf:crop_growth_accelerator_2',
+                'sf:tree_growth_accelerator',
+                'sf:xp_collector',
+                'sf:gps_transmitter',
+                'sf:geo_miner',
+                'sf:oil_pump',
+                'sf:fluid_pump',
+                'sf:iron_golem_assembler',
+                'sf:wither_assembler'
+        ] as Set
         if (electricFiles.size() != 66) {
             violations << "compiled electric machine file count expected 66, got ${electricFiles.size()}"
         }
         electricFiles.each { file ->
             def text = file.getText('UTF-8')
             def rel = root.toPath().relativize(file.toPath()).toString()
+            def machineSlug = rel.replace('\\', '/').replaceFirst('^content/machines/electric-machines/', '').replaceFirst('\\.yml$', '')
+            def namespaceSplit = machineSlug.indexOf('_')
+            def machineId = namespaceSplit < 0 ? machineSlug : machineSlug.substring(0, namespaceSplit) + ':' + machineSlug.substring(namespaceSplit + 1)
+            electricMachineIds.add(machineId)
+            def runtimeExecutor = null
+            def runtimeProvider = null
+            def runtimeTags = [] as Set
+            def runtimeIncludes = [] as Set
+            def runtimeExcludes = [] as Set
+            def runtimeList = null
+            text.readLines().each { line ->
+                def executorMatch = line =~ /^      executor:\s*(.+?)\s*$/
+                if (executorMatch.matches()) {
+                    runtimeExecutor = cleanScalar(executorMatch[0][1])
+                    runtimeList = null
+                    return
+                }
+                def providerMatch = line =~ /^      provider:\s*(.+?)\s*$/
+                if (providerMatch.matches()) {
+                    runtimeProvider = cleanScalar(providerMatch[0][1])
+                    runtimeList = null
+                    return
+                }
+                if ((line =~ /^      include-recipes:\s*$/).matches()) {
+                    runtimeList = 'include'
+                    return
+                }
+                if ((line =~ /^      exclude-recipes:\s*$/).matches()) {
+                    runtimeList = 'exclude'
+                    return
+                }
+                if ((line =~ /^        recipe-tags:\s*$/).matches()) {
+                    runtimeList = 'tags'
+                    return
+                }
+                if (runtimeList != null) {
+                    def valueMatch = line =~ /^        -\s*(.+?)\s*$/
+                    if (valueMatch.matches()) {
+                        def value = cleanScalar(valueMatch[0][1])
+                        if (runtimeList == 'tags') {
+                            runtimeTags.add(cleanTag(value))
+                        } else if (runtimeList == 'include') {
+                            runtimeIncludes.add(value)
+                        } else if (runtimeList == 'exclude') {
+                            runtimeExcludes.add(value)
+                        }
+                    } else if ((line =~ /^      [A-Za-z0-9_-]+:/).matches() || (line =~ /^    [A-Za-z0-9_-]+:/).matches()) {
+                        runtimeList = null
+                    }
+                }
+            }
+            if (runtimeExecutor != null || runtimeProvider != null || !runtimeTags.isEmpty() || !runtimeIncludes.isEmpty() || !runtimeExcludes.isEmpty()) {
+                electricMachineRuntimeExecutorById[machineId] = runtimeExecutor
+                electricMachineRuntimeTagsById[machineId] = runtimeTags
+                def runtimeConflict = [] as Set
+                runtimeConflict.addAll(runtimeIncludes)
+                runtimeConflict.retainAll(runtimeExcludes)
+                if (!runtimeConflict.isEmpty()) {
+                    violations << "${rel}: runtime include-recipes/exclude-recipes conflict ${runtimeConflict}"
+                }
+                if (runtimeExecutor == null || runtimeExecutor.isBlank()) {
+                    violations << "${rel}: runtime requires executor"
+                }
+                if (runtimeExecutor == 'sf:special_provider') {
+                    if (runtimeProvider == null || runtimeProvider.isBlank()) {
+                        violations << "${rel}: sf:special_provider runtime requires provider"
+                    } else if (!specialElectricProviders.contains(runtimeProvider)) {
+                        violations << "${rel}: unknown special electric provider ${runtimeProvider}"
+                    }
+                    if (!runtimeTags.isEmpty() || !runtimeIncludes.isEmpty() || !runtimeExcludes.isEmpty()) {
+                        violations << "${rel}: sf:special_provider runtime must not declare electric recipe tags/includes/excludes"
+                    }
+                } else if (runtimeProvider != null && !runtimeProvider.isBlank()) {
+                    violations << "${rel}: runtime provider is only valid for sf:special_provider"
+                }
+                runtimeIncludes.each { recipeId ->
+                    if (!electricRecipeIds.contains(recipeId)) {
+                        violations << "${rel}: runtime include-recipes references unknown electric recipe ${recipeId}"
+                    } else if (electricRecipeTypes[recipeId] != runtimeExecutor) {
+                        violations << "${rel}: runtime include-recipes ${recipeId} has recipe-type ${electricRecipeTypes[recipeId]} but executor is ${runtimeExecutor}"
+                    }
+                }
+                runtimeExcludes.each { recipeId ->
+                    if (!electricRecipeIds.contains(recipeId)) {
+                        violations << "${rel}: runtime exclude-recipes references unknown electric recipe ${recipeId}"
+                    }
+                }
+            }
             ['name-key:', 'functions:', 'ui:', 'inventory-size:', 'status-slot:', 'items:', 'status:', 'slots:'].each { token ->
                 if (!text.contains(token)) {
                     violations << "${rel}: missing ${token}"
@@ -1623,6 +1996,37 @@ tasks.register('validateSfxCompiledContent') {
             }
             flushSlot()
         }
+        electricMachineIds.each { machineId ->
+            def visibleMachineId = machineId == 'sf:auto_brewer_legacy' ? 'sf:auto_brewer' : machineId
+            if (!compiledItemIds.contains(visibleMachineId)) {
+                violations << "compiled electric machine ${machineId} has no matching item definition"
+            }
+            if (!catalogMachineIds.contains(visibleMachineId)) {
+                violations << "compiled electric machine ${machineId} has no matching machine catalog definition"
+            }
+        }
+        electricMachineRuntimeTagsById.each { machineId, runtimeTags ->
+            def executor = electricMachineRuntimeExecutorById[machineId]
+            runtimeTags.each { tag ->
+                def matches = electricRecipeTagsById.any { recipeId, tags ->
+                    electricRecipeTypes[recipeId] == executor && tags.contains(tag)
+                }
+                if (!matches) {
+                    violations << "compiled electric machine ${machineId} runtime recipe-tag ${tag} has no matching recipe for executor ${executor}"
+                }
+            }
+        }
+        electricRecipeTagsById.each { recipeId, tags ->
+            def recipeType = electricRecipeTypes[recipeId]
+            tags.each { tag ->
+                def accepted = electricMachineRuntimeTagsById.any { machineId, runtimeTags ->
+                    electricMachineRuntimeExecutorById[machineId] == recipeType && runtimeTags.contains(tag)
+                }
+                if (!accepted) {
+                    violations << "compiled electric recipe ${recipeId} recipe-tag ${tag} has no accepting machine runtime for recipe-type ${recipeType}"
+                }
+            }
+        }
         def energyFiles = fileTree(new File(root, 'content/machines/energy-components')) {
             include '**/*.yml'
         }.files
@@ -1670,7 +2074,7 @@ tasks.register('validateSfxCompiledContent') {
         if (!violations.isEmpty()) {
             throw new GradleException("Compiled SFX content validation failed:\n" + violations.take(100).join('\n'))
         }
-        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric provider recipe entries, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, ${catalogMachineIds.size()} machine item reference(s), ${recipeMachineReferences.size()} recipe machine reference(s), ${recipeMachineTagReferences.size()} recipe machine tag reference(s), ${recipeItemReferences.size()} recipe item reference(s), ${electricRecipeItemReferences.size()} electric recipe item reference(s), ${itemGuideRecipeItemReferences.size()} item guide recipe item reference(s), and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
+        logger.lifecycle("Validated compiled SFX content: ${compiledFiles.size()} YAML file(s), ${recipeFiles.size()} recipe file(s), ${electricFiles.size()} electric machine file(s), ${energyFiles.size()} energy component file(s), ${cargoFiles.size()} cargo component file(s), ${catalogCompiledCount} machine catalog entries, ${manualCompiledCount} manual machine entries, ${configurableCompiledCount} configurable machine entries, ${electricRecipeCompiledEntryCount} electric recipes, ${compiledItemCount} items, ${compiledCategoryCount} categories, ${compiledResearchCount} researches, ${catalogMachineIds.size()} machine item reference(s), ${recipeMachineReferences.size()} recipe machine reference(s), ${recipeMachineTagReferences.size()} recipe machine tag reference(s), ${recipeItemReferences.size()} recipe item reference(s), ${electricRecipeItemReferences.size()} electric recipe item reference(s), ${itemGuideRecipeItemReferences.size()} item guide recipe item reference(s), and ${referencedLanguageKeys.size()} language key reference(s) against ${languageKeysByFile.size()} bundled language file(s).")
     }
 }
 

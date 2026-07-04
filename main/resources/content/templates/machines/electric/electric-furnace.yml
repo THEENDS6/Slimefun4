@@ -1,0 +1,44 @@
+
+items:
+  "sf:electric_furnace":
+    category: sf:electricity
+    material: FURNACE
+    name-key: items.sf.electric_furnace.name
+    priority: 346
+    lore-key: items.sf.electric_furnace.lore
+    flags: [legacy-sf]
+  "sf:electric_furnace_2":
+    category: sf:electricity
+    material: FURNACE
+    name-key: items.sf.electric_furnace_2.name
+    priority: 347
+    lore-key: items.sf.electric_furnace_2.lore
+    flags: [legacy-sf]
+  "sf:electric_furnace_3":
+    category: sf:electricity
+    material: FURNACE
+    name-key: items.sf.electric_furnace_3.name
+    priority: 348
+    lore-key: items.sf.electric_furnace_3.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:electric_furnace": {category: ELECTRIC, display-name: sf:electric_furnace, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:electric_furnace_2": {category: ELECTRIC, display-name: sf:electric_furnace_2, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:electric_furnace_3": {category: ELECTRIC, display-name: sf:electric_furnace_3, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:electric_furnace":
+    @cf: templates.machines.standard-electric-ui-definition
+    @io: true
+    @d: {name-key: items.sf.electric_furnace.name, speed: 1, capacity: 1280, consumption: 4, progress-material: FLINT_AND_STEEL}
+    runtime: {executor: sf:special_provider, provider: sf:vanilla_furnace}
+  "sf:electric_furnace_2":
+    @cf: templates.machines.standard-electric-ui-definition
+    @io: true
+    @d: {name-key: items.sf.electric_furnace_2.name, speed: 2, capacity: 2560, consumption: 6, progress-material: FLINT_AND_STEEL}
+    runtime: {executor: sf:special_provider, provider: sf:vanilla_furnace}
+  "sf:electric_furnace_3":
+    @cf: templates.machines.standard-electric-ui-definition
+    @io: true
+    @d: {name-key: items.sf.electric_furnace_3.name, speed: 4, capacity: 5120, consumption: 10, progress-material: FLINT_AND_STEEL}
+    runtime: {executor: sf:special_provider, provider: sf:vanilla_furnace}

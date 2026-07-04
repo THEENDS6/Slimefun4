@@ -1,0 +1,24 @@
+
+items:
+  "sf:auto_breeder":
+    category: sf:electricity
+    material: HAY_BLOCK
+    name-key: items.sf.auto_breeder.name
+    priority: 427
+    lore-key: items.sf.auto_breeder.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:auto_breeder":
+    category: ELECTRIC
+    display-name: sf:auto_breeder
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, electric, electric-world-action]
+    profile: electric_world_action
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:auto_breeder":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @d: {name-key: items.sf.auto_breeder.name, speed: 1, capacity: 20480, consumption: 60, progress-material: WHEAT}
+    runtime: {executor: sf:special_provider, provider: sf:auto_breeder}

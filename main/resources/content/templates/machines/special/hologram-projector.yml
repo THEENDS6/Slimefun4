@@ -1,0 +1,14 @@
+
+items:
+  @ot: content/items.yml
+  sf:hologram_projector:
+    category: sf:machines
+    material: QUARTZ_SLAB
+    name-key: items.sf.hologram_projector.name
+    priority: 311
+    lore-key: items.sf.hologram_projector.lore
+    flags: [legacy-sf, plugin-block, placeable-block, creative-clone]
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:hologram_projector: {category: SPECIAL, display-name: sf:hologram_projector, status-slot: -1, tick-interval: 1, tags: [machine, special, hologram-projector], profile: hologram_projector}

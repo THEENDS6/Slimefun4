@@ -1,0 +1,18 @@
+
+items:
+  "sf:refinery":
+    category: sf:electricity
+    material: PISTON
+    name-key: items.sf.refinery.name
+    priority: 396
+    lore-key: items.sf.refinery.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:refinery": {category: ELECTRIC, display-name: sf:refinery, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:refinery":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d: {name-key: items.sf.refinery.name, speed: 1, capacity: 5120, consumption: 32, progress-material: PISTON}
+    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [oil-refining]}, include-recipes: [], exclude-recipes: []}

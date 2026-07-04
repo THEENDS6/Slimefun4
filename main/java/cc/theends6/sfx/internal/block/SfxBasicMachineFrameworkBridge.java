@@ -5,12 +5,21 @@ import cc.theends6.sfx.internal.machine.SfxMachineDefinition;
 import cc.theends6.sfx.internal.machine.SfxMachineEffect;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 final class SfxBasicMachineFrameworkBridge {
     private SfxBasicMachineFrameworkBridge() {}
-    static List<SfxMachineDefinition> definitions() {
-        return List.of(simple("sf:composter"), simple("sf:crucible"), simple("sf:output_chest"), simple("sf:ignition_chamber"), furnace("sf:enhanced_furnace"), furnace("sf:enhanced_furnace_2"), furnace("sf:enhanced_furnace_3"), furnace("sf:enhanced_furnace_4"), furnace("sf:enhanced_furnace_5"), furnace("sf:enhanced_furnace_6"), furnace("sf:enhanced_furnace_7"), furnace("sf:enhanced_furnace_8"), furnace("sf:enhanced_furnace_9"), furnace("sf:enhanced_furnace_10"), furnace("sf:enhanced_furnace_11"), furnace("sf:reinforced_furnace"), furnace("sf:carbonado_edged_furnace"));
+    static List<SfxMachineDefinition> definitions(Collection<String> basicHandInputIds, Collection<String> enhancedFurnaceIds) {
+        List<SfxMachineDefinition> definitions = new ArrayList<>();
+        for (String id : basicHandInputIds) {
+            definitions.add(simple(id));
+        }
+        for (String id : enhancedFurnaceIds) {
+            definitions.add(furnace(id));
+        }
+        return List.copyOf(definitions);
     }
     static SfxMachineStatus furnaceStatus(boolean initialized, boolean canContinue, boolean outputBlocked, boolean hasFuel) {
         if (!initialized) return SfxMachineStatus.ERROR;

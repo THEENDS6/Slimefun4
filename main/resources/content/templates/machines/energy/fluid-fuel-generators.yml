@@ -1,0 +1,109 @@
+
+items:
+  @ot: content/items.yml
+  sf:lava_generator:
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.lava_generator.name
+    priority: 344
+    headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
+    lore-key: items.sf.lava_generator.lore
+    flags:
+    - legacy-sf
+  sf:lava_generator_2:
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.lava_generator_2.name
+    priority: 345
+    headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
+    lore-key: items.sf.lava_generator_2.lore
+    flags:
+    - legacy-sf
+  sf:combustion_reactor:
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.combustion_reactor.name
+    priority: 397
+    headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
+    lore-key: items.sf.combustion_reactor.lore
+    flags:
+    - legacy-sf
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:lava_generator:
+    category: ENERGY
+    display-name: sf:lava_generator
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - fuel-generator
+    profile: fuel_generator
+  sf:lava_generator_2:
+    category: ENERGY
+    display-name: sf:lava_generator_2
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - fuel-generator
+    profile: fuel_generator
+  sf:combustion_reactor:
+    category: ENERGY
+    display-name: sf:combustion_reactor
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - energy-node
+    profile: energy_node
+
+components:
+  @ot: content/machines/energy-components.yml
+  "sf:lava_generator":
+    @cf: templates.energy.generator-output
+    @io: true
+    @d:
+      capacity: 10240
+      generation: 20
+      burn-rate: 10
+      progress-material: FLINT_AND_STEEL
+      fuels:
+      - key: lava
+        input: {material: LAVA_BUCKET, amount: 1}
+        output: {material: BUCKET, amount: 1}
+        seconds: 80
+  "sf:lava_generator_2":
+    @cf: templates.energy.generator-output
+    @io: true
+    @d:
+      capacity: 20480
+      generation: 40
+      burn-rate: 15
+      progress-material: FLINT_AND_STEEL
+      fuels:
+      - key: lava
+        input: {material: LAVA_BUCKET, amount: 1}
+        output: {material: BUCKET, amount: 1}
+        seconds: 80
+  "sf:combustion_reactor":
+    @cf: templates.energy.generator-output
+    @io: true
+    @d:
+      capacity: 20480
+      generation: 64
+      burn-rate: 10
+      progress-material: FLINT_AND_STEEL
+      fuels:
+      - key: oil
+        input: {item: "sf:bucket_of_oil", amount: 1}
+        output: {material: BUCKET, amount: 1}
+        seconds: 40
+      - key: fuel
+        input: {item: "sf:bucket_of_fuel", amount: 1}
+        output: {material: BUCKET, amount: 1}
+        seconds: 120

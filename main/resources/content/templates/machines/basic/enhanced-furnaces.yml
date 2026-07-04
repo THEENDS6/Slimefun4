@@ -1,0 +1,48 @@
+
+items:
+  @ot: content/items.yml
+  sf:enhanced_furnace: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace.name, priority: 313, lore-key: items.sf.enhanced_furnace.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:enhanced_furnace_2: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace_2.name, priority: 314, lore-key: items.sf.enhanced_furnace_2.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:enhanced_furnace_3: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace_3.name, priority: 315, lore-key: items.sf.enhanced_furnace_3.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:enhanced_furnace_4: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace_4.name, priority: 316, lore-key: items.sf.enhanced_furnace_4.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:enhanced_furnace_5: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace_5.name, priority: 317, lore-key: items.sf.enhanced_furnace_5.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:enhanced_furnace_6: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace_6.name, priority: 318, lore-key: items.sf.enhanced_furnace_6.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:enhanced_furnace_7: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace_7.name, priority: 319, lore-key: items.sf.enhanced_furnace_7.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:enhanced_furnace_8: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace_8.name, priority: 320, lore-key: items.sf.enhanced_furnace_8.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:enhanced_furnace_9: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace_9.name, priority: 321, lore-key: items.sf.enhanced_furnace_9.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:enhanced_furnace_10: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace_10.name, priority: 322, lore-key: items.sf.enhanced_furnace_10.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:enhanced_furnace_11: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.enhanced_furnace_11.name, priority: 323, lore-key: items.sf.enhanced_furnace_11.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:reinforced_furnace: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.reinforced_furnace.name, priority: 324, lore-key: items.sf.reinforced_furnace.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:carbonado_edged_furnace: {category: sf:enhanced_furnaces, material: FURNACE, name-key: items.sf.carbonado_edged_furnace.name, priority: 325, lore-key: items.sf.carbonado_edged_furnace.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:enhanced_furnace: {category: BASIC, display-name: sf:enhanced_furnace, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:enhanced_furnace_2: {category: BASIC, display-name: sf:enhanced_furnace_2, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:enhanced_furnace_3: {category: BASIC, display-name: sf:enhanced_furnace_3, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:enhanced_furnace_4: {category: BASIC, display-name: sf:enhanced_furnace_4, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:enhanced_furnace_5: {category: BASIC, display-name: sf:enhanced_furnace_5, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:enhanced_furnace_6: {category: BASIC, display-name: sf:enhanced_furnace_6, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:enhanced_furnace_7: {category: BASIC, display-name: sf:enhanced_furnace_7, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:enhanced_furnace_8: {category: BASIC, display-name: sf:enhanced_furnace_8, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:enhanced_furnace_9: {category: BASIC, display-name: sf:enhanced_furnace_9, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:enhanced_furnace_10: {category: BASIC, display-name: sf:enhanced_furnace_10, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:enhanced_furnace_11: {category: BASIC, display-name: sf:enhanced_furnace_11, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:reinforced_furnace: {category: BASIC, display-name: sf:reinforced_furnace, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:carbonado_edged_furnace: {category: BASIC, display-name: sf:carbonado_edged_furnace, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+
+basic-machines:
+  @ot: content/machines/basic-machines.yml
+  sf:enhanced_furnace: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 2, fuel-efficiency: 1, fortune-level: 1}}}
+  sf:enhanced_furnace_2: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 2, fuel-efficiency: 1, fortune-level: 1}}}
+  sf:enhanced_furnace_3: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 3, fuel-efficiency: 2, fortune-level: 1}}}
+  sf:enhanced_furnace_4: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 3, fuel-efficiency: 3, fortune-level: 1}}}
+  sf:enhanced_furnace_5: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 4, fuel-efficiency: 3, fortune-level: 1}}}
+  sf:enhanced_furnace_6: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 4, fuel-efficiency: 3, fortune-level: 2}}}
+  sf:enhanced_furnace_7: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 5, fuel-efficiency: 3, fortune-level: 2}}}
+  sf:enhanced_furnace_8: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 5, fuel-efficiency: 4, fortune-level: 2}}}
+  sf:enhanced_furnace_9: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 6, fuel-efficiency: 4, fortune-level: 2}}}
+  sf:enhanced_furnace_10: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 7, fuel-efficiency: 4, fortune-level: 2}}}
+  sf:enhanced_furnace_11: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 8, fuel-efficiency: 4, fortune-level: 2}}}
+  sf:reinforced_furnace: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 10, fuel-efficiency: 5, fortune-level: 3}}}
+  sf:carbonado_edged_furnace: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 20, fuel-efficiency: 10, fortune-level: 3}}}

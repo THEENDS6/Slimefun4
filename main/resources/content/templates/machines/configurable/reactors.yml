@@ -1,0 +1,342 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+items:
+  @ot: content/items.yml
+  sf:nuclear_reactor:
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.nuclear_reactor.name
+    priority: 437
+    headTexture: fa5de0bc2bfb5cc2d23eb72f96402ada479524dd0de404bc23b6dacee3ffd080
+    lore-key: items.sf.nuclear_reactor.lore
+    flags:
+    - legacy-sf
+  sf:netherstar_reactor:
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.netherstar_reactor.name
+    priority: 533
+    headTexture: a11ed1d1b25b624665ecdddc3d3a5dff0b9f35e3de77a12f516e60fe8501cc8d
+    lore-key: items.sf.netherstar_reactor.lore
+    flags:
+    - legacy-sf
+  sf:reactor_access_port:
+    category: sf:cargo
+    material: CYAN_TERRACOTTA
+    name-key: items.sf.reactor_access_port.name
+    priority: 438
+    lore-key: items.sf.reactor_access_port.lore
+    flags:
+    - legacy-sf
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:nuclear_reactor:
+    category: CONFIGURABLE
+    display-name: sf:nuclear_reactor
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - configurable
+    - reactor
+    profile: reactor
+  sf:netherstar_reactor:
+    category: CONFIGURABLE
+    display-name: sf:netherstar_reactor
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - configurable
+    - reactor
+    profile: reactor
+  sf:reactor_access_port:
+    category: CONFIGURABLE
+    display-name: sf:reactor_access_port
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - configurable
+    - proxy-panel-reactor-access-port
+    profile: proxy_panel_reactor_access_port
+
+cargo-components:
+  @ot: content/machines/cargo-components.yml
+  sf:reactor_access_port:
+    @io: true
+    type: REACTOR_ACCESS_PORT
+
+machines:
+  "sf:nuclear_reactor":
+    @io: true
+    @ot: content/machines/configurable-machines.yml
+    kind: REACTOR
+    energy:
+      capacity: 327680
+      energy-per-action: 0
+      energy-per-tick: 500
+    reactor:
+      coolant-item: "sf:reactor_coolant_cell"
+      wither-aura: false
+      fuels:
+        - key: "sf:uranium"
+          amount: 1
+          seconds: 1200
+          output: {item: "sf:neptunium", amount: 1}
+        - key: "sf:neptunium"
+          amount: 1
+          seconds: 600
+          output: {item: "sf:plutonium", amount: 1}
+        - key: "sf:boosted_uranium"
+          amount: 1
+          seconds: 1500
+    ui:
+      panels:
+        reactor:
+          inventory-size: 54
+          frame:
+            - slots: [0, 1, 2, 3, 5, 6, 7, 8, 12, 13, 14, 21, 23]
+              item: {material: GRAY_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [9, 10, 11, 18, 20, 27, 29, 36, 38, 45, 46, 47]
+              item: {material: LIME_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [15, 16, 17, 24, 26, 33, 35, 42, 44, 51, 52, 53]
+              item: {material: CYAN_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [30, 31, 32, 39, 41, 48, 50]
+              item: {material: GREEN_STAINED_GLASS_PANE, name: " ", lore: []}
+          inputs:
+            - slot: 19
+              state-index: 0
+              accepts: reactor-fuel
+            - slot: 28
+              state-index: 1
+              accepts: reactor-fuel
+            - slot: 37
+              state-index: 2
+              accepts: reactor-fuel
+            - slot: 25
+              state-index: 3
+              accepts: reactor-coolant
+            - slot: 34
+              state-index: 4
+              accepts: reactor-coolant
+            - slot: 43
+              state-index: 5
+              accepts: reactor-coolant
+          outputs:
+            - slot: 40
+              state-index: 0
+          buttons:
+            - slot: 4
+              action: reactor-toggle-mode
+              item-source: reactor.mode
+            - slot: 49
+              action: reactor-access-port
+              item-source: reactor.access-port
+          status:
+            - slot: 22
+              item-source: reactor.progress
+          display:
+            - slot: 1
+              item-source: reactor.fuel-slots
+            - slot: 7
+              item-source: reactor.coolant-slots
+        access-port:
+          inventory-size: 54
+          frame:
+            - slots: [0, 1, 2, 3, 5, 6, 7, 8, 12, 13, 14, 21, 23]
+              item: {material: GRAY_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [9, 10, 11, 18, 20, 27, 29, 36, 38, 45, 46, 47]
+              item: {material: LIME_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [15, 16, 17, 24, 26, 33, 35, 42, 44, 51, 52, 53]
+              item: {material: CYAN_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [30, 31, 32, 39, 41, 48, 50]
+              item: {material: GREEN_STAINED_GLASS_PANE, name: " ", lore: []}
+          inputs:
+            - slot: 19
+              state-index: 0
+              accepts: reactor-fuel
+            - slot: 28
+              state-index: 1
+              accepts: reactor-fuel
+            - slot: 37
+              state-index: 2
+              accepts: reactor-fuel
+            - slot: 25
+              state-index: 3
+              accepts: reactor-coolant
+            - slot: 34
+              state-index: 4
+              accepts: reactor-coolant
+            - slot: 43
+              state-index: 5
+              accepts: reactor-coolant
+          outputs:
+            - slot: 40
+              state-index: 0
+          buttons:
+            - slot: 4
+              action: reactor-toggle-mode
+              item-source: reactor.mode
+            - slot: 49
+              action: reactor-access-port
+              item-source: reactor.access-port
+          status:
+            - slot: 22
+              item-source: reactor.progress
+          display:
+            - slot: 1
+              item-source: reactor.fuel-slots
+            - slot: 7
+              item-source: reactor.coolant-slots
+  "sf:netherstar_reactor":
+    @io: true
+    @ot: content/machines/configurable-machines.yml
+    kind: REACTOR
+    energy:
+      capacity: 655360
+      energy-per-action: 0
+      energy-per-tick: 2048
+    reactor:
+      coolant-item: "sf:nether_ice_coolant_cell"
+      wither-aura: true
+      fuels:
+        - key: "nether_star"
+          material: NETHER_STAR
+          amount: 1
+          seconds: 1800
+    ui:
+      panels:
+        reactor:
+          inventory-size: 54
+          frame:
+            - slots: [0, 1, 2, 3, 5, 6, 7, 8, 12, 13, 14, 21, 23]
+              item: {material: GRAY_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [9, 10, 11, 18, 20, 27, 29, 36, 38, 45, 46, 47]
+              item: {material: LIME_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [15, 16, 17, 24, 26, 33, 35, 42, 44, 51, 52, 53]
+              item: {material: CYAN_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [30, 31, 32, 39, 41, 48, 50]
+              item: {material: GREEN_STAINED_GLASS_PANE, name: " ", lore: []}
+          inputs:
+            - slot: 19
+              state-index: 0
+              accepts: reactor-fuel
+            - slot: 28
+              state-index: 1
+              accepts: reactor-fuel
+            - slot: 37
+              state-index: 2
+              accepts: reactor-fuel
+            - slot: 25
+              state-index: 3
+              accepts: reactor-coolant
+            - slot: 34
+              state-index: 4
+              accepts: reactor-coolant
+            - slot: 43
+              state-index: 5
+              accepts: reactor-coolant
+          outputs:
+            - slot: 40
+              state-index: 0
+          buttons:
+            - slot: 4
+              action: reactor-toggle-mode
+              item-source: reactor.mode
+            - slot: 49
+              action: reactor-access-port
+              item-source: reactor.access-port
+          status:
+            - slot: 22
+              item-source: reactor.progress
+          display:
+            - slot: 1
+              item-source: reactor.fuel-slots
+            - slot: 7
+              item-source: reactor.coolant-slots
+        access-port:
+          inventory-size: 54
+          frame:
+            - slots: [0, 1, 2, 3, 5, 6, 7, 8, 12, 13, 14, 21, 23]
+              item: {material: GRAY_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [9, 10, 11, 18, 20, 27, 29, 36, 38, 45, 46, 47]
+              item: {material: LIME_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [15, 16, 17, 24, 26, 33, 35, 42, 44, 51, 52, 53]
+              item: {material: CYAN_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [30, 31, 32, 39, 41, 48, 50]
+              item: {material: GREEN_STAINED_GLASS_PANE, name: " ", lore: []}
+          inputs:
+            - slot: 19
+              state-index: 0
+              accepts: reactor-fuel
+            - slot: 28
+              state-index: 1
+              accepts: reactor-fuel
+            - slot: 37
+              state-index: 2
+              accepts: reactor-fuel
+            - slot: 25
+              state-index: 3
+              accepts: reactor-coolant
+            - slot: 34
+              state-index: 4
+              accepts: reactor-coolant
+            - slot: 43
+              state-index: 5
+              accepts: reactor-coolant
+          outputs:
+            - slot: 40
+              state-index: 0
+          buttons:
+            - slot: 4
+              action: reactor-toggle-mode
+              item-source: reactor.mode
+            - slot: 49
+              action: reactor-access-port
+              item-source: reactor.access-port
+          status:
+            - slot: 22
+              item-source: reactor.progress
+          display:
+            - slot: 1
+              item-source: reactor.fuel-slots
+            - slot: 7
+              item-source: reactor.coolant-slots
+  "sf:reactor_access_port":
+    @io: true
+    @ot: content/machines/configurable-machines.yml
+    kind: ACCESS_PORT
+    energy:
+      capacity: 0
+      energy-per-action: 0
+      energy-per-tick: 0
+    ui:
+      panels:
+        access-port:
+          inventory-size: 54
+          frame:
+            - slots: [0, 1, 2, 3, 5, 6, 7, 8, 12, 13, 14, 21, 23]
+              item: {material: GRAY_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [9, 10, 11, 18, 20, 27, 29, 36, 38, 45, 46, 47]
+              item: {material: LIME_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [15, 16, 17, 24, 26, 33, 35, 42, 44, 51, 52, 53]
+              item: {material: CYAN_STAINED_GLASS_PANE, name: " ", lore: []}
+            - slots: [30, 31, 32, 39, 41, 48, 50]
+              item: {material: GREEN_STAINED_GLASS_PANE, name: " ", lore: []}
+          status:
+            - slot: 49
+              item-source: reactor.access-port

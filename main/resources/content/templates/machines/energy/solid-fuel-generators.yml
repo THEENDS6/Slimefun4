@@ -1,0 +1,102 @@
+
+items:
+  @ot: content/items.yml
+  sf:coal_generator:
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.coal_generator.name
+    priority: 342
+    headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
+    lore-key: items.sf.coal_generator.lore
+    flags:
+    - legacy-sf
+  sf:coal_generator_2:
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.coal_generator_2.name
+    priority: 343
+    headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
+    lore-key: items.sf.coal_generator_2.lore
+    flags:
+    - legacy-sf
+  sf:magnesium_generator:
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.magnesium_generator.name
+    priority: 462
+    headTexture: 9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730
+    lore-key: items.sf.magnesium_generator.lore
+    flags:
+    - legacy-sf
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:coal_generator:
+    category: ENERGY
+    display-name: sf:coal_generator
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - fuel-generator
+    profile: fuel_generator
+  sf:coal_generator_2:
+    category: ENERGY
+    display-name: sf:coal_generator_2
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - fuel-generator
+    profile: fuel_generator
+  sf:magnesium_generator:
+    category: ENERGY
+    display-name: sf:magnesium_generator
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - fuel-generator
+    profile: fuel_generator
+
+components:
+  @ot: content/machines/energy-components.yml
+  "sf:coal_generator":
+    @cf: templates.energy.component-definition
+    @io: true
+    @d:
+      type: GENERATOR
+      capacity: 1280
+      generation: 16
+      consumption: 0
+      burn-rate: 10
+      vanilla-fuel: true
+      progress-material: FLINT_AND_STEEL
+      fuels: []
+  "sf:coal_generator_2":
+    @cf: templates.energy.component-definition
+    @io: true
+    @d:
+      type: GENERATOR
+      capacity: 5120
+      generation: 30
+      consumption: 0
+      burn-rate: 15
+      vanilla-fuel: true
+      progress-material: FLINT_AND_STEEL
+      fuels: []
+  "sf:magnesium_generator":
+    @cf: templates.energy.generator-output
+    @io: true
+    @d:
+      capacity: 2560
+      generation: 36
+      burn-rate: 10
+      progress-material: FLINT_AND_STEEL
+      fuels:
+      - key: magnesium
+        input: {item: "sf:magnesium_salt", amount: 1}
+        seconds: 20

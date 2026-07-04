@@ -1,0 +1,39 @@
+
+items:
+  @ot: content/items.yml
+  sf:charging_bench:
+    category: sf:electricity
+    material: CRAFTING_TABLE
+    name-key: items.sf.charging_bench.name
+    priority: 452
+    lore-key: items.sf.charging_bench.lore
+    flags:
+    - legacy-sf
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:charging_bench:
+    category: ENERGY
+    display-name: sf:charging_bench
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - charging-bench
+    profile: charging_bench
+
+components:
+  @ot: content/machines/energy-components.yml
+  "sf:charging_bench":
+    @cf: templates.energy.component-definition
+    @io: true
+    @d:
+      type: CHARGER
+      capacity: 2560
+      generation: 0
+      consumption: 100
+      burn-rate: 10
+      vanilla-fuel: false
+      progress-material: GOLDEN_PICKAXE
+      fuels: []

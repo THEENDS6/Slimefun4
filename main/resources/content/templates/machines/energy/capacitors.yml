@@ -1,0 +1,95 @@
+
+items:
+  "sf:small_capacitor":
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.small_capacitor.name
+    priority: 364
+    headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
+    lore-key: items.sf.small_capacitor.lore
+    flags: [legacy-sf]
+  "sf:medium_capacitor":
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.medium_capacitor.name
+    priority: 365
+    headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
+    lore-key: items.sf.medium_capacitor.lore
+    flags: [legacy-sf]
+  "sf:big_capacitor":
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.big_capacitor.name
+    priority: 366
+    headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
+    lore-key: items.sf.big_capacitor.lore
+    flags: [legacy-sf]
+  "sf:large_capacitor":
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.large_capacitor.name
+    priority: 367
+    headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
+    lore-key: items.sf.large_capacitor.lore
+    flags: [legacy-sf]
+  "sf:carbonado_edged_capacitor":
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.carbonado_edged_capacitor.name
+    priority: 368
+    headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
+    lore-key: items.sf.carbonado_edged_capacitor.lore
+    flags: [legacy-sf]
+  "sf:energized_capacitor":
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.energized_capacitor.name
+    priority: 369
+    headTexture: 91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4
+    lore-key: items.sf.energized_capacitor.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:small_capacitor": {category: ENERGY, display-name: sf:small_capacitor, status-slot: -1, tick-interval: 1, tags: [machine, energy, energy-node], profile: energy_node}
+  "sf:medium_capacitor": {category: ENERGY, display-name: sf:medium_capacitor, status-slot: -1, tick-interval: 1, tags: [machine, energy, energy-node], profile: energy_node}
+  "sf:big_capacitor": {category: ENERGY, display-name: sf:big_capacitor, status-slot: -1, tick-interval: 1, tags: [machine, energy, energy-node], profile: energy_node}
+  "sf:large_capacitor": {category: ENERGY, display-name: sf:large_capacitor, status-slot: -1, tick-interval: 1, tags: [machine, energy, energy-node], profile: energy_node}
+  "sf:carbonado_edged_capacitor": {category: ENERGY, display-name: sf:carbonado_edged_capacitor, status-slot: -1, tick-interval: 1, tags: [machine, energy, energy-node], profile: energy_node}
+  "sf:energized_capacitor": {category: ENERGY, display-name: sf:energized_capacitor, status-slot: -1, tick-interval: 1, tags: [machine, energy, energy-node], profile: energy_node}
+components:
+  @ot: content/machines/energy-components.yml
+  "sf:small_capacitor":
+    @cf: templates.energy.passive-component-output
+    @io: true
+    @d:
+      type: CAPACITOR
+      capacity: 2560
+  "sf:medium_capacitor":
+    @cf: templates.energy.passive-component-output
+    @io: true
+    @d:
+      type: CAPACITOR
+      capacity: 10240
+  "sf:big_capacitor":
+    @cf: templates.energy.passive-component-output
+    @io: true
+    @d:
+      type: CAPACITOR
+      capacity: 20480
+  "sf:large_capacitor":
+    @cf: templates.energy.passive-component-output
+    @io: true
+    @d:
+      type: CAPACITOR
+      capacity: 163840
+  "sf:carbonado_edged_capacitor":
+    @cf: templates.energy.passive-component-output
+    @io: true
+    @d:
+      type: CAPACITOR
+      capacity: 1310720
+  "sf:energized_capacitor":
+    @cf: templates.energy.passive-component-output
+    @io: true
+    @d:
+      type: CAPACITOR
+      capacity: 10485760

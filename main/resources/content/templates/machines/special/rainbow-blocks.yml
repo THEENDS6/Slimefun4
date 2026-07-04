@@ -1,0 +1,54 @@
+
+items:
+  @ot: content/items.yml
+  sf:rainbow_wool: {category: sf:rainbow_blocks, material: WHITE_WOOL, name-key: items.sf.rainbow_wool.name, priority: 211, lore-key: items.sf.rainbow_wool.lore, flags: [legacy-sf]}
+  sf:rainbow_glass: {category: sf:rainbow_blocks, material: WHITE_STAINED_GLASS, name-key: items.sf.rainbow_glass.name, priority: 212, lore-key: items.sf.rainbow_glass.lore, flags: [legacy-sf]}
+  sf:rainbow_clay: {category: sf:rainbow_blocks, material: WHITE_TERRACOTTA, name-key: items.sf.rainbow_clay.name, priority: 213, lore-key: items.sf.rainbow_clay.lore, flags: [legacy-sf]}
+  sf:rainbow_glass_pane: {category: sf:rainbow_blocks, material: WHITE_STAINED_GLASS_PANE, name-key: items.sf.rainbow_glass_pane.name, priority: 214, lore-key: items.sf.rainbow_glass_pane.lore, flags: [legacy-sf]}
+  sf:rainbow_concrete: {category: sf:rainbow_blocks, material: WHITE_CONCRETE, name-key: items.sf.rainbow_concrete.name, priority: 215, lore-key: items.sf.rainbow_concrete.lore, flags: [legacy-sf]}
+  sf:rainbow_glazed_terracotta: {category: sf:rainbow_blocks, material: WHITE_GLAZED_TERRACOTTA, name-key: items.sf.rainbow_glazed_terracotta.name, priority: 216, lore-key: items.sf.rainbow_glazed_terracotta.lore, flags: [legacy-sf]}
+  sf:rainbow_wool_xmas: {category: sf:seasonal, material: WHITE_WOOL, name-key: items.sf.rainbow_wool_xmas.name, priority: 217, lore-key: items.sf.rainbow_wool_xmas.lore, flags: [legacy-sf]}
+  sf:rainbow_glass_xmas: {category: sf:seasonal, material: WHITE_STAINED_GLASS, name-key: items.sf.rainbow_glass_xmas.name, priority: 218, lore-key: items.sf.rainbow_glass_xmas.lore, flags: [legacy-sf]}
+  sf:rainbow_clay_xmas: {category: sf:seasonal, material: WHITE_TERRACOTTA, name-key: items.sf.rainbow_clay_xmas.name, priority: 219, lore-key: items.sf.rainbow_clay_xmas.lore, flags: [legacy-sf]}
+  sf:rainbow_glass_pane_xmas: {category: sf:seasonal, material: WHITE_STAINED_GLASS_PANE, name-key: items.sf.rainbow_glass_pane_xmas.name, priority: 220, lore-key: items.sf.rainbow_glass_pane_xmas.lore, flags: [legacy-sf]}
+  sf:rainbow_concrete_xmas: {category: sf:seasonal, material: WHITE_CONCRETE, name-key: items.sf.rainbow_concrete_xmas.name, priority: 221, lore-key: items.sf.rainbow_concrete_xmas.lore, flags: [legacy-sf]}
+  sf:rainbow_glazed_terracotta_xmas: {category: sf:seasonal, material: WHITE_GLAZED_TERRACOTTA, name-key: items.sf.rainbow_glazed_terracotta_xmas.name, priority: 222, lore-key: items.sf.rainbow_glazed_terracotta_xmas.lore, flags: [legacy-sf]}
+  sf:rainbow_wool_valentine: {category: sf:seasonal, material: PINK_WOOL, name-key: items.sf.rainbow_wool_valentine.name, priority: 223, lore-key: items.sf.rainbow_wool_valentine.lore, flags: [legacy-sf]}
+  sf:rainbow_glass_valentine: {category: sf:seasonal, material: PINK_STAINED_GLASS, name-key: items.sf.rainbow_glass_valentine.name, priority: 224, lore-key: items.sf.rainbow_glass_valentine.lore, flags: [legacy-sf]}
+  sf:rainbow_clay_valentine: {category: sf:seasonal, material: PINK_TERRACOTTA, name-key: items.sf.rainbow_clay_valentine.name, priority: 225, lore-key: items.sf.rainbow_clay_valentine.lore, flags: [legacy-sf]}
+  sf:rainbow_glass_pane_valentine: {category: sf:seasonal, material: PINK_STAINED_GLASS_PANE, name-key: items.sf.rainbow_glass_pane_valentine.name, priority: 226, lore-key: items.sf.rainbow_glass_pane_valentine.lore, flags: [legacy-sf]}
+  sf:rainbow_concrete_valentine: {category: sf:seasonal, material: PINK_CONCRETE, name-key: items.sf.rainbow_concrete_valentine.name, priority: 227, lore-key: items.sf.rainbow_concrete_valentine.lore, flags: [legacy-sf]}
+  sf:rainbow_glazed_terracotta_valentine: {category: sf:seasonal, material: PINK_GLAZED_TERRACOTTA, name-key: items.sf.rainbow_glazed_terracotta_valentine.name, priority: 228, lore-key: items.sf.rainbow_glazed_terracotta_valentine.lore, flags: [legacy-sf]}
+  sf:rainbow_wool_halloween: {category: sf:seasonal, material: ORANGE_WOOL, name-key: items.sf.rainbow_wool_halloween.name, priority: 229, lore-key: items.sf.rainbow_wool_halloween.lore, flags: [legacy-sf]}
+  sf:rainbow_glass_halloween: {category: sf:seasonal, material: ORANGE_STAINED_GLASS, name-key: items.sf.rainbow_glass_halloween.name, priority: 230, lore-key: items.sf.rainbow_glass_halloween.lore, flags: [legacy-sf]}
+  sf:rainbow_clay_halloween: {category: sf:seasonal, material: ORANGE_TERRACOTTA, name-key: items.sf.rainbow_clay_halloween.name, priority: 231, lore-key: items.sf.rainbow_clay_halloween.lore, flags: [legacy-sf]}
+  sf:rainbow_glass_pane_halloween: {category: sf:seasonal, material: ORANGE_STAINED_GLASS_PANE, name-key: items.sf.rainbow_glass_pane_halloween.name, priority: 232, lore-key: items.sf.rainbow_glass_pane_halloween.lore, flags: [legacy-sf]}
+  sf:rainbow_concrete_halloween: {category: sf:seasonal, material: ORANGE_CONCRETE, name-key: items.sf.rainbow_concrete_halloween.name, priority: 233, lore-key: items.sf.rainbow_concrete_halloween.lore, flags: [legacy-sf]}
+  sf:rainbow_glazed_terracotta_halloween: {category: sf:seasonal, material: ORANGE_GLAZED_TERRACOTTA, name-key: items.sf.rainbow_glazed_terracotta_halloween.name, priority: 234, lore-key: items.sf.rainbow_glazed_terracotta_halloween.lore, flags: [legacy-sf]}
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:rainbow_wool: {category: SPECIAL, display-name: sf:rainbow_wool, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glass: {category: SPECIAL, display-name: sf:rainbow_glass, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_clay: {category: SPECIAL, display-name: sf:rainbow_clay, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glass_pane: {category: SPECIAL, display-name: sf:rainbow_glass_pane, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_concrete: {category: SPECIAL, display-name: sf:rainbow_concrete, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glazed_terracotta: {category: SPECIAL, display-name: sf:rainbow_glazed_terracotta, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_wool_xmas: {category: SPECIAL, display-name: sf:rainbow_wool_xmas, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glass_xmas: {category: SPECIAL, display-name: sf:rainbow_glass_xmas, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_clay_xmas: {category: SPECIAL, display-name: sf:rainbow_clay_xmas, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glass_pane_xmas: {category: SPECIAL, display-name: sf:rainbow_glass_pane_xmas, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_concrete_xmas: {category: SPECIAL, display-name: sf:rainbow_concrete_xmas, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glazed_terracotta_xmas: {category: SPECIAL, display-name: sf:rainbow_glazed_terracotta_xmas, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_wool_valentine: {category: SPECIAL, display-name: sf:rainbow_wool_valentine, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glass_valentine: {category: SPECIAL, display-name: sf:rainbow_glass_valentine, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_clay_valentine: {category: SPECIAL, display-name: sf:rainbow_clay_valentine, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glass_pane_valentine: {category: SPECIAL, display-name: sf:rainbow_glass_pane_valentine, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_concrete_valentine: {category: SPECIAL, display-name: sf:rainbow_concrete_valentine, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glazed_terracotta_valentine: {category: SPECIAL, display-name: sf:rainbow_glazed_terracotta_valentine, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_wool_halloween: {category: SPECIAL, display-name: sf:rainbow_wool_halloween, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glass_halloween: {category: SPECIAL, display-name: sf:rainbow_glass_halloween, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_clay_halloween: {category: SPECIAL, display-name: sf:rainbow_clay_halloween, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glass_pane_halloween: {category: SPECIAL, display-name: sf:rainbow_glass_pane_halloween, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_concrete_halloween: {category: SPECIAL, display-name: sf:rainbow_concrete_halloween, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}
+  sf:rainbow_glazed_terracotta_halloween: {category: SPECIAL, display-name: sf:rainbow_glazed_terracotta_halloween, status-slot: -1, tick-interval: 1, tags: [machine, special, decoration], profile: decoration}

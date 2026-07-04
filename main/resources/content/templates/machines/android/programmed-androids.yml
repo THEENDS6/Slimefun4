@@ -1,0 +1,148 @@
+
+items:
+  @ot: content/items.yml
+  sf:programmable_android:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android.name
+    priority: 370
+    headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
+    lore-key: items.sf.programmable_android.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_farmer:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_farmer.name
+    priority: 371
+    headTexture: f9d33357e8418823bf783de92de80291b4ebd392aec8706698e06896d498f6
+    lore-key: items.sf.programmable_android_farmer.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_miner:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_miner.name
+    priority: 372
+    headTexture: e638a28541ab3ae0a723d5578738e08758388ec4c33247bd4ca13482aef334
+    lore-key: items.sf.programmable_android_miner.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_woodcutter:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_woodcutter.name
+    priority: 373
+    headTexture: d32a814510142205169a1ad32f0a745f18e9cb6c66ee64eca2e65babdef9ff
+    lore-key: items.sf.programmable_android_woodcutter.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_butcher:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_butcher.name
+    priority: 374
+    headTexture: 3b472df0ad9a3be88f2e5d5d422d02b116d64d8df1475ed32e546afc84b31
+    lore-key: items.sf.programmable_android_butcher.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_fisherman:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_fisherman.name
+    priority: 375
+    headTexture: 345e8733a73114333b98b3601751241722f4713e1a1a5d36fbb132493f1c7
+    lore-key: items.sf.programmable_android_fisherman.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_2:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_2.name
+    priority: 376
+    headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
+    lore-key: items.sf.programmable_android_2.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_2_fisherman:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_2_fisherman.name
+    priority: 377
+    headTexture: 345e8733a73114333b98b3601751241722f4713e1a1a5d36fbb132493f1c7
+    lore-key: items.sf.programmable_android_2_fisherman.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_2_farmer:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_2_farmer.name
+    priority: 378
+    headTexture: f9d33357e8418823bf783de92de80291b4ebd392aec8706698e06896d498f6
+    lore-key: items.sf.programmable_android_2_farmer.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_2_butcher:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_2_butcher.name
+    priority: 379
+    headTexture: 3b472df0ad9a3be88f2e5d5d422d02b116d64d8df1475ed32e546afc84b31
+    lore-key: items.sf.programmable_android_2_butcher.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_3:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_3.name
+    priority: 380
+    headTexture: 3503cb7ed845e7a507f569afc647c47ac483771465c9a679a54594c76afba
+    lore-key: items.sf.programmable_android_3.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_3_fisherman:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_3_fisherman.name
+    priority: 381
+    headTexture: 345e8733a73114333b98b3601751241722f4713e1a1a5d36fbb132493f1c7
+    lore-key: items.sf.programmable_android_3_fisherman.lore
+    flags: [legacy-sf, placeable-block]
+  sf:programmable_android_3_butcher:
+    category: sf:robots
+    material: PLAYER_HEAD
+    name-key: items.sf.programmable_android_3_butcher.name
+    priority: 382
+    headTexture: 3b472df0ad9a3be88f2e5d5d422d02b116d64d8df1475ed32e546afc84b31
+    lore-key: items.sf.programmable_android_3_butcher.lore
+    flags: [legacy-sf, placeable-block]
+  sf:android_interface_fuel:
+    category: sf:robots
+    material: DISPENSER
+    name-key: items.sf.android_interface_fuel.name
+    priority: 390
+    lore-key: items.sf.android_interface_fuel.lore
+    flags: [legacy-sf, placeable-block]
+  sf:android_interface_items:
+    category: sf:robots
+    material: DISPENSER
+    name-key: items.sf.android_interface_items.name
+    priority: 391
+    lore-key: items.sf.android_interface_items.lore
+    flags: [legacy-sf, placeable-block]
+  sf:android_memory_core:
+    category: sf:technical_components
+    material: PLAYER_HEAD
+    name-key: items.sf.android_memory_core.name
+    priority: 398
+    headTexture: d78f2b7e5e75639ea7fb796c35d364c4df28b4243e66b76277aadcd6261337
+    flags:
+    - legacy-sf
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:programmable_android: {category: ANDROID, display-name: sf:programmable_android, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_farmer: {category: ANDROID, display-name: sf:programmable_android_farmer, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_miner: {category: ANDROID, display-name: sf:programmable_android_miner, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_woodcutter: {category: ANDROID, display-name: sf:programmable_android_woodcutter, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_butcher: {category: ANDROID, display-name: sf:programmable_android_butcher, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_fisherman: {category: ANDROID, display-name: sf:programmable_android_fisherman, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_2: {category: ANDROID, display-name: sf:programmable_android_2, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_2_fisherman: {category: ANDROID, display-name: sf:programmable_android_2_fisherman, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_2_farmer: {category: ANDROID, display-name: sf:programmable_android_2_farmer, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_2_butcher: {category: ANDROID, display-name: sf:programmable_android_2_butcher, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_3: {category: ANDROID, display-name: sf:programmable_android_3, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_3_fisherman: {category: ANDROID, display-name: sf:programmable_android_3_fisherman, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:programmable_android_3_butcher: {category: ANDROID, display-name: sf:programmable_android_3_butcher, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}
+  sf:android_interface_fuel: {category: ANDROID, display-name: sf:android_interface_fuel, status-slot: -1, tick-interval: 1, tags: [machine, android, android-interface], profile: android_interface}
+  sf:android_interface_items: {category: ANDROID, display-name: sf:android_interface_items, status-slot: -1, tick-interval: 1, tags: [machine, android, android-interface], profile: android_interface}
+  sf:android_memory_core: {category: ANDROID, display-name: sf:android_memory_core, status-slot: -1, tick-interval: 1, tags: [machine, android], profile: android}

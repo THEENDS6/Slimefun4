@@ -22,6 +22,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxManualMachineYamlLoader {
     private static final String RESOURCE_PATH = "content/machines/manual-machines.yml";
+    private static final String BASIC_MACHINE_RESOURCE_PATH = "content/machines/basic-machines.yml";
+    private static final String MANUAL_MACHINE_EXECUTOR = "sf:manual_machine";
 
     private final JavaPlugin plugin;
     private final SfxLocalization localization;
@@ -59,6 +61,7 @@ public final class SfxManualMachineYamlLoader {
             plugin.getLogger().warning(message);
             return 0;
         }
+        Map<String, Set<String>> acceptedRecipeTypes = loadAcceptedRecipeTypes(strict);
         int loaded = 0;
         for (String id : root.getKeys(false)) {
             ConfigurationSection section = root.getConfigurationSection(id);
@@ -66,7 +69,11 @@ public final class SfxManualMachineYamlLoader {
                 continue;
             }
             try {
-                registry.registerMachine(parse(id, section));
+                String normalizedId = cc.theends6.sfx.api.item.SfxItemDefinition.normalizeId(id);
+                if (!acceptedRecipeTypes.containsKey(normalizedId)) {
+                    throw new IllegalArgumentException("compiled manual machine runtime contract is missing in " + BASIC_MACHINE_RESOURCE_PATH);
+                }
+                registry.registerMachine(parse(id, section, acceptedRecipeTypes.get(normalizedId)));
                 loaded++;
             } catch (RuntimeException ex) {
                 if (strict) {
@@ -79,7 +86,34 @@ public final class SfxManualMachineYamlLoader {
         return loaded;
     }
 
-    private ManualMachineDefinition parse(String id, ConfigurationSection section) {
+    private Map<String, Set<String>> loadAcceptedRecipeTypes(boolean strict) {
+        YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, BASIC_MACHINE_RESOURCE_PATH);
+        ConfigurationSection root = yaml.getConfigurationSection("machines");
+        if (root == null) {
+            String message = "No machines section in " + BASIC_MACHINE_RESOURCE_PATH + "; no manual machine runtime contracts loaded.";
+            if (strict) {
+                throw new IllegalStateException(message);
+            }
+            plugin.getLogger().warning(message);
+            return Map.of();
+        }
+
+        Map<String, Set<String>> result = new java.util.LinkedHashMap<>();
+        for (String id : root.getKeys(false)) {
+            ConfigurationSection section = root.getConfigurationSection(id);
+            if (section == null) {
+                continue;
+            }
+            String executor = section.getString("runtime.executor", "");
+            if (!MANUAL_MACHINE_EXECUTOR.equals(cc.theends6.sfx.api.item.SfxItemDefinition.normalizeId(executor))) {
+                continue;
+            }
+            result.put(cc.theends6.sfx.api.item.SfxItemDefinition.normalizeId(id), stringSet(section.getList("runtime.accepts.recipe-types")));
+        }
+        return Map.copyOf(result);
+    }
+
+    private ManualMachineDefinition parse(String id, ConfigurationSection section, Set<String> acceptedRecipeTypes) {
         if (section.contains("name")) {
             throw new IllegalArgumentException("literal field is not allowed in compiled manual machine content: name (use name-key)");
         }
@@ -91,7 +125,7 @@ public final class SfxManualMachineYamlLoader {
         BlockFace inventoryFace = parseFace(requiredString(section, "inventory-face"));
         ManualMachineOperation operation = ManualMachineOperation.valueOf(requiredString(section, "operation").trim().replace('-', '_').toUpperCase(Locale.ROOT));
         boolean deployable = requiredBoolean(section, "deployable");
-        return new ManualMachineDefinition(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, stringSet(section.getList("tags")));
+        return new ManualMachineDefinition(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, stringSet(section.getList("tags")), acceptedRecipeTypes);
     }
 
     private String requiredLanguageString(ConfigurationSection section, String path) {

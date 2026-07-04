@@ -112,7 +112,7 @@ public final class SfxCargoService implements Listener {
     private final SfxElectricMachineService electricMachines;
     private final SfxMachineRuntimeEngine machineRuntime;
     private final Set<SfxFloatingTextKey> displayKeys = ConcurrentHashMap.newKeySet();
-    private final Map<String, SfxCargoComponentDefinition> definitions = SfxCargoDefinitions.create();
+    private final Map<String, SfxCargoComponentDefinition> definitions;
     private final SfxTopologyService topology;
     private final Map<UUID, SfxCargoNodeState> states = new ConcurrentHashMap<>();
     private final Set<UUID> dirtyStates = ConcurrentHashMap.newKeySet();
@@ -134,6 +134,7 @@ public final class SfxCargoService implements Listener {
         this.floatingText = Objects.requireNonNull(floatingText, "floatingText");
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
         this.machineRuntime = machineRuntime == null ? new SfxMachineRuntimeEngine() : machineRuntime;
+        this.definitions = SfxCargoDefinitions.load(plugin);
         registerFrameworkEffects();
         this.topology = new SfxTopologyService(blockData, new SfxCargoTopologyPolicy(definitions), new SfxCargoConnectivityPolicy(RANGE));
         bootstrapLoadedStates();

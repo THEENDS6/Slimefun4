@@ -1,0 +1,14 @@
+
+items:
+  @ot: content/items.yml
+  sf:infused_hopper:
+    category: sf:gadgets
+    material: HOPPER
+    name-key: items.sf.infused_hopper.name
+    priority: 405
+    lore-key: items.sf.infused_hopper.lore
+    flags: [legacy-sf, visual-glint, plugin-block, placeable-block, creative-clone]
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:infused_hopper: {category: SPECIAL, display-name: sf:infused_hopper, status-slot: -1, tick-interval: 1, tags: [machine, special, infused-hopper], profile: infused_hopper}

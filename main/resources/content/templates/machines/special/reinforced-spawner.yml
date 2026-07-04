@@ -1,0 +1,14 @@
+
+items:
+  @ot: content/items.yml
+  sf:reinforced_spawner:
+    category: sf:items
+    material: SPAWNER
+    name-key: items.sf.reinforced_spawner.name
+    priority: 463
+    lore-key: items.sf.reinforced_spawner.lore
+    flags: [legacy-sf, plugin-block, placeable-block, creative-clone]
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:reinforced_spawner: {category: SPECIAL, display-name: sf:reinforced_spawner, status-slot: -1, tick-interval: 1, tags: [machine, special, reinforced-spawner], profile: reinforced_spawner}

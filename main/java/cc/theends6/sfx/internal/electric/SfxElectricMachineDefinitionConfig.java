@@ -70,6 +70,40 @@ final class SfxElectricMachineDefinitionConfig {
     }
 
     SfxElectricMachineDefinition create(String id, String compiledEntryId, SfxElectricRecipeProvider recipeProvider) {
+        return create(id, compiledEntryId, recipeProvider, null);
+    }
+
+    SfxElectricMachineDefinition create(String id, String compiledEntryId, SfxElectricRecipeYamlLoader staticRecipes) {
+        return create(id, compiledEntryId, staticRecipes, Map.of());
+    }
+
+    SfxElectricMachineDefinition create(String id, String compiledEntryId, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> specialProviders) {
+        if (staticRecipes == null) {
+            throw new IllegalArgumentException("Electric machine " + id + " requires recipe loader.");
+        }
+        String entryId = compiledEntryId == null || compiledEntryId.isBlank() ? id : compiledEntryId.trim();
+        Entry entry = selectEntry(entryId);
+        if (entry == null) {
+            throw new IllegalStateException("Missing compiled electric machine definition for " + entryId + " while registering " + id);
+        }
+        if (entry.runtime == null) {
+            throw new IllegalStateException("Missing compiled runtime binding for electric machine " + entryId);
+        }
+        return create(id, compiledEntryId, resolveRuntimeProvider(entryId, entry.runtime, staticRecipes, specialProviders), entry);
+    }
+
+    private SfxElectricRecipeProvider resolveRuntimeProvider(String entryId, SfxElectricMachineRuntimeBinding runtime, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> specialProviders) {
+        if ("sf:special_provider".equals(runtime.executor())) {
+            SfxElectricRecipeProvider provider = specialProviders == null ? null : specialProviders.get(runtime.provider());
+            if (provider == null) {
+                throw new IllegalStateException("Missing special electric recipe provider " + runtime.provider() + " for " + entryId);
+            }
+            return provider;
+        }
+        return staticRecipes.provider(runtime);
+    }
+
+    private SfxElectricMachineDefinition create(String id, String compiledEntryId, SfxElectricRecipeProvider recipeProvider, Entry knownEntry) {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("Electric machine id is required.");
         }
@@ -77,7 +111,7 @@ final class SfxElectricMachineDefinitionConfig {
             throw new IllegalArgumentException("Electric machine " + id + " requires a recipe provider.");
         }
         String entryId = compiledEntryId == null || compiledEntryId.isBlank() ? id : compiledEntryId.trim();
-        Entry entry = selectEntry(entryId);
+        Entry entry = knownEntry == null ? selectEntry(entryId) : knownEntry;
         if (entry == null) {
             throw new IllegalStateException("Missing compiled electric machine definition for " + entryId + " while registering " + id);
         }
@@ -280,6 +314,7 @@ final class SfxElectricMachineDefinitionConfig {
             Integer energyConsumptionPerTick,
             Material progressMaterial,
             Set<String> functionTags,
+            SfxElectricMachineRuntimeBinding runtime,
             SfxElectricMachineUiDefinition ui,
             SfxElectricAssemblerSpec assemblerSpec
     ) {
@@ -292,9 +327,26 @@ final class SfxElectricMachineDefinitionConfig {
                     optionalInt(energy, "consumption-per-tick"),
                     parseMaterial(section.getString("progress-material", null)),
                     parseFunctionTags(section),
+                    parseRuntime(section.getConfigurationSection("runtime")),
                     parseUi(section.getConfigurationSection("ui"), strict),
                     parseAssembler(section.getConfigurationSection("assembler")));
         }
+    }
+
+    private static SfxElectricMachineRuntimeBinding parseRuntime(ConfigurationSection section) {
+        if (section == null) {
+            return null;
+        }
+        return new SfxElectricMachineRuntimeBinding(
+                section.getString("executor", null),
+                section.getString("provider", null),
+                stringSet(section.getList("accepts.recipe-tags", List.of())),
+                stringSet(section.getList("include-recipes", List.of())),
+                stringSet(section.getList("exclude-recipes", List.of())));
+    }
+
+    private static Set<String> stringSet(Object value) {
+        return Set.copyOf(strings(value));
     }
 
     private static Integer optionalInt(ConfigurationSection section, String path) {

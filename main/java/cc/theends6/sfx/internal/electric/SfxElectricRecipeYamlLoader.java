@@ -6,10 +6,12 @@ import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -21,63 +23,92 @@ final class SfxElectricRecipeYamlLoader {
     private static final String RESOURCE_PATH = "content/machines/electric-recipes.yml";
 
     private final JavaPlugin plugin;
-    private final Map<String, SfxElectricRecipeProvider> providers;
+    private final Map<String, SfxElectricRecipe> recipesById;
 
-    private SfxElectricRecipeYamlLoader(JavaPlugin plugin, Map<String, SfxElectricRecipeProvider> providers) {
+    private SfxElectricRecipeYamlLoader(JavaPlugin plugin, Map<String, SfxElectricRecipe> recipesById) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
-        this.providers = Map.copyOf(providers);
+        this.recipesById = Map.copyOf(recipesById);
     }
 
     static SfxElectricRecipeYamlLoader load(JavaPlugin plugin) {
         ensureBundledFile(plugin);
         boolean strict = plugin.getConfig().getBoolean("content.runtime.compiled-only", true);
         YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, RESOURCE_PATH);
-        ConfigurationSection root = yaml.getConfigurationSection("providers");
-        if (root == null) {
-            String message = "No providers section in " + RESOURCE_PATH + "; static electric providers will be empty.";
+        List<Map<?, ?>> entries = requiredRecipeList(yaml, "electric-recipes");
+        if (entries.isEmpty()) {
+            String message = "No recipes in " + RESOURCE_PATH + "; static electric recipes will be empty.";
             if (strict) {
                 throw new IllegalStateException(message);
             }
             plugin.getLogger().warning(message);
             return new SfxElectricRecipeYamlLoader(plugin, Map.of());
         }
-        Map<String, SfxElectricRecipeProvider> result = new LinkedHashMap<>();
+        Map<String, SfxElectricRecipe> indexedRecipes = new LinkedHashMap<>();
         int recipes = 0;
-        for (String providerId : root.getKeys(false)) {
-            ConfigurationSection section = root.getConfigurationSection(providerId);
-            if (section == null) {
-                continue;
-            }
-            List<SfxElectricRecipe> parsed = new ArrayList<>();
-            List<Map<?, ?>> entries = requiredRecipeList(section, "recipes");
-            for (Map<?, ?> raw : entries) {
-                try {
-                    parsed.addAll(parseRecipeOrExpansion(raw));
-                } catch (RuntimeException ex) {
-                    if (strict) {
-                        throw new IllegalStateException("Invalid electric recipe YAML entry in provider " + providerId, ex);
+        for (Map<?, ?> raw : entries) {
+            try {
+                List<SfxElectricRecipe> parsed = parseRecipeOrExpansion(raw);
+                for (SfxElectricRecipe recipe : parsed) {
+                    SfxElectricRecipe previous = indexedRecipes.put(recipe.key(), recipe);
+                    if (previous != null) {
+                        throw new IllegalStateException("Duplicate electric recipe id in YAML: " + recipe.key());
                     }
-                    plugin.getLogger().log(Level.WARNING, "Invalid electric recipe YAML entry in provider " + providerId + "; skipping it.", ex);
                 }
+                recipes += parsed.size();
+            } catch (RuntimeException ex) {
+                if (strict) {
+                    throw new IllegalStateException("Invalid electric recipe YAML entry", ex);
+                }
+                plugin.getLogger().log(Level.WARNING, "Invalid electric recipe YAML entry; skipping it.", ex);
             }
-            List<SfxElectricRecipe> snapshot = List.copyOf(parsed);
-            result.put(providerId, () -> snapshot);
-            recipes += snapshot.size();
         }
-        SfxValidationDiagnostics.log(plugin, "machine-yaml", "electric recipe providers=" + result.size() + ", recipes=" + recipes);
-        return new SfxElectricRecipeYamlLoader(plugin, result);
+        SfxValidationDiagnostics.log(plugin, "machine-yaml", "electric recipes=" + recipes);
+        return new SfxElectricRecipeYamlLoader(plugin, indexedRecipes);
     }
 
-    SfxElectricRecipeProvider provider(String id) {
-        SfxElectricRecipeProvider provider = providers.get(id);
-        if (provider == null) {
-            if (plugin.getConfig().getBoolean("content.runtime.compiled-only", true)) {
-                throw new IllegalStateException("Missing electric recipe provider in YAML: " + id);
+    SfxElectricRecipeProvider provider(SfxElectricMachineRuntimeBinding runtime) {
+        Objects.requireNonNull(runtime, "runtime");
+        String executor = runtime.executor();
+        Set<String> acceptedTags = runtime.recipeTags();
+        Set<String> excluded = runtime.excludeRecipes();
+        Map<String, SfxElectricRecipe> selected = new LinkedHashMap<>();
+        for (SfxElectricRecipe recipe : recipesById.values()) {
+            if (!executor.equals(recipe.recipeType())) {
+                continue;
             }
-            plugin.getLogger().warning("Missing electric recipe provider in YAML: " + id);
-            return List::of;
+            if (matchesAnyTag(recipe, acceptedTags) && !excluded.contains(recipe.key())) {
+                selected.put(recipe.key(), recipe);
+            }
         }
-        return provider;
+        for (String includeId : runtime.includeRecipes()) {
+            SfxElectricRecipe recipe = recipesById.get(includeId);
+            if (recipe == null) {
+                throw new IllegalStateException("Electric machine runtime includes unknown recipe: " + includeId);
+            }
+            if (!executor.equals(recipe.recipeType())) {
+                throw new IllegalStateException("Electric machine runtime include " + includeId + " has recipe-type "
+                        + recipe.recipeType() + " but executor is " + executor);
+            }
+            selected.put(includeId, recipe);
+        }
+        if (selected.isEmpty()) {
+            throw new IllegalStateException("Electric machine runtime executor " + executor
+                    + " with recipe-tags " + acceptedTags + " did not match any electric recipes.");
+        }
+        List<SfxElectricRecipe> snapshot = List.copyOf(selected.values());
+        return () -> snapshot;
+    }
+
+    private static boolean matchesAnyTag(SfxElectricRecipe recipe, Set<String> acceptedTags) {
+        if (acceptedTags == null || acceptedTags.isEmpty()) {
+            return false;
+        }
+        for (String tag : recipe.recipeTags()) {
+            if (acceptedTags.contains(tag)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static List<SfxElectricRecipe> parseRecipeOrExpansion(Map<?, ?> entry) {
@@ -90,13 +121,15 @@ final class SfxElectricRecipeYamlLoader {
 
     private static SfxElectricRecipe parseRecipe(Map<?, ?> entry) {
         String id = string(entry.get("id"));
+        String recipeType = optionalString(entry.get("recipe-type"));
+        Set<String> recipeTags = strings(entry.get("recipe-tags"));
         int ticks = integer(requiredValue(entry, "ticks"));
         List<SfxRecipeSlot> inputs = parseInputs(entry.get("inputs"));
         Object randomOutputs = entry.get("random-outputs");
         if (randomOutputs instanceof List<?>) {
-            return SfxElectricRecipe.randomOutput(id, inputs.getFirst(), parseWeightedOutputs(randomOutputs), ticks);
+            return SfxElectricRecipe.randomOutput(id, recipeType, recipeTags, inputs.getFirst(), parseWeightedOutputs(randomOutputs), ticks);
         }
-        return SfxElectricRecipe.fixedOutputs(id, inputs, parseOutputs(entry.get("outputs")), ticks);
+        return SfxElectricRecipe.fixedOutputs(id, recipeType, recipeTags, inputs, parseOutputs(entry.get("outputs")), ticks);
     }
 
     private static List<SfxRecipeSlot> parseInputs(Object raw) {
@@ -223,6 +256,19 @@ final class SfxElectricRecipeYamlLoader {
         }
         String value = String.valueOf(raw).trim();
         return value.isEmpty() ? null : value;
+    }
+
+    private static Set<String> strings(Object raw) {
+        if (!(raw instanceof List<?> list)) {
+            return Set.of();
+        }
+        Set<String> result = new LinkedHashSet<>();
+        for (Object value : list) {
+            if (value != null && !String.valueOf(value).isBlank()) {
+                result.add(String.valueOf(value).trim().replace('_', '-').toLowerCase(Locale.ROOT));
+            }
+        }
+        return Set.copyOf(result);
     }
 
     private static int integer(Object raw) {

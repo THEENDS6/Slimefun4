@@ -1,0 +1,113 @@
+
+items:
+  @ot: content/items.yml
+  sf:gps_control_panel:
+    category: sf:gps
+    material: PLAYER_HEAD
+    name-key: items.sf.gps_control_panel.name
+    priority: 388
+    headTexture: ddcfba58faf1f64847884111822b64afa21d7fc62d4481f14f3f3bcb6330
+    lore-key: items.sf.gps_control_panel.lore
+    flags:
+    - legacy-sf
+  sf:gps_geo_scanner:
+    category: sf:gps
+    material: PLAYER_HEAD
+    name-key: items.sf.gps_geo_scanner.name
+    priority: 392
+    headTexture: 2ad8cfeb387a56e3e5bcf85345d6a417b242293887db3ce3ba91fa409b254b86
+    lore-key: items.sf.gps_geo_scanner.lore
+    flags:
+    - legacy-sf
+  sf:gps_teleporter_pylon:
+    category: sf:gps
+    material: PURPLE_STAINED_GLASS
+    name-key: items.sf.gps_teleporter_pylon.name
+    priority: 399
+    lore-key: items.sf.gps_teleporter_pylon.lore
+    flags:
+    - legacy-sf
+  sf:gps_teleportation_matrix:
+    category: sf:gps
+    material: IRON_BLOCK
+    name-key: items.sf.gps_teleportation_matrix.name
+    priority: 400
+    lore-key: items.sf.gps_teleportation_matrix.lore
+    flags:
+    - legacy-sf
+  sf:gps_activation_device_shared:
+    category: sf:gps
+    material: STONE_PRESSURE_PLATE
+    name-key: items.sf.gps_activation_device_shared.name
+    priority: 401
+    lore-key: items.sf.gps_activation_device_shared.lore
+    flags:
+    - legacy-sf
+  sf:gps_activation_device_personal:
+    category: sf:gps
+    material: STONE_PRESSURE_PLATE
+    name-key: items.sf.gps_activation_device_personal.name
+    priority: 402
+    lore-key: items.sf.gps_activation_device_personal.lore
+    flags:
+    - legacy-sf
+  sf:elevator_plate:
+    category: sf:gps
+    material: STONE_PRESSURE_PLATE
+    name-key: items.sf.elevator_plate.name
+    priority: 404
+    lore-key: items.sf.elevator_plate.lore
+    flags:
+    - legacy-sf
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:gps_control_panel:
+    category: GPS
+    display-name: sf:gps_control_panel
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, gps, gps-device]
+    profile: gps_device
+  sf:gps_geo_scanner:
+    category: GPS
+    display-name: sf:gps_geo_scanner
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, gps, gps-device]
+    profile: gps_device
+  sf:gps_teleporter_pylon:
+    category: GPS
+    display-name: sf:gps_teleporter_pylon
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, gps, gps-device]
+    profile: gps_device
+  sf:gps_teleportation_matrix:
+    category: GPS
+    display-name: sf:gps_teleportation_matrix
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, gps, gps-device]
+    profile: gps_device
+  sf:gps_activation_device_shared:
+    category: GPS
+    display-name: sf:gps_activation_device_shared
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, gps, gps-device]
+    profile: gps_device
+  sf:gps_activation_device_personal:
+    category: GPS
+    display-name: sf:gps_activation_device_personal
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, gps, gps-device]
+    profile: gps_device
+  sf:elevator_plate:
+    category: GPS
+    display-name: sf:elevator_plate
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, gps, gps-device]
+    profile: gps_device

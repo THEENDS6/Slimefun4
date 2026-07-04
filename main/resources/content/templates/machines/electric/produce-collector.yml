@@ -1,0 +1,24 @@
+
+items:
+  "sf:produce_collector":
+    category: sf:electricity
+    material: HAY_BLOCK
+    name-key: items.sf.produce_collector.name
+    priority: 428
+    lore-key: items.sf.produce_collector.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:produce_collector":
+    category: ELECTRIC
+    display-name: sf:produce_collector
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, electric, electric-world-action]
+    profile: electric_world_action
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:produce_collector":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d: {name-key: items.sf.produce_collector.name, speed: 1, capacity: 10240, consumption: 32, progress-material: BUCKET}
+    runtime: {executor: sf:special_provider, provider: sf:produce_collector}

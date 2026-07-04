@@ -1,0 +1,12 @@
+
+items:
+  @ot: content/items.yml
+  sf:hardened_glass: {category: sf:technical_components, material: LIGHT_GRAY_STAINED_GLASS, name-key: items.sf.hardened_glass.name, priority: 203, lore-key: items.sf.hardened_glass.lore, flags: [legacy-sf]}
+  sf:wither_proof_obsidian: {category: sf:technical_components, material: OBSIDIAN, name-key: items.sf.wither_proof_obsidian.name, priority: 204, lore-key: items.sf.wither_proof_obsidian.lore, flags: [legacy-sf]}
+  sf:wither_proof_glass: {category: sf:technical_components, material: PURPLE_STAINED_GLASS, name-key: items.sf.wither_proof_glass.name, priority: 205, lore-key: items.sf.wither_proof_glass.lore, flags: [legacy-sf]}
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:hardened_glass: {category: SPECIAL, display-name: sf:hardened_glass, status-slot: -1, tick-interval: 1, tags: [machine, special, structural-decoration], profile: structural_decoration}
+  sf:wither_proof_obsidian: {category: SPECIAL, display-name: sf:wither_proof_obsidian, status-slot: -1, tick-interval: 1, tags: [machine, special, structural-decoration], profile: structural_decoration}
+  sf:wither_proof_glass: {category: SPECIAL, display-name: sf:wither_proof_glass, status-slot: -1, tick-interval: 1, tags: [machine, special, structural-decoration], profile: structural_decoration}

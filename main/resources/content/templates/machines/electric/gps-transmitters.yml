@@ -1,0 +1,33 @@
+
+items:
+  "sf:gps_transmitter": {category: sf:gps, material: PLAYER_HEAD, name-key: items.sf.gps_transmitter.name, priority: 383, headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f, lore-key: items.sf.gps_transmitter.lore, flags: [legacy-sf]}
+  "sf:gps_transmitter_2": {category: sf:gps, material: PLAYER_HEAD, name-key: items.sf.gps_transmitter_2.name, priority: 384, headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f, lore-key: items.sf.gps_transmitter_2.lore, flags: [legacy-sf]}
+  "sf:gps_transmitter_3": {category: sf:gps, material: PLAYER_HEAD, name-key: items.sf.gps_transmitter_3.name, priority: 385, headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f, lore-key: items.sf.gps_transmitter_3.lore, flags: [legacy-sf]}
+  "sf:gps_transmitter_4": {category: sf:gps, material: PLAYER_HEAD, name-key: items.sf.gps_transmitter_4.name, priority: 386, headTexture: b0c9c1a022f40b73f14b4cba37c718c6a533f3a2864b6536d5f456934cc1f, lore-key: items.sf.gps_transmitter_4.lore, flags: [legacy-sf]}
+machine-catalog:
+  "sf:gps_transmitter": {category: ELECTRIC, display-name: sf:gps_transmitter, status-slot: -1, tick-interval: 1, tags: [machine, electric, gps-transmitter, gps], profile: gps_transmitter}
+  "sf:gps_transmitter_2": {category: ELECTRIC, display-name: sf:gps_transmitter_2, status-slot: -1, tick-interval: 1, tags: [machine, electric, gps-transmitter, gps], profile: gps_transmitter}
+  "sf:gps_transmitter_3": {category: ELECTRIC, display-name: sf:gps_transmitter_3, status-slot: -1, tick-interval: 1, tags: [machine, electric, gps-transmitter, gps], profile: gps_transmitter}
+  "sf:gps_transmitter_4": {category: ELECTRIC, display-name: sf:gps_transmitter_4, status-slot: -1, tick-interval: 1, tags: [machine, electric, gps-transmitter, gps], profile: gps_transmitter}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:gps_transmitter":
+    @cf: templates.machines.no-menu-definition
+    @io: true
+    @d: {name-key: items.sf.gps_transmitter.name, speed: 1, capacity: 320, consumption: 2, progress-material: COMPASS}
+    runtime: {executor: sf:special_provider, provider: sf:gps_transmitter}
+  "sf:gps_transmitter_2":
+    @cf: templates.machines.no-menu-definition
+    @io: true
+    @d: {name-key: items.sf.gps_transmitter_2.name, speed: 1, capacity: 1280, consumption: 6, progress-material: COMPASS}
+    runtime: {executor: sf:special_provider, provider: sf:gps_transmitter}
+  "sf:gps_transmitter_3":
+    @cf: templates.machines.no-menu-definition
+    @io: true
+    @d: {name-key: items.sf.gps_transmitter_3.name, speed: 1, capacity: 5120, consumption: 22, progress-material: COMPASS}
+    runtime: {executor: sf:special_provider, provider: sf:gps_transmitter}
+  "sf:gps_transmitter_4":
+    @cf: templates.machines.no-menu-definition
+    @io: true
+    @d: {name-key: items.sf.gps_transmitter_4.name, speed: 1, capacity: 20480, consumption: 92, progress-material: COMPASS}
+    runtime: {executor: sf:special_provider, provider: sf:gps_transmitter}

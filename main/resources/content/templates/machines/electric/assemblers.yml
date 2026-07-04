@@ -1,0 +1,29 @@
+
+items:
+  "sf:iron_golem_assembler": {category: sf:electricity, material: IRON_BLOCK, name-key: items.sf.iron_golem_assembler.name, priority: 456, lore-key: items.sf.iron_golem_assembler.lore, flags: [legacy-sf]}
+  "sf:wither_assembler": {category: sf:electricity, material: OBSIDIAN, name-key: items.sf.wither_assembler.name, priority: 457, lore-key: items.sf.wither_assembler.lore, flags: [legacy-sf]}
+machine-catalog:
+  "sf:iron_golem_assembler": {category: ELECTRIC, display-name: sf:iron_golem_assembler, status-slot: -1, tick-interval: 1, tags: [machine, electric, assembler], profile: assembler}
+  "sf:wither_assembler": {category: ELECTRIC, display-name: sf:wither_assembler, status-slot: -1, tick-interval: 1, tags: [machine, electric, assembler], profile: assembler}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:iron_golem_assembler":
+    @cf: templates.machines.iron-golem-assembler-definition
+    @io: true
+    @d: {name-key: items.sf.iron_golem_assembler.name, speed: 1, capacity: 81920, consumption: 75, progress-material: CARVED_PUMPKIN}
+    runtime: {executor: sf:special_provider, provider: sf:iron_golem_assembler}
+    assembler:
+      head-material: CARVED_PUMPKIN
+      head-amount: 1
+      body-materials: [IRON_BLOCK]
+      body-amount: 4
+  "sf:wither_assembler":
+    @cf: templates.machines.wither-assembler-definition
+    @io: true
+    @d: {name-key: items.sf.wither_assembler.name, speed: 1, capacity: 81920, consumption: 150, progress-material: WITHER_SKELETON_SKULL}
+    runtime: {executor: sf:special_provider, provider: sf:wither_assembler}
+    assembler:
+      head-material: WITHER_SKELETON_SKULL
+      head-amount: 3
+      body-materials: [SOUL_SAND, SOUL_SOIL]
+      body-amount: 4

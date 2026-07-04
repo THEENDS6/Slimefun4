@@ -1,0 +1,57 @@
+
+items:
+  "sf:animal_growth_accelerator":
+    category: sf:electricity
+    material: HAY_BLOCK
+    name-key: items.sf.animal_growth_accelerator.name
+    priority: 429
+    lore-key: items.sf.animal_growth_accelerator.lore
+    flags: [legacy-sf]
+  "sf:crop_growth_accelerator":
+    category: sf:electricity
+    material: LIME_TERRACOTTA
+    name-key: items.sf.crop_growth_accelerator.name
+    priority: 430
+    lore-key: items.sf.crop_growth_accelerator.lore
+    flags: [legacy-sf]
+  "sf:crop_growth_accelerator_2":
+    category: sf:electricity
+    material: LIME_TERRACOTTA
+    name-key: items.sf.crop_growth_accelerator_2.name
+    priority: 431
+    lore-key: items.sf.crop_growth_accelerator_2.lore
+    flags: [legacy-sf]
+  "sf:tree_growth_accelerator":
+    category: sf:electricity
+    material: BROWN_TERRACOTTA
+    name-key: items.sf.tree_growth_accelerator.name
+    priority: 432
+    lore-key: items.sf.tree_growth_accelerator.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:animal_growth_accelerator": {category: ELECTRIC, display-name: sf:animal_growth_accelerator, status-slot: -1, tick-interval: 1, tags: [machine, electric, electric-world-action], profile: electric_world_action}
+  "sf:crop_growth_accelerator": {category: ELECTRIC, display-name: sf:crop_growth_accelerator, status-slot: -1, tick-interval: 1, tags: [machine, electric, electric-world-action], profile: electric_world_action}
+  "sf:crop_growth_accelerator_2": {category: ELECTRIC, display-name: sf:crop_growth_accelerator_2, status-slot: -1, tick-interval: 1, tags: [machine, electric, electric-world-action], profile: electric_world_action}
+  "sf:tree_growth_accelerator": {category: ELECTRIC, display-name: sf:tree_growth_accelerator, status-slot: -1, tick-interval: 1, tags: [machine, electric, electric-world-action], profile: electric_world_action}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:animal_growth_accelerator":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @d: {name-key: items.sf.animal_growth_accelerator.name, speed: 1, capacity: 20480, consumption: 14, progress-material: WHEAT}
+    runtime: {executor: sf:special_provider, provider: sf:animal_growth_accelerator}
+  "sf:crop_growth_accelerator":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @d: {name-key: items.sf.crop_growth_accelerator.name, speed: 1, capacity: 40960, consumption: 100, progress-material: BONE_MEAL}
+    runtime: {executor: sf:special_provider, provider: sf:crop_growth_accelerator}
+  "sf:crop_growth_accelerator_2":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @d: {name-key: items.sf.crop_growth_accelerator_2.name, speed: 1, capacity: 40960, consumption: 120, progress-material: BONE_MEAL}
+    runtime: {executor: sf:special_provider, provider: sf:crop_growth_accelerator_2}
+  "sf:tree_growth_accelerator":
+    @cf: templates.machines.simple-io-definition
+    @io: true
+    @d: {name-key: items.sf.tree_growth_accelerator.name, speed: 1, capacity: 40960, consumption: 96, progress-material: OAK_SAPLING}
+    runtime: {executor: sf:special_provider, provider: sf:tree_growth_accelerator}
