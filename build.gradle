@@ -543,6 +543,43 @@ tasks.register('validateSfxCompiledRecipeRuntimeShapes', JavaExec) {
     }
 }
 
+tasks.register('reverseTranscribeSfxCompiled', JavaExec) {
+    group = 'verification'
+    description = 'Reverse-transcribes edited server compiled content back into source templates, then roundtrip-validates the result.'
+    dependsOn 'classes', 'validateSfxTemplateCompile'
+    inputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
+    inputs.property('sfxReverseSourceRoot', providers.gradleProperty('sfxReverseSourceRoot').orElse('main/resources/content/templates'))
+    inputs.property('sfxReverseBaselineDir', providers.gradleProperty('sfxReverseBaselineDir').orElse(layout.buildDirectory.dir('sfx-template-compiled').map { it.asFile.absolutePath }))
+    inputs.property('sfxReverseCompiledDir', providers.gradleProperty('sfxReverseCompiledDir').orElse('run-paper-1.21.8/plugins/SlimeFunX/content/compiled'))
+    inputs.property('sfxReverseReportRoot', providers.gradleProperty('sfxReverseReportRoot').orElse(layout.buildDirectory.dir('sfx-reverse-transcribe').map { it.asFile.absolutePath }))
+    outputs.dir(layout.buildDirectory.dir('sfx-reverse-transcribe'))
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.template.SfxCompiledReverseTranscriber')
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
+    doFirst {
+        def serverCompiled = providers.gradleProperty('sfxReverseCompiledDir')
+                .orElse(layout.projectDirectory.dir('run-paper-1.21.8/plugins/SlimeFunX/content/compiled').asFile.absolutePath)
+                .get()
+        def sourceRoot = providers.gradleProperty('sfxReverseSourceRoot')
+                .orElse(layout.projectDirectory.dir('main/resources/content/templates').asFile.absolutePath)
+                .get()
+        def baselineCompiled = providers.gradleProperty('sfxReverseBaselineDir')
+                .orElse(layout.buildDirectory.dir('sfx-template-compiled').get().asFile.absolutePath)
+                .get()
+        def reportRoot = providers.gradleProperty('sfxReverseReportRoot')
+                .orElse(layout.buildDirectory.dir('sfx-reverse-transcribe').get().asFile.absolutePath)
+                .get()
+        args = [
+                "--source-root=${sourceRoot}",
+                "--baseline-compiled=${baselineCompiled}",
+                "--server-compiled=${serverCompiled}",
+                "--report-root=${reportRoot}"
+        ]
+    }
+}
+
 tasks.register('validateSfxCompiledContent') {
     group = 'verification'
     description = 'Validates compiled SFX content is explicit runtime data without template or layout fallback tokens.'
