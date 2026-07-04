@@ -9,23 +9,23 @@ items:
     lore-key: items.sf.freezer.lore
     flags: [legacy-sf]
   "sf:freezer_2":
-    category: sf:electricity
-    material: LIGHT_BLUE_STAINED_GLASS
+    @cf: items.sf:freezer
     name-key: items.sf.freezer_2.name
     priority: 440
     lore-key: items.sf.freezer_2.lore
-    flags: [legacy-sf]
   "sf:freezer_3":
-    category: sf:electricity
-    material: LIGHT_BLUE_STAINED_GLASS
+    @cf: items.sf:freezer
     name-key: items.sf.freezer_3.name
     priority: 441
     lore-key: items.sf.freezer_3.lore
-    flags: [legacy-sf]
 machine-catalog:
   "sf:freezer": {category: ELECTRIC, display-name: sf:freezer, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
-  "sf:freezer_2": {category: ELECTRIC, display-name: sf:freezer_2, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
-  "sf:freezer_3": {category: ELECTRIC, display-name: sf:freezer_3, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:freezer_2":
+    @cf: machine-catalog.sf:freezer
+    display-name: sf:freezer_2
+  "sf:freezer_3":
+    @cf: machine-catalog.sf:freezer
+    display-name: sf:freezer_3
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:freezer":
@@ -34,12 +34,12 @@ machines:
     @d: {name-key: items.sf.freezer.name, speed: 1, capacity: 5120, consumption: 18, progress-material: GOLDEN_PICKAXE}
     runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [freezing]}, include-recipes: [], exclude-recipes: []}
   "sf:freezer_2":
-    @cf: templates.machines.standard-electric-definition
-    @io: true
-    @d: {name-key: items.sf.freezer_2.name, speed: 2, capacity: 5120, consumption: 30, progress-material: GOLDEN_PICKAXE}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [freezing]}, include-recipes: [], exclude-recipes: []}
+    @cf: machines.sf:freezer
+    name-key: items.sf.freezer_2.name
+    speed: 2
+    energy: {capacity: 5120, consumption-per-tick: 30}
   "sf:freezer_3":
-    @cf: templates.machines.standard-electric-definition
-    @io: true
-    @d: {name-key: items.sf.freezer_3.name, speed: 3, capacity: 5120, consumption: 42, progress-material: GOLDEN_PICKAXE}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [freezing]}, include-recipes: [], exclude-recipes: []}
+    @cf: machines.sf:freezer
+    name-key: items.sf.freezer_3.name
+    speed: 3
+    energy: {capacity: 5120, consumption-per-tick: 42}
