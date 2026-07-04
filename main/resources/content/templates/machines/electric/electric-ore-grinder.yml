@@ -8,23 +8,23 @@ items:
     lore-key: items.sf.electric_ore_grinder.lore
     flags: [legacy-sf]
   "sf:electric_ore_grinder_2":
-    category: sf:electricity
-    material: FURNACE
+    @cf: items.sf:electric_ore_grinder
     name-key: items.sf.electric_ore_grinder_2.name
     priority: 350
     lore-key: items.sf.electric_ore_grinder_2.lore
-    flags: [legacy-sf]
   "sf:electric_ore_grinder_3":
-    category: sf:electricity
-    material: FURNACE
+    @cf: items.sf:electric_ore_grinder
     name-key: items.sf.electric_ore_grinder_3.name
     priority: 351
     lore-key: items.sf.electric_ore_grinder_3.lore
-    flags: [legacy-sf]
 machine-catalog:
   "sf:electric_ore_grinder": {category: ELECTRIC, display-name: sf:electric_ore_grinder, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
-  "sf:electric_ore_grinder_2": {category: ELECTRIC, display-name: sf:electric_ore_grinder_2, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
-  "sf:electric_ore_grinder_3": {category: ELECTRIC, display-name: sf:electric_ore_grinder_3, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:electric_ore_grinder_2":
+    @cf: machine-catalog.sf:electric_ore_grinder
+    display-name: sf:electric_ore_grinder_2
+  "sf:electric_ore_grinder_3":
+    @cf: machine-catalog.sf:electric_ore_grinder
+    display-name: sf:electric_ore_grinder_3
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:electric_ore_grinder":
@@ -33,12 +33,12 @@ machines:
     @d: {name-key: items.sf.electric_ore_grinder.name, speed: 1, capacity: 2560, consumption: 12, progress-material: IRON_PICKAXE}
     runtime: {executor: sf:special_provider, provider: sf:classic_ore_grinder}
   "sf:electric_ore_grinder_2":
-    @cf: templates.machines.standard-electric-definition
-    @io: true
-    @d: {name-key: items.sf.electric_ore_grinder_2.name, speed: 4, capacity: 10240, consumption: 30, progress-material: IRON_PICKAXE}
-    runtime: {executor: sf:special_provider, provider: sf:classic_ore_grinder}
+    @cf: machines.sf:electric_ore_grinder
+    name-key: items.sf.electric_ore_grinder_2.name
+    speed: 4
+    energy: {capacity: 10240, consumption-per-tick: 30}
   "sf:electric_ore_grinder_3":
-    @cf: templates.machines.standard-electric-definition
-    @io: true
-    @d: {name-key: items.sf.electric_ore_grinder_3.name, speed: 10, capacity: 20480, consumption: 90, progress-material: IRON_PICKAXE}
-    runtime: {executor: sf:special_provider, provider: sf:classic_ore_grinder}
+    @cf: machines.sf:electric_ore_grinder
+    name-key: items.sf.electric_ore_grinder_3.name
+    speed: 10
+    energy: {capacity: 20480, consumption-per-tick: 90}
