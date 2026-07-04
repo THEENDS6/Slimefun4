@@ -1,31 +1,59 @@
 
 items:
   "sf:food_fabricator":
+    @d:
+      suffix: ""
     category: sf:electricity
     material: GREEN_STAINED_GLASS
-    name-key: items.sf.food_fabricator.name
+    name-key: items.sf.food_fabricator${suffix}.name
     priority: 433
-    lore-key: items.sf.food_fabricator.lore
-    flags: [legacy-sf]
+    lore-key: items.sf.food_fabricator${suffix}.lore
+    flags:
+    - legacy-sf
   "sf:food_fabricator_2":
-    category: sf:electricity
-    material: GREEN_STAINED_GLASS
-    name-key: items.sf.food_fabricator_2.name
+    @cf: items.sf:food_fabricator
+    @d:
+      suffix: "_2"
     priority: 434
-    lore-key: items.sf.food_fabricator_2.lore
-    flags: [legacy-sf]
 machine-catalog:
-  "sf:food_fabricator": {category: ELECTRIC, display-name: sf:food_fabricator, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
-  "sf:food_fabricator_2": {category: ELECTRIC, display-name: sf:food_fabricator_2, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:food_fabricator":
+    @d:
+      suffix: ""
+    category: ELECTRIC
+    display-name: sf:food_fabricator${suffix}
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
+  "sf:food_fabricator_2":
+    @cf: machine-catalog.sf:food_fabricator
+    @d:
+      suffix: "_2"
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:food_fabricator":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.food_fabricator.name, speed: 1, capacity: 5120, consumption: 14, progress-material: GOLDEN_HOE}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [food-fabrication]}, include-recipes: [], exclude-recipes: []}
+    @d:
+      suffix: ""
+      speed: 1
+      capacity: 5120
+      consumption: 14
+      progress-material: GOLDEN_HOE
+    name-key: items.sf.food_fabricator${suffix}.name
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - food-fabrication
+      include-recipes: []
+      exclude-recipes: []
   "sf:food_fabricator_2":
-    @cf: templates.machines.standard-electric-definition
-    @io: true
-    @d: {name-key: items.sf.food_fabricator_2.name, speed: 6, capacity: 10240, consumption: 48, progress-material: GOLDEN_HOE}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [food-fabrication]}, include-recipes: [], exclude-recipes: []}
+    @cf: machines.sf:food_fabricator
+    @d:
+      suffix: "_2"
+    speed: 6
+    energy:
+      capacity: 10240
+      consumption-per-tick: 48
