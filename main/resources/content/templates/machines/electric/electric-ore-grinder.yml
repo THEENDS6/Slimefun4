@@ -1,44 +1,68 @@
 # Electric Ore Grinder machine family. It bridges classic grind stone and ore crusher recipes.
 items:
   "sf:electric_ore_grinder":
+    @d:
+      suffix: ""
     category: sf:electricity
     material: FURNACE
-    name-key: items.sf.electric_ore_grinder.name
+    name-key: items.sf.electric_ore_grinder${suffix}.name
     priority: 349
-    lore-key: items.sf.electric_ore_grinder.lore
+    lore-key: items.sf.electric_ore_grinder${suffix}.lore
     flags: [legacy-sf]
   "sf:electric_ore_grinder_2":
     @cf: items.sf:electric_ore_grinder
-    name-key: items.sf.electric_ore_grinder_2.name
+    @d:
+      suffix: "_2"
     priority: 350
-    lore-key: items.sf.electric_ore_grinder_2.lore
   "sf:electric_ore_grinder_3":
     @cf: items.sf:electric_ore_grinder
-    name-key: items.sf.electric_ore_grinder_3.name
+    @d:
+      suffix: "_3"
     priority: 351
-    lore-key: items.sf.electric_ore_grinder_3.lore
 machine-catalog:
-  "sf:electric_ore_grinder": {category: ELECTRIC, display-name: sf:electric_ore_grinder, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:electric_ore_grinder":
+    @d:
+      suffix: ""
+    category: ELECTRIC
+    display-name: sf:electric_ore_grinder${suffix}
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, electric]
   "sf:electric_ore_grinder_2":
     @cf: machine-catalog.sf:electric_ore_grinder
-    display-name: sf:electric_ore_grinder_2
+    @d:
+      suffix: "_2"
   "sf:electric_ore_grinder_3":
     @cf: machine-catalog.sf:electric_ore_grinder
-    display-name: sf:electric_ore_grinder_3
+    @d:
+      suffix: "_3"
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:electric_ore_grinder":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.electric_ore_grinder.name, speed: 1, capacity: 2560, consumption: 12, progress-material: IRON_PICKAXE}
+    @d:
+      suffix: ""
+      progress-material: IRON_PICKAXE
+    name-key: items.sf.electric_ore_grinder${suffix}.name
+    speed: 1
+    energy:
+      capacity: 2560
+      consumption-per-tick: 12
     runtime: {executor: sf:special_provider, provider: sf:classic_ore_grinder}
   "sf:electric_ore_grinder_2":
     @cf: machines.sf:electric_ore_grinder
-    name-key: items.sf.electric_ore_grinder_2.name
+    @d:
+      suffix: "_2"
     speed: 4
-    energy: {capacity: 10240, consumption-per-tick: 30}
+    energy:
+      capacity: 10240
+      consumption-per-tick: 30
   "sf:electric_ore_grinder_3":
     @cf: machines.sf:electric_ore_grinder
-    name-key: items.sf.electric_ore_grinder_3.name
+    @d:
+      suffix: "_3"
     speed: 10
-    energy: {capacity: 20480, consumption-per-tick: 90}
+    energy:
+      capacity: 20480
+      consumption-per-tick: 90

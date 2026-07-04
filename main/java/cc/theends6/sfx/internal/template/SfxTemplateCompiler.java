@@ -1149,6 +1149,7 @@ public final class SfxTemplateCompiler {
             }
             String id = String.valueOf(entry.getKey());
             Map<String, Object> item = deepCopyMap((Map<String, Object>) rawItem);
+            pruneTemplatesAndMeta(item);
             Object declaredId = item.get("id");
             if (declaredId != null && !id.equals(String.valueOf(declaredId).trim())) {
                 throw new SfxTemplateCompileException("Template item key " + id + " conflicts with declared id " + declaredId);

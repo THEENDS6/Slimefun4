@@ -2,27 +2,31 @@
 # as dust-to-ingot and quartz-block-to-silicon processing.
 items:
   "sf:electric_ingot_factory":
+    @d:
+      suffix: ""
     category: sf:electricity
     material: RED_TERRACOTTA
-    name-key: items.sf.electric_ingot_factory.name
+    name-key: items.sf.electric_ingot_factory${suffix}.name
     priority: 448
-    lore-key: items.sf.electric_ingot_factory.lore
+    lore-key: items.sf.electric_ingot_factory${suffix}.lore
     flags:
     - legacy-sf
   "sf:electric_ingot_factory_2":
     @cf: items.sf:electric_ingot_factory
-    name-key: items.sf.electric_ingot_factory_2.name
+    @d:
+      suffix: "_2"
     priority: 449
-    lore-key: items.sf.electric_ingot_factory_2.lore
   "sf:electric_ingot_factory_3":
     @cf: items.sf:electric_ingot_factory
-    name-key: items.sf.electric_ingot_factory_3.name
+    @d:
+      suffix: "_3"
     priority: 450
-    lore-key: items.sf.electric_ingot_factory_3.lore
 machine-catalog:
   "sf:electric_ingot_factory":
+    @d:
+      suffix: ""
     category: ELECTRIC
-    display-name: sf:electric_ingot_factory
+    display-name: sf:electric_ingot_factory${suffix}
     status-slot: -1
     tick-interval: 1
     tags:
@@ -30,21 +34,24 @@ machine-catalog:
     - electric
   "sf:electric_ingot_factory_2":
     @cf: machine-catalog.sf:electric_ingot_factory
-    display-name: sf:electric_ingot_factory_2
+    @d:
+      suffix: "_2"
   "sf:electric_ingot_factory_3":
     @cf: machine-catalog.sf:electric_ingot_factory
-    display-name: sf:electric_ingot_factory_3
+    @d:
+      suffix: "_3"
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:electric_ingot_factory":
     @cf: templates.machines.standard-electric-definition
     @io: true
     @d:
-      name-key: items.sf.electric_ingot_factory.name
+      suffix: ""
       speed: 1
       capacity: 10240
       consumption: 8
       progress-material: FLINT_AND_STEEL
+    name-key: items.sf.electric_ingot_factory${suffix}.name
     runtime:
       executor: sf:electric_processing
       accepts:
@@ -54,14 +61,16 @@ machines:
       exclude-recipes: []
   "sf:electric_ingot_factory_2":
     @cf: machines.sf:electric_ingot_factory
-    name-key: items.sf.electric_ingot_factory_2.name
+    @d:
+      suffix: "_2"
     speed: 2
     energy:
       capacity: 20480
       consumption-per-tick: 14
   "sf:electric_ingot_factory_3":
     @cf: machines.sf:electric_ingot_factory
-    name-key: items.sf.electric_ingot_factory_3.name
+    @d:
+      suffix: "_3"
     speed: 8
     energy:
       capacity: 81920
