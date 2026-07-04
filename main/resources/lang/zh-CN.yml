@@ -4938,6 +4938,24 @@ gps:
         lore: '&7放置并供电 GPS 信号发生器来建立网络。'
       no-waypoints:
         name: '&c没有路径点'
+    transmitter:
+      title: '&3GPS 信号发生器'
+      background: '&8'
+      status:
+        name: '&b工作状态'
+        online: '&7状态：&a工作中'
+        offline: '&7状态：&c离线 / 能量不足'
+        energy: '&7能量：&e{stored}&7/&e{required}'
+        strength: '&7本机信号强度：&e{strength}'
+        network: '&7当前网络复杂度：&e{complexity}'
+      info:
+        name: '&b机器信息'
+        type: '&7类型：&f{type}'
+        owner: '&7所属玩家：&f{owner}'
+        owner-uuid: '&7玩家 UUID：&8{uuid}'
+        owner-unknown: '未知玩家'
+        location: '&7位置：&f{world} &8(&f{x}&7, &f{y}&7, &f{z}&8)'
+        transmitters: '&7拥有者信号发生器：&e{count}'
     waypoints:
       title: '&3GPS 路径点'
       no-waypoints: '&c没有路径点'

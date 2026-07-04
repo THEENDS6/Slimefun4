@@ -4974,6 +4974,24 @@ gps:
         lore: '&7Place and power GPS transmitters to build the network.'
       no-waypoints:
         name: '&cNo waypoints'
+    transmitter:
+      title: '&3GPS Transmitter'
+      background: '&8'
+      status:
+        name: '&bWork Status'
+        online: '&7Status: &aONLINE'
+        offline: '&7Status: &cOFFLINE / insufficient energy'
+        energy: '&7Energy: &e{stored}&7/&e{required}'
+        strength: '&7Local signal strength: &e{strength}'
+        network: '&7Current network complexity: &e{complexity}'
+      info:
+        name: '&bMachine Info'
+        type: '&7Type: &f{type}'
+        owner: '&7Owner: &f{owner}'
+        owner-uuid: '&7Owner UUID: &8{uuid}'
+        owner-unknown: 'Unknown player'
+        location: '&7Location: &f{world} &8(&f{x}&7, &f{y}&7, &f{z}&8)'
+        transmitters: '&7Owner transmitters: &e{count}'
     waypoints:
       title: '&3GPS Waypoints'
       no-waypoints: '&cNo waypoints'

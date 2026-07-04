@@ -24,6 +24,12 @@ storage:
   android-scripts:
     sqlite-file: 'data/android-scripts.db'
 
+gps:
+  # SFX extension: opens a small status GUI when right-clicking a placed GPS transmitter.
+  sfx-extensions:
+    transmitter-gui:
+      enabled: true
+
 backpacks:
   allow-foreign-open: true
 
