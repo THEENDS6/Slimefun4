@@ -162,6 +162,10 @@ final class SfxElectricMachineDefinitionConfig {
         return entry.assemblerSpec;
     }
 
+    Set<String> entryIds() {
+        return entries.keySet();
+    }
+
     private Entry selectEntry(String compiledEntryId) {
         return entries.get(compiledEntryId);
     }
