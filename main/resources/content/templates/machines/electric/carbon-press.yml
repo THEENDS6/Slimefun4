@@ -2,27 +2,31 @@
 
 items:
   "sf:carbon_press":
+    @d:
+      suffix: ""
     category: sf:electricity
     material: BLACK_STAINED_GLASS
-    name-key: items.sf.carbon_press.name
+    name-key: items.sf.carbon_press${suffix}.name
     priority: 415
-    lore-key: items.sf.carbon_press.lore
+    lore-key: items.sf.carbon_press${suffix}.lore
     flags:
     - legacy-sf
   "sf:carbon_press_2":
     @cf: items.sf:carbon_press
-    name-key: items.sf.carbon_press_2.name
+    @d:
+      suffix: "_2"
     priority: 416
-    lore-key: items.sf.carbon_press_2.lore
   "sf:carbon_press_3":
     @cf: items.sf:carbon_press
-    name-key: items.sf.carbon_press_3.name
+    @d:
+      suffix: "_3"
     priority: 417
-    lore-key: items.sf.carbon_press_3.lore
 machine-catalog:
   "sf:carbon_press":
+    @d:
+      suffix: ""
     category: ELECTRIC
-    display-name: sf:carbon_press
+    display-name: sf:carbon_press${suffix}
     status-slot: -1
     tick-interval: 1
     tags:
@@ -30,21 +34,24 @@ machine-catalog:
     - electric
   "sf:carbon_press_2":
     @cf: machine-catalog.sf:carbon_press
-    display-name: sf:carbon_press_2
+    @d:
+      suffix: "_2"
   "sf:carbon_press_3":
     @cf: machine-catalog.sf:carbon_press
-    display-name: sf:carbon_press_3
+    @d:
+      suffix: "_3"
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:carbon_press":
     @cf: templates.machines.standard-electric-definition
     @io: true
     @d:
-      name-key: items.sf.carbon_press.name
+      suffix: ""
       speed: 1
       capacity: 25600
       consumption: 20
       progress-material: DIAMOND_PICKAXE
+    name-key: items.sf.carbon_press${suffix}.name
     runtime:
       executor: sf:electric_processing
       accepts:
@@ -54,14 +61,16 @@ machines:
       exclude-recipes: []
   "sf:carbon_press_2":
     @cf: machines.sf:carbon_press
-    name-key: items.sf.carbon_press_2.name
+    @d:
+      suffix: "_2"
     speed: 3
     energy:
       capacity: 81920
       consumption-per-tick: 50
   "sf:carbon_press_3":
     @cf: machines.sf:carbon_press
-    name-key: items.sf.carbon_press_3.name
+    @d:
+      suffix: "_3"
     speed: 15
     energy:
       capacity: 327680
