@@ -4,16 +4,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-providers:
+recipe-groups:
   auto_drier:
     recipe-type: sf:electric_processing
     recipe-tags:

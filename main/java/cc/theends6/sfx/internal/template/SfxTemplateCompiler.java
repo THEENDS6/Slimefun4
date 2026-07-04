@@ -1289,20 +1289,20 @@ public final class SfxTemplateCompiler {
         } catch (Exception ex) {
             throw new SfxTemplateCompileException("Cannot load electric recipe source " + relativeSource(source) + ": " + ex.getMessage(), ex);
         }
-        ConfigurationSection root = yaml.getConfigurationSection("providers");
+        ConfigurationSection root = yaml.getConfigurationSection("recipe-groups");
         if (root == null) {
-            throw new SfxTemplateCompileException("Electric recipe source " + relativeSource(source) + " requires providers root section.");
+            throw new SfxTemplateCompileException("Electric recipe source " + relativeSource(source) + " requires recipe-groups root section.");
         }
         List<Map<String, Object>> recipes = new ArrayList<>();
-        for (String providerId : root.getKeys(false)) {
-            ConfigurationSection section = root.getConfigurationSection(providerId);
+        for (String groupId : root.getKeys(false)) {
+            ConfigurationSection section = root.getConfigurationSection(groupId);
             if (section == null) {
                 continue;
             }
-            String providerRecipeType = section.getString("recipe-type", null);
-            List<String> providerRecipeTags = strings(section.getList("recipe-tags", List.of()));
+            String groupRecipeType = section.getString("recipe-type", null);
+            List<String> groupRecipeTags = strings(section.getList("recipe-tags", List.of()));
             for (Map<?, ?> raw : section.getMapList("recipes")) {
-                recipes.addAll(compileElectricRecipeEntry(raw, providerRecipeType, providerRecipeTags));
+                recipes.addAll(compileElectricRecipeEntry(raw, groupRecipeType, groupRecipeTags));
             }
         }
         Map<String, Object> wrapped = new LinkedHashMap<>();
@@ -1310,10 +1310,10 @@ public final class SfxTemplateCompiler {
         return new OutputNode(List.of(), "$.electric-recipes", "content/machines/electric-recipes.yml", wrapped, relativeSource(source), "electric-recipes.yml");
     }
 
-    private List<Map<String, Object>> compileElectricRecipeEntry(Map<?, ?> entry, String providerRecipeType, List<String> providerRecipeTags) {
+    private List<Map<String, Object>> compileElectricRecipeEntry(Map<?, ?> entry, String groupRecipeType, List<String> groupRecipeTags) {
         String expand = stringOrNull(entry.get("expand"));
         if (expand == null) {
-            return List.of(applyElectricRecipeDefaults(normalizeElectricRecipeEntry(entry), providerRecipeType, providerRecipeTags));
+            return List.of(applyElectricRecipeDefaults(normalizeElectricRecipeEntry(entry), groupRecipeType, groupRecipeTags));
         }
         List<Map<String, Object>> expanded;
         if (expand.equalsIgnoreCase("tag")) {
@@ -1324,16 +1324,16 @@ public final class SfxTemplateCompiler {
             throw new SfxTemplateCompileException("Unsupported electric recipe expansion: " + expand);
         }
         return expanded.stream()
-                .map(recipe -> applyElectricRecipeDefaults(recipe, providerRecipeType, providerRecipeTags))
+                .map(recipe -> applyElectricRecipeDefaults(recipe, groupRecipeType, groupRecipeTags))
                 .toList();
     }
 
-    private Map<String, Object> applyElectricRecipeDefaults(Map<String, Object> recipe, String providerRecipeType, List<String> providerRecipeTags) {
-        if (providerRecipeType != null && !providerRecipeType.isBlank()) {
-            recipe.putIfAbsent("recipe-type", providerRecipeType.trim());
+    private Map<String, Object> applyElectricRecipeDefaults(Map<String, Object> recipe, String groupRecipeType, List<String> groupRecipeTags) {
+        if (groupRecipeType != null && !groupRecipeType.isBlank()) {
+            recipe.putIfAbsent("recipe-type", groupRecipeType.trim());
         }
-        if (providerRecipeTags != null && !providerRecipeTags.isEmpty()) {
-            recipe.putIfAbsent("recipe-tags", new ArrayList<>(providerRecipeTags));
+        if (groupRecipeTags != null && !groupRecipeTags.isEmpty()) {
+            recipe.putIfAbsent("recipe-tags", new ArrayList<>(groupRecipeTags));
         }
         return recipe;
     }
