@@ -1,31 +1,60 @@
 
 items:
   "sf:food_composter":
+    @d:
+      suffix: ""
     category: sf:electricity
     material: GREEN_TERRACOTTA
-    name-key: items.sf.food_composter.name
+    name-key: items.sf.food_composter${suffix}.name
     priority: 435
-    lore-key: items.sf.food_composter.lore
-    flags: [legacy-sf]
+    lore-key: items.sf.food_composter${suffix}.lore
+    flags:
+    - legacy-sf
   "sf:food_composter_2":
-    category: sf:electricity
-    material: GREEN_TERRACOTTA
-    name-key: items.sf.food_composter_2.name
+    @cf: items.sf:food_composter
+    @d:
+      suffix: "_2"
     priority: 436
-    lore-key: items.sf.food_composter_2.lore
-    flags: [legacy-sf]
 machine-catalog:
-  "sf:food_composter": {category: ELECTRIC, display-name: sf:food_composter, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
-  "sf:food_composter_2": {category: ELECTRIC, display-name: sf:food_composter_2, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:food_composter":
+    @d:
+      suffix: ""
+    category: ELECTRIC
+    display-name: sf:food_composter${suffix}
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
+  "sf:food_composter_2":
+    @cf: machine-catalog.sf:food_composter
+    @d:
+      suffix: "_2"
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:food_composter":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.food_composter.name, speed: 1, capacity: 5120, consumption: 16, progress-material: GOLDEN_HOE}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [food-composting]}, include-recipes: [], exclude-recipes: []}
+    @d:
+      suffix: ""
+      progress-material: GOLDEN_HOE
+    speed: 1
+    energy:
+      capacity: 5120
+      consumption-per-tick: 16
+    name-key: items.sf.food_composter${suffix}.name
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - food-composting
+      include-recipes: []
+      exclude-recipes: []
   "sf:food_composter_2":
-    @cf: templates.machines.standard-electric-definition
-    @io: true
-    @d: {name-key: items.sf.food_composter_2.name, speed: 10, capacity: 10240, consumption: 52, progress-material: GOLDEN_HOE}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [food-composting]}, include-recipes: [], exclude-recipes: []}
+    @cf: machines.sf:food_composter
+    @d:
+      suffix: "_2"
+    speed: 10
+    energy:
+      capacity: 10240
+      consumption-per-tick: 52
