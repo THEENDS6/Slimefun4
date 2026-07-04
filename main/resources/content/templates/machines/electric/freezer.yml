@@ -2,44 +2,76 @@
 # material conversion.
 items:
   "sf:freezer":
+    @d:
+      suffix: ""
     category: sf:electricity
     material: LIGHT_BLUE_STAINED_GLASS
-    name-key: items.sf.freezer.name
+    name-key: items.sf.freezer${suffix}.name
     priority: 439
-    lore-key: items.sf.freezer.lore
-    flags: [legacy-sf]
+    lore-key: items.sf.freezer${suffix}.lore
+    flags:
+    - legacy-sf
   "sf:freezer_2":
     @cf: items.sf:freezer
-    name-key: items.sf.freezer_2.name
+    @d:
+      suffix: "_2"
     priority: 440
-    lore-key: items.sf.freezer_2.lore
   "sf:freezer_3":
     @cf: items.sf:freezer
-    name-key: items.sf.freezer_3.name
+    @d:
+      suffix: "_3"
     priority: 441
-    lore-key: items.sf.freezer_3.lore
 machine-catalog:
-  "sf:freezer": {category: ELECTRIC, display-name: sf:freezer, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:freezer":
+    @d:
+      suffix: ""
+    category: ELECTRIC
+    display-name: sf:freezer${suffix}
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
   "sf:freezer_2":
     @cf: machine-catalog.sf:freezer
-    display-name: sf:freezer_2
+    @d:
+      suffix: "_2"
   "sf:freezer_3":
     @cf: machine-catalog.sf:freezer
-    display-name: sf:freezer_3
+    @d:
+      suffix: "_3"
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:freezer":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.freezer.name, speed: 1, capacity: 5120, consumption: 18, progress-material: GOLDEN_PICKAXE}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [freezing]}, include-recipes: [], exclude-recipes: []}
+    @d:
+      suffix: ""
+      speed: 1
+      capacity: 5120
+      consumption: 18
+      progress-material: GOLDEN_PICKAXE
+    name-key: items.sf.freezer${suffix}.name
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - freezing
+      include-recipes: []
+      exclude-recipes: []
   "sf:freezer_2":
     @cf: machines.sf:freezer
-    name-key: items.sf.freezer_2.name
+    @d:
+      suffix: "_2"
     speed: 2
-    energy: {capacity: 5120, consumption-per-tick: 30}
+    energy:
+      capacity: 5120
+      consumption-per-tick: 30
   "sf:freezer_3":
     @cf: machines.sf:freezer
-    name-key: items.sf.freezer_3.name
+    @d:
+      suffix: "_3"
     speed: 3
-    energy: {capacity: 5120, consumption-per-tick: 42}
+    energy:
+      capacity: 5120
+      consumption-per-tick: 42
