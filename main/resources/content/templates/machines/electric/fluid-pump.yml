@@ -1,0 +1,18 @@
+# Fluid Pump machine family. It runs a Java fluid pump provider.
+items:
+  "sf:fluid_pump":
+    category: sf:electricity
+    material: BLUE_TERRACOTTA
+    name-key: items.sf.fluid_pump.name
+    priority: 451
+    lore-key: items.sf.fluid_pump.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:fluid_pump": {category: ELECTRIC, display-name: sf:fluid_pump, status-slot: -1, tick-interval: 1, tags: [machine, electric, fluid-pump], profile: fluid_pump}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:fluid_pump":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d: {name-key: items.sf.fluid_pump.name, speed: 1, capacity: 512, consumption: 8, progress-material: BUCKET}
+    runtime: {executor: sf:special_provider, provider: sf:fluid_pump}

@@ -1,0 +1,142 @@
+# Cargo node machine family.
+items:
+  @ot: content/items.yml
+  sf:cargo_manager:
+    category: sf:cargo
+    material: PLAYER_HEAD
+    name-key: items.sf.cargo_manager.name
+    priority: 426
+    headTexture: e510bc85362a130a6ff9d91ff11d6fa46d7d1912a3431f751558ef3c4d9c2
+    lore-key: items.sf.cargo_manager.lore
+    flags:
+    - legacy-sf
+  sf:cargo_node:
+    category: sf:cargo
+    material: PLAYER_HEAD
+    name-key: items.sf.cargo_node.name
+    priority: 503
+    headTexture: 07b7ef6fd7864865c31c1dc87bed24ab5973579f5c6638fecb8dedeb443ff0
+    lore-key: items.sf.cargo_node.lore
+    flags:
+    - legacy-sf
+  sf:cargo_node_input:
+    category: sf:cargo
+    material: PLAYER_HEAD
+    name-key: items.sf.cargo_node_input.name
+    priority: 504
+    headTexture: 16d1c1a69a3de9fec962a77bf3b2e376dd25c873a3d8f14f1dd345dae4c4
+    lore-key: items.sf.cargo_node_input.lore
+    flags:
+    - legacy-sf
+  sf:cargo_node_input_advanced:
+    category: sf:cargo
+    material: PLAYER_HEAD
+    name-key: items.sf.cargo_node_input_advanced.name
+    priority: 505
+    headTexture: 16d1c1a69a3de9fec962a77bf3b2e376dd25c873a3d8f14f1dd345dae4c4
+    lore-key: items.sf.cargo_node_input_advanced.lore
+    flags:
+    - legacy-sf
+  sf:cargo_node_output:
+    category: sf:cargo
+    material: PLAYER_HEAD
+    name-key: items.sf.cargo_node_output.name
+    priority: 506
+    headTexture: 55b21fd480c1c43bf3b9f842c869bdc3bc5acc2599bf2eb6b8a1c95dce978f
+    lore-key: items.sf.cargo_node_output.lore
+    flags:
+    - legacy-sf
+  sf:cargo_node_output_advanced:
+    category: sf:cargo
+    material: PLAYER_HEAD
+    name-key: items.sf.cargo_node_output_advanced.name
+    priority: 507
+    headTexture: 55b21fd480c1c43bf3b9f842c869bdc3bc5acc2599bf2eb6b8a1c95dce978f
+    lore-key: items.sf.cargo_node_output_advanced.lore
+    flags:
+    - legacy-sf
+  sf:trash_can_block:
+    category: sf:cargo
+    material: PLAYER_HEAD
+    name-key: items.sf.trash_can_block.name
+    priority: 534
+    headTexture: 32d41042ce99147cc38cac9e46741576e7ee791283e6fac8d3292cae2935f1f
+    lore-key: items.sf.trash_can_block.lore
+    flags:
+    - legacy-sf
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:cargo_manager:
+    category: CARGO
+    display-name: sf:cargo_manager
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, cargo, cargo-node]
+    profile: cargo_node
+  sf:cargo_node:
+    category: CARGO
+    display-name: sf:cargo_node
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, cargo, cargo-node]
+    profile: cargo_node
+  sf:cargo_node_input:
+    category: CARGO
+    display-name: sf:cargo_node_input
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, cargo, cargo-node]
+    profile: cargo_node
+  sf:cargo_node_input_advanced:
+    category: CARGO
+    display-name: sf:cargo_node_input_advanced
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, cargo, cargo-node]
+    profile: cargo_node
+  sf:cargo_node_output:
+    category: CARGO
+    display-name: sf:cargo_node_output
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, cargo, cargo-node]
+    profile: cargo_node
+  sf:cargo_node_output_advanced:
+    category: CARGO
+    display-name: sf:cargo_node_output_advanced
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, cargo, cargo-node]
+    profile: cargo_node
+  sf:trash_can_block:
+    category: CARGO
+    display-name: sf:trash_can_block
+    status-slot: -1
+    tick-interval: 1
+    tags: [machine, cargo, cargo-node]
+    profile: cargo_node
+
+cargo-components:
+  @ot: content/machines/cargo-components.yml
+  sf:cargo_manager:
+    @io: true
+    type: MANAGER
+  sf:cargo_node:
+    @io: true
+    type: CONNECTOR
+  sf:cargo_node_input:
+    @io: true
+    type: INPUT_NODE
+  sf:cargo_node_input_advanced:
+    @io: true
+    type: ADVANCED_INPUT_NODE
+  sf:cargo_node_output:
+    @io: true
+    type: OUTPUT_NODE
+  sf:cargo_node_output_advanced:
+    @io: true
+    type: ADVANCED_OUTPUT_NODE
+  sf:trash_can_block:
+    @io: true
+    type: TRASH_CAN

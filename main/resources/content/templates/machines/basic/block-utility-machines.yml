@@ -1,0 +1,21 @@
+# Basic block utility machine family.
+items:
+  @ot: content/items.yml
+  sf:composter: {category: sf:machines, material: CAULDRON, name-key: items.sf.composter.name, priority: 307, lore-key: items.sf.composter.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:crucible: {category: sf:machines, material: CAULDRON, name-key: items.sf.crucible.name, priority: 308, lore-key: items.sf.crucible.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:output_chest: {category: sf:machines, material: CHEST, name-key: items.sf.output_chest.name, priority: 309, lore-key: items.sf.output_chest.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+  sf:ignition_chamber: {category: sf:machines, material: DROPPER, name-key: items.sf.ignition_chamber.name, priority: 310, lore-key: items.sf.ignition_chamber.lore, flags: [legacy-sf, plugin-block, placeable-block, creative-clone]}
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:composter: {category: BASIC, display-name: sf:composter, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:crucible: {category: BASIC, display-name: sf:crucible, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:output_chest: {category: BASIC, display-name: sf:output_chest, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+  sf:ignition_chamber: {category: BASIC, display-name: sf:ignition_chamber, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual]}
+
+basic-machines:
+  @ot: content/machines/basic-machines.yml
+  sf:composter: {runtime: {executor: sf:basic_hand_input}}
+  sf:crucible: {runtime: {executor: sf:basic_hand_input}}
+  sf:output_chest: {runtime: {executor: sf:basic_hand_input}}
+  sf:ignition_chamber: {runtime: {executor: sf:basic_hand_input}}

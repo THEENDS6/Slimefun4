@@ -1,0 +1,10 @@
+# Ancient altar structure family.
+items:
+  @ot: content/items.yml
+  sf:ancient_pedestal: {category: sf:technical_components, material: DISPENSER, name-key: items.sf.ancient_pedestal.name, priority: 207, lore-key: items.sf.ancient_pedestal.lore, flags: [legacy-sf]}
+  sf:ancient_altar: {category: sf:technical_components, material: ENCHANTING_TABLE, name-key: items.sf.ancient_altar.name, priority: 208, lore-key: items.sf.ancient_altar.lore, flags: [legacy-sf]}
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:ancient_altar: {category: SPECIAL, display-name: sf:ancient_altar, status-slot: -1, tick-interval: 1, tags: [machine, special, ancient-altar], profile: ancient_altar}
+  sf:ancient_pedestal: {category: SPECIAL, display-name: sf:ancient_pedestal, status-slot: -1, tick-interval: 1, tags: [machine, special, ancient-altar], profile: ancient_altar}

@@ -1,0 +1,19 @@
+# Geo Extractor machine family. It runs Java providers for geo resources and oil.
+items:
+  "sf:geo_miner": {category: sf:gps, material: PLAYER_HEAD, name-key: items.sf.geo_miner.name, priority: 394, headTexture: a37741f764dd3dd7adaeb43b63d3959eb70e5eb28f15d6b34cab34a1d1f60387, lore-key: items.sf.geo_miner.lore, flags: [legacy-sf]}
+  "sf:oil_pump": {category: sf:gps, material: PLAYER_HEAD, name-key: items.sf.oil_pump.name, priority: 395, headTexture: afe1a040a425e31a46d4f9a9b9806fa2f0c47ee84711cc1932fd8ab32b2d038, lore-key: items.sf.oil_pump.lore, flags: [legacy-sf]}
+machine-catalog:
+  "sf:geo_miner": {category: ELECTRIC, display-name: sf:geo_miner, status-slot: -1, tick-interval: 1, tags: [machine, electric, geo-extractor], profile: geo_extractor}
+  "sf:oil_pump": {category: ELECTRIC, display-name: sf:oil_pump, status-slot: -1, tick-interval: 1, tags: [machine, electric, geo-extractor], profile: geo_extractor}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:geo_miner":
+    @cf: templates.machines.geo-miner-definition
+    @io: true
+    @d: {name-key: items.sf.geo_miner.name, speed: 1, capacity: 512, consumption: 48, progress-material: DIAMOND_PICKAXE}
+    runtime: {executor: sf:special_provider, provider: sf:geo_miner}
+  "sf:oil_pump":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d: {name-key: items.sf.oil_pump.name, speed: 1, capacity: 512, consumption: 24, progress-material: BUCKET}
+    runtime: {executor: sf:special_provider, provider: sf:oil_pump}

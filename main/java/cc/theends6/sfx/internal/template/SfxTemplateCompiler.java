@@ -86,6 +86,9 @@ public final class SfxTemplateCompiler {
                 outputs.add(new OutputNode(List.of("all"), "$", null, expanded));
             }
             outputs = groupRecipeOutputs(outputs);
+            outputs.addAll(compileTemplateItemDefinitionsOutputs(expanded));
+            outputs.addAll(compileTemplateMachineCatalogOutputs(expanded));
+            outputs.addAll(compileTemplateBasicMachineOutputs(expanded));
             Path machineCatalogSource = sourceRoot.resolveSibling("machines").resolve("machine-catalog.yml");
             OutputNode machineCatalogOutput = compileMachineCatalogOutput(machineCatalogSource);
             if (machineCatalogOutput != null) {
@@ -1109,7 +1112,15 @@ public final class SfxTemplateCompiler {
         }
         ConfigurationSection root = yaml.getConfigurationSection("machines");
         if (root == null) {
-            throw new SfxTemplateCompileException("Machine catalog source " + relativeSource(source) + " requires machines root section.");
+            boolean hasMachinesRoot = Files.readAllLines(source, StandardCharsets.UTF_8).stream()
+                    .map(String::trim)
+                    .anyMatch("machines:"::equals);
+            if (!hasMachinesRoot) {
+                throw new SfxTemplateCompileException("Machine catalog source " + relativeSource(source) + " requires machines root section.");
+            }
+            Map<String, Object> wrapped = new LinkedHashMap<>();
+            wrapped.put("machines", Map.of());
+            return new OutputNode(List.of(), "$.machines", "content/machines/machine-catalog.yml", wrapped, relativeSource(source), "catalog.yml");
         }
         Map<String, Object> machines = new LinkedHashMap<>();
         for (String id : root.getKeys(false)) {
@@ -1125,6 +1136,101 @@ public final class SfxTemplateCompiler {
         return new OutputNode(List.of(), "$.machines", "content/machines/machine-catalog.yml", wrapped, relativeSource(source), "catalog.yml");
     }
 
+    @SuppressWarnings("unchecked")
+    private List<OutputNode> compileTemplateItemDefinitionsOutputs(Map<String, Object> expanded) {
+        Object rawItems = expanded.get("items");
+        if (!(rawItems instanceof Map<?, ?> itemMap) || itemMap.isEmpty()) {
+            return List.of();
+        }
+        Map<String, List<Map<String, Object>>> itemsBySource = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : itemMap.entrySet()) {
+            if (!(entry.getValue() instanceof Map<?, ?> rawItem)) {
+                continue;
+            }
+            String id = String.valueOf(entry.getKey());
+            Map<String, Object> item = deepCopyMap((Map<String, Object>) rawItem);
+            Object declaredId = item.get("id");
+            if (declaredId != null && !id.equals(String.valueOf(declaredId).trim())) {
+                throw new SfxTemplateCompileException("Template item key " + id + " conflicts with declared id " + declaredId);
+            }
+            item.put("id", id);
+            String source = sourceOf("items." + id);
+            itemsBySource.computeIfAbsent(source == null ? "" : source, ignored -> new ArrayList<>()).add(item);
+        }
+        List<OutputNode> outputs = new ArrayList<>();
+        for (Map.Entry<String, List<Map<String, Object>>> entry : itemsBySource.entrySet()) {
+            Map<String, Object> wrapped = new LinkedHashMap<>();
+            wrapped.put("categories", List.of());
+            wrapped.put("items", entry.getValue());
+            String source = entry.getKey().isBlank() ? null : entry.getKey();
+            outputs.add(new OutputNode(List.of(), "$.items", "content/items.yml", wrapped, source, sourceOutputFile(source, "template-items.yml")));
+        }
+        return outputs;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<OutputNode> compileTemplateMachineCatalogOutputs(Map<String, Object> expanded) {
+        Object rawCatalog = expanded.get("machine-catalog");
+        if (!(rawCatalog instanceof Map<?, ?> catalogMap) || catalogMap.isEmpty()) {
+            return List.of();
+        }
+        Map<String, Map<String, Object>> machinesBySource = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : catalogMap.entrySet()) {
+            if (!(entry.getValue() instanceof Map<?, ?> rawMachine)) {
+                continue;
+            }
+            String id = String.valueOf(entry.getKey());
+            YamlConfiguration yaml = new YamlConfiguration();
+            yaml.createSection("entry", deepCopyMap((Map<String, Object>) rawMachine));
+            String source = sourceOf("machine-catalog." + id);
+            machinesBySource
+                    .computeIfAbsent(source == null ? "" : source, ignored -> new LinkedHashMap<>())
+                    .put(id, serializeMachineCatalogDefinition(compileMachineCatalogDefinition(id, yaml.getConfigurationSection("entry"))));
+        }
+        List<OutputNode> outputs = new ArrayList<>();
+        for (Map.Entry<String, Map<String, Object>> entry : machinesBySource.entrySet()) {
+            Map<String, Object> wrapped = new LinkedHashMap<>();
+            wrapped.put("machines", entry.getValue());
+            String source = entry.getKey().isBlank() ? null : entry.getKey();
+            outputs.add(new OutputNode(List.of(), "$.machine-catalog", "content/machines/machine-catalog.yml", wrapped, source, sourceOutputFile(source, "template-catalog.yml")));
+        }
+        return outputs;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<OutputNode> compileTemplateBasicMachineOutputs(Map<String, Object> expanded) {
+        Object rawMachines = expanded.get("basic-machines");
+        if (!(rawMachines instanceof Map<?, ?> machineMap) || machineMap.isEmpty()) {
+            return List.of();
+        }
+        Map<String, Map<String, Object>> machinesBySource = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : machineMap.entrySet()) {
+            if (!(entry.getValue() instanceof Map<?, ?> rawMachine)) {
+                continue;
+            }
+            String id = String.valueOf(entry.getKey());
+            String source = sourceOf("basic-machines." + id);
+            machinesBySource
+                    .computeIfAbsent(source == null ? "" : source, ignored -> new LinkedHashMap<>())
+                    .put(id, deepCopyMap((Map<String, Object>) rawMachine));
+        }
+        List<OutputNode> outputs = new ArrayList<>();
+        for (Map.Entry<String, Map<String, Object>> entry : machinesBySource.entrySet()) {
+            Map<String, Object> wrapped = new LinkedHashMap<>();
+            wrapped.put("machines", entry.getValue());
+            String source = entry.getKey().isBlank() ? null : entry.getKey();
+            outputs.add(new OutputNode(List.of(), "$.basic-machines", "content/machines/basic-machines.yml", wrapped, source, sourceOutputFile(source, "basic-machines.yml")));
+        }
+        return outputs;
+    }
+
+    private String sourceOutputFile(String source, String fallback) {
+        if (source == null || source.isBlank()) {
+            return fallback;
+        }
+        return recipeSourceGroup(source) + ".yml";
+    }
+
     private List<ContentPassThroughSource> contentPassThroughSources() {
         Path machines = sourceRoot.resolveSibling("machines");
         Path contentRoot = sourceRoot.getParent();
@@ -1134,8 +1240,7 @@ public final class SfxTemplateCompiler {
                 new ContentPassThroughSource(contentRoot.resolve("items").resolve("20-legacy-items.yml"), "content/items.yml", "20-legacy-items.yml"),
                 new ContentPassThroughSource(contentRoot.resolve("researches").resolve("10-legacy-slimefun.yml"), "content/researches.yml", "10-legacy-slimefun.yml"),
                 new ContentPassThroughSource(contentRoot.resolve("legacy-item-behavior.yml"), "content/legacy-item-behavior.yml", "legacy-item-behavior.yml"),
-                new ContentPassThroughSource(machines.resolve("manual-machines.yml"), "content/machines/manual-machines.yml", "manual-machines.yml"),
-                new ContentPassThroughSource(machines.resolve("configurable-machines.yml"), "content/machines/configurable-machines.yml", "configurable-machines.yml")
+                new ContentPassThroughSource(machines.resolve("manual-machines.yml"), "content/machines/manual-machines.yml", "manual-machines.yml")
         );
     }
 
@@ -1188,37 +1293,49 @@ public final class SfxTemplateCompiler {
         if (root == null) {
             throw new SfxTemplateCompileException("Electric recipe source " + relativeSource(source) + " requires providers root section.");
         }
-        Map<String, Object> providers = new LinkedHashMap<>();
+        List<Map<String, Object>> recipes = new ArrayList<>();
         for (String providerId : root.getKeys(false)) {
             ConfigurationSection section = root.getConfigurationSection(providerId);
             if (section == null) {
                 continue;
             }
-            List<Map<String, Object>> recipes = new ArrayList<>();
+            String providerRecipeType = section.getString("recipe-type", null);
+            List<String> providerRecipeTags = strings(section.getList("recipe-tags", List.of()));
             for (Map<?, ?> raw : section.getMapList("recipes")) {
-                recipes.addAll(compileElectricRecipeEntry(raw));
+                recipes.addAll(compileElectricRecipeEntry(raw, providerRecipeType, providerRecipeTags));
             }
-            Map<String, Object> provider = new LinkedHashMap<>();
-            provider.put("recipes", recipes);
-            providers.put(providerId, provider);
         }
         Map<String, Object> wrapped = new LinkedHashMap<>();
-        wrapped.put("providers", providers);
-        return new OutputNode(List.of(), "$.providers", "content/machines/electric-recipes.yml", wrapped, relativeSource(source), "electric-recipes.yml");
+        wrapped.put("electric-recipes", recipes);
+        return new OutputNode(List.of(), "$.electric-recipes", "content/machines/electric-recipes.yml", wrapped, relativeSource(source), "electric-recipes.yml");
     }
 
-    private List<Map<String, Object>> compileElectricRecipeEntry(Map<?, ?> entry) {
+    private List<Map<String, Object>> compileElectricRecipeEntry(Map<?, ?> entry, String providerRecipeType, List<String> providerRecipeTags) {
         String expand = stringOrNull(entry.get("expand"));
         if (expand == null) {
-            return List.of(normalizeElectricRecipeEntry(entry));
+            return List.of(applyElectricRecipeDefaults(normalizeElectricRecipeEntry(entry), providerRecipeType, providerRecipeTags));
         }
+        List<Map<String, Object>> expanded;
         if (expand.equalsIgnoreCase("tag")) {
-            return compileElectricTagExpansion(entry);
+            expanded = compileElectricTagExpansion(entry);
+        } else if (expand.equalsIgnoreCase("materials")) {
+            expanded = compileElectricMaterialsExpansion(entry);
+        } else {
+            throw new SfxTemplateCompileException("Unsupported electric recipe expansion: " + expand);
         }
-        if (expand.equalsIgnoreCase("materials")) {
-            return compileElectricMaterialsExpansion(entry);
+        return expanded.stream()
+                .map(recipe -> applyElectricRecipeDefaults(recipe, providerRecipeType, providerRecipeTags))
+                .toList();
+    }
+
+    private Map<String, Object> applyElectricRecipeDefaults(Map<String, Object> recipe, String providerRecipeType, List<String> providerRecipeTags) {
+        if (providerRecipeType != null && !providerRecipeType.isBlank()) {
+            recipe.putIfAbsent("recipe-type", providerRecipeType.trim());
         }
-        throw new SfxTemplateCompileException("Unsupported electric recipe expansion: " + expand);
+        if (providerRecipeTags != null && !providerRecipeTags.isEmpty()) {
+            recipe.putIfAbsent("recipe-tags", new ArrayList<>(providerRecipeTags));
+        }
+        return recipe;
     }
 
     private List<Map<String, Object>> compileElectricTagExpansion(Map<?, ?> entry) {
@@ -1517,7 +1634,7 @@ public final class SfxTemplateCompiler {
             return keys == null ? List.of() : keys;
         }
         String first = keys.getFirst();
-        if (Set.of("machines", "recipes", "components").contains(first)) {
+        if (Set.of("machines", "recipes", "components", "cargo-components").contains(first)) {
             return keys.subList(1, keys.size());
         }
         return keys;

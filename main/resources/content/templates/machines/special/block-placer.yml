@@ -1,0 +1,14 @@
+# Block placer machine family.
+items:
+  @ot: content/items.yml
+  sf:block_placer:
+    category: sf:machines
+    material: DISPENSER
+    name-key: items.sf.block_placer.name
+    priority: 312
+    lore-key: items.sf.block_placer.lore
+    flags: [legacy-sf, plugin-block, placeable-block, creative-clone]
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:block_placer: {category: SPECIAL, display-name: sf:block_placer, status-slot: -1, tick-interval: 1, tags: [machine, special, block-placer], profile: block_placer}

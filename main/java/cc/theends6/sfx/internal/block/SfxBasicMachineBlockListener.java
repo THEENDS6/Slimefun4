@@ -14,6 +14,7 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
 import cc.theends6.sfx.internal.machine.SfxOutputPolicies;
+import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -23,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -72,28 +74,10 @@ import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 public final class SfxBasicMachineBlockListener implements Listener {
-    private static final Set<String> SUPPORTED_BLOCKS = Set.of(
-            "sf:composter",
-            "sf:crucible",
-            "sf:output_chest",
-            "sf:ignition_chamber",
-            "sf:enhanced_furnace",
-            "sf:enhanced_furnace_2",
-            "sf:enhanced_furnace_3",
-            "sf:enhanced_furnace_4",
-            "sf:enhanced_furnace_5",
-            "sf:enhanced_furnace_6",
-            "sf:enhanced_furnace_7",
-            "sf:enhanced_furnace_8",
-            "sf:enhanced_furnace_9",
-            "sf:enhanced_furnace_10",
-            "sf:enhanced_furnace_11",
-            "sf:reinforced_furnace",
-            "sf:carbonado_edged_furnace"
-    );
-
     private static final BlockFace[] OUTPUT_CHEST_SEARCH = {
             BlockFace.UP, BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST
     };
@@ -114,6 +98,9 @@ public final class SfxBasicMachineBlockListener implements Listener {
     private volatile SfxFuelBurnTimeBridge fuelBurnTimeBridge;
     private final SfxMachineTickSettings tickSettings;
     private final SfxMachineRuntimeEngine machineRuntime;
+    private final Map<String, FurnaceStats> enhancedFurnaceStats;
+    private final Set<String> basicHandInputMachines;
+    private final Set<String> supportedBlocks;
     private volatile boolean furnaceTickerRunning;
     private volatile long furnaceTickCounter;
 
@@ -125,9 +112,67 @@ public final class SfxBasicMachineBlockListener implements Listener {
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.tickSettings = SfxMachineTickSettings.from(plugin.getConfig());
         this.machineRuntime = sharedMachineRuntime == null ? new SfxMachineRuntimeEngine() : sharedMachineRuntime;
-        this.machineRuntime.registerDefinitions(SfxBasicMachineFrameworkBridge.definitions());
+        BasicMachineRuntimeConfig basicMachineRuntime = loadBasicMachineRuntime(plugin);
+        this.enhancedFurnaceStats = basicMachineRuntime.enhancedFurnaceStats();
+        this.basicHandInputMachines = basicMachineRuntime.basicHandInputMachines();
+        Set<String> supported = new LinkedHashSet<>(basicHandInputMachines);
+        supported.addAll(enhancedFurnaceStats.keySet());
+        this.supportedBlocks = Set.copyOf(supported);
+        this.machineRuntime.registerDefinitions(SfxBasicMachineFrameworkBridge.definitions(basicHandInputMachines, enhancedFurnaceStats.keySet()));
         registerFrameworkEffects();
         bootstrapEnhancedFurnaces();
+    }
+
+    private BasicMachineRuntimeConfig loadBasicMachineRuntime(JavaPlugin plugin) {
+        YamlConfiguration yaml = SfxCompiledYamlResolver.loadMerged(plugin, "content/machines/basic-machines.yml");
+        ConfigurationSection machines = yaml.getConfigurationSection("machines");
+        if (machines == null) {
+            throw new IllegalStateException("Compiled basic machine contract missing machines root.");
+        }
+        Set<String> basicHandInputMachines = new LinkedHashSet<>();
+        Map<String, FurnaceStats> enhancedFurnaceStats = new LinkedHashMap<>();
+        for (String id : machines.getKeys(false)) {
+            ConfigurationSection runtime = machines.getConfigurationSection(id + ".runtime");
+            if (runtime == null) {
+                throw new IllegalStateException("Compiled basic machine " + id + " missing runtime.");
+            }
+            String executor = runtime.getString("executor", "");
+            if ("sf:basic_hand_input".equals(executor)) {
+                basicHandInputMachines.add(id);
+                continue;
+            }
+            if ("sf:manual_machine".equals(executor)) {
+                continue;
+            }
+            if (!"sf:enhanced_furnace".equals(executor)) {
+                throw new IllegalStateException("Compiled basic machine " + id + " has unsupported runtime.executor " + executor + ".");
+            }
+            ConfigurationSection stats = runtime.getConfigurationSection("stats");
+            if (stats == null) {
+                throw new IllegalStateException("Compiled enhanced furnace " + id + " missing runtime.stats.");
+            }
+            int processingSpeed = requirePositiveInt(stats, "processing-speed", id);
+            int fuelEfficiency = requirePositiveInt(stats, "fuel-efficiency", id);
+            int fortuneLevel = requirePositiveInt(stats, "fortune-level", id);
+            enhancedFurnaceStats.put(id, new FurnaceStats(processingSpeed, fuelEfficiency, fortuneLevel));
+        }
+        if (basicHandInputMachines.isEmpty()) {
+            throw new IllegalStateException("Compiled basic machine contract contains no sf:basic_hand_input runtime entries.");
+        }
+        if (enhancedFurnaceStats.isEmpty()) {
+            throw new IllegalStateException("Compiled basic machine contract contains no sf:enhanced_furnace runtime entries.");
+        }
+        return new BasicMachineRuntimeConfig(Set.copyOf(basicHandInputMachines), Map.copyOf(enhancedFurnaceStats));
+    }
+
+    private int requirePositiveInt(ConfigurationSection section, String key, String id) {
+        if (!section.isInt(key) || section.getInt(key) <= 0) {
+            throw new IllegalStateException("Compiled enhanced furnace " + id + " requires positive runtime.stats." + key + ".");
+        }
+        return section.getInt(key);
+    }
+
+    private record BasicMachineRuntimeConfig(Set<String> basicHandInputMachines, Map<String, FurnaceStats> enhancedFurnaceStats) {
     }
 
     private void registerFrameworkEffects() {
@@ -206,7 +251,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         items.readMarker(event.getItemInHand()).ifPresent(marker -> {
-            if (!SUPPORTED_BLOCKS.contains(marker.itemId())) {
+            if (!supportedBlocks.contains(marker.itemId())) {
                 return;
             }
             UUID instanceId = blockData.findAnchor(event.getBlockPlaced().getLocation())
@@ -223,7 +268,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     public boolean supportsType(String typeId) {
-        return SUPPORTED_BLOCKS.contains(typeId);
+        return supportedBlocks.contains(typeId);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -233,7 +278,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         String typeId = instanceType(anchor.get().instanceId());
-        if (!SUPPORTED_BLOCKS.contains(typeId)) {
+        if (!supportedBlocks.contains(typeId)) {
             return;
         }
         event.setDropItems(false);
@@ -241,7 +286,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     public void destroyAnchoredBlock(Block block, String typeId) {
-        if (block == null || typeId == null || !SUPPORTED_BLOCKS.contains(typeId)) {
+        if (block == null || typeId == null || !supportedBlocks.contains(typeId)) {
             return;
         }
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(block.getLocation());
@@ -657,22 +702,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (typeId == null) {
             return null;
         }
-        return switch (typeId) {
-            case "sf:enhanced_furnace" -> new FurnaceStats(2, 1, 1);
-            case "sf:enhanced_furnace_2" -> new FurnaceStats(2, 1, 1);
-            case "sf:enhanced_furnace_3" -> new FurnaceStats(3, 2, 1);
-            case "sf:enhanced_furnace_4" -> new FurnaceStats(3, 3, 1);
-            case "sf:enhanced_furnace_5" -> new FurnaceStats(4, 3, 1);
-            case "sf:enhanced_furnace_6" -> new FurnaceStats(4, 3, 2);
-            case "sf:enhanced_furnace_7" -> new FurnaceStats(5, 3, 2);
-            case "sf:enhanced_furnace_8" -> new FurnaceStats(5, 4, 2);
-            case "sf:enhanced_furnace_9" -> new FurnaceStats(6, 4, 2);
-            case "sf:enhanced_furnace_10" -> new FurnaceStats(7, 4, 2);
-            case "sf:enhanced_furnace_11" -> new FurnaceStats(8, 4, 2);
-            case "sf:reinforced_furnace" -> new FurnaceStats(10, 5, 3);
-            case "sf:carbonado_edged_furnace" -> new FurnaceStats(20, 10, 3);
-            default -> null;
-        };
+        return enhancedFurnaceStats.get(typeId);
     }
 
     private String instanceTypeAt(Location location) {
@@ -1401,22 +1431,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private FurnaceStats furnaceStats(String typeId) {
-        return switch (typeId) {
-            case "sf:enhanced_furnace" -> new FurnaceStats(2, 1, 1);
-            case "sf:enhanced_furnace_2" -> new FurnaceStats(2, 1, 1);
-            case "sf:enhanced_furnace_3" -> new FurnaceStats(3, 2, 1);
-            case "sf:enhanced_furnace_4" -> new FurnaceStats(3, 3, 1);
-            case "sf:enhanced_furnace_5" -> new FurnaceStats(4, 3, 1);
-            case "sf:enhanced_furnace_6" -> new FurnaceStats(4, 3, 2);
-            case "sf:enhanced_furnace_7" -> new FurnaceStats(5, 3, 2);
-            case "sf:enhanced_furnace_8" -> new FurnaceStats(5, 4, 2);
-            case "sf:enhanced_furnace_9" -> new FurnaceStats(6, 4, 2);
-            case "sf:enhanced_furnace_10" -> new FurnaceStats(7, 4, 2);
-            case "sf:enhanced_furnace_11" -> new FurnaceStats(8, 4, 2);
-            case "sf:reinforced_furnace" -> new FurnaceStats(10, 5, 3);
-            case "sf:carbonado_edged_furnace" -> new FurnaceStats(20, 10, 3);
-            default -> null;
-        };
+        return enhancedFurnaceStats.get(typeId);
     }
 
     private void playSound(Location location, Sound sound, float volume, float pitch) {

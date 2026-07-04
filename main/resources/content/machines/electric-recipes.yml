@@ -15,6 +15,9 @@
 
 providers:
   auto_drier:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - drying
     recipes:
     - id: sf:auto_drier:rotten_flesh
       inputs:
@@ -155,6 +158,9 @@ providers:
   electric_ingot_factory:
     recipes:
     - id: sf:electric_ingot_factory:iron
+      recipe-type: sf:electric_processing
+      recipe-tags:
+      - simple-smelting
       inputs:
       - item: sf:iron_dust
         amount: 1
@@ -163,6 +169,9 @@ providers:
       - material: IRON_INGOT
         amount: 1
     - id: sf:electric_ingot_factory:gold
+      recipe-type: sf:electric_processing
+      recipe-tags:
+      - simple-smelting
       inputs:
       - item: sf:gold_dust
         amount: 1
@@ -171,6 +180,9 @@ providers:
       - item: sf:gold_4k
         amount: 1
     - id: sf:electric_ingot_factory:tin
+      recipe-type: sf:electric_processing
+      recipe-tags:
+      - simple-smelting
       inputs:
       - item: sf:tin_dust
         amount: 1
@@ -179,6 +191,9 @@ providers:
       - item: sf:tin_ingot
         amount: 1
     - id: sf:electric_ingot_factory:copper
+      recipe-type: sf:electric_processing
+      recipe-tags:
+      - simple-smelting
       inputs:
       - item: sf:copper_dust
         amount: 1
@@ -187,6 +202,9 @@ providers:
       - item: sf:copper_ingot
         amount: 1
     - id: sf:electric_ingot_factory:silver
+      recipe-type: sf:electric_processing
+      recipe-tags:
+      - simple-smelting
       inputs:
       - item: sf:silver_dust
         amount: 1
@@ -195,6 +213,9 @@ providers:
       - item: sf:silver_ingot
         amount: 1
     - id: sf:electric_ingot_factory:aluminum
+      recipe-type: sf:electric_processing
+      recipe-tags:
+      - simple-smelting
       inputs:
       - item: sf:aluminum_dust
         amount: 1
@@ -203,6 +224,9 @@ providers:
       - item: sf:aluminum_ingot
         amount: 1
     - id: sf:electric_ingot_factory:lead
+      recipe-type: sf:electric_processing
+      recipe-tags:
+      - simple-smelting
       inputs:
       - item: sf:lead_dust
         amount: 1
@@ -211,6 +235,9 @@ providers:
       - item: sf:lead_ingot
         amount: 1
     - id: sf:electric_ingot_factory:zinc
+      recipe-type: sf:electric_processing
+      recipe-tags:
+      - simple-smelting
       inputs:
       - item: sf:zinc_dust
         amount: 1
@@ -219,6 +246,9 @@ providers:
       - item: sf:zinc_ingot
         amount: 1
     - id: sf:electric_ingot_factory:silicon
+      recipe-type: sf:electric_processing
+      recipe-tags:
+      - simple-smelting
       inputs:
       - material: QUARTZ_BLOCK
         amount: 1
@@ -227,6 +257,9 @@ providers:
       - item: sf:silicon
         amount: 1
   carbon_press:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - carbon-pressing
     recipes:
     - id: sf:carbon_press:charcoal
       inputs:
@@ -287,6 +320,9 @@ providers:
       - item: sf:carbonado
         amount: 1
   electric_press:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - material-pressing
     recipes:
     - id: sf:electric_press:stone_chunk
       inputs:
@@ -601,6 +637,9 @@ providers:
       - material: RAW_COPPER_BLOCK
         amount: 1
   electrified_crucible:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - crucible-melting
     recipes:
     - id: sf:crucible:cobblestone
       inputs:
@@ -741,6 +780,9 @@ providers:
       - material: LAVA_BUCKET
         amount: 1
   freezer:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - freezing
     recipes:
     - id: sf:freezer:ice
       inputs:
@@ -811,6 +853,9 @@ providers:
       - material: SLIME_BLOCK
         amount: 1
   heated_pressure_chamber:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - heated-pressure-processing
     recipes:
     - id: sf:heated_pressure_chamber:plastic_sheet
       inputs:
@@ -891,6 +936,9 @@ providers:
       - item: sf:magnesium_salt
         amount: 1
   food_fabricator:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - food-fabrication
     recipes:
     - id: sf:food_fabricator:minecraft:wheat
       inputs:
@@ -1003,6 +1051,9 @@ providers:
       - item: sf:organic_food_seagrass
         amount: 2
   food_composter:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - food-composting
     recipes:
     - id: sf:food_composter:wheat
       inputs:
@@ -1093,6 +1144,9 @@ providers:
       - item: sf:fertilizer_seagrass
         amount: 2
   refinery:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - oil-refining
     recipes:
     - id: sf:refinery:fuel
       inputs:
@@ -1103,6 +1157,9 @@ providers:
       - item: sf:bucket_of_fuel
         amount: 1
   electric_gold_pan:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - panning
     recipes:
     - id: sf:electric_gold_pan:gravel
       inputs:
@@ -1171,6 +1228,9 @@ providers:
         amount: 1
         weight: 2
   electric_dust_washer:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - dust-washing
     recipes:
     - id: sf:electric_dust_washer:sifted_ore
       inputs:
@@ -1213,6 +1273,9 @@ providers:
       - item: sf:salt
         amount: 1
   electric_ingot_pulverizer:
+    recipe-type: sf:electric_processing
+    recipe-tags:
+    - ingot-pulverizing
     recipes:
     - id: sf:electric_ingot_pulverizer:iron
       inputs:

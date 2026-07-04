@@ -1,0 +1,44 @@
+# Electric Gold Pan machine family. It accepts panning recipes.
+items:
+  "sf:electric_gold_pan":
+    category: sf:electricity
+    material: BROWN_TERRACOTTA
+    name-key: items.sf.electric_gold_pan.name
+    priority: 442
+    lore-key: items.sf.electric_gold_pan.lore
+    flags: [legacy-sf]
+  "sf:electric_gold_pan_2":
+    category: sf:electricity
+    material: BROWN_TERRACOTTA
+    name-key: items.sf.electric_gold_pan_2.name
+    priority: 443
+    lore-key: items.sf.electric_gold_pan_2.lore
+    flags: [legacy-sf]
+  "sf:electric_gold_pan_3":
+    category: sf:electricity
+    material: BROWN_TERRACOTTA
+    name-key: items.sf.electric_gold_pan_3.name
+    priority: 444
+    lore-key: items.sf.electric_gold_pan_3.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:electric_gold_pan": {category: ELECTRIC, display-name: sf:electric_gold_pan, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:electric_gold_pan_2": {category: ELECTRIC, display-name: sf:electric_gold_pan_2, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:electric_gold_pan_3": {category: ELECTRIC, display-name: sf:electric_gold_pan_3, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:electric_gold_pan":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d: {name-key: items.sf.electric_gold_pan.name, speed: 1, capacity: 2560, consumption: 2, progress-material: DIAMOND_SHOVEL}
+    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [panning]}, include-recipes: [], exclude-recipes: []}
+  "sf:electric_gold_pan_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d: {name-key: items.sf.electric_gold_pan_2.name, speed: 3, capacity: 5120, consumption: 4, progress-material: DIAMOND_SHOVEL}
+    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [panning]}, include-recipes: [], exclude-recipes: []}
+  "sf:electric_gold_pan_3":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d: {name-key: items.sf.electric_gold_pan_3.name, speed: 10, capacity: 10240, consumption: 14, progress-material: DIAMOND_SHOVEL}
+    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [panning]}, include-recipes: [], exclude-recipes: []}

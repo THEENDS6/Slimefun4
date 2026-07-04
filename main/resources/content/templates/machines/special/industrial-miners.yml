@@ -1,0 +1,10 @@
+# Industrial miner multiblock family.
+items:
+  @ot: content/items.yml
+  sf:industrial_miner: {category: sf:multiblocks, material: GOLDEN_PICKAXE, name-key: items.sf.industrial_miner.name, priority: 305, lore-key: items.sf.industrial_miner.lore, flags: [legacy-sf]}
+  sf:advanced_industrial_miner: {category: sf:multiblocks, material: DIAMOND_PICKAXE, name-key: items.sf.advanced_industrial_miner.name, priority: 306, lore-key: items.sf.advanced_industrial_miner.lore, flags: [legacy-sf]}
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:advanced_industrial_miner: {category: SPECIAL, display-name: sf:advanced_industrial_miner, status-slot: -1, tick-interval: 1, tags: [machine, special, industrial-miner], profile: industrial_miner}
+  sf:industrial_miner: {category: SPECIAL, display-name: sf:industrial_miner, status-slot: -1, tick-interval: 1, tags: [machine, special, industrial-miner], profile: industrial_miner}

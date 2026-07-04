@@ -1,0 +1,35 @@
+# Energy network node component families.
+items:
+  "sf:energy_regulator":
+    category: sf:technical_components
+    material: PLAYER_HEAD
+    name-key: items.sf.energy_regulator.name
+    priority: 421
+    headTexture: d78f2b7e5e75639ea7fb796c35d364c4df28b4243e66b76277aadcd6261337
+    lore-key: items.sf.energy_regulator.lore
+    flags: [legacy-sf]
+  "sf:energy_connector":
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.energy_connector.name
+    priority: 422
+    headTexture: 1085e098756b995b00241644089c55a8f9acde35b9a37785d5e057a923613b
+    lore-key: items.sf.energy_connector.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:energy_regulator": {category: ENERGY, display-name: sf:energy_regulator, status-slot: -1, tick-interval: 1, tags: [machine, energy, energy-node], profile: energy_node}
+  "sf:energy_connector": {category: ENERGY, display-name: sf:energy_connector, status-slot: -1, tick-interval: 1, tags: [machine, energy, energy-node], profile: energy_node}
+components:
+  @ot: content/machines/energy-components.yml
+  "sf:energy_regulator":
+    @cf: templates.energy.passive-component-output
+    @io: true
+    @d:
+      type: REGULATOR
+      capacity: 0
+  "sf:energy_connector":
+    @cf: templates.energy.passive-component-output
+    @io: true
+    @d:
+      type: CONNECTOR
+      capacity: 0

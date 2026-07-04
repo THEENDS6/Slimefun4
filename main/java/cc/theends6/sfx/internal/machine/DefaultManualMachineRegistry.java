@@ -79,6 +79,11 @@ public final class DefaultManualMachineRegistry implements SfxManualMachineRegis
         return List.copyOf(result);
     }
 
+    public boolean acceptsRecipeType(String machineId, String recipeType) {
+        ManualMachineDefinition definition = machines.get(SfxItemDefinition.normalizeId(machineId));
+        return definition != null && definition.acceptsRecipeType(recipeType);
+    }
+
     @Override
     public Collection<ManualMachineRecipe> recipesFor(String machineId) {
         return List.copyOf(recipes.getOrDefault(SfxItemDefinition.normalizeId(machineId), List.of()));

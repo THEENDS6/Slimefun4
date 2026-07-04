@@ -1,0 +1,3 @@
+# Cargo component definitions are generated from content/templates/machines/cargo/.
+# Runtime loads this base file and overlays compiled template output from content/compiled/content/machines/cargo-components/.
+cargo-components: {}

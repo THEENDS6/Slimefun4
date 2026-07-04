@@ -40,6 +40,7 @@ public final class ManualMachineDefinition {
     private final boolean symmetric;
     private final boolean deployable;
     private final Set<String> tags;
+    private final Set<String> acceptedRecipeTypes;
 
     public ManualMachineDefinition(String id, Component name, Material icon, Material[] pattern, BlockFace triggerFace, BlockFace inventoryFace, ManualMachineOperation operation) {
         this(id, name, icon, pattern, pattern, triggerFace, inventoryFace, operation, true);
@@ -50,10 +51,14 @@ public final class ManualMachineDefinition {
     }
 
     public ManualMachineDefinition(String id, Component name, Material icon, Material[] pattern, Material[] displayPattern, BlockFace triggerFace, BlockFace inventoryFace, ManualMachineOperation operation, boolean deployable) {
-        this(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, Set.of());
+        this(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, Set.of(), Set.of());
     }
 
     public ManualMachineDefinition(String id, Component name, Material icon, Material[] pattern, Material[] displayPattern, BlockFace triggerFace, BlockFace inventoryFace, ManualMachineOperation operation, boolean deployable, Set<String> tags) {
+        this(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, tags, Set.of());
+    }
+
+    public ManualMachineDefinition(String id, Component name, Material icon, Material[] pattern, Material[] displayPattern, BlockFace triggerFace, BlockFace inventoryFace, ManualMachineOperation operation, boolean deployable, Set<String> tags, Set<String> acceptedRecipeTypes) {
         if (pattern == null || pattern.length != 9) {
             throw new IllegalArgumentException("Manual multiblock pattern must contain exactly 9 material slots.");
         }
@@ -77,6 +82,7 @@ public final class ManualMachineDefinition {
         this.symmetric = isSymmetric(pattern);
         this.deployable = deployable;
         this.tags = normalizeTags(tags, this.id, this.operation);
+        this.acceptedRecipeTypes = normalizeRecipeTypes(acceptedRecipeTypes);
     }
 
     public String id() {
@@ -117,6 +123,14 @@ public final class ManualMachineDefinition {
 
     public Set<String> tags() {
         return tags;
+    }
+
+    public Set<String> acceptedRecipeTypes() {
+        return acceptedRecipeTypes;
+    }
+
+    public boolean acceptsRecipeType(String recipeType) {
+        return recipeType != null && acceptedRecipeTypes.contains(SfxItemDefinition.normalizeId(recipeType));
     }
 
     public boolean hasTags(Set<String> requiredTags) {
@@ -231,5 +245,17 @@ public final class ManualMachineDefinition {
 
     private static String normalizeTag(String raw) {
         return raw.trim().replace('_', '-').toLowerCase(Locale.ROOT);
+    }
+
+    private static Set<String> normalizeRecipeTypes(Set<String> raw) {
+        Set<String> result = new LinkedHashSet<>();
+        if (raw != null) {
+            for (String recipeType : raw) {
+                if (recipeType != null && !recipeType.isBlank()) {
+                    result.add(SfxItemDefinition.normalizeId(recipeType));
+                }
+            }
+        }
+        return Set.copyOf(result);
     }
 }

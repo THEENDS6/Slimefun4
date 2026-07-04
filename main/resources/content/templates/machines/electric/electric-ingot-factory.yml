@@ -1,0 +1,102 @@
+# Electric ingot factory machine family. It accepts simple-smelting recipes such
+# as dust-to-ingot and quartz-block-to-silicon processing.
+items:
+  "sf:electric_ingot_factory":
+    category: sf:electricity
+    material: RED_TERRACOTTA
+    name-key: items.sf.electric_ingot_factory.name
+    priority: 448
+    lore-key: items.sf.electric_ingot_factory.lore
+    flags:
+    - legacy-sf
+  "sf:electric_ingot_factory_2":
+    category: sf:electricity
+    material: RED_TERRACOTTA
+    name-key: items.sf.electric_ingot_factory_2.name
+    priority: 449
+    lore-key: items.sf.electric_ingot_factory_2.lore
+    flags:
+    - legacy-sf
+  "sf:electric_ingot_factory_3":
+    category: sf:electricity
+    material: RED_TERRACOTTA
+    name-key: items.sf.electric_ingot_factory_3.name
+    priority: 450
+    lore-key: items.sf.electric_ingot_factory_3.lore
+    flags:
+    - legacy-sf
+machine-catalog:
+  "sf:electric_ingot_factory":
+    category: ELECTRIC
+    display-name: sf:electric_ingot_factory
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
+  "sf:electric_ingot_factory_2":
+    category: ELECTRIC
+    display-name: sf:electric_ingot_factory_2
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
+  "sf:electric_ingot_factory_3":
+    category: ELECTRIC
+    display-name: sf:electric_ingot_factory_3
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:electric_ingot_factory":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d:
+      name-key: items.sf.electric_ingot_factory.name
+      speed: 1
+      capacity: 10240
+      consumption: 8
+      progress-material: FLINT_AND_STEEL
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - simple-smelting
+      include-recipes: []
+      exclude-recipes: []
+  "sf:electric_ingot_factory_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d:
+      name-key: items.sf.electric_ingot_factory_2.name
+      speed: 2
+      capacity: 20480
+      consumption: 14
+      progress-material: FLINT_AND_STEEL
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - simple-smelting
+      include-recipes: []
+      exclude-recipes: []
+  "sf:electric_ingot_factory_3":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d:
+      name-key: items.sf.electric_ingot_factory_3.name
+      speed: 8
+      capacity: 81920
+      consumption: 40
+      progress-material: FLINT_AND_STEEL
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - simple-smelting
+      include-recipes: []
+      exclude-recipes: []

@@ -138,7 +138,9 @@ public final class DefaultSfxRecipeRegistry {
         if (!definition.runtimeMachineTags().isEmpty()) {
             result.addAll(machines.machineIdsWithTags(definition.runtimeMachineTags()));
         }
-        return List.copyOf(result);
+        return result.stream()
+                .filter(machineId -> machines.acceptsRecipeType(machineId, definition.recipeType()))
+                .toList();
     }
 
     private List<ManualMachineOutput> toManualOutputs(List<SfxRecipeOutputDefinition> outputs) {

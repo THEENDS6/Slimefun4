@@ -1,0 +1,36 @@
+# Auto Brewer machine family. It can use the SFX brewer provider or legacy brewer provider.
+items:
+  "sf:auto_brewer":
+    category: sf:electricity
+    material: SMOKER
+    name-key: items.sf.auto_brewer.name
+    priority: 360
+    lore-key: items.sf.auto_brewer.lore
+    flags: [legacy-sf]
+  "sf:auto_brewer_2":
+    category: sf:electricity
+    material: SMOKER
+    name-key: items.sf.auto_brewer_2.name
+    priority: 361
+    lore-key: items.sf.auto_brewer_2.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:auto_brewer": {category: ELECTRIC, display-name: sf:auto_brewer, status-slot: -1, tick-interval: 1, tags: [machine, electric, auto-brewer], profile: auto_brewer}
+  "sf:auto_brewer_2": {category: ELECTRIC, display-name: sf:auto_brewer_2, status-slot: -1, tick-interval: 1, tags: [machine, electric, auto-brewer], profile: auto_brewer}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:auto_brewer":
+    @cf: templates.machines.auto-brewer-definition
+    @io: true
+    @d: {name-key: items.sf.auto_brewer.name, speed: 1, capacity: 10240, consumption: 12, progress-material: BREWING_STAND}
+    runtime: {executor: sf:special_provider, provider: sf:auto_brewer}
+  "sf:auto_brewer_2":
+    @cf: templates.machines.auto-brewer-definition
+    @io: true
+    @d: {name-key: items.sf.auto_brewer_2.name, speed: 5, capacity: 20480, consumption: 50, progress-material: BREWING_STAND}
+    runtime: {executor: sf:special_provider, provider: sf:auto_brewer}
+  "sf:auto_brewer#legacy":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d: {name-key: items.sf.auto_brewer.name, speed: 1, capacity: 5120, consumption: 12, progress-material: FISHING_ROD}
+    runtime: {executor: sf:special_provider, provider: sf:auto_brewer_legacy}

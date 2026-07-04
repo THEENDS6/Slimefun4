@@ -1,0 +1,38 @@
+# Auto drier machine family. It accepts drying recipes for dehydration and
+# drying-style material conversion.
+items:
+  "sf:auto_drier":
+    category: sf:electricity
+    material: SMOKER
+    name-key: items.sf.auto_drier.name
+    priority: 353
+    lore-key: items.sf.auto_drier.lore
+    flags:
+    - legacy-sf
+machine-catalog:
+  "sf:auto_drier":
+    category: ELECTRIC
+    display-name: sf:auto_drier
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:auto_drier":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d:
+      name-key: items.sf.auto_drier.name
+      speed: 1
+      capacity: 25600
+      consumption: 10
+      progress-material: FLINT_AND_STEEL
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - drying
+      include-recipes: []
+      exclude-recipes: []

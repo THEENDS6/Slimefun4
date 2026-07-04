@@ -1,0 +1,72 @@
+# Electric press machine family. It accepts material-pressing recipes for
+# compressing, forming and compacting materials.
+items:
+  "sf:electric_press":
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.electric_press.name
+    priority: 410
+    headTexture: 8d5cf92bc79ec19f4106441affff1406a1367010dcafb197dd94cfca1a6de0fc
+    lore-key: items.sf.electric_press.lore
+    flags:
+    - legacy-sf
+  "sf:electric_press_2":
+    category: sf:electricity
+    material: PLAYER_HEAD
+    name-key: items.sf.electric_press_2.name
+    priority: 411
+    headTexture: 8d5cf92bc79ec19f4106441affff1406a1367010dcafb197dd94cfca1a6de0fc
+    lore-key: items.sf.electric_press_2.lore
+    flags:
+    - legacy-sf
+machine-catalog:
+  "sf:electric_press":
+    category: ELECTRIC
+    display-name: sf:electric_press
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
+  "sf:electric_press_2":
+    category: ELECTRIC
+    display-name: sf:electric_press_2
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:electric_press":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d:
+      name-key: items.sf.electric_press.name
+      speed: 1
+      capacity: 25600
+      consumption: 16
+      progress-material: IRON_HOE
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - material-pressing
+      include-recipes: []
+      exclude-recipes: []
+  "sf:electric_press_2":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d:
+      name-key: items.sf.electric_press_2.name
+      speed: 3
+      capacity: 51200
+      consumption: 40
+      progress-material: IRON_HOE
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - material-pressing
+      include-recipes: []
+      exclude-recipes: []

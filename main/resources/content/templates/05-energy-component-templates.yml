@@ -1,6 +1,6 @@
 # Reserved for shared energy-component templates.
 #
 # Keep this file in the bundled template list so existing data folders that
-# already contain it continue to sync cleanly. Concrete energy component output
-# templates now live in 30-energy-components.yml; do not duplicate template keys
-# from 00-electric-machine-templates.yml here.
+# already contain it continue to sync cleanly. Concrete energy component source
+# templates now live under machines/energy/; shared template definitions live in
+# 30-energy-components.yml.

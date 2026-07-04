@@ -1,0 +1,48 @@
+# Manual basic multiblock machine family.
+items:
+  @ot: content/items.yml
+  sf:enhanced_crafting_table: {category: sf:multiblocks, material: CRAFTING_TABLE, name-key: items.sf.enhanced_crafting_table.name, priority: 293, lore-key: items.sf.enhanced_crafting_table.lore, flags: [legacy-sf]}
+  sf:grind_stone: {category: sf:multiblocks, material: DISPENSER, name-key: items.sf.grind_stone.name, priority: 294, lore-key: items.sf.grind_stone.lore, flags: [legacy-sf]}
+  sf:armor_forge: {category: sf:multiblocks, material: ANVIL, name-key: items.sf.armor_forge.name, priority: 295, lore-key: items.sf.armor_forge.lore, flags: [legacy-sf]}
+  sf:makeshift_smeltery: {category: sf:multiblocks, material: BLAST_FURNACE, name-key: items.sf.makeshift_smeltery.name, priority: 296, lore-key: items.sf.makeshift_smeltery.lore, flags: [legacy-sf]}
+  sf:smeltery: {category: sf:multiblocks, material: FURNACE, name-key: items.sf.smeltery.name, priority: 297, lore-key: items.sf.smeltery.lore, flags: [legacy-sf]}
+  sf:ore_crusher: {category: sf:multiblocks, material: DISPENSER, name-key: items.sf.ore_crusher.name, priority: 298, lore-key: items.sf.ore_crusher.lore, flags: [legacy-sf]}
+  sf:compressor: {category: sf:multiblocks, material: PISTON, name-key: items.sf.compressor.name, priority: 489, lore-key: items.sf.compressor.lore, flags: [legacy-sf]}
+  sf:pressure_chamber: {category: sf:multiblocks, material: GLASS, name-key: items.sf.pressure_chamber.name, priority: 299, lore-key: items.sf.pressure_chamber.lore, flags: [legacy-sf]}
+  sf:magic_workbench: {category: sf:multiblocks, material: CRAFTING_TABLE, name-key: items.sf.magic_workbench.name, priority: 300, lore-key: items.sf.magic_workbench.lore, flags: [legacy-sf]}
+  sf:ore_washer: {category: sf:multiblocks, material: CAULDRON, name-key: items.sf.ore_washer.name, priority: 301, lore-key: items.sf.ore_washer.lore, flags: [legacy-sf]}
+  sf:table_saw: {category: sf:multiblocks, material: STONECUTTER, name-key: items.sf.table_saw.name, priority: 302, lore-key: items.sf.table_saw.lore, flags: [legacy-sf]}
+  sf:juicer: {category: sf:multiblocks, material: GLASS_BOTTLE, name-key: items.sf.juicer.name, priority: 303, lore-key: items.sf.juicer.lore, flags: [legacy-sf]}
+  sf:automated_panning_machine: {category: sf:multiblocks, material: BOWL, name-key: items.sf.automated_panning_machine.name, priority: 304, lore-key: items.sf.automated_panning_machine.lore, flags: [legacy-sf]}
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:enhanced_crafting_table: {category: BASIC, display-name: sf:enhanced_crafting_table, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, enhanced-crafting]}
+  sf:grind_stone: {category: BASIC, display-name: sf:grind_stone, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, grind-stone]}
+  sf:compressor: {category: BASIC, display-name: sf:compressor, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, compressor]}
+  sf:ore_crusher: {category: BASIC, display-name: sf:ore_crusher, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, ore-crusher]}
+  sf:ore_washer: {category: BASIC, display-name: sf:ore_washer, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, ore-washer]}
+  sf:armor_forge: {category: BASIC, display-name: sf:armor_forge, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, armor, armor-forge]}
+  sf:makeshift_smeltery: {category: BASIC, display-name: sf:makeshift_smeltery, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, smeltery]}
+  sf:smeltery: {category: BASIC, display-name: sf:smeltery, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, smeltery]}
+  sf:pressure_chamber: {category: BASIC, display-name: sf:pressure_chamber, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, pressure-chamber]}
+  sf:magic_workbench: {category: BASIC, display-name: sf:magic_workbench, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, magic, magic-workbench]}
+  sf:table_saw: {category: BASIC, display-name: sf:table_saw, status-slot: -1, tick-interval: 1, tags: [machine, basic, hand-input-transform, manual], profile: hand_input_transform}
+  sf:juicer: {category: BASIC, display-name: sf:juicer, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, juicer]}
+  sf:automated_panning_machine: {category: BASIC, display-name: sf:automated_panning_machine, status-slot: -1, tick-interval: 1, tags: [machine, basic, hand-input-transform, manual], profile: hand_input_transform}
+
+basic-machines:
+  @ot: content/machines/basic-machines.yml
+  sf:enhanced_crafting_table: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:enhanced_crafting_table]}}}
+  sf:grind_stone: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:grind_stone]}}}
+  sf:compressor: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:compressor]}}}
+  sf:ore_crusher: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:ore_crusher]}}}
+  sf:ore_washer: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:ore_washer]}}}
+  sf:armor_forge: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:armor_forge]}}}
+  sf:makeshift_smeltery: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:smeltery]}}}
+  sf:smeltery: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:smeltery]}}}
+  sf:pressure_chamber: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:pressure_chamber]}}}
+  sf:magic_workbench: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:magic_workbench]}}}
+  sf:table_saw: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: []}}}
+  sf:juicer: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:juicer]}}}
+  sf:automated_panning_machine: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: []}}}

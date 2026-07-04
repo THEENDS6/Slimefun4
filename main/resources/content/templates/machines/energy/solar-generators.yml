@@ -1,0 +1,105 @@
+# Solar generator component family.
+items:
+  @ot: content/items.yml
+  sf:solar_generator:
+    category: sf:electricity
+    material: DAYLIGHT_DETECTOR
+    name-key: items.sf.solar_generator.name
+    priority: 338
+    lore-key: items.sf.solar_generator.lore
+    flags:
+    - legacy-sf
+  sf:solar_generator_2:
+    category: sf:electricity
+    material: DAYLIGHT_DETECTOR
+    name-key: items.sf.solar_generator_2.name
+    priority: 339
+    lore-key: items.sf.solar_generator_2.lore
+    flags:
+    - legacy-sf
+  sf:solar_generator_3:
+    category: sf:electricity
+    material: DAYLIGHT_DETECTOR
+    name-key: items.sf.solar_generator_3.name
+    priority: 340
+    lore-key: items.sf.solar_generator_3.lore
+    flags:
+    - legacy-sf
+  sf:solar_generator_4:
+    category: sf:electricity
+    material: DAYLIGHT_DETECTOR
+    name-key: items.sf.solar_generator_4.name
+    priority: 341
+    lore-key: items.sf.solar_generator_4.lore
+    flags:
+    - legacy-sf
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:solar_generator:
+    category: ENERGY
+    display-name: sf:solar_generator
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - solar-generator
+    profile: solar_generator
+  sf:solar_generator_2:
+    category: ENERGY
+    display-name: sf:solar_generator_2
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - solar-generator
+    profile: solar_generator
+  sf:solar_generator_3:
+    category: ENERGY
+    display-name: sf:solar_generator_3
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - solar-generator
+    profile: solar_generator
+  sf:solar_generator_4:
+    category: ENERGY
+    display-name: sf:solar_generator_4
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - solar-generator
+    profile: solar_generator
+
+components:
+  @ot: content/machines/energy-components.yml
+  "sf:solar_generator":
+    @cf: templates.energy.generator-output
+    @io: true
+    @d: {capacity: 0, generation: 4, burn-rate: 10, progress-material: DAYLIGHT_DETECTOR, fuels: []}
+  "sf:solar_generator_2":
+    @cf: templates.energy.generator-output
+    @io: true
+    @d: {capacity: 0, generation: 16, burn-rate: 10, progress-material: DAYLIGHT_DETECTOR, fuels: []}
+  "sf:solar_generator_3":
+    @cf: templates.energy.generator-output
+    @io: true
+    @d: {capacity: 0, generation: 64, burn-rate: 10, progress-material: DAYLIGHT_DETECTOR, fuels: []}
+  "sf:solar_generator_4":
+    @cf: templates.energy.component-definition
+    @io: true
+    @d:
+      type: GENERATOR
+      capacity: 0
+      generation: 256
+      consumption: 128
+      burn-rate: 10
+      vanilla-fuel: false
+      progress-material: DAYLIGHT_DETECTOR
+      fuels: []

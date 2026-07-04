@@ -1,0 +1,18 @@
+# Electric Ingot Pulverizer machine family. It accepts ingot pulverizing recipes.
+items:
+  "sf:electric_ingot_pulverizer":
+    category: sf:electricity
+    material: FURNACE
+    name-key: items.sf.electric_ingot_pulverizer.name
+    priority: 352
+    lore-key: items.sf.electric_ingot_pulverizer.lore
+    flags: [legacy-sf]
+machine-catalog:
+  "sf:electric_ingot_pulverizer": {category: ELECTRIC, display-name: sf:electric_ingot_pulverizer, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+machines:
+  @ot: content/machines/electric-machines.yml
+  "sf:electric_ingot_pulverizer":
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    @d: {name-key: items.sf.electric_ingot_pulverizer.name, speed: 1, capacity: 10240, consumption: 14, progress-material: IRON_PICKAXE}
+    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [ingot-pulverizing]}, include-recipes: [], exclude-recipes: []}
