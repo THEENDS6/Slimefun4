@@ -1,44 +1,76 @@
 # Electric Dust Washer machine family. It accepts dust washing recipes.
 items:
   "sf:electric_dust_washer":
+    @d:
+      suffix: ""
     category: sf:electricity
     material: BLUE_STAINED_GLASS
-    name-key: items.sf.electric_dust_washer.name
+    name-key: items.sf.electric_dust_washer${suffix}.name
     priority: 445
-    lore-key: items.sf.electric_dust_washer.lore
-    flags: [legacy-sf]
+    lore-key: items.sf.electric_dust_washer${suffix}.lore
+    flags:
+    - legacy-sf
   "sf:electric_dust_washer_2":
     @cf: items.sf:electric_dust_washer
-    name-key: items.sf.electric_dust_washer_2.name
+    @d:
+      suffix: "_2"
     priority: 446
-    lore-key: items.sf.electric_dust_washer_2.lore
   "sf:electric_dust_washer_3":
     @cf: items.sf:electric_dust_washer
-    name-key: items.sf.electric_dust_washer_3.name
+    @d:
+      suffix: "_3"
     priority: 447
-    lore-key: items.sf.electric_dust_washer_3.lore
 machine-catalog:
-  "sf:electric_dust_washer": {category: ELECTRIC, display-name: sf:electric_dust_washer, status-slot: -1, tick-interval: 1, tags: [machine, electric]}
+  "sf:electric_dust_washer":
+    @d:
+      suffix: ""
+    category: ELECTRIC
+    display-name: sf:electric_dust_washer${suffix}
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - electric
   "sf:electric_dust_washer_2":
     @cf: machine-catalog.sf:electric_dust_washer
-    display-name: sf:electric_dust_washer_2
+    @d:
+      suffix: "_2"
   "sf:electric_dust_washer_3":
     @cf: machine-catalog.sf:electric_dust_washer
-    display-name: sf:electric_dust_washer_3
+    @d:
+      suffix: "_3"
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:electric_dust_washer":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.electric_dust_washer.name, speed: 1, capacity: 5120, consumption: 6, progress-material: GOLDEN_SHOVEL}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [dust-washing]}, include-recipes: [], exclude-recipes: []}
+    @d:
+      suffix: ""
+      speed: 1
+      capacity: 5120
+      consumption: 6
+      progress-material: GOLDEN_SHOVEL
+    name-key: items.sf.electric_dust_washer${suffix}.name
+    runtime:
+      executor: sf:electric_processing
+      accepts:
+        recipe-tags:
+        - dust-washing
+      include-recipes: []
+      exclude-recipes: []
   "sf:electric_dust_washer_2":
     @cf: machines.sf:electric_dust_washer
-    name-key: items.sf.electric_dust_washer_2.name
+    @d:
+      suffix: "_2"
     speed: 2
-    energy: {capacity: 10240, consumption-per-tick: 10}
+    energy:
+      capacity: 10240
+      consumption-per-tick: 10
   "sf:electric_dust_washer_3":
     @cf: machines.sf:electric_dust_washer
-    name-key: items.sf.electric_dust_washer_3.name
+    @d:
+      suffix: "_3"
     speed: 10
-    energy: {capacity: 20480, consumption-per-tick: 30}
+    energy:
+      capacity: 20480
+      consumption-per-tick: 30
