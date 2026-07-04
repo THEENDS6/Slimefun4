@@ -348,10 +348,10 @@ tasks.register('validateSfxMachineYaml') {
         }
 
         def electricRecipeViolations = []
-        def electricProviderCount = 0
+        def electricRecipeGroupCount = 0
         def electricRecipeEntryCount = 0
         def electricExpansionCount = 0
-        def currentProvider = null
+        def currentRecipeGroup = null
         def currentElectricRecipe = null
         def validateElectricRecipe = { recipe ->
             if (recipe == null) {
@@ -362,20 +362,20 @@ tasks.register('validateSfxMachineYaml') {
                 electricExpansionCount++
                 ['expand', 'id-prefix', 'input-amount', 'ticks', 'outputs'].each { field ->
                     if (!recipe.fields.contains(field)) {
-                        electricRecipeViolations << "electric recipe provider ${recipe.provider} expansion missing ${field}"
+                        electricRecipeViolations << "electric recipe group ${recipe.group} expansion missing ${field}"
                     }
                 }
                 if (!recipe.fields.contains('tag') && !recipe.fields.contains('materials')) {
-                    electricRecipeViolations << "electric recipe provider ${recipe.provider} expansion missing tag/materials"
+                    electricRecipeViolations << "electric recipe group ${recipe.group} expansion missing tag/materials"
                 }
             } else {
                 ['id', 'inputs', 'ticks'].each { field ->
                     if (!recipe.fields.contains(field)) {
-                        electricRecipeViolations << "electric recipe provider ${recipe.provider} recipe missing ${field}"
+                        electricRecipeViolations << "electric recipe group ${recipe.group} recipe missing ${field}"
                     }
                 }
                 if (!recipe.fields.contains('outputs') && !recipe.fields.contains('random-outputs')) {
-                    electricRecipeViolations << "electric recipe provider ${recipe.provider} recipe ${recipe.id ?: '<unknown>'} missing outputs/random-outputs"
+                    electricRecipeViolations << "electric recipe group ${recipe.group} recipe ${recipe.id ?: '<unknown>'} missing outputs/random-outputs"
                 }
             }
         }
@@ -383,22 +383,22 @@ tasks.register('validateSfxMachineYaml') {
             validateElectricRecipe(currentElectricRecipe)
         }
         electricRecipeFile.eachLine('UTF-8') { line ->
-            def providerMatch = line =~ /^  ([a-z0-9_]+):\s*$/
-            if (providerMatch.matches()) {
+            def groupMatch = line =~ /^  ([a-z0-9_]+):\s*$/
+            if (groupMatch.matches()) {
                 flushElectricRecipe()
                 currentElectricRecipe = null
-                currentProvider = providerMatch.group(1)
-                electricProviderCount++
+                currentRecipeGroup = groupMatch.group(1)
+                electricRecipeGroupCount++
                 return
             }
-            if (currentProvider == null) {
+            if (currentRecipeGroup == null) {
                 return
             }
             def recipeStart = line =~ /^    - (id|expand):\s*(.+?)\s*$/
             if (recipeStart.matches()) {
                 flushElectricRecipe()
                 currentElectricRecipe = [
-                        provider: currentProvider,
+                        group   : currentRecipeGroup,
                         fields  : [] as Set,
                         id      : null
                 ]
@@ -418,8 +418,8 @@ tasks.register('validateSfxMachineYaml') {
             }
         }
         flushElectricRecipe()
-        if (electricProviderCount != 13) {
-            electricRecipeViolations << "electric recipe provider count expected 13, got ${electricProviderCount}"
+        if (electricRecipeGroupCount != 13) {
+            electricRecipeViolations << "electric recipe group count expected 13, got ${electricRecipeGroupCount}"
         }
         if (electricRecipeEntryCount != 139) {
             electricRecipeViolations << "electric recipe entry count expected 139, got ${electricRecipeEntryCount}"
@@ -491,7 +491,7 @@ tasks.register('validateSfxMachineYaml') {
         if (!configurableViolations.isEmpty()) {
             throw new GradleException("Configurable machine YAML validation failed:\n" + configurableViolations.join('\n'))
         }
-        logger.lifecycle("Validated ${declaredProfiles.size()} machine YAML profile declaration(s), ${catalogCount} machine catalog declaration(s), ${manualCount} manual machine declaration(s), ${electricRecipeEntryCount} electric recipe provider entry(s), and ${configurableCount} configurable machine declaration(s).")
+        logger.lifecycle("Validated ${declaredProfiles.size()} machine YAML profile declaration(s), ${catalogCount} machine catalog declaration(s), ${manualCount} manual machine declaration(s), ${electricRecipeEntryCount} electric recipe group entry(s), and ${configurableCount} configurable machine declaration(s).")
     }
 }
 

@@ -1,19 +1,10 @@
 # 电力机器配方定义。
 # 静态配方、材料/标签展开和随机输出写在这里；带 NBT、药水或附魔逻辑的动态配方仍由 Java 策略生成。
 #
-# 完整示例（复制后去掉注释即可启用）：
-# recipes:
-#   sf:example_machine:
-#     - key: example_recipe
-#       ticks: 10
-#       input:
-#         - material: COBBLESTONE
-#           amount: 1
-#       output:
-#         - material: STONE
-#           amount: 1
+# Source groups keep related electric recipes together for maintainers.
+# Compiled output flattens these groups into content/machines/electric-recipes/electric-recipes.yml.
 
-providers:
+recipe-groups:
   auto_drier:
     recipe-type: sf:electric_processing
     recipe-tags:
