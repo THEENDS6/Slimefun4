@@ -660,7 +660,7 @@ tasks.register('validateSfxBasicExpansionBoundary') {
                 'advanced-input-interface'
         ]
         def allowedPrefixes = [
-                'addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/',
+                'addons/basic-expansion/src/main/java/',
                 'addons/basic-expansion/src/main/resources/'
         ]
         def violations = []
@@ -730,13 +730,16 @@ tasks.register('validateSfxBasicExpansionBoundary') {
         }
         def basicAddon = layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java').asFile
         def basicAddonText = basicAddon.getText('UTF-8')
+        def basicAddonJavaText = fileTree(layout.projectDirectory.dir('addons/basic-expansion/src/main/java')) {
+            include '**/*.java'
+        }.files.collect { it.getText('UTF-8') }.join('\n')
         [
                 'sf:duralumin_jetpack',
                 'sf:carbonado_jetboots',
                 'sf:armored_jetpack',
                 'sf:fuel_jetpack'
         ].each { token ->
-            if (!basicAddonText.contains(token)) {
+            if (!basicAddonJavaText.contains(token)) {
                 violations << "SfxBasicExpansionAddon must own rechargeable SFX item definition ${token}"
             }
         }
@@ -751,12 +754,12 @@ tasks.register('validateSfxBasicExpansionBoundary') {
             violations << "SfxLocalization must not know Basic Expansion lore keys; addon code must register localized list processors."
         }
         ['registerLocalizedListPostProcessor', 'sfx-basic-expansion.lore.tier2-fuel-consumption'].each { token ->
-            if (!basicAddonText.contains(token)) {
+            if (!basicAddonJavaText.contains(token)) {
                 violations << "SfxBasicExpansionAddon must own Basic Expansion localized list processing token ${token}"
             }
         }
         ['registerTechnicalGadgetBehaviorProvider', 'BasicTechnicalGadgetBehavior', 'playJetBootsAirJumpSound'].each { token ->
-            if (!basicAddonText.contains(token)) {
+            if (!basicAddonJavaText.contains(token)) {
                 violations << "SfxBasicExpansionAddon must own SFX jetpack/jetboots behavior token ${token}"
             }
         }
@@ -768,7 +771,7 @@ tasks.register('validateSfxBasicExpansionBoundary') {
             }
         }
         ['registerGpsTransmitterStatusViewProvider', 'gps.ui.transmitter.status.energy', 'gps.ui.transmitter.info.transmitters'].each { token ->
-            if (!basicAddonText.contains(token)) {
+            if (!basicAddonJavaText.contains(token)) {
                 violations << "SfxBasicExpansionAddon must own GPS transmitter status UI token ${token}"
             }
         }
@@ -782,7 +785,7 @@ tasks.register('validateSfxBasicExpansionBoundary') {
             }
         }
         ['registerAutoBrewerBehaviorProvider', 'BasicAutoBrewerBehavior', 'BLAZE_FUEL_TICKS'].each { token ->
-            if (!basicAddonText.contains(token)) {
+            if (!basicAddonJavaText.contains(token)) {
                 violations << "SfxBasicExpansionAddon must own Auto Brewer UI/input behavior token ${token}"
             }
         }
@@ -794,7 +797,7 @@ tasks.register('validateSfxBasicExpansionBoundary') {
             }
         }
         ['registerRadiationSymptomHandler', 'radiationSymptoms', 'SLOW_DIGGING'].each { token ->
-            if (!basicAddonText.contains(token)) {
+            if (!basicAddonJavaText.contains(token)) {
                 violations << "SfxBasicExpansionAddon must own SFX radiation symptom token ${token}"
             }
         }
@@ -1041,29 +1044,34 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitions.java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitionConfig.java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAreaElectricMachineProviders.java'))
-    inputs.file(layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java'))
+    inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java'))
     doLast {
         def violations = []
         def definitions = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitions.java').asFile.getText('UTF-8')
         def definitionConfig = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitionConfig.java').asFile.getText('UTF-8')
         def areaProviders = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAreaElectricMachineProviders.java').asFile.getText('UTF-8')
-        def addon = layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java').asFile.getText('UTF-8')
+        def addon = fileTree(layout.projectDirectory.dir('addons/basic-expansion/src/main/java')) {
+            include '**/*.java'
+        }.files.collect { it.getText('UTF-8') }.join('\n')
         def registrar = layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java').asFile.getText('UTF-8')
         if (definitions.contains('SfxUtilityRulesResolver.rules(plugin).autoBrewerEnabled()')) {
             violations << 'SfxElectricMachineDefinitions must not directly select SFX Auto Brewer through utility rules.'
         }
-        if (!definitions.contains('sfx:advanced_auto_brewer')) {
-            violations << 'SfxElectricMachineDefinitions must expose the advanced auto brewer provider key.'
+        if (definitions.contains('new SfxAdvancedAutoBrewerRecipeProvider')
+                || definitions.contains('SfxAreaElectricMachineProviders.produceCollector(true)')
+                || definitions.contains('SfxAreaElectricMachineProviders.autoBreeder(true)')
+                || definitions.contains('SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 3, 20, true)')) {
+            violations << 'SfxElectricMachineDefinitions must not construct SFX electric providers directly.'
         }
         if (!definitionConfig.contains('electricSpecialProviderKeyPolicies()')) {
             violations << 'SfxElectricMachineDefinitionConfig must resolve special providers through addon policies.'
         }
-        if (!registrar.contains('registerElectricSpecialProviderKeyPolicy')) {
-            violations << 'SfxBehaviorRegistrar must expose electric special provider key policies.'
+        if (!registrar.contains('registerElectricSpecialProviderKeyPolicy') || !registrar.contains('registerElectricSpecialProvider')) {
+            violations << 'SfxBehaviorRegistrar must expose electric special provider key policies and provider factories.'
         }
-        if (!addon.contains('registerElectricSpecialProviderKeyPolicy') || !addon.contains('sfx:advanced_auto_brewer')) {
-            violations << 'SfxBasicExpansionAddon must register the Auto Brewer provider override through addon behavior API.'
+        if (!addon.contains('registerElectricSpecialProviderKeyPolicy') || !addon.contains('registerElectricSpecialProvider') || !addon.contains('sfx:advanced_auto_brewer')) {
+            violations << 'SfxBasicExpansionAddon must register the Auto Brewer provider override and provider through addon behavior API.'
         }
         [
                 'sfx:crop_growth_accelerator',
@@ -1075,7 +1083,7 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
                 'sfx:xp_collector',
                 'sfx:fluid_pump'
         ].each { providerKey ->
-            if (!definitions.contains(providerKey) || !addon.contains(providerKey)) {
+            if (definitions.contains(providerKey) || !addon.contains(providerKey)) {
                 violations << "SFX electric provider override is missing ${providerKey}"
             }
         }

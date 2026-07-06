@@ -29,6 +29,8 @@ public interface SfxBehaviorRegistrar {
 
     void registerElectricSpecialProviderKeyPolicy(SfxElectricSpecialProviderKeyPolicy policy);
 
+    void registerElectricSpecialProvider(String key, SfxElectricSpecialProviderFactory factory);
+
     void registerAutoBrewerBehaviorProvider(SfxAutoBrewerBehaviorProvider provider);
 
     void registerLocalizedListPostProcessor(SfxLocalizedListPostProcessor processor);

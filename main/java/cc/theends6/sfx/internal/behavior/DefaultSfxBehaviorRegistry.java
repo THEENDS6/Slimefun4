@@ -7,6 +7,8 @@ import cc.theends6.sfx.api.behavior.SfxAreaMachineRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxAutoBrewerBehaviorProvider;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferPolicy;
 import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderKeyPolicy;
+import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderFactory;
+import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderRegistration;
 import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelPolicy;
 import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionPolicy;
@@ -38,6 +40,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     private final List<SfxAreaMachineRuleProvider> areaMachineRuleProviders = new ArrayList<>();
     private final List<SfxUtilityRuleProvider> utilityRuleProviders = new ArrayList<>();
     private final List<SfxElectricSpecialProviderKeyPolicy> electricSpecialProviderKeyPolicies = new ArrayList<>();
+    private final List<SfxElectricSpecialProviderRegistration> electricSpecialProviders = new ArrayList<>();
     private final List<SfxAutoBrewerBehaviorProvider> autoBrewerBehaviorProviders = new ArrayList<>();
     private final List<SfxLocalizedListPostProcessor> localizedListPostProcessors = new ArrayList<>();
 
@@ -56,6 +59,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         areaMachineRuleProviders.clear();
         utilityRuleProviders.clear();
         electricSpecialProviderKeyPolicies.clear();
+        electricSpecialProviders.clear();
         autoBrewerBehaviorProviders.clear();
         localizedListPostProcessors.clear();
     }
@@ -231,6 +235,16 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     @Override
     public synchronized List<SfxElectricSpecialProviderKeyPolicy> electricSpecialProviderKeyPolicies() {
         return Collections.unmodifiableList(new ArrayList<>(electricSpecialProviderKeyPolicies));
+    }
+
+    @Override
+    public synchronized void registerElectricSpecialProvider(String key, SfxElectricSpecialProviderFactory factory) {
+        electricSpecialProviders.add(new SfxElectricSpecialProviderRegistration(key, factory));
+    }
+
+    @Override
+    public synchronized List<SfxElectricSpecialProviderRegistration> electricSpecialProviders() {
+        return Collections.unmodifiableList(new ArrayList<>(electricSpecialProviders));
     }
 
     @Override
