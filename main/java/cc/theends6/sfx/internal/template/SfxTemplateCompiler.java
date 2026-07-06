@@ -763,10 +763,10 @@ public final class SfxTemplateCompiler {
             recipe.put("input", explicitRecipeSlot(recipe.get("input")));
         }
         if (recipe.containsKey("outputs")) {
-            recipe.put("outputs", explicitRecipeOutputs(recipe.get("outputs")));
+            recipe.put("outputs", explicitRecipeOutputs(recipe.get("outputs"), false));
         }
         if (recipe.containsKey("random-outputs")) {
-            recipe.put("random-outputs", explicitRecipeOutputs(recipe.get("random-outputs")));
+            recipe.put("random-outputs", explicitRecipeOutputs(recipe.get("random-outputs"), true));
         }
     }
 
@@ -795,13 +795,18 @@ public final class SfxTemplateCompiler {
         throw new SfxTemplateCompileException("Unsupported recipe slot value: " + raw);
     }
 
-    private List<Object> explicitRecipeOutputs(Object raw) {
+    private List<Object> explicitRecipeOutputs(Object raw, boolean includeWeight) {
         if (!(raw instanceof List<?> entries)) {
             throw new SfxTemplateCompileException("Recipe output list must be a list.");
         }
         List<Object> result = new ArrayList<>(entries.size());
         for (Object entry : entries) {
-            result.add(explicitRecipeOutput(entry));
+            Map<String, Object> output = explicitRecipeOutput(entry);
+            if (includeWeight) {
+                int weight = entry instanceof Map<?, ?> map ? intValue(map.get("weight"), 1) : 1;
+                output.put("weight", Math.max(1, weight));
+            }
+            result.add(output);
         }
         return result;
     }
@@ -1425,13 +1430,65 @@ public final class SfxTemplateCompiler {
         recipe.put("inputs", inputs);
         Object outputs = entry.get("outputs");
         if (outputs != null) {
-            recipe.put("outputs", deepCopyValue(outputs));
+            recipe.put("outputs", explicitElectricRecipeOutputs(outputs, false));
         }
         Object randomOutputs = entry.get("random-outputs");
         if (randomOutputs != null) {
-            recipe.put("random-outputs", deepCopyValue(randomOutputs));
+            recipe.put("random-outputs", explicitElectricRecipeOutputs(randomOutputs, true));
         }
         return recipe;
+    }
+
+    private List<Object> explicitElectricRecipeOutputs(Object raw, boolean includeWeight) {
+        if (!(raw instanceof List<?> entries)) {
+            throw new SfxTemplateCompileException("Electric recipe output list must be a list.");
+        }
+        List<Object> result = new ArrayList<>(entries.size());
+        for (Object entry : entries) {
+            result.add(explicitElectricRecipeOutput(entry, includeWeight));
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> explicitElectricRecipeOutput(Object raw, boolean includeWeight) {
+        Map<String, Object> stack;
+        if (raw instanceof Map<?, ?> map) {
+            stack = explicitElectricRecipeItemMap((Map<String, Object>) map);
+        } else if (raw instanceof String text) {
+            stack = explicitElectricRecipeItemToken(text);
+        } else {
+            throw new SfxTemplateCompileException("Unsupported electric recipe output value: " + raw);
+        }
+        if (includeWeight) {
+            int weight = raw instanceof Map<?, ?> map ? intValue(map.get("weight"), 1) : 1;
+            stack.put("weight", Math.max(1, weight));
+        }
+        return stack;
+    }
+
+    private Map<String, Object> explicitElectricRecipeItemToken(String raw) {
+        Map<String, Object> stack = explicitRecipeItemToken(raw, false);
+        return electricStackFromGeneric(stack);
+    }
+
+    private Map<String, Object> explicitElectricRecipeItemMap(Map<String, Object> raw) {
+        Map<String, Object> stack = explicitRecipeItemMap(raw, false);
+        return electricStackFromGeneric(stack);
+    }
+
+    private Map<String, Object> electricStackFromGeneric(Map<String, Object> generic) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        Object type = generic.get("type");
+        if ("sfx".equals(type)) {
+            result.put("item", generic.get("id"));
+        } else if ("vanilla".equals(type)) {
+            result.put("material", generic.get("material"));
+        } else {
+            throw new SfxTemplateCompileException("Electric recipe output cannot use type: " + type);
+        }
+        result.put("amount", generic.get("amount"));
+        return result;
     }
 
     @SuppressWarnings("unchecked")
