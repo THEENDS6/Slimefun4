@@ -660,7 +660,7 @@ tasks.register('validateSfxBasicExpansionBoundary') {
                 'advanced-input-interface'
         ]
         def allowedPrefixes = [
-                'addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/',
+                'addons/basic-expansion/src/main/java/',
                 'addons/basic-expansion/src/main/resources/'
         ]
         def violations = []
@@ -731,142 +731,145 @@ tasks.register('validateSfxBasicExpansionBoundary') {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*.yml'
+*.java'
+        }.files.collect { it.getText('UTF-8') }.join('\n')
+        [
+                'sf:duralumin_jetpack',
+                'sf:carbonado_jetboots',
+                'sf:armored_jetpack',
+                'sf:fuel_jetpack'
+        ].each { token ->
+            if (!basicAddonJavaText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own rechargeable SFX item definition ${token}"
+            }
+        }
+        def localization = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/util/SfxLocalization.java').asFile
+        def localizationText = localization.getText('UTF-8')
+        ['Radius: &b19x19', 'Knowledge Flask', 'supports shears, bottles and brushes'].each { token ->
+            if (localizationText.contains(token)) {
+                violations << "SfxLocalization must read Basic Expansion lore from addon language, not hard-code ${token}"
+            }
+        }
+        if (localizationText.contains('sfx-basic-expansion.lore')) {
+            violations << "SfxLocalization must not know Basic Expansion lore keys; addon code must register localized list processors."
+        }
+        ['registerLocalizedListPostProcessor', 'sfx-basic-expansion.lore.tier2-fuel-consumption'].each { token ->
+            if (!basicAddonJavaText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own Basic Expansion localized list processing token ${token}"
+            }
+        }
+        ['registerTechnicalGadgetBehaviorProvider', 'BasicTechnicalGadgetBehavior', 'playJetBootsAirJumpSound'].each { token ->
+            if (!basicAddonJavaText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own SFX jetpack/jetboots behavior token ${token}"
+            }
+        }
+        def gpsService = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/gps/SfxGpsService.java').asFile
+        def gpsServiceText = gpsService.getText('UTF-8')
+        ['TRANSMITTER_GUI_STATUS_SLOT', 'gps.ui.transmitter.status.energy', 'gps.ui.transmitter.info.transmitters'].each { token ->
+            if (gpsServiceText.contains(token)) {
+                violations << "SfxGpsService must get SFX transmitter status UI view data from Basic Expansion addon, not core token ${token}"
+            }
+        }
+        ['registerGpsTransmitterStatusViewProvider', 'gps.ui.transmitter.status.energy', 'gps.ui.transmitter.info.transmitters'].each { token ->
+            if (!basicAddonJavaText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own GPS transmitter status UI token ${token}"
+            }
+        }
+        def autoBrewerRenderer = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAutoBrewerMenuRenderer.java').asFile
+        def autoBrewerRendererText = autoBrewerRenderer.getText('UTF-8')
+        def electricService = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineService.java').asFile
+        def electricServiceText = electricService.getText('UTF-8')
+        ['BLAZE_SLOT = 10', 'POTION_SLOTS =', 'MAX_BLAZE_FUEL_TICKS'].each { token ->
+            if (autoBrewerRendererText.contains(token) || electricServiceText.contains(token)) {
+                violations << "Auto Brewer UI/input constants must live in Basic Expansion addon, not core token ${token}"
+            }
+        }
+        ['registerAutoBrewerBehaviorProvider', 'BasicAutoBrewerBehavior', 'BLAZE_FUEL_TICKS'].each { token ->
+            if (!basicAddonJavaText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own Auto Brewer UI/input behavior token ${token}"
+            }
+        }
+        def radiationService = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/radiation/SfxRadiationService.java').asFile
+        def radiationServiceText = radiationService.getText('UTF-8')
+        ['applySymptoms(', 'SLOW_DIGGING", EFFECT_DURATION_TICKS', 'CONFUSION", EFFECT_DURATION_TICKS'].each { token ->
+            if (radiationServiceText.contains(token)) {
+                violations << "SfxRadiationService must get SFX radiation symptoms from Basic Expansion addon, not core token ${token}"
+            }
+        }
+        ['registerRadiationSymptomHandler', 'radiationSymptoms', 'SLOW_DIGGING'].each { token ->
+            if (!basicAddonJavaText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own SFX radiation symptom token ${token}"
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException("SFX Basic Expansion boundary validation failed:\n" + violations.unique().join('\n'))
+        }
+        logger.lifecycle("Validated SFX Basic Expansion ids, language keys, and config paths are confined to addon-owned sources.")
+    }
+}
+
+tasks.register('validateSfxFeatureGates') {
+    group = 'verification'
+    description = 'Validates bundled content feature gates reference features registered by bundled addons.'
+    inputs.file(layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java'))
+    inputs.file(layout.projectDirectory.file('main/resources/config.yml'))
+    inputs.dir(layout.projectDirectory.dir('main/resources/content'))
+    inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources/content'))
+    doLast {
+        def addonFile = layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java').asFile
+        def addonText = addonFile.getText('UTF-8')
+        def constants = [:]
+        (addonText =~ /private static final String\s+([A-Z0-9_]+)\s*=\s*"([^"]+)"/).each { match ->
+            constants[match[1]] = match[2]
+        }
+        def registered = [] as Set
+        (addonText =~ /context\.features\(\)\.registerBoolean\(\s*([A-Z0-9_]+|"[^"]+")\s*,/).each { match ->
+            def token = match[1]
+            if (token.startsWith('"')) {
+                registered << token.replaceAll(/^"|"$/, '')
+            } else if (constants.containsKey(token)) {
+                registered << constants[token]
+            }
+        }
+        if (registered.isEmpty()) {
+            throw new GradleException('No bundled addon features were detected in SfxBasicExpansionAddon.')
+        }
+        def violations = []
+
+        def registeredConfigPaths = [] as Set
+        (addonText =~ /context\.features\(\)\.registerBoolean\(\s*(?:[A-Z0-9_]+|"[^"]+")\s*,\s*"([^"]+)"/).each { match ->
+            registeredConfigPaths << match[1]
+        }
+        def configFile = layout.projectDirectory.file('main/resources/config.yml').asFile
+        def configPaths = [] as Set
+        def pathStack = []
+        configFile.readLines('UTF-8').each { line ->
+            if (line.trim().isEmpty() || line.trim().startsWith('#')) {
+                return
+            }
+            def matcher = line =~ /^(\s*)([A-Za-z0-9_.-]+):(?:\s*(.*))?$/
+            if (!matcher.matches()) {
+                return
+            }
+            int level = ((String) matcher.group(1)).length().intdiv(2)
+            while (pathStack.size() > level) {
+                pathStack.remove(pathStack.size() - 1)
+            }
+            pathStack.add(matcher.group(2))
+            configPaths << pathStack.join('.')
+        }
+        registeredConfigPaths.each { path ->
+            if (!configPaths.contains(path)) {
+                violations << "SfxBasicExpansionAddon registers feature config path ${path}, but main/resources/config.yml does not declare it"
+            }
+        }
+
+        [
+                layout.projectDirectory.dir('main/resources/content').asFile,
+                layout.projectDirectory.dir('addons/basic-expansion/src/main/resources/content').asFile
+        ].each { contentRoot ->
+            fileTree(contentRoot) {
+                include '**/*.yml'
             }.files.sort { it.path }.each { file ->
                 def relative = layout.projectDirectory.asFile.toPath().relativize(file.toPath()).toString().replace('\\', '/')
                 file.readLines('UTF-8').eachWithIndex { line, index ->
@@ -1041,29 +1044,34 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitions.java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitionConfig.java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAreaElectricMachineProviders.java'))
-    inputs.file(layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java'))
+    inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java'))
     doLast {
         def violations = []
         def definitions = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitions.java').asFile.getText('UTF-8')
         def definitionConfig = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitionConfig.java').asFile.getText('UTF-8')
         def areaProviders = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAreaElectricMachineProviders.java').asFile.getText('UTF-8')
-        def addon = layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java').asFile.getText('UTF-8')
+        def addon = fileTree(layout.projectDirectory.dir('addons/basic-expansion/src/main/java')) {
+            include '**/*.java'
+        }.files.collect { it.getText('UTF-8') }.join('\n')
         def registrar = layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java').asFile.getText('UTF-8')
         if (definitions.contains('SfxUtilityRulesResolver.rules(plugin).autoBrewerEnabled()')) {
             violations << 'SfxElectricMachineDefinitions must not directly select SFX Auto Brewer through utility rules.'
         }
-        if (!definitions.contains('sfx:advanced_auto_brewer')) {
-            violations << 'SfxElectricMachineDefinitions must expose the advanced auto brewer provider key.'
+        if (definitions.contains('new SfxAdvancedAutoBrewerRecipeProvider')
+                || definitions.contains('SfxAreaElectricMachineProviders.produceCollector(true)')
+                || definitions.contains('SfxAreaElectricMachineProviders.autoBreeder(true)')
+                || definitions.contains('SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 3, 20, true)')) {
+            violations << 'SfxElectricMachineDefinitions must not construct SFX electric providers directly.'
         }
         if (!definitionConfig.contains('electricSpecialProviderKeyPolicies()')) {
             violations << 'SfxElectricMachineDefinitionConfig must resolve special providers through addon policies.'
         }
-        if (!registrar.contains('registerElectricSpecialProviderKeyPolicy')) {
-            violations << 'SfxBehaviorRegistrar must expose electric special provider key policies.'
+        if (!registrar.contains('registerElectricSpecialProviderKeyPolicy') || !registrar.contains('registerElectricSpecialProvider')) {
+            violations << 'SfxBehaviorRegistrar must expose electric special provider key policies and provider factories.'
         }
-        if (!addon.contains('registerElectricSpecialProviderKeyPolicy') || !addon.contains('sfx:advanced_auto_brewer')) {
-            violations << 'SfxBasicExpansionAddon must register the Auto Brewer provider override through addon behavior API.'
+        if (!addon.contains('registerElectricSpecialProviderKeyPolicy') || !addon.contains('registerElectricSpecialProvider') || !addon.contains('sfx:advanced_auto_brewer')) {
+            violations << 'SfxBasicExpansionAddon must register the Auto Brewer provider override and provider through addon behavior API.'
         }
         [
                 'sfx:crop_growth_accelerator',
@@ -1075,7 +1083,7 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
                 'sfx:xp_collector',
                 'sfx:fluid_pump'
         ].each { providerKey ->
-            if (!definitions.contains(providerKey) || !addon.contains(providerKey)) {
+            if (definitions.contains(providerKey) || !addon.contains(providerKey)) {
                 violations << "SFX electric provider override is missing ${providerKey}"
             }
         }
@@ -1161,38 +1169,38 @@ tasks.register('validateSfxCompiledContent') {
     doLast {
         def root = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
         def compiledFiles = fileTree(root) {
-            include '**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*.yml'
+            include '**/*.yml'
+            exclude '_source-map.yml'
+        }.files
+        def forbiddenTokens = [
+                'menu-style:',
+                'layout:',
+                '@cf',
+                '@copyfrom',
+                '@d',
+                '@define',
+                '@g',
+                '@global',
+                '@io',
+                '@isoutput',
+                '@it',
+                '@istemplate',
+                '@ot',
+                '@outputtarget',
+                '@p',
+                '@project',
+                '${',
+                'tag-fuels',
+                'expand:',
+                'id-prefix:',
+                'input-prefix:',
+                'input-amount:',
+                '&id',
+                '*id'
+        ]
+        def violations = []
+        def recipeFiles = fileTree(new File(root, 'content/recipes')) {
+            include '**/*.yml'
         }.files
         def validRecipeOperations = ['shaped', 'shapeless', 'single', 'hand'] as Set
         def recipeMachineReferences = []
@@ -1703,20 +1711,20 @@ tasks.register('validateSfxCompiledContent') {
         def catalogMachineTags = [] as Set
         def catalogMachineTagsById = [:].withDefault { [] as Set }
         if (catalogCompiledFiles.isEmpty()) {
-            violations << "compiled machine catalog output missing content/machines/machine-catalog
-
-
-
-
-
-
-
-
-
-
-
-
-).count
+            violations << "compiled machine catalog output missing content/machines/machine-catalog/*.yml"
+        } else {
+            def catalogText = catalogCompiledFiles.collect { it.getText('UTF-8') }.join('\n')
+            catalogCompiledCount = (catalogText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
+            if (catalogCompiledCount != 184) {
+                violations << "compiled machine catalog entry count expected 184, got ${catalogCompiledCount}"
+            }
+            ['category:', 'display-name:', 'input-slots:', 'output-slots:', 'status-slot:', 'tick-interval:', 'tags:', 'capabilities:', 'input-provider:', 'output-provider:', 'policies:', 'effects:'].each { token ->
+                def count = (catalogText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count
+                if (count < 184) {
+                    violations << "compiled machine catalog expected ${token} on every entry, got ${count}"
+                }
+            }
+            def providerSlotCount = (catalogText =~ /(?m)^      slots:\s*/).count
             def providerDescriptionCount = (catalogText =~ /(?m)^      description:\s*/).count
             if (providerSlotCount != 368) {
                 violations << "compiled machine catalog expected provider slots on every input/output provider, got ${providerSlotCount}"

@@ -175,4 +175,6 @@ Radiation symptom handlers own addon-specific radiation symptom effects. Core ow
 
 Electric special provider key policies may redirect a compiled `sf:special_provider` binding from a classic provider key to an addon provider key. Basic Expansion uses this for Auto Brewer, growth machines, Produce Collector, Auto Breeder, XP Collector, and Fluid Pump behavior without hard-coding those SFX branches in the core provider implementations.
 
+Electric special provider factories may register the runtime provider behind an addon provider key. The factory receives the active plugin, item registry, and block-data service when electric machine definitions are built, so addon jars can provide Java-backed machine executors while the core only resolves the compiled provider contract.
+
 Localized list post-processors can adjust generated item lore and other language lists after the core language lookup is complete. The context exposes the requested language key plus raw text/list lookup helpers so addon-owned text stays in addon language files.
