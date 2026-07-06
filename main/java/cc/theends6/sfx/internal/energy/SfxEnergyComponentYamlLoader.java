@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal.energy;
 
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.feature.SfxFeatureSwitch;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -61,12 +62,38 @@ final class SfxEnergyComponentYamlLoader {
     }
 
     private boolean isEnabled(ConfigurationSection section) {
+        if (!requiredFeaturesEnabled(section.get("requires-feature"))) {
+            return false;
+        }
         String requireTrue = section.getString("enabled-when-config-true", null);
         if (requireTrue != null && !requireTrue.isBlank() && !plugin.getConfig().getBoolean(requireTrue, false)) {
             return false;
         }
         String requireFalse = section.getString("enabled-when-config-false", null);
         return requireFalse == null || requireFalse.isBlank() || !plugin.getConfig().getBoolean(requireFalse, false);
+    }
+
+    private boolean requiredFeaturesEnabled(Object raw) {
+        if (raw == null) {
+            return true;
+        }
+        if (raw instanceof Iterable<?> iterable) {
+            for (Object value : iterable) {
+                if (!requiredFeatureEnabled(value)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return requiredFeatureEnabled(raw);
+    }
+
+    private boolean requiredFeatureEnabled(Object raw) {
+        if (raw == null) {
+            return true;
+        }
+        String id = String.valueOf(raw).trim();
+        return SfxFeatureSwitch.requirementEnabled(plugin, id);
     }
 
     private SfxEnergyComponentDefinition parse(String id, ConfigurationSection section, boolean strict) {

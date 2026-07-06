@@ -218,6 +218,9 @@ final class SfxElectricMachineStatusIconRenderer {
     }
 
     private Component workingLore(SfxElectricMachineDefinition definition) {
+        if (definition.hasFunction("auto-brewer")) {
+            return localization.component("electric-ui.auto-brewer.progress.brewing");
+        }
         return switch (definition.id()) {
             case "sf:produce_collector" -> localization.component("electric-ui.action.produce.working");
             case "sf:auto_breeder" -> localization.component("electric-ui.action.auto-breeder.working");
@@ -228,7 +231,6 @@ final class SfxElectricMachineStatusIconRenderer {
             case "sf:fluid_pump" -> localization.component("electric-ui.action.fluid-pump.working");
             case "sf:geo_miner" -> localization.component("electric-ui.action.geo-miner.working");
             case "sf:oil_pump" -> localization.component("electric-ui.action.oil-pump.working");
-            case "sf:auto_brewer", "sf:auto_brewer_2" -> localization.component("electric-ui.auto-brewer.progress.brewing");
             case "sf:iron_golem_assembler", "sf:wither_assembler" -> localization.component("configurable-ui.assembler.working.lore");
             default -> SfxMachineStatusDefaults.lore(localization, SfxMachineStatusKey.WORKING);
         };

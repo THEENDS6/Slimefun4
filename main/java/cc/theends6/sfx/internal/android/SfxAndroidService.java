@@ -1,5 +1,9 @@
 package cc.theends6.sfx.internal.android;
 
+import cc.theends6.sfx.SlimeFunXPlugin;
+import cc.theends6.sfx.api.SfxApi;
+import cc.theends6.sfx.api.behavior.SfxAndroidWoodcutterContext;
+import cc.theends6.sfx.api.behavior.SfxAndroidWoodcutterPolicy;
 import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItemRegistry;
@@ -628,8 +632,8 @@ public final class SfxAndroidService implements Listener {
             return false;
         }
         List<Block> bottomLogs = bottomLayerLogs(target, logs, actionFacing(state));
-        boolean batchBottomLayer = plugin.getConfig().getBoolean("androids.woodcutter.batch-replant-bottom-layer", true);
-        if (batchBottomLayer && onlyBottomLayerLogsRemain(logs, bottomLogs)) {
+        boolean onlyBottomLayerLogsRemain = onlyBottomLayerLogsRemain(logs, bottomLogs);
+        if (batchReplantBottomLayer(logs, bottomLogs, onlyBottomLayerLogsRemain)) {
             return chopAndReplantBottomLayer(state, bottomLogs);
         }
         Block log = nextLogToChop(target, logs, bottomLogs, actionFacing(state));
@@ -651,6 +655,23 @@ public final class SfxAndroidService implements Listener {
         }
         state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
         return true;
+    }
+
+    private boolean batchReplantBottomLayer(List<Block> logs, List<Block> bottomLogs, boolean onlyBottomLayerLogsRemain) {
+        SfxApi api = sfxApi();
+        if (api == null) {
+            return false;
+        }
+        SfxAndroidWoodcutterContext context = new SfxAndroidWoodcutterContext(logs.size(), bottomLogs.size(), onlyBottomLayerLogsRemain);
+        boolean decision = false;
+        for (SfxAndroidWoodcutterPolicy policy : api.behaviors().androidWoodcutterPolicies()) {
+            decision = policy.batchReplantBottomLayer(context, decision);
+        }
+        return decision;
+    }
+
+    private SfxApi sfxApi() {
+        return plugin instanceof SlimeFunXPlugin sfx ? sfx.api() : null;
     }
 
     private Block nextLogToChop(Block root, List<Block> logs, List<Block> bottomLogs, BlockFace face) {

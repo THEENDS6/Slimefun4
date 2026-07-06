@@ -12,6 +12,10 @@ import cc.theends6.sfx.api.menu.SfxMenu;
 import cc.theends6.sfx.api.menu.SfxMenuButton;
 import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.internal.energy.SfxEnergyBalance;
+import cc.theends6.sfx.internal.energy.SfxEnergyComponentDefinition;
+import cc.theends6.sfx.internal.energy.SfxEnergyDefinitions;
+import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
 import cc.theends6.sfx.internal.machine.ManualMachineDefinition;
@@ -150,6 +154,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     final SfxResearchService researches;
     private final Map<UUID, GuidePreferences> preferencesByPlayer = new ConcurrentHashMap<>();
     private final Map<Material, List<GuideRecipePage>> vanillaRecipeCache = new ConcurrentHashMap<>();
+    private volatile Map<String, SfxEnergyComponentDefinition> guideEnergyDefinitions;
     final Set<UUID> researchingPlayers = ConcurrentHashMap.newKeySet();
 
     public DefaultSfxGuide(
@@ -763,6 +768,9 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private List<DisplayEntry> specialDisplayEntries(SfxItemDefinition definition, GuideMode mode) {
+        if ("bio-reactor".equals(definition.guideFuelProfile())) {
+            return compiledBioFuelDisplayEntries(definition.id(), mode, 300);
+        }
         return switch (definition.id()) {
             case "sf:composter" -> pairedDisplayEntries(List.of(
                     SfxRecipeSlot.vanilla(Material.OAK_LEAVES, 8), SfxRecipeSlot.vanilla(Material.DIRT),
@@ -789,7 +797,6 @@ public final class DefaultSfxGuide implements SfxGuide {
             case "sf:lava_generator_2" -> fixedFuelDisplayEntries(40, tierTwoBurnRateTenths(), mode, 300, List.of(
                     fuelData(SfxRecipeSlot.vanilla(Material.LAVA_BUCKET), 40 * lavaSecondsMultiplier(), "lava")));
             case "sf:bio_reactor" -> bioFuelDisplayEntries(8, 10, mode, 300);
-            case "sf:bio_reactor_2" -> bioFuelDisplayEntries(20, tierTwoBurnRateTenths(), mode, 300);
             case "sf:combustion_reactor" -> combustionFuelDisplayEntries(mode);
             case "sf:magnesium_generator" -> fixedFuelDisplayEntries(36, 10, mode, 300, List.of(
                     fuelData(SfxRecipeSlot.sfx("sf:magnesium_salt"), 20, "magnesium")));
@@ -803,8 +810,41 @@ public final class DefaultSfxGuide implements SfxGuide {
         };
     }
 
+    private List<DisplayEntry> compiledBioFuelDisplayEntries(String componentId, GuideMode mode, int startPriority) {
+        SfxEnergyComponentDefinition definition = guideEnergyDefinitions().get(componentId);
+        if (definition == null || definition.fuelRules().isEmpty()) {
+            return List.of();
+        }
+        List<FuelDisplayData> fuels = new ArrayList<>();
+        for (SfxEnergyComponentDefinition.FuelRule rule : definition.fuelRules()) {
+            SfxRecipeSlot slot = recipeSlot(rule.input());
+            if (slot != null) {
+                fuels.add(fuelData(slot, rule.seconds(), rule.key()));
+            }
+        }
+        return fixedFuelDisplayEntries(definition.energyPerTick(), definition.fuelBurnRateTenths(), mode, startPriority, fuels);
+    }
+
+    private Map<String, SfxEnergyComponentDefinition> guideEnergyDefinitions() {
+        Map<String, SfxEnergyComponentDefinition> cached = guideEnergyDefinitions;
+        if (cached == null) {
+            cached = SfxEnergyDefinitions.create(plugin);
+            guideEnergyDefinitions = cached;
+        }
+        return cached;
+    }
+
+    private SfxRecipeSlot recipeSlot(SfxElectricStack stack) {
+        if (stack == null || stack.hasSnapshot()) {
+            return null;
+        }
+        return stack.isSfxItem()
+                ? SfxRecipeSlot.sfx(stack.itemId(), stack.amount())
+                : SfxRecipeSlot.vanilla(stack.material(), stack.amount());
+    }
+
     private List<DisplayEntry> combustionFuelDisplayEntries(GuideMode mode) {
-        boolean sfxBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
+        boolean sfxBalance = generatorBalanceEnabled();
         int energy = sfxBalance ? 64 : 24;
         int oilSeconds = sfxBalance ? 40 : 30;
         int fuelSeconds = sfxBalance ? 120 : 90;
@@ -814,7 +854,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private List<DisplayEntry> coalFuelDisplayEntries(int energyPerTick, int burnRateTenths, GuideMode mode, int startPriority) {
-        int multiplier = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 2 : 1;
+        int multiplier = SfxEnergyBalance.rules(plugin).coalFuelTicksMultiplier();
         List<FuelDisplayData> fuels = List.of(
                 fuelData(SfxRecipeSlot.vanilla(Material.CHARCOAL), vanillaFuelSeconds(1600, multiplier), "charcoal"),
                 fuelData(SfxRecipeSlot.vanilla(Material.COAL), vanillaFuelSeconds(1600, multiplier), "coal"),
@@ -829,7 +869,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private List<DisplayEntry> bioFuelDisplayEntries(int energyPerTick, int burnRateTenths, GuideMode mode, int startPriority) {
-        int multiplier = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 4 : 1;
+        int multiplier = SfxEnergyBalance.rules(plugin).bioFuelSecondsMultiplier();
         List<FuelDisplayData> fuels = new ArrayList<>();
         addBioFuel(fuels, Material.ROTTEN_FLESH, 2, multiplier);
         addBioFuel(fuels, Material.SPIDER_EYE, 2, multiplier);
@@ -918,15 +958,19 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private int tierTwoBurnRateTenths() {
-        return plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 15 : 10;
+        return SfxEnergyBalance.rules(plugin).tierTwoBurnRateTenths();
     }
 
     private int lavaSecondsMultiplier() {
-        return plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 2 : 1;
+        return SfxEnergyBalance.rules(plugin).lavaFuelSecondsMultiplier();
     }
 
     private int netherStarReactorEnergyPerTick() {
-        return plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 2048 : 1024;
+        return SfxEnergyBalance.rules(plugin).netherStarReactorEnergyPerTick();
+    }
+
+    private boolean generatorBalanceEnabled() {
+        return SfxEnergyBalance.rules(plugin).generatorBalanceEnabled();
     }
 
     private String formatDuration(double seconds) {

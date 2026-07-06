@@ -1,5 +1,11 @@
 package cc.theends6.sfx.internal.cargo;
 
+import cc.theends6.sfx.SlimeFunXPlugin;
+import cc.theends6.sfx.api.SfxApi;
+import cc.theends6.sfx.api.behavior.SfxCargoDistribution;
+import cc.theends6.sfx.api.behavior.SfxCargoInputTransferContext;
+import cc.theends6.sfx.api.behavior.SfxCargoInputTransferDecision;
+import cc.theends6.sfx.api.behavior.SfxCargoInputTransferPolicy;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
@@ -646,9 +652,7 @@ public final class SfxCargoService implements Listener {
             if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(input.instance().typeId(), SfxMachinePhase.BEFORE_INPUT, input.instance().instanceId(), toLocation(input.instance().anchorKey()), cargoTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, inputFramework), inputFramework, SfxMachinePhase.BEFORE_INPUT.name())) {
                 continue;
             }
-            int moved = input.definition().type() == SfxCargoComponentType.ADVANCED_INPUT_NODE
-                    ? processAdvancedInput(input, network.outputs())
-                    : processBasicInput(input, network.outputs());
+            int moved = processInput(input, network.outputs());
             inputFramework.put("cargo.moved", moved);
             if (moved > 0) {
                 recordManagerTransfer(network.managerId(), moved);
@@ -796,35 +800,74 @@ public final class SfxCargoService implements Listener {
         return new SfxFloatingTextKey("cargo-manager", key.worldId(), key.x(), key.y(), key.z());
     }
 
-    private int processBasicInput(SfxCargoNodeRef input, List<SfxCargoNodeRef> outputs) {
+    private int processInput(SfxCargoNodeRef input, List<SfxCargoNodeRef> outputs) {
         SfxCargoEndpoint source = input.endpoint();
         if (source == null || !source.canExtract()) {
             return 0;
         }
+        SfxCargoInputTransferDecision decision = inputTransferDecision(input);
         Predicate<ItemStack> filter = stack -> acceptsInputFilter(input.state(), stack);
-        PlannedStack plan = source.planFirst(filter, 64);
-        if (plan == null || plan.isEmpty()) {
-            return 0;
+        int maxItems = Math.max(1, SfxCargoNodeState.normalizeBatchLimit(decision.maxItems()));
+        int maxDistinctTypes = Math.max(1, Math.min(16, decision.maxDistinctTypes()));
+        SfxCargoDistributionMode distribution = internalDistribution(decision.distribution());
+        if (maxItems <= 64 && maxDistinctTypes == 1 && !decision.allowMultipleSlots()) {
+            PlannedStack plan = source.planFirst(filter, maxItems);
+            return plan == null || plan.isEmpty() ? 0 : commitPlannedTransfer(input, source, plan, outputs, distribution);
         }
-        return commitPlannedTransfer(input, source, plan, outputs, input.state().roundRobin ? SfxCargoDistributionMode.ROUND_ROBIN : SfxCargoDistributionMode.SEQUENTIAL);
-    }
-
-    private int processAdvancedInput(SfxCargoNodeRef input, List<SfxCargoNodeRef> outputs) {
-        SfxCargoEndpoint source = input.endpoint();
-        if (source == null || !source.canExtract()) {
-            return 0;
-        }
-        Predicate<ItemStack> filter = stack -> acceptsInputFilter(input.state(), stack);
-        int limit = SfxCargoNodeState.normalizeBatchLimit(input.state().batchLimit);
-        List<PlannedStack> batch = source.planBatch(filter, limit, input.state().maxDistinctTypes, input.state().allowMultipleSlots);
+        List<PlannedStack> batch = source.planBatch(filter, maxItems, maxDistinctTypes, decision.allowMultipleSlots());
         if (batch.isEmpty()) {
             return 0;
         }
         int moved = 0;
         for (PlannedStack plan : batch) {
-            moved += commitPlannedTransfer(input, source, plan, outputs, input.state().distributionMode);
+            moved += commitPlannedTransfer(input, source, plan, outputs, distribution);
         }
         return moved;
+    }
+
+    private SfxCargoInputTransferDecision inputTransferDecision(SfxCargoNodeRef input) {
+        SfxCargoDistribution basicDistribution = input.state().roundRobin ? SfxCargoDistribution.ROUND_ROBIN : SfxCargoDistribution.SEQUENTIAL;
+        SfxCargoInputTransferDecision decision = SfxCargoInputTransferDecision.singleStack(basicDistribution);
+        SfxApi api = sfxApi();
+        if (api == null) {
+            return decision;
+        }
+        SfxCargoInputTransferContext context = new SfxCargoInputTransferContext(
+                input.definition().id(),
+                input.definition().type() == SfxCargoComponentType.ADVANCED_INPUT_NODE,
+                input.state().roundRobin,
+                publicDistribution(input.state().distributionMode),
+                input.state().allowMultipleSlots,
+                SfxCargoNodeState.normalizeBatchLimit(input.state().batchLimit),
+                Math.max(1, Math.min(16, input.state().maxDistinctTypes))
+        );
+        for (SfxCargoInputTransferPolicy policy : api.behaviors().cargoInputTransferPolicies()) {
+            SfxCargoInputTransferDecision next = policy.decide(context, decision);
+            if (next != null) {
+                decision = next;
+            }
+        }
+        return decision;
+    }
+
+    private SfxCargoDistribution publicDistribution(SfxCargoDistributionMode mode) {
+        return switch (mode == null ? SfxCargoDistributionMode.SEQUENTIAL : mode) {
+            case SEQUENTIAL -> SfxCargoDistribution.SEQUENTIAL;
+            case ROUND_ROBIN -> SfxCargoDistribution.ROUND_ROBIN;
+            case EVEN -> SfxCargoDistribution.EVEN;
+        };
+    }
+
+    private SfxCargoDistributionMode internalDistribution(SfxCargoDistribution mode) {
+        return switch (mode == null ? SfxCargoDistribution.SEQUENTIAL : mode) {
+            case SEQUENTIAL -> SfxCargoDistributionMode.SEQUENTIAL;
+            case ROUND_ROBIN -> SfxCargoDistributionMode.ROUND_ROBIN;
+            case EVEN -> SfxCargoDistributionMode.EVEN;
+        };
+    }
+
+    private SfxApi sfxApi() {
+        return plugin instanceof SlimeFunXPlugin sfx ? sfx.api() : null;
     }
 
     private int commitPlannedTransfer(SfxCargoNodeRef input, SfxCargoEndpoint source, PlannedStack plan, List<SfxCargoNodeRef> outputs, SfxCargoDistributionMode mode) {

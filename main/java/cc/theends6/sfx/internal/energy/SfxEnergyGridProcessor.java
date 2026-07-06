@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.energy;
 
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.internal.feature.SfxFeatureSwitch;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
@@ -113,7 +114,7 @@ final class SfxEnergyGridProcessor {
         int totalCapacityBefore = service.totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
                 + service.configurableMachines.totalCapacity(configurableRuntimeMachines);
         int totalEffectiveCapacityBefore = totalCapacityBefore + service.hiddenBufferCapacity(service.hiddenStorageBaseCapacity(capacitorRefs, generatorRefs));
-        boolean autoPauseEnabled = service.plugin.getConfig().getBoolean("energy.generator-balance.pause-generators-when-grid-full", true);
+        boolean autoPauseEnabled = SfxEnergyBalance.rules(service.plugin).pauseGeneratorsWhenGridFull();
         int potentialSupply = service.potentialGeneration(generatorRefs, configurableProducers);
         if (autoPauseEnabled) {
             service.applyGeneratorAutoPause(generatorRefs, configurableProducers, totalStoredBefore, totalEffectiveCapacityBefore, potentialSupply, requestedConsumption);

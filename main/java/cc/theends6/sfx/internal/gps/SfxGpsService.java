@@ -1,5 +1,10 @@
 package cc.theends6.sfx.internal.gps;
 
+import cc.theends6.sfx.SlimeFunXPlugin;
+import cc.theends6.sfx.api.SfxApi;
+import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionContext;
+import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionDecision;
+import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionPolicy;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.menu.SfxMenu;
@@ -141,7 +146,6 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
             28, 29, 30, 31, 32, 33, 34,
             37, 38, 39, 40, 41, 42, 43
     };
-    private static final String CONFIG_TRANSMITTER_GUI_ENABLED = "gps.sfx-extensions.transmitter-gui.enabled";
     private static final int TRANSMITTER_GUI_STATUS_SLOT = 11;
     private static final int TRANSMITTER_GUI_INFO_SLOT = 15;
     private static final String HEAD_GLOBE_OVERWORLD = "c9c8881e42915a9d29bb61a16fb26d059913204d265df5b439b3d792acd56";
@@ -403,7 +407,7 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
     private boolean handleGpsBlockRightClick(Player player, Block block, SfxBlockInstanceRecord instance) {
         return switch (instance.typeId()) {
             case "sf:gps_transmitter", "sf:gps_transmitter_2", "sf:gps_transmitter_3", "sf:gps_transmitter_4" -> {
-                if (!transmitterGuiEnabled()) {
+                if (transmitterInteraction(player, block, instance) != SfxGpsTransmitterInteractionDecision.OPEN_STATUS_UI) {
                     yield false;
                 }
                 openTransmitterGui(player, block, instance);
@@ -540,8 +544,35 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         return player.getUniqueId() + ":" + worldId + ":" + location.getBlockX() + ":" + location.getBlockY() + ":" + location.getBlockZ();
     }
 
-    private boolean transmitterGuiEnabled() {
-        return plugin.getConfig().getBoolean(CONFIG_TRANSMITTER_GUI_ENABLED, true);
+    private SfxGpsTransmitterInteractionDecision transmitterInteraction(Player player, Block block, SfxBlockInstanceRecord instance) {
+        SfxApi api = sfxApi();
+        if (api == null) {
+            return SfxGpsTransmitterInteractionDecision.PASS;
+        }
+        Location location = block.getLocation();
+        UUID owner = instance.ownerId();
+        int requiredEnergy = Math.max(1, TRANSMITTER_CONSUMPTION.getOrDefault(instance.typeId(), 1));
+        SfxGpsTransmitterInteractionContext context = new SfxGpsTransmitterInteractionContext(
+                instance.typeId(),
+                owner,
+                electricMachines.consumerStoredEnergy(instance.instanceId()),
+                requiredEnergy,
+                transmitterStrength(instance, blockData.findAnchor(location).orElse(null)),
+                networkComplexity(owner),
+                countTransmitters(owner)
+        );
+        SfxGpsTransmitterInteractionDecision decision = SfxGpsTransmitterInteractionDecision.PASS;
+        for (SfxGpsTransmitterInteractionPolicy policy : api.behaviors().gpsTransmitterInteractionPolicies()) {
+            SfxGpsTransmitterInteractionDecision next = policy.decide(context, decision);
+            if (next != null) {
+                decision = next;
+            }
+        }
+        return decision;
+    }
+
+    private SfxApi sfxApi() {
+        return plugin instanceof SlimeFunXPlugin sfx ? sfx.api() : null;
     }
 
     private void openTransmitterGui(Player player, Block block, SfxBlockInstanceRecord instance) {

@@ -4,6 +4,7 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.behavior.SfxAreaMachineRules;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,12 +72,8 @@ final class SfxAreaElectricMachineProviders {
     private static final double XP_COLLECTOR_ABSORB_RANGE = 1.0D;
     private static final double XP_COLLECTOR_ATTRACT_SPEED = 0.18D;
     private static final int XP_PER_FLASK = 10;
-    private static final int DEFAULT_XP_FLASK_ENERGY_COST = 4096;
     private static final int FLUID_PUMP_WORK_TICKS = 10;
     private static final int FLUID_SOURCE_SEARCH_LIMIT = 42;
-    private static final int DEFAULT_FLUID_POOL_CHECK_INTERVAL_TICKS = 200;
-    private static final int DEFAULT_WATER_POOL_SOURCE_THRESHOLD = 4;
-    private static final int DEFAULT_LAVA_POOL_SOURCE_THRESHOLD = 300;
     private static final Map<FluidPoolCacheKey, FluidPoolCacheEntry> FLUID_POOL_CACHE = new ConcurrentHashMap<>();
     private static final Map<FluidPumpSourceCacheKey, FluidPumpSourceCacheEntry> FLUID_PUMP_SOURCE_CACHE = new ConcurrentHashMap<>();
     private static final Enchantment UNBREAKING = Enchantment.getByKey(NamespacedKey.minecraft("unbreaking"));
@@ -93,18 +90,18 @@ final class SfxAreaElectricMachineProviders {
         Block below = location.getBlock().getRelative(BlockFace.DOWN);
         Material fluid = fluidMaterial(below);
         if (fluid != null && isSourceLiquid(below)) {
-            hasLargeEnoughSourcePool(plugin, location, below, fluid);
+            hasLargeEnoughSourcePool(SfxAreaMachineBalance.rules(plugin), location, below, fluid);
         }
     }
 
-    static SfxElectricRecipeProvider fluidPump() {
+    static SfxElectricRecipeProvider fluidPump(SfxAreaMachineRules rules) {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 if (isActive(state, "sf:fluid_pump")) {
-                    return advanceFluidPump(plugin, items, definition, state, location);
+                    return advanceFluidPump(rules, plugin, items, definition, state, location);
                 }
-                FluidPumpAction action = findFluidPumpStart(plugin, items, definition, state, location);
+                FluidPumpAction action = findFluidPumpStart(rules, plugin, items, definition, state, location);
                 if (action.status() != SfxElectricMachineRenderStatus.WORKING) {
                     return SfxElectricMachineTickResult.status(action.status(), action.status() != SfxElectricMachineRenderStatus.NO_INPUT);
                 }
@@ -119,7 +116,7 @@ final class SfxAreaElectricMachineProviders {
                 state.reservedInputs(List.of(reserved));
                 state.pendingOutput(null);
                 state.progressWork(0);
-                return advanceFluidPump(plugin, items, definition, state, location);
+                return advanceFluidPump(rules, plugin, items, definition, state, location);
             }
 
             @Override
@@ -127,7 +124,7 @@ final class SfxAreaElectricMachineProviders {
                 if (isActive(state, "sf:fluid_pump")) {
                     return state.progressWork() >= Math.max(1, state.activeBaseTicks()) ? 0 : definition.energyConsumptionPerTick();
                 }
-                return requestedFluidPumpEnergy(plugin, items, definition, state, location);
+                return requestedFluidPumpEnergy(rules, items, definition, state, location);
             }
         };
     }
@@ -186,20 +183,20 @@ final class SfxAreaElectricMachineProviders {
         };
     }
 
-    static SfxElectricRecipeProvider produceCollector() {
+    static SfxElectricRecipeProvider produceCollector(boolean sfxBalance) {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 if (isActive(state, "sf:produce_collector:")) {
-                    return advanceProduce(plugin, items, definition, state, location, useSfxBalance(plugin, "produce-collector"));
+                    return advanceProduce(plugin, items, definition, state, location, sfxBalance);
                 }
-                ProduceStart start = findProduceStart(plugin, items, definition, state, location, useSfxBalance(plugin, "produce-collector"));
+                ProduceStart start = findProduceStart(plugin, items, definition, state, location, sfxBalance);
                 return startProduce(definition, state, start);
             }
 
             @Override
             public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                if (!useSfxBalance(plugin, "produce-collector")) {
+                if (!sfxBalance) {
                     return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
                 }
                 if (state.hasProgress()) {
@@ -211,10 +208,10 @@ final class SfxAreaElectricMachineProviders {
         };
     }
 
-    static SfxElectricRecipeProvider autoBreeder() {
+    static SfxElectricRecipeProvider autoBreeder(boolean sfxBalance) {
         return entityActionProvider(
                 "sf:auto_breeder",
-                "auto-breeder",
+                sfxBalance,
                 true,
                 entity -> entity instanceof Animals animal && entity.isValid() && animal.isAdult() && animal.canBreed() && !animal.isLoveMode(),
                 entity -> {
@@ -225,15 +222,14 @@ final class SfxAreaElectricMachineProviders {
                 });
     }
 
-    static SfxElectricRecipeProvider animalGrowthAccelerator() {
+    static SfxElectricRecipeProvider animalGrowthAccelerator(int ageIncrement) {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 Predicate<Entity> predicate = entity -> entity instanceof org.bukkit.entity.Ageable ageable && entity.isValid() && !ageable.isAdult();
                 Consumer<Entity> action = entity -> {
                     if (entity instanceof org.bukkit.entity.Ageable ageable) {
-                        int amount = useSfxBalance(plugin, "animal-growth-accelerator") ? 4000 : 2000;
-                        ageable.setAge(Math.min(0, ageable.getAge() + amount));
+                        ageable.setAge(Math.min(0, ageable.getAge() + Math.max(1, ageIncrement)));
                     }
                     spawnEntityHearts(entity);
                 };
@@ -257,11 +253,11 @@ final class SfxAreaElectricMachineProviders {
         };
     }
 
-    static SfxElectricRecipeProvider cropGrowthAccelerator(SfxBlockDataService blockData, int classicRadius, int sfxAttempts) {
+    static SfxElectricRecipeProvider cropGrowthAccelerator(SfxBlockDataService blockData, int classicRadius, int sfxAttempts, boolean sfxMode) {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                if (useSfxBalance(plugin, "crop-growth-accelerator")) {
+                if (sfxMode) {
                     return tickSfxCropGrowth(blockData, definition, state, location, sfxAttempts);
                 }
                 return tickClassicCropGrowth(definition, state, location, classicRadius, classicRadius);
@@ -269,7 +265,7 @@ final class SfxAreaElectricMachineProviders {
 
             @Override
             public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                if (!useSfxBalance(plugin, "crop-growth-accelerator")) {
+                if (!sfxMode) {
                     return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
                 }
                 if (state.hasProgress()) {
@@ -283,11 +279,11 @@ final class SfxAreaElectricMachineProviders {
         };
     }
 
-    static SfxElectricRecipeProvider treeGrowthAccelerator() {
+    static SfxElectricRecipeProvider treeGrowthAccelerator(boolean sfxMode) {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                if (useSfxBalance(plugin, "tree-growth-accelerator")) {
+                if (sfxMode) {
                     return tickSfxTreeGrowth(definition, state, location);
                 }
                 return tickClassicTreeGrowth(definition, state, location);
@@ -295,7 +291,7 @@ final class SfxAreaElectricMachineProviders {
 
             @Override
             public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                if (!useSfxBalance(plugin, "tree-growth-accelerator")) {
+                if (!sfxMode) {
                     return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
                 }
                 if (state.hasProgress()) {
@@ -309,13 +305,11 @@ final class SfxAreaElectricMachineProviders {
         };
     }
 
-    static SfxElectricRecipeProvider expCollector() {
+    static SfxElectricRecipeProvider expCollector(boolean sfxBalance, int flaskEnergyCost) {
         return new SpecialProvider() {
             @Override
             public SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, SfxMachineTickContext context) {
-                boolean useBalance = useSfxBalance(plugin, "xp-collector");
-                int flaskEnergyCost = xpFlaskEnergyCost(plugin);
-                FlushResult initialFlush = flushKnowledgeFlasks(items, definition, state, useBalance, flaskEnergyCost);
+                FlushResult initialFlush = flushKnowledgeFlasks(items, definition, state, sfxBalance, flaskEnergyCost);
                 boolean changed = initialFlush.changed();
                 int consumedEnergy = initialFlush.consumedEnergy();
                 int supplementalEnergy = initialFlush.consumedEnergy();
@@ -325,7 +319,7 @@ final class SfxAreaElectricMachineProviders {
                     state.activeBaseTicks(ACTION_WORK_TICKS);
                     return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.OUTPUT_FULL, consumedEnergy, supplementalEnergy, changed, true);
                 }
-                if (useBalance && state.specialData() >= XP_PER_FLASK && state.storedEnergy() < flaskEnergyCost) {
+                if (sfxBalance && state.specialData() >= XP_PER_FLASK && state.storedEnergy() < flaskEnergyCost) {
                     state.activeRecipeKey("sf:xp_collector");
                     state.activeBaseTicks(ACTION_WORK_TICKS);
                     return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_POWER, consumedEnergy, supplementalEnergy, changed, true);
@@ -348,7 +342,7 @@ final class SfxAreaElectricMachineProviders {
                 int nextProgress = state.progressWork() + progressTicks;
                 consumedEnergy += baseEnergy;
                 changed = true;
-                if (useBalance) {
+                if (sfxBalance) {
                     for (int tick = 0; tick < progressTicks; tick++) {
                         attractExperience(location);
                         int collected = absorbCloseExperience(location);
@@ -364,11 +358,11 @@ final class SfxAreaElectricMachineProviders {
                 }
                 while (nextProgress >= ACTION_WORK_TICKS) {
                     nextProgress -= ACTION_WORK_TICKS;
-                    int collected = useBalance ? 0 : collectAllNearbyExperience(location);
+                    int collected = sfxBalance ? 0 : collectAllNearbyExperience(location);
                     if (collected > 0) {
                         state.specialData(state.specialData() + collected);
                     }
-                    FlushResult flush = flushKnowledgeFlasks(items, definition, state, useBalance, flaskEnergyCost);
+                    FlushResult flush = flushKnowledgeFlasks(items, definition, state, sfxBalance, flaskEnergyCost);
                     consumedEnergy += flush.consumedEnergy();
                     supplementalEnergy += flush.consumedEnergy();
                     changed = changed || flush.changed() || collected > 0;
@@ -392,7 +386,7 @@ final class SfxAreaElectricMachineProviders {
         };
     }
 
-    private static SfxElectricRecipeProvider entityActionProvider(String key, String balanceKey, boolean organicFood, Predicate<Entity> predicate, Consumer<Entity> action) {
+    private static SfxElectricRecipeProvider entityActionProvider(String key, boolean sfxBalance, boolean organicFood, Predicate<Entity> predicate, Consumer<Entity> action) {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
@@ -411,7 +405,7 @@ final class SfxAreaElectricMachineProviders {
 
             @Override
             public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                if (!useSfxBalance(plugin, balanceKey)) {
+                if (!sfxBalance) {
                     return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
                 }
                 if (state.hasProgress()) {
@@ -1238,10 +1232,6 @@ final class SfxAreaElectricMachineProviders {
         return new FlushResult(changed, consumedEnergy);
     }
 
-    private static int xpFlaskEnergyCost(JavaPlugin plugin) {
-        return Math.max(0, plugin.getConfig().getInt("electric-machines.sfx-balance.xp-collector.flask-energy-cost", DEFAULT_XP_FLASK_ENERGY_COST));
-    }
-
     private static int firstInputSlot(SfxElectricMachineState state, boolean organicFood) {
         for (int slot = 0; slot < state.inputCapacity(); slot++) {
             SfxElectricStack stack = state.input(slot);
@@ -1351,19 +1341,7 @@ final class SfxAreaElectricMachineProviders {
         return state.activeRecipeKey() != null && state.activeRecipeKey().startsWith(key) && state.hasReservedInput();
     }
 
-    private static boolean useSfxBalance(JavaPlugin plugin, String key) {
-        if (plugin == null) {
-            return true;
-        }
-        String path = "electric-machines.sfx-balance." + key;
-        if (plugin.getConfig().isConfigurationSection(path)) {
-            return plugin.getConfig().getBoolean(path + ".enabled", true);
-        }
-        return plugin.getConfig().getBoolean(path, true);
-    }
-
-
-    private static int requestedFluidPumpEnergy(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+    private static int requestedFluidPumpEnergy(SfxAreaMachineRules rules, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
         if (state.hasPendingOutput()) {
             return 0;
         }
@@ -1381,7 +1359,7 @@ final class SfxAreaElectricMachineProviders {
         if (container == null) {
             return 0;
         }
-        Material fluid = cachedFluidForRequest(plugin, location, container).orElse(null);
+        Material fluid = cachedFluidForRequest(rules, location, container).orElse(null);
         if (fluid == null) {
             return 0;
         }
@@ -1389,10 +1367,10 @@ final class SfxAreaElectricMachineProviders {
         return output != null && canFitOutput(items, definition, state, output) ? definition.energyConsumptionPerTick() : 0;
     }
 
-    private static SfxElectricMachineTickResult advanceFluidPump(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+    private static SfxElectricMachineTickResult advanceFluidPump(SfxAreaMachineRules rules, JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
         int totalWork = Math.max(1, state.activeBaseTicks());
         if (state.progressWork() >= totalWork) {
-            return completeFluidPump(plugin, items, definition, state, location);
+            return completeFluidPump(rules, plugin, items, definition, state, location);
         }
         if (state.storedEnergy() < definition.energyConsumptionPerTick()) {
             return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_POWER, true);
@@ -1401,14 +1379,14 @@ final class SfxAreaElectricMachineProviders {
         int progressed = Math.min(totalWork, state.progressWork() + definition.speed());
         state.progressWork(progressed);
         if (progressed >= totalWork) {
-            SfxElectricMachineTickResult completion = completeFluidPump(plugin, items, definition, state, location);
+            SfxElectricMachineTickResult completion = completeFluidPump(rules, plugin, items, definition, state, location);
             return new SfxElectricMachineTickResult(completion.status(), definition.energyConsumptionPerTick(), true, completion.keepActive());
         }
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
     }
 
-    private static SfxElectricMachineTickResult completeFluidPump(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-        FluidPumpAction action = findFluidPumpCompletion(plugin, items, definition, state, location, true);
+    private static SfxElectricMachineTickResult completeFluidPump(SfxAreaMachineRules rules, JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        FluidPumpAction action = findFluidPumpCompletion(rules, plugin, items, definition, state, location, true);
         if (action.status() == SfxElectricMachineRenderStatus.NO_INPUT || action.status() == SfxElectricMachineRenderStatus.NO_TARGET) {
             return SfxElectricMachineTickResult.status(action.status(), true);
         }
@@ -1423,7 +1401,7 @@ final class SfxAreaElectricMachineProviders {
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, 0, true);
     }
 
-    private static FluidPumpAction findFluidPumpStart(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+    private static FluidPumpAction findFluidPumpStart(SfxAreaMachineRules rules, JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
         int inputSlot = -1;
         SfxElectricStack input = null;
         for (int slot = 0; slot < Math.min(state.inputCapacity(), definition.inputSlots().length); slot++) {
@@ -1440,19 +1418,19 @@ final class SfxAreaElectricMachineProviders {
         if (inputSlot < 0 || input == null) {
             return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_INPUT);
         }
-        return buildFluidPumpAction(plugin, items, definition, state, location, input.material(), inputSlot, false);
+        return buildFluidPumpAction(rules, plugin, items, definition, state, location, input.material(), inputSlot, false);
     }
 
-    private static FluidPumpAction findFluidPumpCompletion(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, boolean rollChance) {
+    private static FluidPumpAction findFluidPumpCompletion(SfxAreaMachineRules rules, JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, boolean rollChance) {
         SfxElectricStack reserved = state.reservedInputs().isEmpty() ? null : state.reservedInputs().getFirst();
         if (reserved == null || reserved.isSfxItem() || (reserved.material() != Material.BUCKET && reserved.material() != Material.GLASS_BOTTLE)) {
             return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_INPUT);
         }
-        return buildFluidPumpAction(plugin, items, definition, state, location, reserved.material(), state.activeInputSlot(), rollChance);
+        return buildFluidPumpAction(rules, plugin, items, definition, state, location, reserved.material(), state.activeInputSlot(), rollChance);
     }
 
-    private static FluidPumpAction buildFluidPumpAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, Material container, int inputSlot, boolean rollChance) {
-        Block source = findFluidSource(plugin, location, container, true);
+    private static FluidPumpAction buildFluidPumpAction(SfxAreaMachineRules rules, JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, Material container, int inputSlot, boolean rollChance) {
+        Block source = findFluidSource(rules, location, container, true);
         if (source == null) {
             return FluidPumpAction.status(SfxElectricMachineRenderStatus.NO_TARGET);
         }
@@ -1464,18 +1442,18 @@ final class SfxAreaElectricMachineProviders {
         if (!canFitOutput(items, definition, state, output)) {
             return FluidPumpAction.status(SfxElectricMachineRenderStatus.OUTPUT_FULL);
         }
-        boolean largePool = hasLargeEnoughSourcePool(plugin, location, source, fluid);
+        boolean largePool = hasLargeEnoughSourcePool(rules, location, source, fluid);
         boolean consumeSource = !largePool && (container != Material.GLASS_BOTTLE || (rollChance && ThreadLocalRandom.current().nextDouble() < 0.30D));
         return new FluidPumpAction(SfxElectricMachineRenderStatus.WORKING, inputSlot, output, source, consumeSource);
     }
 
-    private static Block findFluidSource(JavaPlugin plugin, Location location, Material container, boolean refreshIfExpired) {
+    private static Block findFluidSource(SfxAreaMachineRules rules, Location location, Material container, boolean refreshIfExpired) {
         if (location == null || location.getWorld() == null) {
             return null;
         }
         FluidPumpSourceCacheKey key = new FluidPumpSourceCacheKey(location.getWorld().getUID(), location.getBlockX(), location.getBlockY(), location.getBlockZ(), container);
         long now = location.getWorld().getFullTime();
-        int interval = fluidPumpProbeInterval(plugin);
+        int interval = fluidPumpProbeInterval(rules);
         FluidPumpSourceCacheEntry cached = FLUID_PUMP_SOURCE_CACHE.get(key);
         if (cached != null && now - cached.checkedTick() < interval) {
             if (!cached.found() || cached.fluid() == null) {
@@ -1500,7 +1478,7 @@ final class SfxAreaElectricMachineProviders {
         return found;
     }
 
-    private static Optional<Material> cachedFluidForRequest(JavaPlugin plugin, Location location, Material container) {
+    private static Optional<Material> cachedFluidForRequest(SfxAreaMachineRules rules, Location location, Material container) {
         if (location == null || location.getWorld() == null) {
             return Optional.empty();
         }
@@ -1510,11 +1488,11 @@ final class SfxAreaElectricMachineProviders {
             return Optional.empty();
         }
         long now = location.getWorld().getFullTime();
-        return now - cached.checkedTick() < fluidPumpProbeInterval(plugin) ? Optional.of(cached.fluid()) : Optional.empty();
+        return now - cached.checkedTick() < fluidPumpProbeInterval(rules) ? Optional.of(cached.fluid()) : Optional.empty();
     }
 
-    private static int fluidPumpProbeInterval(JavaPlugin plugin) {
-        return configInt(plugin, "electric-machines.sfx-extensions.fluid-pump-optimization.check-interval-ticks", DEFAULT_FLUID_POOL_CHECK_INTERVAL_TICKS);
+    private static int fluidPumpProbeInterval(SfxAreaMachineRules rules) {
+        return Math.max(1, rules.fluidPumpProbeIntervalTicks());
     }
 
     private static SfxElectricStack outputForFluid(SfxItems items, Material container, Material fluid) {
@@ -1568,8 +1546,8 @@ final class SfxAreaElectricMachineProviders {
         return isSameFluid(start, fluid) && isSourceLiquid(start) ? start : null;
     }
 
-    private static boolean hasLargeEnoughSourcePool(JavaPlugin plugin, Location machine, Block source, Material fluid) {
-        if (plugin != null && !plugin.getConfig().getBoolean("electric-machines.sfx-extensions.fluid-pump-optimization.enabled", true)) {
+    private static boolean hasLargeEnoughSourcePool(SfxAreaMachineRules rules, Location machine, Block source, Material fluid) {
+        if (!rules.fluidPumpOptimization()) {
             return false;
         }
         if (machine == null || source == null || fluid == null || source.getWorld() == null) {
@@ -1580,9 +1558,9 @@ final class SfxAreaElectricMachineProviders {
             return false;
         }
         int threshold = fluid == Material.LAVA
-                ? configInt(plugin, "electric-machines.sfx-extensions.fluid-pump-optimization.lava-source-threshold", DEFAULT_LAVA_POOL_SOURCE_THRESHOLD)
-                : configInt(plugin, "electric-machines.sfx-extensions.fluid-pump-optimization.water-source-threshold", DEFAULT_WATER_POOL_SOURCE_THRESHOLD);
-        int interval = configInt(plugin, "electric-machines.sfx-extensions.fluid-pump-optimization.check-interval-ticks", DEFAULT_FLUID_POOL_CHECK_INTERVAL_TICKS);
+                ? rules.lavaSourceThreshold()
+                : rules.waterSourceThreshold();
+        int interval = rules.fluidPumpProbeIntervalTicks();
         FluidPoolCacheKey key = new FluidPoolCacheKey(source.getWorld().getUID(), source.getX(), source.getY(), source.getZ(), fluid, threshold);
         long now = source.getWorld().getFullTime();
         FluidPoolCacheEntry cached = FLUID_POOL_CACHE.get(key);
@@ -1621,10 +1599,6 @@ final class SfxAreaElectricMachineProviders {
             }
         }
         return false;
-    }
-
-    private static int configInt(JavaPlugin plugin, String path, int fallback) {
-        return plugin == null ? fallback : Math.max(1, plugin.getConfig().getInt(path, fallback));
     }
 
     private static Material fluidMaterial(Block block) {

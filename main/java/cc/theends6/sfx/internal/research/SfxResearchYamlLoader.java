@@ -1,5 +1,6 @@
 package cc.theends6.sfx.internal.research;
 
+import cc.theends6.sfx.internal.feature.SfxFeatureSwitch;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.io.IOException;
@@ -96,7 +97,7 @@ public final class SfxResearchYamlLoader {
         int cost = integer(entry.get("cost"));
         int order = integer(entry.get("order"));
         List<String> items = strict ? requiredStringList(entry, "items") : stringList(entry.get("items"));
-        items = filterFeatureItems(items);
+        items = filterFeatureItems(items, entry.get("item-feature-gates"));
         return new SfxResearchDefinition(id, nameKey, cost, order, new LinkedHashSet<>(items));
     }
 
@@ -116,13 +117,56 @@ public final class SfxResearchYamlLoader {
         }
     }
 
-    private List<String> filterFeatureItems(List<String> items) {
-        if (plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true)) {
+    private List<String> filterFeatureItems(List<String> items, Object rawGates) {
+        Map<String, List<String>> gates = itemFeatureGates(rawGates);
+        if (gates.isEmpty()) {
             return items;
         }
         return items.stream()
-                .filter(item -> !"sf:bio_reactor_2".equalsIgnoreCase(item.trim()))
+                .filter(item -> requiredFeaturesEnabled(gates.get(normalizeItemId(item))))
                 .toList();
+    }
+
+    private Map<String, List<String>> itemFeatureGates(Object raw) {
+        if (!(raw instanceof Map<?, ?> map)) {
+            return Map.of();
+        }
+        java.util.LinkedHashMap<String, List<String>> result = new java.util.LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            String itemId = normalizeItemId(String.valueOf(entry.getKey()));
+            List<String> features = featureList(entry.getValue());
+            if (!itemId.isEmpty() && !features.isEmpty()) {
+                result.put(itemId, features);
+            }
+        }
+        return result;
+    }
+
+    private List<String> featureList(Object raw) {
+        if (raw instanceof List<?> list) {
+            return list.stream()
+                    .map(value -> String.valueOf(value).trim())
+                    .filter(value -> !value.isEmpty())
+                    .toList();
+        }
+        String feature = raw == null ? "" : String.valueOf(raw).trim();
+        return feature.isEmpty() ? List.of() : List.of(feature);
+    }
+
+    private boolean requiredFeaturesEnabled(List<String> features) {
+        if (features == null || features.isEmpty()) {
+            return true;
+        }
+        for (String feature : features) {
+            if (!SfxFeatureSwitch.requirementEnabled(plugin, feature)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static String normalizeItemId(String itemId) {
+        return itemId == null ? "" : itemId.trim().toLowerCase(Locale.ROOT);
     }
 
     private static int integer(Object raw) {

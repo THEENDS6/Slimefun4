@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.machine;
 
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
+import cc.theends6.sfx.internal.feature.SfxFeatureSwitch;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.util.ArrayList;
@@ -59,6 +60,9 @@ public final class SfxMachineCatalogYamlLoader {
                 continue;
             }
             try {
+                if (!requiredFeaturesEnabled(section.get("requires-feature"))) {
+                    continue;
+                }
                 SfxMachineDefinition definition = parse(id, section, strict);
                 if (engine.definition(definition.id()).isEmpty()) {
                     engine.registerDefinitionIfAbsent(definition);
@@ -75,6 +79,29 @@ public final class SfxMachineCatalogYamlLoader {
         }
         SfxValidationDiagnostics.log(plugin, "machine-yaml", "machine catalog yaml entries=" + loaded);
         return loaded;
+    }
+
+    private boolean requiredFeaturesEnabled(Object raw) {
+        if (raw == null) {
+            return true;
+        }
+        if (raw instanceof Iterable<?> iterable) {
+            for (Object value : iterable) {
+                if (!requiredFeatureEnabled(value)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return requiredFeatureEnabled(raw);
+    }
+
+    private boolean requiredFeatureEnabled(Object raw) {
+        if (raw == null) {
+            return true;
+        }
+        String id = String.valueOf(raw).trim();
+        return SfxFeatureSwitch.requirementEnabled(plugin, id);
     }
 
     private SfxMachineDefinition parse(String id, ConfigurationSection section, boolean strict) {

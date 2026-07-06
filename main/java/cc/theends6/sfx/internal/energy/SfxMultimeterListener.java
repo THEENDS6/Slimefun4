@@ -6,6 +6,7 @@ import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
+import cc.theends6.sfx.internal.behavior.SfxUtilityRulesResolver;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
@@ -85,7 +86,7 @@ public final class SfxMultimeterListener implements Listener {
     }
 
     private void inspectWithMultimeter(Player player, SfxBlockInstanceRecord instance) {
-        boolean enhanced = plugin.getConfig().getBoolean("tools.multimeter.use-sfx-enhanced", true);
+        boolean enhanced = SfxUtilityRulesResolver.rules(plugin).enhancedMultimeterEnabled();
         if (!enhanced) {
             inspectClassic(player, instance);
             return;

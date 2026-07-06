@@ -20,6 +20,9 @@ public final class SfxItemDefinition {
     private final String loreKey;
     private final String categoryId;
     private final int order;
+    private final String guideCategoryId;
+    private final Integer guideOrder;
+    private final String guideFuelProfile;
     private final int version;
     private final boolean hidden;
     private final boolean giveable;
@@ -42,6 +45,11 @@ public final class SfxItemDefinition {
         this.loreKey = builder.loreKey == null || builder.loreKey.isBlank() ? null : builder.loreKey.trim();
         this.categoryId = builder.categoryId == null ? null : SfxItemCategory.normalizeId(builder.categoryId);
         this.order = builder.order;
+        this.guideCategoryId = builder.guideCategoryId == null ? null : SfxItemCategory.normalizeId(builder.guideCategoryId);
+        this.guideOrder = builder.guideOrder;
+        this.guideFuelProfile = builder.guideFuelProfile == null || builder.guideFuelProfile.isBlank()
+                ? null
+                : builder.guideFuelProfile.trim().replace('_', '-').toLowerCase();
         this.version = Math.max(1, builder.version);
         this.hidden = builder.hidden;
         this.giveable = builder.giveable;
@@ -122,6 +130,18 @@ public final class SfxItemDefinition {
         return order;
     }
 
+    public String guideCategoryId() {
+        return guideCategoryId;
+    }
+
+    public Integer guideOrder() {
+        return guideOrder;
+    }
+
+    public String guideFuelProfile() {
+        return guideFuelProfile;
+    }
+
     public boolean hidden() {
         return hidden;
     }
@@ -175,6 +195,9 @@ public final class SfxItemDefinition {
         private String loreKey;
         private String categoryId;
         private int order = DEFAULT_ORDER;
+        private String guideCategoryId;
+        private Integer guideOrder;
+        private String guideFuelProfile;
         private int version = 1;
         private boolean hidden;
         private boolean giveable = true;
@@ -223,6 +246,21 @@ public final class SfxItemDefinition {
 
         public Builder order(int order) {
             this.order = order;
+            return this;
+        }
+
+        public Builder guideCategory(String guideCategoryId) {
+            this.guideCategoryId = guideCategoryId;
+            return this;
+        }
+
+        public Builder guideOrder(int guideOrder) {
+            this.guideOrder = guideOrder;
+            return this;
+        }
+
+        public Builder guideFuelProfile(String guideFuelProfile) {
+            this.guideFuelProfile = guideFuelProfile;
             return this;
         }
 

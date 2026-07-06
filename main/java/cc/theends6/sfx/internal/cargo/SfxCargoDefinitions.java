@@ -1,5 +1,6 @@
 package cc.theends6.sfx.internal.cargo;
 
+import cc.theends6.sfx.internal.feature.SfxFeatureSwitch;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,6 +31,9 @@ public final class SfxCargoDefinitions {
             if (rawType.isBlank()) {
                 throw new IllegalStateException("Cargo component " + id + " is missing type in " + RESOURCE_PATH + ".");
             }
+            if (!requiredFeaturesEnabled(plugin, section.get("requires-feature"))) {
+                continue;
+            }
             SfxCargoComponentType type = SfxCargoComponentType.valueOf(rawType.replace('-', '_').toUpperCase(Locale.ROOT));
             define(definitions, id, type);
         }
@@ -41,5 +45,28 @@ public final class SfxCargoDefinitions {
 
     private static void define(Map<String, SfxCargoComponentDefinition> definitions, String id, SfxCargoComponentType type) {
         definitions.put(id, new SfxCargoComponentDefinition(id, type));
+    }
+
+    private static boolean requiredFeaturesEnabled(JavaPlugin plugin, Object raw) {
+        if (raw == null) {
+            return true;
+        }
+        if (raw instanceof Iterable<?> iterable) {
+            for (Object value : iterable) {
+                if (!requiredFeatureEnabled(plugin, value)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return requiredFeatureEnabled(plugin, raw);
+    }
+
+    private static boolean requiredFeatureEnabled(JavaPlugin plugin, Object raw) {
+        if (raw == null) {
+            return true;
+        }
+        String id = String.valueOf(raw).trim();
+        return SfxFeatureSwitch.requirementEnabled(plugin, id);
     }
 }

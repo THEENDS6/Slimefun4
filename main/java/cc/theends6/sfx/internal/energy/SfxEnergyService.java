@@ -17,6 +17,7 @@ import cc.theends6.sfx.internal.network.SfxNetworkDomain;
 import cc.theends6.sfx.internal.network.SfxNetworkExecution;
 import cc.theends6.sfx.internal.network.SfxNetworkReadiness;
 import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
+import cc.theends6.sfx.internal.technical.SfxTechnicalGadgetBalance;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
@@ -907,10 +908,7 @@ public final class SfxEnergyService implements Listener {
     }
 
     private double chargingBenchEfficiency() {
-        double loss = plugin.getConfig().getBoolean("technical-gadgets.sfx-balance.enabled", true)
-                ? plugin.getConfig().getDouble("technical-gadgets.sfx-balance.charging-bench.energy-loss", 0.80D)
-                : plugin.getConfig().getDouble("technical-gadgets.classic.charging-bench.energy-loss", 0.50D);
-        return Math.max(0.0D, Math.min(1.0D, 1.0D - loss));
+        return SfxTechnicalGadgetBalance.clamp01(1.0D - SfxTechnicalGadgetBalance.rules(plugin).chargingBenchEnergyLoss());
     }
 
     private void moveChargingBenchInputToOutput(SfxEnergyNodeRef charger, int inputSlot, SfxElectricStack stack) {
@@ -1032,7 +1030,7 @@ public final class SfxEnergyService implements Listener {
         if (burnTicks <= 0) {
             return 0;
         }
-        int multiplier = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true) ? 2 : 1;
+        int multiplier = SfxEnergyBalance.rules(plugin).coalFuelTicksMultiplier();
         return burnTicks * multiplier;
     }
 

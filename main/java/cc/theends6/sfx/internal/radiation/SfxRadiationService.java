@@ -1,5 +1,11 @@
 package cc.theends6.sfx.internal.radiation;
 
+import cc.theends6.sfx.SlimeFunXPlugin;
+import cc.theends6.sfx.api.SfxApi;
+import cc.theends6.sfx.api.behavior.SfxRadiationRuleContext;
+import cc.theends6.sfx.api.behavior.SfxRadiationRuleProvider;
+import cc.theends6.sfx.api.behavior.SfxRadiationRules;
+import cc.theends6.sfx.api.behavior.SfxRadiationSymptomProfile;
 import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItemRegistry;
@@ -156,7 +162,7 @@ public final class SfxRadiationService implements Listener {
     }
 
     private void scheduleScan() {
-        runtime.executeGlobalLater(scanIntervalTicks(), () -> {
+        runtime.executeGlobalLater(rules().scanIntervalTicks(), () -> {
             if (!running || !enabled()) {
                 return;
             }
@@ -181,11 +187,16 @@ public final class SfxRadiationService implements Listener {
 
         int current = exposure(player);
         int radioactiveGain = radioactiveExposureInInventory(player);
+        SfxRadiationRules rules = rules();
         int adjustedGain = 0;
         if (radioactiveGain > 0) {
             int hazmatPieces = hazmatPieces(player);
-            double multiplier = Math.max(0.0D, 1.0D - hazmatPieces * hazmatReductionPerPiece());
-            adjustedGain = (int) Math.floor(radioactiveGain * multiplier);
+            if (rules.partialHazmatProtection()) {
+                double multiplier = Math.max(0.0D, 1.0D - hazmatPieces * rules.hazmatReductionPerPiece());
+                adjustedGain = (int) Math.floor(radioactiveGain * multiplier);
+            } else if (hazmatPieces < 4) {
+                adjustedGain = radioactiveGain;
+            }
         }
 
         if (adjustedGain > 0) {
@@ -200,17 +211,22 @@ public final class SfxRadiationService implements Listener {
         }
 
         int next;
-        if (radioactiveGain <= 0) {
-            next = Math.max(0, current - recoveryPerScan());
+        if (radioactiveGain <= 0 || (!rules.partialHazmatProtection() && adjustedGain <= 0)) {
+            next = Math.max(0, current - rules.recoveryPerScan());
         } else {
-            next = Math.min(maxExposure(), current + adjustedGain);
+            next = Math.min(rules.maxExposure(), current + adjustedGain);
         }
         if (next != current) {
             setExposure(player, next);
         }
-        SfxRadiationStage stage = SfxRadiationStage.fromExposure(next);
-        announceStageChange(player, stage);
-        applySymptoms(player, stage);
+        if (rules.symptomProfile() == SfxRadiationSymptomProfile.SFX_REWORK) {
+            SfxRadiationStage stage = SfxRadiationStage.fromExposure(next);
+            announceStageChange(player, stage);
+            applySymptoms(player, stage);
+        } else {
+            lastAnnouncedStage.remove(player.getUniqueId());
+            applyClassicSymptoms(player, next, rules.scanIntervalTicks());
+        }
     }
 
     private boolean isRespawnImmune(Player player) {
@@ -241,7 +257,7 @@ public final class SfxRadiationService implements Listener {
     }
 
     private void setExposure(Player player, int exposure) {
-        int normalized = Math.max(0, Math.min(maxExposure(), exposure));
+        int normalized = Math.max(0, Math.min(rules().maxExposure(), exposure));
         cachedExposure.put(player.getUniqueId(), normalized);
         playerData.find(player.getUniqueId()).ifPresent(profile -> profile.setRadiationExposure(normalized));
     }
@@ -381,6 +397,29 @@ public final class SfxRadiationService implements Listener {
         }
     }
 
+    private void applyClassicSymptoms(Player player, int exposure, int scanIntervalTicks) {
+        if (exposure <= 0) {
+            return;
+        }
+        int duration = Math.max(1, scanIntervalTicks + 20);
+        if (exposure >= 10) {
+            addEffect(player, "SLOW", duration, 3);
+        }
+        if (exposure >= 25) {
+            addEffect(player, "WITHER", duration, 0);
+        }
+        if (exposure >= 50) {
+            addEffect(player, "BLINDNESS", duration, 4);
+        }
+        if (exposure >= 75) {
+            addEffect(player, "WITHER", duration, 3);
+        }
+        if (exposure >= 100) {
+            lastRadiationDamageMillis.put(player.getUniqueId(), System.currentTimeMillis());
+            addEffect(player, "HARM", duration, 49);
+        }
+    }
+
     private void addEffect(Player player, String rawName, int durationTicks, int amplifier) {
         PotionEffectType type = resolvePotion(rawName);
         if (type == null) {
@@ -482,6 +521,32 @@ public final class SfxRadiationService implements Listener {
     }
 
     private int respawnImmunityTicks() {
-        return Math.max(0, plugin.getConfig().getInt("radiation.respawn-immunity-ticks", DEFAULT_RESPAWN_IMMUNITY_TICKS));
+        return rules().respawnImmunityTicks();
+    }
+
+    private SfxRadiationRules rules() {
+        SfxRadiationRuleContext context = new SfxRadiationRuleContext(
+                scanIntervalTicks(),
+                recoveryPerScan(),
+                maxExposure(),
+                hazmatReductionPerPiece(),
+                Math.max(0, plugin.getConfig().getInt("radiation.respawn-immunity-ticks", DEFAULT_RESPAWN_IMMUNITY_TICKS))
+        );
+        SfxRadiationRules rules = SfxRadiationRules.classicDefaults(context.configuredRespawnImmunityTicks());
+        SfxApi api = sfxApi();
+        if (api == null) {
+            return rules;
+        }
+        for (SfxRadiationRuleProvider provider : api.behaviors().radiationRuleProviders()) {
+            SfxRadiationRules provided = provider.apply(context, rules);
+            if (provided != null) {
+                rules = provided;
+            }
+        }
+        return rules;
+    }
+
+    private SfxApi sfxApi() {
+        return plugin instanceof SlimeFunXPlugin sfx ? sfx.api() : null;
     }
 }

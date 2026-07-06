@@ -28,6 +28,10 @@ final class SfxPluginShutdown {
             cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.clearDefaultRuntime(plugin.machineRuntime);
             plugin.machineRuntime.clear();
         }
+        if (plugin.addonManager != null) {
+            plugin.addonManager.close();
+            plugin.addonManager = null;
+        }
         if (plugin.packetEventsLoaded) {
             plugin.packetEventsLoaded = false;
             plugin.packetEventsApi = null;

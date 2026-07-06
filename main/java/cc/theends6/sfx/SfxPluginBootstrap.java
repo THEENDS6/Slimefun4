@@ -20,6 +20,8 @@ final class SfxPluginBootstrap {
         }
         plugin.syncBundledLanguages();
         SfxPluginStorageModule.initialize(plugin);
+        SfxPluginAddonModule.loadAddons(plugin);
+        plugin.localization.reload();
         if (plugin.compileTemplatesOnStartup()) {
             plugin.compileContentTemplates();
         }

@@ -26,7 +26,7 @@ final class SfxCommandTabCompleter {
 
     List<String> complete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return filter(List.of("guide", "cheatguide", "book", "give", "research", "backpack", "inspect", "list", "reload", "template", "help"), args[0]);
+            return filter(List.of("guide", "cheatguide", "book", "give", "research", "backpack", "inspect", "list", "reload", "template", "addon", "help"), args[0]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("book")) {
             return filter(List.of("cheat"), args[1]);
@@ -36,6 +36,9 @@ final class SfxCommandTabCompleter {
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("template") || args[0].equalsIgnoreCase("templates"))) {
             return filter(List.of("compile", "reload"), args[1]);
+        }
+        if (args.length == 2 && (args[0].equalsIgnoreCase("addon") || args[0].equalsIgnoreCase("addons"))) {
+            return filter(List.of("list"), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("research")) {
             return filter(knownPlayerNames(), args[1]);

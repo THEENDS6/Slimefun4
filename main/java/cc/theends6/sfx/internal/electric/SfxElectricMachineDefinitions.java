@@ -1,5 +1,9 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.SlimeFunXPlugin;
+import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderKeyContext;
+import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderKeyPolicy;
+import cc.theends6.sfx.api.behavior.SfxAreaMachineRules;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
@@ -18,6 +22,8 @@ final class SfxElectricMachineDefinitions {
         SfxElectricMachineRegistry result = new SfxElectricMachineRegistry();
         SfxElectricMachineDefinitionConfig config = SfxElectricMachineDefinitionConfig.load(plugin);
         SfxElectricRecipeYamlLoader staticRecipes = SfxElectricRecipeYamlLoader.load(plugin);
+        SfxAreaMachineRules classicAreaRules = SfxAreaMachineRules.classicDefaults();
+        SfxAreaMachineRules addonAreaRules = SfxAreaMachineBalance.rules(plugin);
         SfxElectricRecipeProvider furnaceRecipes = new SfxVanillaFurnaceRecipeProvider(plugin, 4);
         SfxElectricRecipeProvider grinderRecipes = new SfxClassicOreGrinderRecipeProvider(
                 manualMachines.recipesFor("sf:grind_stone"),
@@ -29,14 +35,22 @@ final class SfxElectricMachineDefinitions {
         SfxElectricRecipeProvider bookBinderRecipes = SfxSpecialElectricRecipeProviders.bookBinder(plugin);
         SfxElectricRecipeProvider autoAnvilRecipes = SfxSpecialElectricRecipeProviders.autoAnvil(plugin, items, 10);
         SfxElectricRecipeProvider autoAnvil2Recipes = SfxSpecialElectricRecipeProviders.autoAnvil(plugin, items, 25);
-        SfxElectricRecipeProvider produceCollectorRecipes = SfxAreaElectricMachineProviders.produceCollector();
-        SfxElectricRecipeProvider autoBreederRecipes = SfxAreaElectricMachineProviders.autoBreeder();
-        SfxElectricRecipeProvider animalGrowthRecipes = SfxAreaElectricMachineProviders.animalGrowthAccelerator();
-        SfxElectricRecipeProvider cropGrowthRecipes = SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 3, 20);
-        SfxElectricRecipeProvider cropGrowth2Recipes = SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 4, 30);
-        SfxElectricRecipeProvider treeGrowthRecipes = SfxAreaElectricMachineProviders.treeGrowthAccelerator();
-        SfxElectricRecipeProvider expCollectorRecipes = SfxAreaElectricMachineProviders.expCollector();
-        SfxElectricRecipeProvider fluidPumpRecipes = SfxAreaElectricMachineProviders.fluidPump();
+        SfxElectricRecipeProvider produceCollectorRecipes = SfxAreaElectricMachineProviders.produceCollector(false);
+        SfxElectricRecipeProvider sfxProduceCollectorRecipes = SfxAreaElectricMachineProviders.produceCollector(true);
+        SfxElectricRecipeProvider autoBreederRecipes = SfxAreaElectricMachineProviders.autoBreeder(false);
+        SfxElectricRecipeProvider sfxAutoBreederRecipes = SfxAreaElectricMachineProviders.autoBreeder(true);
+        SfxElectricRecipeProvider animalGrowthRecipes = SfxAreaElectricMachineProviders.animalGrowthAccelerator(2000);
+        SfxElectricRecipeProvider sfxAnimalGrowthRecipes = SfxAreaElectricMachineProviders.animalGrowthAccelerator(4000);
+        SfxElectricRecipeProvider cropGrowthRecipes = SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 3, 20, false);
+        SfxElectricRecipeProvider cropGrowth2Recipes = SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 4, 30, false);
+        SfxElectricRecipeProvider treeGrowthRecipes = SfxAreaElectricMachineProviders.treeGrowthAccelerator(false);
+        SfxElectricRecipeProvider sfxCropGrowthRecipes = SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 3, 20, true);
+        SfxElectricRecipeProvider sfxCropGrowth2Recipes = SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 4, 30, true);
+        SfxElectricRecipeProvider sfxTreeGrowthRecipes = SfxAreaElectricMachineProviders.treeGrowthAccelerator(true);
+        SfxElectricRecipeProvider expCollectorRecipes = SfxAreaElectricMachineProviders.expCollector(false, classicAreaRules.xpFlaskEnergyCost());
+        SfxElectricRecipeProvider sfxExpCollectorRecipes = SfxAreaElectricMachineProviders.expCollector(true, addonAreaRules.xpFlaskEnergyCost());
+        SfxElectricRecipeProvider fluidPumpRecipes = SfxAreaElectricMachineProviders.fluidPump(classicAreaRules);
+        SfxElectricRecipeProvider sfxFluidPumpRecipes = SfxAreaElectricMachineProviders.fluidPump(addonAreaRules);
         SfxElectricAssemblerSpec ironGolemAssemblerSpec = config.assemblerSpec("sf:iron_golem_assembler");
         SfxElectricAssemblerSpec witherAssemblerSpec = config.assemblerSpec("sf:wither_assembler");
         SfxElectricRecipeProvider ironGolemAssemblerRecipes = assemblerProvider("iron_golem", EntityType.IRON_GOLEM, ironGolemAssemblerSpec);
@@ -44,10 +58,10 @@ final class SfxElectricMachineDefinitions {
         SfxElectricRecipeProvider gpsTransmitterRecipes = SfxGpsElectricMachineProviders.transmitter();
         SfxElectricRecipeProvider geoMinerRecipes = SfxGpsElectricMachineProviders.geoExtractor(false);
         SfxElectricRecipeProvider oilPumpRecipes = SfxGpsElectricMachineProviders.geoExtractor(true);
-        boolean sfxAutoBrewer = plugin.getConfig().getBoolean("electric-machines.sfx-extensions.auto-brewer.enabled", true);
-        SfxElectricRecipeProvider autoBrewerRecipes = sfxAutoBrewer
-                ? new SfxAdvancedAutoBrewerRecipeProvider(plugin)
-                : new SfxAutoBrewerRecipeProvider();
+        SfxElectricRecipeProvider classicAutoBrewerRecipes = new SfxAutoBrewerRecipeProvider();
+        SfxElectricRecipeProvider advancedAutoBrewerRecipes = new SfxAdvancedAutoBrewerRecipeProvider(plugin);
+        String autoBrewerProviderKey = resolveElectricProviderKey(plugin, "sf:auto_brewer", "sf:auto_brewer", "sf:auto_brewer");
+        boolean sfxAutoBrewer = "sfx:advanced_auto_brewer".equals(autoBrewerProviderKey);
         SfxElectricRecipeProvider vanillaAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.vanilla(virtualContainers, items);
         SfxElectricRecipeProvider enhancedAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.enhanced(virtualContainers, items, List.copyOf(manualMachines.recipesFor("sf:enhanced_crafting_table")));
         SfxElectricRecipeProvider armorAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.armor(virtualContainers, items, List.copyOf(manualMachines.recipesFor("sf:armor_forge")));
@@ -55,8 +69,9 @@ final class SfxElectricMachineDefinitions {
         specialProviders.put("sf:vanilla_furnace", furnaceRecipes);
         specialProviders.put("sf:classic_ore_grinder", grinderRecipes);
         specialProviders.put("sf:electric_smeltery", electricSmelteryRecipes);
-        specialProviders.put("sf:auto_brewer", autoBrewerRecipes);
-        specialProviders.put("sf:auto_brewer_legacy", autoBrewerRecipes);
+        specialProviders.put("sf:auto_brewer", classicAutoBrewerRecipes);
+        specialProviders.put("sf:auto_brewer_legacy", classicAutoBrewerRecipes);
+        specialProviders.put("sfx:advanced_auto_brewer", advancedAutoBrewerRecipes);
         specialProviders.put("sf:vanilla_auto_crafter", vanillaAutoCrafterRecipes);
         specialProviders.put("sf:enhanced_auto_crafter", enhancedAutoCrafterRecipes);
         specialProviders.put("sf:armor_auto_crafter", armorAutoCrafterRecipes);
@@ -66,16 +81,24 @@ final class SfxElectricMachineDefinitions {
         specialProviders.put("sf:auto_anvil", autoAnvilRecipes);
         specialProviders.put("sf:auto_anvil_2", autoAnvil2Recipes);
         specialProviders.put("sf:produce_collector", produceCollectorRecipes);
+        specialProviders.put("sfx:produce_collector", sfxProduceCollectorRecipes);
         specialProviders.put("sf:auto_breeder", autoBreederRecipes);
+        specialProviders.put("sfx:auto_breeder", sfxAutoBreederRecipes);
         specialProviders.put("sf:animal_growth_accelerator", animalGrowthRecipes);
+        specialProviders.put("sfx:animal_growth_accelerator", sfxAnimalGrowthRecipes);
         specialProviders.put("sf:crop_growth_accelerator", cropGrowthRecipes);
         specialProviders.put("sf:crop_growth_accelerator_2", cropGrowth2Recipes);
         specialProviders.put("sf:tree_growth_accelerator", treeGrowthRecipes);
+        specialProviders.put("sfx:crop_growth_accelerator", sfxCropGrowthRecipes);
+        specialProviders.put("sfx:crop_growth_accelerator_2", sfxCropGrowth2Recipes);
+        specialProviders.put("sfx:tree_growth_accelerator", sfxTreeGrowthRecipes);
         specialProviders.put("sf:xp_collector", expCollectorRecipes);
+        specialProviders.put("sfx:xp_collector", sfxExpCollectorRecipes);
         specialProviders.put("sf:gps_transmitter", gpsTransmitterRecipes);
         specialProviders.put("sf:geo_miner", geoMinerRecipes);
         specialProviders.put("sf:oil_pump", oilPumpRecipes);
         specialProviders.put("sf:fluid_pump", fluidPumpRecipes);
+        specialProviders.put("sfx:fluid_pump", sfxFluidPumpRecipes);
         specialProviders.put("sf:iron_golem_assembler", ironGolemAssemblerRecipes);
         specialProviders.put("sf:wither_assembler", witherAssemblerRecipes);
 
@@ -83,7 +106,7 @@ final class SfxElectricMachineDefinitions {
             if (compiledEntryId.contains("#")) {
                 continue;
             }
-            if (!sfxAutoBrewer && ("sf:auto_brewer".equals(compiledEntryId) || "sf:auto_brewer_2".equals(compiledEntryId))) {
+            if (!sfxAutoBrewer && "sf:auto_brewer".equals(compiledEntryId)) {
                 continue;
             }
             register(result, config, compiledEntryId, staticRecipes, specialProviders);
@@ -103,6 +126,20 @@ final class SfxElectricMachineDefinitions {
                 spec.bodyMaterials(),
                 spec.bodyAmount(),
                 30 * 20);
+    }
+
+    private static String resolveElectricProviderKey(JavaPlugin plugin, String machineId, String compiledEntryId, String providerKey) {
+        String current = providerKey;
+        if (plugin instanceof SlimeFunXPlugin sfx && sfx.api() != null) {
+            SfxElectricSpecialProviderKeyContext context = new SfxElectricSpecialProviderKeyContext(machineId, compiledEntryId, providerKey);
+            for (SfxElectricSpecialProviderKeyPolicy policy : sfx.api().behaviors().electricSpecialProviderKeyPolicies()) {
+                String resolved = policy.resolve(context, current);
+                if (resolved != null && !resolved.isBlank()) {
+                    current = resolved.trim();
+                }
+            }
+        }
+        return current;
     }
 
     private static void register(SfxElectricMachineRegistry registry, SfxElectricMachineDefinitionConfig config, String id, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> specialProviders) {

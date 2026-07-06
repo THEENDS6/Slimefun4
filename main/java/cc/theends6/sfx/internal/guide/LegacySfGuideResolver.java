@@ -99,6 +99,9 @@ public final class LegacySfGuideResolver {
     }
 
     public static int legacySuggestedOrder(SfxItemDefinition item) {
+        if (item.guideOrder() != null) {
+            return item.guideOrder();
+        }
         String guideCategory = resolveLegacyGuideCategory(item);
         if ("guide:sf:basic_machines".equals(guideCategory)) {
             Integer order = CLASSIC_BASIC_MACHINE_ORDER.get(item.id());
@@ -152,6 +155,9 @@ public final class LegacySfGuideResolver {
     }
 
     private static String resolveLegacyGuideCategory(SfxItemDefinition item) {
+        if (item.guideCategoryId() != null) {
+            return item.guideCategoryId();
+        }
         String id = item.id();
         if (isEnderTalismanId(id)) {
             return "guide:sf:ender_talismans";
