@@ -1231,22 +1231,31 @@ recipe-groups:
       random-outputs:
       - item: sf:iron_dust
         amount: 1
+        weight: 1
       - item: sf:gold_dust
         amount: 1
+        weight: 1
       - item: sf:copper_dust
         amount: 1
+        weight: 1
       - item: sf:tin_dust
         amount: 1
+        weight: 1
       - item: sf:zinc_dust
         amount: 1
+        weight: 1
       - item: sf:aluminum_dust
         amount: 1
+        weight: 1
       - item: sf:magnesium_dust
         amount: 1
+        weight: 1
       - item: sf:lead_dust
         amount: 1
+        weight: 1
       - item: sf:silver_dust
         amount: 1
+        weight: 1
     - id: sf:electric_dust_washer:pulverized_ore
       inputs:
       - item: sf:pulverized_ore

@@ -695,7 +695,8 @@ researches:
     order: 112
     name-key: researches.ender_talismans.name
     cost: 28
-    items: []
+    items:
+      - sf:ender_talisman
   - id: nickel_and_cobalt
     order: 115
     name-key: researches.nickel_and_cobalt.name

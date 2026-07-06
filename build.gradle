@@ -2174,6 +2174,9 @@ tasks.register('validateSfxAddonApiDocs') {
             if ((researchText =~ /(?m)^  name:\s*/).find()) {
                 violations << "compiled researches must not contain literal name fields"
             }
+            if ((researchText =~ /(?m)^  items:\s*\[\]\s*$/).find()) {
+                violations << "compiled researches must not contain empty item lists"
+            }
         }
         def compiledLegacyBehaviorFile = new File(root, 'content/legacy-item-behavior/legacy-item-behavior.yml')
         if (!compiledLegacyBehaviorFile.isFile()) {
@@ -2258,9 +2261,15 @@ tasks.register('validateSfxAddonApiDocs') {
             def currentElectricRecipeId = null
             def inElectricRecipeTags = false
             def electricRecipeSlotSection = null
-            electricRecipeText.readLines().eachWithIndex { line, lineIndex ->
+            def pendingRandomOutputWeightLine = null
+            def flushRandomOutputWeight = {
+                pendingRandomOutputWeightLine = null
+            }
+            def electricRecipeLines = electricRecipeText.readLines()
+            electricRecipeLines.eachWithIndex { line, lineIndex ->
                 def recipeStart = line =~ /^- id:\s*(.+?)\s*$/
                 if (recipeStart.matches()) {
+                    flushRandomOutputWeight()
                     def recipeId = cleanScalar(recipeStart[0][1])
                     if (recipeId == null || recipeId.isBlank()) {
                         violations << "content/machines/electric-recipes/electric-recipes.yml:${lineIndex + 1}: blank electric recipe id"
@@ -2275,23 +2284,27 @@ tasks.register('validateSfxAddonApiDocs') {
                 if (currentElectricRecipeId != null) {
                     def typeMatch = line =~ /^  recipe-type:\s*(.+?)\s*$/
                     if (typeMatch.matches()) {
+                        flushRandomOutputWeight()
                         electricRecipeTypes[currentElectricRecipeId] = cleanScalar(typeMatch[0][1])
                         inElectricRecipeTags = false
                         electricRecipeSlotSection = null
                         return
                     }
                     if ((line =~ /^  recipe-tags:\s*$/).matches()) {
+                        flushRandomOutputWeight()
                         inElectricRecipeTags = true
                         electricRecipeSlotSection = null
                         return
                     }
                     def electricSlotSectionMatch = line =~ /^  (inputs|outputs|random-outputs):\s*$/
                     if (electricSlotSectionMatch.matches()) {
+                        flushRandomOutputWeight()
                         electricRecipeSlotSection = electricSlotSectionMatch[0][1]
                         inElectricRecipeTags = false
                         return
                     }
                     if ((line =~ /^  ticks:/).find()) {
+                        flushRandomOutputWeight()
                         inElectricRecipeTags = false
                         electricRecipeSlotSection = null
                     }
@@ -2307,7 +2320,18 @@ tasks.register('validateSfxAddonApiDocs') {
                         if (scalarSlot.matches()) {
                             violations << "content/machines/electric-recipes/electric-recipes.yml:${lineIndex + 1}: electric recipe ${currentElectricRecipeId} ${electricRecipeSlotSection} contains scalar input/output shorthand: ${scalarSlot[0][1]}"
                         }
+                        def electricSlotEntry = line =~ /^  -\s+(item|material):\s*(.+?)\s*$/
+                        if (electricSlotEntry.matches()) {
+                            flushRandomOutputWeight()
+                            if (electricRecipeSlotSection == 'random-outputs') {
+                                pendingRandomOutputWeightLine = lineIndex + 1
+                            }
+                        }
+                        if (pendingRandomOutputWeightLine != null && (line.trim() ==~ /^weight:\s*\d+\s*$/)) {
+                            pendingRandomOutputWeightLine = null
+                        }
                         if ((line =~ /^  [A-Za-z0-9_-]+:/).matches()) {
+                            flushRandomOutputWeight()
                             electricRecipeSlotSection = null
                         }
                     }
@@ -2318,9 +2342,49 @@ tasks.register('validateSfxAddonApiDocs') {
                     if (id == null || id.isBlank()) {
                         violations << "content/machines/electric-recipes/electric-recipes.yml:${lineIndex + 1}: blank electric recipe item reference"
                     } else {
-                        electricRecipeItemReferences << [rel: 'content/machines/electric-recipes/electric-recipes.yml', line: lineIndex + 1, item: id]
+                    electricRecipeItemReferences << [rel: 'content/machines/electric-recipes/electric-recipes.yml', line: lineIndex + 1, item: id]
+                }
+            }
+            flushRandomOutputWeight()
+            def randomSection = false
+            def randomRecipeId = null
+            electricRecipeLines.eachWithIndex { randomLine, randomLineIndex ->
+                def randomRecipeStart = randomLine =~ /^- id:\s*(.+?)\s*$/
+                if (randomRecipeStart.matches()) {
+                    randomRecipeId = cleanScalar(randomRecipeStart[0][1])
+                    randomSection = false
+                    return
+                }
+                if ((randomLine =~ /^  random-outputs:\s*$/).matches()) {
+                    randomSection = true
+                    return
+                }
+                if (randomSection && (randomLine =~ /^  [A-Za-z0-9_-]+:/).matches()) {
+                    randomSection = false
+                    return
+                }
+                def randomEntry = randomLine =~ /^  -\s+(item|material):\s*(.+?)\s*$/
+                if (randomSection && randomEntry.matches()) {
+                    boolean foundWeight = false
+                    int probe = randomLineIndex + 1
+                    while (probe < electricRecipeLines.size()) {
+                        String nextLine = electricRecipeLines[probe]
+                        if ((nextLine =~ /^  -\s+(item|material):\s*/).matches()
+                                || (nextLine =~ /^- id:\s*/).matches()
+                                || (nextLine =~ /^  [A-Za-z0-9_-]+:/).matches()) {
+                            break
+                        }
+                        if (nextLine.trim() ==~ /^weight:\s*\d+\s*$/) {
+                            foundWeight = true
+                            break
+                        }
+                        probe++
+                    }
+                    if (!foundWeight) {
+                        violations << "content/machines/electric-recipes/electric-recipes.yml:${randomLineIndex + 1}: electric recipe ${randomRecipeId} random output missing weight"
                     }
                 }
+            }
             }
         }
         if (!compiledItemIds.isEmpty()) {
