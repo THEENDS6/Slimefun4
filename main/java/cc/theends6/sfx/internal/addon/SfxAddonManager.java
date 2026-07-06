@@ -1,20 +1,22 @@
 package cc.theends6.sfx.internal.addon;
 
-import cc.theends6.sfx.addons.basic.SfxBasicExpansionAddon;
 import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.addon.SfxAddon;
 import cc.theends6.sfx.internal.behavior.DefaultSfxBehaviorRegistry;
 import cc.theends6.sfx.internal.feature.DefaultSfxFeatureRegistry;
 import cc.theends6.sfx.internal.feature.SfxFeatureRegistrarView;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxAddonManager implements AutoCloseable {
+    private static final String BASIC_EXPANSION_ID = "sfx:basic_expansion";
+    private static final String BASIC_EXPANSION_RESOURCE = "bundled-addons/sfx-basic-expansion.jar";
+    private static final String ADDON_MANIFEST = "addon.yml";
+    private static final String LEGACY_ADDON_MANIFEST = "sfx-addon.yml";
+
     private final JavaPlugin plugin;
     private final Logger logger;
     private final SfxApi api;
@@ -50,11 +57,12 @@ public final class SfxAddonManager implements AutoCloseable {
     public void loadBundledAddons(boolean basicExpansionEnabled) {
         if (!basicExpansionEnabled) {
             if (logger != null) {
-                logger.info("Skipped disabled bundled SFX addon " + SfxBasicExpansionAddon.ID);
+                logger.info("Skipped disabled bundled SFX addon " + BASIC_EXPANSION_ID);
             }
             return;
         }
-        loadAll(List.of(new SfxBasicExpansionAddon()), AddonSource.BUNDLED);
+        File addonJar = prepareBundledAddonJar(BASIC_EXPANSION_RESOURCE);
+        loadAddonJar(addonJar, "bundled", false);
     }
 
     public void loadExternalAddons(File addonsDir) {
@@ -74,8 +82,83 @@ public final class SfxAddonManager implements AutoCloseable {
         }
         java.util.Arrays.sort(files, java.util.Comparator.comparing(File::getName));
         for (File file : files) {
-            loadExternalJar(file);
+            loadAddonJar(file, "external", true);
         }
+    }
+
+    private File prepareBundledAddonJar(String resourcePath) {
+        try (InputStream input = plugin.getResource(resourcePath)) {
+            if (input == null) {
+                throw new IllegalStateException("Missing bundled addon jar resource " + resourcePath);
+            }
+            File addonsDir = new File(plugin.getDataFolder(), "addons");
+            if (!addonsDir.isDirectory() && !addonsDir.mkdirs()) {
+                throw new IOException("Failed to create addon directory " + addonsDir.getPath());
+            }
+            File tempJar = File.createTempFile("sfx-bundled-addon-", ".jar", addonsDir);
+            Files.copy(input, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            YamlConfiguration manifest = readManifest(tempJar);
+            String id = manifest.getString("id", BASIC_EXPANSION_ID).trim();
+            File addonDirectory = new File(addonsDir, folderName(id));
+            if (!addonDirectory.isDirectory() && !addonDirectory.mkdirs()) {
+                throw new IOException("Failed to create bundled addon directory " + addonDirectory.getPath());
+            }
+            File addonJar = new File(addonDirectory, manifest.getString("java.jar", "sfx-basic-expansion.jar").trim());
+            replaceFileIfChanged(tempJar, addonJar);
+            if (!tempJar.delete() && tempJar.exists() && logger != null) {
+                logger.warning("Failed to delete temporary bundled addon jar " + tempJar.getPath());
+            }
+            expandDefaultResources(addonJar, addonDirectory);
+            return addonJar;
+        } catch (IOException | RuntimeException exception) {
+            throw new IllegalStateException("Failed to prepare bundled SFX addon " + resourcePath + ": " + exception.getMessage(), exception);
+        }
+    }
+
+    private void replaceFileIfChanged(File source, File target) throws IOException {
+        if (target.isFile() && sameFileContent(source, target)) {
+            return;
+        }
+        Files.createDirectories(target.toPath().getParent());
+        Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private static boolean sameFileContent(File left, File right) throws IOException {
+        if (!left.isFile() || !right.isFile() || left.length() != right.length()) {
+            return false;
+        }
+        byte[] leftBytes = Files.readAllBytes(left.toPath());
+        byte[] rightBytes = Files.readAllBytes(right.toPath());
+        return java.util.Arrays.equals(leftBytes, rightBytes);
+    }
+
+    private void expandDefaultResources(File addonJar, File addonDirectory) throws IOException {
+        try (JarFile jar = new JarFile(addonJar)) {
+            for (JarEntry entry : jar.stream()
+                    .filter(candidate -> !candidate.isDirectory())
+                    .sorted(SfxAddonJarResources.byEntryName())
+                    .toList()) {
+                String name = entry.getName().replace('\\', '/');
+                if (!isExtractableDefaultResource(name)) {
+                    continue;
+                }
+                File target = new File(addonDirectory, name);
+                if (target.isFile()) {
+                    continue;
+                }
+                Files.createDirectories(target.toPath().getParent());
+                try (InputStream input = jar.getInputStream(entry)) {
+                    Files.copy(input, target.toPath());
+                }
+            }
+        }
+    }
+
+    private static boolean isExtractableDefaultResource(String name) {
+        return name.equals(ADDON_MANIFEST)
+                || name.equals(LEGACY_ADDON_MANIFEST)
+                || name.startsWith("content/")
+                || name.startsWith("lang/");
     }
 
     private void loadConfigAddons(File addonsDir) {
@@ -85,7 +168,7 @@ public final class SfxAddonManager implements AutoCloseable {
         }
         java.util.Arrays.sort(directories, java.util.Comparator.comparing(File::getName));
         for (File directory : directories) {
-            File manifestFile = new File(directory, "sfx-addon.yml");
+            File manifestFile = manifestFile(directory);
             if (!manifestFile.isFile()) {
                 continue;
             }
@@ -97,17 +180,48 @@ public final class SfxAddonManager implements AutoCloseable {
                     }
                     continue;
                 }
-                String mainClassName = manifest.getString("main", "").trim();
-                if (!mainClassName.isEmpty()) {
+                String id = manifest.getString("id", directory.getName()).trim();
+                if (isLoaded(id)) {
                     continue;
                 }
-                String id = manifest.getString("id", directory.getName()).trim();
+                String mainClassName = manifest.getString("main", "").trim();
+                if (!mainClassName.isEmpty()) {
+                    File addonJar = directoryAddonJar(directory, manifest);
+                    boolean exposeJarResources = !new File(directory, "content").isDirectory();
+                    loadAddonJar(addonJar, "external", exposeJarResources);
+                    continue;
+                }
                 String name = manifest.getString("name", id).trim();
                 load(new ConfigAddon(id, name, manifestFeatures(manifest)), "config");
             } catch (RuntimeException exception) {
                 throw new IllegalStateException("Failed to load SFX config addon " + directory.getName() + ": " + exception.getMessage(), exception);
             }
         }
+    }
+
+    private synchronized boolean isLoaded(String id) {
+        return id != null && loaded.containsKey(id);
+    }
+
+    private static File directoryAddonJar(File directory, YamlConfiguration manifest) {
+        String jarName = manifest.getString("java.jar", "").trim();
+        if (!jarName.isEmpty()) {
+            return new File(directory, jarName);
+        }
+        File[] jars = directory.listFiles((dir, name) -> name.toLowerCase(java.util.Locale.ROOT).endsWith(".jar"));
+        if (jars == null || jars.length == 0) {
+            throw new IllegalStateException("Java addon directory " + directory.getName() + " declares main but has no addon jar.");
+        }
+        java.util.Arrays.sort(jars, java.util.Comparator.comparing(File::getName));
+        return jars[0];
+    }
+
+    private static File manifestFile(File directory) {
+        File manifest = new File(directory, ADDON_MANIFEST);
+        if (manifest.isFile()) {
+            return manifest;
+        }
+        return new File(directory, LEGACY_ADDON_MANIFEST);
     }
 
     private List<ManifestFeature> manifestFeatures(YamlConfiguration manifest) {
@@ -160,18 +274,11 @@ public final class SfxAddonManager implements AutoCloseable {
         return Collections.unmodifiableList(new ArrayList<>(externalJars.values()));
     }
 
-    private void loadExternalJar(File file) {
+    private void loadAddonJar(File file, String source, boolean exposeJarResources) {
         try {
             URLClassLoader loader = new URLClassLoader(new URL[] {file.toURI().toURL()}, SfxAddon.class.getClassLoader());
-            try (JarFile jar = new JarFile(file)) {
-                JarEntry manifestEntry = jar.getJarEntry("sfx-addon.yml");
-                if (manifestEntry == null) {
-                    throw new IllegalStateException("Missing sfx-addon.yml");
-                }
-                YamlConfiguration manifest;
-                try (InputStreamReader reader = new InputStreamReader(jar.getInputStream(manifestEntry), StandardCharsets.UTF_8)) {
-                    manifest = YamlConfiguration.loadConfiguration(reader);
-                }
+            try {
+                YamlConfiguration manifest = readManifest(file);
                 if (!manifest.getBoolean("enabled", true)) {
                     loader.close();
                     if (logger != null) {
@@ -181,16 +288,18 @@ public final class SfxAddonManager implements AutoCloseable {
                 }
                 String mainClassName = manifest.getString("main", "").trim();
                 if (mainClassName.isEmpty()) {
-                    throw new IllegalStateException("sfx-addon.yml is missing main");
+                    throw new IllegalStateException(ADDON_MANIFEST + " is missing main");
                 }
                 Class<?> mainClass = Class.forName(mainClassName, true, loader);
                 if (!SfxAddon.class.isAssignableFrom(mainClass)) {
                     throw new IllegalStateException("Main class does not implement " + SfxAddon.class.getName() + ": " + mainClassName);
                 }
                 SfxAddon addon = (SfxAddon) mainClass.getDeclaredConstructor().newInstance();
-                load(addon, "external");
+                load(addon, source);
                 synchronized (this) {
-                    externalJars.put(addon.id(), file);
+                    if (exposeJarResources) {
+                        externalJars.put(addon.id(), file);
+                    }
                     externalLoaders.add(loader);
                 }
             } catch (Throwable throwable) {
@@ -200,6 +309,30 @@ public final class SfxAddonManager implements AutoCloseable {
         } catch (Throwable throwable) {
             throw new IllegalStateException("Failed to load SFX addon jar " + file.getName() + ": " + throwable.getMessage(), throwable);
         }
+    }
+
+    private static YamlConfiguration readManifest(File file) throws IOException {
+        try (JarFile jar = new JarFile(file)) {
+            JarEntry manifestEntry = jar.getJarEntry(ADDON_MANIFEST);
+            if (manifestEntry == null) {
+                manifestEntry = jar.getJarEntry(LEGACY_ADDON_MANIFEST);
+            }
+            if (manifestEntry == null) {
+                throw new IllegalStateException("Missing " + ADDON_MANIFEST);
+            }
+            try (InputStreamReader reader = new InputStreamReader(jar.getInputStream(manifestEntry), StandardCharsets.UTF_8)) {
+                return YamlConfiguration.loadConfiguration(reader);
+            }
+        }
+    }
+
+    private static String folderName(String addonId) {
+        String id = addonId == null || addonId.isBlank() ? "addon" : addonId.trim();
+        int namespace = id.indexOf(':');
+        if (namespace >= 0 && namespace + 1 < id.length()) {
+            id = id.substring(namespace + 1);
+        }
+        return id.replaceAll("[^A-Za-z0-9_.-]", "_");
     }
 
     private void load(SfxAddon addon, String source) {
@@ -237,7 +370,6 @@ public final class SfxAddonManager implements AutoCloseable {
     }
 
     private enum AddonSource {
-        BUNDLED("bundled"),
         EXTERNAL("external");
 
         private final String description;

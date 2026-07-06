@@ -70,6 +70,12 @@ sourceSets {
         java.srcDirs = ['main/java']
         resources.srcDirs = ['main/resources']
     }
+    basicExpansion {
+        java.srcDirs = ['addons/basic-expansion/src/main/java']
+        resources.srcDirs = ['addons/basic-expansion/src/main/resources']
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
 }
 
 dependencies {
@@ -92,7 +98,7 @@ processResources {
 }
 
 tasks.named('jar') {
-    dependsOn 'validateSfxTemplateCompile'
+    dependsOn 'validateSfxTemplateCompile', 'basicExpansionJar'
     archiveBaseName.set('SlimeFunX')
     archiveVersion.set('')
     from {
@@ -101,8 +107,21 @@ tasks.named('jar') {
     from(layout.buildDirectory.dir('sfx-template-compiled')) {
         into 'content/compiled'
     }
+    from(tasks.named('basicExpansionJar').flatMap { it.archiveFile }) {
+        into 'bundled-addons'
+    }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+tasks.register('basicExpansionJar', Jar) {
+    group = 'build'
+    description = 'Packages the default SFX Basic Expansion addon as a standalone addon jar.'
+    dependsOn 'basicExpansionClasses'
+    archiveFileName.set('sfx-basic-expansion.jar')
+    destinationDirectory.set(layout.buildDirectory.dir('addons'))
+    from(sourceSets.basicExpansion.output)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 def sameFileContent = { File left, File right ->
@@ -137,6 +156,9 @@ tasks.register('sourcePackage', Zip) {
     reproducibleFileOrder = true
     from(layout.projectDirectory.dir('main')) {
         into 'main'
+    }
+    from(layout.projectDirectory.dir('addons')) {
+        into 'addons'
     }
     from(layout.projectDirectory.file('build.gradle'))
     from(layout.projectDirectory.file('README.md'))
@@ -500,7 +522,7 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     description = 'Compiles bundled SFX templates into build/sfx-template-compiled and fails on unresolved or invalid template output.'
     dependsOn 'classes'
     inputs.dir(layout.projectDirectory.dir('main/resources/content/templates'))
-    inputs.dir(layout.projectDirectory.dir('main/resources/content/addons'))
+    inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/templates/machines/configurable/reactors.yml'))
@@ -517,11 +539,22 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
         languageVersion = JavaLanguageVersion.of(21)
     })
     doFirst {
+        def sourceRoot = layout.buildDirectory.dir('sfx-template-source').get().asFile
         def outputDir = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
+        delete(sourceRoot)
         delete(outputDir)
+        sourceRoot.mkdirs()
         outputDir.mkdirs()
+        copy {
+            from layout.projectDirectory.dir('main/resources/content')
+            into sourceRoot
+        }
+        copy {
+            from layout.projectDirectory.dir('addons/basic-expansion/src/main/resources/content')
+            into new File(sourceRoot, 'addons/basic_expansion/content')
+        }
         args = [
-                layout.projectDirectory.dir('main/resources/content/templates').asFile.absolutePath,
+                new File(sourceRoot, 'templates').absolutePath,
                 outputDir.absolutePath
         ]
     }
@@ -591,6 +624,8 @@ tasks.register('validateSfxBasicExpansionBoundary') {
     group = 'verification'
     description = 'Validates SFX Basic Expansion ids, language keys, and config paths stay in addon-owned sources.'
     inputs.dir(layout.projectDirectory.dir('main/java'))
+    inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/java'))
+    inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources'))
     inputs.dir(layout.projectDirectory.dir('main/resources/content'))
     inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
     doLast {
@@ -625,13 +660,15 @@ tasks.register('validateSfxBasicExpansionBoundary') {
                 'advanced-input-interface'
         ]
         def allowedPrefixes = [
-                'main/java/cc/theends6/sfx/addons/basic/',
-                'main/resources/content/addons/basic_expansion/'
+                'addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/',
+                'addons/basic-expansion/src/main/resources/'
         ]
         def violations = []
         [
                 layout.projectDirectory.dir('main/java').asFile,
-                layout.projectDirectory.dir('main/resources/content').asFile
+                layout.projectDirectory.dir('main/resources/content').asFile,
+                layout.projectDirectory.dir('addons/basic-expansion/src/main/java').asFile,
+                layout.projectDirectory.dir('addons/basic-expansion/src/main/resources').asFile
         ].each { root ->
             fileTree(root) {
                 include '**
@@ -775,33 +812,38 @@ tasks.register('validateSfxBasicExpansionBoundary') {
 
 
 
+
+
+
+
 *.yml'
-        }.files.sort { it.path }.each { file ->
-            def relative = contentRoot.toPath().relativize(file.toPath()).toString().replace('\\', '/')
-            file.readLines('UTF-8').eachWithIndex { line, index ->
-                def requires = line =~ /requires-feature:\s*(.+?)\s*$/
-                if (requires.find()) {
-                    (requires.group(1) =~ /sfx:[A-Za-z0-9_:-]+/).each { featureMatch ->
-                        def feature = featureMatch instanceof List ? featureMatch[0] : featureMatch
-                        if (!registered.contains(feature)) {
-                            violations << "${relative}:${index + 1}: requires-feature references unregistered bundled feature ${feature}"
+            }.files.sort { it.path }.each { file ->
+                def relative = layout.projectDirectory.asFile.toPath().relativize(file.toPath()).toString().replace('\\', '/')
+                file.readLines('UTF-8').eachWithIndex { line, index ->
+                    def requires = line =~ /requires-feature:\s*(.+?)\s*$/
+                    if (requires.find()) {
+                        (requires.group(1) =~ /sfx:[A-Za-z0-9_:-]+/).each { featureMatch ->
+                            def feature = featureMatch instanceof List ? featureMatch[0] : featureMatch
+                            if (!registered.contains(feature)) {
+                                violations << "${relative}:${index + 1}: requires-feature references unregistered bundled feature ${feature}"
+                            }
                         }
                     }
-                }
-                def excludes = line =~ /excludes-feature:\s*(.+?)\s*$/
-                if (excludes.find()) {
-                    (excludes.group(1) =~ /sfx:[A-Za-z0-9_:-]+/).each { featureMatch ->
-                        def feature = featureMatch instanceof List ? featureMatch[0] : featureMatch
-                        if (!registered.contains(feature)) {
-                            violations << "${relative}:${index + 1}: excludes-feature references unregistered bundled feature ${feature}"
+                    def excludes = line =~ /excludes-feature:\s*(.+?)\s*$/
+                    if (excludes.find()) {
+                        (excludes.group(1) =~ /sfx:[A-Za-z0-9_:-]+/).each { featureMatch ->
+                            def feature = featureMatch instanceof List ? featureMatch[0] : featureMatch
+                            if (!registered.contains(feature)) {
+                                violations << "${relative}:${index + 1}: excludes-feature references unregistered bundled feature ${feature}"
+                            }
                         }
                     }
-                }
-                def gate = line =~ /^\s*sf:[A-Za-z0-9_:-]+:\s*(sfx:[A-Za-z0-9_:-]+)\s*$/
-                if (gate.find()) {
-                    def feature = gate.group(1)
-                    if (!registered.contains(feature)) {
-                        violations << "${relative}:${index + 1}: item-feature-gates references unregistered bundled feature ${feature}"
+                    def gate = line =~ /^\s*sf:[A-Za-z0-9_:-]+:\s*(sfx:[A-Za-z0-9_:-]+)\s*$/
+                    if (gate.find()) {
+                        def feature = gate.group(1)
+                        if (!registered.contains(feature)) {
+                            violations << "${relative}:${index + 1}: item-feature-gates references unregistered bundled feature ${feature}"
+                        }
                     }
                 }
             }
@@ -830,8 +872,11 @@ tasks.register('validateSfxAddonJarResourceOverlay') {
             violations << 'SfxAddonManager must retain successfully loaded external addon jar files.'
         }
         if (!manager.contains('loadConfigAddons') || !manager.contains('ConfigAddon')
-                || !manager.contains('sfx-addon.yml')) {
-            violations << 'SfxAddonManager must load data-directory configuration addons from sfx-addon.yml without requiring Java main.'
+                || !manager.contains('addon.yml')) {
+            violations << 'SfxAddonManager must load data-directory configuration addons from addon.yml without requiring Java main.'
+        }
+        if (!manager.contains('bundled-addons/sfx-basic-expansion.jar') || !manager.contains('expandDefaultResources')) {
+            violations << 'SfxAddonManager must load bundled Basic Expansion from an embedded addon jar and expand default resources.'
         }
         if (!manager.contains('manifestFeatures') || !manager.contains('registerBoolean(feature.id()')
                 || !manager.contains('default-enabled')) {
@@ -887,7 +932,7 @@ tasks.register('validateSfxAddonJarResourceSmoke', JavaExec) {
         delete(smokeDir)
         smokeDir.mkdirs()
         def entries = [
-                'sfx-addon.yml'                                      : 'enabled: true\nmain: cc.theends6.sfx.smoke.SmokeAddon\n',
+                'addon.yml'                                          : 'enabled: true\nmain: cc.theends6.sfx.smoke.SmokeAddon\n',
                 'content/templates/root-smoke.yml'                   : 'root-smoke: true\n',
                 'content/addons/smoke/content/templates/bundled-style-smoke.yml': 'bundled-style-smoke: true\n',
                 'lang/en-US.yml'                                     : 'items:\n  smoke.root:\n    name: Root Smoke\n',
@@ -918,183 +963,153 @@ tasks.register('validateSfxAddonApiDocs') {
         }
         [
                 'SfxAddon',
-                'sfx-addon.yml',
-                'plugins/SlimeFunX/addons
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*.yml'
-            exclude '_source-map.yml'
-        }.files
-        def forbiddenTokens = [
-                'menu-style:',
-                'layout:',
-                '@cf',
-                '@copyfrom',
-                '@d',
-                '@define',
-                '@g',
-                '@global',
-                '@io',
-                '@isoutput',
-                '@it',
-                '@istemplate',
-                '@ot',
-                '@outputtarget',
-                '@p',
-                '@project',
-                '${',
-                'tag-fuels',
-                'expand:',
-                'id-prefix:',
-                'input-prefix:',
-                'input-amount:',
-                '&id',
-                '*id'
-        ]
+                'addon.yml',
+                'plugins/SlimeFunX/addons/<addon-id>/',
+                'bundled-addons/sfx-basic-expansion.jar',
+                'requires-feature',
+                'excludes-feature',
+                'custom server lang > addon lang > bundled core lang',
+                'SfxAddonContext',
+                'id: example:config_pack',
+                'default-enabled: true'
+        ].each { token ->
+            if (!docs.contains(token)) {
+                violations << "docs/addon-api.md is missing ${token}"
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException("SFX addon API documentation validation failed:\n" + violations.join('\n'))
+        }
+        logger.lifecycle("Validated SFX addon API documentation.")
+    }
+}
+
+tasks.register('validateSfxElectricProviderAddonPolicy') {
+    group = 'verification'
+    description = 'Validates SFX electric special provider overrides are routed through addon behavior policies.'
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitions.java'))
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitionConfig.java'))
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAreaElectricMachineProviders.java'))
+    inputs.file(layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java'))
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java'))
+    doLast {
         def violations = []
-        def recipeFiles = fileTree(new File(root, 'content/recipes')) {
+        def definitions = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitions.java').asFile.getText('UTF-8')
+        def definitionConfig = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitionConfig.java').asFile.getText('UTF-8')
+        def areaProviders = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAreaElectricMachineProviders.java').asFile.getText('UTF-8')
+        def addon = layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java').asFile.getText('UTF-8')
+        def registrar = layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java').asFile.getText('UTF-8')
+        if (definitions.contains('SfxUtilityRulesResolver.rules(plugin).autoBrewerEnabled()')) {
+            violations << 'SfxElectricMachineDefinitions must not directly select SFX Auto Brewer through utility rules.'
+        }
+        if (!definitions.contains('sfx:advanced_auto_brewer')) {
+            violations << 'SfxElectricMachineDefinitions must expose the advanced auto brewer provider key.'
+        }
+        if (!definitionConfig.contains('electricSpecialProviderKeyPolicies()')) {
+            violations << 'SfxElectricMachineDefinitionConfig must resolve special providers through addon policies.'
+        }
+        if (!registrar.contains('registerElectricSpecialProviderKeyPolicy')) {
+            violations << 'SfxBehaviorRegistrar must expose electric special provider key policies.'
+        }
+        if (!addon.contains('registerElectricSpecialProviderKeyPolicy') || !addon.contains('sfx:advanced_auto_brewer')) {
+            violations << 'SfxBasicExpansionAddon must register the Auto Brewer provider override through addon behavior API.'
+        }
+        [
+                'sfx:crop_growth_accelerator',
+                'sfx:crop_growth_accelerator_2',
+                'sfx:tree_growth_accelerator',
+                'sfx:produce_collector',
+                'sfx:auto_breeder',
+                'sfx:animal_growth_accelerator',
+                'sfx:xp_collector',
+                'sfx:fluid_pump'
+        ].each { providerKey ->
+            if (!definitions.contains(providerKey) || !addon.contains(providerKey)) {
+                violations << "SFX electric provider override is missing ${providerKey}"
+            }
+        }
+        if (areaProviders.contains('SfxAreaMachineBalance.rules(plugin).cropGrowthAcceleratorBalance()')
+                || areaProviders.contains('SfxAreaMachineBalance.rules(plugin).treeGrowthAcceleratorBalance()')
+                || areaProviders.contains('SfxAreaMachineBalance.rules(plugin).produceCollectorBalance()')
+                || areaProviders.contains('SfxAreaMachineBalance.rules(plugin).autoBreederBalance()')
+                || areaProviders.contains('SfxAreaMachineBalance.rules(plugin).animalGrowthAgeIncrement()')
+                || areaProviders.contains('SfxAreaMachineBalance.rules(plugin).xpCollectorBalance()')
+                || areaProviders.contains('SfxAreaMachineBalance.rules(plugin).xpFlaskEnergyCost()')
+                || areaProviders.contains('SfxAreaMachineBalance.rules(plugin).fluidPumpOptimization()')
+                || areaProviders.contains('SfxAreaMachineBalance.rules(plugin).fluidPumpProbeIntervalTicks()')) {
+            violations << 'SfxAreaElectricMachineProviders must not directly switch SFX area providers through area balance rules.'
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException("SFX electric provider addon policy validation failed:\n" + violations.join('\n'))
+        }
+        logger.lifecycle("Validated SFX electric special provider addon policy boundary.")
+    }
+}
+
+tasks.register('validateSfxCompiledRecipeRuntimeShapes', JavaExec) {
+    group = 'verification'
+    description = 'Validates compiled recipe YAML with the same Bukkit section-style shape used by runtime loading.'
+    dependsOn 'classes', 'validateSfxTemplateCompile'
+    inputs.dir(layout.buildDirectory.dir('sfx-template-compiled/content/recipes'))
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.recipe.SfxCompiledRecipeShapeValidator')
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
+    doFirst {
+        args = [
+                layout.buildDirectory.dir('sfx-template-compiled/content/recipes').get().asFile.absolutePath
+        ]
+    }
+}
+
+tasks.register('reverseTranscribeSfxCompiled', JavaExec) {
+    group = 'verification'
+    description = 'Reverse-transcribes edited server compiled content back into source templates, then roundtrip-validates the result.'
+    dependsOn 'classes', 'validateSfxTemplateCompile'
+    inputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
+    inputs.property('sfxReverseSourceRoot', providers.gradleProperty('sfxReverseSourceRoot').orElse('main/resources/content/templates'))
+    inputs.property('sfxReverseBaselineDir', providers.gradleProperty('sfxReverseBaselineDir').orElse(layout.buildDirectory.dir('sfx-template-compiled').map { it.asFile.absolutePath }))
+    inputs.property('sfxReverseCompiledDir', providers.gradleProperty('sfxReverseCompiledDir').orElse('run-paper-1.21.8/plugins/SlimeFunX/content/compiled'))
+    inputs.property('sfxReverseReportRoot', providers.gradleProperty('sfxReverseReportRoot').orElse(layout.buildDirectory.dir('sfx-reverse-transcribe').map { it.asFile.absolutePath }))
+    outputs.dir(layout.buildDirectory.dir('sfx-reverse-transcribe'))
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.template.SfxCompiledReverseTranscriber')
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
+    doFirst {
+        def serverCompiled = providers.gradleProperty('sfxReverseCompiledDir')
+                .orElse(layout.projectDirectory.dir('run-paper-1.21.8/plugins/SlimeFunX/content/compiled').asFile.absolutePath)
+                .get()
+        def sourceRoot = providers.gradleProperty('sfxReverseSourceRoot')
+                .orElse(layout.projectDirectory.dir('main/resources/content/templates').asFile.absolutePath)
+                .get()
+        def baselineCompiled = providers.gradleProperty('sfxReverseBaselineDir')
+                .orElse(layout.buildDirectory.dir('sfx-template-compiled').get().asFile.absolutePath)
+                .get()
+        def reportRoot = providers.gradleProperty('sfxReverseReportRoot')
+                .orElse(layout.buildDirectory.dir('sfx-reverse-transcribe').get().asFile.absolutePath)
+                .get()
+        args = [
+                "--source-root=${sourceRoot}",
+                "--baseline-compiled=${baselineCompiled}",
+                "--server-compiled=${serverCompiled}",
+                "--report-root=${reportRoot}"
+        ]
+    }
+}
+
+tasks.register('validateSfxCompiledContent') {
+    group = 'verification'
+    description = 'Validates compiled SFX content is explicit runtime data without template or layout fallback tokens.'
+    dependsOn 'validateSfxTemplateCompile', 'validateSfxCompiledRecipeRuntimeShapes'
+    inputs.dir(layout.buildDirectory.dir('sfx-template-compiled'))
+    inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
+    inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources'))
+    doLast {
+        def root = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
+        def compiledFiles = fileTree(root) {
             include '**
 
 
@@ -1126,500 +1141,531 @@ tasks.register('validateSfxAddonApiDocs') {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 *.yml'
+        }.files
+        def validRecipeOperations = ['shaped', 'shapeless', 'single', 'hand'] as Set
+        def recipeMachineReferences = []
+        def recipeMachineTagReferences = []
+        def recipeItemReferences = []
+        def electricRecipeItemReferences = []
+        def itemGuideRecipeItemReferences = []
+        def compiledItemIds = [] as Set
+        def compiledRuntimeRecipeTypes = [] as Set
+        def compiledRuntimeRecipeTagsByType = [:].withDefault { [] as Set }
+        def electricRecipeIds = [] as Set
+        def electricRecipeTypes = [:]
+        def electricRecipeTagsById = [:].withDefault { [] as Set }
+        def electricMachineIds = [] as Set
+        def basicMachineIds = [] as Set
+        def electricMachineRuntimeTagsById = [:]
+        def electricMachineRuntimeExecutorById = [:]
+        def cleanScalar = { value ->
+            value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
+        }
+        def cleanTag = { value ->
+            def cleaned = cleanScalar(value)
+            cleaned == null ? null : cleaned.trim().replace('_', '-').toLowerCase(Locale.ROOT)
+        }
+        def sha256File = { File file ->
+            def digest = java.security.MessageDigest.getInstance('SHA-256')
+            file.withInputStream { stream ->
+                byte[] buffer = new byte[8192]
+                int read
+                while ((read = stream.read(buffer)) != -1) {
+                    digest.update(buffer, 0, read)
+                }
+            }
+            digest.digest().collect { String.format('%02x', it & 0xff) }.join()
+        }
+        def validateManifestOutputs = {
+            def manifestFile = new File(root, '_manifest.yml')
+            if (!manifestFile.isFile()) {
+                violations << "compiled manifest missing _manifest.yml"
+                return
+            }
+            def manifestText = manifestFile.getText('UTF-8')
+            ['compiler:', 'compiler-version:', 'compiled-at:', 'generated-at:', 'template-hash:', 'content-version:', 'source-files:', 'outputs:'].each { field ->
+                if (!manifestText.contains(field)) {
+                    violations << "_manifest.yml missing ${field}"
+                }
+            }
+            def outputEntries = []
+            def currentOutput = null
+            boolean inOutputs = false
+            manifestText.readLines().each { line ->
+                if (line == 'outputs:') {
+                    inOutputs = true
+                    return
+                }
+                if (!inOutputs) {
+                    return
+                }
+                def fileMatch = line =~ /^- file:\s*(.+?)\s*$/
+                if (fileMatch.matches()) {
+                    currentOutput = [file: cleanScalar(fileMatch[0][1]), sha256: null]
+                    outputEntries << currentOutput
+                    return
+                }
+                def shaMatch = line =~ /^  sha256:\s*([0-9a-fA-F]{64})\s*$/
+                if (shaMatch.matches() && currentOutput != null) {
+                    currentOutput.sha256 = shaMatch[0][1].toLowerCase(Locale.ROOT)
+                }
+            }
+            def actualOutputs = compiledFiles.findAll { !it.name.startsWith('_') }
+            def actualOutputPaths = actualOutputs.collect {
+                root.toPath().relativize(it.toPath()).toString().replace('\\', '/')
+            } as Set
+            def declaredOutputPaths = [] as Set
+            outputEntries.each { entry ->
+                if (entry.file == null || entry.file.isBlank()) {
+                    violations << "_manifest.yml contains output without file"
+                    return
+                }
+                declaredOutputPaths << entry.file
+                if (entry.sha256 == null) {
+                    violations << "_manifest.yml output ${entry.file} missing sha256"
+                    return
+                }
+                def outputFile = new File(root, entry.file)
+                def rootPath = root.canonicalFile.toPath()
+                def outputPath = outputFile.canonicalFile.toPath()
+                if (!outputPath.startsWith(rootPath)) {
+                    violations << "_manifest.yml output escapes compiled root: ${entry.file}"
+                    return
+                }
+                if (!outputFile.isFile()) {
+                    violations << "_manifest.yml output missing from compiled directory: ${entry.file}"
+                    return
+                }
+                def actualSha = sha256File(outputFile)
+                if (actualSha != entry.sha256) {
+                    violations << "_manifest.yml sha256 mismatch for ${entry.file}"
+                }
+            }
+            actualOutputPaths.each { path ->
+                if (!declaredOutputPaths.contains(path)) {
+                    violations << "compiled output is not listed in _manifest.yml: ${path}"
+                }
+            }
+            declaredOutputPaths.each { path ->
+                if (!actualOutputPaths.contains(path)) {
+                    violations << "_manifest.yml declares missing compiled output: ${path}"
+                }
+            }
+            def sourceMapFile = new File(root, '_source-map.yml')
+            if (!sourceMapFile.isFile()) {
+                violations << "compiled source map missing _source-map.yml"
+            } else {
+                def sourceMapText = sourceMapFile.getText('UTF-8')
+                ['origins:', 'outputs:'].each { field ->
+                    if (!sourceMapText.contains(field)) {
+                        violations << "_source-map.yml missing ${field}"
+                    }
+                }
+                def sourceMapOutputs = [] as Set
+                boolean inSourceMapOutputs = false
+                sourceMapText.readLines().each { line ->
+                    if (line == 'outputs:') {
+                        inSourceMapOutputs = true
+                        return
+                    }
+                    if (!inSourceMapOutputs) {
+                        return
+                    }
+                    def fileMatch = line =~ /^- file:\s*(.+?)\s*$/
+                    if (fileMatch.matches()) {
+                        sourceMapOutputs << cleanScalar(fileMatch[0][1])
+                    }
+                }
+                declaredOutputPaths.each { path ->
+                    if (!sourceMapOutputs.contains(path)) {
+                        violations << "_source-map.yml missing output mapping for ${path}"
+                    }
+                }
+                sourceMapOutputs.each { path ->
+                    if (!declaredOutputPaths.contains(path)) {
+                        violations << "_source-map.yml contains output not listed in _manifest.yml: ${path}"
+                    }
+                }
+            }
+        }
+        validateManifestOutputs()
+        def addRecipeItemReference = { File file, recipe, String section, Object rawId, int lineNumber ->
+            def rel = root.toPath().relativize(file.toPath()).toString()
+            def id = cleanScalar(String.valueOf(rawId))
+            if (id == null || id.isBlank()) {
+                violations << "${rel}:${lineNumber}: recipe ${recipe.key} ${section} contains blank sfx item reference"
+            } else {
+                recipeItemReferences << [rel: rel, line: lineNumber, recipe: recipe.key, section: section, item: id]
+            }
+        }
+        def flattenLanguageKeys = { File file ->
+            def keys = [] as Set
+            def stack = []
+            file.readLines('UTF-8').each { line ->
+                if (line.trim().isEmpty() || line.trim().startsWith('#') || line.trim().startsWith('-')) {
+                    return
+                }
+                def matcher = line =~ /^(\s*)(['"]?)([^:'"]+)\2:\s*(.*)$/
+                if (!matcher.matches()) {
+                    return
+                }
+                int indent = matcher[0][1].length()
+                String key = matcher[0][3].trim()
+                while (!stack.isEmpty() && stack[-1].indent >= indent) {
+                    stack.remove(stack.size() - 1)
+                }
+                def path = (stack.collect { it.key } + key).join('.')
+                keys << path
+                stack << [indent: indent, key: key]
+            }
+            keys
+        }
+        def languageFiles = fileTree(layout.projectDirectory.dir('main/resources/lang')) {
+            include '**/*.yml'
         }.files.sort { it.name }
-        def addonLanguageFiles = fileTree(layout.projectDirectory.dir('main/resources/content/addons')) {
-            include '**/lang
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*.yml'
+        def addonLanguageFiles = fileTree(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources')) {
+            include '**/lang/*.yml'
+        }.files.sort { it.path }
+        def languageKeysByFile = languageFiles.collectEntries { file ->
+            def keys = flattenLanguageKeys(file)
+            addonLanguageFiles.findAll { it.name == file.name }.each { addonFile ->
+                keys.addAll(flattenLanguageKeys(addonFile))
+            }
+            [(file.name): keys]
+        }
+        if (languageKeysByFile.isEmpty()) {
+            violations << "no bundled language files found under main/resources/lang"
+        }
+        def referencedLanguageKeys = [] as Set
+        def validateLanguageReferences = { String text, String rel ->
+            def missing = [] as Set
+            def lines = text.readLines()
+            for (int index = 0; index < lines.size(); index++) {
+                def matcher = lines[index] =~ /^\s+[A-Za-z0-9_.-]+-key:\s*(.+?)\s*$/
+                if (!matcher.matches()) {
+                    continue
+                }
+                def key = cleanScalar(matcher[0][1])
+                if (key == null || key.isBlank()) {
+                    violations << "${rel}:${index + 1}: blank language key reference"
+                    continue
+                }
+                referencedLanguageKeys << key
+                languageKeysByFile.each { languageFile, keys ->
+                    if (!keys.contains(key)) {
+                        missing << "${rel}:${index + 1}: ${languageFile} missing language key ${key}"
+                    }
+                }
+            }
+            violations.addAll(missing)
+        }
+        compiledFiles.each { file ->
+            def text = file.getText('UTF-8')
+            def rel = root.toPath().relativize(file.toPath()).toString()
+            forbiddenTokens.each { token ->
+                if (text.contains(token)) {
+                    violations << "${rel}: contains ${token}"
+                }
+            }
+            if ((text =~ /(?m)^\s*profile\s*:/).find()) {
+                violations << "${rel}: contains profile:"
+            }
+            if ((text =~ /(?m)^\s*layout\s*:/).find()) {
+                violations << "${rel}: contains runtime layout token"
+            }
+            validateLanguageReferences(text, rel)
+        }
+        def validateNoLiteralUiText = { String text, String rel, String label ->
+            def lines = text.readLines()
+            for (int index = 0; index < lines.size(); index++) {
+                def line = lines[index]
+                def nameMatch = line =~ /^\s+name:\s*(.*)$/
+                if (nameMatch.matches()) {
+                    def value = cleanScalar(nameMatch[0][1])
+                    if (value != null && !value.isBlank()) {
+                        violations << "${rel}:${index + 1}: ${label} uses literal name; use name-key"
+                    }
+                }
+                def loreMatch = line =~ /^\s+lore:\s*(.*)$/
+                if (loreMatch.matches()) {
+                    def value = loreMatch[0][1].trim()
+                    if (!value.isEmpty() && value != '[]' && value != '[ ]') {
+                        violations << "${rel}:${index + 1}: ${label} uses literal lore; use lore-key"
+                    } else if (value.isEmpty()) {
+                        def indent = (line =~ /^(\s*)/)[0][1].length()
+                        for (int nextIndex = index + 1; nextIndex < lines.size(); nextIndex++) {
+                            def nextLine = lines[nextIndex]
+                            if (nextLine.trim().isEmpty() || nextLine.trim().startsWith('#')) {
+                                continue
+                            }
+                            def nextIndent = (nextLine =~ /^(\s*)/)[0][1].length()
+                            if (nextIndent <= indent) {
+                                break
+                            }
+                            def itemMatch = nextLine =~ /^\s*-\s*(.*)$/
+                            if (itemMatch.matches()) {
+                                def itemValue = cleanScalar(itemMatch[0][1])
+                                if (itemValue != null && !itemValue.isBlank()) {
+                                    violations << "${rel}:${nextIndex + 1}: ${label} uses literal lore; use lore-key"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        def validateRecipeEntry = { file, recipe ->
+            if (recipe == null) {
+                return
+            }
+            def rel = root.toPath().relativize(file.toPath()).toString()
+            ['id', 'source', 'recipe-type', 'operation', 'guide-order', 'runtime', 'outputs'].each { field ->
+                if (!recipe.fields.contains(field)) {
+                    violations << "${rel}: recipe ${recipe.key} missing ${field}"
+                }
+            }
+            if (recipe.id != null && recipe.id != recipe.key) {
+                violations << "${rel}: recipe ${recipe.key} id field mismatches entry key ${recipe.id}"
+            }
+            if (recipe.operation == null) {
+                return
+            }
+            def operation = recipe.operation.replace('-', '_').toLowerCase(Locale.ROOT)
+            if (operation == 'shaped_3x3') {
+                operation = 'shaped'
+            } else if (operation == 'single_input') {
+                operation = 'single'
+            } else if (operation == 'hand_input') {
+                operation = 'hand'
+            } else if (operation == 'shapeless_input') {
+                operation = 'shapeless'
+            }
+            if (!validRecipeOperations.contains(operation)) {
+                violations << "${rel}: recipe ${recipe.key} has unsupported operation ${recipe.operation}"
+                return
+            }
+            if (operation == 'shaped') {
+                if (!recipe.fields.contains('matrix')) {
+                    violations << "${rel}: recipe ${recipe.key} shaped operation missing matrix"
+                } else if (recipe.matrixCount != 9) {
+                    violations << "${rel}: recipe ${recipe.key} shaped matrix expected 9 entries, got ${recipe.matrixCount}"
+                }
+            } else if (operation == 'shapeless') {
+                if (!recipe.fields.contains('inputs')) {
+                    violations << "${rel}: recipe ${recipe.key} shapeless operation missing inputs"
+                } else if (recipe.inputsCount < 1 || recipe.inputsCount > 9) {
+                    violations << "${rel}: recipe ${recipe.key} shapeless inputs expected 1-9 entries, got ${recipe.inputsCount}"
+                }
+            } else if (!recipe.fields.contains('input')) {
+                violations << "${rel}: recipe ${recipe.key} ${operation} operation missing input"
+            }
+            if (recipe.outputsCount < 1) {
+                violations << "${rel}: recipe ${recipe.key} outputs must contain at least one entry"
+            }
+            if (recipe.runtime == 'true'
+                    && !recipe.fields.contains('runtime-machine-tags')) {
+                violations << "${rel}: recipe ${recipe.key} runtime recipe missing runtime-machine-tags"
+            }
+            if (recipe.fields.contains('runtime-machine-tags') && recipe.machineTagRefs.isEmpty()) {
+                violations << "${rel}: recipe ${recipe.key} runtime-machine-tags must list at least one tag"
+            }
+            if (recipe.fields.contains('machine') || recipe.fields.contains('runtime-machines')) {
+                violations << "${rel}: recipe ${recipe.key} must use runtime-machine-tags instead of direct machine/runtime-machines references"
+            }
+            recipe.machineRefs.each { machineId ->
+                if (machineId == null || machineId.isBlank()) {
+                    violations << "${rel}: recipe ${recipe.key} contains blank machine reference"
+                } else {
+                    recipeMachineReferences << [rel: rel, recipe: recipe.key, machine: machineId]
+                }
+            }
+            recipe.machineTagRefs.each { tag ->
+                if (tag == null || tag.isBlank()) {
+                    violations << "${rel}: recipe ${recipe.key} contains blank runtime-machine-tags reference"
+                } else {
+                    recipeMachineTagReferences << [rel: rel, recipe: recipe.key, tag: cleanTag(tag)]
+                }
+            }
+            if (recipe.runtime == 'true' && recipe.recipeType != null && !recipe.recipeType.isBlank()) {
+                compiledRuntimeRecipeTypes << recipe.recipeType
+                recipe.machineTagRefs.each { tag ->
+                    if (tag != null && !tag.isBlank()) {
+                        compiledRuntimeRecipeTagsByType[recipe.recipeType] << cleanTag(tag)
+                    }
+                }
+            }
+            if (recipe.scalarSlot) {
+                violations << "${rel}: recipe ${recipe.key} contains scalar recipe slot/output shorthand"
+            }
+            if (recipe.fields.contains('note')) {
+                violations << "${rel}: recipe ${recipe.key} contains literal note; use note-key"
+            }
+        }
+        int recipeEntryCount = 0
+        recipeFiles.each { file ->
+            def rel = root.toPath().relativize(file.toPath()).toString()
+            def text = file.getText('UTF-8')
+            recipeEntryCount += (text =~ /(?m)^  ['"]?[^#\s][^\r\n]*['"]?:\s*$/).count
+            def currentRecipe = null
+            def flushPendingSfxSlot = {
+                if (currentRecipe != null && currentRecipe.pendingSfxSection != null) {
+                    violations << "${rel}:${currentRecipe.pendingSfxLine}: recipe ${currentRecipe.key} ${currentRecipe.pendingSfxSection} sfx stack missing id"
+                    currentRecipe.pendingSfxSection = null
+                    currentRecipe.pendingSfxLine = null
+                }
+            }
+            def flushRecipe = {
+                flushPendingSfxSlot()
+                validateRecipeEntry(file, currentRecipe)
+            }
+            text.readLines().eachWithIndex { line, lineIndex ->
+                int lineNumber = lineIndex + 1
+                def recipeMatch = line =~ /^  ['"]?([^'"#\s][^'"]*?)['"]?:\s*$/
+                if (recipeMatch.matches()) {
+                    flushRecipe()
+                    currentRecipe = [
+                            key         : recipeMatch[0][1],
+                            fields      : [] as Set,
+                            section     : null,
+                            id          : null,
+                            recipeType  : null,
+                            operation   : null,
+                            runtime     : null,
+                            matrixCount : 0,
+                            inputsCount : 0,
+                            outputsCount: 0,
+                            machineRefs : [],
+                            machineTagRefs: [],
+                            scalarSlot  : false,
+                            pendingSfxSection: null,
+                            pendingSfxLine: null
+                    ]
+                    return
+                }
+                if (currentRecipe == null) {
+                    return
+                }
+                def fieldMatch = line =~ /^    ([A-Za-z0-9_-]+):(?:\s*(.*))?$/
+                if (fieldMatch.matches()) {
+                    flushPendingSfxSlot()
+                    def field = fieldMatch[0][1]
+                    def value = cleanScalar(fieldMatch[0][2])
+                    currentRecipe.fields.add(field)
+                    currentRecipe.section = ['matrix', 'inputs', 'input', 'outputs', 'random-outputs'].contains(field) ? field : null
+                    if (field == 'id') {
+                        currentRecipe.id = value
+                    } else if (field == 'recipe-type') {
+                        currentRecipe.recipeType = value
+                    } else if (field == 'operation') {
+                        currentRecipe.operation = value
+                    } else if (field == 'runtime') {
+                        currentRecipe.runtime = value == null ? null : value.toLowerCase(Locale.ROOT)
+                    } else if (field == 'machine') {
+                        currentRecipe.machineRefs << value
+                    } else if (field == 'runtime-machines') {
+                        currentRecipe.section = 'runtime-machines'
+                    } else if (field == 'runtime-machine-tags') {
+                        currentRecipe.section = 'runtime-machine-tags'
+                    } else if (field == 'input') {
+                        if (value != null && !value.isBlank()) {
+                            currentRecipe.scalarSlot = true
+                        }
+                    } else if (field == 'random-outputs') {
+                        currentRecipe.section = 'random-outputs'
+                    }
+                    return
+                }
+                def listItemMatch = line =~ /^    -\s*(.*)$/
+                if (listItemMatch.matches()) {
+                    def itemText = listItemMatch[0][1] == null ? '' : listItemMatch[0][1].trim()
+                    if (['matrix', 'inputs', 'outputs', 'random-outputs'].contains(currentRecipe.section)
+                            && !itemText.isBlank()
+                            && !itemText.startsWith('type:')) {
+                        currentRecipe.scalarSlot = true
+                    }
+                    def inlineTypeMatch = itemText =~ /^type:\s*(.+?)\s*$/
+                    if (['matrix', 'inputs', 'outputs', 'random-outputs'].contains(currentRecipe.section)
+                            && inlineTypeMatch.matches()) {
+                        flushPendingSfxSlot()
+                        def type = cleanScalar(inlineTypeMatch[0][1])
+                        if (type != null && type.equalsIgnoreCase('sfx')) {
+                            currentRecipe.pendingSfxSection = currentRecipe.section
+                            currentRecipe.pendingSfxLine = lineNumber
+                        }
+                    }
+                    if (currentRecipe.section == 'matrix') {
+                        currentRecipe.matrixCount++
+                    } else if (currentRecipe.section == 'inputs') {
+                        currentRecipe.inputsCount++
+                    } else if (currentRecipe.section == 'outputs') {
+                        currentRecipe.outputsCount++
+                    } else if (currentRecipe.section == 'runtime-machines') {
+                        currentRecipe.machineRefs << cleanScalar(itemText)
+                    } else if (currentRecipe.section == 'runtime-machine-tags') {
+                        currentRecipe.machineTagRefs << cleanScalar(itemText)
+                    }
+                    return
+                }
+                def nestedTypeMatch = line =~ /^      type:\s*(.+?)\s*$/
+                if (['input', 'matrix', 'inputs', 'outputs', 'random-outputs'].contains(currentRecipe.section)
+                        && nestedTypeMatch.matches()) {
+                    flushPendingSfxSlot()
+                    def type = cleanScalar(nestedTypeMatch[0][1])
+                    if (type != null && type.equalsIgnoreCase('sfx')) {
+                        currentRecipe.pendingSfxSection = currentRecipe.section
+                        currentRecipe.pendingSfxLine = lineNumber
+                    }
+                    return
+                }
+                def nestedIdMatch = line =~ /^      id:\s*(.+?)\s*$/
+                if (currentRecipe.pendingSfxSection != null && nestedIdMatch.matches()) {
+                    addRecipeItemReference(file, currentRecipe, currentRecipe.pendingSfxSection, nestedIdMatch[0][1], lineNumber)
+                    currentRecipe.pendingSfxSection = null
+                    currentRecipe.pendingSfxLine = null
+                }
+            }
+            flushRecipe()
+        }
+        if (recipeEntryCount != 547) {
+            violations << "compiled recipe entry count expected 547, got ${recipeEntryCount}"
+        }
+        if (recipeFiles.size() >= recipeEntryCount) {
+            violations << "compiled recipe files are not grouped: files=${recipeFiles.size()} entries=${recipeEntryCount}"
+        }
+        [
+                'content/recipes/recipes',
+                'content/machines/electric-machines/machines',
+                'content/machines/energy-components/components',
+                'content/machines/cargo-components/cargo-components',
+                'content/machines/machine-catalog/machines'
+        ].each { repeatedPath ->
+            if (new File(root, repeatedPath).exists()) {
+                violations << "compiled output path still contains repeated root section: ${repeatedPath}"
+            }
+        }
+        def catalogCompiledFiles = fileTree(new File(root, 'content/machines/machine-catalog')) {
+            include '**/*.yml'
         }.files.sort { it.name }
         def catalogCompiledCount = 0
         def catalogMachineIds = [] as Set
         def catalogMachineTags = [] as Set
         def catalogMachineTagsById = [:].withDefault { [] as Set }
         if (catalogCompiledFiles.isEmpty()) {
-            violations << "compiled machine catalog output missing content/machines/machine-catalog/*.yml"
-        } else {
-            def catalogText = catalogCompiledFiles.collect { it.getText('UTF-8') }.join('\n')
-            catalogCompiledCount = (catalogText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
-            if (catalogCompiledCount != 184) {
-                violations << "compiled machine catalog entry count expected 184, got ${catalogCompiledCount}"
-            }
-            ['category:', 'display-name:', 'input-slots:', 'output-slots:', 'status-slot:', 'tick-interval:', 'tags:', 'capabilities:', 'input-provider:', 'output-provider:', 'policies:', 'effects:'].each { token ->
-                def count = (catalogText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count
-                if (count < 184) {
-                    violations << "compiled machine catalog expected ${token} on every entry, got ${count}"
-                }
-            }
-            def providerSlotCount = (catalogText =~ /(?m)^      slots:\s*/).count
+            violations << "compiled machine catalog output missing content/machines/machine-catalog
+
+
+
+
+
+
+
+
+
+
+
+
+).count
             def providerDescriptionCount = (catalogText =~ /(?m)^      description:\s*/).count
             if (providerSlotCount != 368) {
                 violations << "compiled machine catalog expected provider slots on every input/output provider, got ${providerSlotCount}"
@@ -1763,100 +1809,100 @@ tasks.register('validateSfxAddonApiDocs') {
             }
         }
         def basicCompiledFiles = fileTree(new File(root, 'content/machines/basic-machines')) {
-            include '**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-).matches()) {
+            include '**/*.yml'
+        }.files.sort { it.name }
+        def basicCompiledCount = 0
+        if (basicCompiledFiles.isEmpty()) {
+            violations << "compiled basic machine output missing content/machines/basic-machines/*.yml"
+        } else {
+            def basicText = basicCompiledFiles.collect { it.getText('UTF-8') }.join('\n')
+            basicCompiledCount = (basicText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
+            if (basicCompiledCount != 30) {
+                violations << "compiled basic machine entry count expected 30, got ${basicCompiledCount}"
+            }
+            def currentBasicMachine = null
+            def currentBasicExecutor = null
+            def sawExecutor = false
+            def sawStats = false
+            def basicStatsKeys = [] as Set
+            def currentAcceptedRecipeTypes = [] as Set
+            def inBasicRecipeTypes = false
+            def validateBasicRuntime = {
+                if (currentBasicMachine != null) {
+                    if (!sawExecutor) {
+                        violations << "compiled basic machine ${currentBasicMachine} missing runtime.executor"
+                    } else if (!['sf:basic_hand_input', 'sf:enhanced_furnace', 'sf:manual_machine'].contains(currentBasicExecutor)) {
+                        violations << "compiled basic machine ${currentBasicMachine} has unsupported runtime.executor ${currentBasicExecutor}"
+                    }
+                    if (currentBasicExecutor == 'sf:enhanced_furnace') {
+                        if (!sawStats) violations << "compiled basic machine ${currentBasicMachine} missing runtime.stats"
+                        ['processing-speed', 'fuel-efficiency', 'fortune-level'].each { key ->
+                            if (!basicStatsKeys.contains(key)) violations << "compiled basic machine ${currentBasicMachine} missing runtime.stats.${key}"
+                        }
+                    } else if (currentBasicExecutor == 'sf:manual_machine') {
+                        currentAcceptedRecipeTypes.each { recipeType ->
+                            if (!compiledRuntimeRecipeTypes.contains(recipeType)) {
+                                violations << "compiled basic machine ${currentBasicMachine} accepts unknown runtime recipe-type ${recipeType}"
+                            }
+                            def matchingTags = compiledRuntimeRecipeTagsByType[recipeType].intersect(catalogMachineTagsById[currentBasicMachine])
+                            if (compiledRuntimeRecipeTypes.contains(recipeType) && matchingTags.isEmpty()) {
+                                violations << "compiled basic machine ${currentBasicMachine} accepts recipe-type ${recipeType} but no runtime recipe tag matches its machine catalog tags"
+                            }
+                        }
+                    }
+                }
+            }
+            basicText.readLines().each { line ->
+                def machineMatch = line =~ /^  ['"]?(sf:[^'":\s]+)['"]?:\s*$/
+                if (machineMatch.matches()) {
+                    validateBasicRuntime()
+                    currentBasicMachine = machineMatch[0][1]
+                    basicMachineIds << currentBasicMachine
+                    if (!catalogMachineIds.contains(currentBasicMachine)) {
+                        violations << "compiled basic machine ${currentBasicMachine} references unknown machine catalog id"
+                    }
+                    currentBasicExecutor = null
+                    sawExecutor = false
+                    sawStats = false
+                    basicStatsKeys.clear()
+                    currentAcceptedRecipeTypes.clear()
+                    inBasicRecipeTypes = false
+                    return
+                }
+                if (currentBasicMachine == null) {
+                    return
+                }
+                def executorMatch = line =~ /^      executor:\s*(sf:[A-Za-z0-9_-]+)\s*$/
+                if (executorMatch.matches()) {
+                    currentBasicExecutor = executorMatch[0][1]
+                    sawExecutor = true
+                    inBasicRecipeTypes = false
+                }
+                if ((line =~ /^      stats:\s*$/).matches()) {
+                    sawStats = true
+                    inBasicRecipeTypes = false
+                }
+                def inlineRecipeTypesMatch = line =~ /^        recipe-types:\s*\[(.*?)\]\s*$/
+                if (inlineRecipeTypesMatch.matches()) {
+                    inBasicRecipeTypes = false
+                    inlineRecipeTypesMatch[0][1].split(',').each { rawType ->
+                        def recipeType = cleanScalar(rawType)
+                        if (recipeType != null && !recipeType.isBlank()) {
+                            currentAcceptedRecipeTypes << recipeType
+                        }
+                    }
+                }
+                if ((line =~ /^        recipe-types:\s*$/).matches()) {
+                    inBasicRecipeTypes = true
+                    return
+                }
+                if (inBasicRecipeTypes) {
+                    def acceptedTypeMatch = line =~ /^        -\s*(sf:[A-Za-z0-9_:-]+)\s*$/
+                    if (acceptedTypeMatch.matches()) {
+                        currentAcceptedRecipeTypes << acceptedTypeMatch[0][1]
+                        return
+                    }
+                    if ((line =~ /^\s{4,8}[A-Za-z0-9_-]+:\s*/).matches()) {
                         inBasicRecipeTypes = false
                     }
                 }
@@ -2842,7 +2888,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
     inputs.files(coreLocalizationFiles.collect { layout.projectDirectory.file(it) })
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/util/SfxLocalization.java'))
     inputs.dir(layout.projectDirectory.dir('main/resources/lang'))
-    inputs.dir(layout.projectDirectory.dir('main/resources/content/addons'))
+    inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources'))
     doLast {
         def violations = []
         def localizationApi = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/util/SfxLocalization.java').asFile.getText('UTF-8')
@@ -2886,6 +2932,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
 
 
 lang
+
 
 
 
