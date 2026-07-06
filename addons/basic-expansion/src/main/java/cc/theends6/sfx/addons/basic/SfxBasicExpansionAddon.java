@@ -5,6 +5,8 @@ import cc.theends6.sfx.api.addon.SfxAddonContext;
 import cc.theends6.sfx.api.behavior.SfxAndroidWoodcutterContext;
 import cc.theends6.sfx.api.behavior.SfxAreaMachineRuleContext;
 import cc.theends6.sfx.api.behavior.SfxAreaMachineRules;
+import cc.theends6.sfx.api.behavior.SfxAutoBrewerBehaviorProvider;
+import cc.theends6.sfx.api.behavior.SfxAutoBrewerInputContext;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferContext;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferDecision;
 import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelContext;
@@ -114,6 +116,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 utilityRules(context, ruleContext, currentRules));
         context.behaviors().registerElectricSpecialProviderKeyPolicy((providerContext, currentProviderKey) ->
                 electricSpecialProviderKey(context, providerContext.providerKey(), currentProviderKey));
+        context.behaviors().registerAutoBrewerBehaviorProvider(new BasicAutoBrewerBehavior());
         context.behaviors().registerLocalizedListPostProcessor((listContext, currentValues) ->
                 localizedList(context, listContext, currentValues));
     }
@@ -718,6 +721,76 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 location.add(backward);
             }
             return location;
+        }
+    }
+
+    private static final class BasicAutoBrewerBehavior implements SfxAutoBrewerBehaviorProvider {
+        private static final int BLAZE_SLOT = 10;
+        private static final int PROGRESS_SLOT = 13;
+        private static final int INGREDIENT_SLOT = 16;
+        private static final int FUEL_DISPLAY_SLOT = 22;
+        private static final int[] POTION_SLOTS = {37, 39, 41, 43};
+        private static final int BLAZE_FUEL_TICKS = 600;
+        private static final int MAX_BLAZE_FUEL_TICKS = 3000;
+        private static final int AUTO_REFILL_THRESHOLD_TICKS = 2400;
+
+        @Override
+        public int blazeSlot() {
+            return BLAZE_SLOT;
+        }
+
+        @Override
+        public int progressSlot() {
+            return PROGRESS_SLOT;
+        }
+
+        @Override
+        public int ingredientSlot() {
+            return INGREDIENT_SLOT;
+        }
+
+        @Override
+        public int fuelDisplaySlot() {
+            return FUEL_DISPLAY_SLOT;
+        }
+
+        @Override
+        public int[] potionSlots() {
+            return POTION_SLOTS.clone();
+        }
+
+        @Override
+        public int blazeFuelTicks() {
+            return BLAZE_FUEL_TICKS;
+        }
+
+        @Override
+        public int maxBlazeFuelTicks() {
+            return MAX_BLAZE_FUEL_TICKS;
+        }
+
+        @Override
+        public int autoRefillThresholdTicks() {
+            return AUTO_REFILL_THRESHOLD_TICKS;
+        }
+
+        @Override
+        public boolean validInput(SfxAutoBrewerInputContext context) {
+            if (context.empty()) {
+                return true;
+            }
+            if (context.rawSlot() == BLAZE_SLOT) {
+                return context.material() == Material.BLAZE_POWDER && !context.hasItemMeta();
+            }
+            if (context.rawSlot() == INGREDIENT_SLOT) {
+                return context.brewingIngredient();
+            }
+            for (int potionSlot : POTION_SLOTS) {
+                if (context.rawSlot() == potionSlot) {
+                    return context.validPotion();
+                }
+            }
+            return false;
         }
     }
 }

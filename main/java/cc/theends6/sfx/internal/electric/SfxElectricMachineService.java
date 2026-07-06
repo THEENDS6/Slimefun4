@@ -1,5 +1,8 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.SlimeFunXPlugin;
+import cc.theends6.sfx.api.behavior.SfxAutoBrewerBehaviorProvider;
+import cc.theends6.sfx.api.behavior.SfxAutoBrewerInputContext;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
@@ -132,7 +135,7 @@ public final class SfxElectricMachineService implements Listener {
         this.simpleIoMenuRenderer = new SfxSimpleIoMachineMenuRenderer(items, localization, profiles);
         this.assemblerMenuRenderer = new SfxElectricAssemblerMenuRenderer(items, localization, profiles);
         this.geoMinerMenuRenderer = new SfxGeoMinerMachineMenuRenderer(items, localization, profiles);
-        this.autoBrewerMenuRenderer = new SfxAutoBrewerMenuRenderer(items, localization, profiles);
+        this.autoBrewerMenuRenderer = new SfxAutoBrewerMenuRenderer(items, localization, profiles, autoBrewerBehavior());
         this.autoCrafterMenuRenderer = new SfxAutoCrafterMenuRenderer(items, localization, profiles);
         this.recipeProcessor = new SfxElectricRecipeProcessor(items);
         bootstrapLoadedStates();
@@ -1548,23 +1551,30 @@ public final class SfxElectricMachineService implements Listener {
 
 
     private boolean isValidAutoBrewerInput(int rawSlot, ItemStack item) {
-        if (item == null || item.getType().isAir()) {
+        SfxAutoBrewerBehaviorProvider behavior = autoBrewerBehavior();
+        if (behavior == null) {
             return true;
         }
-        if (rawSlot == SfxAutoBrewerMenuRenderer.BLAZE_SLOT) {
-            return item.getType() == Material.BLAZE_POWDER && !item.hasItemMeta();
-        }
+        Material material = item == null ? Material.AIR : item.getType();
+        boolean empty = item == null || material.isAir();
         SfxPotionBrewEngine brewEngine = new SfxPotionBrewEngine(plugin);
-        if (rawSlot == SfxAutoBrewerMenuRenderer.INGREDIENT_SLOT) {
-            SfxElectricStack stack = SfxElectricStack.fromItemStack(items, item);
-            return stack != null && brewEngine.isBrewingIngredient(stack);
+        SfxElectricStack stack = empty ? null : SfxElectricStack.fromItemStack(items, item);
+        return behavior.validInput(new SfxAutoBrewerInputContext(
+                rawSlot,
+                material,
+                empty,
+                item != null && item.hasItemMeta(),
+                stack != null && brewEngine.isBrewingIngredient(stack),
+                !empty && brewEngine.isValidPotionItem(items, item)
+        ));
+    }
+
+    private SfxAutoBrewerBehaviorProvider autoBrewerBehavior() {
+        if (!(plugin instanceof SlimeFunXPlugin sfx) || sfx.api() == null) {
+            return null;
         }
-        for (int potionSlot : SfxAutoBrewerMenuRenderer.POTION_SLOTS) {
-            if (rawSlot == potionSlot) {
-                return brewEngine.isValidPotionItem(items, item);
-            }
-        }
-        return false;
+        List<SfxAutoBrewerBehaviorProvider> providers = sfx.api().behaviors().autoBrewerBehaviorProviders();
+        return providers.isEmpty() ? null : providers.get(providers.size() - 1);
     }
 
 }

@@ -29,5 +29,7 @@ public interface SfxBehaviorRegistry {
 
     List<SfxElectricSpecialProviderKeyPolicy> electricSpecialProviderKeyPolicies();
 
+    List<SfxAutoBrewerBehaviorProvider> autoBrewerBehaviorProviders();
+
     List<SfxLocalizedListPostProcessor> localizedListPostProcessors();
 }

@@ -772,6 +772,20 @@ tasks.register('validateSfxBasicExpansionBoundary') {
                 violations << "SfxBasicExpansionAddon must own GPS transmitter status UI token ${token}"
             }
         }
+        def autoBrewerRenderer = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAutoBrewerMenuRenderer.java').asFile
+        def autoBrewerRendererText = autoBrewerRenderer.getText('UTF-8')
+        def electricService = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineService.java').asFile
+        def electricServiceText = electricService.getText('UTF-8')
+        ['BLAZE_SLOT = 10', 'POTION_SLOTS =', 'MAX_BLAZE_FUEL_TICKS'].each { token ->
+            if (autoBrewerRendererText.contains(token) || electricServiceText.contains(token)) {
+                violations << "Auto Brewer UI/input constants must live in Basic Expansion addon, not core token ${token}"
+            }
+        }
+        ['registerAutoBrewerBehaviorProvider', 'BasicAutoBrewerBehavior', 'BLAZE_FUEL_TICKS'].each { token ->
+            if (!basicAddonText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own Auto Brewer UI/input behavior token ${token}"
+            }
+        }
         if (!violations.isEmpty()) {
             throw new GradleException("SFX Basic Expansion boundary validation failed:\n" + violations.unique().join('\n'))
         }
