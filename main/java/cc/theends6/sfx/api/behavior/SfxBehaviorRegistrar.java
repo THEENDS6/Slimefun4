@@ -7,6 +7,8 @@ public interface SfxBehaviorRegistrar {
 
     void registerRadiationRuleProvider(SfxRadiationRuleProvider provider);
 
+    void registerRadiationSymptomHandler(SfxRadiationSymptomHandler handler);
+
     void registerCargoInputTransferPolicy(SfxCargoInputTransferPolicy policy);
 
     void registerGpsTransmitterInteractionPolicy(SfxGpsTransmitterInteractionPolicy policy);

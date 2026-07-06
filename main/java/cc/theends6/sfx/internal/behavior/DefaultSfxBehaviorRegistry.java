@@ -13,6 +13,7 @@ import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionPolicy;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterStatusViewProvider;
 import cc.theends6.sfx.api.behavior.SfxLocalizedListPostProcessor;
 import cc.theends6.sfx.api.behavior.SfxRadiationRuleProvider;
+import cc.theends6.sfx.api.behavior.SfxRadiationSymptomHandler;
 import cc.theends6.sfx.api.behavior.SfxRechargeableItemProvider;
 import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetBehaviorProvider;
 import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRuleProvider;
@@ -29,6 +30,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     private final List<SfxCargoInputTransferPolicy> cargoInputTransferPolicies = new ArrayList<>();
     private final List<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies = new ArrayList<>();
     private final List<SfxGpsTransmitterStatusViewProvider> gpsTransmitterStatusViewProviders = new ArrayList<>();
+    private final List<SfxRadiationSymptomHandler> radiationSymptomHandlers = new ArrayList<>();
     private final List<SfxTechnicalGadgetRuleProvider> technicalGadgetRuleProviders = new ArrayList<>();
     private final List<SfxTechnicalGadgetBehaviorProvider> technicalGadgetBehaviorProviders = new ArrayList<>();
     private final List<SfxRechargeableItemProvider> rechargeableItemProviders = new ArrayList<>();
@@ -46,6 +48,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         cargoInputTransferPolicies.clear();
         gpsTransmitterInteractionPolicies.clear();
         gpsTransmitterStatusViewProviders.clear();
+        radiationSymptomHandlers.clear();
         technicalGadgetRuleProviders.clear();
         technicalGadgetBehaviorProviders.clear();
         rechargeableItemProviders.clear();
@@ -94,6 +97,16 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     @Override
     public synchronized List<SfxRadiationRuleProvider> radiationRuleProviders() {
         return Collections.unmodifiableList(new ArrayList<>(radiationRuleProviders));
+    }
+
+    @Override
+    public synchronized void registerRadiationSymptomHandler(SfxRadiationSymptomHandler handler) {
+        radiationSymptomHandlers.add(Objects.requireNonNull(handler, "handler"));
+    }
+
+    @Override
+    public synchronized List<SfxRadiationSymptomHandler> radiationSymptomHandlers() {
+        return Collections.unmodifiableList(new ArrayList<>(radiationSymptomHandlers));
     }
 
     @Override

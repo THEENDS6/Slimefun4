@@ -18,6 +18,7 @@ import cc.theends6.sfx.api.behavior.SfxJetBootsDriveMode;
 import cc.theends6.sfx.api.behavior.SfxLocalizedListContext;
 import cc.theends6.sfx.api.behavior.SfxRadiationRuleContext;
 import cc.theends6.sfx.api.behavior.SfxRadiationRules;
+import cc.theends6.sfx.api.behavior.SfxRadiationSymptomContext;
 import cc.theends6.sfx.api.behavior.SfxRadiationSymptomProfile;
 import cc.theends6.sfx.api.behavior.SfxRechargeableItemDefinition;
 import cc.theends6.sfx.api.behavior.SfxRechargeableItemKind;
@@ -37,6 +38,8 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 public final class SfxBasicExpansionAddon implements SfxAddon {
@@ -97,6 +100,8 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 batchReplantBottomLayer(context, woodcutterContext, currentDecision));
         context.behaviors().registerRadiationRuleProvider((ruleContext, currentRules) ->
                 sfxRadiationRules(context, ruleContext, currentRules));
+        context.behaviors().registerRadiationSymptomHandler(symptomContext ->
+                radiationSymptoms(context, symptomContext));
         context.behaviors().registerCargoInputTransferPolicy((transferContext, currentDecision) ->
                 advancedInputTransfer(context, transferContext, currentDecision));
         context.behaviors().registerGpsTransmitterInteractionPolicy((transmitterContext, currentDecision) ->
@@ -148,6 +153,57 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 SfxRadiationSymptomProfile.SFX_REWORK,
                 ruleContext.configuredRespawnImmunityTicks()
         );
+    }
+
+    private static boolean radiationSymptoms(SfxAddonContext context, SfxRadiationSymptomContext symptomContext) {
+        if (!context.api().features().enabled(RADIATION_REWORK) || symptomContext.stageLevel() <= 0) {
+            return false;
+        }
+        Player player = symptomContext.player();
+        int duration = symptomContext.effectDurationTicks();
+        int stage = symptomContext.stageLevel();
+        if (stage >= 1) {
+            addEffect(player, "WEAKNESS", duration, 0);
+            addEffect(player, "HUNGER", duration, 0);
+        }
+        if (stage >= 2) {
+            addEffect(player, "SLOW", duration, 0);
+            addEffect(player, "HUNGER", duration, 1);
+            addEffect(player, "POISON", duration, 0);
+            addEffect(player, "SLOW_DIGGING", duration, 0);
+        }
+        if (stage >= 3) {
+            addEffect(player, "CONFUSION", duration, 0);
+            addEffect(player, "WITHER", duration, 0);
+        }
+        if (stage >= 4) {
+            addEffect(player, "WITHER", duration, 1);
+            addEffect(player, "SLOW_DIGGING", duration, 1);
+            addEffect(player, "CONFUSION", duration, 0);
+        }
+        if (stage >= 5) {
+            addEffect(player, "BLINDNESS", duration, 0);
+            symptomContext.markRadiationDamage();
+            addEffect(player, "HARM", 1, 0);
+        }
+        return true;
+    }
+
+    private static void addEffect(Player player, String typeName, int durationTicks, int amplifier) {
+        PotionEffectType type = potionEffectType(typeName);
+        if (type == null) {
+            return;
+        }
+        player.addPotionEffect(new PotionEffect(type, Math.max(1, durationTicks), Math.max(0, amplifier), true, true, true));
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static PotionEffectType potionEffectType(String name) {
+        try {
+            return PotionEffectType.getByName(name);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
     }
 
     private static SfxCargoInputTransferDecision advancedInputTransfer(SfxAddonContext context, SfxCargoInputTransferContext transferContext, SfxCargoInputTransferDecision currentDecision) {

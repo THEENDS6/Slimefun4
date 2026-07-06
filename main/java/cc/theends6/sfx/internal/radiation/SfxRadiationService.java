@@ -6,6 +6,8 @@ import cc.theends6.sfx.api.behavior.SfxRadiationRuleContext;
 import cc.theends6.sfx.api.behavior.SfxRadiationRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxRadiationRules;
 import cc.theends6.sfx.api.behavior.SfxRadiationSymptomProfile;
+import cc.theends6.sfx.api.behavior.SfxRadiationSymptomContext;
+import cc.theends6.sfx.api.behavior.SfxRadiationSymptomHandler;
 import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItemRegistry;
@@ -222,7 +224,7 @@ public final class SfxRadiationService implements Listener {
         if (rules.symptomProfile() == SfxRadiationSymptomProfile.SFX_REWORK) {
             SfxRadiationStage stage = SfxRadiationStage.fromExposure(next);
             announceStageChange(player, stage);
-            applySymptoms(player, stage);
+            applyAddonSymptoms(player, next, stage);
         } else {
             lastAnnouncedStage.remove(player.getUniqueId());
             applyClassicSymptoms(player, next, rules.scanIntervalTicks());
@@ -367,33 +369,20 @@ public final class SfxRadiationService implements Listener {
         };
     }
 
-    private void applySymptoms(Player player, SfxRadiationStage stage) {
-        if (stage == SfxRadiationStage.NONE) {
+    private void applyAddonSymptoms(Player player, int exposure, SfxRadiationStage stage) {
+        if (stage == SfxRadiationStage.NONE || !(plugin instanceof SlimeFunXPlugin sfx) || sfx.api() == null) {
             return;
         }
-        if (stage.level() >= 1) {
-            addEffect(player, "WEAKNESS", EFFECT_DURATION_TICKS, 0);
-            addEffect(player, "HUNGER", EFFECT_DURATION_TICKS, 0);
-        }
-        if (stage.level() >= 2) {
-            addEffect(player, "SLOW", EFFECT_DURATION_TICKS, 0);
-            addEffect(player, "HUNGER", EFFECT_DURATION_TICKS, 1);
-            addEffect(player, "POISON", EFFECT_DURATION_TICKS, 0);
-            addEffect(player, "SLOW_DIGGING", EFFECT_DURATION_TICKS, 0);
-        }
-        if (stage.level() >= 3) {
-            addEffect(player, "CONFUSION", EFFECT_DURATION_TICKS, 0);
-            addEffect(player, "WITHER", EFFECT_DURATION_TICKS, 0);
-        }
-        if (stage.level() >= 4) {
-            addEffect(player, "WITHER", EFFECT_DURATION_TICKS, 1);
-            addEffect(player, "SLOW_DIGGING", EFFECT_DURATION_TICKS, 1);
-            addEffect(player, "CONFUSION", EFFECT_DURATION_TICKS, 0);
-        }
-        if (stage.level() >= 5) {
-            addEffect(player, "BLINDNESS", EFFECT_DURATION_TICKS, 0);
-            lastRadiationDamageMillis.put(player.getUniqueId(), System.currentTimeMillis());
-            addEffect(player, "HARM", 1, 0);
+        SfxRadiationSymptomContext context = new SfxRadiationSymptomContext(
+                player,
+                exposure,
+                stage.level(),
+                EFFECT_DURATION_TICKS,
+                () -> lastRadiationDamageMillis.put(player.getUniqueId(), System.currentTimeMillis()));
+        for (SfxRadiationSymptomHandler handler : sfx.api().behaviors().radiationSymptomHandlers()) {
+            if (handler.apply(context)) {
+                return;
+            }
         }
     }
 

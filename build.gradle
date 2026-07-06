@@ -786,6 +786,18 @@ tasks.register('validateSfxBasicExpansionBoundary') {
                 violations << "SfxBasicExpansionAddon must own Auto Brewer UI/input behavior token ${token}"
             }
         }
+        def radiationService = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/radiation/SfxRadiationService.java').asFile
+        def radiationServiceText = radiationService.getText('UTF-8')
+        ['applySymptoms(', 'SLOW_DIGGING", EFFECT_DURATION_TICKS', 'CONFUSION", EFFECT_DURATION_TICKS'].each { token ->
+            if (radiationServiceText.contains(token)) {
+                violations << "SfxRadiationService must get SFX radiation symptoms from Basic Expansion addon, not core token ${token}"
+            }
+        }
+        ['registerRadiationSymptomHandler', 'radiationSymptoms', 'SLOW_DIGGING'].each { token ->
+            if (!basicAddonText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own SFX radiation symptom token ${token}"
+            }
+        }
         if (!violations.isEmpty()) {
             throw new GradleException("SFX Basic Expansion boundary validation failed:\n" + violations.unique().join('\n'))
         }

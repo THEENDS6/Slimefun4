@@ -9,6 +9,8 @@ public interface SfxBehaviorRegistry {
 
     List<SfxRadiationRuleProvider> radiationRuleProviders();
 
+    List<SfxRadiationSymptomHandler> radiationSymptomHandlers();
+
     List<SfxCargoInputTransferPolicy> cargoInputTransferPolicies();
 
     List<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies();
