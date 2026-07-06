@@ -721,6 +721,13 @@ tasks.register('validateSfxBasicExpansionBoundary') {
                 violations << "SfxRechargeableItemService must keep SFX jetpack/jetboots definitions in Basic Expansion addon, not core token ${token}"
             }
         }
+        def technicalService = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/technical/SfxTechnicalGadgetService.java').asFile
+        def technicalServiceText = technicalService.getText('UTF-8')
+        ['JETPACK_VERTICAL_MULTIPLIER', 'HOVER_UPWARD_DAMPING_Y', 'JETBOOTS_ASSIST_HORIZONTAL_FACTOR', 'playFuelJetpackEffects'].each { token ->
+            if (technicalServiceText.contains(token)) {
+                violations << "SfxTechnicalGadgetService must get SFX jetpack/jetboots behavior from Basic Expansion addon, not core token ${token}"
+            }
+        }
         def basicAddon = layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java').asFile
         def basicAddonText = basicAddon.getText('UTF-8')
         [
@@ -746,6 +753,11 @@ tasks.register('validateSfxBasicExpansionBoundary') {
         ['registerLocalizedListPostProcessor', 'sfx-basic-expansion.lore.tier2-fuel-consumption'].each { token ->
             if (!basicAddonText.contains(token)) {
                 violations << "SfxBasicExpansionAddon must own Basic Expansion localized list processing token ${token}"
+            }
+        }
+        ['registerTechnicalGadgetBehaviorProvider', 'BasicTechnicalGadgetBehavior', 'playJetBootsAirJumpSound'].each { token ->
+            if (!basicAddonText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own SFX jetpack/jetboots behavior token ${token}"
             }
         }
         if (!violations.isEmpty()) {
@@ -970,6 +982,7 @@ tasks.register('validateSfxAddonApiDocs') {
                 'excludes-feature',
                 'custom server lang > addon lang > bundled core lang',
                 'SfxAddonContext',
+                'Technical gadget behavior providers',
                 'id: example:config_pack',
                 'default-enabled: true'
         ].each { token ->

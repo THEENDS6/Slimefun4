@@ -12,11 +12,13 @@ import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionPolicy;
 import cc.theends6.sfx.api.behavior.SfxLocalizedListPostProcessor;
 import cc.theends6.sfx.api.behavior.SfxRadiationRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxRechargeableItemProvider;
+import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetBehaviorProvider;
 import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxUtilityRuleProvider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, SfxBehaviorRegistrar {
     private final List<SfxEnhancedFurnaceFuelPolicy> enhancedFurnaceFuelPolicies = new ArrayList<>();
@@ -25,6 +27,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     private final List<SfxCargoInputTransferPolicy> cargoInputTransferPolicies = new ArrayList<>();
     private final List<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies = new ArrayList<>();
     private final List<SfxTechnicalGadgetRuleProvider> technicalGadgetRuleProviders = new ArrayList<>();
+    private final List<SfxTechnicalGadgetBehaviorProvider> technicalGadgetBehaviorProviders = new ArrayList<>();
     private final List<SfxRechargeableItemProvider> rechargeableItemProviders = new ArrayList<>();
     private final List<SfxEnergyBalanceRuleProvider> energyBalanceRuleProviders = new ArrayList<>();
     private final List<SfxAreaMachineRuleProvider> areaMachineRuleProviders = new ArrayList<>();
@@ -39,6 +42,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         cargoInputTransferPolicies.clear();
         gpsTransmitterInteractionPolicies.clear();
         technicalGadgetRuleProviders.clear();
+        technicalGadgetBehaviorProviders.clear();
         rechargeableItemProviders.clear();
         energyBalanceRuleProviders.clear();
         areaMachineRuleProviders.clear();
@@ -123,6 +127,16 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     @Override
     public synchronized List<SfxTechnicalGadgetRuleProvider> technicalGadgetRuleProviders() {
         return Collections.unmodifiableList(new ArrayList<>(technicalGadgetRuleProviders));
+    }
+
+    @Override
+    public synchronized void registerTechnicalGadgetBehaviorProvider(SfxTechnicalGadgetBehaviorProvider provider) {
+        technicalGadgetBehaviorProviders.add(Objects.requireNonNull(provider, "provider"));
+    }
+
+    @Override
+    public synchronized List<SfxTechnicalGadgetBehaviorProvider> technicalGadgetBehaviorProviders() {
+        return Collections.unmodifiableList(new ArrayList<>(technicalGadgetBehaviorProviders));
     }
 
     @Override

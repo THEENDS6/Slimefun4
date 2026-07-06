@@ -165,6 +165,8 @@ Providers receive the current rule or decision and may return an adjusted one. T
 
 Rechargeable item providers may register new rechargeable items or override classic SF rechargeable definitions. Basic Expansion uses this to provide the SFX jetpack and jetboots rework, plus the fuel jetpack definition, while core keeps the classic SF definitions.
 
+Technical gadget behavior providers own the active SFX jetpack and jetboots behavior: velocity calculation, hover movement, air jumps, fall-damage reduction, and particles/sounds. Core owns only input polling, player tick scheduling, energy/fuel storage, and state cleanup.
+
 Electric special provider key policies may redirect a compiled `sf:special_provider` binding from a classic provider key to an addon provider key. Basic Expansion uses this for Auto Brewer, growth machines, Produce Collector, Auto Breeder, XP Collector, and Fluid Pump behavior without hard-coding those SFX branches in the core provider implementations.
 
 Localized list post-processors can adjust generated item lore and other language lists after the core language lookup is complete. The context exposes the requested language key plus raw text/list lookup helpers so addon-owned text stays in addon language files.

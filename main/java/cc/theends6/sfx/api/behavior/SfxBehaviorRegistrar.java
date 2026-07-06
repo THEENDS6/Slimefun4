@@ -13,6 +13,8 @@ public interface SfxBehaviorRegistrar {
 
     void registerTechnicalGadgetRuleProvider(SfxTechnicalGadgetRuleProvider provider);
 
+    void registerTechnicalGadgetBehaviorProvider(SfxTechnicalGadgetBehaviorProvider provider);
+
     void registerRechargeableItemProvider(SfxRechargeableItemProvider provider);
 
     void registerEnergyBalanceRuleProvider(SfxEnergyBalanceRuleProvider provider);

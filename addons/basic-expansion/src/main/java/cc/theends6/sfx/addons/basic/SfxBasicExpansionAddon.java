@@ -11,12 +11,16 @@ import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelContext;
 import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRuleContext;
 import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRules;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionDecision;
+import cc.theends6.sfx.api.behavior.SfxJetBootsDriveMode;
 import cc.theends6.sfx.api.behavior.SfxLocalizedListContext;
 import cc.theends6.sfx.api.behavior.SfxRadiationRuleContext;
 import cc.theends6.sfx.api.behavior.SfxRadiationRules;
 import cc.theends6.sfx.api.behavior.SfxRadiationSymptomProfile;
 import cc.theends6.sfx.api.behavior.SfxRechargeableItemDefinition;
 import cc.theends6.sfx.api.behavior.SfxRechargeableItemKind;
+import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetBehaviorProvider;
+import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetItem;
+import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetItemKind;
 import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRuleContext;
 import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRules;
 import cc.theends6.sfx.api.behavior.SfxUtilityRuleContext;
@@ -24,6 +28,12 @@ import cc.theends6.sfx.api.behavior.SfxUtilityRules;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
+import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 public final class SfxBasicExpansionAddon implements SfxAddon {
     private static final String ENHANCED_FURNACE_SPEED_FUEL = "sfx:enhanced_furnace_speed_fuel";
@@ -89,6 +99,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 gpsTransmitterInteraction(context, currentDecision));
         context.behaviors().registerTechnicalGadgetRuleProvider((ruleContext, currentRules) ->
                 technicalGadgetRules(context, ruleContext, currentRules));
+        context.behaviors().registerTechnicalGadgetBehaviorProvider(new BasicTechnicalGadgetBehavior());
         context.behaviors().registerRechargeableItemProvider(() ->
                 rechargeableItems(context));
         context.behaviors().registerEnergyBalanceRuleProvider((ruleContext, currentRules) ->
@@ -462,5 +473,200 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
             copy.addAll(addonLines);
         }
         return copy;
+    }
+
+    private static final class BasicTechnicalGadgetBehavior implements SfxTechnicalGadgetBehaviorProvider {
+        private static final double JETPACK_VERTICAL_MULTIPLIER = 2.0D;
+        private static final double JETPACK_HORIZONTAL_FACTOR = 0.20D;
+        private static final double JETPACK_MAX_HORIZONTAL_SPEED = 0.85D;
+        private static final double HOVER_HORIZONTAL_FACTOR = 0.20D;
+        private static final double HOVER_HOLD_Y = 0.0D;
+        private static final double HOVER_UPWARD_DAMPING_Y = -0.020D;
+        private static final double HOVER_DOWNWARD_RECOVERY_Y = 0.010D;
+        private static final double HOVER_DESCEND_MULTIPLIER = 0.80D;
+        private static final double JETBOOTS_HORIZONTAL_MULTIPLIER = 2.0D;
+        private static final double JETBOOTS_ASSIST_HORIZONTAL_FACTOR = 0.20D;
+        private static final double JETBOOTS_ASSIST_GROUND_HORIZONTAL_FACTOR = 0.40D;
+        private static final double JETBOOTS_ASSIST_GROUND_MIN_ACCELERATION = 0.045D;
+        private static final double JETBOOTS_MAX_HORIZONTAL_SPEED = 0.95D;
+        private static final float AIR_JUMP_SOUND_VOLUME = 0.38F;
+        private static final float AIR_JUMP_SOUND_PITCH = 1.55F;
+
+        @Override
+        public Vector jetpackVelocity(Player player, Vector currentVelocity, Vector inputDirection, SfxTechnicalGadgetItem jetpack, boolean aboveHeightLimit) {
+            double upward = aboveHeightLimit ? 0.0D : jetpack.movementValue() * JETPACK_VERTICAL_MULTIPLIER;
+            Vector horizontal = accelerate(currentVelocity, inputDirection, jetpack.movementValue() * JETPACK_HORIZONTAL_FACTOR);
+            return limitHorizontal(new Vector(horizontal.getX(), Math.max(currentVelocity.getY(), upward), horizontal.getZ()), maxJetpackHorizontalSpeed(jetpack));
+        }
+
+        @Override
+        public double hoverCost(SfxTechnicalGadgetItem jetpack, boolean verticalInput) {
+            return jetpack.useCost() * (verticalInput ? 1.0D : 0.5D);
+        }
+
+        @Override
+        public double hoverYVelocity(double currentY, SfxTechnicalGadgetItem jetpack, boolean jumpDown, boolean shiftDown, boolean aboveHeightLimit) {
+            if (jumpDown && !aboveHeightLimit) {
+                return jetpack.movementValue() * JETPACK_VERTICAL_MULTIPLIER;
+            }
+            if (shiftDown) {
+                return -Math.max(0.10D, jetpack.movementValue() * JETPACK_VERTICAL_MULTIPLIER * HOVER_DESCEND_MULTIPLIER);
+            }
+            if (currentY > 0.015D) {
+                return HOVER_UPWARD_DAMPING_Y;
+            }
+            if (currentY < -0.070D) {
+                return HOVER_DOWNWARD_RECOVERY_Y;
+            }
+            if (currentY < -0.025D) {
+                return HOVER_DOWNWARD_RECOVERY_Y * 0.5D;
+            }
+            return HOVER_HOLD_Y;
+        }
+
+        @Override
+        public double hoverHorizontalAcceleration(SfxTechnicalGadgetItem jetpack) {
+            return jetpack.movementValue() * HOVER_HORIZONTAL_FACTOR;
+        }
+
+        @Override
+        public double maxJetpackHorizontalSpeed(SfxTechnicalGadgetItem jetpack) {
+            return JETPACK_MAX_HORIZONTAL_SPEED;
+        }
+
+        @Override
+        public Vector jetBootsThrustVelocity(Player player, Vector currentVelocity, SfxTechnicalGadgetItem jetBoots) {
+            Vector direction = player.getEyeLocation().getDirection();
+            Vector vector = new Vector(
+                    currentVelocity.getX() * 0.35D + direction.getX() * jetBootsThrustHorizontalAcceleration(jetBoots),
+                    Math.max(currentVelocity.getY(), 0.06D),
+                    currentVelocity.getZ() * 0.35D + direction.getZ() * jetBootsThrustHorizontalAcceleration(jetBoots)
+            );
+            return limitHorizontal(vector, maxJetBootsHorizontalSpeed(jetBoots));
+        }
+
+        @Override
+        public double jetBootsThrustHorizontalAcceleration(SfxTechnicalGadgetItem jetBoots) {
+            return jetBoots.movementValue() * JETBOOTS_HORIZONTAL_MULTIPLIER;
+        }
+
+        @Override
+        public double jetBootsAssistAcceleration(Player player, SfxTechnicalGadgetItem jetBoots) {
+            double base = jetBoots.movementValue() * JETBOOTS_ASSIST_HORIZONTAL_FACTOR;
+            if (!player.isOnGround()) {
+                return base;
+            }
+            return Math.max(base, Math.max(jetBoots.movementValue() * JETBOOTS_ASSIST_GROUND_HORIZONTAL_FACTOR, JETBOOTS_ASSIST_GROUND_MIN_ACCELERATION));
+        }
+
+        @Override
+        public double jetBootsUseCost(SfxTechnicalGadgetItem jetBoots, SfxJetBootsDriveMode mode) {
+            return jetBoots.useCost() * (mode == SfxJetBootsDriveMode.THRUST ? 2.0D : 1.0D);
+        }
+
+        @Override
+        public double maxJetBootsHorizontalSpeed(SfxTechnicalGadgetItem jetBoots) {
+            return JETBOOTS_MAX_HORIZONTAL_SPEED;
+        }
+
+        @Override
+        public int maxAirJumps(SfxTechnicalGadgetItem jetBoots) {
+            int level = Math.max(1, jetBoots.level());
+            if (level >= 7) {
+                return 3;
+            }
+            if (level >= 4) {
+                return 2;
+            }
+            return 1;
+        }
+
+        @Override
+        public double airJumpVelocity(SfxTechnicalGadgetItem jetBoots) {
+            return Math.max(0.38D, 0.42D + jetBoots.movementValue());
+        }
+
+        @Override
+        public double safeFallBonus(SfxTechnicalGadgetItem jetBoots) {
+            return switch (Math.max(1, jetBoots.level())) {
+                case 1 -> 3.0D;
+                case 2 -> 5.0D;
+                case 3 -> 7.0D;
+                case 4 -> 10.0D;
+                case 5 -> 14.0D;
+                case 6 -> 20.0D;
+                default -> 32.0D;
+            };
+        }
+
+        @Override
+        public double fallDamageMultiplier(SfxTechnicalGadgetItem jetBoots) {
+            return switch (Math.max(1, jetBoots.level())) {
+                case 1 -> 0.80D;
+                case 2 -> 0.70D;
+                case 3 -> 0.60D;
+                case 4 -> 0.50D;
+                case 5 -> 0.40D;
+                case 6 -> 0.30D;
+                default -> 0.20D;
+            };
+        }
+
+        @Override
+        public void playJetpackEffects(Player player, SfxTechnicalGadgetItem jetpack) {
+            Location location = jetpackParticleLocation(player);
+            if (jetpack.kind() == SfxTechnicalGadgetItemKind.FUEL_JETPACK) {
+                player.getWorld().spawnParticle(Particle.SMOKE, location, 8, 0.12D, 0.10D, 0.12D, 0.02D);
+                player.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.11F, 1.25F);
+                return;
+            }
+            player.getWorld().spawnParticle(Particle.CLOUD, location, 6, 0.11D, 0.08D, 0.11D, 0.015D);
+            player.getWorld().playSound(location, Sound.ENTITY_TNT_PRIMED, SoundCategory.PLAYERS, 0.22F, 1.25F);
+        }
+
+        @Override
+        public void playJetBootsEffects(Player player, double extraY) {
+            Location location = player.getLocation().clone().add(0.0D, 0.18D + extraY, 0.0D);
+            player.getWorld().spawnParticle(Particle.CLOUD, location, 4, 0.18D, 0.04D, 0.18D, 0.012D);
+            player.getWorld().playSound(location, Sound.ENTITY_TNT_PRIMED, SoundCategory.PLAYERS, 0.22F, 1.25F);
+        }
+
+        @Override
+        public void playJetBootsAirJumpSound(Player player) {
+            Location soundLocation = player.getLocation().clone().add(0.0D, 0.18D, 0.0D);
+            player.getWorld().playSound(soundLocation, Sound.ENTITY_WITHER_SHOOT, SoundCategory.PLAYERS, AIR_JUMP_SOUND_VOLUME, AIR_JUMP_SOUND_PITCH);
+        }
+
+        private static Vector accelerate(Vector current, Vector direction, double amount) {
+            Vector result = new Vector(current.getX(), 0.0D, current.getZ());
+            if (amount <= 0.0D || direction.lengthSquared() <= 0.000001D) {
+                return result;
+            }
+            return result.add(direction.clone().normalize().multiply(amount));
+        }
+
+        private static Vector limitHorizontal(Vector vector, double maxHorizontalSpeed) {
+            double x = vector.getX();
+            double z = vector.getZ();
+            double horizontal = Math.sqrt(x * x + z * z);
+            if (horizontal <= maxHorizontalSpeed || horizontal <= 0.000001D) {
+                return vector;
+            }
+            double scale = maxHorizontalSpeed / horizontal;
+            vector.setX(x * scale);
+            vector.setZ(z * scale);
+            return vector;
+        }
+
+        private static Location jetpackParticleLocation(Player player) {
+            Location location = player.getLocation().clone().add(0.0D, 0.85D, 0.0D);
+            Vector backward = player.getEyeLocation().getDirection();
+            backward.setY(0.0D);
+            if (backward.lengthSquared() > 0.000001D) {
+                backward.normalize().multiply(-0.36D);
+                location.add(backward);
+            }
+            return location;
+        }
     }
 }
