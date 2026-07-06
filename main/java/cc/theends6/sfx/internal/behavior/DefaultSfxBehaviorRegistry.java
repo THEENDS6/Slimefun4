@@ -9,6 +9,7 @@ import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderKeyPolicy;
 import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelPolicy;
 import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionPolicy;
+import cc.theends6.sfx.api.behavior.SfxGpsTransmitterStatusViewProvider;
 import cc.theends6.sfx.api.behavior.SfxLocalizedListPostProcessor;
 import cc.theends6.sfx.api.behavior.SfxRadiationRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxRechargeableItemProvider;
@@ -26,6 +27,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     private final List<SfxRadiationRuleProvider> radiationRuleProviders = new ArrayList<>();
     private final List<SfxCargoInputTransferPolicy> cargoInputTransferPolicies = new ArrayList<>();
     private final List<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies = new ArrayList<>();
+    private final List<SfxGpsTransmitterStatusViewProvider> gpsTransmitterStatusViewProviders = new ArrayList<>();
     private final List<SfxTechnicalGadgetRuleProvider> technicalGadgetRuleProviders = new ArrayList<>();
     private final List<SfxTechnicalGadgetBehaviorProvider> technicalGadgetBehaviorProviders = new ArrayList<>();
     private final List<SfxRechargeableItemProvider> rechargeableItemProviders = new ArrayList<>();
@@ -41,6 +43,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         radiationRuleProviders.clear();
         cargoInputTransferPolicies.clear();
         gpsTransmitterInteractionPolicies.clear();
+        gpsTransmitterStatusViewProviders.clear();
         technicalGadgetRuleProviders.clear();
         technicalGadgetBehaviorProviders.clear();
         rechargeableItemProviders.clear();
@@ -114,6 +117,16 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     @Override
     public synchronized List<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies() {
         return Collections.unmodifiableList(new ArrayList<>(gpsTransmitterInteractionPolicies));
+    }
+
+    @Override
+    public synchronized void registerGpsTransmitterStatusViewProvider(SfxGpsTransmitterStatusViewProvider provider) {
+        gpsTransmitterStatusViewProviders.add(Objects.requireNonNull(provider, "provider"));
+    }
+
+    @Override
+    public synchronized List<SfxGpsTransmitterStatusViewProvider> gpsTransmitterStatusViewProviders() {
+        return Collections.unmodifiableList(new ArrayList<>(gpsTransmitterStatusViewProviders));
     }
 
     @Override

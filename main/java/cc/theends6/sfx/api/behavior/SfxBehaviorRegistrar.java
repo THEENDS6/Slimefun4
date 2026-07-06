@@ -11,6 +11,8 @@ public interface SfxBehaviorRegistrar {
 
     void registerGpsTransmitterInteractionPolicy(SfxGpsTransmitterInteractionPolicy policy);
 
+    void registerGpsTransmitterStatusViewProvider(SfxGpsTransmitterStatusViewProvider provider);
+
     void registerTechnicalGadgetRuleProvider(SfxTechnicalGadgetRuleProvider provider);
 
     void registerTechnicalGadgetBehaviorProvider(SfxTechnicalGadgetBehaviorProvider provider);

@@ -5,6 +5,8 @@ import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionContext;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionDecision;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionPolicy;
+import cc.theends6.sfx.api.behavior.SfxGpsTransmitterStatusView;
+import cc.theends6.sfx.api.behavior.SfxGpsTransmitterStatusViewProvider;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.menu.SfxMenu;
@@ -146,8 +148,6 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
             28, 29, 30, 31, 32, 33, 34,
             37, 38, 39, 40, 41, 42, 43
     };
-    private static final int TRANSMITTER_GUI_STATUS_SLOT = 11;
-    private static final int TRANSMITTER_GUI_INFO_SLOT = 15;
     private static final String HEAD_GLOBE_OVERWORLD = "c9c8881e42915a9d29bb61a16fb26d059913204d265df5b439b3d792acd56";
     private static final String HEAD_MINECRAFT_CHUNK = "8449b9318e33158e64a46ab0de121c3d40000e3332c1574932b3c849d8fa0dc2";
 
@@ -549,18 +549,7 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         if (api == null) {
             return SfxGpsTransmitterInteractionDecision.PASS;
         }
-        Location location = block.getLocation();
-        UUID owner = instance.ownerId();
-        int requiredEnergy = Math.max(1, TRANSMITTER_CONSUMPTION.getOrDefault(instance.typeId(), 1));
-        SfxGpsTransmitterInteractionContext context = new SfxGpsTransmitterInteractionContext(
-                instance.typeId(),
-                owner,
-                electricMachines.consumerStoredEnergy(instance.instanceId()),
-                requiredEnergy,
-                transmitterStrength(instance, blockData.findAnchor(location).orElse(null)),
-                networkComplexity(owner),
-                countTransmitters(owner)
-        );
+        SfxGpsTransmitterInteractionContext context = transmitterContext(block, instance);
         SfxGpsTransmitterInteractionDecision decision = SfxGpsTransmitterInteractionDecision.PASS;
         for (SfxGpsTransmitterInteractionPolicy policy : api.behaviors().gpsTransmitterInteractionPolicies()) {
             SfxGpsTransmitterInteractionDecision next = policy.decide(context, decision);
@@ -571,6 +560,27 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         return decision;
     }
 
+    private SfxGpsTransmitterInteractionContext transmitterContext(Block block, SfxBlockInstanceRecord instance) {
+        Location location = block.getLocation();
+        UUID owner = instance.ownerId();
+        int requiredEnergy = Math.max(1, TRANSMITTER_CONSUMPTION.getOrDefault(instance.typeId(), 1));
+        return new SfxGpsTransmitterInteractionContext(
+                instance.typeId(),
+                owner,
+                electricMachines.consumerStoredEnergy(instance.instanceId()),
+                requiredEnergy,
+                transmitterStrength(instance, blockData.findAnchor(location).orElse(null)),
+                networkComplexity(owner),
+                countTransmitters(owner),
+                escape(plain(localization.itemName(instance.typeId()))),
+                escape(ownerDisplayName(owner)),
+                escape(location.getWorld() == null ? "world" : location.getWorld().getName()),
+                location.getBlockX(),
+                location.getBlockY(),
+                location.getBlockZ()
+        );
+    }
+
     private SfxApi sfxApi() {
         return plugin instanceof SlimeFunXPlugin sfx ? sfx.api() : null;
     }
@@ -578,43 +588,57 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
     private void openTransmitterGui(Player player, Block block, SfxBlockInstanceRecord instance) {
         Location location = block.getLocation();
         UUID owner = instance.ownerId();
-        int requiredEnergy = Math.max(1, TRANSMITTER_CONSUMPTION.getOrDefault(instance.typeId(), 1));
-        int storedEnergy = electricMachines.consumerStoredEnergy(instance.instanceId());
-        boolean online = storedEnergy >= requiredEnergy;
-        int strength = transmitterStrength(instance, blockData.findAnchor(location).orElse(null));
-        int complexity = networkComplexity(owner);
+        SfxGpsTransmitterInteractionContext context = transmitterContext(block, instance);
+        SfxGpsTransmitterStatusView view = transmitterStatusView(context);
+        if (view == null) {
+            return;
+        }
+        boolean online = context.storedEnergy() >= context.requiredEnergy();
 
-        SfxMenu.Builder builder = SfxMenu.builder(component("gps.ui.transmitter.title")).rows(3);
+        SfxMenu.Builder builder = SfxMenu.builder(component(view.titleKey())).rows(3);
         ItemStack background = namedItem(
-                ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE).build(),
-                component("gps.ui.transmitter.background"),
+                ItemBuilder.of(view.backgroundMaterial()).build(),
+                component(view.backgroundKey()),
                 List.of());
         for (int slot = 0; slot < 27; slot++) {
             builder.button(slot, new SfxMenuButton(background, click -> openTransmitterGui(click.player(), block, instance)));
         }
 
-        builder.button(TRANSMITTER_GUI_STATUS_SLOT, new SfxMenuButton(namedItem(
-                ItemBuilder.of(online ? Material.LIME_STAINED_GLASS : Material.RED_STAINED_GLASS).build(),
-                component("gps.ui.transmitter.status.name"),
-                List.of(
-                        component(online ? "gps.ui.transmitter.status.online" : "gps.ui.transmitter.status.offline"),
-                        component("gps.ui.transmitter.status.energy", Map.of("stored", storedEnergy, "required", requiredEnergy)),
-                        component("gps.ui.transmitter.status.strength", Map.of("strength", strength)),
-                        component("gps.ui.transmitter.status.network", Map.of("complexity", complexity))
-                )), click -> openTransmitterGui(click.player(), block, instance)));
+        List<Component> statusLore = new ArrayList<>();
+        statusLore.add(component(online ? view.onlineLoreKey() : view.offlineLoreKey()));
+        for (SfxGpsTransmitterStatusView.Line line : view.statusLore()) {
+            statusLore.add(component(line.key(), line.placeholders()));
+        }
+        builder.button(view.statusSlot(), new SfxMenuButton(namedItem(
+                ItemBuilder.of(online ? view.onlineMaterial() : view.offlineMaterial()).build(),
+                component(view.statusNameKey()),
+                statusLore), click -> openTransmitterGui(click.player(), block, instance)));
 
-        builder.button(TRANSMITTER_GUI_INFO_SLOT, new SfxMenuButton(namedItem(
-                itemIcon(instance.typeId(), Material.COMPASS),
-                component("gps.ui.transmitter.info.name"),
-                List.of(
-                        component("gps.ui.transmitter.info.type", Map.of("type", escape(plain(localization.itemName(instance.typeId()))))),
-                        component("gps.ui.transmitter.info.owner", Map.of("owner", escape(ownerDisplayName(owner)))),
-                        component("gps.ui.transmitter.info.owner-uuid", Map.of("uuid", owner == null ? "-" : owner.toString())),
-                        component("gps.ui.transmitter.info.location", Map.of("world", escape(location.getWorld() == null ? "world" : location.getWorld().getName()), "x", location.getBlockX(), "y", location.getBlockY(), "z", location.getBlockZ())),
-                        component("gps.ui.transmitter.info.transmitters", Map.of("count", countTransmitters(owner)))
-                )), click -> openTransmitterGui(click.player(), block, instance)));
+        List<Component> infoLore = new ArrayList<>();
+        for (SfxGpsTransmitterStatusView.Line line : view.infoLore()) {
+            infoLore.add(component(line.key(), line.placeholders()));
+        }
+        builder.button(view.infoSlot(), new SfxMenuButton(namedItem(
+                itemIcon(instance.typeId(), view.infoFallbackMaterial()),
+                component(view.infoNameKey()),
+                infoLore), click -> openTransmitterGui(click.player(), block, instance)));
 
         menus.openRoot(player, builder.build());
+    }
+
+    private SfxGpsTransmitterStatusView transmitterStatusView(SfxGpsTransmitterInteractionContext context) {
+        SfxApi api = sfxApi();
+        if (api == null) {
+            return null;
+        }
+        SfxGpsTransmitterStatusView view = null;
+        for (SfxGpsTransmitterStatusViewProvider provider : api.behaviors().gpsTransmitterStatusViewProviders()) {
+            SfxGpsTransmitterStatusView next = provider.view(context, view);
+            if (next != null) {
+                view = next;
+            }
+        }
+        return view;
     }
 
     private String ownerDisplayName(UUID owner) {

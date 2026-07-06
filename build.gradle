@@ -760,6 +760,18 @@ tasks.register('validateSfxBasicExpansionBoundary') {
                 violations << "SfxBasicExpansionAddon must own SFX jetpack/jetboots behavior token ${token}"
             }
         }
+        def gpsService = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/gps/SfxGpsService.java').asFile
+        def gpsServiceText = gpsService.getText('UTF-8')
+        ['TRANSMITTER_GUI_STATUS_SLOT', 'gps.ui.transmitter.status.energy', 'gps.ui.transmitter.info.transmitters'].each { token ->
+            if (gpsServiceText.contains(token)) {
+                violations << "SfxGpsService must get SFX transmitter status UI view data from Basic Expansion addon, not core token ${token}"
+            }
+        }
+        ['registerGpsTransmitterStatusViewProvider', 'gps.ui.transmitter.status.energy', 'gps.ui.transmitter.info.transmitters'].each { token ->
+            if (!basicAddonText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own GPS transmitter status UI token ${token}"
+            }
+        }
         if (!violations.isEmpty()) {
             throw new GradleException("SFX Basic Expansion boundary validation failed:\n" + violations.unique().join('\n'))
         }
