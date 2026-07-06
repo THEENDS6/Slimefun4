@@ -171,6 +171,8 @@ GPS transmitter status view providers own the SFX transmitter status UI model: t
 
 Auto Brewer behavior providers own the SFX Auto Brewer UI/input surface: input slots, fuel display constants, and slot validation rules. Core owns only inventory rendering calls, potion classification, and machine state persistence.
 
+Radiation symptom handlers own addon-specific radiation symptom effects. Core owns exposure accounting, classic SF symptoms, stage announcement state, persistence, and death attribution hooks.
+
 Electric special provider key policies may redirect a compiled `sf:special_provider` binding from a classic provider key to an addon provider key. Basic Expansion uses this for Auto Brewer, growth machines, Produce Collector, Auto Breeder, XP Collector, and Fluid Pump behavior without hard-coding those SFX branches in the core provider implementations.
 
 Localized list post-processors can adjust generated item lore and other language lists after the core language lookup is complete. The context exposes the requested language key plus raw text/list lookup helpers so addon-owned text stays in addon language files.
