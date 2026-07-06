@@ -62,11 +62,6 @@ record AssemblerStart(SfxElectricMachineRenderStatus status, List<SfxElectricSta
 record AssemblerConsume(int slot, int amount) {
 }
 
-enum GrowthTarget {
-    CROP,
-    SAPLING
-}
-
 enum ProduceStartStatus {
     NO_INPUT,
     NO_TARGET,
@@ -75,28 +70,17 @@ enum ProduceStartStatus {
 }
 
 enum ProduceAction {
-    MILK("milk", false),
-    STEW("stew", false),
-    SHEEP_WOOL("sheep_wool", true),
-    HONEY_BOTTLE("honey_bottle", false),
-    HONEYCOMB("honeycomb", true),
-    ARMADILLO_SCUTE("armadillo_scute", true),
-    MOOSHROOM_SHEAR("mooshroom_shear", true);
+    MILK("milk"),
+    STEW("stew");
 
     private final String key;
-    private final boolean durableTool;
 
-    ProduceAction(String key, boolean durableTool) {
+    ProduceAction(String key) {
         this.key = key;
-        this.durableTool = durableTool;
     }
 
     String key() {
         return key;
-    }
-
-    boolean usesDurableTool() {
-        return durableTool;
     }
 
     static ProduceAction fromKey(String key) {
@@ -115,12 +99,6 @@ enum ProduceAction {
         }
         return null;
     }
-}
-
-enum ToolUseStatus {
-    RESTORE_TOOL,
-    OUTPUT_TOOL,
-    BROKEN
 }
 
 record ProduceStart(ProduceStartStatus status, int inputSlot, ProduceAction action, SfxElectricStack primaryOutput) {
@@ -147,24 +125,6 @@ record ProduceTarget(List<SfxElectricStack> outputs, Runnable apply) {
 record ProduceCompletion(SfxElectricMachineRenderStatus status) {
     static ProduceCompletion status(SfxElectricMachineRenderStatus status) {
         return new ProduceCompletion(status);
-    }
-}
-
-record ToolUseResult(ToolUseStatus status, SfxElectricStack tool) {
-    static ToolUseResult restore(SfxElectricStack tool) {
-        return new ToolUseResult(ToolUseStatus.RESTORE_TOOL, tool);
-    }
-
-    static ToolUseResult output(SfxElectricStack tool) {
-        return new ToolUseResult(ToolUseStatus.OUTPUT_TOOL, tool);
-    }
-
-    static ToolUseResult broken() {
-        return new ToolUseResult(ToolUseStatus.BROKEN, null);
-    }
-
-    static ToolUseResult noTool() {
-        return new ToolUseResult(ToolUseStatus.BROKEN, null);
     }
 }
 

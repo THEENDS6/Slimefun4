@@ -1,6 +1,9 @@
 package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.internal.block.SfxBlockDataService;
+import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.api.behavior.SfxAreaMachineRules;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import java.util.ArrayList;
@@ -12,21 +15,28 @@ import cc.theends6.sfx.internal.inventory.SfxTransferTransaction;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Beehive;
 import org.bukkit.block.data.Levelled;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Animals;
+import org.bukkit.entity.Armadillo;
 import org.bukkit.entity.Cow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -35,15 +45,17 @@ import org.bukkit.entity.Goat;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.MushroomCow;
+import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Wither;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
-final class SfxAreaElectricMachineProviders {
+final class SfxBasicExpansionAreaElectricMachineProviders {
     private static final int PRODUCE_RANGE = 2;
     private static final int ACTION_WORK_TICKS = 10;
     private static final int PRODUCE_WORK_TICKS = 100;
@@ -52,6 +64,10 @@ final class SfxAreaElectricMachineProviders {
     private static final double ANIMAL_GROWTH_RANGE = 3.0D;
     private static final int CLASSIC_TREE_GROWTH_RADIUS = 9;
     private static final int CLASSIC_TREE_GROWTH_ATTEMPTS = 4;
+    private static final int SFX_GROWTH_RADIUS = 9;
+    private static final int SFX_GROWTH_TOTAL_TICKS = 600;
+    private static final int SFX_GROWTH_INTERVAL_TICKS = 200;
+    private static final double SFX_GROWTH_SUCCESS_CHANCE = 0.5D;
     private static final double XP_COLLECTOR_RANGE = 4.0D;
     private static final double XP_COLLECTOR_ABSORB_RANGE = 1.0D;
     private static final double XP_COLLECTOR_ATTRACT_SPEED = 0.18D;
@@ -60,7 +76,10 @@ final class SfxAreaElectricMachineProviders {
     private static final int FLUID_SOURCE_SEARCH_LIMIT = 42;
     private static final Map<FluidPoolCacheKey, FluidPoolCacheEntry> FLUID_POOL_CACHE = new ConcurrentHashMap<>();
     private static final Map<FluidPumpSourceCacheKey, FluidPumpSourceCacheEntry> FLUID_PUMP_SOURCE_CACHE = new ConcurrentHashMap<>();
-    private SfxAreaElectricMachineProviders() {
+    private static final Enchantment UNBREAKING = Enchantment.getByKey(NamespacedKey.minecraft("unbreaking"));
+    private static final Enchantment MENDING = Enchantment.getByKey(NamespacedKey.minecraft("mending"));
+
+    private SfxBasicExpansionAreaElectricMachineProviders() {
     }
 
 
@@ -164,27 +183,35 @@ final class SfxAreaElectricMachineProviders {
         };
     }
 
-    static SfxElectricRecipeProvider produceCollector() {
+    static SfxElectricRecipeProvider produceCollector(boolean sfxBalance) {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 if (isActive(state, "sf:produce_collector:")) {
-                    return advanceProduce(plugin, items, definition, state, location);
+                    return advanceProduce(plugin, items, definition, state, location, sfxBalance);
                 }
-                ProduceStart start = findProduceStart(plugin, items, definition, state, location);
+                ProduceStart start = findProduceStart(plugin, items, definition, state, location, sfxBalance);
                 return startProduce(definition, state, start);
             }
 
             @Override
             public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
+                if (!sfxBalance) {
+                    return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
+                }
+                if (state.hasProgress()) {
+                    return definition.energyConsumptionPerTick();
+                }
+                ProduceStart start = findProduceStart(plugin, items, definition, state, location, true);
+                return start.status() == ProduceStartStatus.READY ? definition.energyConsumptionPerTick() : 0;
             }
         };
     }
 
-    static SfxElectricRecipeProvider autoBreeder() {
+    static SfxElectricRecipeProvider autoBreeder(boolean sfxBalance) {
         return entityActionProvider(
                 "sf:auto_breeder",
+                sfxBalance,
                 true,
                 entity -> entity instanceof Animals animal && entity.isValid() && animal.isAdult() && animal.canBreed() && !animal.isLoveMode(),
                 entity -> {
@@ -226,39 +253,63 @@ final class SfxAreaElectricMachineProviders {
         };
     }
 
-    static SfxElectricRecipeProvider cropGrowthAccelerator(int classicRadius) {
+    static SfxElectricRecipeProvider cropGrowthAccelerator(SfxBlockDataService blockData, int classicRadius, int sfxAttempts, boolean sfxMode) {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+                if (sfxMode) {
+                    return tickSfxCropGrowth(blockData, definition, state, location, sfxAttempts);
+                }
                 return tickClassicCropGrowth(definition, state, location, classicRadius, classicRadius);
             }
 
             @Override
             public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
+                if (!sfxMode) {
+                    return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
+                }
+                if (state.hasProgress()) {
+                    return hasOverlappingCropAccelerator(blockData, location) ? 0 : definition.energyConsumptionPerTick();
+                }
+                if (firstInputSlot(state, false) < 0 || hasOverlappingCropAccelerator(blockData, location) || !hasGrowableCrop(location, SFX_GROWTH_RADIUS)) {
+                    return 0;
+                }
+                return definition.energyConsumptionPerTick();
             }
         };
     }
 
-    static SfxElectricRecipeProvider treeGrowthAccelerator() {
+    static SfxElectricRecipeProvider treeGrowthAccelerator(boolean sfxMode) {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+                if (sfxMode) {
+                    return tickSfxTreeGrowth(definition, state, location);
+                }
                 return tickClassicTreeGrowth(definition, state, location);
             }
 
             @Override
             public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
+                if (!sfxMode) {
+                    return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
+                }
+                if (state.hasProgress()) {
+                    return definition.energyConsumptionPerTick();
+                }
+                if (firstInputSlot(state, false) < 0 || !hasGrowableSapling(location, SFX_GROWTH_RADIUS)) {
+                    return 0;
+                }
+                return definition.energyConsumptionPerTick();
             }
         };
     }
 
-    static SfxElectricRecipeProvider expCollector(int flaskEnergyCost) {
+    static SfxElectricRecipeProvider expCollector(boolean sfxBalance, int flaskEnergyCost) {
         return new SpecialProvider() {
             @Override
             public SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, SfxMachineTickContext context) {
-                FlushResult initialFlush = flushKnowledgeFlasks(items, definition, state, false, flaskEnergyCost);
+                FlushResult initialFlush = flushKnowledgeFlasks(items, definition, state, sfxBalance, flaskEnergyCost);
                 boolean changed = initialFlush.changed();
                 int consumedEnergy = initialFlush.consumedEnergy();
                 int supplementalEnergy = initialFlush.consumedEnergy();
@@ -268,6 +319,12 @@ final class SfxAreaElectricMachineProviders {
                     state.activeBaseTicks(ACTION_WORK_TICKS);
                     return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.OUTPUT_FULL, consumedEnergy, supplementalEnergy, changed, true);
                 }
+                if (sfxBalance && state.specialData() >= XP_PER_FLASK && state.storedEnergy() < flaskEnergyCost) {
+                    state.activeRecipeKey("sf:xp_collector");
+                    state.activeBaseTicks(ACTION_WORK_TICKS);
+                    return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_POWER, consumedEnergy, supplementalEnergy, changed, true);
+                }
+
                 state.activeRecipeKey("sf:xp_collector");
                 state.activeBaseTicks(ACTION_WORK_TICKS);
                 if (state.storedEnergy() < definition.energyConsumptionPerTick()) {
@@ -285,13 +342,27 @@ final class SfxAreaElectricMachineProviders {
                 int nextProgress = state.progressWork() + progressTicks;
                 consumedEnergy += baseEnergy;
                 changed = true;
+                if (sfxBalance) {
+                    for (int tick = 0; tick < progressTicks; tick++) {
+                        attractExperience(location);
+                        int collected = absorbCloseExperience(location);
+                        if (collected > 0) {
+                            state.specialData(state.specialData() + collected);
+                            changed = true;
+                        }
+                        FlushResult flush = flushKnowledgeFlasks(items, definition, state, true, flaskEnergyCost);
+                        consumedEnergy += flush.consumedEnergy();
+                        supplementalEnergy += flush.consumedEnergy();
+                        changed = changed || flush.changed();
+                    }
+                }
                 while (nextProgress >= ACTION_WORK_TICKS) {
                     nextProgress -= ACTION_WORK_TICKS;
-                    int collected = collectAllNearbyExperience(location);
+                    int collected = sfxBalance ? 0 : collectAllNearbyExperience(location);
                     if (collected > 0) {
                         state.specialData(state.specialData() + collected);
                     }
-                    FlushResult flush = flushKnowledgeFlasks(items, definition, state, false, flaskEnergyCost);
+                    FlushResult flush = flushKnowledgeFlasks(items, definition, state, sfxBalance, flaskEnergyCost);
                     consumedEnergy += flush.consumedEnergy();
                     supplementalEnergy += flush.consumedEnergy();
                     changed = changed || flush.changed() || collected > 0;
@@ -315,7 +386,7 @@ final class SfxAreaElectricMachineProviders {
         };
     }
 
-    private static SfxElectricRecipeProvider entityActionProvider(String key, boolean organicFood, Predicate<Entity> predicate, Consumer<Entity> action) {
+    private static SfxElectricRecipeProvider entityActionProvider(String key, boolean sfxBalance, boolean organicFood, Predicate<Entity> predicate, Consumer<Entity> action) {
         return new WorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
@@ -334,7 +405,17 @@ final class SfxAreaElectricMachineProviders {
 
             @Override
             public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
+                if (!sfxBalance) {
+                    return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
+                }
+                if (state.hasProgress()) {
+                    return definition.energyConsumptionPerTick();
+                }
+                int inputSlot = firstInputSlot(state, organicFood);
+                if (inputSlot < 0 || findTargetEntity(location, key, predicate) == null) {
+                    return 0;
+                }
+                return definition.energyConsumptionPerTick();
             }
         };
     }
@@ -367,6 +448,40 @@ final class SfxAreaElectricMachineProviders {
         return startTimedWork(definition, state, inputSlot, null, ACTION_WORK_TICKS, "sf:tree_growth_accelerator");
     }
 
+    private static SfxElectricMachineTickResult tickSfxCropGrowth(SfxBlockDataService blockData, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, int attempts) {
+        if (isActive(state, "sf:crop_growth_accelerator:sfx")) {
+            if (hasOverlappingCropAccelerator(blockData, location)) {
+                return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OVERLAPPING_AREA, true);
+            }
+            return advanceSfxGrowth(definition, state, location, attempts, GrowthTarget.CROP);
+        }
+        if (hasOverlappingCropAccelerator(blockData, location)) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OVERLAPPING_AREA, true);
+        }
+        int inputSlot = firstInputSlot(state, false);
+        if (inputSlot < 0) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_INPUT, false);
+        }
+        if (!hasGrowableCrop(location, SFX_GROWTH_RADIUS)) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
+        }
+        return startTimedWork(definition, state, inputSlot, null, SFX_GROWTH_TOTAL_TICKS, "sf:crop_growth_accelerator:sfx:" + attempts);
+    }
+
+    private static SfxElectricMachineTickResult tickSfxTreeGrowth(SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        if (isActive(state, "sf:tree_growth_accelerator:sfx")) {
+            return advanceSfxGrowth(definition, state, location, 30, GrowthTarget.SAPLING);
+        }
+        int inputSlot = firstInputSlot(state, false);
+        if (inputSlot < 0) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_INPUT, false);
+        }
+        if (!hasGrowableSapling(location, SFX_GROWTH_RADIUS)) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
+        }
+        return startTimedWork(definition, state, inputSlot, null, SFX_GROWTH_TOTAL_TICKS, "sf:tree_growth_accelerator:sfx");
+    }
+
     private static SfxElectricMachineTickResult startTimedWork(SfxElectricMachineDefinition definition, SfxElectricMachineState state, int inputSlot, SfxElectricStack output, int workTicks, String key) {
         if (state.storedEnergy() < definition.energyConsumptionPerTick()) {
             return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_POWER, true);
@@ -394,19 +509,19 @@ final class SfxAreaElectricMachineProviders {
         };
     }
 
-    private static SfxElectricMachineTickResult advanceProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+    private static SfxElectricMachineTickResult advanceProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, boolean sfxBalance) {
         return advanceTimedAction(definition, state, () -> {
             ProduceAction action = ProduceAction.fromKey(state.activeRecipeKey());
             if (action == null) {
                 restoreReservedAndReset(items, definition, state);
                 return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
             }
-            ProduceCompletion completion = completeProduce(plugin, items, definition, state, location, action);
+            ProduceCompletion completion = completeProduce(plugin, items, definition, state, location, action, sfxBalance);
             if (completion.status() != SfxElectricMachineRenderStatus.WORKING) {
                 return SfxElectricMachineTickResult.status(completion.status(), true);
             }
             state.resetProgress();
-            return continueProduce(plugin, items, definition, state, location);
+            return continueProduce(plugin, items, definition, state, location, sfxBalance);
         });
     }
 
@@ -462,6 +577,40 @@ final class SfxAreaElectricMachineProviders {
         });
     }
 
+    private static SfxElectricMachineTickResult advanceSfxGrowth(SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, int attempts, GrowthTarget target) {
+        if ((target == GrowthTarget.CROP && !hasGrowableCrop(location, SFX_GROWTH_RADIUS))
+                || (target == GrowthTarget.SAPLING && !hasGrowableSapling(location, SFX_GROWTH_RADIUS))) {
+            state.resetProgress();
+            return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.NO_TARGET, 0, true);
+        }
+        if (!state.hasProgress()) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.IDLE, true);
+        }
+        if (state.storedEnergy() < definition.energyConsumptionPerTick()) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_POWER, true);
+        }
+        int previous = state.progressWork();
+        int next = Math.min(SFX_GROWTH_TOTAL_TICKS, previous + Math.max(1, definition.speed()));
+        state.storedEnergy(state.storedEnergy() - definition.energyConsumptionPerTick());
+        state.progressWork(next);
+        for (int marker = SFX_GROWTH_INTERVAL_TICKS; marker <= SFX_GROWTH_TOTAL_TICKS; marker += SFX_GROWTH_INTERVAL_TICKS) {
+            if (previous < marker && next >= marker) {
+                if (target == GrowthTarget.CROP) {
+                    spawnGrowthAreaBoneMealParticles(location);
+                }
+                runRandomGrowthAttempts(location, attempts, target);
+            }
+        }
+        if (next >= SFX_GROWTH_TOTAL_TICKS) {
+            state.resetProgress();
+            SfxElectricMachineTickResult result = target == GrowthTarget.CROP
+                    ? continueSfxCropGrowth(definition, state, location)
+                    : continueSfxTreeGrowth(definition, state, location);
+            return new SfxElectricMachineTickResult(result.status(), definition.energyConsumptionPerTick() + result.consumedEnergy(), true, result.keepActive());
+        }
+        return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
+    }
+
     private static SfxElectricMachineTickResult advanceTimedAction(SfxElectricMachineDefinition definition, SfxElectricMachineState state, java.util.function.Supplier<SfxElectricMachineTickResult> completion) {
         if (!state.hasProgress()) {
             return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.IDLE, true);
@@ -479,8 +628,8 @@ final class SfxAreaElectricMachineProviders {
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
     }
 
-    private static SfxElectricMachineTickResult continueProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-        ProduceStart start = findProduceStart(plugin, items, definition, state, location);
+    private static SfxElectricMachineTickResult continueProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, boolean sfxBalance) {
+        ProduceStart start = findProduceStart(plugin, items, definition, state, location, sfxBalance);
         return startProduce(definition, state, start);
     }
 
@@ -517,7 +666,29 @@ final class SfxAreaElectricMachineProviders {
         return startTimedWork(definition, state, inputSlot, null, ACTION_WORK_TICKS, "sf:tree_growth_accelerator");
     }
 
-    private static ProduceStart findProduceStart(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+    private static SfxElectricMachineTickResult continueSfxCropGrowth(SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        int inputSlot = firstInputSlot(state, false);
+        if (inputSlot < 0) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_INPUT, false);
+        }
+        if (!hasGrowableCrop(location, SFX_GROWTH_RADIUS)) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
+        }
+        return startTimedWork(definition, state, inputSlot, null, SFX_GROWTH_TOTAL_TICKS, "sf:crop_growth_accelerator:sfx");
+    }
+
+    private static SfxElectricMachineTickResult continueSfxTreeGrowth(SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        int inputSlot = firstInputSlot(state, false);
+        if (inputSlot < 0) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_INPUT, false);
+        }
+        if (!hasGrowableSapling(location, SFX_GROWTH_RADIUS)) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
+        }
+        return startTimedWork(definition, state, inputSlot, null, SFX_GROWTH_TOTAL_TICKS, "sf:tree_growth_accelerator:sfx");
+    }
+
+    private static ProduceStart findProduceStart(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, boolean sfxBalance) {
         boolean sawTool = false;
         for (int slot = 0; slot < state.inputCapacity(); slot++) {
             SfxElectricStack input = state.input(slot);
@@ -525,13 +696,16 @@ final class SfxAreaElectricMachineProviders {
                 continue;
             }
             Material material = input.material();
-            if (!isProduceTool(material)) {
+            if (!isProduceTool(material, sfxBalance)) {
                 continue;
             }
             sawTool = true;
             ProduceStart start = switch (material) {
                 case BUCKET -> produceStartForAction(items, definition, state, location, slot, ProduceAction.MILK);
                 case BOWL -> produceStartForAction(items, definition, state, location, slot, ProduceAction.STEW);
+                case GLASS_BOTTLE -> sfxBalance ? produceStartForAction(items, definition, state, location, slot, ProduceAction.HONEY_BOTTLE) : ProduceStart.noTarget();
+                case SHEARS -> sfxBalance ? firstReadyProduce(items, definition, state, location, slot, ProduceAction.SHEEP_WOOL, ProduceAction.HONEYCOMB, ProduceAction.MOOSHROOM_SHEAR) : ProduceStart.noTarget();
+                case BRUSH -> sfxBalance ? produceStartForAction(items, definition, state, location, slot, ProduceAction.ARMADILLO_SCUTE) : ProduceStart.noTarget();
                 default -> ProduceStart.noTarget();
             };
             if (start.status() == ProduceStartStatus.READY || start.status() == ProduceStartStatus.OUTPUT_FULL) {
@@ -539,6 +713,18 @@ final class SfxAreaElectricMachineProviders {
             }
         }
         return sawTool ? ProduceStart.noTarget() : ProduceStart.noInput();
+    }
+
+    private static ProduceStart firstReadyProduce(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, int slot, ProduceAction... actions) {
+        ProduceStart last = ProduceStart.noTarget();
+        for (ProduceAction action : actions) {
+            ProduceStart start = produceStartForAction(items, definition, state, location, slot, action);
+            if (start.status() == ProduceStartStatus.READY || start.status() == ProduceStartStatus.OUTPUT_FULL) {
+                return start;
+            }
+            last = start;
+        }
+        return last;
     }
 
     private static ProduceStart produceStartForAction(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, int slot, ProduceAction action) {
@@ -552,19 +738,34 @@ final class SfxAreaElectricMachineProviders {
         return ProduceStart.ready(slot, action, outputs.getFirst());
     }
 
-    private static ProduceCompletion completeProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, ProduceAction action) {
+    private static ProduceCompletion completeProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, ProduceAction action, boolean sfxBalance) {
+        SfxElectricStack reserved = state.reservedInputs().isEmpty() ? null : state.reservedInputs().getFirst();
         ProduceTarget target = findProduceTarget(location, action);
         if (target == null) {
             restoreReservedAndReset(items, definition, state);
             return ProduceCompletion.status(SfxElectricMachineRenderStatus.NO_TARGET);
         }
         List<SfxElectricStack> outputs = target.outputs();
+        ToolUseResult toolUse = ToolUseResult.noTool();
+        if (action.usesDurableTool()) {
+            toolUse = useDurableTool(items, reserved);
+            if (toolUse.status() == ToolUseStatus.OUTPUT_TOOL) {
+                outputs = append(outputs, toolUse.tool());
+            }
+        }
         if (!canFitOutputs(items, definition, state, outputs)) {
             return ProduceCompletion.status(SfxElectricMachineRenderStatus.BLOCKED_OUTPUT);
         }
         target.apply().run();
         for (SfxElectricStack output : target.outputs()) {
             pushOutput(items, definition, state, output);
+        }
+        if (action.usesDurableTool()) {
+            if (toolUse.status() == ToolUseStatus.RESTORE_TOOL) {
+                restoreOrOutput(items, definition, state, state.activeInputSlot(), toolUse.tool());
+            } else if (toolUse.status() == ToolUseStatus.OUTPUT_TOOL) {
+                pushOutput(items, definition, state, toolUse.tool());
+            }
         }
         return ProduceCompletion.status(SfxElectricMachineRenderStatus.WORKING);
     }
@@ -587,12 +788,120 @@ final class SfxAreaElectricMachineProviders {
                 Entity target = firstNearbyEntity(location, PRODUCE_RANGE, PRODUCE_RANGE, entity -> entity instanceof MushroomCow cow && cow.isAdult());
                 yield target == null ? null : new ProduceTarget(List.of(SfxElectricStack.vanilla(Material.MUSHROOM_STEW, 1)), () -> {});
             }
-            default -> null;
+            case SHEEP_WOOL -> {
+                Entity target = firstNearbyEntity(location, PRODUCE_RANGE, PRODUCE_RANGE, entity -> entity instanceof Sheep sheep && sheep.isAdult() && !sheep.isSheared());
+                if (!(target instanceof Sheep sheep)) {
+                    yield null;
+                }
+                Material wool = woolMaterial(sheep.getColor());
+                yield new ProduceTarget(List.of(SfxElectricStack.vanilla(wool, 1)), () -> sheep.setSheared(true));
+            }
+            case HONEY_BOTTLE -> {
+                Block hive = findMatureBeehive(location);
+                yield hive == null ? null : new ProduceTarget(List.of(SfxElectricStack.vanilla(Material.HONEY_BOTTLE, 1)), () -> resetHoney(hive));
+            }
+            case HONEYCOMB -> {
+                Block hive = findMatureBeehive(location);
+                yield hive == null ? null : new ProduceTarget(List.of(SfxElectricStack.vanilla(Material.HONEYCOMB, 3)), () -> resetHoney(hive));
+            }
+            case ARMADILLO_SCUTE -> {
+                Entity target = firstNearbyEntity(location, PRODUCE_RANGE, PRODUCE_RANGE, entity -> entity instanceof Armadillo && entity.isValid());
+                yield target == null ? null : new ProduceTarget(List.of(SfxElectricStack.vanilla(Material.ARMADILLO_SCUTE, 1)), () -> {});
+            }
+            case MOOSHROOM_SHEAR -> {
+                Entity target = firstNearbyEntity(location, PRODUCE_RANGE, PRODUCE_RANGE, entity -> entity instanceof MushroomCow cow && cow.isAdult());
+                if (!(target instanceof MushroomCow cow)) {
+                    yield null;
+                }
+                Material mushroom = cow.getVariant() == MushroomCow.Variant.BROWN ? Material.BROWN_MUSHROOM : Material.RED_MUSHROOM;
+                yield new ProduceTarget(List.of(SfxElectricStack.vanilla(mushroom, 5)), () -> convertMooshroomToCow(cow));
+            }
         };
     }
 
-    private static boolean isProduceTool(Material material) {
-        return material == Material.BUCKET || material == Material.BOWL;
+    private static boolean isProduceTool(Material material, boolean sfxBalance) {
+        if (material == Material.BUCKET || material == Material.BOWL) {
+            return true;
+        }
+        return sfxBalance && (material == Material.SHEARS || material == Material.GLASS_BOTTLE || material == Material.BRUSH);
+    }
+
+    private static boolean hasOverlappingCropAccelerator(SfxBlockDataService blockData, Location location) {
+        if (blockData == null || location == null || location.getWorld() == null) {
+            return false;
+        }
+        UUID currentId = blockData.findAnchor(location).map(anchor -> anchor.instanceId()).orElse(null);
+        SfxBlockAnchorKey current = SfxBlockAnchorKey.fromLocation(location);
+        for (var anchor : blockData.anchors()) {
+            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (instance == null || Objects.equals(instance.instanceId(), currentId)) {
+                continue;
+            }
+            if (!instance.typeId().equals("sf:crop_growth_accelerator") && !instance.typeId().equals("sf:crop_growth_accelerator_2")) {
+                continue;
+            }
+            SfxBlockAnchorKey other = instance.anchorKey();
+            if (!other.worldId().equals(current.worldId())) {
+                continue;
+            }
+            if (Math.abs(other.x() - current.x()) <= SFX_GROWTH_RADIUS * 2 && Math.abs(other.z() - current.z()) <= SFX_GROWTH_RADIUS * 2) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasGrowableCrop(Location location, int radius) {
+        if (location == null || location.getWorld() == null) {
+            return false;
+        }
+        Block center = location.getBlock();
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                if (isGrowableCrop(center.getRelative(x, 0, z))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasGrowableSapling(Location location, int radius) {
+        if (location == null || location.getWorld() == null) {
+            return false;
+        }
+        Block center = location.getBlock();
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                if (Tag.SAPLINGS.isTagged(center.getRelative(x, 0, z).getType())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void runRandomGrowthAttempts(Location location, int attempts, GrowthTarget target) {
+        if (location == null || location.getWorld() == null) {
+            return;
+        }
+        Block center = location.getBlock();
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        for (int i = 0; i < attempts; i++) {
+            int x = random.nextInt(-SFX_GROWTH_RADIUS, SFX_GROWTH_RADIUS + 1);
+            int z = random.nextInt(-SFX_GROWTH_RADIUS, SFX_GROWTH_RADIUS + 1);
+            Block block = center.getRelative(x, 0, z);
+            if (target == GrowthTarget.CROP) {
+                if (isGrowableCrop(block) && random.nextDouble() < SFX_GROWTH_SUCCESS_CHANCE) {
+                    growCropWithHeartParticles(block);
+                }
+                continue;
+            }
+            if (Tag.SAPLINGS.isTagged(block.getType()) && random.nextDouble() < SFX_GROWTH_SUCCESS_CHANCE) {
+                block.applyBoneMeal(BlockFace.UP);
+                spawnBoneMealParticles(block);
+            }
+        }
     }
 
     private static boolean growCropWithBoneMealParticles(Block crop) {
@@ -600,6 +909,14 @@ final class SfxAreaElectricMachineProviders {
             return false;
         }
         spawnBoneMealParticles(crop);
+        return true;
+    }
+
+    private static boolean growCropWithHeartParticles(Block crop) {
+        if (!increaseCropAge(crop)) {
+            return false;
+        }
+        spawnBlockHearts(crop);
         return true;
     }
 
@@ -681,6 +998,102 @@ final class SfxAreaElectricMachineProviders {
         return null;
     }
 
+    private static Block findMatureBeehive(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return null;
+        }
+        Block center = location.getBlock();
+        for (int x = -PRODUCE_RANGE; x <= PRODUCE_RANGE; x++) {
+            for (int y = -PRODUCE_RANGE; y <= PRODUCE_RANGE; y++) {
+                for (int z = -PRODUCE_RANGE; z <= PRODUCE_RANGE; z++) {
+                    Block block = center.getRelative(x, y, z);
+                    if (block.getType() != Material.BEEHIVE && block.getType() != Material.BEE_NEST) {
+                        continue;
+                    }
+                    BlockData data = block.getBlockData();
+                    if (data instanceof Beehive hive && hive.getHoneyLevel() >= hive.getMaximumHoneyLevel()) {
+                        return block;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void resetHoney(Block block) {
+        BlockData data = block.getBlockData();
+        if (data instanceof Beehive hive) {
+            hive.setHoneyLevel(0);
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, "sf:area_machine", block, hive, false, "electric-area", "produce-collector:hive-reset");
+        }
+    }
+
+    private static void convertMooshroomToCow(MushroomCow cow) {
+        if (!cow.isValid() || cow.getWorld() == null) {
+            return;
+        }
+        Location spawn = cow.getLocation();
+        Cow replacement = cow.getWorld().spawn(spawn, Cow.class);
+        replacement.setAge(cow.getAge());
+        replacement.setHealth(Math.min(replacement.getHealth(), cow.getHealth()));
+        replacement.setCustomName(cow.getCustomName());
+        replacement.setCustomNameVisible(cow.isCustomNameVisible());
+        replacement.setPersistent(cow.isPersistent());
+        cow.remove();
+    }
+
+    private static Material woolMaterial(DyeColor color) {
+        return switch (color == null ? DyeColor.WHITE : color) {
+            case WHITE -> Material.WHITE_WOOL;
+            case ORANGE -> Material.ORANGE_WOOL;
+            case MAGENTA -> Material.MAGENTA_WOOL;
+            case LIGHT_BLUE -> Material.LIGHT_BLUE_WOOL;
+            case YELLOW -> Material.YELLOW_WOOL;
+            case LIME -> Material.LIME_WOOL;
+            case PINK -> Material.PINK_WOOL;
+            case GRAY -> Material.GRAY_WOOL;
+            case LIGHT_GRAY -> Material.LIGHT_GRAY_WOOL;
+            case CYAN -> Material.CYAN_WOOL;
+            case PURPLE -> Material.PURPLE_WOOL;
+            case BLUE -> Material.BLUE_WOOL;
+            case BROWN -> Material.BROWN_WOOL;
+            case GREEN -> Material.GREEN_WOOL;
+            case RED -> Material.RED_WOOL;
+            case BLACK -> Material.BLACK_WOOL;
+        };
+    }
+
+    private static ToolUseResult useDurableTool(SfxItems items, SfxElectricStack reserved) {
+        if (reserved == null) {
+            return ToolUseResult.broken();
+        }
+        ItemStack stack = reserved.toItemStack(items);
+        short maxDurability = stack.getType().getMaxDurability();
+        if (maxDurability <= 0) {
+            return ToolUseResult.restore(SfxElectricStack.fromItemStack(items, stack));
+        }
+        int unbreaking = UNBREAKING == null ? 0 : stack.getEnchantmentLevel(UNBREAKING);
+        boolean consumeDurability = unbreaking <= 0 || ThreadLocalRandom.current().nextInt(unbreaking + 1) == 0;
+        if (!consumeDurability) {
+            return ToolUseResult.restore(SfxElectricStack.fromItemStack(items, stack));
+        }
+        ItemMeta meta = stack.getItemMeta();
+        if (!(meta instanceof Damageable damageable)) {
+            return ToolUseResult.restore(SfxElectricStack.fromItemStack(items, stack));
+        }
+        int nextDamage = damageable.getDamage() + 1;
+        if (nextDamage >= maxDurability) {
+            return ToolUseResult.broken();
+        }
+        damageable.setDamage(nextDamage);
+        stack.setItemMeta(meta);
+        boolean hasMending = MENDING != null && stack.containsEnchantment(MENDING);
+        if (hasMending && maxDurability - nextDamage <= 1) {
+            return ToolUseResult.output(SfxElectricStack.fromItemStack(items, stack));
+        }
+        return ToolUseResult.restore(SfxElectricStack.fromItemStack(items, stack));
+    }
+
     private static void restoreOrOutput(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, int slot, SfxElectricStack stack) {
         if (stack == null) {
             return;
@@ -727,6 +1140,17 @@ final class SfxAreaElectricMachineProviders {
 
     private static void spawnBoneMealParticles(Block block) {
         block.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, block.getLocation().add(0.5D, 0.5D, 0.5D), 8, 0.25D, 0.25D, 0.25D, 0.0D);
+    }
+
+    private static void spawnGrowthAreaBoneMealParticles(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return;
+        }
+        location.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, location.clone().add(0.5D, 0.75D, 0.5D), 160, SFX_GROWTH_RADIUS + 0.5D, 0.35D, SFX_GROWTH_RADIUS + 0.5D, 0.0D);
+    }
+
+    private static void spawnBlockHearts(Block block) {
+        block.getWorld().spawnParticle(Particle.HEART, block.getLocation().add(0.5D, 0.5D, 0.5D), 4, 0.1F, 0.1F, 0.1F, 0.0D);
     }
 
     private static int collectAllNearbyExperience(Location location) {
@@ -1321,6 +1745,112 @@ final class SfxAreaElectricMachineProviders {
         }
         state.resetProgress();
         return SfxElectricMachineTickResult.changed(state.hasAnyInput() ? SfxElectricMachineRenderStatus.WORKING : SfxElectricMachineRenderStatus.IDLE, 0, state.hasAnyInput());
+    }
+
+    private enum GrowthTarget {
+        CROP,
+        SAPLING
+    }
+
+    private enum ProduceStartStatus {
+        NO_INPUT,
+        NO_TARGET,
+        OUTPUT_FULL,
+        READY
+    }
+
+    private enum ProduceAction {
+        MILK("milk", false),
+        STEW("stew", false),
+        SHEEP_WOOL("sheep_wool", true),
+        HONEY_BOTTLE("honey_bottle", false),
+        HONEYCOMB("honeycomb", true),
+        ARMADILLO_SCUTE("armadillo_scute", true),
+        MOOSHROOM_SHEAR("mooshroom_shear", true);
+
+        private final String key;
+        private final boolean durableTool;
+
+        ProduceAction(String key, boolean durableTool) {
+            this.key = key;
+            this.durableTool = durableTool;
+        }
+
+        String key() {
+            return key;
+        }
+
+        boolean usesDurableTool() {
+            return durableTool;
+        }
+
+        static ProduceAction fromKey(String key) {
+            if (key == null) {
+                return null;
+            }
+            String prefix = "sf:produce_collector:";
+            if (!key.startsWith(prefix)) {
+                return null;
+            }
+            String actionKey = key.substring(prefix.length()).toLowerCase(Locale.ROOT);
+            for (ProduceAction action : values()) {
+                if (action.key.equals(actionKey)) {
+                    return action;
+                }
+            }
+            return null;
+        }
+    }
+
+    private enum ToolUseStatus {
+        RESTORE_TOOL,
+        OUTPUT_TOOL,
+        BROKEN
+    }
+
+    private record ProduceStart(ProduceStartStatus status, int inputSlot, ProduceAction action, SfxElectricStack primaryOutput) {
+        static ProduceStart noInput() {
+            return new ProduceStart(ProduceStartStatus.NO_INPUT, -1, null, null);
+        }
+
+        static ProduceStart noTarget() {
+            return new ProduceStart(ProduceStartStatus.NO_TARGET, -1, null, null);
+        }
+
+        static ProduceStart outputFull() {
+            return new ProduceStart(ProduceStartStatus.OUTPUT_FULL, -1, null, null);
+        }
+
+        static ProduceStart ready(int inputSlot, ProduceAction action, SfxElectricStack primaryOutput) {
+            return new ProduceStart(ProduceStartStatus.READY, inputSlot, action, primaryOutput);
+        }
+    }
+
+    private record ProduceTarget(List<SfxElectricStack> outputs, Runnable apply) {
+    }
+
+    private record ProduceCompletion(SfxElectricMachineRenderStatus status) {
+        static ProduceCompletion status(SfxElectricMachineRenderStatus status) {
+            return new ProduceCompletion(status);
+        }
+    }
+
+    private record ToolUseResult(ToolUseStatus status, SfxElectricStack tool) {
+        static ToolUseResult restore(SfxElectricStack tool) {
+            return new ToolUseResult(ToolUseStatus.RESTORE_TOOL, tool);
+        }
+
+        static ToolUseResult output(SfxElectricStack tool) {
+            return new ToolUseResult(ToolUseStatus.OUTPUT_TOOL, tool);
+        }
+
+        static ToolUseResult broken() {
+            return new ToolUseResult(ToolUseStatus.BROKEN, null);
+        }
+
+        static ToolUseResult noTool() {
+            return new ToolUseResult(ToolUseStatus.BROKEN, null);
+        }
     }
 
 }
