@@ -216,7 +216,7 @@ public final class SfxTechnicalGadgetService implements Listener {
             airborneTicks.merge(id, 1, Integer::sum);
         }
 
-        tickSfxFlightPermission(player, hasJetpack, jetBoots);
+        tickManagedFlightPermission(player, hasJetpack, jetBoots);
         boolean suppressShiftAction = handleShiftPress(player, jetBoots, shiftPressed);
         handleJumpPress(player, chestplate, jetpack, boots, jetBoots, hasJetpack, jumpPressed);
         tickPassiveJetBoots(player, jetBoots);
@@ -721,7 +721,7 @@ public final class SfxTechnicalGadgetService implements Listener {
         return gameMode == GameMode.SURVIVAL || gameMode == GameMode.ADVENTURE;
     }
 
-    private void tickSfxFlightPermission(Player player, boolean hasJetpack, SfxRechargeableItemService.Definition jetBoots) {
+    private void tickManagedFlightPermission(Player player, boolean hasJetpack, SfxRechargeableItemService.Definition jetBoots) {
         UUID id = player.getUniqueId();
         boolean active = technicalGadgetRules().jetpackReworkEnabled() && isManagedFlightGameMode(player.getGameMode()) && (hasJetpack || jetBoots != null);
         if (!active) {
