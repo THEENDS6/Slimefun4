@@ -15,6 +15,8 @@ public interface SfxBehaviorRegistry {
 
     List<SfxTechnicalGadgetRuleProvider> technicalGadgetRuleProviders();
 
+    List<SfxTechnicalGadgetBehaviorProvider> technicalGadgetBehaviorProviders();
+
     List<SfxRechargeableItemProvider> rechargeableItemProviders();
 
     List<SfxEnergyBalanceRuleProvider> energyBalanceRuleProviders();

@@ -2,6 +2,10 @@ package cc.theends6.sfx.internal.technical;
 
 import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRules;
 import cc.theends6.sfx.api.behavior.SfxBehaviorRegistry;
+import cc.theends6.sfx.api.behavior.SfxJetBootsDriveMode;
+import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetBehaviorProvider;
+import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetItem;
+import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetItemKind;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -16,10 +20,8 @@ import java.util.logging.Level;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
@@ -38,26 +40,11 @@ public final class SfxTechnicalGadgetService implements Listener {
     private static final int FALLBACK_JUMP_PULSE_TICKS = 6;
     private static final double FUEL_BUCKET_VALUE = 2500.0D;
     private static final int GROUND_JUMP_GRACE_TICKS = 3;
-    private static final double JETPACK_VERTICAL_MULTIPLIER = 2.0D;
-    private static final double JETPACK_HORIZONTAL_FACTOR = 0.20D;
-    private static final double JETPACK_MAX_HORIZONTAL_SPEED = 0.85D;
-    private static final double HOVER_HORIZONTAL_FACTOR = 0.20D;
-    private static final double HOVER_HOLD_Y = 0.0D;
-    private static final double HOVER_UPWARD_DAMPING_Y = -0.020D;
-    private static final double HOVER_DOWNWARD_RECOVERY_Y = 0.010D;
-    private static final double HOVER_DESCEND_MULTIPLIER = 0.80D;
-    private static final double JETBOOTS_HORIZONTAL_MULTIPLIER = 2.0D;
-    private static final double JETBOOTS_ASSIST_HORIZONTAL_FACTOR = 0.20D;
-    private static final double JETBOOTS_ASSIST_GROUND_HORIZONTAL_FACTOR = 0.40D;
-    private static final double JETBOOTS_ASSIST_GROUND_MIN_ACCELERATION = 0.045D;
-    private static final double JETBOOTS_MAX_HORIZONTAL_SPEED = 0.95D;
     private static final int JETBOOTS_MODE_TAP_WINDOW_TICKS = 7;
     private static final int JETBOOTS_AIR_JUMP_TRAIL_TICKS = 7;
     private static final int ASSIST_JUMP_GRACE_TICKS = 3;
     private static final int PASSIVE_EFFECT_INTERVAL_TICKS = 3;
     private static final int PASSIVE_GADGET_CHECK_INTERVAL_TICKS = 10;
-    private static final float AIR_JUMP_SOUND_VOLUME = 0.38F;
-    private static final float AIR_JUMP_SOUND_PITCH = 1.55F;
     private static final double FUEL_AUTO_REFILL_THRESHOLD = 7500.0D;
     private static final String FUEL_BUCKET_ID = "sf:bucket_of_fuel";
 
@@ -65,6 +52,7 @@ public final class SfxTechnicalGadgetService implements Listener {
     private final SfxRuntime runtime;
     private final SfxItems items;
     private final SfxLocalization localization;
+    private final SfxBehaviorRegistry behaviors;
     private final SfxRechargeableItemService rechargeableItems;
     private final Map<UUID, Boolean> hoverEnabled = new ConcurrentHashMap<>();
     private final Map<UUID, Boolean> previousJumpDown = new ConcurrentHashMap<>();
@@ -94,6 +82,7 @@ public final class SfxTechnicalGadgetService implements Listener {
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
+        this.behaviors = behaviors;
         this.rechargeableItems = new SfxRechargeableItemService(plugin, items, behaviors);
         this.tickCounter = 0L;
         this.running = false;
@@ -190,6 +179,10 @@ public final class SfxTechnicalGadgetService implements Listener {
         SfxRechargeableItemService.Definition jetpack = jetpackDefinition(chestplate);
         SfxRechargeableItemService.Definition jetBoots = jetBootsDefinition(boots);
         if (!technicalGadgetRules().jetpackReworkEnabled()) {
+            clearRuntimeState(player);
+            return;
+        }
+        if (technicalGadgetBehavior() == null) {
             clearRuntimeState(player);
             return;
         }
@@ -298,7 +291,10 @@ public final class SfxTechnicalGadgetService implements Listener {
         if (jetBoots != null
                 && usedAirJumps.getOrDefault(id, 0) == 0
                 && airborneTicks.getOrDefault(id, 0) <= GROUND_JUMP_GRACE_TICKS) {
-            playJetBootsAirJumpSound(player);
+            SfxTechnicalGadgetBehaviorProvider behavior = technicalGadgetBehavior();
+            if (behavior != null) {
+                behavior.playJetBootsAirJumpSound(player);
+            }
         }
 
         if (jetpack != null && jetpack.hoverSupported() && tickCounter - previous <= DOUBLE_TAP_WINDOW_TICKS) {
@@ -315,16 +311,18 @@ public final class SfxTechnicalGadgetService implements Listener {
     }
 
     private void tryUseJetpack(Player player, ItemStack chestplate, SfxRechargeableItemService.Definition definition, PlayerInput input) {
+        SfxTechnicalGadgetBehaviorProvider behavior = technicalGadgetBehavior();
+        if (behavior == null) {
+            return;
+        }
         if (definition == null || !consumeEnergy(player, chestplate, definition, definition.useCost())) {
             return;
         }
         player.getInventory().setChestplate(chestplate);
         player.setFallDistance(0.0F);
         Vector current = player.getVelocity();
-        double upward = isAboveHeightLimit(player, definition) ? 0.0D : definition.movementValue() * JETPACK_VERTICAL_MULTIPLIER;
-        Vector horizontal = addInputHorizontalVelocity(player, input, current, definition.movementValue() * JETPACK_HORIZONTAL_FACTOR);
-        player.setVelocity(limitHorizontal(new Vector(horizontal.getX(), Math.max(current.getY(), upward), horizontal.getZ()), JETPACK_MAX_HORIZONTAL_SPEED));
-        playJetpackEffects(player, definition);
+        player.setVelocity(behavior.jetpackVelocity(player, current, inputDirection(player, input), toApi(definition), isAboveHeightLimit(player, definition)));
+        behavior.playJetpackEffects(player, toApi(definition));
     }
 
     private void tryHoverJetpack(
@@ -337,23 +335,22 @@ public final class SfxTechnicalGadgetService implements Listener {
             boolean jumpDown,
             boolean shiftDown
     ) {
+        SfxTechnicalGadgetBehaviorProvider behavior = technicalGadgetBehavior();
+        if (behavior == null) {
+            return;
+        }
         if (definition == null) {
             return;
         }
         boolean verticalInput = jumpDown || shiftDown;
-        double cost = definition.useCost() * (verticalInput ? 1.0D : 0.5D);
+        double cost = behavior.hoverCost(toApi(definition), verticalInput);
         if (!consumeEnergy(player, chestplate, definition, cost)) {
             return;
         }
         player.getInventory().setChestplate(chestplate);
         player.setFallDistance(0.0F);
         Vector current = player.getVelocity();
-        double y = hoverHoldVelocity(current.getY());
-        if (jumpDown && !isAboveHeightLimit(player, definition)) {
-            y = definition.movementValue() * JETPACK_VERTICAL_MULTIPLIER;
-        } else if (shiftDown) {
-            y = -Math.max(0.10D, definition.movementValue() * JETPACK_VERTICAL_MULTIPLIER * HOVER_DESCEND_MULTIPLIER);
-        }
+        double y = behavior.hoverYVelocity(current.getY(), toApi(definition), jumpDown, shiftDown, isAboveHeightLimit(player, definition));
 
         boolean horizontalInput = input.hasHorizontalMovement();
         Vector horizontal = current.clone();
@@ -362,73 +359,73 @@ public final class SfxTechnicalGadgetService implements Listener {
             if (jetBoots != null) {
                 horizontal = tryApplyJetBootsHoverHorizontal(player, boots, jetBoots, input, horizontal);
             } else {
-                horizontal = addInputHorizontalVelocity(player, input, horizontal, definition.movementValue() * HOVER_HORIZONTAL_FACTOR);
+                horizontal = addInputHorizontalVelocity(player, input, horizontal, behavior.hoverHorizontalAcceleration(toApi(definition)));
             }
         }
-        player.setVelocity(limitHorizontal(new Vector(horizontal.getX(), y, horizontal.getZ()), JETPACK_MAX_HORIZONTAL_SPEED));
+        player.setVelocity(limitHorizontal(new Vector(horizontal.getX(), y, horizontal.getZ()), behavior.maxJetpackHorizontalSpeed(toApi(definition))));
         if (shouldPlayPassiveEffect(verticalInput || horizontalInput)) {
-            playJetpackEffects(player, definition);
+            behavior.playJetpackEffects(player, toApi(definition));
         }
     }
 
     private void tryUseJetBootsThrust(Player player, ItemStack boots, SfxRechargeableItemService.Definition definition, JetBootsDriveMode mode) {
-        if (definition == null || mode != JetBootsDriveMode.THRUST || !consumeEnergy(player, boots, definition, jetBootsUseCost(definition, mode))) {
+        SfxTechnicalGadgetBehaviorProvider behavior = technicalGadgetBehavior();
+        if (behavior == null || definition == null || mode != JetBootsDriveMode.THRUST || !consumeEnergy(player, boots, definition, behavior.jetBootsUseCost(toApi(definition), toApi(mode)))) {
             return;
         }
         player.getInventory().setBoots(boots);
         player.setFallDistance(0.0F);
-        Vector direction = player.getEyeLocation().getDirection();
-        Vector current = player.getVelocity();
-        Vector vector = new Vector(
-                current.getX() * 0.35D + direction.getX() * definition.movementValue() * JETBOOTS_HORIZONTAL_MULTIPLIER,
-                Math.max(current.getY(), 0.06D),
-                current.getZ() * 0.35D + direction.getZ() * definition.movementValue() * JETBOOTS_HORIZONTAL_MULTIPLIER
-        );
-        player.setVelocity(limitHorizontal(vector, JETBOOTS_MAX_HORIZONTAL_SPEED));
-        playJetBootsEffects(player);
+        player.setVelocity(behavior.jetBootsThrustVelocity(player, player.getVelocity(), toApi(definition)));
+        behavior.playJetBootsEffects(player, 0.0D);
     }
 
     private void tryUseJetBootsAssist(Player player, ItemStack boots, SfxRechargeableItemService.Definition definition, PlayerInput input) {
+        SfxTechnicalGadgetBehaviorProvider behavior = technicalGadgetBehavior();
         if (definition == null || !input.hasHorizontalMovement()) {
             return;
         }
-        if (!consumeEnergy(player, boots, definition, jetBootsUseCost(definition, JetBootsDriveMode.ASSIST))) {
+        if (behavior == null || !consumeEnergy(player, boots, definition, behavior.jetBootsUseCost(toApi(definition), SfxJetBootsDriveMode.ASSIST))) {
             return;
         }
         player.getInventory().setBoots(boots);
         Vector current = player.getVelocity();
-        double acceleration = jetBootsAssistAcceleration(player, definition);
-        Vector horizontal = addInputHorizontalBoostVector(player, input, current, acceleration, JETBOOTS_MAX_HORIZONTAL_SPEED);
+        double acceleration = behavior.jetBootsAssistAcceleration(player, toApi(definition));
+        Vector horizontal = addInputHorizontalBoostVector(player, input, current, acceleration, behavior.maxJetBootsHorizontalSpeed(toApi(definition)));
         player.setVelocity(new Vector(horizontal.getX(), current.getY(), horizontal.getZ()));
         if (shouldPlayPassiveEffect(false)) {
-            playJetBootsEffects(player, player.isOnGround() ? 0.30D : 0.0D);
+            behavior.playJetBootsEffects(player, player.isOnGround() ? 0.30D : 0.0D);
         }
     }
 
     private Vector tryApplyJetBootsHoverHorizontal(Player player, ItemStack boots, SfxRechargeableItemService.Definition definition, PlayerInput input, Vector currentHorizontal) {
+        SfxTechnicalGadgetBehaviorProvider behavior = technicalGadgetBehavior();
         if (definition == null || !input.hasHorizontalMovement()) {
             return addInputHorizontalVelocity(player, input, currentHorizontal, 0.0D);
         }
         JetBootsDriveMode mode = jetBootsMode(player);
-        if (!consumeEnergy(player, boots, definition, jetBootsUseCost(definition, mode))) {
+        if (behavior == null || !consumeEnergy(player, boots, definition, behavior.jetBootsUseCost(toApi(definition), toApi(mode)))) {
             return addInputHorizontalVelocity(player, input, currentHorizontal, 0.0D);
         }
         player.getInventory().setBoots(boots);
-        playJetBootsEffects(player);
+        behavior.playJetBootsEffects(player, 0.0D);
         double acceleration = mode == JetBootsDriveMode.THRUST
-                ? definition.movementValue() * JETBOOTS_HORIZONTAL_MULTIPLIER
-                : jetBootsAssistAcceleration(player, definition);
-        return addInputHorizontalBoostVector(player, input, currentHorizontal, acceleration, JETBOOTS_MAX_HORIZONTAL_SPEED);
+                ? behavior.jetBootsThrustHorizontalAcceleration(toApi(definition))
+                : behavior.jetBootsAssistAcceleration(player, toApi(definition));
+        return addInputHorizontalBoostVector(player, input, currentHorizontal, acceleration, behavior.maxJetBootsHorizontalSpeed(toApi(definition)));
     }
 
     private void tryUseJetBootsAirJump(Player player, ItemStack boots, SfxRechargeableItemService.Definition definition, boolean ignoreGroundJumpGrace, JetBootsDriveMode mode) {
-        int maxAirJumps = maxAirJumps(definition);
+        SfxTechnicalGadgetBehaviorProvider behavior = technicalGadgetBehavior();
+        if (behavior == null) {
+            return;
+        }
+        int maxAirJumps = behavior.maxAirJumps(toApi(definition));
         UUID id = player.getUniqueId();
         int used = usedAirJumps.getOrDefault(id, 0);
         if ((!ignoreGroundJumpGrace && airborneTicks.getOrDefault(id, 0) <= GROUND_JUMP_GRACE_TICKS) || used >= maxAirJumps) {
             return;
         }
-        if (!consumeEnergy(player, boots, definition, jetBootsUseCost(definition, mode) * 50.0D)) {
+        if (!consumeEnergy(player, boots, definition, behavior.jetBootsUseCost(toApi(definition), toApi(mode)) * 50.0D)) {
             return;
         }
         usedAirJumps.put(id, used + 1);
@@ -436,24 +433,9 @@ public final class SfxTechnicalGadgetService implements Listener {
         player.getInventory().setBoots(boots);
         player.setFallDistance(0.0F);
         Vector current = player.getVelocity();
-        player.setVelocity(new Vector(current.getX(), Math.max(0.38D, 0.42D + definition.movementValue()), current.getZ()));
-        playJetBootsAirJumpSound(player);
-        playJetBootsEffects(player);
-    }
-
-    private double jetBootsAssistAcceleration(Player player, SfxRechargeableItemService.Definition definition) {
-        double base = definition.movementValue() * JETBOOTS_ASSIST_HORIZONTAL_FACTOR;
-        if (!player.isOnGround()) {
-            return base;
-        }
-        return Math.max(base, Math.max(definition.movementValue() * JETBOOTS_ASSIST_GROUND_HORIZONTAL_FACTOR, JETBOOTS_ASSIST_GROUND_MIN_ACCELERATION));
-    }
-
-    private double jetBootsUseCost(SfxRechargeableItemService.Definition definition, JetBootsDriveMode mode) {
-        if (definition == null) {
-            return 0.0D;
-        }
-        return definition.useCost() * (mode == JetBootsDriveMode.THRUST ? 2.0D : 1.0D);
+        player.setVelocity(new Vector(current.getX(), behavior.airJumpVelocity(toApi(definition)), current.getZ()));
+        behavior.playJetBootsAirJumpSound(player);
+        behavior.playJetBootsEffects(player, 0.0D);
     }
 
     private JetBootsDriveMode jetBootsMode(Player player) {
@@ -467,7 +449,10 @@ public final class SfxTechnicalGadgetService implements Listener {
             return;
         }
         jetBootsTrailTicks.put(id, ticks - 1);
-        playJetBootsEffects(player);
+        SfxTechnicalGadgetBehaviorProvider behavior = technicalGadgetBehavior();
+        if (behavior != null) {
+            behavior.playJetBootsEffects(player, 0.0D);
+        }
     }
 
     private boolean consumeEnergy(Player holder, ItemStack stack, SfxRechargeableItemService.Definition definition, double amount) {
@@ -525,8 +510,13 @@ public final class SfxTechnicalGadgetService implements Listener {
         if (!isPassiveGadgetCheckTick(id) && attributeSnapshots.containsKey(id)) {
             return;
         }
+        SfxTechnicalGadgetBehaviorProvider behavior = technicalGadgetBehavior();
+        if (behavior == null) {
+            restoreAttributes(player);
+            return;
+        }
         applyAttribute(player, "GENERIC_JUMP_STRENGTH", "JUMP_STRENGTH", definition.movementValue(), AttributeKind.JUMP_STRENGTH);
-        applyAttribute(player, "GENERIC_SAFE_FALL_DISTANCE", "SAFE_FALL_DISTANCE", safeFallBonus(definition), AttributeKind.SAFE_FALL_DISTANCE);
+        applyAttribute(player, "GENERIC_SAFE_FALL_DISTANCE", "SAFE_FALL_DISTANCE", behavior.safeFallBonus(toApi(definition)), AttributeKind.SAFE_FALL_DISTANCE);
     }
 
     private void applyAttribute(Player player, String legacyName, String modernName, double bonus, AttributeKind kind) {
@@ -818,43 +808,38 @@ public final class SfxTechnicalGadgetService implements Listener {
         return maxScan + 1;
     }
 
-    private int maxAirJumps(SfxRechargeableItemService.Definition definition) {
-        int level = Math.max(1, definition.level());
-        if (level >= 7) {
-            return 3;
-        }
-        if (level >= 4) {
-            return 2;
-        }
-        return 1;
-    }
-
-    private double safeFallBonus(SfxRechargeableItemService.Definition definition) {
-        return switch (Math.max(1, definition.level())) {
-            case 1 -> 3.0D;
-            case 2 -> 5.0D;
-            case 3 -> 7.0D;
-            case 4 -> 10.0D;
-            case 5 -> 14.0D;
-            case 6 -> 20.0D;
-            default -> 32.0D;
-        };
-    }
-
-    private double fallDamageMultiplier(SfxRechargeableItemService.Definition definition) {
-        return switch (Math.max(1, definition.level())) {
-            case 1 -> 0.80D;
-            case 2 -> 0.70D;
-            case 3 -> 0.60D;
-            case 4 -> 0.50D;
-            case 5 -> 0.40D;
-            case 6 -> 0.30D;
-            default -> 0.20D;
-        };
-    }
-
     private SfxTechnicalGadgetRules technicalGadgetRules() {
         return SfxTechnicalGadgetBalance.rules(plugin);
+    }
+
+    private SfxTechnicalGadgetBehaviorProvider technicalGadgetBehavior() {
+        if (behaviors == null) {
+            return null;
+        }
+        List<SfxTechnicalGadgetBehaviorProvider> providers = behaviors.technicalGadgetBehaviorProviders();
+        return providers.isEmpty() ? null : providers.get(providers.size() - 1);
+    }
+
+    private SfxTechnicalGadgetItem toApi(SfxRechargeableItemService.Definition definition) {
+        return new SfxTechnicalGadgetItem(
+                definition.itemId(),
+                switch (definition.kind()) {
+                    case GENERIC -> SfxTechnicalGadgetItemKind.GENERIC;
+                    case JETPACK -> SfxTechnicalGadgetItemKind.JETPACK;
+                    case JETBOOTS -> SfxTechnicalGadgetItemKind.JETBOOTS;
+                    case FUEL_JETPACK -> SfxTechnicalGadgetItemKind.FUEL_JETPACK;
+                },
+                definition.level(),
+                definition.capacity(),
+                definition.movementValue(),
+                definition.useCost(),
+                definition.heightLimit(),
+                definition.hoverSupported(),
+                definition.fuelCapacity());
+    }
+
+    private SfxJetBootsDriveMode toApi(JetBootsDriveMode mode) {
+        return mode == JetBootsDriveMode.ASSIST ? SfxJetBootsDriveMode.ASSIST : SfxJetBootsDriveMode.THRUST;
     }
 
     private SfxRechargeableItemService.Definition jetpackDefinition(ItemStack chestplate) {
@@ -923,19 +908,6 @@ public final class SfxTechnicalGadgetService implements Listener {
         }
     }
 
-    private double hoverHoldVelocity(double currentY) {
-        if (currentY > 0.015D) {
-            return HOVER_UPWARD_DAMPING_Y;
-        }
-        if (currentY < -0.070D) {
-            return HOVER_DOWNWARD_RECOVERY_Y;
-        }
-        if (currentY < -0.025D) {
-            return HOVER_DOWNWARD_RECOVERY_Y * 0.5D;
-        }
-        return HOVER_HOLD_Y;
-    }
-
     private Vector addInputHorizontalVelocity(Player player, PlayerInput input, Vector current, double accelerationAmount) {
         Vector result = new Vector(current.getX(), 0.0D, current.getZ());
         if (accelerationAmount <= 0.0D) {
@@ -945,36 +917,6 @@ public final class SfxTechnicalGadgetService implements Listener {
         if (acceleration.lengthSquared() > 0.000001D) {
             acceleration.normalize().multiply(accelerationAmount);
             result.add(acceleration);
-        }
-        return result;
-    }
-
-    private Vector addInputHorizontalVelocitySoft(Player player, PlayerInput input, Vector current, double accelerationAmount, double maxHorizontalSpeed) {
-        Vector result = new Vector(current.getX(), 0.0D, current.getZ());
-        if (accelerationAmount <= 0.0D) {
-            return result;
-        }
-        Vector acceleration = inputDirection(player, input);
-        if (acceleration.lengthSquared() <= 0.000001D) {
-            return result;
-        }
-        acceleration.normalize();
-        double currentHorizontal = Math.sqrt(result.getX() * result.getX() + result.getZ() * result.getZ());
-        if (currentHorizontal >= maxHorizontalSpeed) {
-            Vector currentDirection = result.clone();
-            if (currentDirection.lengthSquared() > 0.000001D) {
-                currentDirection.normalize();
-                if (currentDirection.dot(acceleration) > 0.0D) {
-                    return result;
-                }
-            }
-        }
-        result.add(acceleration.multiply(accelerationAmount));
-        double newHorizontal = Math.sqrt(result.getX() * result.getX() + result.getZ() * result.getZ());
-        if (currentHorizontal <= maxHorizontalSpeed && newHorizontal > maxHorizontalSpeed) {
-            double scale = maxHorizontalSpeed / newHorizontal;
-            result.setX(result.getX() * scale);
-            result.setZ(result.getZ() * scale);
         }
         return result;
     }
@@ -1050,53 +992,6 @@ public final class SfxTechnicalGadgetService implements Listener {
         return vector;
     }
 
-    private Location jetpackParticleLocation(Player player) {
-        Location location = player.getLocation().clone().add(0.0D, 0.85D, 0.0D);
-        Vector backward = player.getEyeLocation().getDirection();
-        backward.setY(0.0D);
-        if (backward.lengthSquared() > 0.000001D) {
-            backward.normalize().multiply(-0.36D);
-            location.add(backward);
-        }
-        return location;
-    }
-
-    private Location jetBootsParticleLocation(Player player) {
-        return player.getLocation().clone().add(0.0D, 0.18D, 0.0D);
-    }
-
-    private void playJetpackEffects(Player player, SfxRechargeableItemService.Definition definition) {
-        if (definition != null && definition.kind() == SfxRechargeableItemService.RechargeableKind.FUEL_JETPACK) {
-            playFuelJetpackEffects(player);
-            return;
-        }
-        Location location = jetpackParticleLocation(player);
-        player.getWorld().spawnParticle(Particle.CLOUD, location, 6, 0.11D, 0.08D, 0.11D, 0.015D);
-        player.getWorld().playSound(location, Sound.ENTITY_TNT_PRIMED, SoundCategory.PLAYERS, 0.22F, 1.25F);
-    }
-
-    private void playFuelJetpackEffects(Player player) {
-        Location location = jetpackParticleLocation(player);
-        player.getWorld().spawnParticle(Particle.SMOKE, location, 8, 0.12D, 0.10D, 0.12D, 0.02D);
-        player.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.11F, 1.25F);
-    }
-
-    private void playJetBootsEffects(Player player) {
-        playJetBootsEffects(player, 0.0D);
-    }
-
-    private void playJetBootsEffects(Player player, double extraY) {
-        Location location = jetBootsParticleLocation(player).add(0.0D, extraY, 0.0D);
-        player.getWorld().spawnParticle(Particle.CLOUD, location, 4, 0.18D, 0.04D, 0.18D, 0.012D);
-        player.getWorld().playSound(location, Sound.ENTITY_TNT_PRIMED, SoundCategory.PLAYERS, 0.22F, 1.25F);
-    }
-
-    private void playJetBootsAirJumpSound(Player player) {
-        Location soundLocation = jetBootsParticleLocation(player);
-        player.getWorld().playSound(soundLocation, Sound.ENTITY_WITHER_SHOOT, SoundCategory.PLAYERS, AIR_JUMP_SOUND_VOLUME, AIR_JUMP_SOUND_PITCH);
-    }
-
-
     private void sendActionbar(Player player, String key) {
         player.sendActionBar(localization.component(key));
     }
@@ -1138,13 +1033,17 @@ public final class SfxTechnicalGadgetService implements Listener {
         if (jetBoots == null) {
             return;
         }
-        double safe = 3.0D + safeFallBonus(jetBoots);
+        SfxTechnicalGadgetBehaviorProvider behavior = technicalGadgetBehavior();
+        if (behavior == null) {
+            return;
+        }
+        double safe = 3.0D + behavior.safeFallBonus(toApi(jetBoots));
         if (player.getFallDistance() <= safe) {
             event.setCancelled(true);
             player.setFallDistance(0.0F);
             return;
         }
-        event.setDamage(event.getDamage() * fallDamageMultiplier(jetBoots));
+        event.setDamage(event.getDamage() * behavior.fallDamageMultiplier(toApi(jetBoots)));
     }
 
     @EventHandler
