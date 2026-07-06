@@ -4,6 +4,7 @@ import cc.theends6.sfx.api.behavior.SfxBehaviorRegistrar;
 import cc.theends6.sfx.api.behavior.SfxBehaviorRegistry;
 import cc.theends6.sfx.api.behavior.SfxAndroidWoodcutterPolicy;
 import cc.theends6.sfx.api.behavior.SfxAreaMachineRuleProvider;
+import cc.theends6.sfx.api.behavior.SfxAutoBrewerBehaviorProvider;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferPolicy;
 import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderKeyPolicy;
 import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelPolicy;
@@ -35,6 +36,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     private final List<SfxAreaMachineRuleProvider> areaMachineRuleProviders = new ArrayList<>();
     private final List<SfxUtilityRuleProvider> utilityRuleProviders = new ArrayList<>();
     private final List<SfxElectricSpecialProviderKeyPolicy> electricSpecialProviderKeyPolicies = new ArrayList<>();
+    private final List<SfxAutoBrewerBehaviorProvider> autoBrewerBehaviorProviders = new ArrayList<>();
     private final List<SfxLocalizedListPostProcessor> localizedListPostProcessors = new ArrayList<>();
 
     public synchronized void clear() {
@@ -51,6 +53,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         areaMachineRuleProviders.clear();
         utilityRuleProviders.clear();
         electricSpecialProviderKeyPolicies.clear();
+        autoBrewerBehaviorProviders.clear();
         localizedListPostProcessors.clear();
     }
 
@@ -215,6 +218,16 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     @Override
     public synchronized List<SfxElectricSpecialProviderKeyPolicy> electricSpecialProviderKeyPolicies() {
         return Collections.unmodifiableList(new ArrayList<>(electricSpecialProviderKeyPolicies));
+    }
+
+    @Override
+    public synchronized void registerAutoBrewerBehaviorProvider(SfxAutoBrewerBehaviorProvider provider) {
+        autoBrewerBehaviorProviders.add(Objects.requireNonNull(provider, "provider"));
+    }
+
+    @Override
+    public synchronized List<SfxAutoBrewerBehaviorProvider> autoBrewerBehaviorProviders() {
+        return Collections.unmodifiableList(new ArrayList<>(autoBrewerBehaviorProviders));
     }
 
     @Override
