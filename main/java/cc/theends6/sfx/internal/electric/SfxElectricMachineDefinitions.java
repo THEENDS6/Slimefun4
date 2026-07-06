@@ -51,7 +51,7 @@ final class SfxElectricMachineDefinitions {
         SfxElectricRecipeProvider oilPumpRecipes = SfxGpsElectricMachineProviders.geoExtractor(true);
         SfxElectricRecipeProvider classicAutoBrewerRecipes = new SfxAutoBrewerRecipeProvider();
         String autoBrewerProviderKey = resolveElectricProviderKey(plugin, "sf:auto_brewer", "sf:auto_brewer", "sf:auto_brewer");
-        boolean sfxAutoBrewer = "sfx:advanced_auto_brewer".equals(autoBrewerProviderKey);
+        boolean autoBrewerProviderOverridden = !"sf:auto_brewer".equals(autoBrewerProviderKey);
         SfxElectricRecipeProvider vanillaAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.vanilla(virtualContainers, items);
         SfxElectricRecipeProvider enhancedAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.enhanced(virtualContainers, items, List.copyOf(manualMachines.recipesFor("sf:enhanced_crafting_table")));
         SfxElectricRecipeProvider armorAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.armor(virtualContainers, items, List.copyOf(manualMachines.recipesFor("sf:armor_forge")));
@@ -95,12 +95,12 @@ final class SfxElectricMachineDefinitions {
             if (compiledEntryId.contains("#")) {
                 continue;
             }
-            if (!sfxAutoBrewer && "sf:auto_brewer".equals(compiledEntryId)) {
+            if (!autoBrewerProviderOverridden && "sf:auto_brewer".equals(compiledEntryId)) {
                 continue;
             }
             register(result, config, compiledEntryId, staticRecipes, specialProviders);
         }
-        if (!sfxAutoBrewer) {
+        if (!autoBrewerProviderOverridden) {
             register(result, config, "sf:auto_brewer", "sf:auto_brewer#legacy", staticRecipes, specialProviders);
         }
         return result;
