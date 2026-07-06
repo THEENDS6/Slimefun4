@@ -13,6 +13,8 @@ public interface SfxBehaviorRegistry {
 
     List<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies();
 
+    List<SfxGpsTransmitterStatusViewProvider> gpsTransmitterStatusViewProviders();
+
     List<SfxTechnicalGadgetRuleProvider> technicalGadgetRuleProviders();
 
     List<SfxTechnicalGadgetBehaviorProvider> technicalGadgetBehaviorProviders();

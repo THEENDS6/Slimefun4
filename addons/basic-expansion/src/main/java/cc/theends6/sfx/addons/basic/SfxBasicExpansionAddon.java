@@ -11,6 +11,7 @@ import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelContext;
 import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRuleContext;
 import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRules;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionDecision;
+import cc.theends6.sfx.api.behavior.SfxGpsTransmitterStatusView;
 import cc.theends6.sfx.api.behavior.SfxJetBootsDriveMode;
 import cc.theends6.sfx.api.behavior.SfxLocalizedListContext;
 import cc.theends6.sfx.api.behavior.SfxRadiationRuleContext;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
@@ -97,6 +99,8 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 advancedInputTransfer(context, transferContext, currentDecision));
         context.behaviors().registerGpsTransmitterInteractionPolicy((transmitterContext, currentDecision) ->
                 gpsTransmitterInteraction(context, currentDecision));
+        context.behaviors().registerGpsTransmitterStatusViewProvider((transmitterContext, currentView) ->
+                gpsTransmitterStatusView(context, transmitterContext, currentView));
         context.behaviors().registerTechnicalGadgetRuleProvider((ruleContext, currentRules) ->
                 technicalGadgetRules(context, ruleContext, currentRules));
         context.behaviors().registerTechnicalGadgetBehaviorProvider(new BasicTechnicalGadgetBehavior());
@@ -160,6 +164,53 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
             return currentDecision;
         }
         return SfxGpsTransmitterInteractionDecision.OPEN_STATUS_UI;
+    }
+
+    private static SfxGpsTransmitterStatusView gpsTransmitterStatusView(
+            SfxAddonContext context,
+            cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionContext transmitterContext,
+            SfxGpsTransmitterStatusView currentView
+    ) {
+        if (!context.api().features().enabled(GPS_TRANSMITTER_STATUS_UI)) {
+            return currentView;
+        }
+        return new SfxGpsTransmitterStatusView(
+                "gps.ui.transmitter.title",
+                "gps.ui.transmitter.background",
+                Material.GRAY_STAINED_GLASS_PANE,
+                13,
+                Material.LIME_STAINED_GLASS,
+                Material.RED_STAINED_GLASS,
+                "gps.ui.transmitter.status.name",
+                "gps.ui.transmitter.status.online",
+                "gps.ui.transmitter.status.offline",
+                List.of(
+                        new SfxGpsTransmitterStatusView.Line("gps.ui.transmitter.status.energy", Map.of(
+                                "stored", transmitterContext.storedEnergy(),
+                                "required", transmitterContext.requiredEnergy())),
+                        new SfxGpsTransmitterStatusView.Line("gps.ui.transmitter.status.strength", Map.of(
+                                "strength", transmitterContext.signalStrength())),
+                        new SfxGpsTransmitterStatusView.Line("gps.ui.transmitter.status.network", Map.of(
+                                "complexity", transmitterContext.networkComplexity()))
+                ),
+                15,
+                Material.COMPASS,
+                "gps.ui.transmitter.info.name",
+                List.of(
+                        new SfxGpsTransmitterStatusView.Line("gps.ui.transmitter.info.type", Map.of(
+                                "type", transmitterContext.transmitterName())),
+                        new SfxGpsTransmitterStatusView.Line("gps.ui.transmitter.info.owner", Map.of(
+                                "owner", transmitterContext.ownerName())),
+                        new SfxGpsTransmitterStatusView.Line("gps.ui.transmitter.info.owner-uuid", Map.of(
+                                "uuid", transmitterContext.ownerId() == null ? "-" : transmitterContext.ownerId().toString())),
+                        new SfxGpsTransmitterStatusView.Line("gps.ui.transmitter.info.location", Map.of(
+                                "world", transmitterContext.worldName(),
+                                "x", transmitterContext.blockX(),
+                                "y", transmitterContext.blockY(),
+                                "z", transmitterContext.blockZ())),
+                        new SfxGpsTransmitterStatusView.Line("gps.ui.transmitter.info.transmitters", Map.of(
+                                "count", transmitterContext.ownedTransmitterCount()))
+                ));
     }
 
     private static SfxTechnicalGadgetRules technicalGadgetRules(SfxAddonContext context, SfxTechnicalGadgetRuleContext ruleContext, SfxTechnicalGadgetRules currentRules) {

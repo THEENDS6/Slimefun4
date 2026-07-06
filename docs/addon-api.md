@@ -167,6 +167,8 @@ Rechargeable item providers may register new rechargeable items or override clas
 
 Technical gadget behavior providers own the active SFX jetpack and jetboots behavior: velocity calculation, hover movement, air jumps, fall-damage reduction, and particles/sounds. Core owns only input polling, player tick scheduling, energy/fuel storage, and state cleanup.
 
+GPS transmitter status view providers own the SFX transmitter status UI model: title, slots, materials, language keys, and placeholders. Core owns only opening the inventory and supplying transmitter telemetry.
+
 Electric special provider key policies may redirect a compiled `sf:special_provider` binding from a classic provider key to an addon provider key. Basic Expansion uses this for Auto Brewer, growth machines, Produce Collector, Auto Breeder, XP Collector, and Fluid Pump behavior without hard-coding those SFX branches in the core provider implementations.
 
 Localized list post-processors can adjust generated item lore and other language lists after the core language lookup is complete. The context exposes the requested language key plus raw text/list lookup helpers so addon-owned text stays in addon language files.

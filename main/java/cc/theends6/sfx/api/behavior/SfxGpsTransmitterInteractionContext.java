@@ -9,6 +9,12 @@ public record SfxGpsTransmitterInteractionContext(
         int requiredEnergy,
         int signalStrength,
         int networkComplexity,
-        int ownedTransmitterCount
+        int ownedTransmitterCount,
+        String transmitterName,
+        String ownerName,
+        String worldName,
+        int blockX,
+        int blockY,
+        int blockZ
 ) {
 }
