@@ -1,0 +1,27 @@
+
+recipes:
+  '@ot': content/recipes.yml
+  legacy:fuel_jetpack:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:fuel_jetpack
+    requires-feature: sfx:jetpacks_and_jetboots_rework
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 41
+    source: sfx-20260516u
+    runtime: true
+    runtime-machine-tags:
+    - enhanced-crafting
+    matrix:
+    - sf:steel_ingot
+    - empty
+    - sf:steel_ingot
+    - sf:steel_ingot
+    - sf:combustion_reactor
+    - sf:steel_ingot
+    - sf:steel_thruster
+    - sf:reinforced_plate
+    - sf:steel_thruster
+    outputs:
+    - sf:fuel_jetpack

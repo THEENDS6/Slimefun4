@@ -377,15 +377,6 @@ items:
   lore-key: items.sf.carbonado_jetpack.lore
   flags:
   - legacy-sf
-- id: sf:fuel_jetpack
-  category: sf:jetpacks
-  material: LEATHER_CHESTPLATE
-  name-key: items.sf.fuel_jetpack.name
-  priority: 42
-  colorRgb: 16755200
-  lore-key: items.sf.fuel_jetpack.lore
-  flags:
-  - legacy-sf
 - id: sf:armored_jetpack
   category: sf:jetpacks
   material: IRON_CHESTPLATE

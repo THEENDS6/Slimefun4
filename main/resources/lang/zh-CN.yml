@@ -419,18 +419,6 @@ items:
     - '&8⇨ &7悬停：&a双击空格'
     - ''
     - '&e按住空格&7推进'
-  sf.fuel_jetpack:
-    name: '&6燃油喷气背包'
-    lore:
-    - ''
-    - '&8⇨ &6⛽ &70 / 10000 燃油'
-    - '&8⇨ &7推力：&c0.18'
-    - '&8⇨ &7高度限制：&a无'
-    - '&8⇨ &7悬停：&a双击空格'
-    - '&8⇨ &7燃油消耗：&61/t'
-    - '&8⇨ &7燃油桶：&62500 燃油'
-    - ''
-    - '&e按住空格&7推进'
   sf.armored_jetpack:
     name: '&9装甲喷气背包'
     lore:
@@ -2203,13 +2191,6 @@ items:
     - '&a中型机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
     - '&8⇨ &e⚡ &712 J/t'
-  sf.auto_brewer_2:
-    name: '&6自动酿造机 &7(&eII&7)'
-    lore:
-    - ''
-    - '&6高级机器'
-    - '&8⇨ &b⚡ &7速度：&b5x'
-    - '&8⇨ &e⚡ &750 J/t'
   sf.book_binder:
     name: '&6附魔书装订机'
     lore:
@@ -2225,13 +2206,6 @@ items:
     - '&6普通发电机'
     - '&8⇨ &e⚡ &72560 J 储能'
     - '&8⇨ &e⚡ &78 J/t'
-  sf.bio_reactor_2:
-    name: '&2生物质发电机 &7(&eII&7)'
-    lore:
-    - ''
-    - '&6高级发电机'
-    - '&8⇨ &e⚡ &75120 J 储能'
-    - '&8⇨ &e⚡ &720 J/t'
   sf.multimeter:
     name: '&e万用表'
     lore:
@@ -2690,11 +2664,6 @@ items:
     lore:
     - ''
     - '&f运输输入管道'
-  sf.cargo_node_input_advanced:
-    name: '&6高级运输节点 &c(输入)'
-    lore:
-    - ''
-    - '&f高级运输输入管道'
   sf.cargo_node_output:
     name: '&7运输节点 &c(输出)'
     lore:
@@ -2720,7 +2689,6 @@ items:
     - ''
     - '&f这台机器可让你'
     - '&f收集附近动物和蜂箱的产物。'
-    - '&7SFX：支持剪刀、玻璃瓶和刷子。'
     - ''
     - '&6高级机器'
     - '&8⇨ &e⚡ &710240 J 储能'
@@ -3897,8 +3865,6 @@ categories:
     name: '&eAuto-Breeder'
   sf.auto_brewer:
     name: '&6Auto Brewer'
-  sf.auto_brewer_2:
-    name: '&6Auto Brewer &7(&eII&7)'
   sf.auto_disenchanter:
     name: '&5Auto Disenchanter'
   sf.auto_disenchanter_2:
@@ -4058,8 +4024,6 @@ guide:
         lore: <gray>点击切换这本书为作弊科技书。</gray>
     layout:
       name: <yellow>页面布局</yellow>
-      classic: <gray>当前为 SFX 布局，点击切换到经典布局。</gray>
-      sfx: <gray>当前为经典布局，点击切换到 SFX 扩展布局。</gray>
     history:
       name: <yellow>递归配方回溯</yellow>
       enabled: <green>已启用</green>
@@ -4081,7 +4045,6 @@ guide:
       lore: <gray>再次打开科技书时，回到你上次关闭时所在的页面。</gray>
     machine-ui:
       name: <yellow>机器界面扩展信息</yellow>
-      lore: <gray>在经典进度显示上额外展示 SFX 的配方、倍率和 tick 进度信息。</gray>
     machine-sound:
       name: <yellow>机器完成音效</yellow>
       lore: <gray>查看机器界面时，仅向你播放完成音效。</gray>
@@ -4091,7 +4054,6 @@ guide:
     current-layout:
       name: <aqua>当前布局</aqua>
       classic: <gray>经典布局已启用。</gray>
-      sfx: <gray>SFX 扩展布局已启用。</gray>
       mode: <gray>当前科技书模式：{mode}</gray>
     toggle:
       enabled: <green>已启用</green>
@@ -4201,7 +4163,7 @@ messages:
   fire-extinguish: '&b你身上的火焰已被熄灭。'
   no-pvp: '&c这个世界禁用了 PVP。'
   profile:
-    loading: <yellow>SFX 玩家数据仍在加载，请稍后再试。</yellow>
+    loading: <yellow>SFX player data is still loading. Try again in a moment.</yellow>
   not-researched-item: <red>你还没有解锁这个物品。</red>
   not-enough-xp: <red>你的经验等级不足，无法解锁这项研究。</red>
   machines:
@@ -4507,8 +4469,6 @@ energy:
       J</gray>
     classic-positive: <green>+{net} J ⚡</green>
     classic-negative: <red>{net} J ⚡</red>
-    sfx-positive: <green>+{net_text} J/t</green><newline>{flow_line}<newline>{storage_line}
-    sfx-negative: <red>-{net_text} J/t</red><newline>{flow_line}<newline>{storage_line}
   generator:
     fuel:
       oil: 石油桶
@@ -4535,7 +4495,6 @@ energy:
       name: <yellow>太阳能发电机</yellow>
     buffer: '<gray>储能: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
     production: '<gray>发电: </gray><green>{energy} J/t</green>'
-    tier2-fuel-consumption-lore: '&8⇨ &6🔥 &7燃料消耗：&b1.5x'
   charging-bench:
     name: <yellow>充电台</yellow>
     description: <gray>一次为一件可充电物品充电。</gray>
@@ -4758,7 +4717,6 @@ cargo:
     connector-detached: '&c运输连接器未接入网络。'
     recipe-selected: '&a已选择配方：&f{recipe}'
     recipe-not-found: '&c没有找到该物品对应的原版有键配方。'
-    hold-sfx-item: '&c请手持一个 SFX 物品来选择增强/护甲配方目标。'
   ui:
     title:
       input: '&c运输输入接口'

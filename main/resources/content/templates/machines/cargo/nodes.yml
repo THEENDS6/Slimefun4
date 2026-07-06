@@ -28,15 +28,6 @@ items:
     lore-key: items.sf.cargo_node_input.lore
     flags:
     - legacy-sf
-  sf:cargo_node_input_advanced:
-    category: sf:cargo
-    material: PLAYER_HEAD
-    name-key: items.sf.cargo_node_input_advanced.name
-    priority: 505
-    headTexture: 16d1c1a69a3de9fec962a77bf3b2e376dd25c873a3d8f14f1dd345dae4c4
-    lore-key: items.sf.cargo_node_input_advanced.lore
-    flags:
-    - legacy-sf
   sf:cargo_node_output:
     category: sf:cargo
     material: PLAYER_HEAD
@@ -88,13 +79,6 @@ machine-catalog:
     tick-interval: 1
     tags: [machine, cargo, cargo-node]
     profile: cargo_node
-  sf:cargo_node_input_advanced:
-    category: CARGO
-    display-name: sf:cargo_node_input_advanced
-    status-slot: -1
-    tick-interval: 1
-    tags: [machine, cargo, cargo-node]
-    profile: cargo_node
   sf:cargo_node_output:
     category: CARGO
     display-name: sf:cargo_node_output
@@ -128,9 +112,6 @@ cargo-components:
   sf:cargo_node_input:
     @io: true
     type: INPUT_NODE
-  sf:cargo_node_input_advanced:
-    @io: true
-    type: ADVANCED_INPUT_NODE
   sf:cargo_node_output:
     @io: true
     type: OUTPUT_NODE

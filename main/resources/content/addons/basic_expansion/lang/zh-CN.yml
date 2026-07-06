@@ -1,0 +1,61 @@
+items:
+  sf.fuel_jetpack:
+    name: '&6燃油喷气背包'
+    lore:
+    - ''
+    - '&8⇨ &6⛽ &70 / 10000 燃油'
+    - '&8⇨ &7推力：&c0.18'
+    - '&8⇨ &7高度限制：&a无'
+    - '&8⇨ &7悬停：&a双击空格'
+    - '&8⇨ &7燃油消耗：&61/t'
+    - '&8⇨ &7燃油桶：&62500 燃油'
+    - ''
+    - '&e按住空格&7推进'
+  sf.auto_brewer_2:
+    name: '&6自动酿造机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &b⚡ &7速度：&b5x'
+    - '&8⇨ &e⚡ &750 J/t'
+  sf.bio_reactor_2:
+    name: '&2生物质发电机 &7(&eII&7)'
+    lore:
+    - ''
+    - '&6高级发电机'
+    - '&8⇨ &e⚡ &75120 J 储能'
+    - '&8⇨ &e⚡ &720 J/t'
+    - '&8⇨ &6🔥 &7燃料消耗：&b1.5x'
+  sf.cargo_node_input_advanced:
+    name: '&6高级运输节点 &c(输入)'
+    lore:
+    - ''
+    - '&f高级运输输入管道'
+machines:
+  sf.auto_brewer_2:
+    name: '&6Auto Brewer &7(&eII&7)'
+
+sfx-basic-expansion:
+  lore:
+    produce-collector:
+    - '&7SFX: supports shears, bottles and brushes.'
+    crop-growth-accelerator:
+    - '&8* &7Radius: &b19x19'
+    - '&8* &7Speed: &a{attempts}/time'
+    - '&8* &7Interval: &b10 Seconds'
+    - '&8* &eEnergy: &740960 J Buffer'
+    - '&8* &eEnergy: &7{energy} J/t'
+    crop-growth-accelerator-2:
+    - '&8* &7Radius: &b19x19'
+    - '&8* &7Speed: &a{attempts}/time'
+    - '&8* &7Interval: &b10 Seconds'
+    - '&8* &eEnergy: &740960 J Buffer'
+    - '&8* &eEnergy: &7{energy} J/t'
+    tree-growth-accelerator:
+    - '&8* &7Radius: &b19x19'
+    - '&8* &7Speed: &a{attempts}/time'
+    - '&8* &7Interval: &b10 Seconds'
+    - '&8* &eEnergy: &740960 J Buffer'
+    - '&8* &eEnergy: &7{energy} J/t'
+    xp-collector-per-flask: '&8* &eEnergy: &7{cost} J/Knowledge Flask'
+    tier2-fuel-consumption: '&8* &7Fuel consumption: &b1.5x'

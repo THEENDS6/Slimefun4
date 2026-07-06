@@ -183,7 +183,6 @@ researches:
       - sf:steel_jetpack
       - sf:damascus_steel_jetpack
       - sf:reinforced_alloy_jetpack
-      - sf:fuel_jetpack
   - id: multitools
     order: 27
     name-key: researches.multitools.name
@@ -1292,7 +1291,6 @@ researches:
     cost: 30
     items:
       - sf:cargo_node_input
-      - sf:cargo_node_input_advanced
       - sf:cargo_node_output
   - id: electric_ingot_machines
     order: 207
@@ -1626,7 +1624,6 @@ researches:
     cost: 30
     items:
       - sf:auto_brewer
-      - sf:auto_brewer_2
   - id: enchantment_rune
     order: 259
     name-key: researches.enchantment_rune.name
@@ -1738,7 +1735,6 @@ researches:
     items:
       - sf:coal_generator_2
       - sf:lava_generator_2
-      - sf:bio_reactor_2
   - id: ingredients_and_cheese
     order: 276
     name-key: researches.ingredients_and_cheese.name

@@ -1,0 +1,9 @@
+researches:
+  - id: improved_generators_sfx_bio_reactor_2
+    order: 275
+    name-key: researches.improved_generators.name
+    cost: 24
+    items:
+      - sf:bio_reactor_2
+    item-feature-gates:
+      sf:bio_reactor_2: sfx:generator_balance

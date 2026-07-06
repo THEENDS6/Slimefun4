@@ -1,0 +1,9 @@
+researches:
+  - id: cargo_nodes_sfx_advanced_input
+    order: 206
+    name-key: researches.cargo_nodes.name
+    cost: 30
+    items:
+      - sf:cargo_node_input_advanced
+    item-feature-gates:
+      sf:cargo_node_input_advanced: sfx:advanced_input_interface

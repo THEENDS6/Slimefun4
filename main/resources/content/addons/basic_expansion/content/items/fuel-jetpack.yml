@@ -1,0 +1,13 @@
+items:
+- id: sf:fuel_jetpack
+  requires-feature: sfx:jetpacks_and_jetboots_rework
+  category: sf:jetpacks
+  guide-category: guide:sf:technical_gadgets
+  guide-order: 42
+  material: LEATHER_CHESTPLATE
+  name-key: items.sf.fuel_jetpack.name
+  priority: 42
+  colorRgb: 16755200
+  lore-key: items.sf.fuel_jetpack.lore
+  flags:
+  - legacy-sf

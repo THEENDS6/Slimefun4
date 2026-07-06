@@ -1,5 +1,10 @@
 language: 'zh-CN'
 
+addons:
+  basic-expansion:
+    
+    enabled: true
+
 content:
   compile-templates-on-startup: false
   sync-bundled-languages-on-startup: false
@@ -153,14 +158,15 @@ technical-gadgets:
     
     jetpack-interval-ticks: 3
     jetboots-interval-ticks: 10
-    
-    interval-ticks: 10
     charging-bench:
       energy-consumption-per-tick: 20
       energy-loss: 0.50
 
 
 cargo:
+  sfx-extensions:
+    advanced-input-interface:
+      enabled: true
   visualizer:
     enabled: false
     particle: dust
@@ -224,6 +230,10 @@ configurable-machines:
     allow-soul-soil: true
 
 energy:
+  
+  display-update-interval-ticks: 1
+  
+  update-only-on-change: true
   storage:
     
     
@@ -232,10 +242,6 @@ energy:
     mode: 'sfx'
     
     see-through: false
-    
-    update-interval-ticks: 1
-    
-    update-only-on-change: true
   bucket-fuels:
     instant-empty-bucket-return: true
   generator-balance:
@@ -260,6 +266,8 @@ tools:
 
 radiation:
   enabled: true
+  sfx-rework:
+    enabled: true
   
   scan-interval-ticks: 10
   
@@ -279,8 +287,6 @@ legacy:
     radius: 3.5
     
     base-interval-ticks: 10
-    
-    interval-ticks: 10
     
     idle-backoff-after-seconds: 30
     
