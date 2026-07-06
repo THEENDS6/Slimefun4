@@ -111,9 +111,11 @@ The goal is not to change Slimefun for the sake of novelty. The goal is to keep 
 
 ## API and additions
 
-The public API is not stable yet. The current `api` package exists to separate intended external access from internal implementation, but no long-term compatibility promise is made for this development line.
+The public API is not stable yet. The current `api` package separates intended external access from internal implementation, but no long-term compatibility promise is made for this development line.
 
-Addon/addition support should be designed after the core runtime is stable. Until then, code outside this repository should avoid depending on internal packages.
+SFX now has experimental addon support. Java addons implement `SfxAddon` and are loaded from `plugins/SlimeFunX/addons/*.jar`; configuration content and language files can be shipped inside addon jars or under the plugin data directory. Behavior should be registered through `SfxAddonContext.features()` and `SfxAddonContext.behaviors()`, not by depending on internal packages.
+
+See `docs/addon-api.md` for the current addon contract.
 
 ## Feedback
 
