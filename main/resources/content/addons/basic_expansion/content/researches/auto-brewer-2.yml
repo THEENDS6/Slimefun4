@@ -1,0 +1,9 @@
+researches:
+  - id: auto_brewer_sfx_auto_brewer_2
+    order: 258
+    name-key: researches.auto_brewer.name
+    cost: 30
+    items:
+      - sf:auto_brewer_2
+    item-feature-gates:
+      sf:auto_brewer_2: sfx:auto_brewer

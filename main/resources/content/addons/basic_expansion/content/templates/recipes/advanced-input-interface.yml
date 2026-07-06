@@ -1,0 +1,27 @@
+# SFX Basic Expansion: advanced cargo input recipe.
+recipes:
+  '@ot': content/recipes.yml
+  custom:cargo_node_input_advanced:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    requires-feature: sfx:advanced_input_interface
+    id: custom:cargo_node_input_advanced
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 2
+    source: slimefunx
+    runtime: true
+    runtime-machine-tags:
+    - enhanced-crafting
+    matrix:
+    - empty
+    - sf:cargo_motor
+    - empty
+    - sf:cobalt_ingot
+    - sf:cargo_node_input
+    - sf:cobalt_ingot
+    - empty
+    - sf:cargo_motor
+    - empty
+    outputs:
+    - sf:cargo_node_input_advanced

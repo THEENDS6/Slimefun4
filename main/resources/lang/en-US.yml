@@ -571,18 +571,6 @@ items:
     - '&8⇨ &7Hover: &aDouble-tap Space'
     - ''
     - '&eHold Space&7 to thrust'
-  sf.fuel_jetpack:
-    name: '&6Fuel Jetpack'
-    lore:
-    - ''
-    - '&8⇨ &6⛽&70 / 10000 Fuel'
-    - '&8⇨ &7Thrust: &c0.18'
-    - '&8⇨ &7Height Limit: &aNone'
-    - '&8⇨ &7Hover: &aDouble-tap Space'
-    - '&8⇨ &7Fuel Cost: &61/t'
-    - '&8⇨ &7Fuel Bucket: &62500 Fuel'
-    - ''
-    - '&eHold Space&7 to thrust'
   sf.armored_jetpack:
     name: '&9Armored Jetpack'
     lore:
@@ -2270,13 +2258,6 @@ items:
     - '&aMedium Machine'
     - '&8⇨ &b⚡&7Speed: &b1x'
     - '&8⇨ &e⚡&712 J/t'
-  sf.auto_brewer_2:
-    name: '&6Auto Brewer &7(&eII&7)'
-    lore:
-    - ''
-    - '&6Advanced Machine'
-    - '&8⇨ &b⚡&7Speed: &b5x'
-    - '&8⇨ &e⚡&750 J/t'
   sf.book_binder:
     name: '&6Book Binder'
     lore:
@@ -2292,13 +2273,6 @@ items:
     - '&6Average Generator'
     - '&8⇨ &e⚡ &72560 J Buffer'
     - '&8⇨ &e⚡ &78 J/t'
-  sf.bio_reactor_2:
-    name: '&2Bio Reactor &7- &eII'
-    lore:
-    - ''
-    - '&6Advanced Generator'
-    - '&8⇨ &e⚡ &75120 J Buffer'
-    - '&8⇨ &e⚡ &720 J/t'
   sf.multimeter:
     name: '&eMultimeter'
     lore:
@@ -2757,11 +2731,6 @@ items:
     lore:
     - ''
     - '&fCargo Input Pipe'
-  sf.cargo_node_input_advanced:
-    name: '&6Advanced Cargo Node &c(Input)'
-    lore:
-    - ''
-    - '&fAdvanced Cargo Input Pipe'
   sf.cargo_node_output:
     name: '&7Cargo Node &c(Output)'
     lore:
@@ -2787,7 +2756,6 @@ items:
     - ''
     - '&fThis machine allows you to'
     - '&fcollect produce from nearby animals and hives.'
-    - '&7SFX: supports shears, bottles and brushes.'
     - ''
     - '&6Advanced Machine'
     - '&8⇨ &e⚡&710240 J Buffer'
@@ -4092,8 +4060,6 @@ categories:
     name: '&eAuto-Breeder'
   sf.auto_brewer:
     name: '&6Auto Brewer'
-  sf.auto_brewer_2:
-    name: '&6Auto Brewer &7(&eII&7)'
   sf.auto_disenchanter:
     name: '&5Auto Disenchanter'
   sf.auto_disenchanter_2:
@@ -4569,7 +4535,6 @@ energy:
       name: <yellow>Solar Generator</yellow>
     buffer: '<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
     production: '<gray>Production: </gray><green>{energy} J/t</green>'
-    tier2-fuel-consumption-lore: '&8⇨ &6🔥 &7Fuel consumption: &b1.5x'
   charging-bench:
     name: <yellow>Charging Bench</yellow>
     description: <gray>Charges one rechargeable item at a time.</gray>

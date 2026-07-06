@@ -1,0 +1,9 @@
+researches:
+  - id: jetpacks_sfx_fuel_jetpack
+    order: 26
+    name-key: researches.jetpacks.name
+    cost: 22
+    items:
+      - sf:fuel_jetpack
+    item-feature-gates:
+      sf:fuel_jetpack: sfx:jetpacks_and_jetboots_rework

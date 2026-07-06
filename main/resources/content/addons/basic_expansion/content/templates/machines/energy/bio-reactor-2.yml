@@ -1,0 +1,39 @@
+# SFX Basic Expansion: Bio Reactor II item and machine catalog entry.
+items:
+  @ot: content/items.yml
+  sf:bio_reactor_2:
+    requires-feature: sfx:generator_balance
+    category: sf:electricity
+    guide-category: guide:sf:electricity
+    guide-order: 420
+    guide-fuel-profile: bio-reactor
+    material: LIME_TERRACOTTA
+    name-key: items.sf.bio_reactor_2.name
+    priority: 363
+    lore-key: items.sf.bio_reactor_2.lore
+    flags:
+    - legacy-sf
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sf:bio_reactor_2:
+    requires-feature: sfx:generator_balance
+    category: ENERGY
+    display-name: sf:bio_reactor_2
+    status-slot: -1
+    tick-interval: 1
+    tags:
+    - machine
+    - energy
+    - energy-node
+    profile: energy_node
+
+components:
+  @ot: content/machines/energy-components.yml
+  "sf:bio_reactor_2":
+    @cf: components.sf:bio_reactor
+    requires-feature: sfx:generator_balance
+    @d:
+      capacity: 5120
+      generation: 20
+      burn-rate: 15

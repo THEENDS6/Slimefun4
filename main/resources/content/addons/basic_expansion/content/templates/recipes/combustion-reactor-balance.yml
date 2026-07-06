@@ -1,0 +1,27 @@
+# SFX Basic Expansion: balanced combustion reactor recipe.
+recipes:
+  '@ot': content/recipes.yml
+  legacy:combustion_reactor:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:combustion_reactor
+    requires-feature: sfx:generator_balance
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 63
+    source: sfx-balance
+    runtime: true
+    runtime-machine-tags:
+    - enhanced-crafting
+    matrix:
+    - empty
+    - sf:steel_ingot
+    - empty
+    - sf:steel_ingot
+    - sf:coal_generator
+    - sf:steel_ingot
+    - sf:heating_coil
+    - sf:steel_ingot
+    - sf:heating_coil
+    outputs:
+    - sf:combustion_reactor

@@ -23,29 +23,6 @@ recipes:
     - empty
     outputs:
     - sf:cargo_node_input*2
-  custom:cargo_node_input_advanced:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: custom:cargo_node_input_advanced
-    recipe-type: sf:enhanced_crafting_table
-    operation: shaped
-    guide-order: 2
-    source: slimefunx
-    runtime: true
-    runtime-machine-tags:
-    - enhanced-crafting
-    matrix:
-    - empty
-    - sf:cargo_motor
-    - empty
-    - sf:cobalt_ingot
-    - sf:cargo_node_input
-    - sf:cobalt_ingot
-    - empty
-    - sf:cargo_motor
-    - empty
-    outputs:
-    - sf:cargo_node_input_advanced
   custom:cargo_node_output:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -368,29 +345,6 @@ recipes:
     - sf:corinthian_bronze_ingot
     outputs:
     - sf:auto_brewer
-  legacy:auto_brewer_2:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:auto_brewer_2
-    recipe-type: sf:enhanced_crafting_table
-    operation: shaped
-    guide-order: 16
-    source: sfx
-    runtime: true
-    runtime-machine-tags:
-    - enhanced-crafting
-    matrix:
-    - sf:reinforced_plate
-    - sf:electric_motor
-    - sf:reinforced_plate
-    - sf:hardened_glass
-    - sf:auto_brewer
-    - sf:hardened_glass
-    - sf:cooling_unit
-    - sf:blistering_ingot_3
-    - sf:cooling_unit
-    outputs:
-    - sf:auto_brewer_2
   legacy:auto_disenchanter:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -690,30 +644,6 @@ recipes:
     - empty
     outputs:
     - sf:bio_reactor
-  sfx:bio_reactor_2:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: sfx:bio_reactor_2
-    requires-sfx-generator-balance: true
-    recipe-type: sf:enhanced_crafting_table
-    operation: shaped
-    guide-order: 28
-    source: sfx-balance
-    runtime: true
-    runtime-machine-tags:
-    - enhanced-crafting
-    matrix:
-    - sf:heating_coil
-    - sf:composter
-    - sf:heating_coil
-    - sf:gilded_iron
-    - sf:bio_reactor
-    - sf:gilded_iron
-    - sf:gilded_iron
-    - sf:electric_motor
-    - sf:gilded_iron
-    outputs:
-    - sf:bio_reactor_2
   legacy:block_placer:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -990,29 +920,6 @@ recipes:
     - sf:steel_thruster
     outputs:
     - sf:carbonado_jetpack
-  legacy:fuel_jetpack:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:fuel_jetpack
-    recipe-type: sf:enhanced_crafting_table
-    operation: shaped
-    guide-order: 41
-    source: sfx-20260516u
-    runtime: true
-    runtime-machine-tags:
-    - enhanced-crafting
-    matrix:
-    - sf:steel_ingot
-    - empty
-    - sf:steel_ingot
-    - sf:steel_ingot
-    - sf:combustion_reactor
-    - sf:steel_ingot
-    - sf:steel_thruster
-    - sf:reinforced_plate
-    - sf:steel_thruster
-    outputs:
-    - sf:fuel_jetpack
   legacy:carbonado_multi_tool:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -1519,35 +1426,11 @@ recipes:
     - empty
     outputs:
     - sf:cobalt_pickaxe
-  legacy:combustion_reactor:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:combustion_reactor
-    requires-sfx-generator-balance: true
-    recipe-type: sf:enhanced_crafting_table
-    operation: shaped
-    guide-order: 63
-    source: sfx-balance
-    runtime: true
-    runtime-machine-tags:
-    - enhanced-crafting
-    matrix:
-    - empty
-    - sf:steel_ingot
-    - empty
-    - sf:steel_ingot
-    - sf:coal_generator
-    - sf:steel_ingot
-    - sf:heating_coil
-    - sf:steel_ingot
-    - sf:heating_coil
-    outputs:
-    - sf:combustion_reactor
   legacy:combustion_reactor_classic:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:combustion_reactor_classic
-    requires-classic-generator-balance: true
+    excludes-feature: sfx:generator_balance
     recipe-type: sf:enhanced_crafting_table
     operation: shaped
     guide-order: 63

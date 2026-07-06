@@ -1,0 +1,61 @@
+items:
+  sf.fuel_jetpack:
+    name: '&6Fuel Jetpack'
+    lore:
+    - ''
+    - '&8⇨ &6⛽&70 / 10000 Fuel'
+    - '&8⇨ &7Thrust: &c0.18'
+    - '&8⇨ &7Height Limit: &aNone'
+    - '&8⇨ &7Hover: &aDouble-tap Space'
+    - '&8⇨ &7Fuel Cost: &61/t'
+    - '&8⇨ &7Fuel Bucket: &62500 Fuel'
+    - ''
+    - '&eHold Space&7 to thrust'
+  sf.auto_brewer_2:
+    name: '&6Auto Brewer &7(&eII&7)'
+    lore:
+    - ''
+    - '&6Advanced Machine'
+    - '&8⇨ &b⚡&7Speed: &b5x'
+    - '&8⇨ &e⚡&750 J/t'
+  sf.bio_reactor_2:
+    name: '&2Bio Reactor &7- &eII'
+    lore:
+    - ''
+    - '&6Advanced Generator'
+    - '&8⇨ &e⚡ &75120 J Buffer'
+    - '&8⇨ &e⚡ &720 J/t'
+    - '&8⇨ &6🔥 &7Fuel consumption: &b1.5x'
+  sf.cargo_node_input_advanced:
+    name: '&6Advanced Cargo Node &c(Input)'
+    lore:
+    - ''
+    - '&fAdvanced Cargo Input Pipe'
+machines:
+  sf.auto_brewer_2:
+    name: '&6Auto Brewer &7(&eII&7)'
+
+sfx-basic-expansion:
+  lore:
+    produce-collector:
+    - '&7SFX: supports shears, bottles and brushes.'
+    crop-growth-accelerator:
+    - '&8* &7Radius: &b19x19'
+    - '&8* &7Speed: &a{attempts}/time'
+    - '&8* &7Interval: &b10 Seconds'
+    - '&8* &eEnergy: &740960 J Buffer'
+    - '&8* &eEnergy: &7{energy} J/t'
+    crop-growth-accelerator-2:
+    - '&8* &7Radius: &b19x19'
+    - '&8* &7Speed: &a{attempts}/time'
+    - '&8* &7Interval: &b10 Seconds'
+    - '&8* &eEnergy: &740960 J Buffer'
+    - '&8* &eEnergy: &7{energy} J/t'
+    tree-growth-accelerator:
+    - '&8* &7Radius: &b19x19'
+    - '&8* &7Speed: &a{attempts}/time'
+    - '&8* &7Interval: &b10 Seconds'
+    - '&8* &eEnergy: &740960 J Buffer'
+    - '&8* &eEnergy: &7{energy} J/t'
+    xp-collector-per-flask: '&8* &eEnergy: &7{cost} J/Knowledge Flask'
+    tier2-fuel-consumption: '&8* &7Fuel consumption: &b1.5x'

@@ -1,5 +1,10 @@
 language: 'zh-CN'
 
+addons:
+  basic-expansion:
+    # Default SFX expansion addon. Disabling this keeps the core runtime and classic SF content only.
+    enabled: true
+
 content:
   compile-templates-on-startup: false
   sync-bundled-languages-on-startup: false
@@ -153,14 +158,15 @@ technical-gadgets:
     # Classic Slimefun-style pulse intervals. SF4 schedules Jetpack every 3 ticks and JetBoots every 2 ticks.
     jetpack-interval-ticks: 3
     jetboots-interval-ticks: 10
-    # Backwards-compatible fallback if the specific values above are removed.
-    interval-ticks: 10
     charging-bench:
       energy-consumption-per-tick: 20
       energy-loss: 0.50
 
 
 cargo:
+  sfx-extensions:
+    advanced-input-interface:
+      enabled: true
   visualizer:
     enabled: false
     particle: dust
@@ -224,6 +230,10 @@ configurable-machines:
     allow-soul-soil: true
 
 energy:
+  # Check every tick by default; update-only-on-change prevents redundant display entity writes.
+  display-update-interval-ticks: 1
+  # Change means the final rendered display content changed, not merely raw energy numbers.
+  update-only-on-change: true
   storage:
     # Hidden grid storage buffer. The grid can internally store this percentage above the visible capacity.
     # UI, multimeter and capacitor appearances still display the public capacity only.
@@ -232,10 +242,6 @@ energy:
     mode: 'sfx'
     # TextDisplay see-through can cause visual artifacts behind skulls/water; keep disabled by default.
     see-through: false
-    # Check every tick by default; update-only-on-change prevents redundant display entity writes.
-    update-interval-ticks: 1
-    # Change means the final rendered display content changed, not merely raw energy numbers.
-    update-only-on-change: true
   bucket-fuels:
     instant-empty-bucket-return: true
   generator-balance:
@@ -260,6 +266,8 @@ tools:
 
 radiation:
   enabled: true
+  sfx-rework:
+    enabled: true
   # Radiation inventory exposure is calculated twice per second.
   scan-interval-ticks: 10
   # If the player carries no radioactive items, exposure decays by this amount per scan.
@@ -279,8 +287,6 @@ legacy:
     radius: 3.5
     # Classic visible cadence: active hoppers scan every 10 ticks.
     base-interval-ticks: 10
-    # Backwards-compatible alias; ignored when base-interval-ticks is present.
-    interval-ticks: 10
     # If a hopper has not moved items for this long, SFX gradually skips actual scans.
     idle-backoff-after-seconds: 30
     # Idle scan interval cap = base-interval-ticks * max-idle-multiplier.
