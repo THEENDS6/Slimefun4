@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.technical;
 
+import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRules;
+import cc.theends6.sfx.api.behavior.SfxBehaviorRegistry;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -64,7 +66,6 @@ public final class SfxTechnicalGadgetService implements Listener {
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxRechargeableItemService rechargeableItems;
-    private final boolean extensionsEnabled;
     private final Map<UUID, Boolean> hoverEnabled = new ConcurrentHashMap<>();
     private final Map<UUID, Boolean> previousJumpDown = new ConcurrentHashMap<>();
     private final Map<UUID, Boolean> previousShiftDown = new ConcurrentHashMap<>();
@@ -81,16 +82,19 @@ public final class SfxTechnicalGadgetService implements Listener {
     private volatile long tickCounter;
 
     public SfxTechnicalGadgetService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items) {
-        this(plugin, runtime, items, new SfxLocalization(plugin));
+        this(plugin, runtime, items, new SfxLocalization(plugin), null);
     }
 
     public SfxTechnicalGadgetService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization) {
+        this(plugin, runtime, items, localization, null);
+    }
+
+    public SfxTechnicalGadgetService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBehaviorRegistry behaviors) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
-        this.rechargeableItems = new SfxRechargeableItemService(plugin, items);
-        this.extensionsEnabled = plugin.getConfig().getBoolean("technical-gadgets.sfx-extensions.jetpacks-and-jetboots.enabled", true);
+        this.rechargeableItems = new SfxRechargeableItemService(plugin, items, behaviors);
         this.tickCounter = 0L;
         this.running = false;
     }
@@ -185,6 +189,10 @@ public final class SfxTechnicalGadgetService implements Listener {
         ItemStack boots = player.getInventory().getBoots();
         SfxRechargeableItemService.Definition jetpack = jetpackDefinition(chestplate);
         SfxRechargeableItemService.Definition jetBoots = jetBootsDefinition(boots);
+        if (!technicalGadgetRules().jetpackReworkEnabled()) {
+            clearRuntimeState(player);
+            return;
+        }
         boolean hasJetpack = jetpack != null;
         boolean hasJetBoots = jetBoots != null;
         if (!hasJetpack && !hasJetBoots) {
@@ -725,7 +733,7 @@ public final class SfxTechnicalGadgetService implements Listener {
 
     private void tickSfxFlightPermission(Player player, boolean hasJetpack, SfxRechargeableItemService.Definition jetBoots) {
         UUID id = player.getUniqueId();
-        boolean active = extensionsEnabled && isManagedFlightGameMode(player.getGameMode()) && (hasJetpack || jetBoots != null);
+        boolean active = technicalGadgetRules().jetpackReworkEnabled() && isManagedFlightGameMode(player.getGameMode()) && (hasJetpack || jetBoots != null);
         if (!active) {
             restoreFlight(player);
             return;
@@ -843,6 +851,10 @@ public final class SfxTechnicalGadgetService implements Listener {
             case 6 -> 0.30D;
             default -> 0.20D;
         };
+    }
+
+    private SfxTechnicalGadgetRules technicalGadgetRules() {
+        return SfxTechnicalGadgetBalance.rules(plugin);
     }
 
     private SfxRechargeableItemService.Definition jetpackDefinition(ItemStack chestplate) {
@@ -1099,6 +1111,9 @@ public final class SfxTechnicalGadgetService implements Listener {
         ItemStack boots = player.getInventory().getBoots();
         SfxRechargeableItemService.Definition jetpack = jetpackDefinition(chestplate);
         SfxRechargeableItemService.Definition jetBoots = jetBootsDefinition(boots);
+        if (!technicalGadgetRules().jetpackReworkEnabled()) {
+            return;
+        }
         if (jetpack == null && jetBoots == null) {
             return;
         }

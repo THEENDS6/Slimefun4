@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal;
 
 import cc.theends6.sfx.api.SfxApi;
+import cc.theends6.sfx.api.behavior.SfxBehaviorRegistry;
 import cc.theends6.sfx.api.guide.SfxGuide;
 import cc.theends6.sfx.api.item.SfxItemRegistry;
 import cc.theends6.sfx.api.item.SfxItems;
@@ -8,6 +9,8 @@ import cc.theends6.sfx.api.machine.SfxManualMachineRegistry;
 import cc.theends6.sfx.api.machine.SfxMachineRuntime;
 import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
+import cc.theends6.sfx.api.feature.SfxFeatureRegistry;
+import cc.theends6.sfx.internal.behavior.DefaultSfxBehaviorRegistry;
 import cc.theends6.sfx.internal.guide.DefaultSfxGuide;
 import cc.theends6.sfx.internal.guide.PermissionGuideAccessPolicy;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
@@ -20,6 +23,7 @@ import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.runtime.PaperSfxRuntime;
 import cc.theends6.sfx.internal.util.SfxLocalization;
+import cc.theends6.sfx.internal.feature.DefaultSfxFeatureRegistry;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxApiImpl implements SfxApi {
@@ -28,6 +32,8 @@ public final class SfxApiImpl implements SfxApi {
     private final DefaultSfxItems items;
     private final DefaultSfxMenus menus;
     private final DefaultSfxGuide guide;
+    private final SfxFeatureRegistry features;
+    private final SfxBehaviorRegistry behaviors;
     private final DefaultManualMachineRegistry manualMachines;
     private final DefaultSfxMachineRuntimeApi machineRuntime;
 
@@ -37,6 +43,8 @@ public final class SfxApiImpl implements SfxApi {
             DefaultSfxItems items,
             DefaultSfxMenus menus,
             DefaultSfxGuide guide,
+            SfxFeatureRegistry features,
+            SfxBehaviorRegistry behaviors,
             DefaultManualMachineRegistry manualMachines,
             DefaultSfxMachineRuntimeApi machineRuntime
     ) {
@@ -45,18 +53,20 @@ public final class SfxApiImpl implements SfxApi {
         this.items = items;
         this.menus = menus;
         this.guide = guide;
+        this.features = features;
+        this.behaviors = behaviors;
         this.manualMachines = manualMachines;
         this.machineRuntime = machineRuntime;
     }
 
-    public static SfxApiImpl bootstrap(JavaPlugin plugin, SfxLocalization localization, SfxPlayerDataService profiles, SfxResearchService researches) {
+    public static SfxApiImpl bootstrap(JavaPlugin plugin, SfxLocalization localization, SfxPlayerDataService profiles, SfxResearchService researches, DefaultSfxFeatureRegistry features, DefaultSfxBehaviorRegistry behaviors) {
         PaperSfxRuntime runtime = new PaperSfxRuntime(plugin);
         DefaultSfxItemRegistry itemRegistry = new DefaultSfxItemRegistry();
         DefaultManualMachineRegistry manualMachines = new DefaultManualMachineRegistry();
         DefaultSfxItems items = new DefaultSfxItems(plugin, itemRegistry, localization);
         DefaultSfxMenus menus = new DefaultSfxMenus(runtime);
         DefaultSfxGuide guide = new DefaultSfxGuide(plugin, runtime, itemRegistry, items, menus, new PermissionGuideAccessPolicy(), manualMachines, localization, profiles, researches);
-        return new SfxApiImpl(runtime, itemRegistry, items, menus, guide, manualMachines, new DefaultSfxMachineRuntimeApi());
+        return new SfxApiImpl(runtime, itemRegistry, items, menus, guide, features, behaviors, manualMachines, new DefaultSfxMachineRuntimeApi());
     }
 
     @Override
@@ -82,6 +92,16 @@ public final class SfxApiImpl implements SfxApi {
     @Override
     public SfxGuide guide() {
         return guide;
+    }
+
+    @Override
+    public SfxFeatureRegistry features() {
+        return features;
+    }
+
+    @Override
+    public SfxBehaviorRegistry behaviors() {
+        return behaviors;
     }
 
     @Override

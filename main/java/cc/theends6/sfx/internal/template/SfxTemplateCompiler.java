@@ -1129,7 +1129,7 @@ public final class SfxTemplateCompiler {
                 continue;
             }
             SfxMachineDefinition definition = compileMachineCatalogDefinition(id, section);
-            machines.put(id, serializeMachineCatalogDefinition(definition));
+            machines.put(id, serializeMachineCatalogDefinition(definition, section.get("requires-feature")));
         }
         Map<String, Object> wrapped = new LinkedHashMap<>();
         wrapped.put("machines", machines);
@@ -1186,7 +1186,7 @@ public final class SfxTemplateCompiler {
             String source = sourceOf("machine-catalog." + id);
             machinesBySource
                     .computeIfAbsent(source == null ? "" : source, ignored -> new LinkedHashMap<>())
-                    .put(id, serializeMachineCatalogDefinition(compileMachineCatalogDefinition(id, yaml.getConfigurationSection("entry"))));
+                    .put(id, serializeMachineCatalogDefinition(compileMachineCatalogDefinition(id, yaml.getConfigurationSection("entry")), rawMachine.get("requires-feature")));
         }
         List<OutputNode> outputs = new ArrayList<>();
         for (Map.Entry<String, Map<String, Object>> entry : machinesBySource.entrySet()) {
@@ -1235,14 +1235,37 @@ public final class SfxTemplateCompiler {
     private List<ContentPassThroughSource> contentPassThroughSources() {
         Path machines = sourceRoot.resolveSibling("machines");
         Path contentRoot = sourceRoot.getParent();
-        return List.of(
+        List<ContentPassThroughSource> sources = new ArrayList<>(List.of(
                 new ContentPassThroughSource(contentRoot.resolve("items.yml"), "content/items.yml", "items.yml"),
-                new ContentPassThroughSource(contentRoot.resolve("items").resolve("10-legacy-categories.yml"), "content/items.yml", "10-legacy-categories.yml"),
-                new ContentPassThroughSource(contentRoot.resolve("items").resolve("20-legacy-items.yml"), "content/items.yml", "20-legacy-items.yml"),
-                new ContentPassThroughSource(contentRoot.resolve("researches").resolve("10-legacy-slimefun.yml"), "content/researches.yml", "10-legacy-slimefun.yml"),
                 new ContentPassThroughSource(contentRoot.resolve("legacy-item-behavior.yml"), "content/legacy-item-behavior.yml", "legacy-item-behavior.yml"),
                 new ContentPassThroughSource(machines.resolve("manual-machines.yml"), "content/machines/manual-machines.yml", "manual-machines.yml")
-        );
+        ));
+        Path items = contentRoot.resolve("items");
+        if (Files.isDirectory(items)) {
+            try {
+                for (Path path : listYamlFiles(items)) {
+                    sources.add(new ContentPassThroughSource(path, "content/items.yml", items.relativize(path).toString().replace('\\', '/')));
+                }
+            } catch (IOException ex) {
+                throw new SfxTemplateCompileException("Cannot list item content sources: " + ex.getMessage(), ex);
+            }
+        } else {
+            sources.add(new ContentPassThroughSource(items.resolve("10-legacy-categories.yml"), "content/items.yml", "10-legacy-categories.yml"));
+            sources.add(new ContentPassThroughSource(items.resolve("20-legacy-items.yml"), "content/items.yml", "20-legacy-items.yml"));
+        }
+        Path researches = contentRoot.resolve("researches");
+        if (Files.isDirectory(researches)) {
+            try {
+                for (Path path : listYamlFiles(researches)) {
+                    sources.add(new ContentPassThroughSource(path, "content/researches.yml", researches.relativize(path).toString().replace('\\', '/')));
+                }
+            } catch (IOException ex) {
+                throw new SfxTemplateCompileException("Cannot list research content sources: " + ex.getMessage(), ex);
+            }
+        } else {
+            sources.add(new ContentPassThroughSource(researches.resolve("10-legacy-slimefun.yml"), "content/researches.yml", "10-legacy-slimefun.yml"));
+        }
+        return sources;
     }
 
     private OutputNode compileYamlPassThroughOutput(ContentPassThroughSource source) throws IOException {
@@ -1495,7 +1518,14 @@ public final class SfxTemplateCompiler {
     }
 
     private Map<String, Object> serializeMachineCatalogDefinition(SfxMachineDefinition definition) {
+        return serializeMachineCatalogDefinition(definition, null);
+    }
+
+    private Map<String, Object> serializeMachineCatalogDefinition(SfxMachineDefinition definition, Object requiredFeature) {
         Map<String, Object> result = new LinkedHashMap<>();
+        if (requiredFeature != null) {
+            result.put("requires-feature", deepCopyValue(requiredFeature));
+        }
         result.put("category", definition.category().name());
         result.put("display-name", definition.displayName());
         result.put("input-slots", new ArrayList<>(definition.inputSlots()));

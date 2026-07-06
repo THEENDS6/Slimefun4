@@ -1,5 +1,9 @@
 package cc.theends6.sfx.internal.technical;
 
+import cc.theends6.sfx.api.behavior.SfxBehaviorRegistry;
+import cc.theends6.sfx.api.behavior.SfxRechargeableItemDefinition;
+import cc.theends6.sfx.api.behavior.SfxRechargeableItemKind;
+import cc.theends6.sfx.api.behavior.SfxRechargeableItemProvider;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.util.Text;
@@ -27,15 +31,18 @@ public final class SfxRechargeableItemService {
     private final NamespacedKey fuelKey;
     private final Map<String, Definition> definitions = new LinkedHashMap<>();
     private final double rechargeableMultiplier;
-    private final boolean sfxExtensionBalance;
 
     public SfxRechargeableItemService(JavaPlugin plugin, SfxItems items) {
+        this(plugin, items, null);
+    }
+
+    public SfxRechargeableItemService(JavaPlugin plugin, SfxItems items, SfxBehaviorRegistry behaviors) {
         this.items = items;
         this.chargeKey = new NamespacedKey(plugin, "item_charge");
         this.fuelKey = new NamespacedKey(plugin, "item_fuel");
-        this.rechargeableMultiplier = rechargeableMultiplier(plugin);
-        this.sfxExtensionBalance = plugin.getConfig().getBoolean("technical-gadgets.sfx-extensions.jetpacks-and-jetboots.enabled", true);
+        this.rechargeableMultiplier = SfxTechnicalGadgetBalance.rules(plugin).rechargeableMultiplier();
         registerDefaults();
+        registerAddonDefinitions(behaviors);
     }
 
     public Optional<Definition> definition(ItemStack stack) {
@@ -232,11 +239,7 @@ public final class SfxRechargeableItemService {
     }
 
     private void registerDefaults() {
-        if (sfxExtensionBalance) {
-            registerSfxJetpacksAndBoots();
-        } else {
-            registerClassicJetpacksAndBoots();
-        }
+        registerClassicJetpacksAndBoots();
 
         generic("sf:duralumin_multi_tool", 20.0D);
         generic("sf:solder_multi_tool", 30.0D);
@@ -245,24 +248,6 @@ public final class SfxRechargeableItemService {
         generic("sf:damascus_steel_multi_tool", 60.0D);
         generic("sf:reinforced_alloy_multi_tool", 75.0D);
         generic("sf:carbonado_multi_tool", 100.0D);
-    }
-
-    private void registerSfxJetpacksAndBoots() {
-        registerJetpackAndBoots("sf:duralumin_jetpack", "sf:duralumin_jetboots", 1, 2000.0D, 0.10D, 1.0D, 10);
-        registerJetpackAndBoots("sf:solder_jetpack", "sf:solder_jetboots", 2, 4000.0D, 0.12D, 1.4D, 15);
-        registerJetpackAndBoots("sf:billon_jetpack", "sf:billon_jetboots", 3, 6000.0D, 0.14D, 1.6D, 20);
-        registerJetpackAndBoots("sf:steel_jetpack", "sf:steel_jetboots", 4, 10000.0D, 0.16D, 2.0D, 25);
-        registerJetpackAndBoots("sf:damascus_steel_jetpack", "sf:damascus_steel_jetboots", 5, 14000.0D, 0.18D, 2.5D, 30);
-        registerJetpackAndBoots("sf:reinforced_alloy_jetpack", "sf:reinforced_alloy_jetboots", 6, 22000.0D, 0.20D, 3.0D, 50);
-        registerJetpackAndBoots("sf:carbonado_jetpack", "sf:carbonado_jetboots", 7, 30000.0D, 0.25D, 3.0D, 100);
-        jetpack("sf:armored_jetpack", 4, 10000.0D, 0.16D, 2.0D, 25, true);
-        jetBoots("sf:armored_jetboots", 4, 10000.0D, 0.16D, 2.0D, 25);
-        definitions.put("sf:fuel_jetpack", Definition.fuelJetpack("sf:fuel_jetpack", 5, 0.18D, 1.0D, -1, true, 10000.0D));
-    }
-
-    private void registerJetpackAndBoots(String jetpackId, String bootsId, int level, double capacity, double thrust, double useCost, int heightLimit) {
-        jetpack(jetpackId, level, capacity, thrust, useCost, heightLimit, level >= 4);
-        jetBoots(bootsId, level, capacity, thrust, useCost, heightLimit);
     }
 
     private void registerClassicJetpacksAndBoots() {
@@ -285,14 +270,6 @@ public final class SfxRechargeableItemService {
         jetBootsClassic("sf:armored_jetboots", 50.0D, 0.45D);
     }
 
-    private void jetpack(String id, int level, double capacity, double thrust, double useCost, int heightLimit, boolean hoverSupported) {
-        definitions.put(id, Definition.electric(id, RechargeableKind.JETPACK, level, capacity, thrust, useCost, heightLimit, hoverSupported));
-    }
-
-    private void jetBoots(String id, int level, double capacity, double speed, double useCost, int heightLimit) {
-        definitions.put(id, Definition.electric(id, RechargeableKind.JETBOOTS, level, capacity, speed, useCost, heightLimit, false));
-    }
-
     private void jetpackClassic(String id, double classicCapacity, double thrust) {
         definitions.put(id, Definition.electric(id, RechargeableKind.JETPACK, 0, scaled(classicCapacity), thrust, scaled(0.08D), -1, false));
     }
@@ -309,13 +286,43 @@ public final class SfxRechargeableItemService {
         return classicValue * rechargeableMultiplier;
     }
 
-    private double rechargeableMultiplier(JavaPlugin plugin) {
-        double base = plugin.getConfig().getDouble("technical-gadgets.rechargeable.base-multiplier", 20.0D);
-        if (!plugin.getConfig().getBoolean("technical-gadgets.sfx-balance.enabled", true)) {
-            return Math.max(1.0D, base);
+    private void registerAddonDefinitions(SfxBehaviorRegistry behaviors) {
+        if (behaviors == null) {
+            return;
         }
-        double balance = plugin.getConfig().getDouble("technical-gadgets.sfx-balance.rechargeable-multiplier", 5.0D);
-        return Math.max(1.0D, base * Math.max(1.0D, balance));
+        for (SfxRechargeableItemProvider provider : behaviors.rechargeableItemProviders()) {
+            List<SfxRechargeableItemDefinition> addonDefinitions = provider.definitions();
+            if (addonDefinitions == null) {
+                continue;
+            }
+            for (SfxRechargeableItemDefinition definition : addonDefinitions) {
+                if (definition != null) {
+                    definitions.put(definition.itemId(), fromApi(definition));
+                }
+            }
+        }
+    }
+
+    private Definition fromApi(SfxRechargeableItemDefinition definition) {
+        return new Definition(
+                definition.itemId(),
+                fromApi(definition.kind()),
+                definition.level(),
+                definition.capacity(),
+                definition.movementValue(),
+                definition.useCost(),
+                definition.heightLimit(),
+                definition.hoverSupported(),
+                definition.fuelCapacity());
+    }
+
+    private RechargeableKind fromApi(SfxRechargeableItemKind kind) {
+        return switch (kind) {
+            case GENERIC -> RechargeableKind.GENERIC;
+            case JETPACK -> RechargeableKind.JETPACK;
+            case JETBOOTS -> RechargeableKind.JETBOOTS;
+            case FUEL_JETPACK -> RechargeableKind.FUEL_JETPACK;
+        };
     }
 
     public enum RechargeableKind {

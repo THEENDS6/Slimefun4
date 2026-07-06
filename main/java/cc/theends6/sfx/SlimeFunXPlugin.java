@@ -22,6 +22,9 @@ import cc.theends6.sfx.internal.core.SfxAuditReport;
 import cc.theends6.sfx.internal.core.SfxAuditSink;
 import cc.theends6.sfx.internal.core.SfxListenerRegistrar;
 import cc.theends6.sfx.internal.core.SfxModuleManager;
+import cc.theends6.sfx.internal.addon.SfxAddonManager;
+import cc.theends6.sfx.internal.behavior.DefaultSfxBehaviorRegistry;
+import cc.theends6.sfx.internal.feature.DefaultSfxFeatureRegistry;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationService;
@@ -111,6 +114,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     SfxIndustrialMinerService industrialMinerService;
     SfxListenerRegistrar listenerRegistrar;
     SfxModuleManager moduleManager;
+    DefaultSfxFeatureRegistry featureRegistry;
+    DefaultSfxBehaviorRegistry behaviorRegistry;
+    SfxAddonManager addonManager;
     SfxMachineRuntimeEngine machineRuntime;
     SfxMachinePhaseLedger machinePhaseLedger;
     Object packetEventsApi;
@@ -198,6 +204,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         return researchService;
     }
 
+    public SfxAddonManager addonManager() {
+        return addonManager;
+    }
+
     public SfxBackpackListener backpackListener() {
         return backpackListener;
     }
@@ -220,8 +230,9 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
             reloadConfig();
             syncBundledLanguages();
-            localization.reload();
             legacyItemBehaviorConfig.reload();
+            SfxPluginAddonModule.loadAddons(this);
+            localization.reload();
             compileContentTemplates();
             if (researchRegistry != null) {
                 researchRegistry.clear();
@@ -306,6 +317,12 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         industrialMinerService = null;
         listenerRegistrar = null;
         moduleManager = null;
+        if (addonManager != null) {
+            addonManager.close();
+            addonManager = null;
+        }
+        featureRegistry = null;
+        behaviorRegistry = null;
         machineRuntime = null;
         machinePhaseLedger = null;
         researchService = null;

@@ -5,6 +5,7 @@ import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.guide.GuideMode;
 import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.api.item.SfxItemMarker;
+import cc.theends6.sfx.api.feature.SfxFeature;
 import cc.theends6.sfx.api.menu.SfxMenu;
 import cc.theends6.sfx.api.menu.SfxMenuButton;
 import cc.theends6.sfx.internal.playerdata.SfxBackpackRecord;
@@ -70,6 +71,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
             case "list" -> listItems(sender, args.length >= 2 ? parsePositive(args[1], 1) - 1 : 0);
             case "reload" -> reload(sender, args);
             case "template", "templates" -> handleTemplate(sender, args);
+            case "addon", "addons" -> handleAddon(sender, args);
             default -> sendHelp(sender, label);
         }
         return true;
@@ -450,6 +452,31 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         }
     }
 
+    private void handleAddon(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("sfx.command.reload")) {
+            sender.sendMessage(Text.prefixed(plugin, tr("command.errors.no-reload")));
+            return;
+        }
+        SlimeFunXPlugin sfx = sfxPlugin();
+        if (sfx == null || sfx.addonManager() == null) {
+            sender.sendMessage(Text.prefixed(plugin, "SFX addon manager is not loaded."));
+            return;
+        }
+        if (args.length >= 2 && !args[1].equalsIgnoreCase("list")) {
+            sender.sendMessage(Text.prefixed(plugin, "Usage: /sfx addon list"));
+            return;
+        }
+        sender.sendMessage(Text.mm("<green>SFX addons:</green>"));
+        sfx.addonManager().loadedAddons().forEach(addon ->
+                sender.sendMessage(Text.mm("<gray>- </gray><white>" + addon.id() + "</white> <dark_gray>(" + addon.name() + ")</dark_gray>")));
+        sender.sendMessage(Text.mm("<green>SFX addon features:</green>"));
+        for (SfxFeature feature : api.features().features()) {
+            String state = feature.enabled() ? "<green>enabled</green>" : "<red>disabled</red>";
+            sender.sendMessage(Text.mm("<gray>- </gray><white>" + feature.id() + "</white> " + state
+                    + " <dark_gray>owner=" + feature.addonId() + " config=" + feature.configPath() + "</dark_gray>"));
+        }
+    }
+
     private void sendHelp(CommandSender sender, String label) {
         sender.sendMessage(Text.mm(tr("command.help.header")));
         sender.sendMessage(Text.mm(tr("command.help.line.guide").replace("{label}", label)));
@@ -462,6 +489,7 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Text.mm(tr("command.help.line.list").replace("{label}", label)));
         sender.sendMessage(Text.mm(tr("command.help.line.reload").replace("{label}", label)));
         sender.sendMessage(Text.mm(tr("command.help.line.template").replace("{label}", label)));
+        sender.sendMessage(Text.mm("<gray>/" + label + " addon list</gray> <dark_gray>- addon diagnostics</dark_gray>"));
     }
 
     @Override

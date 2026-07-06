@@ -6,6 +6,7 @@ import cc.theends6.sfx.api.item.SfxItemRegistry;
 import cc.theends6.sfx.api.item.SfxRecipe;
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
+import cc.theends6.sfx.internal.feature.SfxFeatureSwitch;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxLocalization;
@@ -140,14 +141,59 @@ public final class SfxYamlContentLoader {
 
 
     private boolean isFeatureEnabled(Map<?, ?> entry) {
-        boolean sfxGeneratorBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
-        if (Boolean.TRUE.equals(entry.get("requires-sfx-generator-balance")) && !sfxGeneratorBalance) {
+        if (!requiredFeaturesEnabled(entry.get("requires-feature"))) {
             return false;
         }
-        if (Boolean.TRUE.equals(entry.get("requires-classic-generator-balance")) && sfxGeneratorBalance) {
+        if (!excludedFeaturesAbsent(entry.get("excludes-feature"))) {
             return false;
         }
         return true;
+    }
+
+    private boolean requiredFeaturesEnabled(Object raw) {
+        if (raw == null) {
+            return true;
+        }
+        if (raw instanceof List<?> list) {
+            for (Object value : list) {
+                if (!requiredFeatureEnabled(value)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return requiredFeatureEnabled(raw);
+    }
+
+    private boolean requiredFeatureEnabled(Object raw) {
+        if (raw == null) {
+            return true;
+        }
+        String id = String.valueOf(raw).trim();
+        return SfxFeatureSwitch.requirementEnabled(plugin, id);
+    }
+
+    private boolean excludedFeaturesAbsent(Object raw) {
+        if (raw == null) {
+            return true;
+        }
+        if (raw instanceof List<?> list) {
+            for (Object value : list) {
+                if (!excludedFeatureAbsent(value)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return excludedFeatureAbsent(raw);
+    }
+
+    private boolean excludedFeatureAbsent(Object raw) {
+        if (raw == null) {
+            return true;
+        }
+        String id = String.valueOf(raw).trim();
+        return !SfxFeatureSwitch.requirementEnabled(plugin, id);
     }
 
     private void validateCompiledContentEntry(Map<?, ?> entry, String label) {
@@ -215,6 +261,17 @@ public final class SfxYamlContentLoader {
                 .nameKey(nameKey);
         builder.category(categoryId);
         builder.order(integer(requiredAny(entry, "order", "priority", "pos")));
+        String guideCategory = optionalString(entry.get("guide-category"));
+        if (guideCategory != null) {
+            builder.guideCategory(guideCategory);
+        }
+        if (entry.containsKey("guide-order")) {
+            builder.guideOrder(integer(entry.get("guide-order")));
+        }
+        String guideFuelProfile = optionalString(entry.get("guide-fuel-profile"));
+        if (guideFuelProfile != null) {
+            builder.guideFuelProfile(guideFuelProfile);
+        }
         if (entry.containsKey("version")) {
             builder.version(integer(entry.get("version")));
         }

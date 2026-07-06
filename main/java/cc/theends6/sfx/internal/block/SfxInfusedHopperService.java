@@ -273,11 +273,7 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
     }
 
     private long baseIntervalTicks() {
-        long configured = plugin.getConfig().getLong("legacy.infused-hopper.base-interval-ticks", Long.MIN_VALUE);
-        if (configured == Long.MIN_VALUE) {
-            configured = plugin.getConfig().getLong("legacy.infused-hopper.interval-ticks", 10L);
-        }
-        return Math.max(1L, configured);
+        return Math.max(1L, plugin.getConfig().getLong("legacy.infused-hopper.base-interval-ticks", 10L));
     }
 
     private String shortLocation(Location location) {

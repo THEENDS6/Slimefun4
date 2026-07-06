@@ -39,7 +39,7 @@ final class SfxPluginServiceModule {
         plugin.virtualContainerService = new SfxVirtualContainerService(plugin, plugin.api.runtime());
         plugin.electricMachineService = new SfxElectricMachineService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.playerDataService, plugin.api.internalManualMachines(), plugin.virtualContainerService, plugin.floatingTextDisplayService, plugin.machineRuntime);
         plugin.configurableMachineService = new SfxConfigurableMachineService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.floatingTextDisplayService, plugin.machineRuntime);
-        plugin.technicalGadgetService = new SfxTechnicalGadgetService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization);
+        plugin.technicalGadgetService = new SfxTechnicalGadgetService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.api.behaviors());
         plugin.energyService = new SfxEnergyService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.electricMachineService, plugin.configurableMachineService, plugin.floatingTextDisplayService, plugin.technicalGadgetService.rechargeableItems(), plugin.machineRuntime);
         plugin.cargoService = new SfxCargoService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.virtualContainerService, plugin.floatingTextDisplayService, plugin.electricMachineService, plugin.machineRuntime);
         plugin.decorationService = new SfxDecorationService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.blockDataService, plugin.machineRuntime);

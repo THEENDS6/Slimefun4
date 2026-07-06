@@ -61,7 +61,6 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:damascus_steel_jetpack", "guide:sf:technical_gadgets");
     map.put("sf:reinforced_alloy_jetpack", "guide:sf:technical_gadgets");
     map.put("sf:carbonado_jetpack", "guide:sf:technical_gadgets");
-    map.put("sf:fuel_jetpack", "guide:sf:technical_gadgets");
     map.put("sf:armored_jetpack", "guide:sf:technical_gadgets");
     map.put("sf:duralumin_jetboots", "guide:sf:technical_gadgets");
     map.put("sf:solder_jetboots", "guide:sf:technical_gadgets");
@@ -382,10 +381,8 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:auto_anvil", "guide:sf:electricity");
     map.put("sf:auto_anvil_2", "guide:sf:electricity");
     map.put("sf:auto_brewer", "guide:sf:electricity");
-    map.put("sf:auto_brewer_2", "guide:sf:electricity");
     map.put("sf:book_binder", "guide:sf:electricity");
     map.put("sf:bio_reactor", "guide:sf:electricity");
-    map.put("sf:bio_reactor_2", "guide:sf:electricity");
     map.put("sf:multimeter", "guide:sf:technical_gadgets");
     map.put("sf:small_capacitor", "guide:sf:electricity");
     map.put("sf:medium_capacitor", "guide:sf:electricity");
@@ -528,7 +525,6 @@ static Map<String, String> createExactCategoryByItem() {
     map.put("sf:debug_fish", "guide:sf:misc");
     map.put("sf:cargo_node", "guide:sf:cargo");
     map.put("sf:cargo_node_input", "guide:sf:cargo");
-    map.put("sf:cargo_node_input_advanced", "guide:sf:cargo");
     map.put("sf:cargo_node_output", "guide:sf:cargo");
     map.put("sf:cargo_node_output_advanced", "guide:sf:cargo");
     map.put("sf:organic_food", "guide:sf:misc");
@@ -749,7 +745,8 @@ static Map<String, Integer> createClassicItemOrderOverrides() {
     order = putRange(map, order, "sf:electric_smeltery", "sf:electric_smeltery_2");
     order = putRange(map, order, "sf:electric_press", "sf:electric_press_2");
     order = putRange(map, order, "sf:refinery", "sf:combustion_reactor", "sf:nuclear_reactor", "sf:magnesium_generator");
-    order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:bio_reactor", "sf:bio_reactor_2");
+    order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:bio_reactor");
+    order += 10;
     return Collections.unmodifiableMap(map);
 }
 
@@ -760,8 +757,9 @@ static Map<String, Integer> createClassicCargoOrder() {
             "sf:cargo_motor",
             "sf:cargo_manager",
             "sf:cargo_node",
-            "sf:cargo_node_input",
-            "sf:cargo_node_input_advanced",
+            "sf:cargo_node_input");
+    order += 10;
+    order = putRange(map, order,
             "sf:cargo_node_output",
             "sf:cargo_node_output_advanced",
             "sf:reactor_access_port",
@@ -832,7 +830,8 @@ static Map<String, Integer> createClassicElectricityOrder() {
     order = putRange(map, order, "sf:electric_press", "sf:electric_press_2");
     order = putRange(map, order, "sf:refinery");
     order = putRange(map, order, "sf:combustion_reactor");
-    order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:magnesium_generator", "sf:bio_reactor", "sf:bio_reactor_2");
+    order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:magnesium_generator", "sf:bio_reactor");
+    order += 10;
     order = putRange(map, order, "sf:nuclear_reactor", "sf:netherstar_reactor");
     order = putRange(map, order, "sf:fluid_pump");
     order = putRange(map, order, "sf:carbon_press", "sf:carbon_press_2", "sf:carbon_press_3");
@@ -844,7 +843,8 @@ static Map<String, Integer> createClassicElectricityOrder() {
     order = putRange(map, order, "sf:auto_enchanter", "sf:auto_enchanter_2");
     order = putRange(map, order, "sf:auto_disenchanter", "sf:auto_disenchanter_2");
     order = putRange(map, order, "sf:auto_anvil", "sf:auto_anvil_2");
-    order = putRange(map, order, "sf:auto_brewer", "sf:auto_brewer_2");
+    order = putRange(map, order, "sf:auto_brewer");
+    order += 10;
     order = putRange(map, order, "sf:book_binder");
     order = putRange(map, order, "sf:auto_breeder");
     order = putRange(map, order, "sf:animal_growth_accelerator", "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2", "sf:tree_growth_accelerator");

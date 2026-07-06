@@ -3,6 +3,7 @@ package cc.theends6.sfx.internal.energy;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
+import cc.theends6.sfx.internal.technical.SfxTechnicalGadgetBalance;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
@@ -179,10 +180,7 @@ final class SfxEnergyGeneratorMenuRenderer {
     }
 
     private int chargingBenchEnergyLossPercent() {
-        double loss = plugin.getConfig().getBoolean("technical-gadgets.sfx-balance.enabled", true)
-                ? plugin.getConfig().getDouble("technical-gadgets.sfx-balance.charging-bench.energy-loss", 0.80D)
-                : plugin.getConfig().getDouble("technical-gadgets.classic.charging-bench.energy-loss", 0.50D);
-        return (int) Math.round(Math.max(0.0D, Math.min(1.0D, loss)) * 100.0D);
+        return (int) Math.round(SfxTechnicalGadgetBalance.rules(plugin).chargingBenchEnergyLoss() * 100.0D);
     }
 
     private ItemStack capacitorHead(int current, int total) {

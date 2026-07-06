@@ -1,6 +1,10 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.SlimeFunXPlugin;
+import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelContext;
+import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelPolicy;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.energy.SfxFuelBurnTimeBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
@@ -1028,11 +1032,18 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return 0;
         }
         double burnMultiplier = stats.fuelEfficiency();
-        if (plugin.getConfig().getBoolean("plugin-blocks.enhanced-furnace.speed-affects-fuel-consumption", false)
-                && stats.processingSpeed() > 0) {
-            burnMultiplier /= stats.processingSpeed();
+        SfxApi api = sfxApi();
+        if (api != null) {
+            SfxEnhancedFurnaceFuelContext context = new SfxEnhancedFurnaceFuelContext(fuel.clone(), burnTicks, stats.fuelEfficiency(), stats.processingSpeed());
+            for (SfxEnhancedFurnaceFuelPolicy policy : api.behaviors().enhancedFurnaceFuelPolicies()) {
+                burnMultiplier = policy.fuelMultiplier(context, burnMultiplier);
+            }
         }
         return Math.max(1, Math.min(Short.MAX_VALUE - 1, (int) Math.ceil(burnTicks * burnMultiplier)));
+    }
+
+    private SfxApi sfxApi() {
+        return plugin instanceof SlimeFunXPlugin sfx ? sfx.api() : null;
     }
 
     private int fallbackFuelTicks(Material type) {

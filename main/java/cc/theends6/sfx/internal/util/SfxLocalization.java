@@ -1,16 +1,28 @@
 package cc.theends6.sfx.internal.util;
 
+import cc.theends6.sfx.SlimeFunXPlugin;
+import cc.theends6.sfx.internal.addon.SfxAddonJarResources;
+import cc.theends6.sfx.api.addon.SfxAddon;
+import cc.theends6.sfx.api.behavior.SfxLocalizedListContext;
+import cc.theends6.sfx.api.behavior.SfxLocalizedListPostProcessor;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.kyori.adventure.text.Component;
@@ -24,6 +36,7 @@ public final class SfxLocalization {
     private final JavaPlugin plugin;
     private final Set<String> warnedMissingPaths = ConcurrentHashMap.newKeySet();
     private YamlConfiguration bundled;
+    private YamlConfiguration addon;
     private YamlConfiguration custom;
 
     public SfxLocalization(JavaPlugin plugin) {
@@ -34,6 +47,7 @@ public final class SfxLocalization {
     public void reload() {
         String language = language();
         this.bundled = loadBundled(language);
+        this.addon = loadAddonOverlay(language);
         this.custom = loadCustom(language);
     }
 
@@ -108,11 +122,19 @@ public final class SfxLocalization {
         if (!fromCustom.isEmpty()) {
             return postProcessList(path, fromCustom);
         }
+        List<String> fromAddon = stringList(addon, path);
+        if (!fromAddon.isEmpty()) {
+            return postProcessList(path, fromAddon);
+        }
         List<String> fromBundled = stringList(bundled, path);
         if (!fromBundled.isEmpty()) {
             return postProcessList(path, fromBundled);
         }
         List<String> indexed = indexedList(custom, path);
+        if (!indexed.isEmpty()) {
+            return postProcessList(path, indexed);
+        }
+        indexed = indexedList(addon, path);
         if (!indexed.isEmpty()) {
             return postProcessList(path, indexed);
         }
@@ -139,164 +161,48 @@ public final class SfxLocalization {
     }
 
     private List<String> postProcessList(String path, List<String> values) {
-        boolean sfxGeneratorBalance = plugin.getConfig().getBoolean("energy.generator-balance.use-sfx-balance", true);
-        if ("items.sf.combustion_reactor.lore".equals(path)) {
-            return combustionReactorLore(values, sfxGeneratorBalance);
-        }
-        if ("items.sf.netherstar_reactor.lore".equals(path)) {
-            return netherStarReactorLore(values, sfxGeneratorBalance);
-        }
-        if (sfxGeneratorBalance && path.startsWith("items.sf.electrified_crucible")) {
-            return electrifiedCrucibleLore(path, values);
-        }
-        if (isGrowthAcceleratorLore(path)) {
-            return growthAcceleratorLore(path, values);
-        }
-        if ("items.sf.xp_collector.lore".equals(path)) {
-            return xpCollectorLore(values);
-        }
-        if (!sfxGeneratorBalance) {
+        if (!(plugin instanceof SlimeFunXPlugin sfx)) {
             return values;
         }
-        if (!"items.sf.coal_generator_2.lore".equals(path)
-                && !"items.sf.lava_generator_2.lore".equals(path)
-                && !"items.sf.bio_reactor_2.lore".equals(path)) {
-            return values;
-        }
-        String line = text("energy.generator.tier2-fuel-consumption-lore");
-        if (line == null || line.isBlank() || values.contains(line)) {
-            return values;
-        }
-        List<String> copy = new ArrayList<>(values);
-        copy.add(line);
-        return copy;
-    }
-
-    private boolean isGrowthAcceleratorLore(String path) {
-        return "items.sf.crop_growth_accelerator.lore".equals(path)
-                || "items.sf.crop_growth_accelerator_2.lore".equals(path)
-                || "items.sf.tree_growth_accelerator.lore".equals(path);
-    }
-
-    private List<String> growthAcceleratorLore(String path, List<String> values) {
-        boolean crop = "items.sf.crop_growth_accelerator.lore".equals(path)
-                || "items.sf.crop_growth_accelerator_2.lore".equals(path);
-        boolean tree = "items.sf.tree_growth_accelerator.lore".equals(path);
-        boolean enabled = crop
-                ? plugin.getConfig().getBoolean("electric-machines.sfx-balance.crop-growth-accelerator", true)
-                : plugin.getConfig().getBoolean("electric-machines.sfx-balance.tree-growth-accelerator", true);
-        if (!enabled || values.size() < 4) {
-            return values;
-        }
-
-        boolean zh = language().toLowerCase(Locale.ROOT).startsWith("zh");
-        boolean cropOne = "items.sf.crop_growth_accelerator.lore".equals(path);
-        int attempts = cropOne ? 20 : 30;
-        int energy = cropOne ? 100 : (tree ? 96 : 120);
-
-        List<String> copy = new ArrayList<>();
-        copy.add(values.get(0));
-        copy.add(values.get(1));
-        copy.add(values.get(2));
-        copy.add(values.get(3));
-        if (zh) {
-            copy.add("&8⇨ &7范围： &b19x19");
-            copy.add("&8⇨ &7速度： &a" + attempts + "/次");
-            copy.add("&8⇨ &7间隔： &b10 秒");
-            copy.add("&8⇨ &e⚡ &740960 J 储能");
-            copy.add("&8⇨ &e⚡ &7" + energy + " J/t");
-        } else {
-            copy.add("&8⇨ &7Radius: &b19x19");
-            copy.add("&8⇨ &7Speed: &a" + attempts + "/time");
-            copy.add("&8⇨ &7Interval: &b10 Seconds");
-            copy.add("&8⇨ &e⚡&740960 J Buffer");
-            copy.add("&8⇨ &e⚡&7" + energy + " J/t");
-        }
-        return copy;
-    }
-
-    private List<String> xpCollectorLore(List<String> values) {
-        String configPath = "electric-machines.sfx-balance.xp-collector";
-        boolean enabled = plugin.getConfig().isConfigurationSection(configPath)
-                ? plugin.getConfig().getBoolean(configPath + ".enabled", true)
-                : plugin.getConfig().getBoolean(configPath, true);
-        if (!enabled || values.isEmpty()) {
-            return values;
-        }
-        boolean zh = language().toLowerCase(Locale.ROOT).startsWith("zh");
-        int energyCost = Math.max(0, plugin.getConfig().getInt(configPath + ".flask-energy-cost", 4096));
-        String perFlask = zh ? "&8⇨ &e⚡ &7" + energyCost + " J/学识之瓶" : "&8⇨ &e⚡&7" + energyCost + " J/Knowledge Flask";
-        if (values.contains(perFlask)) {
-            return values;
-        }
-        List<String> copy = new ArrayList<>(values.size() + 1);
-        boolean inserted = false;
-        for (String value : values) {
-            if (!inserted && value != null && value.contains("J/t")) {
-                copy.add(perFlask);
-                inserted = true;
-            }
-            copy.add(value);
-        }
-        if (!inserted) {
-            copy.add(perFlask);
-        }
-        return copy;
-    }
-
-    private List<String> electrifiedCrucibleLore(String path, List<String> values) {
-        int classicEnergy;
-        if ("items.sf.electrified_crucible_3.lore".equals(path)) {
-            classicEnergy = 120;
-        } else if ("items.sf.electrified_crucible_2.lore".equals(path)) {
-            classicEnergy = 80;
-        } else if ("items.sf.electrified_crucible.lore".equals(path)) {
-            classicEnergy = 48;
-        } else {
-            return values;
-        }
-        double multiplier = Math.max(1.0D, plugin.getConfig().getDouble("energy.generator-balance.electrified-crucible-consumption-multiplier", 1.5D));
-        String energy = String.valueOf(Math.max(1, (int) Math.round(classicEnergy * multiplier)));
-        List<String> copy = new ArrayList<>(values.size());
-        for (String line : values) {
-            if (line != null && line.contains("J/t")) {
-                copy.add(line.replaceFirst("\\d+\\s*J/t", energy + " J/t"));
-            } else {
-                copy.add(line);
+        List<String> current = values;
+        SfxLocalizedListContext context = new LocalizedListContext(path);
+        for (SfxLocalizedListPostProcessor processor : sfx.api().behaviors().localizedListPostProcessors()) {
+            List<String> provided = processor.apply(context, current);
+            if (provided != null) {
+                current = provided;
             }
         }
-        return copy;
+        return current;
     }
 
-    private List<String> combustionReactorLore(List<String> values, boolean sfxGeneratorBalance) {
-        String capacity = sfxGeneratorBalance ? "20480" : "5120";
-        String output = sfxGeneratorBalance ? "64" : "24";
-        List<String> copy = new ArrayList<>(values.size());
-        for (String value : values) {
-            String line = value
-                    .replace("20480 J", capacity + " J")
-                    .replace("5120 J", capacity + " J")
-                    .replace("64 J/t", output + " J/t")
-                    .replace("24 J/t", output + " J/t");
-            copy.add(line);
+    private List<String> rawList(String path) {
+        List<String> indexed = indexedList(custom, path);
+        if (!indexed.isEmpty()) {
+            return indexed;
         }
-        return copy;
+        indexed = indexedList(addon, path);
+        if (!indexed.isEmpty()) {
+            return indexed;
+        }
+        return indexedList(bundled, path);
     }
 
-    private List<String> netherStarReactorLore(List<String> values, boolean sfxGeneratorBalance) {
-        String output = sfxGeneratorBalance ? "2048" : "1024";
-        List<String> copy = new ArrayList<>(values.size());
-        for (String value : values) {
-            copy.add(value
-                    .replace("2048 J/t", output + " J/t")
-                    .replace("1024 J/t", output + " J/t"));
+    private String rawText(String path) {
+        String result = string(custom, path);
+        if (result != null) {
+            return result;
         }
-        return copy;
+        result = string(addon, path);
+        if (result != null) {
+            return result;
+        }
+        return string(bundled, path);
     }
 
     public Map<String, String> sectionStrings(String path) {
         Map<String, String> values = new LinkedHashMap<>();
         mergeSection(values, bundled, path);
+        mergeSection(values, addon, path);
         mergeSection(values, custom, path);
         return values;
     }
@@ -320,6 +226,12 @@ public final class SfxLocalization {
     private String lookup(String path) {
         if (custom != null) {
             String value = string(custom, path);
+            if (value != null) {
+                return value;
+            }
+        }
+        if (addon != null) {
+            String value = string(addon, path);
             if (value != null) {
                 return value;
             }
@@ -426,6 +338,34 @@ public final class SfxLocalization {
         return buffer.toString();
     }
 
+    private final class LocalizedListContext implements SfxLocalizedListContext {
+        private final String path;
+
+        private LocalizedListContext(String path) {
+            this.path = path;
+        }
+
+        @Override
+        public String path() {
+            return path;
+        }
+
+        @Override
+        public List<String> rawList(String path) {
+            return SfxLocalization.this.rawList(path);
+        }
+
+        @Override
+        public String rawText(String path) {
+            return SfxLocalization.this.rawText(path);
+        }
+
+        @Override
+        public String applyPlaceholders(String value, Map<String, String> placeholders) {
+            return SfxLocalization.applyPlaceholders(value, placeholders);
+        }
+    }
+
     private static Component render(String input) {
         if (input == null) {
             return Component.empty();
@@ -455,5 +395,154 @@ public final class SfxLocalization {
             return null;
         }
         return YamlConfiguration.loadConfiguration(file);
+    }
+
+    private YamlConfiguration loadAddonOverlay(String language) {
+        YamlConfiguration merged = new YamlConfiguration();
+        Set<String> loadedAddonFolders = loadedAddonFolders();
+        loadBundledAddonOverlay(merged, language, loadedAddonFolders);
+        loadExternalAddonJarOverlay(merged, language);
+        loadDataFolderAddonOverlay(merged, new File(plugin.getDataFolder(), "content/addons"), language, loadedAddonFolders);
+        loadDataFolderAddonOverlay(merged, new File(plugin.getDataFolder(), "addons"), language, loadedAddonFolders);
+        return merged;
+    }
+
+    private void loadBundledAddonOverlay(YamlConfiguration merged, String language, Set<String> loadedAddonFolders) {
+        if (loadedAddonFolders.isEmpty()) {
+            return;
+        }
+        try {
+            Path location = Path.of(plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+            if (Files.isDirectory(location)) {
+                loadBundledAddonOverlayFromDirectory(merged, location, language, loadedAddonFolders);
+            } else if (Files.isRegularFile(location)) {
+                loadBundledAddonOverlayFromJar(merged, location, language, loadedAddonFolders);
+            }
+        } catch (URISyntaxException | IOException ex) {
+            plugin.getLogger().warning("Failed to load bundled addon language overlay: " + ex.getMessage());
+        }
+    }
+
+    private void loadBundledAddonOverlayFromDirectory(YamlConfiguration merged, Path location, String language, Set<String> loadedAddonFolders) throws IOException {
+        Path addonRoot = location.resolve("content/addons");
+        if (!Files.isDirectory(addonRoot)) {
+            return;
+        }
+        try (var stream = Files.walk(addonRoot)) {
+            stream.filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().equals(language + ".yml"))
+                    .filter(path -> path.toString().replace('\\', '/').contains("/lang/"))
+                    .filter(path -> loadedAddonFolders.contains(addonRoot.relativize(path).getName(0).toString()))
+                    .sorted()
+                    .forEach(path -> mergeYaml(merged, YamlConfiguration.loadConfiguration(path.toFile())));
+        }
+    }
+
+    private void loadBundledAddonOverlayFromJar(YamlConfiguration merged, Path location, String language, Set<String> loadedAddonFolders) throws IOException {
+        try (JarFile jar = new JarFile(location.toFile())) {
+            jar.stream()
+                    .filter(entry -> !entry.isDirectory())
+                    .filter(entry -> entry.getName().startsWith("content/addons/"))
+                    .filter(entry -> entry.getName().endsWith("/lang/" + language + ".yml"))
+                    .filter(entry -> loadedAddonFolders.contains(addonFolderFromBundledEntry(entry.getName())))
+                    .sorted(Comparator.comparing(java.util.jar.JarEntry::getName))
+                    .forEach(entry -> {
+                        try (var stream = jar.getInputStream(entry);
+                             var reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+                            mergeYaml(merged, YamlConfiguration.loadConfiguration(reader));
+                        } catch (IOException ex) {
+                            plugin.getLogger().warning("Failed to load addon language resource " + entry.getName() + ": " + ex.getMessage());
+                        }
+                    });
+        }
+    }
+
+    private void loadDataFolderAddonOverlay(YamlConfiguration merged, File root, String language, Set<String> loadedAddonFolders) {
+        if (!root.isDirectory()) {
+            return;
+        }
+        File[] addons = root.listFiles(File::isDirectory);
+        if (addons == null) {
+            return;
+        }
+        java.util.Arrays.sort(addons, Comparator.comparing(File::getName));
+        for (File addonDirectory : addons) {
+            if (!loadedAddonFolders.contains(addonDirectory.getName())) {
+                continue;
+            }
+            File file = new File(new File(addonDirectory, "lang"), language + ".yml");
+            if (file.isFile()) {
+                mergeYaml(merged, YamlConfiguration.loadConfiguration(file));
+            }
+        }
+    }
+
+    private Set<String> loadedAddonFolders() {
+        if (!(plugin instanceof SlimeFunXPlugin sfx) || sfx.addonManager() == null) {
+            return Set.of();
+        }
+        Set<String> folders = new HashSet<>();
+        for (SfxAddon addon : sfx.addonManager().loadedAddons()) {
+            String id = addon.id();
+            if (id == null || id.isBlank()) {
+                continue;
+            }
+            folders.add(id);
+            folders.add(id.replace(':', '_'));
+            int namespace = id.indexOf(':');
+            if (namespace >= 0 && namespace + 1 < id.length()) {
+                folders.add(id.substring(namespace + 1));
+            }
+        }
+        return folders;
+    }
+
+    private static String addonFolderFromBundledEntry(String entryName) {
+        if (entryName == null || !entryName.startsWith("content/addons/")) {
+            return "";
+        }
+        String remainder = entryName.substring("content/addons/".length());
+        int slash = remainder.indexOf('/');
+        return slash < 0 ? remainder : remainder.substring(0, slash);
+    }
+
+    private void loadExternalAddonJarOverlay(YamlConfiguration merged, String language) {
+        if (!(plugin instanceof SlimeFunXPlugin sfx) || sfx.addonManager() == null) {
+            return;
+        }
+        for (File addonJar : sfx.addonManager().externalAddonJars()) {
+            loadExternalAddonJarOverlay(merged, addonJar, language);
+        }
+    }
+
+    private void loadExternalAddonJarOverlay(YamlConfiguration merged, File addonJar, String language) {
+        if (addonJar == null || !addonJar.isFile()) {
+            return;
+        }
+        try (JarFile jar = new JarFile(addonJar)) {
+            jar.stream()
+                    .filter(entry -> !entry.isDirectory())
+                    .filter(entry -> SfxAddonJarResources.isLanguageEntry(entry.getName(), language))
+                    .sorted(SfxAddonJarResources.byEntryName())
+                    .forEach(entry -> {
+                        try (var stream = jar.getInputStream(entry);
+                             var reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+                            mergeYaml(merged, YamlConfiguration.loadConfiguration(reader));
+                        } catch (IOException ex) {
+                            plugin.getLogger().warning("Failed to load addon language resource " + entry.getName() + ": " + ex.getMessage());
+                        }
+                    });
+        } catch (IOException ex) {
+            plugin.getLogger().warning("Failed to load addon language overlay from " + addonJar.getName() + ": " + ex.getMessage());
+        }
+    }
+
+    private static void mergeYaml(YamlConfiguration target, YamlConfiguration source) {
+        for (String key : source.getKeys(true)) {
+            Object value = source.get(key);
+            if (!(value instanceof ConfigurationSection)) {
+                target.set(key, value);
+            }
+        }
     }
 }

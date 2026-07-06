@@ -31,10 +31,8 @@ final class SfxEnergyDisplayController {
         SfxFloatingTextKey cacheKey = key(regulatorKey);
         CachedDisplay previous = lastDisplays.get(cacheKey);
         long now = System.currentTimeMillis() / 50L;
-        int interval = Math.max(1, plugin.getConfig().getInt("energy.display-update-interval-ticks",
-                plugin.getConfig().getInt("energy.regulator-display.update-interval-ticks", 1)));
-        boolean updateOnlyOnChange = plugin.getConfig().getBoolean("energy.update-only-on-change",
-                plugin.getConfig().getBoolean("energy.regulator-display.update-only-on-change", true));
+        int interval = Math.max(1, plugin.getConfig().getInt("energy.display-update-interval-ticks", 1));
+        boolean updateOnlyOnChange = plugin.getConfig().getBoolean("energy.update-only-on-change", true);
         boolean classic = "classic".equalsIgnoreCase(plugin.getConfig().getString("energy.regulator-display.mode", "sfx"));
         DisplayValues values = new DisplayValues(status, supply, consumption, net, totalStored, totalCapacity, classic);
         if (previous != null) {
