@@ -1,0 +1,7 @@
+id: sfx:basic_expansion
+name: SFX Basic Expansion
+version: 1.0.0
+main: cc.theends6.sfx.addons.basic.SfxBasicExpansionAddon
+enabled: true
+java:
+  jar: sfx-basic-expansion.jar

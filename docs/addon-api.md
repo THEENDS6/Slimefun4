@@ -11,23 +11,57 @@ Configuration content declares items, recipes, machines, UI, energy entries, res
 The core runtime must not hard-code Basic Expansion item ids, language keys, or SFX-specific config paths. Those belong under:
 
 ```text
-main/java/cc/theends6/sfx/addons/basic
-main/resources/content/addons/basic_expansion
+addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic
+addons/basic-expansion/src/main/resources
 ```
+
+Build output packages this addon as a complete jar and embeds it into the SFX plugin:
+
+```text
+SlimeFunX.jar
+  bundled-addons/sfx-basic-expansion.jar
+
+sfx-basic-expansion.jar
+  addon.yml
+  content/...
+  lang/...
+  cc/theends6/sfx/addons/basic/...
+```
+
+At runtime SFX expands the bundled addon defaults into:
+
+```text
+plugins/SlimeFunX/addons/basic_expansion/addon.yml
+plugins/SlimeFunX/addons/basic_expansion/content/...
+plugins/SlimeFunX/addons/basic_expansion/lang/...
+plugins/SlimeFunX/addons/basic_expansion/sfx-basic-expansion.jar
+```
+
+The expanded files are the editable server-side content source. The addon jar remains the Java code source and default-resource source.
 
 ## Java Addon Jar
 
-External Java addons are loaded from:
+External Java addons can use the same directory model:
 
 ```text
-plugins/SlimeFunX/addons/*.jar
+plugins/SlimeFunX/addons/<addon-id>/
+  addon.yml
+  content/...
+  lang/...
+  addon.jar
 ```
 
-Each Java addon jar must contain `sfx-addon.yml`:
+Jar-only addons are also supported from `plugins/SlimeFunX/addons/*.jar`.
+
+Each Java addon jar must contain `addon.yml`:
 
 ```yaml
+id: example:demo
+name: Example Demo
 enabled: true
 main: com.example.sfxaddon.ExampleAddon
+java:
+  jar: example-demo.jar
 ```
 
 The `main` class must implement `cc.theends6.sfx.api.addon.SfxAddon`.
@@ -61,7 +95,7 @@ public final class ExampleAddon implements SfxAddon {
 
 Addon content may be shipped inside the addon jar or placed in the plugin data directory.
 
-Data-directory configuration addons must also contain `sfx-addon.yml`, but they do not need a Java `main` class:
+Data-directory configuration addons must also contain `addon.yml`, but they do not need a Java `main` class:
 
 ```yaml
 id: example:config_pack
@@ -96,7 +130,7 @@ content/addons/<addon-id>/lang/zh-CN.yml
 Data-directory layout:
 
 ```text
-plugins/SlimeFunX/addons/<addon-id>/sfx-addon.yml
+plugins/SlimeFunX/addons/<addon-id>/addon.yml
 plugins/SlimeFunX/addons/<addon-id>/content/...
 plugins/SlimeFunX/addons/<addon-id>/lang/<language>.yml
 ```
