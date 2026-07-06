@@ -1059,10 +1059,11 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
             violations << 'SfxElectricMachineDefinitions must not directly select SFX Auto Brewer through utility rules.'
         }
         if (definitions.contains('new SfxAdvancedAutoBrewerRecipeProvider')
+                || definitions.contains('sfx:advanced_auto_brewer')
                 || definitions.contains('SfxAreaElectricMachineProviders.produceCollector(true)')
                 || definitions.contains('SfxAreaElectricMachineProviders.autoBreeder(true)')
                 || definitions.contains('SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 3, 20, true)')) {
-            violations << 'SfxElectricMachineDefinitions must not construct SFX electric providers directly.'
+            violations << 'SfxElectricMachineDefinitions must not construct or name SFX electric providers directly.'
         }
         if (!definitionConfig.contains('electricSpecialProviderKeyPolicies()')) {
             violations << 'SfxElectricMachineDefinitionConfig must resolve special providers through addon policies.'
