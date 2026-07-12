@@ -2,7 +2,7 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 
-enum SfxElectricMachineRenderStatus {
+public enum SfxElectricMachineRenderStatus {
     IDLE(SfxMachineStatusKey.IDLE),
     NO_INPUT(SfxMachineStatusKey.NO_INPUT),
     NO_TARGET(SfxMachineStatusKey.NO_TARGET),
@@ -25,7 +25,7 @@ enum SfxElectricMachineRenderStatus {
         this.statusKey = statusKey;
     }
 
-    SfxMachineStatusKey statusKey() {
+    public SfxMachineStatusKey statusKey() {
         return statusKey;
     }
 }

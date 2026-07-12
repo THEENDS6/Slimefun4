@@ -121,4 +121,8 @@ public final class SfxApiImpl implements SfxApi {
     public DefaultManualMachineRegistry internalManualMachines() {
         return manualMachines;
     }
+
+    public DefaultSfxGuide internalGuide() {
+        return guide;
+    }
 }

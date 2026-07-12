@@ -25,6 +25,11 @@ ext {
     outputDirName = 'output'
     paper261RuntimeDirName = 'run-paper-26.1'
     paper261RuntimeJarName = 'paper-26.1.jar'
+    slimeEasyDeliveryDirName = 'tools/slimeeasy-sieve-animation'
+    slimeEasySourceDirName = 'external/SlimeEasy-sieve-animation'
+    slimeEasyCompleteSourceZipName = 'SlimeEasy-sieve-animation-complete-source.zip'
+    slimeEasyJarName = 'SlimeEasy.jar'
+    slimeEasyGradleUserHomeName = 'build/slimeeasy/gradle-user-home'
     foliaRuntimeJarName = 'folia-1.21.8-6.jar'
     legacyRuntimeDirName = 'run-legacy-slimefun-1.21.8'
     legacySlimefunDownloadUrl = 'https://github.com/rutwok-labs/SlimefunCore-V.4.0/releases/download/2647/SlimefunCore4-2647.jar'
@@ -76,6 +81,12 @@ sourceSets {
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
         runtimeClasspath += output + compileClasspath
     }
+    contentExpansion {
+        java.srcDirs = ['addons/content-expansion/src/main/java']
+        resources.srcDirs = ['addons/content-expansion/src/main/resources']
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
 }
 
 dependencies {
@@ -98,7 +109,7 @@ processResources {
 }
 
 tasks.named('jar') {
-    dependsOn 'validateSfxTemplateCompile', 'basicExpansionJar'
+    dependsOn 'validateSfxTemplateCompile', 'basicExpansionJar', 'contentExpansionJar'
     archiveBaseName.set('SlimeFunX')
     archiveVersion.set('')
     from {
@@ -110,8 +121,21 @@ tasks.named('jar') {
     from(tasks.named('basicExpansionJar').flatMap { it.archiveFile }) {
         into 'bundled-addons'
     }
+    from(tasks.named('contentExpansionJar').flatMap { it.archiveFile }) {
+        into 'bundled-addons'
+    }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+tasks.register('contentExpansionJar', Jar) {
+    group = 'build'
+    description = 'Packages the SFX Content Expansion addon as a standalone addon jar.'
+    dependsOn 'contentExpansionClasses'
+    archiveFileName.set('sfx-content-expansion.jar')
+    destinationDirectory.set(layout.buildDirectory.dir('addons'))
+    from(sourceSets.contentExpansion.output)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.register('basicExpansionJar', Jar) {
@@ -122,6 +146,24 @@ tasks.register('basicExpansionJar', Jar) {
     destinationDirectory.set(layout.buildDirectory.dir('addons'))
     from(sourceSets.basicExpansion.output)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register('validateSfxBasicExpansionClassLinkage', JavaExec) {
+    group = 'verification'
+    description = 'Links every Basic Expansion class through an isolated addon classloader.'
+    dependsOn 'classes', 'basicExpansionJar'
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.addon.SfxAddonClassLinkageSmokeCli')
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
+    doFirst {
+        args = [tasks.named('basicExpansionJar').get().archiveFile.get().asFile.absolutePath]
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'validateSfxBasicExpansionClassLinkage'
 }
 
 def sameFileContent = { File left, File right ->
@@ -523,6 +565,7 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     dependsOn 'classes'
     inputs.dir(layout.projectDirectory.dir('main/resources/content/templates'))
     inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources'))
+    inputs.dir(layout.projectDirectory.dir('addons/content-expansion/src/main/resources'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/templates/machines/configurable/reactors.yml'))
@@ -552,6 +595,10 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
         copy {
             from layout.projectDirectory.dir('addons/basic-expansion/src/main/resources/content')
             into new File(sourceRoot, 'addons/basic_expansion/content')
+        }
+        copy {
+            from layout.projectDirectory.dir('addons/content-expansion/src/main/resources/content')
+            into new File(sourceRoot, 'addons/content_expansion/content')
         }
         args = [
                 new File(sourceRoot, 'templates').absolutePath,
@@ -788,6 +835,21 @@ tasks.register('validateSfxBasicExpansionBoundary') {
             if (!basicAddonJavaText.contains(token)) {
                 violations << "SfxBasicExpansionAddon must own Auto Brewer UI/input behavior token ${token}"
             }
+        }
+        def corePotionBrewEngine = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxPotionBrewEngine.java').asFile
+        if (corePotionBrewEngine.exists()) {
+            violations << "SFX potion brew behavior must live in Basic Expansion addon, not core SfxPotionBrewEngine."
+        }
+        ['SfxBasicExpansionPotionBrewEngine', 'POWER_CRYSTAL = "sf:power_crystal"', 'MAGIC_SUGAR = "sf:magic_sugar"'].each { token ->
+            if (!basicAddonJavaText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own Auto Brewer potion extension token ${token}"
+            }
+        }
+        if (basicAddonJavaText.contains('new WorldActionProvider()')) {
+            violations << 'Basic Expansion area machine providers must not inherit core WorldActionProvider across addon classloaders.'
+        }
+        if (!basicAddonJavaText.contains('SfxBasicExpansionWorldActionProvider')) {
+            violations << 'Basic Expansion addon must own its world-action provider base class.'
         }
         def radiationService = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/radiation/SfxRadiationService.java').asFile
         def radiationServiceText = radiationService.getText('UTF-8')
@@ -1040,12 +1102,13 @@ tasks.register('validateSfxAddonApiDocs') {
 
 tasks.register('validateSfxElectricProviderAddonPolicy') {
     group = 'verification'
-    description = 'Validates SFX electric special provider overrides are routed through addon behavior policies.'
+    description = 'Validates SFX electric machine provider overrides are routed through addon behavior policies.'
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitions.java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitionConfig.java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAreaElectricMachineProviders.java'))
     inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java'))
+    inputs.dir(layout.projectDirectory.dir('main/java/cc/theends6/sfx/api/behavior'))
     doLast {
         def violations = []
         def definitions = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitions.java').asFile.getText('UTF-8')
@@ -1055,6 +1118,19 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
             include '**/*.java'
         }.files.collect { it.getText('UTF-8') }.join('\n')
         def registrar = layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java').asFile.getText('UTF-8')
+        def behaviorApiFiles = fileTree(layout.projectDirectory.dir('main/java/cc/theends6/sfx/api/behavior')) {
+            include '**/*.java'
+        }.files
+        behaviorApiFiles.each { apiFile ->
+            def apiText = apiFile.getText('UTF-8')
+            if (apiText =~ /(?m)^import\s+cc\.theends6\.sfx\.internal\./) {
+                violations << "Addon behavior API must not expose core internals: ${apiFile.name}"
+            }
+        }
+        def providerFactory = layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxElectricMachineProviderFactory.java').asFile.getText('UTF-8')
+        if (!providerFactory.contains('SfxElectricMachineProvider create(SfxElectricMachineProviderContext context)')) {
+            violations << 'Electric provider addons must be created through the public provider context hook.'
+        }
         if (definitions.contains('SfxUtilityRulesResolver.rules(plugin).autoBrewerEnabled()')) {
             violations << 'SfxElectricMachineDefinitions must not directly select SFX Auto Brewer through utility rules.'
         }
@@ -1065,13 +1141,13 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
                 || definitions.contains('SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 3, 20, true)')) {
             violations << 'SfxElectricMachineDefinitions must not construct or name SFX electric providers directly.'
         }
-        if (!definitionConfig.contains('electricSpecialProviderKeyPolicies()')) {
-            violations << 'SfxElectricMachineDefinitionConfig must resolve special providers through addon policies.'
+        if (!definitionConfig.contains('electricMachineProviderKeyPolicies()')) {
+            violations << 'SfxElectricMachineDefinitionConfig must resolve providers through addon policies.'
         }
-        if (!registrar.contains('registerElectricSpecialProviderKeyPolicy') || !registrar.contains('registerElectricSpecialProvider')) {
-            violations << 'SfxBehaviorRegistrar must expose electric special provider key policies and provider factories.'
+        if (!registrar.contains('registerElectricMachineProviderKeyPolicy') || !registrar.contains('registerElectricMachineProvider')) {
+            violations << 'SfxBehaviorRegistrar must expose electric machine provider key policies and provider factories.'
         }
-        if (!addon.contains('registerElectricSpecialProviderKeyPolicy') || !addon.contains('registerElectricSpecialProvider') || !addon.contains('sfx:advanced_auto_brewer')) {
+        if (!addon.contains('registerElectricMachineProviderKeyPolicy') || !addon.contains('registerElectricMachineProvider') || !addon.contains('sfx:advanced_auto_brewer')) {
             violations << 'SfxBasicExpansionAddon must register the Auto Brewer provider override and provider through addon behavior API.'
         }
         [
@@ -1102,7 +1178,7 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
         if (!violations.isEmpty()) {
             throw new GradleException("SFX electric provider addon policy validation failed:\n" + violations.join('\n'))
         }
-        logger.lifecycle("Validated SFX electric special provider addon policy boundary.")
+        logger.lifecycle("Validated SFX electric machine provider addon policy boundary.")
     }
 }
 
@@ -1387,6 +1463,10 @@ tasks.register('validateSfxCompiledContent') {
         def addonLanguageFiles = fileTree(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources')) {
             include '**/lang/*.yml'
         }.files.sort { it.path }
+        def contentAddonLanguageFiles = fileTree(layout.projectDirectory.dir('addons/content-expansion/src/main/resources')) {
+            include '**/lang/*.yml'
+        }.files.sort { it.path }
+        addonLanguageFiles.addAll(contentAddonLanguageFiles)
         def languageKeysByFile = languageFiles.collectEntries { file ->
             def keys = flattenLanguageKeys(file)
             addonLanguageFiles.findAll { it.name == file.name }.each { addonFile ->
@@ -1687,8 +1767,8 @@ tasks.register('validateSfxCompiledContent') {
             }
             flushRecipe()
         }
-        if (recipeEntryCount != 547) {
-            violations << "compiled recipe entry count expected 547, got ${recipeEntryCount}"
+        if (recipeEntryCount != 562) {
+            violations << "compiled recipe entry count expected 562, got ${recipeEntryCount}"
         }
         if (recipeFiles.size() >= recipeEntryCount) {
             violations << "compiled recipe files are not grouped: files=${recipeFiles.size()} entries=${recipeEntryCount}"
@@ -1715,29 +1795,29 @@ tasks.register('validateSfxCompiledContent') {
             violations << "compiled machine catalog output missing content/machines/machine-catalog/*.yml"
         } else {
             def catalogText = catalogCompiledFiles.collect { it.getText('UTF-8') }.join('\n')
-            catalogCompiledCount = (catalogText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
-            if (catalogCompiledCount != 184) {
-                violations << "compiled machine catalog entry count expected 184, got ${catalogCompiledCount}"
+            catalogCompiledCount = (catalogText =~ /(?m)^  ['"]?[A-Za-z0-9_.-]+:[^'"\r\n]+['"]?:\s*$/).count
+            if (catalogCompiledCount != 187) {
+                violations << "compiled machine catalog entry count expected 187, got ${catalogCompiledCount}"
             }
             ['category:', 'display-name:', 'input-slots:', 'output-slots:', 'status-slot:', 'tick-interval:', 'tags:', 'capabilities:', 'input-provider:', 'output-provider:', 'policies:', 'effects:'].each { token ->
                 def count = (catalogText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count
-                if (count < 184) {
+                if (count < 187) {
                     violations << "compiled machine catalog expected ${token} on every entry, got ${count}"
                 }
             }
             def providerSlotCount = (catalogText =~ /(?m)^      slots:\s*/).count
             def providerDescriptionCount = (catalogText =~ /(?m)^      description:\s*/).count
-            if (providerSlotCount != 368) {
+            if (providerSlotCount != 374) {
                 violations << "compiled machine catalog expected provider slots on every input/output provider, got ${providerSlotCount}"
             }
-            if (providerDescriptionCount != 368) {
+            if (providerDescriptionCount != 374) {
                 violations << "compiled machine catalog expected provider description on every input/output provider, got ${providerDescriptionCount}"
             }
             def currentMachine = null
             def inTags = false
             def slotList = null
             catalogText.readLines().each { line ->
-                def machineMatch = line =~ /^  ['"]?(sf:[^'":\s]+)['"]?:\s*$/
+                def machineMatch = line =~ /^  ['"]?([A-Za-z0-9_.-]+:[^'":\s]+)['"]?:\s*$/
                 if (machineMatch.matches()) {
                     currentMachine = machineMatch[0][1]
                     if (catalogMachineIds.contains(currentMachine)) {
@@ -2081,8 +2161,8 @@ tasks.register('validateSfxCompiledContent') {
         } else {
             def itemText = compiledItemFiles.collect { it.getText('UTF-8') }.join('\n')
             compiledItemCount = (itemText =~ /(?m)^(?:- id:|  id:)\s*/).count
-            if (compiledItemCount != 556) {
-                violations << "compiled item count expected 556, got ${compiledItemCount}"
+            if (compiledItemCount != 565) {
+                violations << "compiled item count expected 565, got ${compiledItemCount}"
             }
             [
                     'category'      : (itemText =~ /(?m)^(?:  category:|- category:)\s*/).count,
@@ -2090,7 +2170,7 @@ tasks.register('validateSfxCompiledContent') {
                     'name-key'      : (itemText =~ /(?m)^(?:  name-key:|- name-key:)\s*/).count,
                     'priority/order': (itemText =~ /(?m)^(?:  (priority|order|pos):|- (priority|order|pos):)\s*/).count
             ].each { field, count ->
-                if (count != 556) {
+                if (count != 565) {
                     violations << "compiled items expected ${field} on every entry, got ${count}"
                 }
             }
@@ -2544,10 +2624,12 @@ tasks.register('validateSfxCompiledContent') {
                 'sf:oil_pump',
                 'sf:fluid_pump',
                 'sf:iron_golem_assembler',
-                'sf:wither_assembler'
+                'sf:wither_assembler',
+                'sfx:waxing_machine',
+                'sfx:cutting_machine'
         ] as Set
-        if (electricFiles.size() != 66) {
-            violations << "compiled electric machine file count expected 66, got ${electricFiles.size()}"
+        if (electricFiles.size() != 68) {
+            violations << "compiled electric machine file count expected 68, got ${electricFiles.size()}"
         }
         electricFiles.each { file ->
             def text = file.getText('UTF-8')
@@ -2615,17 +2697,17 @@ tasks.register('validateSfxCompiledContent') {
                 if (runtimeExecutor == null || runtimeExecutor.isBlank()) {
                     violations << "${rel}: runtime requires executor"
                 }
-                if (runtimeExecutor == 'sf:special_provider') {
+                if (runtimeExecutor == 'sf:provider') {
                     if (runtimeProvider == null || runtimeProvider.isBlank()) {
-                        violations << "${rel}: sf:special_provider runtime requires provider"
+                        violations << "${rel}: sf:provider runtime requires provider"
                     } else if (!specialElectricProviders.contains(runtimeProvider)) {
                         violations << "${rel}: unknown special electric provider ${runtimeProvider}"
                     }
                     if (!runtimeTags.isEmpty() || !runtimeIncludes.isEmpty() || !runtimeExcludes.isEmpty()) {
-                        violations << "${rel}: sf:special_provider runtime must not declare electric recipe tags/includes/excludes"
+                        violations << "${rel}: sf:provider runtime must not declare electric recipe tags/includes/excludes"
                     }
                 } else if (runtimeProvider != null && !runtimeProvider.isBlank()) {
-                    violations << "${rel}: runtime provider is only valid for sf:special_provider"
+                    violations << "${rel}: runtime provider is only valid for sf:provider"
                 }
                 runtimeIncludes.each { recipeId ->
                     if (!electricRecipeIds.contains(recipeId)) {
@@ -3236,6 +3318,150 @@ tasks.register('prepareRuntimeDirs') {
         file("${rootProject.ext.paper261RuntimeDirName}/plugins").mkdirs()
         file('run-folia-1.21.8/plugins').mkdirs()
         file("${rootProject.ext.legacyRuntimeDirName}/plugins").mkdirs()
+    }
+}
+
+tasks.register('generateSlimeEasyModifiedSource') {
+    group = 'slimeeasy'
+    description = 'Regenerates the patched SlimeEasy source tree from the verified upstream baseline.'
+    inputs.dir(layout.projectDirectory.dir(rootProject.ext.slimeEasyDeliveryDirName))
+    outputs.dir(layout.projectDirectory.dir(rootProject.ext.slimeEasySourceDirName))
+    outputs.file(layout.buildDirectory.file("slimeeasy/${rootProject.ext.slimeEasyCompleteSourceZipName}"))
+    doLast {
+        def deliveryDir = layout.projectDirectory.dir(rootProject.ext.slimeEasyDeliveryDirName).asFile
+        def generator = new File(deliveryDir, 'generate-complete-source.py')
+        if (!generator.isFile()) {
+            throw new GradleException("Missing SlimeEasy source generator: ${generator}")
+        }
+
+        def outputZip = layout.buildDirectory.file("slimeeasy/${rootProject.ext.slimeEasyCompleteSourceZipName}").get().asFile
+        outputZip.parentFile.mkdirs()
+        exec {
+            commandLine 'python', generator.absolutePath, '--output', outputZip.absolutePath
+        }
+
+        def externalDir = layout.projectDirectory.dir('external').asFile
+        def sourceDir = layout.projectDirectory.dir(rootProject.ext.slimeEasySourceDirName).asFile
+        delete sourceDir
+        copy {
+            from zipTree(outputZip)
+            into externalDir
+        }
+
+        def wrapperProperties = new File(sourceDir, 'gradle/wrapper/gradle-wrapper.properties')
+        if (wrapperProperties.isFile()) {
+            wrapperProperties.text = wrapperProperties.getText(StandardCharsets.UTF_8.name())
+                    .replace('networkTimeout=10000', 'networkTimeout=120000')
+        }
+    }
+}
+
+tasks.register('buildSlimeEasyModified') {
+    group = 'slimeeasy'
+    description = 'Builds the imported patched SlimeEasy source tree with Java 25.'
+    doLast {
+        def sourceDir = layout.projectDirectory.dir(rootProject.ext.slimeEasySourceDirName).asFile
+        def gradleUserHome = layout.projectDirectory.dir(rootProject.ext.slimeEasyGradleUserHomeName).asFile
+        def wrapper = new File(sourceDir, 'gradlew.bat')
+        if (!wrapper.isFile()) {
+            throw new GradleException("Missing SlimeEasy source tree. Run generateSlimeEasyModifiedSource first.")
+        }
+        def gradleCommand = [
+                file("${System.getProperty('user.home')}/.gradle/wrapper/dists/gradle-9.6.1-bin/4ticwg1pgcbps2hj28r8so764/gradle-9.6.1/bin/gradle.bat"),
+                wrapper
+        ].find { it.isFile() }
+        def java25Home = [
+                file('D:/MyApp/java/jdk-25'),
+                file('D:/Program Files/Zulu/zulu-25'),
+                file('C:/Program Files/Java/jdk-25'),
+                file('C:/Program Files/Java/jdk-25.0.1'),
+                file('C:/Program Files/Java/jdk-25.0.2')
+        ].find { new File(it, 'bin/java.exe').isFile() }
+        exec {
+            workingDir sourceDir
+            environment 'GRADLE_USER_HOME', gradleUserHome.absolutePath
+            if (java25Home != null) {
+                environment 'JAVA_HOME', java25Home.absolutePath
+                environment 'PATH', "${new File(java25Home, 'bin').absolutePath}${File.pathSeparator}${System.getenv('PATH')}"
+            }
+            commandLine gradleCommand.absolutePath, 'build', '--no-daemon', '--stacktrace'
+        }
+    }
+}
+
+tasks.register('prepareSlimeEasyPaper262Runtime') {
+    group = 'slimeeasy'
+    description = 'Stages SlimeEasy, Slimefun, and accepts the EULA for the SlimeEasy Paper 26.2 test server.'
+    dependsOn 'buildSlimeEasyModified'
+    doLast {
+        def sourceDir = layout.projectDirectory.dir(rootProject.ext.slimeEasySourceDirName).asFile
+        def libsDir = new File(sourceDir, 'libs')
+        def slimefunJar = libsDir.listFiles()?.find { it.isFile() && it.name.toLowerCase(Locale.ROOT).startsWith('slimefun') && it.name.endsWith('.jar') }
+        if (slimefunJar == null) {
+            throw new GradleException("Missing Slimefun compile/runtime jar under ${libsDir}")
+        }
+
+        def pluginsDir = new File(sourceDir, 'run/plugins')
+        pluginsDir.mkdirs()
+        copy {
+            from slimefunJar
+            into pluginsDir
+        }
+        def slimeEasyJar = new File(sourceDir, 'build/libs/SlimeEasy-1.0-SNAPSHOT-all.jar')
+        if (!slimeEasyJar.isFile()) {
+            throw new GradleException("Missing SlimeEasy shadow jar: ${slimeEasyJar}")
+        }
+        copy {
+            from slimeEasyJar
+            into pluginsDir
+            rename { rootProject.ext.slimeEasyJarName }
+        }
+        new File(sourceDir, 'run/eula.txt').setText('eula=true\n', 'UTF-8')
+    }
+}
+
+tasks.register('runSlimeEasyPaper262') {
+    group = 'slimeeasy'
+    description = 'Builds and starts the patched SlimeEasy Paper 26.2 test server with Slimefun staged.'
+    dependsOn 'prepareSlimeEasyPaper262Runtime'
+    doLast {
+        def sourceDir = layout.projectDirectory.dir(rootProject.ext.slimeEasySourceDirName).asFile
+        def java25Home = [
+                file('D:/MyApp/java/jdk-25'),
+                file('D:/Program Files/Zulu/zulu-25'),
+                file('C:/Program Files/Java/jdk-25'),
+                file('C:/Program Files/Java/jdk-25.0.1'),
+                file('C:/Program Files/Java/jdk-25.0.2')
+        ].find { new File(it, 'bin/java.exe').isFile() }
+        if (java25Home == null) {
+            throw new GradleException("Missing Java 25 runtime for SlimeEasy Paper 26.2.")
+        }
+        def runDir = new File(sourceDir, 'run')
+        def paperJar = new File(runDir, 'versions/26.2/paper-26.2.jar')
+        if (!paperJar.isFile()) {
+            throw new GradleException("Missing Paper 26.2 runtime jar: ${paperJar}. Run the SlimeEasy runServer task once from the imported project to download Paper, then retry runSlimeEasyPaper262.")
+        }
+        def libraryJars = fileTree(new File(runDir, 'libraries')) {
+            include '**/*.jar'
+        }.files.sort { it.absolutePath }
+        if (libraryJars.isEmpty()) {
+            throw new GradleException("Missing Paper runtime libraries under ${new File(runDir, 'libraries')}. Run the SlimeEasy runServer task once from the imported project to download Paper, then retry runSlimeEasyPaper262.")
+        }
+        def serverClasspath = ([paperJar] + libraryJars).collect { it.absolutePath }.join(File.pathSeparator)
+        exec {
+            workingDir runDir
+            standardInput = System.in
+            environment 'JAVA_HOME', java25Home.absolutePath
+            environment 'PATH', "${new File(java25Home, 'bin').absolutePath}${File.pathSeparator}${System.getenv('PATH')}"
+            commandLine new File(java25Home, 'bin/java.exe').absolutePath,
+                    '-Xms2G',
+                    '-Xmx2G',
+                    *rootProject.ext.serverEncodingJvmArgs,
+                    '-cp',
+                    serverClasspath,
+                    'org.bukkit.craftbukkit.Main',
+                    'nogui'
+        }
     }
 }
 

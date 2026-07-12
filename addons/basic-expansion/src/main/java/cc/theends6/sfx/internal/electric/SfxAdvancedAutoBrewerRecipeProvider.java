@@ -19,10 +19,10 @@ final class SfxAdvancedAutoBrewerRecipeProvider implements SfxElectricRecipeProv
     private static final int SNAPSHOT_POTION_BASE = 1;
     private static final int RESULT_BASE = 0;
 
-    private final SfxPotionBrewEngine engine;
+    private final SfxBasicExpansionPotionBrewEngine engine;
 
     SfxAdvancedAutoBrewerRecipeProvider(JavaPlugin plugin) {
-        this.engine = new SfxPotionBrewEngine(plugin);
+        this.engine = new SfxBasicExpansionPotionBrewEngine(plugin);
     }
 
     @Override
@@ -166,7 +166,7 @@ final class SfxAdvancedAutoBrewerRecipeProvider implements SfxElectricRecipeProv
             if (!engine.isValidPotionItem(items, potion)) {
                 continue;
             }
-            SfxPotionBrewEngine.BrewResult result = engine.brew(items, potion, ingredient);
+            SfxBasicExpansionPotionBrewEngine.BrewResult result = engine.brew(items, potion, ingredient);
             if (result == null || result.result() == null || result.result().getType().isAir()) {
                 continue;
             }

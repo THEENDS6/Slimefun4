@@ -9,7 +9,8 @@ record SfxElectricMachineRuntimeBinding(
         String provider,
         Set<String> recipeTags,
         Set<String> includeRecipes,
-        Set<String> excludeRecipes
+        Set<String> excludeRecipes,
+        Set<String> guideRecipeTypes
 ) {
     SfxElectricMachineRuntimeBinding {
         executor = normalizeId(executor);
@@ -17,14 +18,15 @@ record SfxElectricMachineRuntimeBinding(
         recipeTags = normalizeTags(recipeTags);
         includeRecipes = normalizeIds(includeRecipes);
         excludeRecipes = normalizeIds(excludeRecipes);
+        guideRecipeTypes = normalizeIds(guideRecipeTypes);
         if (executor == null || executor.isBlank()) {
             throw new IllegalArgumentException("Electric machine runtime requires executor.");
         }
-        if ("sf:special_provider".equals(executor) && (provider == null || provider.isBlank())) {
-            throw new IllegalArgumentException("Electric machine special-provider runtime requires provider.");
+        if ("sf:provider".equals(executor) && (provider == null || provider.isBlank())) {
+            throw new IllegalArgumentException("Electric machine provider runtime requires provider.");
         }
-        if (!"sf:special_provider".equals(executor) && provider != null && !provider.isBlank()) {
-            throw new IllegalArgumentException("Electric machine runtime provider is only valid for sf:special_provider.");
+        if (!"sf:provider".equals(executor) && provider != null && !provider.isBlank()) {
+            throw new IllegalArgumentException("Electric machine runtime provider is only valid for sf:provider.");
         }
         Set<String> conflicts = new LinkedHashSet<>(includeRecipes);
         conflicts.retainAll(excludeRecipes);

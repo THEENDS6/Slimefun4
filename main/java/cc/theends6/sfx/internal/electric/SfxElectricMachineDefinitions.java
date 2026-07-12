@@ -1,8 +1,8 @@
 package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.SlimeFunXPlugin;
-import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderKeyContext;
-import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderKeyPolicy;
+import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderKeyContext;
+import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderKeyPolicy;
 import cc.theends6.sfx.api.behavior.SfxAreaMachineRules;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
@@ -55,38 +55,43 @@ final class SfxElectricMachineDefinitions {
         SfxElectricRecipeProvider vanillaAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.vanilla(virtualContainers, items);
         SfxElectricRecipeProvider enhancedAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.enhanced(virtualContainers, items, List.copyOf(manualMachines.recipesFor("sf:enhanced_crafting_table")));
         SfxElectricRecipeProvider armorAutoCrafterRecipes = SfxAutoCrafterRecipeProvider.armor(virtualContainers, items, List.copyOf(manualMachines.recipesFor("sf:armor_forge")));
-        Map<String, SfxElectricRecipeProvider> specialProviders = new LinkedHashMap<>();
-        specialProviders.put("sf:vanilla_furnace", furnaceRecipes);
-        specialProviders.put("sf:classic_ore_grinder", grinderRecipes);
-        specialProviders.put("sf:electric_smeltery", electricSmelteryRecipes);
-        specialProviders.put("sf:auto_brewer", classicAutoBrewerRecipes);
-        specialProviders.put("sf:auto_brewer_legacy", classicAutoBrewerRecipes);
-        specialProviders.put("sf:vanilla_auto_crafter", vanillaAutoCrafterRecipes);
-        specialProviders.put("sf:enhanced_auto_crafter", enhancedAutoCrafterRecipes);
-        specialProviders.put("sf:armor_auto_crafter", armorAutoCrafterRecipes);
-        specialProviders.put("sf:auto_enchanter", autoEnchanterRecipes);
-        specialProviders.put("sf:auto_disenchanter", autoDisenchanterRecipes);
-        specialProviders.put("sf:book_binder", bookBinderRecipes);
-        specialProviders.put("sf:auto_anvil", autoAnvilRecipes);
-        specialProviders.put("sf:auto_anvil_2", autoAnvil2Recipes);
-        specialProviders.put("sf:produce_collector", produceCollectorRecipes);
-        specialProviders.put("sf:auto_breeder", autoBreederRecipes);
-        specialProviders.put("sf:animal_growth_accelerator", animalGrowthRecipes);
-        specialProviders.put("sf:crop_growth_accelerator", cropGrowthRecipes);
-        specialProviders.put("sf:crop_growth_accelerator_2", cropGrowth2Recipes);
-        specialProviders.put("sf:tree_growth_accelerator", treeGrowthRecipes);
-        specialProviders.put("sf:xp_collector", expCollectorRecipes);
-        specialProviders.put("sf:gps_transmitter", gpsTransmitterRecipes);
-        specialProviders.put("sf:geo_miner", geoMinerRecipes);
-        specialProviders.put("sf:oil_pump", oilPumpRecipes);
-        specialProviders.put("sf:fluid_pump", fluidPumpRecipes);
-        specialProviders.put("sf:iron_golem_assembler", ironGolemAssemblerRecipes);
-        specialProviders.put("sf:wither_assembler", witherAssemblerRecipes);
+        Map<String, SfxElectricRecipeProvider> providers = new LinkedHashMap<>();
+        providers.put("sf:vanilla_furnace", furnaceRecipes);
+        providers.put("sf:classic_ore_grinder", grinderRecipes);
+        providers.put("sf:electric_smeltery", electricSmelteryRecipes);
+        providers.put("sf:auto_brewer", classicAutoBrewerRecipes);
+        providers.put("sf:auto_brewer_legacy", classicAutoBrewerRecipes);
+        providers.put("sf:vanilla_auto_crafter", vanillaAutoCrafterRecipes);
+        providers.put("sf:enhanced_auto_crafter", enhancedAutoCrafterRecipes);
+        providers.put("sf:armor_auto_crafter", armorAutoCrafterRecipes);
+        providers.put("sf:auto_enchanter", autoEnchanterRecipes);
+        providers.put("sf:auto_disenchanter", autoDisenchanterRecipes);
+        providers.put("sf:book_binder", bookBinderRecipes);
+        providers.put("sf:auto_anvil", autoAnvilRecipes);
+        providers.put("sf:auto_anvil_2", autoAnvil2Recipes);
+        providers.put("sf:produce_collector", produceCollectorRecipes);
+        providers.put("sf:auto_breeder", autoBreederRecipes);
+        providers.put("sf:animal_growth_accelerator", animalGrowthRecipes);
+        providers.put("sf:crop_growth_accelerator", cropGrowthRecipes);
+        providers.put("sf:crop_growth_accelerator_2", cropGrowth2Recipes);
+        providers.put("sf:tree_growth_accelerator", treeGrowthRecipes);
+        providers.put("sf:xp_collector", expCollectorRecipes);
+        providers.put("sf:gps_transmitter", gpsTransmitterRecipes);
+        providers.put("sf:geo_miner", geoMinerRecipes);
+        providers.put("sf:oil_pump", oilPumpRecipes);
+        providers.put("sf:fluid_pump", fluidPumpRecipes);
+        providers.put("sf:iron_golem_assembler", ironGolemAssemblerRecipes);
+        providers.put("sf:wither_assembler", witherAssemblerRecipes);
         if (plugin instanceof SlimeFunXPlugin sfx && sfx.api() != null) {
-            for (cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderRegistration registration : sfx.api().behaviors().electricSpecialProviders()) {
-                SfxElectricRecipeProvider provider = registration.factory().create(plugin, items, blockData);
-                if (provider != null) {
-                    specialProviders.put(registration.key(), provider);
+            for (cc.theends6.sfx.api.behavior.SfxElectricMachineProviderRegistration registration : sfx.api().behaviors().electricMachineProviders()) {
+                cc.theends6.sfx.api.behavior.SfxElectricMachineProvider hook = registration.factory().create(
+                        new cc.theends6.sfx.api.behavior.SfxElectricMachineProviderContext(
+                                plugin, items, (location, machineId, horizontalRadius, verticalRadius) ->
+                                hasOverlappingMachine(blockData, location, machineId, horizontalRadius, verticalRadius)));
+                if (hook instanceof SfxElectricRecipeProvider provider) {
+                    providers.put(registration.key(), provider);
+                } else if (hook != null) {
+                    throw new IllegalStateException("Invalid electric provider hook for " + registration.key());
                 }
             }
         }
@@ -98,10 +103,10 @@ final class SfxElectricMachineDefinitions {
             if (!autoBrewerProviderOverridden && "sf:auto_brewer".equals(compiledEntryId)) {
                 continue;
             }
-            register(result, config, compiledEntryId, staticRecipes, specialProviders);
+            register(result, config, compiledEntryId, staticRecipes, providers);
         }
         if (!autoBrewerProviderOverridden) {
-            register(result, config, "sf:auto_brewer", "sf:auto_brewer#legacy", staticRecipes, specialProviders);
+            register(result, config, "sf:auto_brewer", "sf:auto_brewer#legacy", staticRecipes, providers);
         }
         return result;
     }
@@ -120,8 +125,8 @@ final class SfxElectricMachineDefinitions {
     private static String resolveElectricProviderKey(JavaPlugin plugin, String machineId, String compiledEntryId, String providerKey) {
         String current = providerKey;
         if (plugin instanceof SlimeFunXPlugin sfx && sfx.api() != null) {
-            SfxElectricSpecialProviderKeyContext context = new SfxElectricSpecialProviderKeyContext(machineId, compiledEntryId, providerKey);
-            for (SfxElectricSpecialProviderKeyPolicy policy : sfx.api().behaviors().electricSpecialProviderKeyPolicies()) {
+            SfxElectricMachineProviderKeyContext context = new SfxElectricMachineProviderKeyContext(machineId, compiledEntryId, providerKey);
+            for (SfxElectricMachineProviderKeyPolicy policy : sfx.api().behaviors().electricMachineProviderKeyPolicies()) {
                 String resolved = policy.resolve(context, current);
                 if (resolved != null && !resolved.isBlank()) {
                     current = resolved.trim();
@@ -131,11 +136,49 @@ final class SfxElectricMachineDefinitions {
         return current;
     }
 
-    private static void register(SfxElectricMachineRegistry registry, SfxElectricMachineDefinitionConfig config, String id, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> specialProviders) {
-        registry.register(config.create(id, id, staticRecipes, specialProviders));
+    private static boolean hasOverlappingMachine(
+            SfxBlockDataService blockData,
+            org.bukkit.Location location,
+            String machineId,
+            int horizontalRadius,
+            int verticalRadius
+    ) {
+        if (blockData == null || location == null || location.getWorld() == null || machineId == null || machineId.isBlank()) {
+            return false;
+        }
+        java.util.UUID currentId = blockData.findAnchor(location).map(anchor -> anchor.instanceId()).orElse(null);
+        cc.theends6.sfx.internal.block.SfxBlockAnchorKey current =
+                cc.theends6.sfx.internal.block.SfxBlockAnchorKey.fromLocation(location);
+        for (var anchor : blockData.anchors()) {
+            cc.theends6.sfx.internal.block.SfxBlockInstanceRecord instance =
+                    blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (instance == null || java.util.Objects.equals(instance.instanceId(), currentId)) {
+                continue;
+            }
+            boolean matchingType = instance.typeId().equals(machineId)
+                    || ("sf:crop_growth_accelerator".equals(machineId)
+                    && "sf:crop_growth_accelerator_2".equals(instance.typeId()));
+            if (!matchingType) {
+                continue;
+            }
+            cc.theends6.sfx.internal.block.SfxBlockAnchorKey other = instance.anchorKey();
+            if (!other.worldId().equals(current.worldId())) {
+                continue;
+            }
+            if (Math.abs(other.x() - current.x()) <= Math.max(0, horizontalRadius)
+                    && Math.abs(other.z() - current.z()) <= Math.max(0, horizontalRadius)
+                    && Math.abs(other.y() - current.y()) <= Math.max(0, verticalRadius)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    private static void register(SfxElectricMachineRegistry registry, SfxElectricMachineDefinitionConfig config, String id, String compiledEntryId, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> specialProviders) {
-        registry.register(config.create(id, compiledEntryId, staticRecipes, specialProviders));
+    private static void register(SfxElectricMachineRegistry registry, SfxElectricMachineDefinitionConfig config, String id, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> providers) {
+        registry.register(config.create(id, id, staticRecipes, providers));
+    }
+
+    private static void register(SfxElectricMachineRegistry registry, SfxElectricMachineDefinitionConfig config, String id, String compiledEntryId, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> providers) {
+        registry.register(config.create(id, compiledEntryId, staticRecipes, providers));
     }
 }

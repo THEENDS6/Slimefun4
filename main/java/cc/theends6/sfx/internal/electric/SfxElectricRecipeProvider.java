@@ -1,12 +1,13 @@
 package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.behavior.SfxElectricMachineProvider;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.List;
 
-public interface SfxElectricRecipeProvider {
+public interface SfxElectricRecipeProvider extends SfxElectricMachineProvider {
     List<SfxElectricRecipe> recipes();
 
     default SfxElectricRecipeMatch findDynamicMatch(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
@@ -43,6 +44,10 @@ public interface SfxElectricRecipeProvider {
 
     default List<SfxElectricStack> dropsOnDestroy(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
         return List.of();
+    }
+
+    default boolean locksInputsDuringProgress() {
+        return false;
     }
 }
 

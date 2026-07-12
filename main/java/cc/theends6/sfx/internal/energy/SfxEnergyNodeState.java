@@ -10,7 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class SfxEnergyNodeState {
-    private static final int SCHEMA = 2;
+    private static final int SCHEMA = 3;
     private static final int LEGACY_SCHEMA = 1;
     private static final Logger LOGGER = Logger.getLogger(SfxEnergyNodeState.class.getName());
 
@@ -21,6 +21,8 @@ public final class SfxEnergyNodeState {
     private int fuelProgressTenths;
     private int fuelTotalTenths;
     private SfxElectricStack pendingOutput;
+    private int specialData;
+    private int specialData2;
 
     public static SfxEnergyNodeState empty() {
         return new SfxEnergyNodeState();
@@ -32,7 +34,7 @@ public final class SfxEnergyNodeState {
         }
         try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(blob))) {
             int schema = input.readInt();
-            if (schema != SCHEMA && schema != LEGACY_SCHEMA) {
+            if (schema != SCHEMA && schema != LEGACY_SCHEMA && schema != 2) {
                 LOGGER.warning("Unsupported energy node state schema " + schema + "; returning empty state to keep the node usable");
                 return empty();
             }
@@ -54,6 +56,10 @@ public final class SfxEnergyNodeState {
             state.fuelTotalTenths = Math.max(0, input.readInt());
             if (input.readBoolean()) {
                 state.pendingOutput = schema == LEGACY_SCHEMA ? SfxElectricStack.read(input) : SfxElectricStack.readV2(input);
+            }
+            if (schema >= 3) {
+                state.specialData = Math.max(0, input.readInt());
+                state.specialData2 = Math.max(0, input.readInt());
             }
             return state;
         } catch (IOException | IllegalArgumentException exception) {
@@ -86,6 +92,8 @@ public final class SfxEnergyNodeState {
             if (pendingOutput != null) {
                 pendingOutput.writeV2(output);
             }
+            output.writeInt(specialData);
+            output.writeInt(specialData2);
             output.flush();
             return buffer.toByteArray();
         } catch (IOException exception) {
@@ -147,6 +155,22 @@ public final class SfxEnergyNodeState {
 
     public void pendingOutput(SfxElectricStack pendingOutput) {
         this.pendingOutput = pendingOutput;
+    }
+
+    public int specialData() {
+        return specialData;
+    }
+
+    public void specialData(int specialData) {
+        this.specialData = Math.max(0, specialData);
+    }
+
+    public int specialData2() {
+        return specialData2;
+    }
+
+    public void specialData2(int specialData2) {
+        this.specialData2 = Math.max(0, specialData2);
     }
 
     public boolean hasAnyInput() {

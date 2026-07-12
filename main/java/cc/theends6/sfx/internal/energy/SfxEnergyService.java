@@ -1,6 +1,8 @@
 package cc.theends6.sfx.internal.energy;
 
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.behavior.SfxEnergyGeneratorProviderContext;
+import cc.theends6.sfx.api.behavior.SfxEnergyGeneratorProviderRegistration;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxAnchoredInteraction;
@@ -71,6 +73,7 @@ public final class SfxEnergyService implements Listener {
     final SfxMachineRuntimeEngine machineRuntime;
     private final SfxTopologyService topology;
     final Map<String, SfxEnergyComponentDefinition> definitions = new LinkedHashMap<>();
+    private final Map<String, SfxDynamicEnergyGeneratorProvider> generatorProviders = new ConcurrentHashMap<>();
     private final Map<UUID, SfxEnergyNodeState> nodeStates = new ConcurrentHashMap<>();
     final Map<UUID, SfxEnergyGridStatus> nodeGridStatuses = new ConcurrentHashMap<>();
     final Set<UUID> dirtyNodes = ConcurrentHashMap.newKeySet();
@@ -106,6 +109,7 @@ public final class SfxEnergyService implements Listener {
         this.displayController = new SfxEnergyDisplayController(plugin, localization, Objects.requireNonNull(floatingTextDisplay, "floatingTextDisplay"));
         this.capacitorProjector = new SfxCapacitorAppearanceProjector(runtime, blockData, definitions);
         this.definitions.putAll(SfxEnergyDefinitions.create(plugin));
+        loadGeneratorProviders();
         this.electricEnergyMenus = new SfxEnergyBackedElectricMenuService(this, rechargeableItems);
         this.topology = new SfxTopologyService(
                 blockData,
@@ -127,6 +131,27 @@ public final class SfxEnergyService implements Listener {
 
     public Listener electricMenuListener() {
         return electricEnergyMenus;
+    }
+
+    private void loadGeneratorProviders() {
+        generatorProviders.clear();
+        if (!(plugin instanceof cc.theends6.sfx.SlimeFunXPlugin sfx) || sfx.api() == null) {
+            return;
+        }
+        for (SfxEnergyGeneratorProviderRegistration registration : sfx.api().behaviors().energyGeneratorProviders()) {
+            cc.theends6.sfx.api.behavior.SfxEnergyGeneratorProvider provider = registration.factory().create(
+                    new SfxEnergyGeneratorProviderContext(plugin, items));
+            if (provider instanceof SfxDynamicEnergyGeneratorProvider dynamic) {
+                generatorProviders.put(registration.key(), dynamic);
+            } else if (provider != null) {
+                throw new IllegalStateException("Invalid energy generator provider hook for " + registration.key());
+            }
+        }
+        for (SfxEnergyComponentDefinition definition : definitions.values()) {
+            if (definition.providerKey() != null && !generatorProviders.containsKey(definition.providerKey())) {
+                throw new IllegalStateException("Missing energy generator provider " + definition.providerKey() + " for " + definition.id());
+            }
+        }
     }
 
     private void registerFrameworkEffects() {
@@ -266,6 +291,12 @@ public final class SfxEnergyService implements Listener {
         }
         for (int slot = 0; slot < outputSlotCount(definition); slot++) {
             dropStack(block, state.output(slot));
+        }
+        SfxDynamicEnergyGeneratorProvider dynamicProvider = dynamicGenerator(definition);
+        if (dynamicProvider != null) {
+            for (SfxElectricStack stack : dynamicProvider.dropsOnDestroy(plugin, items, definition, state, block.getLocation())) {
+                dropStack(block, stack);
+            }
         }
         if (definition != null && state.hasActiveFuel()) {
             SfxElectricStack interruptedOutput = interruptedFuelOutput(definition, state.activeFuelKey());
@@ -515,7 +546,7 @@ public final class SfxEnergyService implements Listener {
             int requestedConsumption
     ) {
         for (SfxEnergyNodeRef generator : generatorRefs) {
-            if (generator.definition().isSolarGenerator()) {
+            if (generator.definition().isSolarGenerator() || excludesFromAutoPause(generator)) {
                 autoPausedGenerators.remove(generator.instance().instanceId());
             }
         }
@@ -539,7 +570,7 @@ public final class SfxEnergyService implements Listener {
         }
         List<AutoPauseCandidate> candidates = new ArrayList<>();
         for (SfxEnergyNodeRef generator : generatorRefs) {
-            if (generator.definition().isSolarGenerator()) {
+            if (generator.definition().isSolarGenerator() || excludesFromAutoPause(generator)) {
                 autoPausedGenerators.remove(generator.instance().instanceId());
                 continue;
             }
@@ -576,6 +607,10 @@ public final class SfxEnergyService implements Listener {
         }
         if (definition.componentType() != SfxEnergyComponentType.GENERATOR) {
             return 0;
+        }
+        SfxDynamicEnergyGeneratorProvider dynamicProvider = dynamicGenerator(definition);
+        if (dynamicProvider != null) {
+            return dynamicProvider.potentialGeneration(plugin, items, definition, state, generationLocation);
         }
         if (definition.isSolarGenerator()) {
             Location location = toLocation(instance.anchorKey());
@@ -927,6 +962,31 @@ public final class SfxEnergyService implements Listener {
         if (generationLocation != null && !runtime.isOwnedByCurrentRegion(generationLocation)) {
             return runtime.supplyAt(generationLocation, () -> generate(instance, definition, state));
         }
+        SfxDynamicEnergyGeneratorProvider dynamicProvider = dynamicGenerator(definition);
+        if (dynamicProvider != null) {
+            return dynamicProvider.generate(plugin, items, definition, state, generationLocation, new SfxEnergyGeneratorAccess() {
+                @Override
+                public boolean hasOutputSpace(SfxEnergyComponentDefinition checkedDefinition, SfxEnergyNodeState checkedState, SfxElectricStack output) {
+                    return findOutputSlot(checkedDefinition, checkedState, output) != null;
+                }
+
+                @Override
+                public boolean pushOutput(SfxEnergyComponentDefinition checkedDefinition, SfxEnergyNodeState checkedState, SfxElectricStack output) {
+                    Integer slot = findOutputSlot(checkedDefinition, checkedState, output);
+                    if (slot == null) {
+                        return false;
+                    }
+                    SfxEnergyService.this.pushOutput(checkedState, slot, output);
+                    dirtyNodes.add(instance.instanceId());
+                    return true;
+                }
+
+                @Override
+                public void markDirty() {
+                    dirtyNodes.add(instance.instanceId());
+                }
+            });
+        }
         if (definition.isSolarGenerator()) {
             Location location = toLocation(instance.anchorKey());
             if (location == null) {
@@ -1157,6 +1217,18 @@ public final class SfxEnergyService implements Listener {
             return;
         }
         state.output(slot, current.copyWithAmount(current.amount() + output.amount()));
+    }
+
+    private SfxDynamicEnergyGeneratorProvider dynamicGenerator(SfxEnergyComponentDefinition definition) {
+        if (definition == null || definition.providerKey() == null) {
+            return null;
+        }
+        return generatorProviders.get(definition.providerKey());
+    }
+
+    private boolean excludesFromAutoPause(SfxEnergyNodeRef generator) {
+        SfxDynamicEnergyGeneratorProvider provider = dynamicGenerator(generator.definition());
+        return provider != null && provider.excludeFromAutoPause(generator.instance(), generator.definition(), generator.state());
     }
 
     SfxEnergyComponentDefinition definitionFor(UUID instanceId) {

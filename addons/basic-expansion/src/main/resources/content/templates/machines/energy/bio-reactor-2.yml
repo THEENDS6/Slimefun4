@@ -5,7 +5,6 @@ items:
     requires-feature: sfx:generator_balance
     category: sf:electricity
     guide-category: guide:sf:electricity
-    guide-order: 420
     guide-fuel-profile: bio-reactor
     material: LIME_TERRACOTTA
     name-key: items.sf.bio_reactor_2.name

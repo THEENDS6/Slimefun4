@@ -15,7 +15,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
 
-final class SfxPotionBrewEngine {
+final class SfxBasicExpansionPotionBrewEngine {
     static final String POWER_CRYSTAL = "sf:power_crystal";
     static final String MAGIC_SUGAR = "sf:magic_sugar";
 
@@ -78,7 +78,7 @@ final class SfxPotionBrewEngine {
     private final NamespacedKey durationKey;
     private final NamespacedKey stageKey;
 
-    SfxPotionBrewEngine(JavaPlugin plugin) {
+    SfxBasicExpansionPotionBrewEngine(JavaPlugin plugin) {
         Objects.requireNonNull(plugin, "plugin");
         this.effectKey = new NamespacedKey(plugin, "sfx_potion_effect");
         this.levelKey = new NamespacedKey(plugin, "sfx_potion_level");

@@ -192,7 +192,7 @@ floating-text:
     y-offset: 0.0
 
 electric-machines:
-  # SFX balance switches for world-interacting electric machines.
+  # SFX balance switches for selected electric machines.
   # false = classic behavior for that machine.
   sfx-balance:
     crop-growth-accelerator: true
@@ -200,6 +200,7 @@ electric-machines:
     auto-breeder: true
     animal-growth-accelerator: true
     produce-collector: true
+    electric-ore-grinder-3: true
     xp-collector:
       enabled: true
       flask-energy-cost: 4096

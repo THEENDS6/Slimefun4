@@ -1,9 +1,10 @@
 package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.SlimeFunXPlugin;
-import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderKeyContext;
-import cc.theends6.sfx.api.behavior.SfxElectricSpecialProviderKeyPolicy;
+import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderKeyContext;
+import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderKeyPolicy;
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
+import cc.theends6.sfx.internal.energy.SfxEnergyBalance;
 import cc.theends6.sfx.internal.feature.SfxFeatureSwitch;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.ui.SfxDurabilityBarMode;
@@ -107,7 +108,7 @@ final class SfxElectricMachineDefinitionConfig {
         return create(id, compiledEntryId, staticRecipes, Map.of());
     }
 
-    SfxElectricMachineDefinition create(String id, String compiledEntryId, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> specialProviders) {
+    SfxElectricMachineDefinition create(String id, String compiledEntryId, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> providers) {
         if (staticRecipes == null) {
             throw new IllegalArgumentException("Electric machine " + id + " requires recipe loader.");
         }
@@ -119,26 +120,26 @@ final class SfxElectricMachineDefinitionConfig {
         if (entry.runtime == null) {
             throw new IllegalStateException("Missing compiled runtime binding for electric machine " + entryId);
         }
-        return create(id, compiledEntryId, resolveRuntimeProvider(id, entryId, entry.runtime, staticRecipes, specialProviders), entry);
+        return create(id, compiledEntryId, resolveRuntimeProvider(id, entryId, entry.runtime, staticRecipes, providers), entry);
     }
 
-    private SfxElectricRecipeProvider resolveRuntimeProvider(String machineId, String entryId, SfxElectricMachineRuntimeBinding runtime, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> specialProviders) {
-        if ("sf:special_provider".equals(runtime.executor())) {
-            String providerKey = resolveSpecialProviderKey(machineId, entryId, runtime.provider());
-            SfxElectricRecipeProvider provider = specialProviders == null ? null : specialProviders.get(providerKey);
+    private SfxElectricRecipeProvider resolveRuntimeProvider(String machineId, String entryId, SfxElectricMachineRuntimeBinding runtime, SfxElectricRecipeYamlLoader staticRecipes, Map<String, SfxElectricRecipeProvider> providers) {
+        if ("sf:provider".equals(runtime.executor())) {
+            String providerKey = resolveProviderKey(machineId, entryId, runtime.provider());
+            SfxElectricRecipeProvider provider = providers == null ? null : providers.get(providerKey);
             if (provider == null) {
-                throw new IllegalStateException("Missing special electric recipe provider " + providerKey + " for " + entryId);
+                throw new IllegalStateException("Missing electric machine provider " + providerKey + " for " + entryId);
             }
             return provider;
         }
         return staticRecipes.provider(runtime);
     }
 
-    private String resolveSpecialProviderKey(String machineId, String entryId, String providerKey) {
+    private String resolveProviderKey(String machineId, String entryId, String providerKey) {
         String current = providerKey;
         if (plugin instanceof SlimeFunXPlugin sfx && sfx.api() != null) {
-            SfxElectricSpecialProviderKeyContext context = new SfxElectricSpecialProviderKeyContext(machineId, entryId, providerKey);
-            for (SfxElectricSpecialProviderKeyPolicy policy : sfx.api().behaviors().electricSpecialProviderKeyPolicies()) {
+            SfxElectricMachineProviderKeyContext context = new SfxElectricMachineProviderKeyContext(machineId, entryId, providerKey);
+            for (SfxElectricMachineProviderKeyPolicy policy : sfx.api().behaviors().electricMachineProviderKeyPolicies()) {
                 String resolved = policy.resolve(context, current);
                 if (resolved != null && !resolved.isBlank()) {
                     current = resolved.trim();
@@ -163,7 +164,7 @@ final class SfxElectricMachineDefinitionConfig {
         String nameKey = requireString(entryId, "name-key", entry.nameKey);
         int speed = requireInt(entryId, "speed", entry.speed);
         int energyCapacity = requireInt(entryId, "energy.capacity", entry.energyCapacity);
-        int energyConsumption = requireInt(entryId, "energy.consumption-per-tick", entry.energyConsumptionPerTick);
+        int energyConsumption = finalEnergyConsumption(entryId, requireInt(entryId, "energy.consumption-per-tick", entry.energyConsumptionPerTick));
         Material progressMaterial = requireValue(entryId, "progress-material", entry.progressMaterial);
         Set<String> functionTags = requireFunctionTags(entryId, entry);
         if (entry.ui == null) {
@@ -192,8 +193,25 @@ final class SfxElectricMachineDefinitionConfig {
                 outputSlots,
                 entryId,
                 functionTags,
+                entry.runtime == null ? Set.of() : entry.runtime.guideRecipeTypes(),
                 ui,
                 assemblerSpec);
+    }
+
+    private int finalEnergyConsumption(String entryId, int classicConsumption) {
+        if (entryId != null && entryId.startsWith("sf:electrified_crucible")) {
+            double multiplier = SfxEnergyBalance.rules(plugin).electrifiedCrucibleConsumptionMultiplier();
+            return Math.max(1, (int) Math.round(classicConsumption * multiplier));
+        }
+        if ("sf:animal_growth_accelerator".equals(entryId)
+                && SfxFeatureSwitch.requirementEnabled(plugin, "sfx:animal_growth_accelerator_balance")) {
+            return 80;
+        }
+        if ("sf:electric_ore_grinder_3".equals(entryId)
+                && SfxFeatureSwitch.requirementEnabled(plugin, "sfx:electric_ore_grinder_3_balance")) {
+            return 75;
+        }
+        return classicConsumption;
     }
 
     SfxElectricAssemblerSpec assemblerSpec(String compiledEntryId) {
@@ -391,7 +409,8 @@ final class SfxElectricMachineDefinitionConfig {
                 section.getString("provider", null),
                 stringSet(section.getList("accepts.recipe-tags", List.of())),
                 stringSet(section.getList("include-recipes", List.of())),
-                stringSet(section.getList("exclude-recipes", List.of())));
+                stringSet(section.getList("exclude-recipes", List.of())),
+                stringSet(section.getList("guide-recipe-types", List.of())));
     }
 
     private static Set<String> stringSet(Object value) {

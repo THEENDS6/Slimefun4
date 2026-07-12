@@ -448,6 +448,12 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         boolean topSlot = event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize();
+        boolean lockedInput = inputsLockedDuringProgress(holder.instanceId(), clickDefinition);
+        if (lockedInput && ((topSlot && contains(clickDefinition.inputSlots(), event.getRawSlot()))
+                || (!topSlot && event.isShiftClick()))) {
+            event.setCancelled(true);
+            return;
+        }
         if (topSlot && !clickDefinition.hasFunction("auto-crafter")) {
             boolean managedInput = contains(clickDefinition.inputSlots(), event.getRawSlot());
             boolean managedOutput = contains(clickDefinition.outputSlots(), event.getRawSlot());
@@ -554,6 +560,10 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         if (dragDefinition.hasFunction("auto-crafter")) {
+            event.setCancelled(true);
+            return;
+        }
+        if (inputsLockedDuringProgress(holder.instanceId(), dragDefinition)) {
             event.setCancelled(true);
             return;
         }
@@ -1531,6 +1541,14 @@ public final class SfxElectricMachineService implements Listener {
         return true;
     }
 
+    private boolean inputsLockedDuringProgress(UUID instanceId, SfxElectricMachineDefinition definition) {
+        if (definition == null || !definition.recipeProvider().locksInputsDuringProgress()) {
+            return false;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        return instance != null && currentState(instanceId, instance).hasProgress();
+    }
+
     private boolean isValidAssemblerInput(SfxElectricMachineDefinition definition, int rawSlot, ItemStack item) {
         if (item == null || item.getType().isAir()) {
             return true;
@@ -1557,16 +1575,54 @@ public final class SfxElectricMachineService implements Listener {
         }
         Material material = item == null ? Material.AIR : item.getType();
         boolean empty = item == null || material.isAir();
-        SfxPotionBrewEngine brewEngine = new SfxPotionBrewEngine(plugin);
         SfxElectricStack stack = empty ? null : SfxElectricStack.fromItemStack(items, item);
         return behavior.validInput(new SfxAutoBrewerInputContext(
                 rawSlot,
                 material,
+                stack != null && stack.isSfxItem() ? stack.itemId() : null,
                 empty,
                 item != null && item.hasItemMeta(),
-                stack != null && brewEngine.isBrewingIngredient(stack),
-                !empty && brewEngine.isValidPotionItem(items, item)
+                stack != null && isVanillaBrewingIngredient(stack),
+                stack != null && isPotionMaterial(material) && !stack.isSfxItem()
         ));
+    }
+
+    public java.util.Collection<SfxElectricMachineDefinition> guideDefinitions() {
+        return java.util.List.copyOf(registry.definitions());
+    }
+
+    private boolean isVanillaBrewingIngredient(SfxElectricStack stack) {
+        if (stack == null || stack.amount() <= 0 || stack.isSfxItem() || stack.hasSnapshot()) {
+            return false;
+        }
+        Material material = stack.material();
+        return material == Material.NETHER_WART
+                || material == Material.REDSTONE
+                || material == Material.GLOWSTONE_DUST
+                || material == Material.FERMENTED_SPIDER_EYE
+                || material == Material.GUNPOWDER
+                || material == Material.DRAGON_BREATH
+                || material == Material.SUGAR
+                || material == Material.RABBIT_FOOT
+                || material == Material.BLAZE_POWDER
+                || material == Material.GLISTERING_MELON_SLICE
+                || material == Material.SPIDER_EYE
+                || material == Material.GHAST_TEAR
+                || material == Material.MAGMA_CREAM
+                || material == Material.PUFFERFISH
+                || material == Material.GOLDEN_CARROT
+                || material == Material.TURTLE_HELMET
+                || material == Material.PHANTOM_MEMBRANE
+                || material == Material.matchMaterial("BREEZE_ROD")
+                || material == Material.COBWEB
+                || material == Material.SLIME_BLOCK
+                || material == Material.STONE;
+    }
+
+    private boolean isPotionMaterial(Material material) {
+        return material == Material.POTION
+                || material == Material.SPLASH_POTION
+                || material == Material.LINGERING_POTION;
     }
 
     private SfxAutoBrewerBehaviorProvider autoBrewerBehavior() {

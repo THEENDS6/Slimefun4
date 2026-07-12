@@ -54,6 +54,31 @@ In the full Gradle workspace, build with:
 
 The built plugin jar is produced by the Gradle project. If you copy this source package into an existing workspace, make sure the workspace build script matches the dependency policy below.
 
+## Local test flows
+
+SlimeFunX and the imported SlimeEasy patch are intentionally tested as separate plugin lines.
+
+For SlimeFunX on the local Paper 26.1 runtime:
+
+```powershell
+.\gradlew.bat check
+.\gradlew.bat deployToPaper261Runtime
+.\gradlew.bat runPaper261
+```
+
+The Paper 26.1 runtime lives under `run-paper-26.1` and expects `paper-26.1.jar` plus PacketEvents in `plugins`.
+
+For the SlimeEasy sieve-animation patch:
+
+```powershell
+.\gradlew.bat generateSlimeEasyModifiedSource
+.\gradlew.bat buildSlimeEasyModified
+.\gradlew.bat prepareSlimeEasyPaper262Runtime
+.\gradlew.bat runSlimeEasyPaper262
+```
+
+The imported source tree lives under `external/SlimeEasy-sieve-animation`. Its test server is the SlimeEasy `run` directory and uses Paper 26.2, Java 25, Slimefun4, and the patched SlimeEasy jar. This is not a SlimeFunX addon test.
+
 ## Dependency policy
 
 The intended dependency policy is:

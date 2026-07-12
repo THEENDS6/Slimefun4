@@ -8,24 +8,24 @@ public final class SfxBasicExpansionElectricProviders {
     }
 
     public static void register(SfxAddonContext context) {
-        context.behaviors().registerElectricSpecialProvider("sfx:advanced_auto_brewer",
-                (plugin, items, blockData) -> new SfxAdvancedAutoBrewerRecipeProvider(plugin));
-        context.behaviors().registerElectricSpecialProvider("sfx:produce_collector",
-                (plugin, items, blockData) -> SfxBasicExpansionAreaElectricMachineProviders.produceCollector(true));
-        context.behaviors().registerElectricSpecialProvider("sfx:auto_breeder",
-                (plugin, items, blockData) -> SfxBasicExpansionAreaElectricMachineProviders.autoBreeder(true));
-        context.behaviors().registerElectricSpecialProvider("sfx:animal_growth_accelerator",
-                (plugin, items, blockData) -> SfxBasicExpansionAreaElectricMachineProviders.animalGrowthAccelerator(4000));
-        context.behaviors().registerElectricSpecialProvider("sfx:crop_growth_accelerator",
-                (plugin, items, blockData) -> SfxBasicExpansionAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 3, 20, true));
-        context.behaviors().registerElectricSpecialProvider("sfx:crop_growth_accelerator_2",
-                (plugin, items, blockData) -> SfxBasicExpansionAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 4, 30, true));
-        context.behaviors().registerElectricSpecialProvider("sfx:tree_growth_accelerator",
-                (plugin, items, blockData) -> SfxBasicExpansionAreaElectricMachineProviders.treeGrowthAccelerator(true));
-        context.behaviors().registerElectricSpecialProvider("sfx:xp_collector",
-                (plugin, items, blockData) -> SfxBasicExpansionAreaElectricMachineProviders.expCollector(true, areaRules(context).xpFlaskEnergyCost()));
-        context.behaviors().registerElectricSpecialProvider("sfx:fluid_pump",
-                (plugin, items, blockData) -> SfxBasicExpansionAreaElectricMachineProviders.fluidPump(areaRules(context)));
+        context.behaviors().registerElectricMachineProvider("sfx:advanced_auto_brewer",
+                hook -> new SfxAdvancedAutoBrewerRecipeProvider(hook.plugin()));
+        context.behaviors().registerElectricMachineProvider("sfx:produce_collector",
+                hook -> SfxBasicExpansionAreaElectricMachineProviders.produceCollector(true));
+        context.behaviors().registerElectricMachineProvider("sfx:auto_breeder",
+                hook -> SfxBasicExpansionAreaElectricMachineProviders.autoBreeder(true, 20));
+        context.behaviors().registerElectricMachineProvider("sfx:animal_growth_accelerator",
+                hook -> SfxBasicExpansionAreaElectricMachineProviders.animalGrowthAccelerator(4000, 40));
+        context.behaviors().registerElectricMachineProvider("sfx:crop_growth_accelerator",
+                hook -> SfxBasicExpansionAreaElectricMachineProviders.cropGrowthAccelerator(hook.areaMachines(), 3, 20, true));
+        context.behaviors().registerElectricMachineProvider("sfx:crop_growth_accelerator_2",
+                hook -> SfxBasicExpansionAreaElectricMachineProviders.cropGrowthAccelerator(hook.areaMachines(), 4, 30, true));
+        context.behaviors().registerElectricMachineProvider("sfx:tree_growth_accelerator",
+                hook -> SfxBasicExpansionAreaElectricMachineProviders.treeGrowthAccelerator(true));
+        context.behaviors().registerElectricMachineProvider("sfx:xp_collector",
+                hook -> SfxBasicExpansionAreaElectricMachineProviders.expCollector(true, areaRules(context).xpFlaskEnergyCost()));
+        context.behaviors().registerElectricMachineProvider("sfx:fluid_pump",
+                hook -> SfxBasicExpansionAreaElectricMachineProviders.fluidPump(areaRules(context)));
     }
 
     private static SfxAreaMachineRules areaRules(SfxAddonContext context) {

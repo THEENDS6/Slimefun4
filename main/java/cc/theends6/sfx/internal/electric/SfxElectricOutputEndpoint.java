@@ -6,12 +6,12 @@ import cc.theends6.sfx.internal.inventory.SfxStorageEndpoint;
 import cc.theends6.sfx.internal.inventory.SfxStorageKey;
 import org.bukkit.inventory.ItemStack;
 
-final class SfxElectricOutputEndpoint implements SfxStorageEndpoint {
+public final class SfxElectricOutputEndpoint implements SfxStorageEndpoint {
     private final SfxItems items;
     private final SfxElectricMachineState state;
     private final int slot;
 
-    SfxElectricOutputEndpoint(SfxItems items, SfxElectricMachineState state, int slot) {
+    public SfxElectricOutputEndpoint(SfxItems items, SfxElectricMachineState state, int slot) {
         this.items = items;
         this.state = state;
         this.slot = slot;

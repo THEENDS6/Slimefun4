@@ -5,7 +5,7 @@ items:
     requires-feature: sfx:advanced_input_interface
     category: sf:cargo
     guide-category: guide:sf:cargo
-    guide-order: 50
+    guide-order: 505.5
     material: PLAYER_HEAD
     name-key: items.sf.cargo_node_input_advanced.name
     priority: 505

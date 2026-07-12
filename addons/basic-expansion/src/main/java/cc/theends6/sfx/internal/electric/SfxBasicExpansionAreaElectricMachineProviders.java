@@ -1,10 +1,8 @@
 package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
-import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.api.behavior.SfxAreaMachineRules;
+import cc.theends6.sfx.api.behavior.SfxAreaMachineRuntime;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,7 +93,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
     }
 
     static SfxElectricRecipeProvider fluidPump(SfxAreaMachineRules rules) {
-        return new WorldActionProvider() {
+        return new SfxBasicExpansionWorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 if (isActive(state, "sf:fluid_pump")) {
@@ -130,7 +128,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
     }
 
     static SfxElectricRecipeProvider assembler(String key, EntityType spawnType, Material headMaterial, int headAmount, Set<Material> bodyMaterials, int bodyAmount, int workTicks) {
-        return new WorldActionProvider() {
+        return new SfxBasicExpansionWorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 if (!assemblerEnabled(state)) {
@@ -184,7 +182,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
     }
 
     static SfxElectricRecipeProvider produceCollector(boolean sfxBalance) {
-        return new WorldActionProvider() {
+        return new SfxBasicExpansionWorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 if (isActive(state, "sf:produce_collector:")) {
@@ -209,10 +207,15 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
     }
 
     static SfxElectricRecipeProvider autoBreeder(boolean sfxBalance) {
+        return autoBreeder(sfxBalance, ACTION_WORK_TICKS);
+    }
+
+    static SfxElectricRecipeProvider autoBreeder(boolean sfxBalance, int workTicks) {
         return entityActionProvider(
                 "sf:auto_breeder",
                 sfxBalance,
                 true,
+                workTicks,
                 entity -> entity instanceof Animals animal && entity.isValid() && animal.isAdult() && animal.canBreed() && !animal.isLoveMode(),
                 entity -> {
                     if (entity instanceof Animals animal) {
@@ -223,7 +226,11 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
     }
 
     static SfxElectricRecipeProvider animalGrowthAccelerator(int ageIncrement) {
-        return new WorldActionProvider() {
+        return animalGrowthAccelerator(ageIncrement, ACTION_WORK_TICKS);
+    }
+
+    static SfxElectricRecipeProvider animalGrowthAccelerator(int ageIncrement, int workTicks) {
+        return new SfxBasicExpansionWorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 Predicate<Entity> predicate = entity -> entity instanceof org.bukkit.entity.Ageable ageable && entity.isValid() && !ageable.isAdult();
@@ -243,7 +250,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
                 if (findTargetEntity(location, "sf:animal_growth_accelerator", predicate) == null) {
                     return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
                 }
-                return startTimedWork(definition, state, inputSlot, null, ACTION_WORK_TICKS, "sf:animal_growth_accelerator");
+                return startTimedWork(definition, state, inputSlot, null, workTicks, "sf:animal_growth_accelerator");
             }
 
             @Override
@@ -253,12 +260,12 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         };
     }
 
-    static SfxElectricRecipeProvider cropGrowthAccelerator(SfxBlockDataService blockData, int classicRadius, int sfxAttempts, boolean sfxMode) {
-        return new WorldActionProvider() {
+    static SfxElectricRecipeProvider cropGrowthAccelerator(SfxAreaMachineRuntime areaMachines, int classicRadius, int sfxAttempts, boolean sfxMode) {
+        return new SfxBasicExpansionWorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 if (sfxMode) {
-                    return tickSfxCropGrowth(blockData, definition, state, location, sfxAttempts);
+                    return tickSfxCropGrowth(areaMachines, definition, state, location, sfxAttempts);
                 }
                 return tickClassicCropGrowth(definition, state, location, classicRadius, classicRadius);
             }
@@ -269,9 +276,9 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
                     return state.hasProgress() || state.hasAnyInput() ? definition.energyConsumptionPerTick() : 0;
                 }
                 if (state.hasProgress()) {
-                    return hasOverlappingCropAccelerator(blockData, location) ? 0 : definition.energyConsumptionPerTick();
+                    return hasOverlappingCropAccelerator(areaMachines, location) ? 0 : definition.energyConsumptionPerTick();
                 }
-                if (firstInputSlot(state, false) < 0 || hasOverlappingCropAccelerator(blockData, location) || !hasGrowableCrop(location, SFX_GROWTH_RADIUS)) {
+                if (firstInputSlot(state, false) < 0 || hasOverlappingCropAccelerator(areaMachines, location) || !hasGrowableCrop(location, SFX_GROWTH_RADIUS)) {
                     return 0;
                 }
                 return definition.energyConsumptionPerTick();
@@ -280,7 +287,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
     }
 
     static SfxElectricRecipeProvider treeGrowthAccelerator(boolean sfxMode) {
-        return new WorldActionProvider() {
+        return new SfxBasicExpansionWorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 if (sfxMode) {
@@ -306,7 +313,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
     }
 
     static SfxElectricRecipeProvider expCollector(boolean sfxBalance, int flaskEnergyCost) {
-        return new SpecialProvider() {
+        return new SfxBasicExpansionTickProvider() {
             @Override
             public SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, SfxMachineTickContext context) {
                 FlushResult initialFlush = flushKnowledgeFlasks(items, definition, state, sfxBalance, flaskEnergyCost);
@@ -386,8 +393,8 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         };
     }
 
-    private static SfxElectricRecipeProvider entityActionProvider(String key, boolean sfxBalance, boolean organicFood, Predicate<Entity> predicate, Consumer<Entity> action) {
-        return new WorldActionProvider() {
+    private static SfxElectricRecipeProvider entityActionProvider(String key, boolean sfxBalance, boolean organicFood, int workTicks, Predicate<Entity> predicate, Consumer<Entity> action) {
+        return new SfxBasicExpansionWorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
                 if (isActive(state, key)) {
@@ -400,7 +407,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
                 if (findTargetEntity(location, key, predicate) == null) {
                     return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
                 }
-                return startTimedWork(definition, state, inputSlot, null, ACTION_WORK_TICKS, key);
+                return startTimedWork(definition, state, inputSlot, null, workTicks, key);
             }
 
             @Override
@@ -448,14 +455,14 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         return startTimedWork(definition, state, inputSlot, null, ACTION_WORK_TICKS, "sf:tree_growth_accelerator");
     }
 
-    private static SfxElectricMachineTickResult tickSfxCropGrowth(SfxBlockDataService blockData, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, int attempts) {
+    private static SfxElectricMachineTickResult tickSfxCropGrowth(SfxAreaMachineRuntime areaMachines, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, int attempts) {
         if (isActive(state, "sf:crop_growth_accelerator:sfx")) {
-            if (hasOverlappingCropAccelerator(blockData, location)) {
+            if (hasOverlappingCropAccelerator(areaMachines, location)) {
                 return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OVERLAPPING_AREA, true);
             }
             return advanceSfxGrowth(definition, state, location, attempts, GrowthTarget.CROP);
         }
-        if (hasOverlappingCropAccelerator(blockData, location)) {
+        if (hasOverlappingCropAccelerator(areaMachines, location)) {
             return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OVERLAPPING_AREA, true);
         }
         int inputSlot = firstInputSlot(state, false);
@@ -826,29 +833,9 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         return sfxBalance && (material == Material.SHEARS || material == Material.GLASS_BOTTLE || material == Material.BRUSH);
     }
 
-    private static boolean hasOverlappingCropAccelerator(SfxBlockDataService blockData, Location location) {
-        if (blockData == null || location == null || location.getWorld() == null) {
-            return false;
-        }
-        UUID currentId = blockData.findAnchor(location).map(anchor -> anchor.instanceId()).orElse(null);
-        SfxBlockAnchorKey current = SfxBlockAnchorKey.fromLocation(location);
-        for (var anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance == null || Objects.equals(instance.instanceId(), currentId)) {
-                continue;
-            }
-            if (!instance.typeId().equals("sf:crop_growth_accelerator") && !instance.typeId().equals("sf:crop_growth_accelerator_2")) {
-                continue;
-            }
-            SfxBlockAnchorKey other = instance.anchorKey();
-            if (!other.worldId().equals(current.worldId())) {
-                continue;
-            }
-            if (Math.abs(other.x() - current.x()) <= SFX_GROWTH_RADIUS * 2 && Math.abs(other.z() - current.z()) <= SFX_GROWTH_RADIUS * 2) {
-                return true;
-            }
-        }
-        return false;
+    private static boolean hasOverlappingCropAccelerator(SfxAreaMachineRuntime areaMachines, Location location) {
+        return areaMachines != null && areaMachines.hasOverlappingMachine(
+                location, "sf:crop_growth_accelerator", SFX_GROWTH_RADIUS * 2, Integer.MAX_VALUE);
     }
 
     private static boolean hasGrowableCrop(Location location, int radius) {
@@ -1851,6 +1838,46 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         static ToolUseResult noTool() {
             return new ToolUseResult(ToolUseStatus.BROKEN, null);
         }
+    }
+
+    private record FlushResult(boolean changed, int consumedEnergy) {
+    }
+
+    private record FluidPumpAction(
+            SfxElectricMachineRenderStatus status,
+            int inputSlot,
+            SfxElectricStack output,
+            Block source,
+            boolean consumeSource
+    ) {
+        static FluidPumpAction status(SfxElectricMachineRenderStatus status) {
+            return new FluidPumpAction(status, -1, null, null, false);
+        }
+    }
+
+    private record FluidPoolCacheKey(UUID worldId, int x, int y, int z, Material fluid, int threshold) {
+    }
+
+    private record FluidPoolCacheEntry(long checkedTick, boolean largeEnough) {
+    }
+
+    private record FluidPumpSourceCacheKey(UUID worldId, int x, int y, int z, Material container) {
+    }
+
+    private record FluidPumpSourceCacheEntry(long checkedTick, boolean found, Material fluid, int x, int y, int z) {
+    }
+
+    private record AssemblerStart(
+            SfxElectricMachineRenderStatus status,
+            List<SfxElectricStack> reservedInputs,
+            int primaryInputSlot
+    ) {
+        static AssemblerStart status(SfxElectricMachineRenderStatus status) {
+            return new AssemblerStart(status, List.of(), -1);
+        }
+    }
+
+    private record AssemblerConsume(int slot, int amount) {
     }
 
 }

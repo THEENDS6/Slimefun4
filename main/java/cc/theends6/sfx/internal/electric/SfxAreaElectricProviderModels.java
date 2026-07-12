@@ -18,7 +18,7 @@ abstract class WorldActionProvider implements SfxElectricRecipeProvider {
     }
 }
 
-abstract class SpecialProvider implements SfxElectricRecipeProvider {
+abstract class TickProvider implements SfxElectricRecipeProvider {
     @Override
     public List<SfxElectricRecipe> recipes() {
         return List.of();

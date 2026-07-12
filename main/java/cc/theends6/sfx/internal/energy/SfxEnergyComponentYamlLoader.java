@@ -111,8 +111,35 @@ final class SfxEnergyComponentYamlLoader {
             throw new IllegalArgumentException(id + " compiled energy definition must not contain tag-fuels helper; use explicit fuels");
         }
         List<SfxEnergyComponentDefinition.FuelRule> fuels = parseFuelRules(section);
+        String providerKey = providerKey(section);
         SfxEnergyComponentUiDefinition ui = parseUi(id, requiredSection(section, "ui"), strict);
-        return new SfxEnergyComponentDefinition(id, type, capacity, energyPerTick, 0, burnRate, vanillaFuel, progressMaterial, fuels, ui);
+        int nightEnergyPerTick = type == SfxEnergyComponentType.GENERATOR && !vanillaFuel && fuels.isEmpty() ? consumption : 0;
+        int finalCapacity = finalCapacity(id, type, capacity);
+        return new SfxEnergyComponentDefinition(id, type, finalCapacity, energyPerTick, nightEnergyPerTick, burnRate, vanillaFuel, progressMaterial, fuels, providerKey, ui);
+    }
+
+    private String providerKey(ConfigurationSection section) {
+        ConfigurationSection runtime = section.getConfigurationSection("runtime");
+        if (runtime == null) {
+            return null;
+        }
+        String provider = runtime.getString("provider", null);
+        return provider == null || provider.isBlank() ? null : provider.trim();
+    }
+
+    private int finalCapacity(String id, SfxEnergyComponentType type, int classicCapacity) {
+        if (type != SfxEnergyComponentType.CAPACITOR || !SfxEnergyBalance.rules(plugin).generatorBalanceEnabled()) {
+            return classicCapacity;
+        }
+        return switch (id) {
+            case "sf:small_capacitor" -> 10240;
+            case "sf:medium_capacitor" -> 40960;
+            case "sf:big_capacitor" -> 163840;
+            case "sf:large_capacitor" -> 655360;
+            case "sf:carbonado_edged_capacitor" -> 2621440;
+            case "sf:energized_capacitor" -> 10485760;
+            default -> classicCapacity;
+        };
     }
 
     private SfxEnergyComponentUiDefinition parseUi(String id, ConfigurationSection section, boolean strict) {

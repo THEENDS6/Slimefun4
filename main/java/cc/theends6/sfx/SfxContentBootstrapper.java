@@ -39,6 +39,7 @@ final class SfxContentBootstrapper {
         DefaultSfxRecipeRegistry recipeRegistry = new DefaultSfxRecipeRegistry();
         recipeYamlLoader.loadInto(recipeRegistry);
         DefaultSfxRecipeRegistry.AuditResult recipeAudit = recipeRegistry.apply(itemRegistry, api.internalManualMachines());
+        api.internalGuide().bindRecipeRegistry(recipeRegistry);
         logRecipeAudit(plugin, recipeAudit);
         BaseContentBootstrap.syncManualMachineGuideContent(itemRegistry, api.internalManualMachines());
 
