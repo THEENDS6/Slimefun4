@@ -32,7 +32,7 @@ final class SfxEnergyGeneratorMenuRenderer {
         this.statusIcons = new SfxMachineStatusIconRenderer(localization);
     }
 
-    void render(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status) {
+    void render(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider) {
         fillInventoryFrame(definition, inventory);
         inventory.setItem(definition.ui().statusSlot(), progressIcon(definition, state, status));
         int[] inputSlots = definition.ui().inputSlots();
@@ -43,11 +43,24 @@ final class SfxEnergyGeneratorMenuRenderer {
         for (int i = 0; i < outputSlots.length; i++) {
             inventory.setItem(outputSlots[i], state.output(i) == null ? null : state.output(i).toItemStack(items));
         }
+        renderProviderItems(definition, inventory, state, provider);
     }
 
-    void renderStatusOnly(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status) {
+    void renderStatusOnly(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider) {
         fillInventoryFrame(definition, inventory);
         inventory.setItem(definition.ui().statusSlot(), progressIcon(definition, state, status));
+        renderProviderItems(definition, inventory, state, provider);
+    }
+
+    private void renderProviderItems(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxDynamicEnergyGeneratorProvider provider) {
+        if (provider == null) {
+            return;
+        }
+        for (Map.Entry<Integer, ItemStack> entry : provider.displayItems(plugin, items, definition, state).entrySet()) {
+            if (entry.getKey() >= 0 && entry.getKey() < inventory.getSize()) {
+                inventory.setItem(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     void renderStorageSlots(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state) {

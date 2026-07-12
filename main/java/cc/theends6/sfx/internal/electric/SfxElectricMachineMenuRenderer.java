@@ -4,14 +4,19 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.util.UUID;
+import java.util.Map;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 final class SfxElectricMachineMenuRenderer {
     private final SfxItems items;
+    private final JavaPlugin plugin;
     private final SfxLocalization localization;
     private final SfxElectricMachineStatusIconRenderer statusIcons;
 
-    SfxElectricMachineMenuRenderer(SfxItems items, SfxLocalization localization, SfxPlayerDataService profiles) {
+    SfxElectricMachineMenuRenderer(JavaPlugin plugin, SfxItems items, SfxLocalization localization, SfxPlayerDataService profiles) {
+        this.plugin = plugin;
         this.items = items;
         this.localization = localization;
         this.statusIcons = new SfxElectricMachineStatusIconRenderer(items, localization, profiles);
@@ -29,6 +34,11 @@ final class SfxElectricMachineMenuRenderer {
         int[] outputSlots = definition.outputSlots();
         for (int slot = 0; slot < outputSlots.length; slot++) {
             inventory.setItem(outputSlots[slot], state.output(slot) == null ? null : state.output(slot).toItemStack(items));
+        }
+        for (Map.Entry<Integer, ItemStack> entry : definition.recipeProvider().displayItems(plugin, items, definition, state).entrySet()) {
+            if (entry.getKey() >= 0 && entry.getKey() < inventory.getSize()) {
+                inventory.setItem(entry.getKey(), entry.getValue());
+            }
         }
     }
 

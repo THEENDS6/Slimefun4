@@ -1219,7 +1219,7 @@ public final class SfxEnergyService implements Listener {
         state.output(slot, current.copyWithAmount(current.amount() + output.amount()));
     }
 
-    private SfxDynamicEnergyGeneratorProvider dynamicGenerator(SfxEnergyComponentDefinition definition) {
+    SfxDynamicEnergyGeneratorProvider dynamicGenerator(SfxEnergyComponentDefinition definition) {
         if (definition == null || definition.providerKey() == null) {
             return null;
         }
