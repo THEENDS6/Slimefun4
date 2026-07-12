@@ -23,8 +23,8 @@ machine-catalog:
   sf:ore_crusher: {category: BASIC, display-name: sf:ore_crusher, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, ore-crusher]}
   sf:ore_washer: {category: BASIC, display-name: sf:ore_washer, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, ore-washer]}
   sf:armor_forge: {category: BASIC, display-name: sf:armor_forge, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, armor, armor-forge]}
-  sf:makeshift_smeltery: {category: BASIC, display-name: sf:makeshift_smeltery, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, smeltery]}
-  sf:smeltery: {category: BASIC, display-name: sf:smeltery, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, smeltery]}
+  sf:makeshift_smeltery: {category: BASIC, display-name: sf:makeshift_smeltery, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, simple-smeltery]}
+  sf:smeltery: {category: BASIC, display-name: sf:smeltery, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, simple-smeltery, alloy-smeltery]}
   sf:pressure_chamber: {category: BASIC, display-name: sf:pressure_chamber, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, pressure-chamber]}
   sf:magic_workbench: {category: BASIC, display-name: sf:magic_workbench, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, magic, magic-workbench]}
   sf:table_saw: {category: BASIC, display-name: sf:table_saw, status-slot: -1, tick-interval: 1, tags: [machine, basic, hand-input-transform, manual], profile: hand_input_transform}
@@ -39,8 +39,8 @@ basic-machines:
   sf:ore_crusher: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:ore_crusher]}}}
   sf:ore_washer: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:ore_washer]}}}
   sf:armor_forge: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:armor_forge]}}}
-  sf:makeshift_smeltery: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:smeltery]}}}
-  sf:smeltery: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:smeltery]}}}
+  sf:makeshift_smeltery: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:simple_smelting]}}}
+  sf:smeltery: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:simple_smelting, sf:alloy_smelting]}}}
   sf:pressure_chamber: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:pressure_chamber]}}}
   sf:magic_workbench: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:magic_workbench]}}}
   sf:table_saw: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: []}}}

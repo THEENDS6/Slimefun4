@@ -51,6 +51,7 @@ machines:
       capacity: 5120
       consumption: 18
       progress-material: GOLDEN_PICKAXE
+      working-name-key: electric-ui.action.freezing.name
     name-key: items.sf.freezer${suffix}.name
     runtime:
       executor: sf:electric_processing

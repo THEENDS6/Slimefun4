@@ -125,6 +125,15 @@ public final class SfxRecipeYamlLoader {
             }
             return result;
         }
+        if (raw instanceof Map<?, ?> map) {
+            List<Map<?, ?>> result = new ArrayList<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                Map<Object, Object> copy = new LinkedHashMap<>(requiredMap(entry.getValue(), "recipe entry"));
+                copy.putIfAbsent("id", String.valueOf(entry.getKey()));
+                result.add(copy);
+            }
+            return result;
+        }
         return List.of();
     }
 

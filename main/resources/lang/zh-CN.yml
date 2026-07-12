@@ -1109,7 +1109,7 @@ items:
   sf.hook:
     name: '&b钩爪'
   sf.sifted_ore:
-    name: '&6筛矿物'
+    name: '&6筛选矿'
   sf.stone_chunk:
     name: '&6石块碎片'
   sf.lava_crystal:
@@ -2218,42 +2218,42 @@ items:
     - '&7范围：&c6 格'
     - ''
     - '&e基础电容'
-    - '&8⇨ &e⚡ &72560 J 容量'
+    - '&8⇨ &e⚡ &72''560 J 容量'
   sf.medium_capacitor:
     name: '&a中型能源电容'
     lore:
     - '&7范围：&c6 格'
     - ''
     - '&6普通电容'
-    - '&8⇨ &e⚡ &710240 J 容量'
+    - '&8⇨ &e⚡ &710''240 J 容量'
   sf.big_capacitor:
     name: '&a大型能源电容'
     lore:
     - '&7范围：&c6 格'
     - ''
     - '&a中型电容'
-    - '&8⇨ &e⚡ &720480 J 容量'
+    - '&8⇨ &e⚡ &720''480 J 容量'
   sf.large_capacitor:
     name: '&a巨型能源电容'
     lore:
     - '&7范围：&c6 格'
     - ''
     - '&2大型电容'
-    - '&8⇨ &e⚡ &7163840 J 容量'
+    - '&8⇨ &e⚡ &7163''840 J 容量'
   sf.carbonado_edged_capacitor:
     name: '&a黑钻能源电容'
     lore:
     - '&7范围：&c6 格'
     - ''
     - '&4终极电容'
-    - '&8⇨ &e⚡ &71310720 J 容量'
+    - '&8⇨ &e⚡ &71''310''720 J 容量'
   sf.energized_capacitor:
     name: '&a充能能源电容'
     lore:
     - '&7范围：&c6 格'
     - ''
     - '&4终极电容'
-    - '&8⇨ &e⚡ &710485760 J 容量'
+    - '&8⇨ &e⚡ &710''485''760 J 容量'
   sf.programmable_android:
     name: '&c可编程机器人 &7(普通型)'
     lore:
@@ -2523,7 +2523,7 @@ items:
     - '&8⇨ &b⚡ &7速度：&b5x'
     - '&8⇨ &e⚡ &744 J/t'
   sf.electric_smeltery:
-    name: '&c电力冶炼炉'
+    name: '&c电力合金炉'
     lore:
     - ''
     - '&4仅用于合金，不会将粉末熔炼成锭'
@@ -2532,7 +2532,7 @@ items:
     - '&8⇨ &b⚡ &7速度：&b1x'
     - '&8⇨ &e⚡ &720 J/t'
   sf.electric_smeltery_2:
-    name: '&c电力冶炼炉 &7- &eII'
+    name: '&c电力合金炉 &7- &eII'
     lore:
     - ''
     - '&4仅用于合金，不会将粉末熔炼成锭'
@@ -2682,7 +2682,7 @@ items:
     - ''
     - '&4终极机器'
     - '&8⇨ &e⚡ &720480 J 储能'
-    - '&8⇨ &e⚡ &760 J/动物'
+    - '&8⇨ &e⚡ &780 J/t'
   sf.produce_collector:
     name: '&b产物收集器'
     lore:
@@ -2797,7 +2797,7 @@ items:
     - ''
     - '&4终极机器'
     - '&8⇨ &e⚡ &720480 J 储能'
-    - '&8⇨ &e⚡ &728 J/t'
+    - '&8⇨ &e⚡ &7120 J/t'
   sf.crop_growth_accelerator:
     name: '&a作物生长加速器'
     lore:
@@ -2986,7 +2986,7 @@ items:
     - ''
     - '&e基础机器'
     - '&8⇨ &b⚡ &7速度：&b1x'
-    - '&8⇨ &e⚡ &78 J/t'
+    - '&8⇨ &e⚡ &780 J/t'
   sf.electric_ingot_factory_2:
     name: '&c电力制锭机 &7(&eII&7)'
     lore:
@@ -3924,9 +3924,9 @@ categories:
   sf.electric_press_2:
     name: '&eElectric Press &7- &eII'
   sf.electric_smeltery:
-    name: '&cElectric Smeltery'
+    name: '&c电力合金炉'
   sf.electric_smeltery_2:
-    name: '&cElectric Smeltery &7- &eII'
+    name: '&c电力合金炉 &7- &eII'
   sf.electrified_crucible:
     name: '&cElectrified Crucible'
   sf.electrified_crucible_2:
@@ -4094,12 +4094,23 @@ guide:
     page: <gray>当前配方 {current} / {total}</gray>
     alternative-source: <gray>点击打开这个来源的配方。</gray>
     alternative-source-group: <gray>也可由以下来源完成：</gray>
+    cycle-detected: 配方浏览形成循环，已停止继续展开。
+    depth-limit: 配方浏览已达到 100 层上限。
+    cycle-blocked: 无法继续查看此配方材料
+    executor: <yellow>可执行此配方的机器</yellow>
+    machine-recipes: <yellow>此机器可执行的配方</yellow>
+    consumable-fuel: <gold>可消耗燃料</gold>
+    related-content: <yellow>相关内容</yellow>
+    process:
+      simple-smelting: 简单冶炼
+      alloy-smelting: 合金冶炼
     vanilla:
       disabled: <dark_gray>原版配方查询已被禁用。</dark_gray>
       crafting: 工作台
       stonecutting: 切石机
       smithing: 锻造台
       furnace: 熔炉
+      smelting: 冶炼
       blasting: 高炉
       smoking: 烟熏炉
       campfire: 营火
@@ -4127,6 +4138,7 @@ guide:
       active: <yellow>下一页</yellow>
       inactive: <dark_gray>下一页</dark_gray>
     page: <gray>页码 {current} / {total}</gray>
+    click-hint: <dark_gray>左键翻 1 页，右键翻 5 页</dark_gray>
   structure:
     dispenser-up: <yellow>发射器</yellow> <gray>(朝上)</gray>
     dispenser-down: <yellow>发射器</yellow> <gray>(朝下)</gray>
@@ -4260,21 +4272,73 @@ electric-ui:
     generic: 范围内没有可作用目标。
   action:
     produce:
+      name: <yellow>采集中</yellow>
       working: <gray>正在采集附近动物产物。</gray>
     auto-breeder:
+      name: <yellow>喂养中</yellow>
       working: <gray>正在喂养附近动物。</gray>
     animal-growth:
+      name: <yellow>成长加速中</yellow>
       working: <gray>正在加速幼年动物成长。</gray>
     crop-growth:
+      name: <yellow>催熟中</yellow>
       working: <gray>正在催熟附近作物。</gray>
     tree-growth:
+      name: <yellow>催生中</yellow>
       working: <gray>正在催生附近树苗。</gray>
     fluid-pump:
+      name: <yellow>抽取中</yellow>
       working: <gray>正在从下方抽取流体。</gray>
     geo-miner:
+      name: <yellow>开采中</yellow>
       working: <gray>正在开采 GEO 资源。</gray>
     oil-pump:
+      name: <yellow>采油中</yellow>
       working: <gray>正在抽取石油。</gray>
+    brewing:
+      name: <yellow>酿造中</yellow>
+    smelting:
+      name: <yellow>熔炼中</yellow>
+    alloy-smelting:
+      name: <yellow>冶炼中</yellow>
+    crushing:
+      name: <yellow>粉碎中</yellow>
+    pressing:
+      name: <yellow>压制中</yellow>
+    ingot-forming:
+      name: <yellow>铸锭中</yellow>
+    washing:
+      name: <yellow>洗矿中</yellow>
+    panning:
+      name: <yellow>淘洗中</yellow>
+    melting:
+      name: <yellow>熔融中</yellow>
+    drying:
+      name: <yellow>干燥中</yellow>
+    food-fabrication:
+      name: <yellow>制备食物中</yellow>
+    composting:
+      name: <yellow>堆肥中</yellow>
+    freezing:
+      name: <yellow>冷冻中</yellow>
+    pressure-heating:
+      name: <yellow>热压中</yellow>
+    enchanting:
+      name: <yellow>附魔中</yellow>
+    disenchanting:
+      name: <yellow>祛魔中</yellow>
+    binding:
+      name: <yellow>装订中</yellow>
+    anvil-repairing:
+      name: <yellow>修复中</yellow>
+    crafting:
+      name: <yellow>合成中</yellow>
+    assembling:
+      name: <yellow>装配中</yellow>
+    xp-collecting:
+      name: <yellow>收集经验中</yellow>
+    refining:
+      name: <yellow>精炼中</yellow>
   auto-crafter:
     enabled:
       name: <green>配方已启用</green>
@@ -4367,6 +4431,7 @@ electric-ui:
         - '&7从这里取走成品。'
     status:
       working:
+        name: '&e工作中'
         lore:
         - '&7进度：&f{progress_current}&7/&f{progress_total} &8({progress_percent}%)'
         - '&7剩余时间：&f{time_left}'

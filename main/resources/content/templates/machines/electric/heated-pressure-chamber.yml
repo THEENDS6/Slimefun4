@@ -42,6 +42,7 @@ machines:
       capacity: 20480
       consumption: 10
       progress-material: FLINT_AND_STEEL
+      working-name-key: electric-ui.action.pressure-heating.name
     name-key: items.sf.heated_pressure_chamber${suffix}.name
     runtime:
       executor: sf:electric_processing

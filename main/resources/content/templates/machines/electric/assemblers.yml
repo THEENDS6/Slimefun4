@@ -10,8 +10,8 @@ machines:
   "sf:iron_golem_assembler":
     @cf: templates.machines.iron-golem-assembler-definition
     @io: true
-    @d: {name-key: items.sf.iron_golem_assembler.name, speed: 1, capacity: 81920, consumption: 75, progress-material: CARVED_PUMPKIN}
-    runtime: {executor: sf:special_provider, provider: sf:iron_golem_assembler}
+    @d: {name-key: items.sf.iron_golem_assembler.name, speed: 1, capacity: 81920, consumption: 75, progress-material: CARVED_PUMPKIN, working-name-key: electric-ui.action.assembling.name}
+    runtime: {executor: sf:provider, provider: sf:iron_golem_assembler}
     assembler:
       head-material: CARVED_PUMPKIN
       head-amount: 1
@@ -20,8 +20,8 @@ machines:
   "sf:wither_assembler":
     @cf: templates.machines.wither-assembler-definition
     @io: true
-    @d: {name-key: items.sf.wither_assembler.name, speed: 1, capacity: 81920, consumption: 150, progress-material: WITHER_SKELETON_SKULL}
-    runtime: {executor: sf:special_provider, provider: sf:wither_assembler}
+    @d: {name-key: items.sf.wither_assembler.name, speed: 1, capacity: 81920, consumption: 150, progress-material: WITHER_SKELETON_SKULL, working-name-key: electric-ui.action.assembling.name}
+    runtime: {executor: sf:provider, provider: sf:wither_assembler}
     assembler:
       head-material: WITHER_SKELETON_SKULL
       head-amount: 3

@@ -14,5 +14,5 @@ machines:
   "sf:fluid_pump":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.fluid_pump.name, speed: 1, capacity: 512, consumption: 8, progress-material: BUCKET}
-    runtime: {executor: sf:special_provider, provider: sf:fluid_pump}
+    @d: {name-key: items.sf.fluid_pump.name, speed: 1, capacity: 512, consumption: 80, progress-material: BUCKET, working-name-key: electric-ui.action.fluid-pump.name}
+    runtime: {executor: sf:provider, provider: sf:fluid_pump}

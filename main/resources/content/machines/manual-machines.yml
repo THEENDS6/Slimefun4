@@ -237,7 +237,7 @@ machines:
     - machine
     - basic
     - manual
-    - smeltery
+    - simple-smeltery
     pattern:
     - type: empty
     - type: material
@@ -278,7 +278,8 @@ machines:
     - machine
     - basic
     - manual
-    - smeltery
+    - simple-smeltery
+    - alloy-smeltery
     pattern:
     - type: empty
     - type: material

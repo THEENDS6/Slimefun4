@@ -33,15 +33,15 @@ machines:
   "sf:vanilla_auto_crafter":
     @cf: templates.machines.auto-crafter-definition
     @io: true
-    @d: {name-key: items.sf.vanilla_auto_crafter.name, speed: 1, capacity: 5120, consumption: 32, progress-material: CRAFTING_TABLE}
-    runtime: {executor: sf:special_provider, provider: sf:vanilla_auto_crafter}
+    @d: {name-key: items.sf.vanilla_auto_crafter.name, speed: 1, capacity: 5120, consumption: 32, progress-material: CRAFTING_TABLE, working-name-key: electric-ui.action.crafting.name}
+    runtime: {executor: sf:provider, provider: sf:vanilla_auto_crafter, guide-recipe-types: [minecraft:crafting]}
   "sf:enhanced_auto_crafter":
     @cf: templates.machines.auto-crafter-definition
     @io: true
-    @d: {name-key: items.sf.enhanced_auto_crafter.name, speed: 1, capacity: 5120, consumption: 32, progress-material: CRAFTING_TABLE}
-    runtime: {executor: sf:special_provider, provider: sf:enhanced_auto_crafter}
+    @d: {name-key: items.sf.enhanced_auto_crafter.name, speed: 1, capacity: 5120, consumption: 32, progress-material: CRAFTING_TABLE, working-name-key: electric-ui.action.crafting.name}
+    runtime: {executor: sf:provider, provider: sf:enhanced_auto_crafter, guide-recipe-types: [sf:enhanced_crafting_table]}
   "sf:armor_auto_crafter":
     @cf: templates.machines.auto-crafter-definition
     @io: true
-    @d: {name-key: items.sf.armor_auto_crafter.name, speed: 1, capacity: 5120, consumption: 64, progress-material: ANVIL}
-    runtime: {executor: sf:special_provider, provider: sf:armor_auto_crafter}
+    @d: {name-key: items.sf.armor_auto_crafter.name, speed: 1, capacity: 5120, consumption: 64, progress-material: ANVIL, working-name-key: electric-ui.action.crafting.name}
+    runtime: {executor: sf:provider, provider: sf:armor_auto_crafter, guide-recipe-types: [sf:armor_forge]}

@@ -20,7 +20,7 @@ machine-catalog:
 machines:
   @ot: content/machines/electric-machines.yml
   "sf:electric_smeltery":
-    @cf: templates.machines.standard-electric-definition
+    @cf: templates.machines.alloy-smeltery-definition
     @io: true
     @d:
       name-key: items.sf.electric_smeltery.name
@@ -28,10 +28,10 @@ machines:
       capacity: 10240
       consumption: 20
       progress-material: FLINT_AND_STEEL
-      input-slots: [10, 11, 19, 20, 28, 29]
-    runtime: {executor: sf:special_provider, provider: sf:electric_smeltery}
+      working-name-key: electric-ui.action.alloy-smelting.name
+    runtime: {executor: sf:provider, provider: sf:electric_smeltery}
   "sf:electric_smeltery_2":
-    @cf: templates.machines.standard-electric-definition
+    @cf: templates.machines.alloy-smeltery-definition
     @io: true
     @d:
       name-key: items.sf.electric_smeltery_2.name
@@ -39,5 +39,5 @@ machines:
       capacity: 10240
       consumption: 40
       progress-material: FLINT_AND_STEEL
-      input-slots: [10, 11, 19, 20, 28, 29]
-    runtime: {executor: sf:special_provider, provider: sf:electric_smeltery}
+      working-name-key: electric-ui.action.alloy-smelting.name
+    runtime: {executor: sf:provider, provider: sf:electric_smeltery}

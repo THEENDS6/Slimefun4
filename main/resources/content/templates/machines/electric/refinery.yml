@@ -14,5 +14,5 @@ machines:
   "sf:refinery":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.refinery.name, speed: 1, capacity: 5120, consumption: 32, progress-material: PISTON}
+    @d: {name-key: items.sf.refinery.name, speed: 1, capacity: 5120, consumption: 32, progress-material: PISTON, working-name-key: electric-ui.action.refining.name}
     runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [oil-refining]}, include-recipes: [], exclude-recipes: []}

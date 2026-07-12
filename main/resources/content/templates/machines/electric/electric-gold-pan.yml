@@ -50,6 +50,7 @@ machines:
       capacity: 2560
       consumption: 2
       progress-material: DIAMOND_SHOVEL
+      working-name-key: electric-ui.action.panning.name
     name-key: items.sf.electric_gold_pan${suffix}.name
     runtime:
       executor: sf:electric_processing

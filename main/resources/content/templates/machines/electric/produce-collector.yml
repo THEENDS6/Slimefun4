@@ -20,5 +20,5 @@ machines:
   "sf:produce_collector":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.produce_collector.name, speed: 1, capacity: 10240, consumption: 32, progress-material: BUCKET}
-    runtime: {executor: sf:special_provider, provider: sf:produce_collector}
+    @d: {name-key: items.sf.produce_collector.name, speed: 1, capacity: 10240, consumption: 32, progress-material: BUCKET, working-name-key: electric-ui.action.produce.name}
+    runtime: {executor: sf:provider, provider: sf:produce_collector}

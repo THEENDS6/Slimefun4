@@ -45,7 +45,7 @@ record GuideRecipePage(
         List<SfxRecipeSlot> matrix,
         Component note,
         int outputAmount,
-        boolean verticalLayout
+        boolean cycleMaterialVariants
 ) {
     static GuideRecipePage noRecipe() {
         return new GuideRecipePage(0, GuideRecipeOrigin.SFX, "no-recipe", "no-recipe", "No Recipe", null,
@@ -223,14 +223,23 @@ record DisplayEntry(
         String label,
         int priority,
         ClickHandler primaryHandler,
-        ClickHandler secondaryHandler
+        ClickHandler secondaryHandler,
+        DisplayEntryKind kind
 ) {
     static DisplayEntry single(ItemStack icon, String label, int priority, ClickHandler handler) {
-        return new DisplayEntry(icon, null, label, priority, handler, null);
+        return single(icon, label, priority, handler, DisplayEntryKind.RELATED);
+    }
+
+    static DisplayEntry single(ItemStack icon, String label, int priority, ClickHandler handler, DisplayEntryKind kind) {
+        return new DisplayEntry(icon, null, label, priority, handler, null, kind);
     }
 
     static DisplayEntry paired(ItemStack topIcon, ItemStack bottomIcon, String label, int priority, ClickHandler topHandler, ClickHandler bottomHandler) {
-        return new DisplayEntry(topIcon, bottomIcon, label, priority, topHandler, bottomHandler);
+        return paired(topIcon, bottomIcon, label, priority, topHandler, bottomHandler, DisplayEntryKind.RELATED);
+    }
+
+    static DisplayEntry paired(ItemStack topIcon, ItemStack bottomIcon, String label, int priority, ClickHandler topHandler, ClickHandler bottomHandler, DisplayEntryKind kind) {
+        return new DisplayEntry(topIcon, bottomIcon, label, priority, topHandler, bottomHandler, kind);
     }
 
     boolean paired() {
@@ -259,4 +268,16 @@ interface RecipePageOpener {
 @FunctionalInterface
 interface PlayerAction {
     void accept(Player player);
+}
+
+enum DisplayEntryKind {
+    EXECUTOR,
+    MACHINE_RECIPE,
+    FUEL,
+    RELATED
+}
+
+@FunctionalInterface
+interface PageAction {
+    void accept(Player player, int page);
 }

@@ -20,5 +20,5 @@ machines:
   "sf:auto_breeder":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @d: {name-key: items.sf.auto_breeder.name, speed: 1, capacity: 20480, consumption: 60, progress-material: WHEAT}
-    runtime: {executor: sf:special_provider, provider: sf:auto_breeder}
+    @d: {name-key: items.sf.auto_breeder.name, speed: 1, capacity: 20480, consumption: 80, progress-material: WHEAT, working-name-key: electric-ui.action.auto-breeder.name}
+    runtime: {executor: sf:provider, provider: sf:auto_breeder}

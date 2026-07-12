@@ -43,6 +43,7 @@ machines:
       capacity: 25600
       consumption: 16
       progress-material: IRON_HOE
+      working-name-key: electric-ui.action.pressing.name
     name-key: items.sf.electric_press${suffix}.name
     runtime:
       executor: sf:electric_processing

@@ -10,10 +10,10 @@ machines:
   "sf:geo_miner":
     @cf: templates.machines.geo-miner-definition
     @io: true
-    @d: {name-key: items.sf.geo_miner.name, speed: 1, capacity: 512, consumption: 48, progress-material: DIAMOND_PICKAXE}
-    runtime: {executor: sf:special_provider, provider: sf:geo_miner}
+    @d: {name-key: items.sf.geo_miner.name, speed: 1, capacity: 512, consumption: 48, progress-material: DIAMOND_PICKAXE, working-name-key: electric-ui.action.geo-miner.name}
+    runtime: {executor: sf:provider, provider: sf:geo_miner}
   "sf:oil_pump":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.oil_pump.name, speed: 1, capacity: 512, consumption: 24, progress-material: BUCKET}
-    runtime: {executor: sf:special_provider, provider: sf:oil_pump}
+    @d: {name-key: items.sf.oil_pump.name, speed: 1, capacity: 512, consumption: 24, progress-material: BUCKET, working-name-key: electric-ui.action.oil-pump.name}
+    runtime: {executor: sf:provider, provider: sf:oil_pump}

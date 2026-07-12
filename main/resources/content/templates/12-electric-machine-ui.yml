@@ -460,13 +460,15 @@ templates:
         status: {}
     status-common:
       @it: true
+      @d:
+        working-name-key: electric-ui.template.status.working.name
       ui:
         items: {}
         status:
           working:
             material: "${progress-material}"
-            name: " "
-            lore-key: electric-ui.template.status.working.lore
+            name-key: "${working-name-key}"
+            lore: []
             include-default-lore: false
             durability-mode: AUTO
           idle:

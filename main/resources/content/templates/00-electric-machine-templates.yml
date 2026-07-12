@@ -72,3 +72,26 @@ templates:
             lore-key: electric-ui.template.frame.output.lore
         items: {}
       @copyfrom: templates.ui.status-common
+    alloy-smeltery:
+      @it: true
+      slots:
+        input: [10, 11, 19, 20, 28, 29]
+        output: [24, 25]
+      ui:
+        inventory-size: 45
+        status-slot: 22
+        frame:
+        - slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 31, 36, 37, 38, 39, 40, 41, 42, 43, 44]
+          item: {material: GRAY_STAINED_GLASS_PANE, name: " ", lore: []}
+        - slots: [9, 12, 18, 21, 27, 30]
+          item:
+            material: CYAN_STAINED_GLASS_PANE
+            name-key: electric-ui.template.frame.input.name
+            lore-key: electric-ui.template.frame.input.lore
+        - slots: [14, 15, 16, 17, 23, 26, 32, 33, 34, 35]
+          item:
+            material: ORANGE_STAINED_GLASS_PANE
+            name-key: electric-ui.template.frame.output.name
+            lore-key: electric-ui.template.frame.output.lore
+        items: {}
+      @copyfrom: templates.ui.status-common

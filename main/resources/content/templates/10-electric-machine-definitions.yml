@@ -57,6 +57,23 @@ templates:
       slots:
         input: "${input-slots}"
         output: "${output-slots}"
+    alloy-smeltery-definition:
+      @it: true
+      @cf: templates.ui.alloy-smeltery
+      @d:
+        functions: [standard-processing]
+        input-slots: [10, 11, 19, 20, 28, 29]
+        output-slots: [24, 25]
+      name-key: "${name-key}"
+      speed: "${speed}"
+      energy:
+        capacity: "${capacity}"
+        consumption-per-tick: "${consumption}"
+      progress-material: "${progress-material}"
+      functions: "${functions}"
+      slots:
+        input: "${input-slots}"
+        output: "${output-slots}"
     simple-io-definition:
       @it: true
       @cf: templates.ui.simple-io

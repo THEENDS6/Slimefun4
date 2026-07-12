@@ -192,12 +192,23 @@ guide:
     page: <gray>Recipe {current} / {total}</gray>
     alternative-source: <gray>Click to open this recipe source.</gray>
     alternative-source-group: <gray>Also available in:</gray>
+    cycle-detected: Recipe browsing formed a cycle, so expansion stopped here.
+    depth-limit: Recipe browsing reached the 100-level limit.
+    cycle-blocked: Cannot continue through this recipe ingredient
+    executor: <yellow>Machine that can execute this recipe</yellow>
+    machine-recipes: <yellow>Recipes this machine can execute</yellow>
+    consumable-fuel: <gold>Consumable fuel</gold>
+    related-content: <yellow>Related content</yellow>
+    process:
+      simple-smelting: Simple Smelting
+      alloy-smelting: Alloy Smelting
     vanilla:
       disabled: <dark_gray>Vanilla recipe lookup is disabled.</dark_gray>
       crafting: Crafting Table
       stonecutting: Stonecutter
       smithing: Smithing Table
       furnace: Furnace
+      smelting: Smelting
       blasting: Blast Furnace
       smoking: Smoker
       campfire: Campfire
@@ -220,6 +231,7 @@ guide:
       active: <yellow>Next Page</yellow>
       inactive: <dark_gray>Next Page</dark_gray>
     page: <gray>Page {current} / {total}</gray>
+    click-hint: <dark_gray>Left-click: 1 page; right-click: 5 pages</dark_gray>
   structure:
     dispenser-up: <yellow>Dispenser</yellow> <gray>(Facing up)</gray>
     dispenser-down: <yellow>Dispenser</yellow> <gray>(Facing down)</gray>
@@ -2285,42 +2297,42 @@ items:
     - '&7Range: &c6 Blocks'
     - ''
     - '&eBasic Capacitor'
-    - '&8⇨ &e⚡ &72560 J Capacity'
+    - '&8⇨ &e⚡ &72''560 J Capacity'
   sf.medium_capacitor:
     name: '&aMedium Energy Capacitor'
     lore:
     - '&7Range: &c6 Blocks'
     - ''
     - '&6Average Capacitor'
-    - '&8⇨ &e⚡ &710240 J Capacity'
+    - '&8⇨ &e⚡ &710''240 J Capacity'
   sf.big_capacitor:
     name: '&aBig Energy Capacitor'
     lore:
     - '&7Range: &c6 Blocks'
     - ''
     - '&aMedium Capacitor'
-    - '&8⇨ &e⚡ &720480 J Capacity'
+    - '&8⇨ &e⚡ &720''480 J Capacity'
   sf.large_capacitor:
     name: '&aLarge Energy Capacitor'
     lore:
     - '&7Range: &c6 Blocks'
     - ''
     - '&2Large Capacitor'
-    - '&8⇨ &e⚡ &7163840 J Capacity'
+    - '&8⇨ &e⚡ &7163''840 J Capacity'
   sf.carbonado_edged_capacitor:
     name: '&aCarbonado Edged Energy Capacitor'
     lore:
     - '&7Range: &c6 Blocks'
     - ''
     - '&4End-Game Capacitor'
-    - '&8⇨ &e⚡ &71310720 J Capacity'
+    - '&8⇨ &e⚡ &71''310''720 J Capacity'
   sf.energized_capacitor:
     name: '&aEnergized Energy Capacitor'
     lore:
     - '&7Range: &c6 Blocks'
     - ''
     - '&4End-Game Capacitor'
-    - '&8⇨ &e⚡ &710485760 J Capacity'
+    - '&8⇨ &e⚡ &710''485''760 J Capacity'
   sf.programmable_android:
     name: '&cProgrammable Android &7(Normal)'
     lore:
@@ -2590,7 +2602,7 @@ items:
     - '&8⇨ &b⚡&7Speed: &b5x'
     - '&8⇨ &e⚡&744 J/t'
   sf.electric_smeltery:
-    name: '&cElectric Smeltery'
+    name: '&cElectric Alloy Smeltery'
     lore:
     - ''
     - '&4Alloys-Only, doesn''t smelt Dust into Ingots'
@@ -2599,7 +2611,7 @@ items:
     - '&8⇨ &b⚡&7Speed: &b1x'
     - '&8⇨ &e⚡&720 J/t'
   sf.electric_smeltery_2:
-    name: '&cElectric Smeltery &7- &eII'
+    name: '&cElectric Alloy Smeltery &7- &eII'
     lore:
     - ''
     - '&4Alloys-Only, doesn''t smelt Dust into Ingots'
@@ -2749,7 +2761,7 @@ items:
     - ''
     - '&4End-Game Machine'
     - '&8⇨ &e⚡&720480 J Buffer'
-    - '&8⇨ &e⚡&760 J/Animal'
+    - '&8⇨ &e⚡&780 J/t'
   sf.produce_collector:
     name: '&bProduce Collector'
     lore:
@@ -2864,7 +2876,7 @@ items:
     - ''
     - '&4End-Game Machine'
     - '&8⇨ &e⚡&720480 J Buffer'
-    - '&8⇨ &e⚡&728 J/t'
+    - '&8⇨ &e⚡&7120 J/t'
   sf.crop_growth_accelerator:
     name: '&aCrop Growth Accelerator'
     lore:
@@ -3053,7 +3065,7 @@ items:
     - ''
     - '&eBasic Machine'
     - '&8⇨ &b⚡&7Speed: &b1x'
-    - '&8⇨ &e⚡&78 J/t'
+    - '&8⇨ &e⚡&780 J/t'
   sf.electric_ingot_factory_2:
     name: '&cElectric Ingot Factory &7(&eII&7)'
     lore:
@@ -4119,9 +4131,9 @@ categories:
   sf.electric_press_2:
     name: '&eElectric Press &7- &eII'
   sf.electric_smeltery:
-    name: '&cElectric Smeltery'
+    name: '&cElectric Alloy Smeltery'
   sf.electric_smeltery_2:
-    name: '&cElectric Smeltery &7- &eII'
+    name: '&cElectric Alloy Smeltery &7- &eII'
   sf.electrified_crucible:
     name: '&cElectrified Crucible'
   sf.electrified_crucible_2:
@@ -4307,21 +4319,73 @@ electric-ui:
     generic: No valid target in range.
   action:
     produce:
+      name: <yellow>Collecting</yellow>
       working: <gray>Collecting nearby animal products.</gray>
     auto-breeder:
+      name: <yellow>Feeding</yellow>
       working: <gray>Feeding nearby animals.</gray>
     animal-growth:
+      name: <yellow>Growing</yellow>
       working: <gray>Accelerating nearby baby animals.</gray>
     crop-growth:
+      name: <yellow>Accelerating Crops</yellow>
       working: <gray>Accelerating nearby crops.</gray>
     tree-growth:
+      name: <yellow>Accelerating Saplings</yellow>
       working: <gray>Accelerating nearby saplings.</gray>
     fluid-pump:
+      name: <yellow>Pumping</yellow>
       working: <gray>Pumping fluid from below.</gray>
     geo-miner:
+      name: <yellow>Mining</yellow>
       working: <gray>Mining GEO resources.</gray>
     oil-pump:
+      name: <yellow>Pumping Oil</yellow>
       working: <gray>Pumping oil.</gray>
+    brewing:
+      name: <yellow>Brewing</yellow>
+    smelting:
+      name: <yellow>Smelting</yellow>
+    alloy-smelting:
+      name: <yellow>Smelting Alloy</yellow>
+    crushing:
+      name: <yellow>Crushing</yellow>
+    pressing:
+      name: <yellow>Pressing</yellow>
+    ingot-forming:
+      name: <yellow>Forming Ingots</yellow>
+    washing:
+      name: <yellow>Washing</yellow>
+    panning:
+      name: <yellow>Panning</yellow>
+    melting:
+      name: <yellow>Melting</yellow>
+    drying:
+      name: <yellow>Drying</yellow>
+    food-fabrication:
+      name: <yellow>Fabricating Food</yellow>
+    composting:
+      name: <yellow>Composting</yellow>
+    freezing:
+      name: <yellow>Freezing</yellow>
+    pressure-heating:
+      name: <yellow>Pressure Heating</yellow>
+    enchanting:
+      name: <yellow>Enchanting</yellow>
+    disenchanting:
+      name: <yellow>Disenchanting</yellow>
+    binding:
+      name: <yellow>Binding</yellow>
+    anvil-repairing:
+      name: <yellow>Repairing</yellow>
+    crafting:
+      name: <yellow>Crafting</yellow>
+    assembling:
+      name: <yellow>Assembling</yellow>
+    xp-collecting:
+      name: <yellow>Collecting XP</yellow>
+    refining:
+      name: <yellow>Refining</yellow>
   auto-crafter:
     enabled:
       name: <green>Recipe Enabled</green>
@@ -4405,6 +4469,7 @@ electric-ui:
         - '&7Take finished items here.'
     status:
       working:
+        name: '&eWorking'
         lore:
         - '&7Progress: &f{progress_current}&7/&f{progress_total} &8({progress_percent}%)'
         - '&7Time left: &f{time_left}'

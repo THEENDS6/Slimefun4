@@ -44,12 +44,13 @@ machines:
     @d:
       suffix: ""
       progress-material: IRON_PICKAXE
+      working-name-key: electric-ui.action.crushing.name
     name-key: items.sf.electric_ore_grinder${suffix}.name
     speed: 1
     energy:
       capacity: 2560
       consumption-per-tick: 12
-    runtime: {executor: sf:special_provider, provider: sf:classic_ore_grinder}
+    runtime: {executor: sf:provider, provider: sf:classic_ore_grinder}
   "sf:electric_ore_grinder_2":
     @cf: machines.sf:electric_ore_grinder
     @d:

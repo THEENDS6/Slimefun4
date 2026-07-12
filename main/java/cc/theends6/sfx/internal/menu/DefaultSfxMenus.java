@@ -21,6 +21,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 
 public final class DefaultSfxMenus implements SfxMenus {
     private final SfxRuntime runtime;
@@ -60,10 +61,38 @@ public final class DefaultSfxMenus implements SfxMenus {
         Inventory inventory = Bukkit.createInventory(holder, menu.rows() * 9, menu.title());
         holder.bind(inventory);
         for (Map.Entry<Integer, SfxMenuButton> entry : menu.buttons().entrySet()) {
-            inventory.setItem(entry.getKey(), entry.getValue().icon());
+            inventory.setItem(entry.getKey(), dynamicIcon(menu, entry.getKey(), player, entry.getValue().icon()));
         }
-        sessions.put(player.getUniqueId(), new Session(menu, inventory, history));
+        Session session = new Session(menu, inventory, history);
+        sessions.put(player.getUniqueId(), session);
         player.openInventory(inventory);
+        if (!menu.dynamicIcons().isEmpty()) {
+            scheduleDynamicRefresh(player, session);
+        }
+    }
+
+    private ItemStack dynamicIcon(SfxMenu menu, int slot, Player player, ItemStack fallback) {
+        java.util.function.Function<Player, ItemStack> provider = menu.dynamicIcons().get(slot);
+        if (provider == null) {
+            return fallback;
+        }
+        ItemStack resolved = provider.apply(player);
+        return resolved == null ? fallback : resolved;
+    }
+
+    private void scheduleDynamicRefresh(Player player, Session expected) {
+        runtime.executeForPlayerLater(player, 20L, () -> {
+            Session current = sessions.get(player.getUniqueId());
+            if (current != expected || !player.isOnline()) {
+                return;
+            }
+            for (Map.Entry<Integer, java.util.function.Function<Player, ItemStack>> entry : current.menu().dynamicIcons().entrySet()) {
+                SfxMenuButton fallback = current.menu().buttons().get(entry.getKey());
+                ItemStack icon = dynamicIcon(current.menu(), entry.getKey(), player, fallback == null ? null : fallback.icon());
+                current.inventory().setItem(entry.getKey(), icon);
+            }
+            scheduleDynamicRefresh(player, expected);
+        });
     }
 
     @Override

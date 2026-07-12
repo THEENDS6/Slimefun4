@@ -51,6 +51,7 @@ machines:
       capacity: 10240
       consumption: 8
       progress-material: FLINT_AND_STEEL
+      working-name-key: electric-ui.action.ingot-forming.name
     name-key: items.sf.electric_ingot_factory${suffix}.name
     runtime:
       executor: sf:electric_processing
