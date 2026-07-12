@@ -1,6 +1,7 @@
 package cc.theends6.sfx.api;
 
 import cc.theends6.sfx.api.behavior.SfxBehaviorRegistry;
+import cc.theends6.sfx.api.chat.SfxChatInputService;
 import cc.theends6.sfx.api.guide.SfxGuide;
 import cc.theends6.sfx.api.item.SfxItemRegistry;
 import cc.theends6.sfx.api.machine.SfxManualMachineRegistry;
@@ -18,6 +19,8 @@ public interface SfxApi {
     SfxItems items();
 
     SfxMenus menus();
+
+    SfxChatInputService chatInput();
 
     SfxGuide guide();
 
