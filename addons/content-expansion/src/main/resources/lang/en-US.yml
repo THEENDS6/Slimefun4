@@ -1,3 +1,14 @@
+content-expansion:
+  ui:
+    salt:
+      name: <yellow>Salt Storage</yellow>
+      amount: '<gray>{stored} / {capacity} ticks</gray>'
+      insert: <yellow>Insert Salt below</yellow>
+    wax:
+      name: <gold>Wax Storage</gold>
+      amount: '<gray>{stored} / {capacity} uses</gray>'
+      insert: <yellow>Insert Honeycomb or a Honey Bottle below</yellow>
+
 items:
   sfx.oxidizing_generator:
     name: '&6Oxidizing Generator'
