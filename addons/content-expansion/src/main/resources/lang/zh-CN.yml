@@ -1,0 +1,55 @@
+items:
+  sfx.oxidizing_generator:
+    name: '&6氧化发电机'
+    lore:
+    - ''
+    - '&7通过氧化铜、锌和镁进行发电'
+    - '&7可使用盐与水提高发电效率'
+    - ''
+    - '&6高级发电机'
+    - '&8⇨ &e⚡ &765536 J 储能'
+    - '&8⇨ &e⚡ &724 J/t'
+  sfx.waxing_machine:
+    name: '&6打蜡机'
+    lore:
+    - ''
+    - '&7消耗内部储存的蜡'
+    - '&7自动为铜制物品打蜡'
+    - ''
+    - '&e基础机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &76 J/t'
+  sfx.cutting_machine:
+    name: '&6切削机'
+    lore:
+    - ''
+    - '&7自动执行切削类处理'
+    - '&7优先去蜡，然后刮除一层氧化'
+    - ''
+    - '&6高级机器'
+    - '&8⇨ &b⚡ &7速度：&b1x'
+    - '&8⇨ &e⚡ &715 J/t'
+  sfx.exposed_copper_ingot:
+    name: '&6斑驳的铜锭'
+    lore: ['&7轻微氧化的铜锭']
+  sfx.weathered_copper_ingot:
+    name: '&3锈蚀的铜锭'
+    lore: ['&7锈蚀的铜锭']
+  sfx.oxidized_copper_ingot:
+    name: '&3氧化的铜锭'
+    lore: ['&7完全氧化的铜锭']
+  sfx.exposed_copper_dust:
+    name: '&6斑驳的铜粉'
+    lore: ['&7轻微氧化的铜粉']
+  sfx.weathered_copper_dust:
+    name: '&3锈蚀的铜粉'
+    lore: ['&7锈蚀的铜粉']
+  sfx.oxidized_copper_dust:
+    name: '&3氧化的铜粉'
+    lore: ['&7完全氧化的铜粉']
+electric-ui:
+  action:
+    waxing:
+      name: '&e打蜡中...'
+    cutting:
+      name: '&e切削中...'

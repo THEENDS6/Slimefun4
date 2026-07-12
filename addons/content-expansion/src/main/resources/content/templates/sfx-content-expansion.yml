@@ -1,0 +1,159 @@
+items:
+  @ot: content/items.yml
+  sfx:oxidizing_generator: {requires-feature: sfx:content_expansion, category: sf:electricity, guide-category: guide:sf:electricity, guide-order: 463, material: WAXED_OXIDIZED_CHISELED_COPPER, name-key: items.sfx.oxidizing_generator.name, priority: 463, lore-key: items.sfx.oxidizing_generator.lore, flags: [placeable-block]}
+  sfx:waxing_machine: {requires-feature: sfx:content_expansion, category: sf:electricity, guide-category: guide:sf:electricity, guide-order: 464, material: HONEYCOMB_BLOCK, name-key: items.sfx.waxing_machine.name, priority: 464, lore-key: items.sfx.waxing_machine.lore, flags: [placeable-block]}
+  sfx:cutting_machine: {requires-feature: sfx:content_expansion, category: sf:electricity, guide-category: guide:sf:electricity, guide-order: 465, material: JUKEBOX, name-key: items.sfx.cutting_machine.name, priority: 465, lore-key: items.sfx.cutting_machine.lore, flags: [placeable-block]}
+  sfx:exposed_copper_ingot: {requires-feature: sfx:content_expansion, category: sf:resources, guide-category: guide:sf:resources, guide-order: 466, material: COPPER_INGOT, name-key: items.sfx.exposed_copper_ingot.name, priority: 466, lore-key: items.sfx.exposed_copper_ingot.lore}
+  sfx:weathered_copper_ingot: {requires-feature: sfx:content_expansion, category: sf:resources, guide-category: guide:sf:resources, guide-order: 467, material: COPPER_INGOT, name-key: items.sfx.weathered_copper_ingot.name, priority: 467, lore-key: items.sfx.weathered_copper_ingot.lore}
+  sfx:oxidized_copper_ingot: {requires-feature: sfx:content_expansion, category: sf:resources, guide-category: guide:sf:resources, guide-order: 468, material: COPPER_INGOT, name-key: items.sfx.oxidized_copper_ingot.name, priority: 468, lore-key: items.sfx.oxidized_copper_ingot.lore}
+  sfx:exposed_copper_dust: {requires-feature: sfx:content_expansion, category: sf:resources, guide-category: guide:sf:resources, guide-order: 469, material: GLOWSTONE_DUST, name-key: items.sfx.exposed_copper_dust.name, priority: 469, lore-key: items.sfx.exposed_copper_dust.lore}
+  sfx:weathered_copper_dust: {requires-feature: sfx:content_expansion, category: sf:resources, guide-category: guide:sf:resources, guide-order: 470, material: GLOWSTONE_DUST, name-key: items.sfx.weathered_copper_dust.name, priority: 470, lore-key: items.sfx.weathered_copper_dust.lore}
+  sfx:oxidized_copper_dust: {requires-feature: sfx:content_expansion, category: sf:resources, guide-category: guide:sf:resources, guide-order: 471, material: GLOWSTONE_DUST, name-key: items.sfx.oxidized_copper_dust.name, priority: 471, lore-key: items.sfx.oxidized_copper_dust.lore}
+
+machine-catalog:
+  @ot: content/machines/catalog.yml
+  sfx:oxidizing_generator: {requires-feature: sfx:content_expansion, category: ENERGY, display-name: sfx:oxidizing_generator, status-slot: -1, tick-interval: 1, tags: [machine, energy, fuel-generator], profile: fuel_generator}
+  sfx:waxing_machine: {requires-feature: sfx:content_expansion, category: ELECTRIC, display-name: sfx:waxing_machine, status-slot: -1, tick-interval: 1, tags: [machine, electric, item-meta-transform], profile: item_meta_transform}
+  sfx:cutting_machine: {requires-feature: sfx:content_expansion, category: ELECTRIC, display-name: sfx:cutting_machine, status-slot: -1, tick-interval: 1, tags: [machine, electric, item-meta-transform], profile: item_meta_transform}
+
+components:
+  @ot: content/machines/energy-components.yml
+  sfx:oxidizing_generator:
+    @cf: templates.energy.generator-output
+    requires-feature: sfx:content_expansion
+    @d:
+      capacity: 65536
+      generation: 24
+      burn-rate: 10
+      progress-material: COPPER_INGOT
+    runtime: {provider: sfx:oxidizing_generator}
+
+machines:
+  @ot: content/machines/electric-machines.yml
+  sfx:waxing_machine:
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    requires-feature: sfx:content_expansion
+    @d: {name-key: items.sfx.waxing_machine.name, speed: 1, capacity: 2048, consumption: 6, progress-material: HONEYCOMB, working-name-key: electric-ui.action.waxing.name}
+    runtime: {executor: sf:provider, provider: sfx:waxing_machine}
+  sfx:cutting_machine:
+    @cf: templates.machines.standard-electric-definition
+    @io: true
+    requires-feature: sfx:content_expansion
+    @d: {name-key: items.sfx.cutting_machine.name, speed: 1, capacity: 4096, consumption: 15, progress-material: JUKEBOX, working-name-key: electric-ui.action.cutting.name}
+    runtime: {executor: sf:provider, provider: sfx:cutting_machine}
+
+recipes:
+  @ot: content/recipes.yml
+  sfx:oxidizing_generator:
+    @cf: templates.recipes.legacy-entry
+    @io: true
+    id: sfx:oxidizing_generator
+    requires-feature: sfx:content_expansion
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 463
+    source: sfx
+    runtime: true
+    runtime-machine-tags: [enhanced-crafting]
+    matrix:
+    - sf:medium_capacitor
+    - WATER_BUCKET
+    - sf:medium_capacitor
+    - COPPER_BLOCK
+    - sf:magnesium_generator
+    - COPPER_BLOCK
+    - sf:electro_magnet
+    - sf:basic_circuit_board
+    - sf:electro_magnet
+    outputs: [sfx:oxidizing_generator]
+  sfx:waxing_machine:
+    @cf: templates.recipes.legacy-entry
+    @io: true
+    id: sfx:waxing_machine
+    requires-feature: sfx:content_expansion
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 464
+    source: sfx
+    runtime: true
+    runtime-machine-tags: [enhanced-crafting]
+    matrix:
+    - WHITE_WOOL
+    - GLASS
+    - WHITE_WOOL
+    - COPPER_INGOT
+    - sf:electric_motor
+    - COPPER_INGOT
+    - SHEARS
+    - sf:basic_circuit_board
+    - SHEARS
+    outputs: [sfx:waxing_machine]
+  sfx:cutting_machine:
+    @cf: templates.recipes.legacy-entry
+    @io: true
+    id: sfx:cutting_machine
+    requires-feature: sfx:content_expansion
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 465
+    source: sfx
+    runtime: true
+    runtime-machine-tags: [enhanced-crafting]
+    matrix:
+    - sf:electric_motor
+    - OBSIDIAN
+    - sf:electric_motor
+    - sf:hardened_glass
+    - DIAMOND_AXE
+    - sf:hardened_glass
+    - IRON_BLOCK
+    - OBSIDIAN
+    - IRON_BLOCK
+    outputs: [sfx:cutting_machine]
+  sfx:oxidize_exposed_copper_ingot:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_exposed_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 472, source: sfx, runtime: false, input: sf:copper_ingot, outputs: [sfx:exposed_copper_ingot], time: 80}
+  sfx:cut_exposed_copper_ingot:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:cut_exposed_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:cutting_machine, operation: single, guide-order: 473, source: sfx, runtime: false, input: sfx:weathered_copper_ingot, outputs: [sfx:exposed_copper_ingot], time: 120}
+  sfx:oxidize_weathered_copper_ingot:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_weathered_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 474, source: sfx, runtime: false, input: sfx:exposed_copper_ingot, outputs: [sfx:weathered_copper_ingot], time: 80}
+  sfx:cut_weathered_copper_ingot:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:cut_weathered_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:cutting_machine, operation: single, guide-order: 475, source: sfx, runtime: false, input: sfx:oxidized_copper_ingot, outputs: [sfx:weathered_copper_ingot], time: 120}
+  sfx:oxidize_oxidized_copper_ingot:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_oxidized_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 476, source: sfx, runtime: false, input: sfx:weathered_copper_ingot, outputs: [sfx:oxidized_copper_ingot], time: 80}
+  sfx:water_oxidize_copper_ingot:
+    @cf: templates.recipes.legacy-entry
+    @io: true
+    id: sfx:water_oxidize_copper_ingot
+    requires-feature: sfx:content_expansion
+    recipe-type: sfx:oxidizing_generator
+    operation: shaped
+    guide-order: 477
+    source: sfx
+    runtime: false
+    matrix: [~, ~, ~, ~, sf:copper_ingot, WATER_BUCKET, ~, ~, ~]
+    outputs: [sfx:oxidized_copper_ingot]
+    time: 64
+  sfx:oxidize_exposed_copper_dust:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_exposed_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 478, source: sfx, runtime: false, input: sf:copper_dust, outputs: [sfx:exposed_copper_dust], time: 27}
+  sfx:cut_exposed_copper_dust:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:cut_exposed_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:cutting_machine, operation: single, guide-order: 479, source: sfx, runtime: false, input: sfx:weathered_copper_dust, outputs: [sfx:exposed_copper_dust], time: 120}
+  sfx:oxidize_weathered_copper_dust:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_weathered_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 480, source: sfx, runtime: false, input: sfx:exposed_copper_dust, outputs: [sfx:weathered_copper_dust], time: 27}
+  sfx:cut_weathered_copper_dust:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:cut_weathered_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:cutting_machine, operation: single, guide-order: 481, source: sfx, runtime: false, input: sfx:oxidized_copper_dust, outputs: [sfx:weathered_copper_dust], time: 120}
+  sfx:oxidize_oxidized_copper_dust:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_oxidized_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 482, source: sfx, runtime: false, input: sfx:weathered_copper_dust, outputs: [sfx:oxidized_copper_dust], time: 27}
+  sfx:water_oxidize_copper_dust:
+    @cf: templates.recipes.legacy-entry
+    @io: true
+    id: sfx:water_oxidize_copper_dust
+    requires-feature: sfx:content_expansion
+    recipe-type: sfx:oxidizing_generator
+    operation: shaped
+    guide-order: 483
+    source: sfx
+    runtime: false
+    matrix: [~, ~, ~, ~, sf:copper_dust, WATER_BUCKET, ~, ~, ~]
+    outputs: [sfx:oxidized_copper_dust]
+    time: 22

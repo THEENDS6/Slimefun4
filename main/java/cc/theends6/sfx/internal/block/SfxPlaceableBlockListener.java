@@ -13,9 +13,12 @@ import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import java.util.Objects;
 import java.util.logging.Logger;
+import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
@@ -35,6 +38,8 @@ import org.bukkit.event.block.SpongeAbsorbEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 
 public final class SfxPlaceableBlockListener implements Listener {
@@ -114,6 +119,39 @@ public final class SfxPlaceableBlockListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         placementRouter.handlePlace(event);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onAnchoredAxeInteraction(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) {
+            return;
+        }
+        if (blockData.findAnchor(event.getClickedBlock().getLocation()).isEmpty()) {
+            return;
+        }
+        ItemStack item = event.getItem();
+        if (item != null && event.getClickedBlock().getType() == Material.JUKEBOX
+                && item.getType().name().startsWith("MUSIC_DISC_")) {
+            denyVanillaBlockMutation(event);
+            return;
+        }
+        if (item == null || !isAxe(item.getType())) {
+            return;
+        }
+        denyVanillaBlockMutation(event);
+    }
+
+    private static void denyVanillaBlockMutation(PlayerInteractEvent event) {
+        event.setCancelled(true);
+        event.setUseInteractedBlock(Event.Result.DENY);
+        event.setUseItemInHand(Event.Result.DENY);
+    }
+
+    private boolean isAxe(Material material) {
+        return switch (material) {
+            case WOODEN_AXE, STONE_AXE, IRON_AXE, GOLDEN_AXE, DIAMOND_AXE, NETHERITE_AXE -> true;
+            default -> false;
+        };
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

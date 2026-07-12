@@ -1,0 +1,7 @@
+id: sfx:content_expansion
+name: SFX Content Expansion
+version: 1.0.0
+main: cc.theends6.sfx.addons.content.SfxContentExpansionAddon
+enabled: true
+java:
+  jar: sfx-content-expansion.jar
