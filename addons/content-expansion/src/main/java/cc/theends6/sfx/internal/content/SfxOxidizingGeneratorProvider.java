@@ -30,10 +30,10 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
     @Override
     public int potentialGeneration(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, Location location) {
         if (state.hasActiveFuel()) {
-            return parseActive(state.activeFuelKey()).generation();
+            return generationFor(parseActive(state.activeFuelKey()), state);
         }
         Plan plan = plan(items, definition, state);
-        return plan == null ? 0 : plan.generation();
+        return plan == null ? 0 : generationFor(plan, state);
     }
 
     @Override
@@ -58,9 +58,6 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
                 consumeOne(state, WATER_INPUT);
                 access.pushOutput(definition, state, SfxElectricStack.vanilla(Material.BUCKET, 1));
             }
-            if (plan.consumeSaltTicks() > 0) {
-                state.specialData(Math.max(0, state.specialData() - plan.consumeSaltTicks()));
-            }
             state.activeFuelKey(plan.encode());
             state.fuelProgressTenths(0);
             state.fuelTotalTenths(plan.ticks());
@@ -68,13 +65,17 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
         }
 
         Plan active = parseActive(state.activeFuelKey());
-        if (active.generation() <= 0 || active.ticks() <= 0) {
+        int generation = generationFor(active, state);
+        if (generation <= 0 || active.ticks() <= 0) {
             state.clearFuelOperation();
             access.markDirty();
             return 0;
         }
-        if (definition.capacity() > 0 && state.storedEnergy() + active.generation() > definition.capacity()) {
+        if (definition.capacity() > 0 && state.storedEnergy() + generation > definition.capacity()) {
             return 0;
+        }
+        if (!active.freeSaltBonus() && state.specialData() > 0) {
+            state.specialData(state.specialData() - 1);
         }
         int nextProgress = state.fuelProgressTenths() + 1;
         if (nextProgress >= state.fuelTotalTenths() && active.output() != null && !access.hasOutputSpace(definition, state, active.output())) {
@@ -88,7 +89,7 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
             state.clearFuelOperation();
         }
         access.markDirty();
-        return active.generation();
+        return generation;
     }
 
     @Override
@@ -124,7 +125,6 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
         double generation = 24.0D;
         double ticks = 80.0D * Math.max(1.0D, value);
         boolean saltBonus = false;
-        int saltConsume = 0;
         SfxElectricStack output = null;
 
         if (value > 0.0D) {
@@ -151,18 +151,12 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
             ticks *= 0.8D;
         }
         int plannedTicks = Math.max(1, (int) Math.ceil(ticks));
-        if (saltBonus || state.specialData() >= plannedTicks) {
-            generation *= 1.5D;
-            if (!saltBonus) {
-                saltConsume = plannedTicks;
-            }
-        }
-        return new Plan(Math.max(1, (int) Math.ceil(generation)), Math.max(1, (int) Math.ceil(ticks)), output, water, saltConsume);
+        return new Plan(Math.max(1, (int) Math.ceil(generation)), plannedTicks, output, water, saltBonus);
     }
 
     private Plan parseActive(String key) {
         if (key == null || !key.startsWith("oxidizing|")) {
-            return new Plan(0, 0, null, false, 0);
+            return new Plan(0, 0, null, false, false);
         }
         String[] parts = key.split("\\|", -1);
         int generation = integer(parts, 1);
@@ -173,7 +167,19 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
                     ? SfxElectricStack.sfx(parts[4], 1)
                     : SfxElectricStack.vanilla(Material.valueOf(parts[4]), 1);
         }
-        return new Plan(generation, ticks, output, false, 0);
+        boolean freeSaltBonus = parts.length >= 7 && Boolean.parseBoolean(parts[6]);
+        return new Plan(generation, ticks, output, false, freeSaltBonus);
+    }
+
+    private int generationFor(Plan plan, SfxEnergyNodeState state) {
+        if (plan == null) {
+            return 0;
+        }
+        double generation = plan.generation();
+        if (plan.freeSaltBonus() || state.specialData() > 0) {
+            generation *= 1.5D;
+        }
+        return Math.max(0, (int) Math.ceil(generation));
     }
 
     private void consumeOne(SfxEnergyNodeState state, int slot) {
@@ -223,7 +229,7 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
                 SALT.maxAmount()));
     }
 
-    private record Plan(int generation, int ticks, SfxElectricStack output, boolean waterBucket, int consumeSaltTicks) {
+    private record Plan(int generation, int ticks, SfxElectricStack output, boolean waterBucket, boolean freeSaltBonus) {
         String encode() {
             String outputKind = "";
             String outputId = "";
@@ -231,7 +237,7 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
                 outputKind = output.isSfxItem() ? "sfx" : "material";
                 outputId = output.isSfxItem() ? output.itemId() : output.material().name();
             }
-            return "oxidizing|" + generation + "|" + ticks + "|" + outputKind + "|" + outputId + "|";
+            return "oxidizing|" + generation + "|" + ticks + "|" + outputKind + "|" + outputId + "||" + freeSaltBonus;
         }
     }
 }

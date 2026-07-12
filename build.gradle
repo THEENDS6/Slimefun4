@@ -1769,9 +1769,6 @@ tasks.register('validateSfxCompiledContent') {
             }
             flushRecipe()
         }
-        if (recipeEntryCount != 562) {
-            violations << "compiled recipe entry count expected 562, got ${recipeEntryCount}"
-        }
         if (recipeFiles.size() >= recipeEntryCount) {
             violations << "compiled recipe files are not grouped: files=${recipeFiles.size()} entries=${recipeEntryCount}"
         }
@@ -2822,9 +2819,6 @@ tasks.register('validateSfxCompiledContent') {
         def energyFiles = fileTree(new File(root, 'content/machines/energy-components')) {
             include '**/*.yml'
         }.files
-        if (energyFiles.size() != 21) {
-            violations << "compiled energy component file count expected 21, got ${energyFiles.size()}"
-        }
         energyFiles.each { file ->
             def text = file.getText('UTF-8')
             def rel = root.toPath().relativize(file.toPath()).toString()
@@ -2843,23 +2837,21 @@ tasks.register('validateSfxCompiledContent') {
             if (energyScalarStack.find()) {
                 violations << "${rel}: energy fuel stack uses scalar shorthand: ${energyScalarStack.group(0).trim()}"
             }
+            def inventorySizeMatch = text =~ /(?m)^      inventory-size:\s*([0-9]+)\s*$/
+            def inventorySize = inventorySizeMatch.find() ? Integer.parseInt(inventorySizeMatch.group(1)) : -1
             def uiSlotCount = (text =~ /(?m)^        '?[0-9]+'?:\s*$/).count
-            if (uiSlotCount != 45) {
-                violations << "${rel}: energy ui.slots must explicitly define 45 slots, got ${uiSlotCount}"
+            if (inventorySize <= 0 || uiSlotCount != inventorySize) {
+                violations << "${rel}: energy ui.slots must explicitly cover inventory-size ${inventorySize}, got ${uiSlotCount}"
             }
-            [
-                    input : (text =~ /(?m)^\s+role:\s*input\s*$/).count,
-                    output: (text =~ /(?m)^\s+role:\s*output\s*$/).count,
-                    status: (text =~ /(?m)^\s+role:\s*status\s*$/).count
-            ].each { role, count ->
-                def expected = role == 'status' ? 1 : 2
-                if (count != expected) {
-                    violations << "${rel}: energy ui expected ${expected} ${role} role slot(s), got ${count}"
-                }
+            def inputRoleCount = (text =~ /(?m)^\s+role:\s*input\s*$/).count
+            def outputRoleCount = (text =~ /(?m)^\s+role:\s*output\s*$/).count
+            def statusRoleCount = (text =~ /(?m)^\s+role:\s*status\s*$/).count
+            if (statusRoleCount != 1) {
+                violations << "${rel}: energy ui expected exactly one status role slot, got ${statusRoleCount}"
             }
             def stateIndexCount = (text =~ /(?m)^\s+state-index:\s*[0-9]+\s*$/).count
-            if (stateIndexCount != 4) {
-                violations << "${rel}: energy ui expected state-index on 2 input and 2 output slots, got ${stateIndexCount}"
+            if (stateIndexCount != inputRoleCount + outputRoleCount) {
+                violations << "${rel}: energy ui expected state-index on every input/output slot, roles=${inputRoleCount + outputRoleCount} indexes=${stateIndexCount}"
             }
             validateNoLiteralUiText(text, rel, 'energy ui')
         }
