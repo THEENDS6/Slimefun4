@@ -17,6 +17,7 @@ public final class DefaultSfxItemRegistry implements SfxItemRegistry {
 
     private final Map<String, SfxItemCategory> categories = new LinkedHashMap<>();
     private final Map<String, SfxItemDefinition> items = new LinkedHashMap<>();
+    private long revision;
 
     @Override
     public void registerCategory(SfxItemCategory category) {
@@ -35,6 +36,7 @@ public final class DefaultSfxItemRegistry implements SfxItemRegistry {
             throw new IllegalArgumentException("Unknown category '" + definition.categoryId() + "' for item " + definition.id());
         }
         items.put(definition.id(), definition);
+        revision++;
     }
 
 
@@ -47,11 +49,13 @@ public final class DefaultSfxItemRegistry implements SfxItemRegistry {
             throw new IllegalArgumentException("Unknown category '" + definition.categoryId() + "' for item " + definition.id());
         }
         items.put(definition.id(), definition);
+        revision++;
     }
 
     public void clear() {
         categories.clear();
         items.clear();
+        revision++;
     }
 
     @Override
@@ -86,5 +90,9 @@ public final class DefaultSfxItemRegistry implements SfxItemRegistry {
                 .filter(item -> normalized.equals(item.categoryId()))
                 .sorted(ITEM_ORDER)
                 .toList();
+    }
+
+    public long revision() {
+        return revision;
     }
 }

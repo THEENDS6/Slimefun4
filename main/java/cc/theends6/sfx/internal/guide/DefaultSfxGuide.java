@@ -35,6 +35,7 @@ import cc.theends6.sfx.internal.recipe.SfxRecipeOutputDefinition;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
@@ -164,6 +165,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     private final SfxMenus menus;
     private final SfxChatInputService chatInput;
     private final SfxGuideAccessPolicy accessPolicy;
+    private final SfxGuideSearchIndex searchIndex;
     private final DefaultManualMachineRegistry manualMachines;
     private final SfxLocalization localization;
     final SfxPlayerDataService profiles;
@@ -195,6 +197,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         this.menus = menus;
         this.chatInput = chatInput;
         this.accessPolicy = accessPolicy;
+        this.searchIndex = new SfxGuideSearchIndex(registry);
         this.manualMachines = manualMachines;
         this.localization = localization;
         this.profiles = profiles;
@@ -334,6 +337,100 @@ public final class DefaultSfxGuide implements SfxGuide {
                 next -> openCategory(next, mode, category.id(), safePage + 1, Navigation.REPLACE));
         builder.button(49, new SfxMenuButton(infoIcon(mode, safePage, pageCount), click -> closeGuide(click.player())));
         showMenu(player, builder, navigation);
+    }
+
+    private void beginSearch(Player player, GuideMode mode) {
+        if (!plugin.getConfig().getBoolean("guide.search.enabled", true)) {
+            player.sendMessage(Text.prefixed(plugin, tr("guide.search.disabled")));
+            return;
+        }
+        menus.suspend(player);
+        player.sendMessage(Text.prefixed(plugin, tr("guide.search.prompt")));
+        int timeoutSeconds = Math.max(5, plugin.getConfig().getInt("guide.search.timeout-seconds", 30));
+        chatInput.await(player, "guide-search", Duration.ofSeconds(timeoutSeconds), input -> {
+            if (input.equalsIgnoreCase("cancel") || input.equalsIgnoreCase("取消")) {
+                player.sendMessage(Text.prefixed(plugin, tr("guide.search.cancelled")));
+                menus.resume(player);
+                return;
+            }
+            String query = limitSearchInput(input);
+            if (SfxGuideSearchIndex.normalize(query).isEmpty()) {
+                player.sendMessage(Text.prefixed(plugin, tr("guide.search.empty")));
+                menus.resume(player);
+                return;
+            }
+            openSearchResults(player, mode, query, 0, Navigation.OPEN);
+        }, () -> {
+            player.sendMessage(Text.prefixed(plugin, tr("guide.search.timeout")));
+            menus.resume(player);
+        });
+    }
+
+    private void openSearchResults(Player player, GuideMode mode, String query, int page, Navigation navigation) {
+        List<SfxItemDefinition> results = searchIndex.search(
+                        query,
+                        plugin.getConfig().getBoolean("guide.search.pinyin-enabled", true),
+                        plugin.getConfig().getBoolean("guide.search.pinyin-initials-enabled", true))
+                .stream()
+                .filter(item -> accessPolicy.canViewItem(player, mode, item))
+                .filter(item -> searchCategoryId(item) == null || isCategoryVisible(searchCategoryId(item)))
+                .filter(item -> mode != GuideMode.SURVIVAL || searchCategoryId(item) == null || isCategoryUnlocked(player, searchCategoryId(item)))
+                .toList();
+        int pageCount = pageCount(results.size());
+        int safePage = clampPage(page, pageCount);
+        SfxMenu.Builder builder = SfxMenu.builder(title(mode, tr("guide.search.title").replace("{query}", query))).rows(6);
+        paintFrame(builder, mode, effectiveLayout(preferences(player)));
+
+        int from = safePage * CONTENT_SLOTS.length;
+        int to = Math.min(results.size(), from + CONTENT_SLOTS.length);
+        for (int i = from; i < to; i++) {
+            SfxItemDefinition definition = results.get(i);
+            SfxResearchDefinition research = researches.researchForItem(definition.id()).orElse(null);
+            boolean locked = mode == GuideMode.SURVIVAL && research != null && !isUnlocked(player, research);
+            ItemStack icon = locked ? lockedItemIcon(definition, research) : searchResultIcon(definition);
+            int slot = CONTENT_SLOTS[i - from];
+            if (mode == GuideMode.CHEAT) {
+                builder.button(slot, new SfxMenuButton(icon, click -> giveFromCheatGuide(click.player(), definition, click.clickType())));
+            } else if (locked) {
+                builder.button(slot, new SfxMenuButton(icon, click -> unlockResearchAndOpen(click.player(), mode, definition, research)));
+            } else {
+                builder.button(slot, new SfxMenuButton(icon, click -> openRecipe(click.player(), mode, definition.id(), 0, Navigation.OPEN)));
+            }
+        }
+        if (results.isEmpty()) {
+            builder.button(22, new SfxMenuButton(ItemBuilder.of(Material.BARRIER)
+                    .name(tr("guide.search.no-results"))
+                    .build(), click -> { }));
+        }
+        builder.button(1, new SfxMenuButton(backIcon(tr("guide.actions.back-guide")), click -> goBack(click.player(), mode)));
+        addContentPagination(builder, safePage, pageCount,
+                previous -> openSearchResults(previous, mode, query, safePage - 1, Navigation.REPLACE),
+                next -> openSearchResults(next, mode, query, safePage + 1, Navigation.REPLACE));
+        builder.button(49, new SfxMenuButton(infoIcon(mode, safePage, pageCount), click -> closeGuide(click.player())));
+        showMenu(player, builder, navigation);
+    }
+
+    private ItemStack searchResultIcon(SfxItemDefinition definition) {
+        List<Component> lore = new ArrayList<>();
+        String categoryId = searchCategoryId(definition);
+        if (categoryId != null) {
+            LegacySfGuideResolver.resolveCategory(registry, categoryId)
+                    .map(this::plainCategoryName)
+                    .ifPresent(name -> lore.add(Text.mm(tr("guide.search.category").replace("{category}", name))));
+        }
+        lore.add(Component.empty());
+        lore.add(Text.mm(tr("guide.actions.open-recipe")));
+        return withLore(items.create(definition, 1), lore);
+    }
+
+    private String searchCategoryId(SfxItemDefinition definition) {
+        return definition.guideCategoryId() == null ? definition.categoryId() : definition.guideCategoryId();
+    }
+
+    private String limitSearchInput(String input) {
+        String value = input == null ? "" : input.trim();
+        int maximum = Math.max(1, plugin.getConfig().getInt("guide.search.max-query-length", 64));
+        return value.length() <= maximum ? value : value.substring(0, maximum);
     }
 
     private void openRecipe(Player player, GuideMode mode, String itemId, int recipeIndex, Navigation navigation) {
@@ -1619,7 +1716,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         builder.button(4, new SfxMenuButton(modeInfoIcon(mode), click -> {
         }));
         builder.button(1, new SfxMenuButton(settingsIcon(), click -> openSettingsView(click.player(), mode, Navigation.OPEN)));
-        builder.button(7, new SfxMenuButton(searchIcon(), click -> click.player().sendMessage(Text.prefixed(plugin, tr("guide.actions.search.todo")))));
+        builder.button(7, new SfxMenuButton(searchIcon(), click -> beginSearch(click.player(), mode)));
     }
 
     private void paintRecipeFrame(SfxMenu.Builder builder, GuideMode mode, SfxDisplayLayout displayLayout) {
@@ -1642,7 +1739,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             }));
         }
         builder.button(1, new SfxMenuButton(settingsIcon(), click -> openSettingsView(click.player(), mode, Navigation.OPEN)));
-        builder.button(7, new SfxMenuButton(searchIcon(), click -> click.player().sendMessage(Text.prefixed(plugin, tr("guide.actions.search.todo")))));
+        builder.button(7, new SfxMenuButton(searchIcon(), click -> beginSearch(click.player(), mode)));
     }
 
     private void addIngredientButton(SfxMenu.Builder builder, int menuSlot, SfxRecipeSlot recipeSlot, GuideMode mode, boolean cycleVariants, List<String> trail) {

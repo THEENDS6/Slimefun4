@@ -26,6 +26,7 @@ import org.bukkit.inventory.ItemStack;
 public final class DefaultSfxMenus implements SfxMenus {
     private final SfxRuntime runtime;
     private final Map<UUID, Session> sessions = new ConcurrentHashMap<>();
+    private final Map<UUID, Deque<SfxMenu>> suspended = new ConcurrentHashMap<>();
     private final java.util.Set<UUID> suppressedRestore = ConcurrentHashMap.newKeySet();
 
     public DefaultSfxMenus(SfxRuntime runtime) {
@@ -34,14 +35,22 @@ public final class DefaultSfxMenus implements SfxMenus {
 
     @Override
     public void openRoot(Player player, SfxMenu menu) {
-        runtime.executeForPlayer(player, () -> openInternal(player, menu, new ArrayDeque<>()));
+        runtime.executeForPlayer(player, () -> {
+            suspended.remove(player.getUniqueId());
+            openInternal(player, menu, new ArrayDeque<>());
+        });
     }
 
     @Override
     public void open(Player player, SfxMenu menu) {
         runtime.executeForPlayer(player, () -> {
             Session previous = sessions.get(player.getUniqueId());
-            Deque<SfxMenu> history = copyHistory(previous);
+            Deque<SfxMenu> history = previous == null
+                    ? suspended.remove(player.getUniqueId())
+                    : copyHistory(previous);
+            if (history == null) {
+                history = new ArrayDeque<>();
+            }
             pushCurrent(previous, history);
             openInternal(player, menu, history);
         });
@@ -51,7 +60,12 @@ public final class DefaultSfxMenus implements SfxMenus {
     public void replace(Player player, SfxMenu menu) {
         runtime.executeForPlayer(player, () -> {
             Session previous = sessions.get(player.getUniqueId());
-            Deque<SfxMenu> history = copyHistory(previous);
+            Deque<SfxMenu> history = previous == null
+                    ? suspended.remove(player.getUniqueId())
+                    : copyHistory(previous);
+            if (history == null) {
+                history = new ArrayDeque<>();
+            }
             openInternal(player, menu, history);
         });
     }
@@ -107,8 +121,37 @@ public final class DefaultSfxMenus implements SfxMenus {
             if (!restoreHistory) {
                 suppressedRestore.add(playerId);
                 sessions.remove(playerId);
+                suspended.remove(playerId);
             }
             player.closeInventory();
+        });
+    }
+
+    @Override
+    public void suspend(Player player) {
+        runtime.executeForPlayer(player, () -> {
+            UUID playerId = player.getUniqueId();
+            Session current = sessions.remove(playerId);
+            if (current == null) {
+                return;
+            }
+            Deque<SfxMenu> history = copyHistory(current);
+            history.push(current.menu());
+            suspended.put(playerId, history);
+            suppressedRestore.add(playerId);
+            player.closeInventory();
+        });
+    }
+
+    @Override
+    public void resume(Player player) {
+        runtime.executeForPlayer(player, () -> {
+            Deque<SfxMenu> history = suspended.remove(player.getUniqueId());
+            if (history == null || history.isEmpty()) {
+                return;
+            }
+            SfxMenu previous = history.pop();
+            openInternal(player, previous, history);
         });
     }
 
@@ -127,6 +170,7 @@ public final class DefaultSfxMenus implements SfxMenus {
         // world/entity state is modified from the wrong thread.
         List<UUID> viewers = List.copyOf(sessions.keySet());
         sessions.clear();
+        suspended.clear();
         for (UUID uuid : viewers) {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null) {
@@ -224,6 +268,7 @@ public final class DefaultSfxMenus implements SfxMenus {
     public void onQuit(PlayerQuitEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
         sessions.remove(uuid);
+        suspended.remove(uuid);
         suppressedRestore.remove(uuid);
     }
 

@@ -171,8 +171,16 @@ guide:
       lore: <gray>You can also Shift + Right Click the guide book.</gray>
     search:
       name: <yellow>Search</yellow>
-      lore: <gray>The search entry is reserved.</gray>
-      todo: <gray>The search entry is reserved for a future chat search page.</gray>
+      lore: <gray>Click, then enter an item name in chat.</gray>
+  search:
+    title: 'Search: {query}'
+    prompt: <yellow>Enter an item name, Pinyin, or Pinyin initials in chat. Enter "cancel" to stop.</yellow>
+    cancelled: <gray>Guide search cancelled.</gray>
+    timeout: <gray>Guide search timed out.</gray>
+    empty: <red>The search query cannot be empty.</red>
+    disabled: <red>Guide search is disabled.</red>
+    no-results: <red>No matching items found</red>
+    category: '<dark_gray>Category: {category}</dark_gray>'
   locked: LOCKED
   locked-itemgroup:
     line1: To unlock this category you will

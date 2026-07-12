@@ -14,6 +14,10 @@ public interface SfxMenus extends Listener {
 
     void close(Player player, boolean restoreHistory);
 
+    void suspend(Player player);
+
+    void resume(Player player);
+
     boolean hasHistory(Player player);
 
     void closeAll();

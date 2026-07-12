@@ -72,6 +72,12 @@ guide:
   sfx-layout-enabled: true
   allow-layout-switching: true
   show-vanilla-recipes: true
+  search:
+    enabled: true
+    pinyin-enabled: true
+    pinyin-initials-enabled: true
+    timeout-seconds: 30
+    max-query-length: 64
   seasonal-categories:
     enabled: true
     always-show: true
