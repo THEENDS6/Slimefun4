@@ -187,11 +187,11 @@ final class SfxEnergyComponentYamlLoader {
         if (!ui.isRole(ui.statusSlot(), "status")) {
             throw new IllegalArgumentException(id + " ui.status-slot must be a status slot: " + ui.statusSlot());
         }
-        validateIndexedRoleSlots(id, ui, "input", 2);
-        validateIndexedRoleSlots(id, ui, "output", 2);
+        validateIndexedRoleSlots(id, ui, "input", SfxEnergyNodeState.INPUT_CAPACITY);
+        validateIndexedRoleSlots(id, ui, "output", SfxEnergyNodeState.OUTPUT_CAPACITY);
     }
 
-    private void validateIndexedRoleSlots(String id, SfxEnergyComponentUiDefinition ui, String role, int expectedCount) {
+    private void validateIndexedRoleSlots(String id, SfxEnergyComponentUiDefinition ui, String role, int maximumCount) {
         List<Integer> indexes = new ArrayList<>();
         for (SfxEnergyComponentUiSlot slot : ui.slots().values()) {
             if (!slot.roleIs(role)) {
@@ -202,10 +202,10 @@ final class SfxEnergyComponentYamlLoader {
             }
             indexes.add(slot.stateIndex());
         }
-        if (indexes.size() != expectedCount) {
-            throw new IllegalArgumentException(id + " energy ui must declare exactly " + expectedCount + " " + role + " slots");
+        if (indexes.size() > maximumCount) {
+            throw new IllegalArgumentException(id + " energy ui declares " + indexes.size() + " " + role + " slots, maximum is " + maximumCount);
         }
-        for (int index = 0; index < expectedCount; index++) {
+        for (int index = 0; index < indexes.size(); index++) {
             if (!indexes.contains(index)) {
                 throw new IllegalArgumentException(id + " ui." + role + " slots missing state-index " + index);
             }
