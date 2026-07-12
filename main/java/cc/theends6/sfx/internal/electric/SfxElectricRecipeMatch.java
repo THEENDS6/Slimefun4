@@ -1,7 +1,7 @@
 package cc.theends6.sfx.internal.electric;
 
-record SfxElectricRecipeMatch(int[] inputSlots, SfxElectricRecipe recipe) {
-    int primaryInputSlot() {
+public record SfxElectricRecipeMatch(int[] inputSlots, SfxElectricRecipe recipe) {
+    public int primaryInputSlot() {
         return inputSlots.length == 0 ? -1 : inputSlots[0];
     }
 }

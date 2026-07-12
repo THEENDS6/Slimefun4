@@ -38,6 +38,7 @@ final class SfxPluginServiceModule {
         plugin.floatingTextDisplayService = new SfxFloatingTextDisplayService(plugin, plugin.api.runtime());
         plugin.virtualContainerService = new SfxVirtualContainerService(plugin, plugin.api.runtime());
         plugin.electricMachineService = new SfxElectricMachineService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.playerDataService, plugin.api.internalManualMachines(), plugin.virtualContainerService, plugin.floatingTextDisplayService, plugin.machineRuntime);
+        plugin.api.internalGuide().bindElectricMachines(plugin.electricMachineService.guideDefinitions());
         plugin.configurableMachineService = new SfxConfigurableMachineService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.floatingTextDisplayService, plugin.machineRuntime);
         plugin.technicalGadgetService = new SfxTechnicalGadgetService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.api.behaviors());
         plugin.energyService = new SfxEnergyService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.electricMachineService, plugin.configurableMachineService, plugin.floatingTextDisplayService, plugin.technicalGadgetService.rechargeableItems(), plugin.machineRuntime);

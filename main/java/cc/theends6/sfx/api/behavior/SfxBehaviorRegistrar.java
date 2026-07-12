@@ -27,9 +27,11 @@ public interface SfxBehaviorRegistrar {
 
     void registerUtilityRuleProvider(SfxUtilityRuleProvider provider);
 
-    void registerElectricSpecialProviderKeyPolicy(SfxElectricSpecialProviderKeyPolicy policy);
+    void registerElectricMachineProviderKeyPolicy(SfxElectricMachineProviderKeyPolicy policy);
 
-    void registerElectricSpecialProvider(String key, SfxElectricSpecialProviderFactory factory);
+    void registerElectricMachineProvider(String key, SfxElectricMachineProviderFactory factory);
+
+    void registerEnergyGeneratorProvider(String key, SfxEnergyGeneratorProviderFactory factory);
 
     void registerAutoBrewerBehaviorProvider(SfxAutoBrewerBehaviorProvider provider);
 

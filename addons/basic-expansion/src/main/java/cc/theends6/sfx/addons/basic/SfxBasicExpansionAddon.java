@@ -58,6 +58,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
     private static final String AUTO_BREEDER_BALANCE = "sfx:auto_breeder_balance";
     private static final String ANIMAL_GROWTH_ACCELERATOR_BALANCE = "sfx:animal_growth_accelerator_balance";
     private static final String PRODUCE_COLLECTOR_BALANCE = "sfx:produce_collector_balance";
+    private static final String ELECTRIC_ORE_GRINDER_3_BALANCE = "sfx:electric_ore_grinder_3_balance";
     private static final String XP_COLLECTOR_BALANCE = "sfx:xp_collector_balance";
     private static final String FLUID_PUMP_OPTIMIZATION = "sfx:fluid_pump_optimization";
     private static final String AUTO_BREWER = "sfx:auto_brewer";
@@ -86,6 +87,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         context.features().registerBoolean(AUTO_BREEDER_BALANCE, "electric-machines.sfx-balance.auto-breeder", true);
         context.features().registerBoolean(ANIMAL_GROWTH_ACCELERATOR_BALANCE, "electric-machines.sfx-balance.animal-growth-accelerator", true);
         context.features().registerBoolean(PRODUCE_COLLECTOR_BALANCE, "electric-machines.sfx-balance.produce-collector", true);
+        context.features().registerBoolean(ELECTRIC_ORE_GRINDER_3_BALANCE, "electric-machines.sfx-balance.electric-ore-grinder-3", true);
         context.features().registerBoolean(XP_COLLECTOR_BALANCE, "electric-machines.sfx-balance.xp-collector.enabled", true);
         context.features().registerBoolean(FLUID_PUMP_OPTIMIZATION, "electric-machines.sfx-extensions.fluid-pump-optimization.enabled", true);
         context.features().registerBoolean(AUTO_BREWER, "electric-machines.sfx-extensions.auto-brewer.enabled", true);
@@ -120,8 +122,8 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 areaMachineRules(context, ruleContext, currentRules));
         context.behaviors().registerUtilityRuleProvider((ruleContext, currentRules) ->
                 utilityRules(context, ruleContext, currentRules));
-        context.behaviors().registerElectricSpecialProviderKeyPolicy((providerContext, currentProviderKey) ->
-                electricSpecialProviderKey(context, providerContext.providerKey(), currentProviderKey));
+        context.behaviors().registerElectricMachineProviderKeyPolicy((providerContext, currentProviderKey) ->
+                electricMachineProviderKey(context, providerContext.providerKey(), currentProviderKey));
         SfxBasicExpansionElectricProviders.register(context);
         context.behaviors().registerAutoBrewerBehaviorProvider(new BasicAutoBrewerBehavior());
         context.behaviors().registerLocalizedListPostProcessor((listContext, currentValues) ->
@@ -374,7 +376,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         );
     }
 
-    private static String electricSpecialProviderKey(SfxAddonContext context, String originalProviderKey, String currentProviderKey) {
+    private static String electricMachineProviderKey(SfxAddonContext context, String originalProviderKey, String currentProviderKey) {
         if ("sf:auto_brewer".equals(originalProviderKey) && context.api().features().enabled(AUTO_BREWER)) {
             return "sfx:advanced_auto_brewer";
         }
@@ -414,8 +416,18 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         if ("items.sf.netherstar_reactor.lore".equals(path)) {
             return netherStarReactorLore(values, generatorBalance);
         }
+        Integer capacitorCapacity = sfxCapacitorCapacity(path);
+        if (generatorBalance && capacitorCapacity != null) {
+            return replaceEnergyCapacity(values, capacitorCapacity);
+        }
         if (generatorBalance && path.startsWith("items.sf.electrified_crucible")) {
             return electrifiedCrucibleLore(context, path, values);
+        }
+        if ("items.sf.animal_growth_accelerator.lore".equals(path) && context.api().features().enabled(ANIMAL_GROWTH_ACCELERATOR_BALANCE)) {
+            return replaceEnergyPerTick(values, 80);
+        }
+        if ("items.sf.electric_ore_grinder_3.lore".equals(path) && context.api().features().enabled(ELECTRIC_ORE_GRINDER_3_BALANCE)) {
+            return replaceEnergyPerTick(values, 75);
         }
         if (generatorBalance && ("items.sf.coal_generator_2.lore".equals(path) || "items.sf.lava_generator_2.lore".equals(path))) {
             return tierTwoGeneratorLore(listContext, values);
@@ -475,16 +487,63 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
             return values;
         }
         double multiplier = Math.max(1.0D, context.configDouble("energy.generator-balance.electrified-crucible-consumption-multiplier", 1.5D));
-        String energy = String.valueOf(Math.max(1, (int) Math.round(classicEnergy * multiplier)));
+        return replaceEnergyPerTick(values, Math.max(1, (int) Math.round(classicEnergy * multiplier)));
+    }
+
+    private static Integer sfxCapacitorCapacity(String path) {
+        return switch (path) {
+            case "items.sf.small_capacitor.lore" -> 10240;
+            case "items.sf.medium_capacitor.lore" -> 40960;
+            case "items.sf.big_capacitor.lore" -> 163840;
+            case "items.sf.large_capacitor.lore" -> 655360;
+            case "items.sf.carbonado_edged_capacitor.lore" -> 2621440;
+            case "items.sf.energized_capacitor.lore" -> 10485760;
+            default -> null;
+        };
+    }
+
+    private static List<String> replaceEnergyPerTick(List<String> values, int energy) {
+        String replacement = energy + " J/t";
         List<String> copy = new ArrayList<>(values.size());
         for (String line : values) {
             if (line != null && line.contains("J/t")) {
-                copy.add(line.replaceFirst("\\d+\\s*J/t", energy + " J/t"));
+                copy.add(line.contains("&7")
+                        ? line.replaceFirst("(?<=&7)\\d+\\s*J/t", replacement)
+                        : line.replaceFirst("\\d+\\s*J/t", replacement));
             } else {
                 copy.add(line);
             }
         }
         return copy;
+    }
+
+    private static List<String> replaceEnergyCapacity(List<String> values, int capacity) {
+        String replacement = formatGroupedEnergy(capacity) + " J";
+        List<String> copy = new ArrayList<>(values.size());
+        for (String line : values) {
+            if (line != null && line.contains(" J") && !line.contains("J/t")) {
+                copy.add(line.contains("&7")
+                        ? line.replaceFirst("(?<=&7)[\\d']+\\s*J", replacement)
+                        : line.replaceFirst("[\\d']+\\s*J", replacement));
+            } else {
+                copy.add(line);
+            }
+        }
+        return copy;
+    }
+
+    private static String formatGroupedEnergy(int value) {
+        String digits = Integer.toString(Math.max(0, value));
+        StringBuilder builder = new StringBuilder(digits.length() + digits.length() / 3);
+        int firstGroup = digits.length() % 3;
+        if (firstGroup == 0) {
+            firstGroup = 3;
+        }
+        builder.append(digits, 0, firstGroup);
+        for (int index = firstGroup; index < digits.length(); index += 3) {
+            builder.append('\'').append(digits, index, index + 3);
+        }
+        return builder.toString();
     }
 
     private static List<String> tierTwoGeneratorLore(SfxLocalizedListContext listContext, List<String> values) {
@@ -791,6 +850,8 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         private static final int BLAZE_FUEL_TICKS = 600;
         private static final int MAX_BLAZE_FUEL_TICKS = 3000;
         private static final int AUTO_REFILL_THRESHOLD_TICKS = 2400;
+        private static final String POWER_CRYSTAL = "sf:power_crystal";
+        private static final String MAGIC_SUGAR = "sf:magic_sugar";
 
         @Override
         public int blazeSlot() {
@@ -841,7 +902,9 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 return context.material() == Material.BLAZE_POWDER && !context.hasItemMeta();
             }
             if (context.rawSlot() == INGREDIENT_SLOT) {
-                return context.brewingIngredient();
+                return context.brewingIngredient()
+                        || POWER_CRYSTAL.equals(context.sfxItemId())
+                        || MAGIC_SUGAR.equals(context.sfxItemId());
             }
             for (int potionSlot : POTION_SLOTS) {
                 if (context.rawSlot() == potionSlot) {

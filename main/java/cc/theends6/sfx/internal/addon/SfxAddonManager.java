@@ -30,6 +30,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class SfxAddonManager implements AutoCloseable {
     private static final String BASIC_EXPANSION_ID = "sfx:basic_expansion";
     private static final String BASIC_EXPANSION_RESOURCE = "bundled-addons/sfx-basic-expansion.jar";
+    private static final String CONTENT_EXPANSION_RESOURCE = "bundled-addons/sfx-content-expansion.jar";
     private static final String ADDON_MANIFEST = "addon.yml";
     private static final String LEGACY_ADDON_MANIFEST = "sfx-addon.yml";
 
@@ -59,10 +60,12 @@ public final class SfxAddonManager implements AutoCloseable {
             if (logger != null) {
                 logger.info("Skipped disabled bundled SFX addon " + BASIC_EXPANSION_ID);
             }
-            return;
+        } else {
+            File addonJar = prepareBundledAddonJar(BASIC_EXPANSION_RESOURCE);
+            loadAddonJar(addonJar, "bundled", false);
         }
-        File addonJar = prepareBundledAddonJar(BASIC_EXPANSION_RESOURCE);
-        loadAddonJar(addonJar, "bundled", false);
+        File contentAddonJar = prepareBundledAddonJar(CONTENT_EXPANSION_RESOURCE);
+        loadAddonJar(contentAddonJar, "bundled", false);
     }
 
     public void loadExternalAddons(File addonsDir) {
@@ -75,15 +78,14 @@ public final class SfxAddonManager implements AutoCloseable {
             }
             return;
         }
-        loadConfigAddons(addonsDir);
         File[] files = addonsDir.listFiles((dir, name) -> name.toLowerCase(java.util.Locale.ROOT).endsWith(".jar"));
-        if (files == null || files.length == 0) {
-            return;
+        if (files != null && files.length > 0) {
+            java.util.Arrays.sort(files, java.util.Comparator.comparing(File::getName));
+            for (File file : files) {
+                loadAddonJar(file, "external", true);
+            }
         }
-        java.util.Arrays.sort(files, java.util.Comparator.comparing(File::getName));
-        for (File file : files) {
-            loadAddonJar(file, "external", true);
-        }
+        loadConfigAddons(addonsDir);
     }
 
     private File prepareBundledAddonJar(String resourcePath) {
@@ -103,11 +105,13 @@ public final class SfxAddonManager implements AutoCloseable {
             if (!addonDirectory.isDirectory() && !addonDirectory.mkdirs()) {
                 throw new IOException("Failed to create bundled addon directory " + addonDirectory.getPath());
             }
-            File addonJar = new File(addonDirectory, manifest.getString("java.jar", "sfx-basic-expansion.jar").trim());
+            String jarName = manifest.getString("java.jar", "sfx-basic-expansion.jar").trim();
+            File addonJar = new File(addonsDir, jarName);
             replaceFileIfChanged(tempJar, addonJar);
             if (!tempJar.delete() && tempJar.exists() && logger != null) {
                 logger.warning("Failed to delete temporary bundled addon jar " + tempJar.getPath());
             }
+            deleteStaleDirectoryJars(addonDirectory);
             expandDefaultResources(addonJar, addonDirectory);
             return addonJar;
         } catch (IOException | RuntimeException exception) {
@@ -130,6 +134,16 @@ public final class SfxAddonManager implements AutoCloseable {
         byte[] leftBytes = Files.readAllBytes(left.toPath());
         byte[] rightBytes = Files.readAllBytes(right.toPath());
         return java.util.Arrays.equals(leftBytes, rightBytes);
+    }
+
+    private void deleteStaleDirectoryJars(File addonDirectory) throws IOException {
+        File[] staleJars = addonDirectory.listFiles((dir, name) -> name.toLowerCase(java.util.Locale.ROOT).endsWith(".jar"));
+        if (staleJars == null || staleJars.length == 0) {
+            return;
+        }
+        for (File staleJar : staleJars) {
+            Files.deleteIfExists(staleJar.toPath());
+        }
     }
 
     private void expandDefaultResources(File addonJar, File addonDirectory) throws IOException {
@@ -186,9 +200,10 @@ public final class SfxAddonManager implements AutoCloseable {
                 }
                 String mainClassName = manifest.getString("main", "").trim();
                 if (!mainClassName.isEmpty()) {
-                    File addonJar = directoryAddonJar(directory, manifest);
-                    boolean exposeJarResources = !new File(directory, "content").isDirectory();
-                    loadAddonJar(addonJar, "external", exposeJarResources);
+                    if (logger != null) {
+                        logger.warning("Ignoring Java SFX addon descriptor in config directory " + directory.getName()
+                                + ". Java addons must be installed as jar files directly under " + addonsDir.getPath() + ".");
+                    }
                     continue;
                 }
                 String name = manifest.getString("name", id).trim();
@@ -201,19 +216,6 @@ public final class SfxAddonManager implements AutoCloseable {
 
     private synchronized boolean isLoaded(String id) {
         return id != null && loaded.containsKey(id);
-    }
-
-    private static File directoryAddonJar(File directory, YamlConfiguration manifest) {
-        String jarName = manifest.getString("java.jar", "").trim();
-        if (!jarName.isEmpty()) {
-            return new File(directory, jarName);
-        }
-        File[] jars = directory.listFiles((dir, name) -> name.toLowerCase(java.util.Locale.ROOT).endsWith(".jar"));
-        if (jars == null || jars.length == 0) {
-            throw new IllegalStateException("Java addon directory " + directory.getName() + " declares main but has no addon jar.");
-        }
-        java.util.Arrays.sort(jars, java.util.Comparator.comparing(File::getName));
-        return jars[0];
     }
 
     private static File manifestFile(File directory) {
@@ -284,6 +286,11 @@ public final class SfxAddonManager implements AutoCloseable {
                     if (logger != null) {
                         logger.info("Skipped disabled SFX addon jar " + file.getName());
                     }
+                    return;
+                }
+                String id = manifest.getString("id", "").trim();
+                if (!id.isEmpty() && isLoaded(id)) {
+                    loader.close();
                     return;
                 }
                 String mainClassName = manifest.getString("main", "").trim();

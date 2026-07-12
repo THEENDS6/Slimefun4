@@ -255,7 +255,7 @@ final class SfxAreaElectricMachineProviders {
     }
 
     static SfxElectricRecipeProvider expCollector(int flaskEnergyCost) {
-        return new SpecialProvider() {
+        return new TickProvider() {
             @Override
             public SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, SfxMachineTickContext context) {
                 FlushResult initialFlush = flushKnowledgeFlasks(items, definition, state, false, flaskEnergyCost);

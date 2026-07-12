@@ -25,6 +25,11 @@ ext {
     outputDirName = 'output'
     paper261RuntimeDirName = 'run-paper-26.1'
     paper261RuntimeJarName = 'paper-26.1.jar'
+    slimeEasyDeliveryDirName = 'tools/slimeeasy-sieve-animation'
+    slimeEasySourceDirName = 'external/SlimeEasy-sieve-animation'
+    slimeEasyCompleteSourceZipName = 'SlimeEasy-sieve-animation-complete-source.zip'
+    slimeEasyJarName = 'SlimeEasy.jar'
+    slimeEasyGradleUserHomeName = 'build/slimeeasy/gradle-user-home'
     foliaRuntimeJarName = 'folia-1.21.8-6.jar'
     legacyRuntimeDirName = 'run-legacy-slimefun-1.21.8'
     legacySlimefunDownloadUrl = 'https://github.com/rutwok-labs/SlimefunCore-V.4.0/releases/download/2647/SlimefunCore4-2647.jar'
@@ -76,6 +81,12 @@ sourceSets {
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
         runtimeClasspath += output + compileClasspath
     }
+    contentExpansion {
+        java.srcDirs = ['addons/content-expansion/src/main/java']
+        resources.srcDirs = ['addons/content-expansion/src/main/resources']
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
 }
 
 dependencies {
@@ -98,7 +109,7 @@ processResources {
 }
 
 tasks.named('jar') {
-    dependsOn 'validateSfxTemplateCompile', 'basicExpansionJar'
+    dependsOn 'validateSfxTemplateCompile', 'basicExpansionJar', 'contentExpansionJar'
     archiveBaseName.set('SlimeFunX')
     archiveVersion.set('')
     from {
@@ -110,8 +121,21 @@ tasks.named('jar') {
     from(tasks.named('basicExpansionJar').flatMap { it.archiveFile }) {
         into 'bundled-addons'
     }
+    from(tasks.named('contentExpansionJar').flatMap { it.archiveFile }) {
+        into 'bundled-addons'
+    }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+tasks.register('contentExpansionJar', Jar) {
+    group = 'build'
+    description = 'Packages the SFX Content Expansion addon as a standalone addon jar.'
+    dependsOn 'contentExpansionClasses'
+    archiveFileName.set('sfx-content-expansion.jar')
+    destinationDirectory.set(layout.buildDirectory.dir('addons'))
+    from(sourceSets.contentExpansion.output)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.register('basicExpansionJar', Jar) {
@@ -122,6 +146,24 @@ tasks.register('basicExpansionJar', Jar) {
     destinationDirectory.set(layout.buildDirectory.dir('addons'))
     from(sourceSets.basicExpansion.output)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register('validateSfxBasicExpansionClassLinkage', JavaExec) {
+    group = 'verification'
+    description = 'Links every Basic Expansion class through an isolated addon classloader.'
+    dependsOn 'classes', 'basicExpansionJar'
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.addon.SfxAddonClassLinkageSmokeCli')
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
+    doFirst {
+        args = [tasks.named('basicExpansionJar').get().archiveFile.get().asFile.absolutePath]
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'validateSfxBasicExpansionClassLinkage'
 }
 
 def sameFileContent = { File left, File right ->
@@ -523,6 +565,7 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     dependsOn 'classes'
     inputs.dir(layout.projectDirectory.dir('main/resources/content/templates'))
     inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources'))
+    inputs.dir(layout.projectDirectory.dir('addons/content-expansion/src/main/resources'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/templates/machines/configurable/reactors.yml'))
@@ -552,6 +595,10 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
         copy {
             from layout.projectDirectory.dir('addons/basic-expansion/src/main/resources/content')
             into new File(sourceRoot, 'addons/basic_expansion/content')
+        }
+        copy {
+            from layout.projectDirectory.dir('addons/content-expansion/src/main/resources/content')
+            into new File(sourceRoot, 'addons/content_expansion/content')
         }
         args = [
                 new File(sourceRoot, 'templates').absolutePath,
@@ -788,6 +835,21 @@ tasks.register('validateSfxBasicExpansionBoundary') {
             if (!basicAddonJavaText.contains(token)) {
                 violations << "SfxBasicExpansionAddon must own Auto Brewer UI/input behavior token ${token}"
             }
+        }
+        def corePotionBrewEngine = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxPotionBrewEngine.java').asFile
+        if (corePotionBrewEngine.exists()) {
+            violations << "SFX potion brew behavior must live in Basic Expansion addon, not core SfxPotionBrewEngine."
+        }
+        ['SfxBasicExpansionPotionBrewEngine', 'POWER_CRYSTAL = "sf:power_crystal"', 'MAGIC_SUGAR = "sf:magic_sugar"'].each { token ->
+            if (!basicAddonJavaText.contains(token)) {
+                violations << "SfxBasicExpansionAddon must own Auto Brewer potion extension token ${token}"
+            }
+        }
+        if (basicAddonJavaText.contains('new WorldActionProvider()')) {
+            violations << 'Basic Expansion area machine providers must not inherit core WorldActionProvider across addon classloaders.'
+        }
+        if (!basicAddonJavaText.contains('SfxBasicExpansionWorldActionProvider')) {
+            violations << 'Basic Expansion addon must own its world-action provider base class.'
         }
         def radiationService = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/radiation/SfxRadiationService.java').asFile
         def radiationServiceText = radiationService.getText('UTF-8')
@@ -1040,12 +1102,13 @@ tasks.register('validateSfxAddonApiDocs') {
 
 tasks.register('validateSfxElectricProviderAddonPolicy') {
     group = 'verification'
-    description = 'Validates SFX electric special provider overrides are routed through addon behavior policies.'
+    description = 'Validates SFX electric machine provider overrides are routed through addon behavior policies.'
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitions.java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitionConfig.java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAreaElectricMachineProviders.java'))
     inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java'))
+    inputs.dir(layout.projectDirectory.dir('main/java/cc/theends6/sfx/api/behavior'))
     doLast {
         def violations = []
         def definitions = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitions.java').asFile.getText('UTF-8')
@@ -1055,6 +1118,19 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
             include '**/*.java'
         }.files.collect { it.getText('UTF-8') }.join('\n')
         def registrar = layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java').asFile.getText('UTF-8')
+        def behaviorApiFiles = fileTree(layout.projectDirectory.dir('main/java/cc/theends6/sfx/api/behavior')) {
+            include '**/*.java'
+        }.files
+        behaviorApiFiles.each { apiFile ->
+            def apiText = apiFile.getText('UTF-8')
+            if (apiText =~ /(?m)^import\s+cc\.theends6\.sfx\.internal\./) {
+                violations << "Addon behavior API must not expose core internals: ${apiFile.name}"
+            }
+        }
+        def providerFactory = layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxElectricMachineProviderFactory.java').asFile.getText('UTF-8')
+        if (!providerFactory.contains('SfxElectricMachineProvider create(SfxElectricMachineProviderContext context)')) {
+            violations << 'Electric provider addons must be created through the public provider context hook.'
+        }
         if (definitions.contains('SfxUtilityRulesResolver.rules(plugin).autoBrewerEnabled()')) {
             violations << 'SfxElectricMachineDefinitions must not directly select SFX Auto Brewer through utility rules.'
         }
@@ -1065,13 +1141,13 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
                 || definitions.contains('SfxAreaElectricMachineProviders.cropGrowthAccelerator(blockData, 3, 20, true)')) {
             violations << 'SfxElectricMachineDefinitions must not construct or name SFX electric providers directly.'
         }
-        if (!definitionConfig.contains('electricSpecialProviderKeyPolicies()')) {
-            violations << 'SfxElectricMachineDefinitionConfig must resolve special providers through addon policies.'
+        if (!definitionConfig.contains('electricMachineProviderKeyPolicies()')) {
+            violations << 'SfxElectricMachineDefinitionConfig must resolve providers through addon policies.'
         }
-        if (!registrar.contains('registerElectricSpecialProviderKeyPolicy') || !registrar.contains('registerElectricSpecialProvider')) {
-            violations << 'SfxBehaviorRegistrar must expose electric special provider key policies and provider factories.'
+        if (!registrar.contains('registerElectricMachineProviderKeyPolicy') || !registrar.contains('registerElectricMachineProvider')) {
+            violations << 'SfxBehaviorRegistrar must expose electric machine provider key policies and provider factories.'
         }
-        if (!addon.contains('registerElectricSpecialProviderKeyPolicy') || !addon.contains('registerElectricSpecialProvider') || !addon.contains('sfx:advanced_auto_brewer')) {
+        if (!addon.contains('registerElectricMachineProviderKeyPolicy') || !addon.contains('registerElectricMachineProvider') || !addon.contains('sfx:advanced_auto_brewer')) {
             violations << 'SfxBasicExpansionAddon must register the Auto Brewer provider override and provider through addon behavior API.'
         }
         [
@@ -1102,7 +1178,7 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
         if (!violations.isEmpty()) {
             throw new GradleException("SFX electric provider addon policy validation failed:\n" + violations.join('\n'))
         }
-        logger.lifecycle("Validated SFX electric special provider addon policy boundary.")
+        logger.lifecycle("Validated SFX electric machine provider addon policy boundary.")
     }
 }
 
@@ -1387,6 +1463,10 @@ tasks.register('validateSfxCompiledContent') {
         def addonLanguageFiles = fileTree(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources')) {
             include '**/lang/*.yml'
         }.files.sort { it.path }
+        def contentAddonLanguageFiles = fileTree(layout.projectDirectory.dir('addons/content-expansion/src/main/resources')) {
+            include '**/lang/*.yml'
+        }.files.sort { it.path }
+        addonLanguageFiles.addAll(contentAddonLanguageFiles)
         def languageKeysByFile = languageFiles.collectEntries { file ->
             def keys = flattenLanguageKeys(file)
             addonLanguageFiles.findAll { it.name == file.name }.each { addonFile ->
@@ -1687,8 +1767,8 @@ tasks.register('validateSfxCompiledContent') {
             }
             flushRecipe()
         }
-        if (recipeEntryCount != 547) {
-            violations << "compiled recipe entry count expected 547, got ${recipeEntryCount}"
+        if (recipeEntryCount != 562) {
+            violations << "compiled recipe entry count expected 562, got ${recipeEntryCount}"
         }
         if (recipeFiles.size() >= recipeEntryCount) {
             violations << "compiled recipe files are not grouped: files=${recipeFiles.size()} entries=${recipeEntryCount}"
@@ -1715,29 +1795,29 @@ tasks.register('validateSfxCompiledContent') {
             violations << "compiled machine catalog output missing content/machines/machine-catalog/*.yml"
         } else {
             def catalogText = catalogCompiledFiles.collect { it.getText('UTF-8') }.join('\n')
-            catalogCompiledCount = (catalogText =~ /(?m)^  ['"]?sf:[^'"\r\n]+['"]?:\s*$/).count
-            if (catalogCompiledCount != 184) {
-                violations << "compiled machine catalog entry count expected 184, got ${catalogCompiledCount}"
+            catalogCompiledCount = (catalogText =~ /(?m)^  ['"]?[A-Za-z0-9_.-]+:[^'"\r\n]+['"]?:\s*$/).count
+            if (catalogCompiledCount != 187) {
+                violations << "compiled machine catalog entry count expected 187, got ${catalogCompiledCount}"
             }
             ['category:', 'display-name:', 'input-slots:', 'output-slots:', 'status-slot:', 'tick-interval:', 'tags:', 'capabilities:', 'input-provider:', 'output-provider:', 'policies:', 'effects:'].each { token ->
                 def count = (catalogText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count
-                if (count < 184) {
+                if (count < 187) {
                     violations << "compiled machine catalog expected ${token} on every entry, got ${count}"
                 }
             }
             def providerSlotCount = (catalogText =~ /(?m)^      slots:\s*/).count
             def providerDescriptionCount = (catalogText =~ /(?m)^      description:\s*/).count
-            if (providerSlotCount != 368) {
+            if (providerSlotCount != 374) {
                 violations << "compiled machine catalog expected provider slots on every input/output provider, got ${providerSlotCount}"
             }
-            if (providerDescriptionCount != 368) {
+            if (providerDescriptionCount != 374) {
                 violations << "compiled machine catalog expected provider description on every input/output provider, got ${providerDescriptionCount}"
             }
             def currentMachine = null
             def inTags = false
             def slotList = null
             catalogText.readLines().each { line ->
-                def machineMatch = line =~ /^  ['"]?(sf:[^'":\s]+)['"]?:\s*$/
+                def machineMatch = line =~ /^  ['"]?([A-Za-z0-9_.-]+:[^'":\s]+)['"]?:\s*$/
                 if (machineMatch.matches()) {
                     currentMachine = machineMatch[0][1]
                     if (catalogMachineIds.contains(currentMachine)) {
@@ -2081,8 +2161,8 @@ tasks.register('validateSfxCompiledContent') {
 
 
 ).count
-            if (compiledItemCount != 556) {
-                violations << "compiled item count expected 556, got ${compiledItemCount}"
+            if (compiledItemCount != 565) {
+                violations << "compiled item count expected 565, got ${compiledItemCount}"
             }
             [
                     'category'      : (itemText =~ /(?m)^(?:  category:|- category:)\s*/).count,
@@ -2090,7 +2170,7 @@ tasks.register('validateSfxCompiledContent') {
                     'name-key'      : (itemText =~ /(?m)^(?:  name-key:|- name-key:)\s*/).count,
                     'priority/order': (itemText =~ /(?m)^(?:  (priority|order|pos):|- (priority|order|pos):)\s*/).count
             ].each { field, count ->
-                if (count != 556) {
+                if (count != 565) {
                     violations << "compiled items expected ${field} on every entry, got ${count}"
                 }
             }
@@ -2544,10 +2624,12 @@ tasks.register('validateSfxCompiledContent') {
                 'sf:oil_pump',
                 'sf:fluid_pump',
                 'sf:iron_golem_assembler',
-                'sf:wither_assembler'
+                'sf:wither_assembler',
+                'sfx:waxing_machine',
+                'sfx:cutting_machine'
         ] as Set
-        if (electricFiles.size() != 66) {
-            violations << "compiled electric machine file count expected 66, got ${electricFiles.size()}"
+        if (electricFiles.size() != 68) {
+            violations << "compiled electric machine file count expected 68, got ${electricFiles.size()}"
         }
         electricFiles.each { file ->
             def text = file.getText('UTF-8')
@@ -2615,17 +2697,17 @@ tasks.register('validateSfxCompiledContent') {
                 if (runtimeExecutor == null || runtimeExecutor.isBlank()) {
                     violations << "${rel}: runtime requires executor"
                 }
-                if (runtimeExecutor == 'sf:special_provider') {
+                if (runtimeExecutor == 'sf:provider') {
                     if (runtimeProvider == null || runtimeProvider.isBlank()) {
-                        violations << "${rel}: sf:special_provider runtime requires provider"
+                        violations << "${rel}: sf:provider runtime requires provider"
                     } else if (!specialElectricProviders.contains(runtimeProvider)) {
                         violations << "${rel}: unknown special electric provider ${runtimeProvider}"
                     }
                     if (!runtimeTags.isEmpty() || !runtimeIncludes.isEmpty() || !runtimeExcludes.isEmpty()) {
-                        violations << "${rel}: sf:special_provider runtime must not declare electric recipe tags/includes/excludes"
+                        violations << "${rel}: sf:provider runtime must not declare electric recipe tags/includes/excludes"
                     }
                 } else if (runtimeProvider != null && !runtimeProvider.isBlank()) {
-                    violations << "${rel}: runtime provider is only valid for sf:special_provider"
+                    violations << "${rel}: runtime provider is only valid for sf:provider"
                 }
                 runtimeIncludes.each { recipeId ->
                     if (!electricRecipeIds.contains(recipeId)) {
@@ -3360,451 +3442,595 @@ lang
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+*.jar'
+        }.files.sort { it.absolutePath }
+        if (libraryJars.isEmpty()) {
+            throw new GradleException("Missing Paper runtime libraries under ${new File(runDir, 'libraries')}. Run the SlimeEasy runServer task once from the imported project to download Paper, then retry runSlimeEasyPaper262.")
+        }
+        def serverClasspath = ([paperJar] + libraryJars).collect { it.absolutePath }.join(File.pathSeparator)
+        exec {
+            workingDir runDir
+            standardInput = System.in
+            environment 'JAVA_HOME', java25Home.absolutePath
+            environment 'PATH', "${new File(java25Home, 'bin').absolutePath}${File.pathSeparator}${System.getenv('PATH')}"
+            commandLine new File(java25Home, 'bin/java.exe').absolutePath,
+                    '-Xms2G',
+                    '-Xmx2G',
+                    *rootProject.ext.serverEncodingJvmArgs,
+                    '-cp',
+                    serverClasspath,
+                    'org.bukkit.craftbukkit.Main',
+                    'nogui'
+        }
+    }
+}
+
+tasks.register('deployToPaperRuntime', Copy) {
+    group = 'deployment'
+    description = 'Builds the plugin and copies it to run-paper-1.21.8/plugins.'
+    dependsOn 'prepareRuntimeDirs', 'validateSfxBundledCompiledContent'
+    finalizedBy 'exportPluginArtifacts'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(layout.projectDirectory.dir('run-paper-1.21.8/plugins'))
+    rename { rootProject.ext.pluginJarName }
+}
+
+tasks.register('installPaperRuntimePlugManX') {
+    group = 'deployment'
+    description = 'Downloads PlugManX into run-paper-1.21.8/plugins for local Paper hot-reload testing.'
+    dependsOn 'prepareRuntimeDirs'
+    outputs.file(layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.plugManXJarName}"))
+    doLast {
+        def target = layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.plugManXJarName}").asFile
+        if (target.exists() && target.length() > 0) {
+            logger.lifecycle("PlugManX already installed: ${target}")
+            return
+        }
+        new URL(rootProject.ext.plugManXDownloadUrl).withInputStream { input ->
+            target.withOutputStream { output -> output << input }
+        }
+        logger.lifecycle("Installed PlugManX ${rootProject.ext.plugManXVersion}: ${target}")
+    }
+}
+
+def configurePaperTestServerProperties = {
+    def propertiesFile = layout.projectDirectory.file('run-paper-1.21.8/server.properties').asFile
+    propertiesFile.parentFile.mkdirs()
+    def properties = new Properties()
+    if (propertiesFile.exists()) {
+        propertiesFile.withInputStream { input -> properties.load(input) }
+    }
+    properties.setProperty('pause-when-empty-seconds', '-1')
+    properties.setProperty('player-idle-timeout', '0')
+    properties.setProperty('enable-rcon', 'true')
+    properties.setProperty('rcon.port', rootProject.ext.paperRuntimeRconPort.toString())
+    properties.setProperty('rcon.password', rootProject.ext.paperRuntimeRconPassword)
+    properties.setProperty('enable-command-block', 'true')
+    properties.setProperty('online-mode', 'false')
+    properties.setProperty('motd', 'SlimeFunX Paper 1.21.8')
+    propertiesFile.withOutputStream { output ->
+        properties.store(output, 'SlimeFunX Paper 1.21.8 test runtime')
+    }
+}
+
+tasks.register('ensurePaperRuntimeTestConfig') {
+    group = 'verification'
+    description = 'Keeps the Paper 1.21.8 test server alive when empty and enables local RCON for SFX reload commands.'
+    dependsOn 'prepareRuntimeDirs'
+    doLast {
+        configurePaperTestServerProperties()
+        logger.lifecycle("Paper 1.21.8 test config ready: pause-when-empty-seconds=-1, player-idle-timeout=0, RCON ${rootProject.ext.paperRuntimeRconHost}:${rootProject.ext.paperRuntimeRconPort}")
+    }
+}
+
+tasks.register('stagePaperRuntimeUpdate', Copy) {
+    group = 'deployment'
+    description = 'Builds SlimeFunX and stages the jar in run-paper-1.21.8/plugins/update for the next restart or external plugin loader.'
+    dependsOn 'ensurePaperRuntimeTestConfig', 'validateSfxBundledCompiledContent'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(layout.projectDirectory.dir('run-paper-1.21.8/plugins/update'))
+    rename { rootProject.ext.pluginJarName }
+}
+
+def readLittleEndianInt = { InputStream input ->
+    byte[] data = new byte[4]
+    new DataInputStream(input).readFully(data)
+    java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN).getInt()
+}
+
+def writeLittleEndianInt = { OutputStream output, int value ->
+    output.write(value & 0xff)
+    output.write((value >>> 8) & 0xff)
+    output.write((value >>> 16) & 0xff)
+    output.write((value >>> 24) & 0xff)
+}
+
+def sendRconPacket = { OutputStream output, int requestId, int type, String payload ->
+    def body = new ByteArrayOutputStream()
+    writeLittleEndianInt(body, requestId)
+    writeLittleEndianInt(body, type)
+    body.write(payload.getBytes(StandardCharsets.UTF_8))
+    body.write(0)
+    body.write(0)
+    writeLittleEndianInt(output, body.size())
+    body.writeTo(output)
+    output.flush()
+}
+
+def readRconPacket = { InputStream input ->
+    int length = readLittleEndianInt(input)
+    byte[] data = new byte[length]
+    new DataInputStream(input).readFully(data)
+    def buffer = java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+    int requestId = buffer.getInt()
+    int type = buffer.getInt()
+    int payloadLength = Math.max(0, length - 10)
+    byte[] payload = new byte[payloadLength]
+    buffer.get(payload)
+    [id: requestId, type: type, payload: new String(payload, StandardCharsets.UTF_8)]
+}
+
+def sendPaperRconCommand = { String commandText ->
+    def output = new ByteArrayOutputStream()
+    def script = layout.projectDirectory.file('tools/paper-rcon.ps1').asFile
+    def result = exec {
+        executable = 'powershell.exe'
+        args = [
+                '-NoProfile',
+                '-ExecutionPolicy', 'Bypass',
+                '-File', script.absolutePath,
+                '-HostName', rootProject.ext.paperRuntimeRconHost,
+                '-Port', rootProject.ext.paperRuntimeRconPort.toString(),
+                '-Password', rootProject.ext.paperRuntimeRconPassword,
+                '-CommandText', commandText,
+                '-TimeoutMs', '5000'
+        ]
+        standardOutput = output
+        errorOutput = output
+        ignoreExitValue = true
+    }
+    def responseText = output.toString(StandardCharsets.UTF_8.name()).trim()
+    if (responseText != null && !responseText.isBlank()) {
+        logger.lifecycle(responseText)
+    }
+    if (result.exitValue != 0) {
+        throw new IOException(responseText.isBlank() ? "RCON command failed: ${commandText}" : responseText)
+    }
+    responseText
+}
+
+def sendPaperRconCommandWithRetry = { String commandText, int attempts = 3, long delayMs = 1000L ->
+    IOException lastIo = null
+    for (int attempt = 1; attempt <= attempts; attempt++) {
+        try {
+            return sendPaperRconCommand(commandText)
+        } catch (IOException exception) {
+            lastIo = exception
+            if (attempt < attempts) {
+                Thread.sleep(delayMs)
+            }
+        }
+    }
+    throw lastIo
+}
+
+def readNewLogText = { logFile, offset ->
+    if (!logFile.exists() || logFile.length() <= offset) {
+        return ''
+    }
+    def stream = new RandomAccessFile(logFile, 'r')
+    stream.withCloseable {
+        it.seek(offset as long)
+        byte[] data = new byte[(int) Math.min(Integer.MAX_VALUE, it.length() - offset)]
+        it.readFully(data)
+        return new String(data, StandardCharsets.UTF_8)
+    }
+}
+
+def waitForLogMatch = { logFile, offset, needles, timeoutMs ->
+    long deadline = System.currentTimeMillis() + timeoutMs
+    while (System.currentTimeMillis() <= deadline) {
+        def text = readNewLogText(logFile, offset)
+        if (needles.any { text.contains(it) }) {
+            return true
+        }
+        Thread.sleep(250L)
+    }
+    false
+}
+
+def waitForSfxEnable = { logFile, offset, timeoutMs ->
+    long deadline = System.currentTimeMillis() + timeoutMs
+    while (System.currentTimeMillis() <= deadline) {
+        def text = readNewLogText(logFile, offset)
+        if (text.contains('[SlimeFunX] SlimeFunX failed to start:')
+                || text.contains('Cannot execute command') && text.contains('plugin is disabled')) {
+            return false
+        }
+        if (text.contains('[SlimeFunX] SFX enabled.')) {
+            return true
+        }
+        Thread.sleep(250L)
+    }
+    false
+}
+
+tasks.register('paperRcon') {
+    group = 'application'
+    description = 'Sends an arbitrary command to the running Paper 1.21.8 test server over local RCON. Use -Pcmd="command".'
+    dependsOn 'ensurePaperRuntimeTestConfig'
+    doLast {
+        def commandText = project.findProperty('cmd')?.toString()
+        if (commandText == null || commandText.isBlank()) {
+            throw new GradleException('Missing command. Use: .\\gradlew.bat paperRcon -Pcmd="say test"')
+        }
+        try {
+            sendPaperRconCommandWithRetry(commandText)
+        } catch (IOException exception) {
+            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled yet. Start it with runPaper after ensurePaperRuntimeTestConfig.', exception)
+        }
+    }
+}
+
+tasks.register('reloadPaperRuntime') {
+    group = 'application'
+    description = 'Sends /sfx reload runtime to the running Paper 1.21.8 test server over local RCON.'
+    dependsOn 'ensurePaperRuntimeTestConfig'
+    doLast {
+        try {
+            sendPaperRconCommandWithRetry('sfx reload runtime')
+            logger.lifecycle('Requested SFX runtime reload on Paper 1.21.8.')
+        } catch (IOException exception) {
+            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled yet. Start it with runPaper after ensurePaperRuntimeTestConfig.', exception)
+        }
+    }
+}
+
+tasks.register('stageAndReloadPaperRuntime') {
+    group = 'application'
+    description = 'Stages the jar for the next restart and reloads the current SFX runtime/config over RCON. Bytecode changes still require restart or an external plugin loader.'
+    dependsOn 'stagePaperRuntimeUpdate', 'reloadPaperRuntime'
+}
+
+tasks.register('plugmanReloadPaperRuntime') {
+    group = 'application'
+    description = 'Builds SlimeFunX, unloads it with PlugManX, replaces the Paper 1.21.8 plugin jar, then loads it again.'
+    dependsOn 'ensurePaperRuntimeTestConfig', 'installPaperRuntimePlugManX', 'jar'
+    doLast {
+        try {
+            sendPaperRconCommandWithRetry('list')
+            def logFile = layout.projectDirectory.file('run-paper-1.21.8/logs/latest.log').asFile
+            long unloadLogOffset = logFile.exists() ? logFile.length() : 0L
+            def unloadResponse = sendPaperRconCommandWithRetry('plugman unload SlimeFunX')
+            if (!String.valueOf(unloadResponse).contains('SlimeFunX has been unloaded')
+                    && !String.valueOf(unloadResponse).contains('That is not a valid plugin')
+                    && !waitForLogMatch(logFile, unloadLogOffset, ['[SlimeFunX] Disabling SlimeFunX'], 10000L)) {
+                throw new GradleException('PlugManX unload command was sent, but SlimeFunX disable was not observed in latest.log.')
+            }
+            def builtJar = tasks.named('jar').get().archiveFile.get().asFile
+            def targetJar = layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.pluginJarName}").asFile
+            java.nio.file.Files.copy(builtJar.toPath(), targetJar.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            logger.lifecycle("Copied ${builtJar.name} to ${targetJar}")
+            Thread.sleep(1500L)
+            long loadLogOffset = logFile.exists() ? logFile.length() : 0L
+            sendPaperRconCommandWithRetry('plugman load SlimeFunX', 5, 1500L)
+            if (!waitForSfxEnable(logFile, loadLogOffset, 20000L)) {
+                throw new GradleException('PlugManX load command was sent, but SlimeFunX enable was not observed in latest.log.')
+            }
+            logger.lifecycle('Requested PlugManX unload/load for SlimeFunX on Paper 1.21.8.')
+        } catch (IOException exception) {
+            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled. Start it with runPaper first.', exception)
+        }
+    }
+}
+
+tasks.named('reloadPaperRuntime') {
+    mustRunAfter 'stagePaperRuntimeUpdate'
+}
+
+tasks.register('preparePaper261Runtime') {
+    group = 'deployment'
+    description = 'Prepares a dedicated Paper 26.1 runtime directory for SFX testing.'
+    dependsOn 'prepareRuntimeDirs'
+    doLast {
+        def sourceDir = layout.projectDirectory.dir('run-paper-1.21.8').asFile
+        def targetDir = layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName).asFile
+
+        targetDir.mkdirs()
+        ['plugins', 'logs'].each { child ->
+            new File(targetDir, child).mkdirs()
+        }
+
+        [
+                'eula.txt',
+                'server.properties',
+                'ops.json',
+                'bukkit.yml',
+                'spigot.yml',
+                'commands.yml',
+                'help.yml',
+                'permissions.yml'
+        ].each { fileName ->
+            def sourceFile = new File(sourceDir, fileName)
+            def targetFile = new File(targetDir, fileName)
+            if (sourceFile.exists() && !targetFile.exists()) {
+                copy {
+                    from sourceFile
+                    into targetDir
+                }
+            }
+        }
+
+        def sourceConfigDir = new File(sourceDir, 'config')
+        def targetConfigDir = new File(targetDir, 'config')
+        if (sourceConfigDir.exists()) {
+            sourceConfigDir.mkdirs()
+            copy {
+                from sourceConfigDir
+                into targetConfigDir
+                include 'paper-global.yml', 'paper-world-defaults.yml'
+            }
+        }
+
+        def sourcePacketEvents = new File(sourceDir, 'plugins/packetevents-spigot-2.12.1.jar')
+        if (sourcePacketEvents.exists()) {
+            copy {
+                from sourcePacketEvents
+                into new File(targetDir, 'plugins')
+            }
+        }
+
+        def sourceReadme = new File(sourceDir, 'README.md')
+        def targetReadme = new File(targetDir, 'README.md')
+        if (!targetReadme.exists()) {
+            targetReadme.text = """Place a Paper 26.1 server jar here as ${rootProject.ext.paper261RuntimeJarName}.
+Paper 26.1+ requires Java 25 according to PaperMC documentation.
+
+${sourceReadme.exists() ? sourceReadme.text : ''}
+""".stripIndent()
+        }
+
+        new File(targetDir, 'start-paper.ps1').text = """\$ErrorActionPreference = 'Stop'
+Set-Location \$PSScriptRoot
+chcp 65001 > \$null
+[Console]::InputEncoding = [System.Text.UTF8Encoding]::new()
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+
+\$javaCmd = 'java'
+\$preferredJava = 'D:\\MyApp\\java\\jdk-25\\bin\\java.exe'
+if (-not (Test-Path \$preferredJava)) {
+    \$preferredJava = 'C:\\Program Files\\Java\\jdk-25\\bin\\java.exe'
+}
+if (-not (Test-Path \$preferredJava)) {
+    \$preferredJava = 'C:\\Program Files\\Java\\jdk-25.0.1\\bin\\java.exe'
+}
+if (-not (Test-Path \$preferredJava)) {
+    \$preferredJava = 'C:\\Program Files\\Java\\jdk-25.0.2\\bin\\java.exe'
+}
+if (Test-Path \$preferredJava) {
+    \$javaCmd = \$preferredJava
+}
+
+& \$javaCmd -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -Xms1G -Xmx2G -jar .\\${rootProject.ext.paper261RuntimeJarName} nogui
+""".stripIndent()
+    }
+}
+
+tasks.register('deployToPaper261Runtime', Copy) {
+    group = 'deployment'
+    description = 'Builds the plugin and copies it to run-paper-26.1/plugins.'
+    dependsOn 'preparePaper261Runtime', 'validateSfxBundledCompiledContent'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName + '/plugins'))
+    rename { rootProject.ext.pluginJarName }
+}
+
+tasks.register('deployToFoliaRuntime', Copy) {
+    group = 'deployment'
+    description = 'Builds the plugin and copies it to run-folia-1.21.8/plugins.'
+    dependsOn 'prepareRuntimeDirs', 'validateSfxBundledCompiledContent'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(layout.projectDirectory.dir('run-folia-1.21.8/plugins'))
+    rename { rootProject.ext.pluginJarName }
+}
+
+tasks.register('fetchLegacySlimefun') {
+    group = 'deployment'
+    description = 'Downloads the classic Slimefun4-compatible 1.21.x jar used by the legacy runtime.'
+    def outputFile = layout.buildDirectory.file("legacy-runtime/${rootProject.ext.legacySlimefunJarName}")
+    outputs.file(outputFile)
+    doLast {
+        def target = outputFile.get().asFile
+        target.parentFile.mkdirs()
+        if (target.exists() && target.length() > 0L) {
+            logger.lifecycle("Using cached legacy Slimefun jar: ${target}")
+            return
+        }
+
+        logger.lifecycle("Downloading legacy Slimefun from ${rootProject.ext.legacySlimefunDownloadUrl}")
+        new URL(rootProject.ext.legacySlimefunDownloadUrl).withInputStream { input ->
+            target.withOutputStream { output -> output << input }
+        }
+    }
+}
+
+tasks.register('prepareLegacySlimefunRuntime') {
+    group = 'deployment'
+    description = 'Prepares a dedicated Paper 1.21.8 runtime directory for classic Slimefun.'
+    dependsOn 'prepareRuntimeDirs'
+    doLast {
+        def sourceDir = layout.projectDirectory.dir('run-paper-1.21.8').asFile
+        def targetDir = layout.projectDirectory.dir(rootProject.ext.legacyRuntimeDirName).asFile
+        def sourcePaperJar = new File(sourceDir, rootProject.ext.paperRuntimeJarName)
+        if (!sourcePaperJar.exists()) {
+            throw new GradleException("Missing Paper runtime jar: ${sourcePaperJar}. Prepare run-paper-1.21.8 first.")
+        }
+
+        copy {
+            from sourcePaperJar
+            into targetDir
+        }
+
+        [
+                'eula.txt',
+                'server.properties',
+                'ops.json',
+                'bukkit.yml',
+                'spigot.yml',
+                'commands.yml',
+                'help.yml',
+                'permissions.yml'
+        ].each { fileName ->
+            def sourceFile = new File(sourceDir, fileName)
+            def targetFile = new File(targetDir, fileName)
+            if (sourceFile.exists() && !targetFile.exists()) {
+                copy {
+                    from sourceFile
+                    into targetDir
+                }
+            }
+        }
+
+        new File(targetDir, 'plugins').mkdirs()
+        new File(targetDir, 'logs').mkdirs()
+    }
+}
+
+tasks.register('deployLegacySlimefunRuntime', Copy) {
+    group = 'deployment'
+    description = 'Downloads a classic Slimefun4-compatible 1.21.x jar, deploys it to the legacy Paper runtime, and removes SlimeFunX from that runtime.'
+    dependsOn 'fetchLegacySlimefun', 'prepareLegacySlimefunRuntime'
+    from(layout.buildDirectory.file("legacy-runtime/${rootProject.ext.legacySlimefunJarName}"))
+    into(layout.projectDirectory.dir("${rootProject.ext.legacyRuntimeDirName}/plugins"))
+    rename { rootProject.ext.legacySlimefunJarName }
+    doLast {
+        def pluginsDir = layout.projectDirectory.dir("${rootProject.ext.legacyRuntimeDirName}/plugins").asFile
+        pluginsDir.listFiles()?.findAll { it.isFile() && it.name.toLowerCase(Locale.ROOT).startsWith('slimefun') && it.name != rootProject.ext.legacySlimefunJarName }?.each { jarFile ->
+            jarFile.delete()
+        }
+
+        def sfxJar = new File(pluginsDir, rootProject.ext.pluginJarName)
+        if (sfxJar.exists()) {
+            sfxJar.delete()
+        }
+
+        def sfxDataDir = new File(pluginsDir, 'SlimeFunX')
+        if (sfxDataDir.exists()) {
+            delete(sfxDataDir)
+        }
+    }
+}
+
+def preferredJavaExecutable = {
+    def java21 = file('C:/Program Files/Java/jdk-21/bin/java.exe')
+    java21.exists() ? java21.absolutePath : 'java'
+}
+
+def preferredJava25Executable = {
+    def java25Candidates = [
+            file('D:/MyApp/java/jdk-25/bin/java.exe'),
+            file('C:/Program Files/Java/jdk-25/bin/java.exe'),
+            file('C:/Program Files/Java/jdk-25.0.1/bin/java.exe'),
+            file('C:/Program Files/Java/jdk-25.0.2/bin/java.exe')
+    ]
+    def java25 = java25Candidates.find { it.exists() }
+    java25 != null ? java25.absolutePath : 'java'
+}
+
+tasks.register('runPaper') {
+    group = 'application'
+    description = 'Builds the plugin, deploys it to the Paper runtime, and starts Paper 1.21.8.'
+    dependsOn 'ensurePaperRuntimeTestConfig', 'deployToPaperRuntime'
+    doLast {
+        def workingDirFile = layout.projectDirectory.dir('run-paper-1.21.8').asFile
+        def command = [preferredJavaExecutable()]
+        command.addAll(rootProject.ext.serverEncodingJvmArgs)
+        command.addAll(['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui'])
+
+        logger.lifecycle('Starting Paper 1.21.8 with heartbeat output to avoid idle timeout false positives.')
+
+        def process = new ProcessBuilder(command)
+                .directory(workingDirFile)
+                .redirectErrorStream(true)
+                .start()
+
+        def inputThread = Thread.startDaemon('runPaper-input-forwarder') {
+            def processInput = process.outputStream
+            try {
+                byte[] buffer = new byte[1024]
+                int read
+                while (process.isAlive() && (read = System.in.read(buffer)) != -1) {
+                    processInput.write(buffer, 0, read)
+                    processInput.flush()
+                }
+            } catch (IOException ignored) {
+                // Ignore stdin forwarding errors during shutdown.
+            } finally {
+                try {
+                    processInput.close()
+                } catch (IOException ignored) {
+                    // Ignore close failure during shutdown.
+                }
+            }
+        }
+
+        def forwardThread = Thread.startDaemon('runPaper-output-forwarder') {
+            process.inputStream.withReader(StandardCharsets.UTF_8.name()) { reader ->
+                String line
+                while ((line = reader.readLine()) != null) {
+                    println line
+                }
+            }
+        }
+
+        try {
+            while (process.isAlive()) {
+                if (!process.waitFor(30, TimeUnit.SECONDS)) {
+                    logger.lifecycle('[runPaper] still running...')
+                }
+            }
+            inputThread.join(1000)
+            forwardThread.join(1000)
+        } finally {
+            if (process.isAlive()) {
+                process.destroy()
+            }
+        }
+
+        def exitCode = process.exitValue()
+        if (exitCode != 0) {
+            throw new GradleException("Paper 1.21.8 exited with code ${exitCode}.")
+        }
+    }
+}
+
+tasks.register('runPaper261', Exec) {
+    group = 'application'
+    description = 'Builds the plugin, deploys it to the Paper 26.1 runtime, and starts Paper 26.1 using Java 25 when available.'
+    dependsOn 'deployToPaper261Runtime'
+    workingDir layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName).asFile
+    executable preferredJava25Executable()
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paper261RuntimeJarName, 'nogui']
+}
+
+tasks.register('runFolia', Exec) {
+    group = 'application'
+    description = 'Builds the plugin, deploys it to the Folia runtime, and starts Folia 1.21.8.'
+    dependsOn 'deployToFoliaRuntime'
+    workingDir layout.projectDirectory.dir('run-folia-1.21.8').asFile
+    executable preferredJavaExecutable()
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.foliaRuntimeJarName, 'nogui']
+}
+
+tasks.register('runLegacySlimefun', Exec) {
+    group = 'application'
+    description = 'Deploys a classic Slimefun4-compatible plugin to a dedicated Paper 1.21.8 runtime and starts it.'
+    dependsOn 'deployLegacySlimefunRuntime'
+    workingDir layout.projectDirectory.dir(rootProject.ext.legacyRuntimeDirName).asFile
+    executable preferredJavaExecutable()
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui']
+}
 

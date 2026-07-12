@@ -15,6 +15,7 @@ public record SfxEnergyComponentDefinition(
         boolean usesVanillaCoalResolver,
         Material progressMaterial,
         List<FuelRule> fuelRules,
+        String providerKey,
         SfxEnergyComponentUiDefinition ui
 ) {
     public SfxEnergyComponentDefinition {
@@ -23,6 +24,7 @@ public record SfxEnergyComponentDefinition(
         Objects.requireNonNull(progressMaterial, "progressMaterial");
         Objects.requireNonNull(ui, "ui");
         fuelRules = fuelRules == null ? List.of() : List.copyOf(fuelRules);
+        providerKey = providerKey == null || providerKey.isBlank() ? null : providerKey.trim();
         capacity = Math.max(0, capacity);
         energyPerTick = Math.max(0, energyPerTick);
         nightEnergyPerTick = Math.max(0, nightEnergyPerTick);
@@ -37,7 +39,7 @@ public record SfxEnergyComponentDefinition(
 
     public boolean isFueledGenerator() {
         return componentType == SfxEnergyComponentType.GENERATOR
-                && (usesVanillaCoalResolver || !fuelRules.isEmpty());
+                && (usesVanillaCoalResolver || !fuelRules.isEmpty() || providerKey != null);
     }
 
     public boolean isCharger() {

@@ -19,6 +19,7 @@ public record SfxElectricMachineDefinition(
         int[] outputSlots,
         String compiledEntryId,
         Set<String> functionTags,
+        Set<String> guideRecipeTypes,
         SfxElectricMachineUiDefinition ui,
         SfxElectricAssemblerSpec assemblerSpec
 ) {
@@ -31,6 +32,7 @@ public record SfxElectricMachineDefinition(
         Objects.requireNonNull(outputSlots, "outputSlots");
         compiledEntryId = compiledEntryId == null || compiledEntryId.isBlank() ? id : compiledEntryId.trim();
         functionTags = normalizeFunctionTags(functionTags);
+        guideRecipeTypes = normalizeRecipeTypes(guideRecipeTypes);
         Objects.requireNonNull(ui, "ui");
         if (inputSlots.length > SfxElectricMachineState.MAX_INPUTS) {
             throw new IllegalArgumentException("Electric machines support up to seven input slots.");
@@ -65,6 +67,10 @@ public record SfxElectricMachineDefinition(
         return function != null && functionTags.contains(normalizeFunctionTag(function));
     }
 
+    public boolean executesGuideRecipeType(String recipeType) {
+        return recipeType != null && guideRecipeTypes.contains(normalizeRecipeType(recipeType));
+    }
+
     private static Set<String> normalizeFunctionTags(Set<String> raw) {
         if (raw == null || raw.isEmpty()) {
             return Set.of();
@@ -80,5 +86,22 @@ public record SfxElectricMachineDefinition(
 
     private static String normalizeFunctionTag(String raw) {
         return raw.trim().replace('_', '-').toLowerCase(Locale.ROOT);
+    }
+
+    private static Set<String> normalizeRecipeTypes(Set<String> raw) {
+        if (raw == null || raw.isEmpty()) {
+            return Set.of();
+        }
+        Set<String> result = new LinkedHashSet<>();
+        for (String value : raw) {
+            if (value != null && !value.isBlank()) {
+                result.add(normalizeRecipeType(value));
+            }
+        }
+        return Set.copyOf(result);
+    }
+
+    private static String normalizeRecipeType(String raw) {
+        return raw.trim().toLowerCase(Locale.ROOT);
     }
 }

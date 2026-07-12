@@ -29,9 +29,11 @@ public interface SfxBehaviorRegistry {
 
     List<SfxUtilityRuleProvider> utilityRuleProviders();
 
-    List<SfxElectricSpecialProviderKeyPolicy> electricSpecialProviderKeyPolicies();
+    List<SfxElectricMachineProviderKeyPolicy> electricMachineProviderKeyPolicies();
 
-    List<SfxElectricSpecialProviderRegistration> electricSpecialProviders();
+    List<SfxElectricMachineProviderRegistration> electricMachineProviders();
+
+    List<SfxEnergyGeneratorProviderRegistration> energyGeneratorProviders();
 
     List<SfxAutoBrewerBehaviorProvider> autoBrewerBehaviorProviders();
 
