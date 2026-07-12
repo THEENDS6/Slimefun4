@@ -131,7 +131,7 @@ public final class SfxElectricMachineService implements Listener {
         this.machineRuntime = sharedMachineRuntime == null ? new SfxMachineRuntimeEngine() : sharedMachineRuntime;
         this.machineRuntime.registerDefinitions(SfxElectricMachineFrameworkBridge.definitions(this.registry));
         registerFrameworkEffects();
-        this.menuRenderer = new SfxElectricMachineMenuRenderer(items, localization, profiles);
+        this.menuRenderer = new SfxElectricMachineMenuRenderer(plugin, items, localization, profiles);
         this.simpleIoMenuRenderer = new SfxSimpleIoMachineMenuRenderer(items, localization, profiles);
         this.assemblerMenuRenderer = new SfxElectricAssemblerMenuRenderer(items, localization, profiles);
         this.geoMinerMenuRenderer = new SfxGeoMinerMachineMenuRenderer(items, localization, profiles);

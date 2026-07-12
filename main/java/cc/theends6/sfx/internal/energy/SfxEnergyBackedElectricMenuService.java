@@ -366,11 +366,11 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
     }
 
     private void render(SfxEnergyGeneratorSession session, SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state) {
-        renderer.render(definition, inventory, state, renderStatus(instance, definition, state));
+        renderer.render(definition, inventory, state, renderStatus(instance, definition, state), energy.dynamicGenerator(definition));
     }
 
     private void renderStatusOnly(SfxEnergyGeneratorSession session, SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state) {
-        renderer.renderStatusOnly(definition, inventory, state, renderStatus(instance, definition, state));
+        renderer.renderStatusOnly(definition, inventory, state, renderStatus(instance, definition, state), energy.dynamicGenerator(definition));
     }
 
     private void syncInventoryToState(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state) {
