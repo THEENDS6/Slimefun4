@@ -93,7 +93,9 @@ dependencies {
     compileOnly "io.papermc.paper:paper-api:${rootProject.ext.paperApiVersion}"
     compileOnly "com.github.retrooper:packetevents-spigot:2.12.1"
     compileOnly "org.xerial:sqlite-jdbc:3.50.3.0"
+    compileOnly "com.github.houbb:pinyin:0.4.0"
     shade "org.xerial:sqlite-jdbc:3.50.3.0"
+    shade "com.github.houbb:pinyin:0.4.0"
 }
 
 tasks.withType(JavaCompile).configureEach {

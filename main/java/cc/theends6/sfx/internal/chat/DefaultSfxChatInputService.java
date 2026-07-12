@@ -31,7 +31,7 @@ public final class DefaultSfxChatInputService implements SfxChatInputService {
         Objects.requireNonNull(onInput, "onInput");
         Objects.requireNonNull(onTimeout, "onTimeout");
         long timeoutTicks = Math.max(1L, (timeout.toMillis() + 49L) / 50L);
-        Session session = new Session(normalizedOwner, UUID.randomUUID(), onInput, onTimeout);
+        Session session = new Session(normalizedOwner, onInput, onTimeout);
         sessions.put(player.getUniqueId(), session);
         runtime.executeForPlayerLater(player, timeoutTicks, () -> {
             if (sessions.remove(player.getUniqueId(), session)) {
@@ -78,6 +78,6 @@ public final class DefaultSfxChatInputService implements SfxChatInputService {
         return owner.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
-    private record Session(String owner, UUID token, Consumer<String> onInput, Runnable onTimeout) {
+    private record Session(String owner, Consumer<String> onInput, Runnable onTimeout) {
     }
 }
