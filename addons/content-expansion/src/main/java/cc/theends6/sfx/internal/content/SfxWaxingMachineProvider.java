@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.content;
 
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.machine.SfxMachineDisplayItem;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineDefinition;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineRenderStatus;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineState;
@@ -10,6 +11,7 @@ import cc.theends6.sfx.internal.electric.SfxElectricRecipeProvider;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import java.util.List;
+import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -21,10 +23,11 @@ final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
     private static final int BOTTLE_OUTPUT = 1;
     private static final int WORK_TICKS = 80;
     private static final int WAX_MAX = 10;
+    private static final int WAX_DISPLAY_SLOT = 4;
 
     @Override
     public List<SfxElectricRecipe> recipes() {
-        return List.of();
+        return SfxCopperVariants.waxingRecipes();
     }
 
     @Override
@@ -98,7 +101,7 @@ final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
 
     private Plan plan(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
         SfxElectricStack target = state.input(TARGET_INPUT);
-        SfxElectricStack output = SfxCopperVariants.waxed(items, target);
+        SfxElectricStack output = SfxCopperVariants.waxed(items, target == null ? null : target.copyWithAmount(1));
         if (output == null || !canPush(state, RESULT_OUTPUT, output)) {
             return null;
         }
@@ -119,6 +122,19 @@ final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
     private void push(SfxElectricMachineState state, int slot, SfxElectricStack stack) {
         SfxElectricStack current = state.output(slot);
         state.output(slot, current == null ? stack : current.copyWithAmount(current.amount() + stack.amount()));
+    }
+
+    @Override
+    public Map<Integer, SfxMachineDisplayItem> displayItems(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
+        boolean stored = state.specialData() > 0;
+        return Map.of(WAX_DISPLAY_SLOT, new SfxMachineDisplayItem(
+                stored ? Material.HONEYCOMB_BLOCK : Material.COBBLESTONE,
+                "content-expansion.ui.wax.name",
+                List.of("content-expansion.ui.wax.amount", "content-expansion.ui.wax.insert"),
+                Map.of("stored", state.specialData(), "capacity", WAX_MAX),
+                stored,
+                state.specialData(),
+                WAX_MAX));
     }
 
     private record Plan(SfxElectricStack output) {

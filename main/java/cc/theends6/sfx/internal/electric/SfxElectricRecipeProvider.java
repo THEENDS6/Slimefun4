@@ -2,12 +2,12 @@ package cc.theends6.sfx.internal.electric;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.behavior.SfxElectricMachineProvider;
+import cc.theends6.sfx.api.machine.SfxMachineDisplayItem;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
 import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.List;
 import java.util.Map;
-import org.bukkit.inventory.ItemStack;
 
 public interface SfxElectricRecipeProvider extends SfxElectricMachineProvider {
     List<SfxElectricRecipe> recipes();
@@ -52,7 +52,7 @@ public interface SfxElectricRecipeProvider extends SfxElectricMachineProvider {
         return false;
     }
 
-    default Map<Integer, ItemStack> displayItems(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
+    default Map<Integer, SfxMachineDisplayItem> displayItems(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
         return Map.of();
     }
 }

@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.energy;
 
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.machine.SfxMachineDisplayItem;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
 import cc.theends6.sfx.internal.technical.SfxTechnicalGadgetBalance;
@@ -56,11 +57,26 @@ final class SfxEnergyGeneratorMenuRenderer {
         if (provider == null) {
             return;
         }
-        for (Map.Entry<Integer, ItemStack> entry : provider.displayItems(plugin, items, definition, state).entrySet()) {
+        for (Map.Entry<Integer, SfxMachineDisplayItem> entry : provider.displayItems(plugin, items, definition, state).entrySet()) {
             if (entry.getKey() >= 0 && entry.getKey() < inventory.getSize()) {
-                inventory.setItem(entry.getKey(), entry.getValue());
+                inventory.setItem(entry.getKey(), displayItem(entry.getValue()));
             }
         }
+    }
+
+    private ItemStack displayItem(SfxMachineDisplayItem display) {
+        ItemStack stack = new ItemStack(display.material());
+        ItemMeta meta = stack.getItemMeta();
+        if (meta != null) {
+            meta.displayName(localization.component(display.nameKey(), display.placeholders()));
+            meta.lore(display.loreKeys().stream().map(key -> localization.component(key, display.placeholders())).toList());
+            meta.setEnchantmentGlintOverride(display.glint());
+            stack.setItemMeta(meta);
+        }
+        if (display.capacity() > 0) {
+            cc.theends6.sfx.internal.ui.SfxItemProgressBar.apply(stack, display.progress(), display.capacity());
+        }
+        return stack;
     }
 
     void renderStorageSlots(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state) {

@@ -1,7 +1,11 @@
 package cc.theends6.sfx.internal.content;
 
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.electric.SfxElectricRecipe;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.bukkit.Material;
@@ -22,6 +26,7 @@ final class SfxCopperVariants {
     private static final Map<Material, Material> PREVIOUS_OXIDATION = new LinkedHashMap<>();
     private static final Map<Material, Material> FINAL_OXIDATION = new LinkedHashMap<>();
     private static final Map<Material, Double> COPPER_VALUES = new LinkedHashMap<>();
+    private static final Map<Material, Material> STRIPPED = new LinkedHashMap<>();
 
     static {
         pair(Material.COPPER_BLOCK, Material.WAXED_COPPER_BLOCK, Material.EXPOSED_COPPER, 9.0D, Material.OXIDIZED_COPPER);
@@ -40,6 +45,20 @@ final class SfxCopperVariants {
         copperFamily("COPPER_BULB", "EXPOSED_COPPER_BULB", "WEATHERED_COPPER_BULB", "OXIDIZED_COPPER_BULB", 3.0D);
         copperFamily("COPPER_DOOR", "EXPOSED_COPPER_DOOR", "WEATHERED_COPPER_DOOR", "OXIDIZED_COPPER_DOOR", 2.0D);
         copperFamily("COPPER_TRAPDOOR", "EXPOSED_COPPER_TRAPDOOR", "WEATHERED_COPPER_TRAPDOOR", "OXIDIZED_COPPER_TRAPDOOR", 3.0D);
+
+        strippedFamily("OAK");
+        strippedFamily("SPRUCE");
+        strippedFamily("BIRCH");
+        strippedFamily("JUNGLE");
+        strippedFamily("ACACIA");
+        strippedFamily("DARK_OAK");
+        strippedFamily("MANGROVE");
+        strippedFamily("CHERRY");
+        stripped("CRIMSON_STEM", "STRIPPED_CRIMSON_STEM");
+        stripped("CRIMSON_HYPHAE", "STRIPPED_CRIMSON_HYPHAE");
+        stripped("WARPED_STEM", "STRIPPED_WARPED_STEM");
+        stripped("WARPED_HYPHAE", "STRIPPED_WARPED_HYPHAE");
+        stripped("BAMBOO_BLOCK", "STRIPPED_BAMBOO_BLOCK");
     }
 
     private SfxCopperVariants() {
@@ -69,7 +88,32 @@ final class SfxCopperVariants {
         if (previous != null) {
             return SfxElectricStack.vanilla(previous, stack.amount());
         }
+        Material stripped = STRIPPED.get(stack.material());
+        if (stripped != null) {
+            return SfxElectricStack.vanilla(stripped, stack.amount());
+        }
         return null;
+    }
+
+    static List<SfxElectricRecipe> cuttingRecipes() {
+        List<SfxElectricRecipe> recipes = new ArrayList<>();
+        UNWAXED.forEach((input, output) -> recipes.add(vanillaCuttingRecipe("unwax", input, output)));
+        PREVIOUS_OXIDATION.forEach((input, output) -> recipes.add(vanillaCuttingRecipe("scrape", input, output)));
+        STRIPPED.forEach((input, output) -> recipes.add(vanillaCuttingRecipe("strip", input, output)));
+        recipes.add(sfxCuttingRecipe("exposed_ingot", EXPOSED_COPPER_INGOT, COPPER_INGOT));
+        recipes.add(sfxCuttingRecipe("weathered_ingot", WEATHERED_COPPER_INGOT, EXPOSED_COPPER_INGOT));
+        recipes.add(sfxCuttingRecipe("oxidized_ingot", OXIDIZED_COPPER_INGOT, WEATHERED_COPPER_INGOT));
+        return List.copyOf(recipes);
+    }
+
+    static List<SfxElectricRecipe> waxingRecipes() {
+        List<SfxElectricRecipe> recipes = new ArrayList<>();
+        WAXED.forEach((input, output) -> recipes.add(new SfxElectricRecipe(
+                "sfx:wax_" + input.name().toLowerCase(java.util.Locale.ROOT),
+                SfxRecipeSlot.vanilla(input),
+                SfxElectricStack.vanilla(output, 1),
+                80)));
+        return List.copyOf(recipes);
     }
 
     static SfxElectricStack oxidizedProduct(SfxItems items, SfxElectricStack stack, boolean finalStage) {
@@ -142,11 +186,33 @@ final class SfxCopperVariants {
             case EXPOSED_COPPER_INGOT -> COPPER_INGOT;
             case WEATHERED_COPPER_INGOT -> EXPOSED_COPPER_INGOT;
             case OXIDIZED_COPPER_INGOT -> WEATHERED_COPPER_INGOT;
-            case EXPOSED_COPPER_DUST -> COPPER_DUST;
-            case WEATHERED_COPPER_DUST -> EXPOSED_COPPER_DUST;
-            case OXIDIZED_COPPER_DUST -> WEATHERED_COPPER_DUST;
             default -> null;
         };
+    }
+
+    private static SfxElectricRecipe vanillaCuttingRecipe(String operation, Material input, Material output) {
+        return new SfxElectricRecipe(
+                "sfx:cut_" + operation + "_" + input.name().toLowerCase(java.util.Locale.ROOT),
+                SfxRecipeSlot.vanilla(input),
+                SfxElectricStack.vanilla(output, 1),
+                120);
+    }
+
+    private static SfxElectricRecipe sfxCuttingRecipe(String key, String input, String output) {
+        return new SfxElectricRecipe("sfx:cut_" + key, SfxRecipeSlot.sfx(input), SfxElectricStack.sfx(output, 1), 120);
+    }
+
+    private static void strippedFamily(String wood) {
+        stripped(wood + "_LOG", "STRIPPED_" + wood + "_LOG");
+        stripped(wood + "_WOOD", "STRIPPED_" + wood + "_WOOD");
+    }
+
+    private static void stripped(String input, String output) {
+        Material inputMaterial = Material.matchMaterial(input);
+        Material outputMaterial = Material.matchMaterial(output);
+        if (inputMaterial != null && outputMaterial != null) {
+            STRIPPED.put(inputMaterial, outputMaterial);
+        }
     }
 
     private static void copperFamily(String base, String exposed, String weathered, String oxidized, double value) {

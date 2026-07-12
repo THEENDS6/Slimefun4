@@ -9,12 +9,8 @@ import cc.theends6.sfx.internal.electric.SfxElectricRecipe;
 import cc.theends6.sfx.internal.electric.SfxElectricRecipeProvider;
 import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
-import java.util.Iterator;
 import java.util.List;
 import org.bukkit.Location;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.Recipe;
-import org.bukkit.inventory.StonecuttingRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 
 final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
@@ -23,15 +19,12 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
     private static final int SNAPSHOT_INPUT = 0;
     private static final int SNAPSHOT_OUTPUT = 0;
 
-    private final JavaPlugin plugin;
-
     SfxCuttingMachineProvider(JavaPlugin plugin) {
-        this.plugin = plugin;
     }
 
     @Override
     public List<SfxElectricRecipe> recipes() {
-        return List.of();
+        return SfxCopperVariants.cuttingRecipes();
     }
 
     @Override
@@ -96,25 +89,6 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
             int ticks = (int) Math.ceil(Math.max(1.0D, SfxCopperVariants.copperValue(input.copyWithAmount(1))) * 120.0D);
             SfxElectricStack output = scrape.copyWithAmount(1);
             return canPush(items, state, output) ? new Plan(output, ticks) : null;
-        }
-        if (input.isSfxItem() || input.hasSnapshot() || input.material() == null) {
-            return null;
-        }
-        Iterator<Recipe> iterator = plugin.getServer().recipeIterator();
-        while (iterator.hasNext()) {
-            Recipe rawRecipe = iterator.next();
-            if (!(rawRecipe instanceof StonecuttingRecipe recipe)) {
-                continue;
-            }
-            if (!recipe.getInputChoice().test(new ItemStack(input.material()))) {
-                continue;
-            }
-            ItemStack result = recipe.getResult();
-            if (result == null || result.getType().isAir()) {
-                continue;
-            }
-            SfxElectricStack output = SfxElectricStack.fromItemStack(items, result);
-            return output != null && canPush(items, state, output) ? new Plan(output, 120) : null;
         }
         return null;
     }
