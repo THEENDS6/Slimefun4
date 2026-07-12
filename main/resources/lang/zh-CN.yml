@@ -4024,6 +4024,8 @@ guide:
         lore: <gray>点击切换这本书为作弊科技书。</gray>
     layout:
       name: <yellow>页面布局</yellow>
+      classic: <gray>当前为 SFX 布局，点击切换到经典布局。</gray>
+      sfx: <gray>当前为经典布局，点击切换到 SFX 扩展布局。</gray>
     history:
       name: <yellow>递归配方回溯</yellow>
       enabled: <green>已启用</green>
@@ -4045,6 +4047,7 @@ guide:
       lore: <gray>再次打开科技书时，回到你上次关闭时所在的页面。</gray>
     machine-ui:
       name: <yellow>机器界面扩展信息</yellow>
+      lore: <gray>在经典进度显示上额外展示 SFX 的配方、倍率和 tick 进度信息。</gray>
     machine-sound:
       name: <yellow>机器完成音效</yellow>
       lore: <gray>查看机器界面时，仅向你播放完成音效。</gray>
@@ -4054,6 +4057,7 @@ guide:
     current-layout:
       name: <aqua>当前布局</aqua>
       classic: <gray>经典布局已启用。</gray>
+      sfx: <gray>SFX 扩展布局已启用。</gray>
       mode: <gray>当前科技书模式：{mode}</gray>
     toggle:
       enabled: <green>已启用</green>
@@ -4112,6 +4116,10 @@ guide:
     process:
       simple-smelting: 简单冶炼
       alloy-smelting: 合金冶炼
+    fluid:
+      lava: <gold>岩浆</gold>
+      water: <aqua>水</aqua>
+      container-ignored: <gray>这里只显示产生的流体，不计算容器。</gray>
     vanilla:
       disabled: <dark_gray>原版配方查询已被禁用。</dark_gray>
       crafting: 工作台
@@ -4174,6 +4182,7 @@ materials:
   campfire: 营火
   smoker: 烟熏炉
   blast_furnace: 高炉
+  nether_star: 下界之星
 messages:
   no-tome-yourself: '&c你不能从自己的学识之书中学习。'
   tome-of-knowledge-sharing:
@@ -4183,7 +4192,7 @@ messages:
   fire-extinguish: '&b你身上的火焰已被熄灭。'
   no-pvp: '&c这个世界禁用了 PVP。'
   profile:
-    loading: <yellow>SFX player data is still loading. Try again in a moment.</yellow>
+    loading: <yellow>SFX 玩家数据仍在加载，请稍后再试。</yellow>
   not-researched-item: <red>你还没有解锁这个物品。</red>
   not-enough-xp: <red>你的经验等级不足，无法解锁这项研究。</red>
   machines:
@@ -4542,6 +4551,8 @@ energy:
       J</gray>
     classic-positive: <green>+{net} J ⚡</green>
     classic-negative: <red>{net} J ⚡</red>
+    sfx-positive: <green>+{net_text} J/t</green><newline>{flow_line}<newline>{storage_line}
+    sfx-negative: <red>-{net_text} J/t</red><newline>{flow_line}<newline>{storage_line}
   generator:
     fuel:
       oil: 石油桶

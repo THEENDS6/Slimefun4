@@ -210,6 +210,10 @@ guide:
     process:
       simple-smelting: Simple Smelting
       alloy-smelting: Alloy Smelting
+    fluid:
+      lava: <gold>Lava</gold>
+      water: <aqua>Water</aqua>
+      container-ignored: <gray>This display represents the produced fluid, not its container.</gray>
     vanilla:
       disabled: <dark_gray>Vanilla recipe lookup is disabled.</dark_gray>
       crafting: Crafting Table
@@ -4221,6 +4225,7 @@ materials:
   campfire: Campfire
   smoker: Smoker
   blast_furnace: Blast Furnace
+  nether_star: Nether Star
 messages:
   no-tome-yourself: '&cYou cannot learn from your own Tome of Knowledge.'
   tome-of-knowledge-sharing:

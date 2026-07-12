@@ -7,6 +7,7 @@ items:
     material: SMOKER
     name-key: items.sf.auto_brewer_2.name
     priority: 361
+    guide-order: 360.1
     lore-key: items.sf.auto_brewer_2.lore
     flags: [legacy-sf]
 

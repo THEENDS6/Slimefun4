@@ -969,9 +969,11 @@ public final class DefaultSfxGuide implements SfxGuide {
             entries.addAll(specialDisplayEntries(definition, mode));
             entries.addAll(machineOutputEntries(definition, mode));
         }
-        return entries.stream()
-                .sorted(DISPLAY_ENTRY_ORDER)
-                .toList();
+        boolean hasPairs = entries.stream().anyMatch(DisplayEntry::paired);
+        Comparator<DisplayEntry> order = hasPairs
+                ? Comparator.comparingInt((DisplayEntry entry) -> entry.paired() ? 0 : 1).thenComparing(DISPLAY_ENTRY_ORDER)
+                : DISPLAY_ENTRY_ORDER;
+        return entries.stream().sorted(order).toList();
     }
 
     private List<DisplayEntry> executorEntriesFor(SfxItemDefinition definition, GuideRecipePage current, GuideMode mode) {
@@ -1076,17 +1078,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                     SfxRecipeSlot.vanilla(Material.SAND, 2), SfxRecipeSlot.vanilla(Material.SOUL_SAND),
                     SfxRecipeSlot.vanilla(Material.WHEAT, 4), SfxRecipeSlot.vanilla(Material.NETHER_WART)
             ), mode);
-            case "sf:crucible" -> pairedDisplayEntries(List.of(
-                    SfxRecipeSlot.vanilla(Material.COBBLESTONE, 16), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
-                    SfxRecipeSlot.vanilla(Material.NETHERRACK, 16), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
-                    SfxRecipeSlot.vanilla(Material.STONE, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
-                    SfxRecipeSlot.vanilla(Material.OBSIDIAN, 1), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
-                    SfxRecipeSlot.vanilla(Material.TERRACOTTA, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
-                    SfxRecipeSlot.vanilla(Material.OAK_LEAVES, 16), SfxRecipeSlot.vanilla(Material.WATER_BUCKET),
-                    SfxRecipeSlot.vanilla(Material.BLACKSTONE, 8), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
-                    SfxRecipeSlot.vanilla(Material.BASALT, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET),
-                    SfxRecipeSlot.vanilla(Material.COBBLED_DEEPSLATE, 12), SfxRecipeSlot.vanilla(Material.LAVA_BUCKET)
-            ), mode);
+            case "sf:crucible" -> crucibleDisplayEntries(mode);
             case "sf:coal_generator" -> coalFuelDisplayEntries(16, 10, mode, 300);
             case "sf:coal_generator_2" -> coalFuelDisplayEntries(30, tierTwoBurnRateTenths(), mode, 300);
             case "sf:lava_generator" -> fixedFuelDisplayEntries(20, 10, mode, 300, List.of(
@@ -1411,6 +1403,32 @@ public final class DefaultSfxGuide implements SfxGuide {
                         handlerForSlot(input, mode), handlerForSlot(outputSlot, mode), DisplayEntryKind.MACHINE_RECIPE));
                 priority += 10;
             }
+        }
+        return entries;
+    }
+
+    private List<DisplayEntry> crucibleDisplayEntries(GuideMode mode) {
+        List<SfxRecipeSlot> inputs = List.of(
+                SfxRecipeSlot.vanilla(Material.COBBLESTONE, 16),
+                SfxRecipeSlot.vanilla(Material.NETHERRACK, 16),
+                SfxRecipeSlot.vanilla(Material.STONE, 12),
+                SfxRecipeSlot.vanilla(Material.OBSIDIAN),
+                SfxRecipeSlot.vanilla(Material.TERRACOTTA, 12),
+                SfxRecipeSlot.vanilla(Material.OAK_LEAVES, 16),
+                SfxRecipeSlot.vanilla(Material.BLACKSTONE, 8),
+                SfxRecipeSlot.vanilla(Material.BASALT, 12),
+                SfxRecipeSlot.vanilla(Material.COBBLED_DEEPSLATE, 12));
+        List<DisplayEntry> entries = new ArrayList<>();
+        for (int i = 0; i < inputs.size(); i++) {
+            boolean water = i == 5;
+            ItemStack fluid = ItemBuilder.of(water ? Material.LIGHT_BLUE_DYE : Material.MAGMA_CREAM)
+                    .name(water ? tr("guide.recipe.fluid.water") : tr("guide.recipe.fluid.lava"))
+                    .lore(tr("guide.recipe.fluid.container-ignored"))
+                    .build();
+            SfxRecipeSlot input = inputs.get(i);
+            entries.add(DisplayEntry.paired(ingredientIcon(input), fluid,
+                    water ? tr("guide.recipe.fluid.water") : tr("guide.recipe.fluid.lava"),
+                    200 + i * 5, handlerForSlot(input, mode), null));
         }
         return entries;
     }
@@ -2085,9 +2103,17 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private ItemStack machineSourceIcon(ManualMachineDefinition machine) {
-        return ItemBuilder.of(machine.triggerMaterial())
+        ItemStack icon = ItemBuilder.of(machine.triggerMaterial())
                 .name("<green>" + machineDisplayName(machine) + "</green>")
                 .build();
+        if ("sf:enhanced_crafting_table".equals(machine.id())) {
+            ItemMeta meta = icon.getItemMeta();
+            if (meta != null) {
+                meta.setEnchantmentGlintOverride(Boolean.TRUE);
+                icon.setItemMeta(meta);
+            }
+        }
+        return icon;
     }
 
     private ItemStack multiblockSourceIcon() {
