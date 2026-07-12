@@ -38,20 +38,20 @@ machines:
   "sf:animal_growth_accelerator":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @d: {name-key: items.sf.animal_growth_accelerator.name, speed: 1, capacity: 20480, consumption: 14, progress-material: WHEAT}
-    runtime: {executor: sf:special_provider, provider: sf:animal_growth_accelerator}
+    @d: {name-key: items.sf.animal_growth_accelerator.name, speed: 1, capacity: 20480, consumption: 120, progress-material: WHEAT, working-name-key: electric-ui.action.animal-growth.name}
+    runtime: {executor: sf:provider, provider: sf:animal_growth_accelerator}
   "sf:crop_growth_accelerator":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @d: {name-key: items.sf.crop_growth_accelerator.name, speed: 1, capacity: 40960, consumption: 100, progress-material: BONE_MEAL}
-    runtime: {executor: sf:special_provider, provider: sf:crop_growth_accelerator}
+    @d: {name-key: items.sf.crop_growth_accelerator.name, speed: 1, capacity: 40960, consumption: 100, progress-material: BONE_MEAL, working-name-key: electric-ui.action.crop-growth.name}
+    runtime: {executor: sf:provider, provider: sf:crop_growth_accelerator}
   "sf:crop_growth_accelerator_2":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @d: {name-key: items.sf.crop_growth_accelerator_2.name, speed: 1, capacity: 40960, consumption: 120, progress-material: BONE_MEAL}
-    runtime: {executor: sf:special_provider, provider: sf:crop_growth_accelerator_2}
+    @d: {name-key: items.sf.crop_growth_accelerator_2.name, speed: 1, capacity: 40960, consumption: 120, progress-material: BONE_MEAL, working-name-key: electric-ui.action.crop-growth.name}
+    runtime: {executor: sf:provider, provider: sf:crop_growth_accelerator_2}
   "sf:tree_growth_accelerator":
     @cf: templates.machines.simple-io-definition
     @io: true
-    @d: {name-key: items.sf.tree_growth_accelerator.name, speed: 1, capacity: 40960, consumption: 96, progress-material: OAK_SAPLING}
-    runtime: {executor: sf:special_provider, provider: sf:tree_growth_accelerator}
+    @d: {name-key: items.sf.tree_growth_accelerator.name, speed: 1, capacity: 40960, consumption: 96, progress-material: OAK_SAPLING, working-name-key: electric-ui.action.tree-growth.name}
+    runtime: {executor: sf:provider, provider: sf:tree_growth_accelerator}

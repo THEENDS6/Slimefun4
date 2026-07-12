@@ -4,13 +4,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:aluminum_brass_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 1
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:aluminum_dust
     - sf:brass_ingot
@@ -21,13 +21,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:aluminum_bronze_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 2
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:aluminum_dust
     - sf:bronze_ingot
@@ -38,13 +38,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:aluminum_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:simple_smelting
     operation: shapeless
     guide-order: 3
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - simple-smeltery
     inputs:
     - sf:aluminum_dust
     outputs:
@@ -53,13 +53,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:billon_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 4
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:silver_dust
     - sf:copper_dust
@@ -70,13 +70,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:brass_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 5
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:copper_dust
     - sf:zinc_dust
@@ -87,13 +87,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:bronze_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 6
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:copper_dust
     - sf:tin_dust
@@ -104,13 +104,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:christmas_caramel
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 7
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - SUGAR
     - SUGAR
@@ -120,13 +120,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:christmas_hot_chocolate
-    recipe-type: sf:smeltery
+    recipe-type: sf:simple_smelting
     operation: shapeless
     guide-order: 8
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - simple-smeltery
     inputs:
     - sf:christmas_chocolate_milk
     outputs:
@@ -135,13 +135,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:cobalt_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 9
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:iron_dust
     - sf:copper_dust
@@ -152,13 +152,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:copper_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:simple_smelting
     operation: shapeless
     guide-order: 10
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - simple-smeltery
     inputs:
     - sf:copper_dust
     outputs:
@@ -167,13 +167,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:corinthian_bronze_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 11
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:silver_dust
     - sf:gold_dust
@@ -185,13 +185,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:damascus_steel_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 12
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:steel_ingot
     - sf:iron_dust
@@ -203,13 +203,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:duralumin_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 13
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:aluminum_dust
     - sf:copper_dust
@@ -220,13 +220,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:ferrosilicon
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 14
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - IRON_INGOT
     - sf:iron_dust
@@ -237,13 +237,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gilded_iron
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 15
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_24k
     - sf:iron_dust
@@ -253,13 +253,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_10k
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 16
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_8k
@@ -269,13 +269,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_12k
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 17
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_10k
@@ -285,13 +285,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_14k
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 18
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_12k
@@ -301,13 +301,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_16k
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 19
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_14k
@@ -317,13 +317,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_18k
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 20
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_16k
@@ -333,13 +333,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_20k
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 21
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_18k
@@ -349,13 +349,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_22k
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 22
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_20k
@@ -365,13 +365,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_24k
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 23
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_22k
@@ -381,13 +381,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_4k
-    recipe-type: sf:smeltery
+    recipe-type: sf:simple_smelting
     operation: shapeless
     guide-order: 24
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - simple-smeltery
     inputs:
     - sf:gold_dust
     outputs:
@@ -396,13 +396,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_6k
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 25
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_4k
@@ -412,13 +412,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:gold_8k
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 26
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:gold_dust
     - sf:gold_6k
@@ -428,13 +428,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:hardened_metal_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 27
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:damascus_steel_ingot
     - sf:duralumin_ingot
@@ -446,13 +446,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:lead_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:simple_smelting
     operation: shapeless
     guide-order: 28
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - simple-smeltery
     inputs:
     - sf:lead_dust
     outputs:
@@ -461,13 +461,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:magnesium_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:simple_smelting
     operation: shapeless
     guide-order: 29
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - simple-smeltery
     inputs:
     - sf:magnesium_dust
     outputs:
@@ -476,13 +476,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:magnet
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 30
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:nickel_ingot
     - sf:aluminum_dust
@@ -494,13 +494,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:nickel_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 31
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:iron_dust
     - IRON_INGOT
@@ -511,13 +511,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:raw_carbonado
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 32
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:synthetic_diamond
     - sf:carbon_chunk
@@ -528,13 +528,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:redstone_alloy
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 33
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - REDSTONE
     - REDSTONE_BLOCK
@@ -542,17 +542,37 @@ recipes:
     - sf:hardened_metal_ingot
     outputs:
     - sf:redstone_alloy
+  legacy:reinforced_alloy_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: legacy:reinforced_alloy_ingot
+    recipe-type: sf:alloy_smelting
+    operation: shapeless
+    guide-order: 42
+    source: slimefun-rc37
+    runtime: true
+    runtime-machine-tags:
+    - alloy-smeltery
+    inputs:
+    - sf:damascus_steel_ingot
+    - sf:hardened_metal_ingot
+    - sf:corinthian_bronze_ingot
+    - sf:solder_ingot
+    - sf:billon_ingot
+    - sf:gold_24k
+    outputs:
+    - sf:reinforced_alloy_ingot
   legacy:silicon:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:silicon
-    recipe-type: sf:smeltery
+    recipe-type: sf:simple_smelting
     operation: shapeless
     guide-order: 34
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - simple-smeltery
     inputs:
     - QUARTZ_BLOCK
     outputs:
@@ -561,13 +581,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:silver_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:simple_smelting
     operation: shapeless
     guide-order: 35
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - simple-smeltery
     inputs:
     - sf:silver_dust
     outputs:
@@ -576,13 +596,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:solder_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 36
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:lead_dust
     - sf:tin_dust
@@ -593,13 +613,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:steel_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 37
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:iron_dust
     - sf:carbon
@@ -610,13 +630,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:synthetic_emerald
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 38
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:synthetic_sapphire
     - sf:aluminum_dust
@@ -628,13 +648,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:synthetic_sapphire
-    recipe-type: sf:smeltery
+    recipe-type: sf:alloy_smelting
     operation: shapeless
     guide-order: 39
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - alloy-smeltery
     inputs:
     - sf:aluminum_dust
     - GLASS
@@ -647,13 +667,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:tin_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:simple_smelting
     operation: shapeless
     guide-order: 40
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - simple-smeltery
     inputs:
     - sf:tin_dust
     outputs:
@@ -662,13 +682,13 @@ recipes:
     '@cf': templates.recipes.legacy-entry
     '@io': true
     id: legacy:zinc_ingot
-    recipe-type: sf:smeltery
+    recipe-type: sf:simple_smelting
     operation: shapeless
     guide-order: 41
     source: slimefun-rc37
     runtime: true
     runtime-machine-tags:
-    - smeltery
+    - simple-smeltery
     inputs:
     - sf:zinc_dust
     outputs:

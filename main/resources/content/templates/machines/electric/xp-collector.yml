@@ -27,9 +27,10 @@ machines:
       capacity: 20480
       consumption: 20
       progress-material: EXPERIENCE_BOTTLE
+      working-name-key: electric-ui.action.xp-collecting.name
       input-slots: []
       output-slots: [10, 11, 12, 13, 14, 15, 16]
-    runtime: {executor: sf:special_provider, provider: sf:xp_collector}
+    runtime: {executor: sf:provider, provider: sf:xp_collector}
     ui:
       inventory-size: 27
       status-slot: 4

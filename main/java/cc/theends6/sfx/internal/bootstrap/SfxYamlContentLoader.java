@@ -266,7 +266,7 @@ public final class SfxYamlContentLoader {
             builder.guideCategory(guideCategory);
         }
         if (entry.containsKey("guide-order")) {
-            builder.guideOrder(integer(entry.get("guide-order")));
+            builder.guideOrder(decimal(entry.get("guide-order")));
         }
         String guideFuelProfile = optionalString(entry.get("guide-fuel-profile"));
         if (guideFuelProfile != null) {
@@ -475,6 +475,13 @@ public final class SfxYamlContentLoader {
             return number.intValue();
         }
         return Integer.parseInt(String.valueOf(raw));
+    }
+
+    private static double decimal(Object raw) {
+        if (raw instanceof Number number) {
+            return number.doubleValue();
+        }
+        return Double.parseDouble(String.valueOf(raw));
     }
 
     private static String string(Object raw) {

@@ -41,6 +41,15 @@ public final class DefaultSfxRecipeRegistry {
         return List.copyOf(definitions.values());
     }
 
+    public Optional<SfxRecipeDefinition> definition(String id) {
+        return id == null ? Optional.empty() : Optional.ofNullable(definitions.get(id.trim().toLowerCase()));
+    }
+
+    public List<String> executionMachineIds(String recipeId, DefaultManualMachineRegistry machines) {
+        SfxRecipeDefinition definition = definition(recipeId).orElse(null);
+        return definition == null ? List.of() : runtimeMachineIds(definition, machines);
+    }
+
     public AuditResult apply(DefaultSfxItemRegistry items, DefaultManualMachineRegistry machines) {
         Audit audit = new Audit();
         Map<String, List<SfxRecipe>> recipesByOutput = new LinkedHashMap<>();
@@ -255,6 +264,24 @@ public final class DefaultSfxRecipeRegistry {
                 .giveable(existing.giveable())
                 .kind(existing.kind())
                 .variant(existing.variant());
+        if (existing.guideCategoryId() != null) {
+            builder.guideCategory(existing.guideCategoryId());
+        }
+        if (existing.guideOrder() != null) {
+            builder.guideOrder(existing.guideOrder());
+        }
+        if (existing.guideFuelProfile() != null) {
+            builder.guideFuelProfile(existing.guideFuelProfile());
+        }
+        if (existing.guideCategoryId() != null) {
+            builder.guideCategory(existing.guideCategoryId());
+        }
+        if (existing.guideOrder() != null) {
+            builder.guideOrder(existing.guideOrder());
+        }
+        if (existing.guideFuelProfile() != null) {
+            builder.guideFuelProfile(existing.guideFuelProfile());
+        }
         if (existing.headTextureHash() != null) {
             builder.headTexture(existing.headTextureHash());
         }

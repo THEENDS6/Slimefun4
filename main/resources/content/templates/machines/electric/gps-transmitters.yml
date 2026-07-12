@@ -15,19 +15,19 @@ machines:
     @cf: templates.machines.no-menu-definition
     @io: true
     @d: {name-key: items.sf.gps_transmitter.name, speed: 1, capacity: 320, consumption: 2, progress-material: COMPASS}
-    runtime: {executor: sf:special_provider, provider: sf:gps_transmitter}
+    runtime: {executor: sf:provider, provider: sf:gps_transmitter}
   "sf:gps_transmitter_2":
     @cf: templates.machines.no-menu-definition
     @io: true
     @d: {name-key: items.sf.gps_transmitter_2.name, speed: 1, capacity: 1280, consumption: 6, progress-material: COMPASS}
-    runtime: {executor: sf:special_provider, provider: sf:gps_transmitter}
+    runtime: {executor: sf:provider, provider: sf:gps_transmitter}
   "sf:gps_transmitter_3":
     @cf: templates.machines.no-menu-definition
     @io: true
     @d: {name-key: items.sf.gps_transmitter_3.name, speed: 1, capacity: 5120, consumption: 22, progress-material: COMPASS}
-    runtime: {executor: sf:special_provider, provider: sf:gps_transmitter}
+    runtime: {executor: sf:provider, provider: sf:gps_transmitter}
   "sf:gps_transmitter_4":
     @cf: templates.machines.no-menu-definition
     @io: true
     @d: {name-key: items.sf.gps_transmitter_4.name, speed: 1, capacity: 20480, consumption: 92, progress-material: COMPASS}
-    runtime: {executor: sf:special_provider, provider: sf:gps_transmitter}
+    runtime: {executor: sf:provider, provider: sf:gps_transmitter}

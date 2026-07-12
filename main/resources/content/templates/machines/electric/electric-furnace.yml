@@ -30,15 +30,15 @@ machines:
   "sf:electric_furnace":
     @cf: templates.machines.standard-electric-ui-definition
     @io: true
-    @d: {name-key: items.sf.electric_furnace.name, speed: 1, capacity: 1280, consumption: 4, progress-material: FLINT_AND_STEEL}
-    runtime: {executor: sf:special_provider, provider: sf:vanilla_furnace}
+    @d: {name-key: items.sf.electric_furnace.name, speed: 1, capacity: 1280, consumption: 4, progress-material: FLINT_AND_STEEL, working-name-key: electric-ui.action.smelting.name}
+    runtime: {executor: sf:provider, provider: sf:vanilla_furnace}
   "sf:electric_furnace_2":
     @cf: templates.machines.standard-electric-ui-definition
     @io: true
-    @d: {name-key: items.sf.electric_furnace_2.name, speed: 2, capacity: 2560, consumption: 6, progress-material: FLINT_AND_STEEL}
-    runtime: {executor: sf:special_provider, provider: sf:vanilla_furnace}
+    @d: {name-key: items.sf.electric_furnace_2.name, speed: 2, capacity: 2560, consumption: 6, progress-material: FLINT_AND_STEEL, working-name-key: electric-ui.action.smelting.name}
+    runtime: {executor: sf:provider, provider: sf:vanilla_furnace}
   "sf:electric_furnace_3":
     @cf: templates.machines.standard-electric-ui-definition
     @io: true
-    @d: {name-key: items.sf.electric_furnace_3.name, speed: 4, capacity: 5120, consumption: 10, progress-material: FLINT_AND_STEEL}
-    runtime: {executor: sf:special_provider, provider: sf:vanilla_furnace}
+    @d: {name-key: items.sf.electric_furnace_3.name, speed: 4, capacity: 5120, consumption: 10, progress-material: FLINT_AND_STEEL, working-name-key: electric-ui.action.smelting.name}
+    runtime: {executor: sf:provider, provider: sf:vanilla_furnace}

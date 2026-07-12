@@ -38,6 +38,7 @@ machines:
     @d:
       suffix: ""
       progress-material: GOLDEN_HOE
+      working-name-key: electric-ui.action.composting.name
     speed: 1
     energy:
       capacity: 5120

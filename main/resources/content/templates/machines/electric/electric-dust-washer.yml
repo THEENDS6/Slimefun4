@@ -50,6 +50,7 @@ machines:
       capacity: 5120
       consumption: 6
       progress-material: GOLDEN_SHOVEL
+      working-name-key: electric-ui.action.washing.name
     name-key: items.sf.electric_dust_washer${suffix}.name
     runtime:
       executor: sf:electric_processing

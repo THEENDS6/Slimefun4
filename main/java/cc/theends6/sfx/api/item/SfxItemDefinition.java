@@ -21,7 +21,7 @@ public final class SfxItemDefinition {
     private final String categoryId;
     private final int order;
     private final String guideCategoryId;
-    private final Integer guideOrder;
+    private final Double guideOrder;
     private final String guideFuelProfile;
     private final int version;
     private final boolean hidden;
@@ -134,7 +134,7 @@ public final class SfxItemDefinition {
         return guideCategoryId;
     }
 
-    public Integer guideOrder() {
+    public Double guideOrder() {
         return guideOrder;
     }
 
@@ -196,7 +196,7 @@ public final class SfxItemDefinition {
         private String categoryId;
         private int order = DEFAULT_ORDER;
         private String guideCategoryId;
-        private Integer guideOrder;
+        private Double guideOrder;
         private String guideFuelProfile;
         private int version = 1;
         private boolean hidden;
@@ -254,7 +254,10 @@ public final class SfxItemDefinition {
             return this;
         }
 
-        public Builder guideOrder(int guideOrder) {
+        public Builder guideOrder(double guideOrder) {
+            if (!Double.isFinite(guideOrder)) {
+                throw new IllegalArgumentException("Guide order must be finite.");
+            }
             this.guideOrder = guideOrder;
             return this;
         }

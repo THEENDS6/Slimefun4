@@ -90,19 +90,18 @@ public final class LegacySfGuideResolver {
         }
         return registry.items().stream()
                 .filter(item -> !item.hidden())
-                .filter(LegacySfGuideResolver::isLegacySlimefunItem)
-                .filter(item -> categoryId.equals(resolveLegacyGuideCategory(item)))
+                .filter(item -> categoryId.equals(resolveGuideCategory(item)))
                 .sorted(Comparator
-                        .comparingInt(LegacySfGuideResolver::legacySuggestedOrder)
+                        .comparingDouble(LegacySfGuideResolver::legacySuggestedOrder)
                         .thenComparing(SfxItemDefinition::id))
                 .toList();
     }
 
-    public static int legacySuggestedOrder(SfxItemDefinition item) {
+    public static double legacySuggestedOrder(SfxItemDefinition item) {
         if (item.guideOrder() != null) {
             return item.guideOrder();
         }
-        String guideCategory = resolveLegacyGuideCategory(item);
+        String guideCategory = resolveGuideCategory(item);
         if ("guide:sf:basic_machines".equals(guideCategory)) {
             Integer order = CLASSIC_BASIC_MACHINE_ORDER.get(item.id());
             if (order != null) {
@@ -154,10 +153,17 @@ public final class LegacySfGuideResolver {
         return item.flags().contains("legacy-sf") || item.id().startsWith("sf:");
     }
 
-    private static String resolveLegacyGuideCategory(SfxItemDefinition item) {
+    private static String resolveGuideCategory(SfxItemDefinition item) {
         if (item.guideCategoryId() != null) {
             return item.guideCategoryId();
         }
+        if (!isLegacySlimefunItem(item)) {
+            return item.categoryId();
+        }
+        return resolveLegacyGuideCategory(item);
+    }
+
+    private static String resolveLegacyGuideCategory(SfxItemDefinition item) {
         String id = item.id();
         if (isEnderTalismanId(id)) {
             return "guide:sf:ender_talismans";

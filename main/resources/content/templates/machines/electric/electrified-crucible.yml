@@ -48,8 +48,9 @@ machines:
       suffix: ""
       speed: 1
       capacity: 20480
-      consumption: 72
+      consumption: 48
       progress-material: FLINT_AND_STEEL
+      working-name-key: electric-ui.action.melting.name
     name-key: items.sf.electrified_crucible${suffix}.name
     runtime:
       executor: sf:electric_processing
@@ -65,7 +66,7 @@ machines:
     speed: 2
     energy:
       capacity: 40960
-      consumption-per-tick: 120
+      consumption-per-tick: 80
   "sf:electrified_crucible_3":
     @cf: machines.sf:electrified_crucible
     @d:
@@ -73,4 +74,4 @@ machines:
     speed: 4
     energy:
       capacity: 81920
-      consumption-per-tick: 180
+      consumption-per-tick: 120

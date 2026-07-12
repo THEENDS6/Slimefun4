@@ -860,26 +860,6 @@ recipes:
     - RED_DYE
     outputs:
     - sf:rainbow_wool_xmas*2
-  legacy:reinforced_alloy_ingot:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:reinforced_alloy_ingot
-    recipe-type: sf:ancient_altar
-    operation: shaped
-    guide-order: 44
-    source: slimefun-rc37
-    matrix:
-    - NAUTILUS_SHELL
-    - sf:reinforced_alloy_ingot
-    - NAUTILUS_SHELL
-    - sf:staff_elemental_water
-    - DIAMOND_SWORD
-    - sf:staff_elemental_water
-    - sf:magic_lump_3
-    - NETHER_STAR
-    - sf:magic_lump_3
-    outputs:
-    - sf:reinforced_alloy_ingot
   legacy:reinforced_spawner:
     '@cf': templates.recipes.legacy-entry
     '@io': true

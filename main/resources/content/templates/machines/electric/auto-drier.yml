@@ -29,6 +29,7 @@ machines:
       capacity: 25600
       consumption: 10
       progress-material: FLINT_AND_STEEL
+      working-name-key: electric-ui.action.drying.name
     runtime:
       executor: sf:electric_processing
       accepts:

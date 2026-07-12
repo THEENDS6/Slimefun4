@@ -51,6 +51,7 @@ machines:
       capacity: 25600
       consumption: 20
       progress-material: DIAMOND_PICKAXE
+      working-name-key: electric-ui.action.pressing.name
     name-key: items.sf.carbon_press${suffix}.name
     runtime:
       executor: sf:electric_processing

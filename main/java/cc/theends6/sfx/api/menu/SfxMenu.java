@@ -4,12 +4,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import net.kyori.adventure.text.Component;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 public final class SfxMenu {
     private final int rows;
     private final Component title;
     private final Map<Integer, SfxMenuButton> buttons;
+    private final Map<Integer, Function<Player, ItemStack>> dynamicIcons;
     private final boolean cancelPlayerClicks;
     private final Consumer<org.bukkit.entity.Player> closeHandler;
     private final boolean restorePreviousOnClose;
@@ -18,6 +22,7 @@ public final class SfxMenu {
         this.rows = builder.rows;
         this.title = builder.title;
         this.buttons = Collections.unmodifiableMap(new HashMap<>(builder.buttons));
+        this.dynamicIcons = Collections.unmodifiableMap(new HashMap<>(builder.dynamicIcons));
         this.cancelPlayerClicks = builder.cancelPlayerClicks;
         this.closeHandler = builder.closeHandler;
         this.restorePreviousOnClose = builder.restorePreviousOnClose;
@@ -33,6 +38,10 @@ public final class SfxMenu {
 
     public Map<Integer, SfxMenuButton> buttons() {
         return buttons;
+    }
+
+    public Map<Integer, Function<Player, ItemStack>> dynamicIcons() {
+        return dynamicIcons;
     }
 
     public boolean cancelPlayerClicks() {
@@ -55,6 +64,7 @@ public final class SfxMenu {
         private int rows = 3;
         private final Component title;
         private final Map<Integer, SfxMenuButton> buttons = new HashMap<>();
+        private final Map<Integer, Function<Player, ItemStack>> dynamicIcons = new HashMap<>();
         private boolean cancelPlayerClicks = true;
         private Consumer<org.bukkit.entity.Player> closeHandler;
         private boolean restorePreviousOnClose;
@@ -73,6 +83,13 @@ public final class SfxMenu {
 
         public Builder button(int slot, SfxMenuButton button) {
             this.buttons.put(slot, button);
+            this.dynamicIcons.remove(slot);
+            return this;
+        }
+
+        public Builder dynamicButton(int slot, SfxMenuButton button, Function<Player, ItemStack> iconProvider) {
+            this.buttons.put(slot, button);
+            this.dynamicIcons.put(slot, iconProvider);
             return this;
         }
 

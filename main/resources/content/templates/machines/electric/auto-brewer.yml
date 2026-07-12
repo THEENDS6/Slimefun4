@@ -14,10 +14,10 @@ machines:
   "sf:auto_brewer":
     @cf: templates.machines.auto-brewer-definition
     @io: true
-    @d: {name-key: items.sf.auto_brewer.name, speed: 1, capacity: 10240, consumption: 12, progress-material: BREWING_STAND}
-    runtime: {executor: sf:special_provider, provider: sf:auto_brewer}
+    @d: {name-key: items.sf.auto_brewer.name, speed: 1, capacity: 10240, consumption: 12, progress-material: BREWING_STAND, working-name-key: electric-ui.action.brewing.name}
+    runtime: {executor: sf:provider, provider: sf:auto_brewer}
   "sf:auto_brewer#legacy":
     @cf: templates.machines.standard-electric-definition
     @io: true
-    @d: {name-key: items.sf.auto_brewer.name, speed: 1, capacity: 5120, consumption: 12, progress-material: FISHING_ROD}
-    runtime: {executor: sf:special_provider, provider: sf:auto_brewer_legacy}
+    @d: {name-key: items.sf.auto_brewer.name, speed: 1, capacity: 5120, consumption: 12, progress-material: FISHING_ROD, working-name-key: electric-ui.action.brewing.name}
+    runtime: {executor: sf:provider, provider: sf:auto_brewer_legacy}
