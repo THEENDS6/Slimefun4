@@ -33,6 +33,7 @@ final class SfxPluginListenerWiring {
         SfxTalismanListener talismanListener = new SfxTalismanListener(plugin, plugin.api.runtime(), plugin.api.items(), plugin.researchService, plugin.legacyItemBehaviorConfig.talismans());
 
         plugin.listenerRegistrar.register(plugin.api.menus());
+        plugin.listenerRegistrar.register(plugin.api.chatInput());
         plugin.listenerRegistrar.register(new SfxFloatingTextDisplayListener(plugin.floatingTextDisplayService));
         plugin.listenerRegistrar.register(new SfxPlayerProfileListener(plugin.playerDataService));
         plugin.listenerRegistrar.register(plugin.radiationService);

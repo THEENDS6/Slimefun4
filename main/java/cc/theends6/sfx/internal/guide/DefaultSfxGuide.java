@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.guide;
 
 import cc.theends6.sfx.api.guide.GuideMode;
+import cc.theends6.sfx.api.chat.SfxChatInputService;
 import cc.theends6.sfx.api.guide.SfxGuide;
 import cc.theends6.sfx.api.guide.SfxGuideAccessPolicy;
 import cc.theends6.sfx.api.item.SfxItemCategory;
@@ -161,6 +162,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     private final DefaultSfxItemRegistry registry;
     private final SfxItems items;
     private final SfxMenus menus;
+    private final SfxChatInputService chatInput;
     private final SfxGuideAccessPolicy accessPolicy;
     private final DefaultManualMachineRegistry manualMachines;
     private final SfxLocalization localization;
@@ -179,6 +181,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             DefaultSfxItemRegistry registry,
             SfxItems items,
             SfxMenus menus,
+            SfxChatInputService chatInput,
             SfxGuideAccessPolicy accessPolicy,
             DefaultManualMachineRegistry manualMachines,
             SfxLocalization localization,
@@ -190,6 +193,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         this.registry = registry;
         this.items = items;
         this.menus = menus;
+        this.chatInput = chatInput;
         this.accessPolicy = accessPolicy;
         this.manualMachines = manualMachines;
         this.localization = localization;

@@ -2,6 +2,7 @@ package cc.theends6.sfx.internal;
 
 import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.behavior.SfxBehaviorRegistry;
+import cc.theends6.sfx.api.chat.SfxChatInputService;
 import cc.theends6.sfx.api.guide.SfxGuide;
 import cc.theends6.sfx.api.item.SfxItemRegistry;
 import cc.theends6.sfx.api.item.SfxItems;
@@ -11,6 +12,7 @@ import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.api.feature.SfxFeatureRegistry;
 import cc.theends6.sfx.internal.behavior.DefaultSfxBehaviorRegistry;
+import cc.theends6.sfx.internal.chat.DefaultSfxChatInputService;
 import cc.theends6.sfx.internal.guide.DefaultSfxGuide;
 import cc.theends6.sfx.internal.guide.PermissionGuideAccessPolicy;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
@@ -31,6 +33,7 @@ public final class SfxApiImpl implements SfxApi {
     private final DefaultSfxItemRegistry itemRegistry;
     private final DefaultSfxItems items;
     private final DefaultSfxMenus menus;
+    private final DefaultSfxChatInputService chatInput;
     private final DefaultSfxGuide guide;
     private final SfxFeatureRegistry features;
     private final SfxBehaviorRegistry behaviors;
@@ -42,6 +45,7 @@ public final class SfxApiImpl implements SfxApi {
             DefaultSfxItemRegistry itemRegistry,
             DefaultSfxItems items,
             DefaultSfxMenus menus,
+            DefaultSfxChatInputService chatInput,
             DefaultSfxGuide guide,
             SfxFeatureRegistry features,
             SfxBehaviorRegistry behaviors,
@@ -52,6 +56,7 @@ public final class SfxApiImpl implements SfxApi {
         this.itemRegistry = itemRegistry;
         this.items = items;
         this.menus = menus;
+        this.chatInput = chatInput;
         this.guide = guide;
         this.features = features;
         this.behaviors = behaviors;
@@ -65,8 +70,9 @@ public final class SfxApiImpl implements SfxApi {
         DefaultManualMachineRegistry manualMachines = new DefaultManualMachineRegistry();
         DefaultSfxItems items = new DefaultSfxItems(plugin, itemRegistry, localization);
         DefaultSfxMenus menus = new DefaultSfxMenus(runtime);
-        DefaultSfxGuide guide = new DefaultSfxGuide(plugin, runtime, itemRegistry, items, menus, new PermissionGuideAccessPolicy(), manualMachines, localization, profiles, researches);
-        return new SfxApiImpl(runtime, itemRegistry, items, menus, guide, features, behaviors, manualMachines, new DefaultSfxMachineRuntimeApi());
+        DefaultSfxChatInputService chatInput = new DefaultSfxChatInputService(runtime);
+        DefaultSfxGuide guide = new DefaultSfxGuide(plugin, runtime, itemRegistry, items, menus, chatInput, new PermissionGuideAccessPolicy(), manualMachines, localization, profiles, researches);
+        return new SfxApiImpl(runtime, itemRegistry, items, menus, chatInput, guide, features, behaviors, manualMachines, new DefaultSfxMachineRuntimeApi());
     }
 
     @Override
@@ -87,6 +93,11 @@ public final class SfxApiImpl implements SfxApi {
     @Override
     public SfxMenus menus() {
         return menus;
+    }
+
+    @Override
+    public SfxChatInputService chatInput() {
+        return chatInput;
     }
 
     @Override
