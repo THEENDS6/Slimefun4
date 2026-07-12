@@ -10,12 +10,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class SfxEnergyNodeState {
-    private static final int SCHEMA = 3;
+    private static final int SCHEMA = 4;
     private static final int LEGACY_SCHEMA = 1;
     private static final Logger LOGGER = Logger.getLogger(SfxEnergyNodeState.class.getName());
 
-    private final SfxElectricStack[] inputs = new SfxElectricStack[2];
-    private final SfxElectricStack[] outputs = new SfxElectricStack[2];
+    static final int INPUT_CAPACITY = 3;
+    static final int OUTPUT_CAPACITY = 2;
+    private final SfxElectricStack[] inputs = new SfxElectricStack[INPUT_CAPACITY];
+    private final SfxElectricStack[] outputs = new SfxElectricStack[OUTPUT_CAPACITY];
     private int storedEnergy;
     private String activeFuelKey;
     private int fuelProgressTenths;
@@ -34,12 +36,13 @@ public final class SfxEnergyNodeState {
         }
         try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(blob))) {
             int schema = input.readInt();
-            if (schema != SCHEMA && schema != LEGACY_SCHEMA && schema != 2) {
+            if (schema != SCHEMA && schema != LEGACY_SCHEMA && schema != 2 && schema != 3) {
                 LOGGER.warning("Unsupported energy node state schema " + schema + "; returning empty state to keep the node usable");
                 return empty();
             }
             SfxEnergyNodeState state = new SfxEnergyNodeState();
-            for (int i = 0; i < state.inputs.length; i++) {
+            int encodedInputCount = schema >= 4 ? INPUT_CAPACITY : 2;
+            for (int i = 0; i < encodedInputCount; i++) {
                 if (input.readBoolean()) {
                     state.inputs[i] = schema == LEGACY_SCHEMA ? SfxElectricStack.read(input) : SfxElectricStack.readV2(input);
                 }
@@ -174,7 +177,12 @@ public final class SfxEnergyNodeState {
     }
 
     public boolean hasAnyInput() {
-        return hasInput(0) || hasInput(1);
+        for (int slot = 0; slot < inputs.length; slot++) {
+            if (hasInput(slot)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean hasInput(int slot) {
