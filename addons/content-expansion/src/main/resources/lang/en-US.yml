@@ -1,0 +1,52 @@
+items:
+  sfx.oxidizing_generator:
+    name: '&6Oxidizing Generator'
+    lore:
+    - '&7Generates power from metal oxidation.'
+    - '&7Salt and water improve its efficiency.'
+    - ''
+    - '&6Advanced Generator'
+    - '&8⇨ &e⚡ &765536 J Buffer'
+    - '&8⇨ &e⚡ &724 J/t'
+  sfx.waxing_machine:
+    name: '&6Waxing Machine'
+    lore:
+    - '&7Automatically waxes copper items.'
+    - '&7Consumes wax stored inside the machine.'
+    - ''
+    - '&eBasic Machine'
+    - '&8⇨ &b⚡ &7Speed: &b1x'
+    - '&8⇨ &e⚡ &76 J/t'
+  sfx.cutting_machine:
+    name: '&6Cutting Machine'
+    lore:
+    - '&7Cuts blocks and scrapes copper.'
+    - '&7Removes wax before scraping oxidation.'
+    - ''
+    - '&6Advanced Machine'
+    - '&8⇨ &b⚡ &7Speed: &b1x'
+    - '&8⇨ &e⚡ &715 J/t'
+  sfx.exposed_copper_ingot:
+    name: '&6Exposed Copper Ingot'
+    lore: ['&7A lightly oxidized copper ingot.']
+  sfx.weathered_copper_ingot:
+    name: '&3Weathered Copper Ingot'
+    lore: ['&7A weathered copper ingot.']
+  sfx.oxidized_copper_ingot:
+    name: '&3Oxidized Copper Ingot'
+    lore: ['&7A fully oxidized copper ingot.']
+  sfx.exposed_copper_dust:
+    name: '&6Exposed Copper Dust'
+    lore: ['&7Lightly oxidized copper dust.']
+  sfx.weathered_copper_dust:
+    name: '&3Weathered Copper Dust'
+    lore: ['&7Weathered copper dust.']
+  sfx.oxidized_copper_dust:
+    name: '&3Oxidized Copper Dust'
+    lore: ['&7Fully oxidized copper dust.']
+electric-ui:
+  action:
+    waxing:
+      name: '&eWaxing...'
+    cutting:
+      name: '&eCutting...'
