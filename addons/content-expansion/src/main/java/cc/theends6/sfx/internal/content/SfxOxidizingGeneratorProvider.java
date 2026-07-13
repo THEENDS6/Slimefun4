@@ -226,7 +226,7 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
                 WATER_DISPLAY_SLOT, new SfxMachineDisplayItem(
                         Material.POTION,
                         "content-expansion.ui.water.name",
-                        List.of("content-expansion.ui.water.insert"),
+                        List.of("content-expansion.ui.water.insert", "content-expansion.ui.water.effect", "content-expansion.ui.water.output"),
                         Map.of(),
                         false,
                         0,

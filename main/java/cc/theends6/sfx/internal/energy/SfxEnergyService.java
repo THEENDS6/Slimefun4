@@ -262,7 +262,7 @@ public final class SfxEnergyService implements Listener {
             return;
         }
         SfxEventGuards.denyBlockAndItemUse(event);
-        if (definition.isFueledGenerator() || definition.isCharger()) {
+        if (definition.componentType() == SfxEnergyComponentType.GENERATOR || definition.isCharger()) {
             runtime.executeForPlayer(event.getPlayer(), () -> electricEnergyMenus.open(event.getPlayer(), instance, definition));
             return;
         }
@@ -617,13 +617,7 @@ public final class SfxEnergyService implements Listener {
             if (location == null) {
                 return 0;
             }
-            World world = location.getWorld();
-            if (world == null || world.getEnvironment() != World.Environment.NORMAL) {
-                return definition.nightEnergyPerTick();
-            }
-            long time = world.getTime();
-            boolean isDaytime = !world.hasStorm() && !world.isThundering() && (time < 12300 || time > 23850);
-            return isDaytime ? definition.energyPerTick() : definition.nightEnergyPerTick();
+            return solarGenerationAt(definition, location);
         }
         if (state.hasPendingOutput() && findOutputSlot(definition, state, state.pendingOutput()) == null) {
             return 0;
@@ -665,6 +659,19 @@ public final class SfxEnergyService implements Listener {
             return byY;
         }
         return Integer.compare(left.z(), right.z());
+    }
+
+    static int solarGenerationAt(SfxEnergyComponentDefinition definition, Location location) {
+        if (definition == null || location == null) {
+            return 0;
+        }
+        World world = location.getWorld();
+        if (world == null || world.getEnvironment() != World.Environment.NORMAL) {
+            return definition.nightEnergyPerTick();
+        }
+        long time = world.getTime();
+        boolean daytime = !world.hasStorm() && !world.isThundering() && (time < 12300L || time > 23850L);
+        return daytime ? definition.energyPerTick() : definition.nightEnergyPerTick();
     }
 
     private int capacitorPriorityDistanceForPlacement(Location location) {
@@ -999,13 +1006,7 @@ public final class SfxEnergyService implements Listener {
             if (location == null) {
                 return 0;
             }
-            World world = location.getWorld();
-            if (world == null || world.getEnvironment() != World.Environment.NORMAL) {
-                return definition.nightEnergyPerTick();
-            }
-            long time = world.getTime();
-            boolean isDaytime = !world.hasStorm() && !world.isThundering() && (time < 12300 || time > 23850);
-            return isDaytime ? definition.energyPerTick() : definition.nightEnergyPerTick();
+            return solarGenerationAt(definition, location);
         }
 
         if (state.hasPendingOutput()) {

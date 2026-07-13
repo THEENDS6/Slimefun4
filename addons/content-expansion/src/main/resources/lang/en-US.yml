@@ -1,8 +1,10 @@
 content-expansion:
   ui:
     water:
-      name: <blue>Water Boost</blue>
+      name: <blue>Electrolyte</blue>
       insert: <aqua>Insert a Water Bucket into the upper-left slot</aqua>
+      effect: <gray>Water increases generation to <aqua>4x</aqua> and reduces processing time by <aqua>20%</aqua></gray>
+      output: <gray>Copper is oxidized faster and the empty Bucket is returned</gray>
     salt:
       name: <yellow>Salt Storage</yellow>
       amount: '<gray>Stored: </gray><yellow>{stored}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> ticks</gray>'

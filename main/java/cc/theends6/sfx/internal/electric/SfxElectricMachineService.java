@@ -410,10 +410,10 @@ public final class SfxElectricMachineService implements Listener {
         if (!autoCrafterSelection && SfxInteractionRules.prefersBlockPlacement(items, event)) {
             return;
         }
-        SfxEventGuards.denyBlockAndItemUse(event);
         if (definition != null && definition.hasFunction("no-menu")) {
             return;
         }
+        SfxEventGuards.denyBlockAndItemUse(event);
         if (autoCrafterSelection) {
             runtime.executeForPlayer(event.getPlayer(), () -> openAutoCrafterSelection(event.getPlayer(), instance, definition, event.getItem(), 0));
         } else if (autoCrafter && (currentState(instance.instanceId(), instance).activeRecipeKey() == null || currentState(instance.instanceId(), instance).activeRecipeKey().isBlank())) {
