@@ -4070,6 +4070,7 @@ guide:
   actions:
     open-category: <gray>点击打开分类</gray>
     open-recipe: <gray>点击查看配方</gray>
+    view-uses: <gray>右键查看用处</gray>
     open-machine: <gray>点击打开这台机器的科技书页面</gray>
     open-vanilla-recipe: <gray>点击查看原版配方</gray>
     back-guide: 返回科技书
@@ -4092,6 +4093,10 @@ guide:
     disabled: <red>科技书搜索功能已关闭。</red>
     no-results: <red>没有找到匹配的物品</red>
     category: '<dark_gray>分类：{category}</dark_gray>'
+  uses:
+    title: '{item} 的用处'
+    page: <yellow>用处列表</yellow>
+    none: <red>没有找到这个物品的用处</red>
   recipe:
     title: 配方详情
     multiblock:
@@ -4109,6 +4114,10 @@ guide:
     cycle-detected: 你已经看过这个配方了，回退看看吧。
     depth-limit: 配方浏览已达到 100 层上限。
     cycle-blocked: 你已经看过这个配方了，回退看看吧
+    section:
+      sources: '&e合成来源'
+      working: '&e可工作配方'
+      toggle: '&7点击切换合成来源 / 可工作配方'
     aggregate:
       index: '&e第 {current} / {total} 个输入'
       mode-cycle: '&e切换到轮询显示'
