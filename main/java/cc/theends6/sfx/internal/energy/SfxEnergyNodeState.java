@@ -10,11 +10,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class SfxEnergyNodeState {
-    private static final int SCHEMA = 4;
+    private static final int SCHEMA = 5;
     private static final int LEGACY_SCHEMA = 1;
     private static final Logger LOGGER = Logger.getLogger(SfxEnergyNodeState.class.getName());
 
-    static final int INPUT_CAPACITY = 3;
+    static final int INPUT_CAPACITY = 4;
     static final int OUTPUT_CAPACITY = 2;
     private final SfxElectricStack[] inputs = new SfxElectricStack[INPUT_CAPACITY];
     private final SfxElectricStack[] outputs = new SfxElectricStack[OUTPUT_CAPACITY];
@@ -36,12 +36,12 @@ public final class SfxEnergyNodeState {
         }
         try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(blob))) {
             int schema = input.readInt();
-            if (schema != SCHEMA && schema != LEGACY_SCHEMA && schema != 2 && schema != 3) {
+            if (schema != SCHEMA && schema != LEGACY_SCHEMA && schema != 2 && schema != 3 && schema != 4) {
                 LOGGER.warning("Unsupported energy node state schema " + schema + "; returning empty state to keep the node usable");
                 return empty();
             }
             SfxEnergyNodeState state = new SfxEnergyNodeState();
-            int encodedInputCount = schema >= 4 ? INPUT_CAPACITY : 2;
+            int encodedInputCount = schema >= 5 ? INPUT_CAPACITY : schema >= 4 ? 3 : 2;
             for (int i = 0; i < encodedInputCount; i++) {
                 if (input.readBoolean()) {
                     state.inputs[i] = schema == LEGACY_SCHEMA ? SfxElectricStack.read(input) : SfxElectricStack.readV2(input);

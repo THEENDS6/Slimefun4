@@ -84,7 +84,12 @@ final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
         if (wax == null || wax.isSfxItem() || wax.hasSnapshot() || state.specialData() >= WAX_MAX) {
             return false;
         }
-        int units = wax.material() == Material.HONEYCOMB ? 3 : wax.material() == Material.HONEY_BOTTLE ? 1 : 0;
+        int units = switch (wax.material()) {
+            case HONEY_BOTTLE -> 1;
+            case HONEYCOMB -> 3;
+            case BEE_NEST -> 10;
+            default -> 0;
+        };
         if (units <= 0 || state.specialData() + units > WAX_MAX) {
             return false;
         }
