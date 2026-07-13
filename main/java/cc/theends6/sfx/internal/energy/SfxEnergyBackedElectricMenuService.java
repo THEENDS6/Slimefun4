@@ -58,6 +58,9 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
         sessionsByViewer.put(player.getUniqueId(), session);
         sessionsByInstance.put(instance.instanceId(), session);
         energy.markActive(instance.instanceId());
+        if (definition.isSolarGenerator()) {
+            energy.refreshSolarExposure(energy.toLocation(instance.anchorKey()));
+        }
         render(session, instance, definition, inventory, state);
         player.openInventory(inventory);
     }
