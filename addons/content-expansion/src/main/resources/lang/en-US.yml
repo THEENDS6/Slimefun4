@@ -2,9 +2,18 @@ content-expansion:
   ui:
     water:
       name: <blue>Electrolyte</blue>
-      insert: <aqua>Insert a Water Bucket into the upper-left slot</aqua>
-      effect: <gray>Water increases generation to <aqua>4x</aqua> and reduces processing time by <aqua>20%</aqua></gray>
-      output: <gray>Copper is oxidized faster and the empty Bucket is returned</gray>
+      amount: '<gray>Stored: </gray><aqua>{stored}</aqua><gray> / </gray><aqua>{capacity} mB</aqua>'
+      insert: <aqua>Water Buckets provide 1000 mB; Water Bottles provide 100 mB</aqua>
+      effect: <gray>Enhanced processing consumes <aqua>{consumption} mB/t</aqua>, generates 4x power, and takes 20% less time</gray>
+      output: <gray>The empty Bucket or Bottle is returned immediately when its water enters storage</gray>
+    mode:
+      power:
+        name: <yellow>Power Mode</yellow>
+        lore: <gray>Processing may auto-pause when the energy grid is full</gray>
+      production:
+        name: <aqua>Production Mode</aqua>
+        lore: <gray>Continues processing even while the energy grid is full</gray>
+      toggle: <yellow>Click to switch mode</yellow>
     salt:
       name: <yellow>Salt Storage</yellow>
       amount: '<gray>Stored: </gray><yellow>{stored}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> ticks</gray>'
@@ -21,7 +30,7 @@ items:
     name: '&6Oxidizing Generator'
     lore:
     - '&7Generates power from metal oxidation.'
-    - '&7Salt and water improve its efficiency.'
+    - '&7Stores up to 2000 mB of electrolyte and supports power/production modes.'
     - ''
     - '&6Advanced Generator'
     - '&8⇨ &e⚡ &765536 J Buffer'

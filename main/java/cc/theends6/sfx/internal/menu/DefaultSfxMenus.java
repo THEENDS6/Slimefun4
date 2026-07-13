@@ -203,12 +203,19 @@ public final class DefaultSfxMenus implements SfxMenus {
             event.setCancelled(true);
             return;
         }
-        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
-            return;
-        }
         Session session = sessions.get(player.getUniqueId());
         if (session == null) {
             event.setCancelled(true);
+            return;
+        }
+        boolean topClick = event.getClickedInventory() != null && event.getClickedInventory().equals(top);
+        SfxMenuButton button = topClick ? session.menu().buttons().get(event.getRawSlot()) : null;
+        if (button != null && event.isShiftClick()) {
+            event.setCancelled(true);
+            button.handler().accept(new SfxMenuClickContext(player, event.getRawSlot(), event.getClick(), this));
+            return;
+        }
+        if (SfxInventoryPolicy.cancelDangerousClick(event)) {
             return;
         }
         if (session.menu().cancelPlayerClicks()) {
@@ -217,7 +224,7 @@ public final class DefaultSfxMenus implements SfxMenus {
         if (event.getClickedInventory() == null || !event.getClickedInventory().equals(top)) {
             return;
         }
-        SfxMenuButton button = session.menu().buttons().get(event.getRawSlot());
+        button = session.menu().buttons().get(event.getRawSlot());
         if (button != null) {
             button.handler().accept(new SfxMenuClickContext(player, event.getRawSlot(), event.getClick(), this));
         }

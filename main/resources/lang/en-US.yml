@@ -4611,13 +4611,20 @@ energy:
       lore: <gray>Resolve regulator or shared-node conflicts first.</gray>
     solar:
       name: <yellow>Solar Generator</yellow>
+      day-active: <yellow>Currently operating during daytime</yellow>
+      night-active: <blue>Currently operating during nighttime</blue>
       current: '<gray>Current generation: </gray><green>{energy} J/t</green>'
       day: '<gray>Day generation: </gray><yellow>{energy} J/t</yellow>'
       night: '<gray>Night generation: </gray><blue>{energy} J/t</blue>'
       time: '<gray>Game time: </gray><aqua>{time}</aqua><dark_gray> ({ticks} ticks)</dark_gray>'
       day-range: <gray>Day: <yellow>05:51–18:18</yellow> (ticks 0–12299 and 23851–23999)</gray>
       night-range: <gray>Night: <blue>18:18–05:51 next day</blue> (ticks 12300–23850)</gray>
-      weather-night: <gray>Storms and thunderstorms use night generation</gray>
+      obstructed:
+        name: <red>Solar Panel Obstructed</red>
+        lore: <gray>Sky light is below 15, so generation has stopped. Transparent blocks that preserve full sky light do not obstruct it.</gray>
+      invalid-dimension:
+        name: <red>Invalid Dimension</red>
+        lore: <gray>Solar generators operate in the Overworld by default.</gray>
     buffer: '<gray>Stored: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
     production: '<gray>Production: </gray><green>{energy} J/t</green>'
   charging-bench:

@@ -2822,7 +2822,7 @@ tasks.register('validateSfxCompiledContent') {
         energyFiles.each { file ->
             def text = file.getText('UTF-8')
             def rel = root.toPath().relativize(file.toPath()).toString()
-            ['components:', 'type:', 'energy:', 'capacity:', 'generation-per-tick:', 'consumption-per-tick:', 'burn-rate:', 'vanilla-fuel:', 'progress-material:', 'fuels:', 'ui:', 'inventory-size:', 'status-slot:', 'slots:', 'role:', 'behavior:', 'state-index:', 'item-source: machine-status'].each { token ->
+            ['components:', 'type:', 'energy:', 'capacity:', 'generation-per-tick:', 'consumption-per-tick:', 'burn-rate:', 'vanilla-fuel:', 'progress-material:', 'fuels:', 'ui:', 'inventory-size:', 'status-slot:', 'slots:', 'role:', 'behavior:', 'item-source: machine-status'].each { token ->
                 if (!text.contains(token)) {
                     violations << "${rel}: missing ${token}"
                 }

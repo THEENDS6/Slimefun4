@@ -3,19 +3,30 @@ package cc.theends6.sfx.internal.content;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.machine.SfxBufferedResource;
 import cc.theends6.sfx.api.machine.SfxMachineDisplayItem;
+import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import cc.theends6.sfx.internal.energy.SfxDynamicEnergyGeneratorProvider;
 import cc.theends6.sfx.internal.energy.SfxEnergyComponentDefinition;
 import cc.theends6.sfx.internal.energy.SfxEnergyGeneratorAccess;
 import cc.theends6.sfx.internal.energy.SfxEnergyNodeState;
-import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionType;
 
 public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGeneratorProvider {
     private static final SfxBufferedResource SALT = new SfxBufferedResource("salt", 600, 6000, false, true);
+    private static final int WATER_CAPACITY = 2000;
+    private static final int WATER_PER_TICK = 10;
+    private static final int WATER_BUCKET_AMOUNT = 1000;
+    private static final int WATER_BOTTLE_AMOUNT = 100;
     private static final String SALT_ID = "sf:salt";
     private static final String ZINC_INGOT = "sf:zinc_ingot";
     private static final String ZINC_DUST = "sf:zinc_dust";
@@ -27,39 +38,47 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
     private static final int WATER_INPUT = 2;
     private static final int SALT_INPUT = 3;
     private static final int WATER_DISPLAY_SLOT = 1;
+    private static final int MODE_DISPLAY_SLOT = 4;
     private static final int SALT_DISPLAY_SLOT = 7;
+    private static final int POWER_MODE = 0;
+    private static final int PRODUCTION_MODE = 1;
 
     @Override
     public int potentialGeneration(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, Location location) {
         if (state.hasActiveFuel()) {
             return generationFor(parseActive(state.activeFuelKey()), state);
         }
-        Plan plan = plan(items, definition, state);
+        Plan plan = plan(items, state, state.specialData2() >= WATER_PER_TICK);
         return plan == null ? 0 : generationFor(plan, state);
     }
 
     @Override
     public int generate(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, Location location, SfxEnergyGeneratorAccess access) {
         boolean changed = refillSalt(state);
+
         if (!state.hasActiveFuel()) {
-            Plan plan = plan(items, definition, state);
+            WaterFill fill = waterFill(items, state);
+            boolean waterEnhanced = state.specialData2() >= WATER_PER_TICK || fill != null;
+            Plan plan = plan(items, state, waterEnhanced);
             if (plan == null) {
+                if (fill != null && access.hasOutputSpace(definition, state, fill.emptyContainer())) {
+                    absorbWater(state, fill);
+                    access.pushOutput(definition, state, fill.emptyContainer());
+                    changed = true;
+                }
                 if (changed) access.markDirty();
                 return 0;
             }
-            if (plan.output() != null && !access.hasOutputSpace(definition, state, plan.output())) {
+            List<SfxElectricStack> startOutputs = outputs(plan.output(), fill == null ? null : fill.emptyContainer());
+            if (!access.hasOutputSpace(definition, state, startOutputs)) {
                 if (changed) access.markDirty();
                 return 0;
             }
-            if (plan.waterBucket() && !access.hasOutputSpace(definition, state, SfxElectricStack.vanilla(Material.BUCKET, 1))) {
-                if (changed) access.markDirty();
-                return 0;
+            if (fill != null) {
+                absorbWater(state, fill);
+                access.pushOutput(definition, state, fill.emptyContainer());
             }
             consumeOne(state, plan.mainInput());
-            if (plan.waterBucket()) {
-                consumeOne(state, WATER_INPUT);
-                access.pushOutput(definition, state, SfxElectricStack.vanilla(Material.BUCKET, 1));
-            }
             state.activeFuelKey(plan.encode());
             state.fuelProgressTenths(0);
             state.fuelTotalTenths(plan.ticks());
@@ -67,21 +86,40 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
         }
 
         Plan active = parseActive(state.activeFuelKey());
+        WaterFill fill = waterFill(items, state);
+        if (fill != null) {
+            List<SfxElectricStack> protectedOutputs = outputs(active.output(), fill.emptyContainer());
+            if (access.hasOutputSpace(definition, state, protectedOutputs)) {
+                absorbWater(state, fill);
+                access.pushOutput(definition, state, fill.emptyContainer());
+            }
+        }
+        if (active.waterEnhanced() && state.specialData2() < WATER_PER_TICK) {
+            access.markDirty();
+            return 0;
+        }
         int generation = generationFor(active, state);
         if (generation <= 0 || active.ticks() <= 0) {
             state.clearFuelOperation();
             access.markDirty();
             return 0;
         }
-        if (definition.capacity() > 0 && state.storedEnergy() + generation > definition.capacity()) {
+        if (state.specialData3() != PRODUCTION_MODE
+                && definition.capacity() > 0
+                && state.storedEnergy() + generation > definition.capacity()) {
+            return 0;
+        }
+        int nextProgress = state.fuelProgressTenths() + 1;
+        if (nextProgress >= state.fuelTotalTenths()
+                && active.output() != null
+                && !access.hasOutputSpace(definition, state, active.output())) {
             return 0;
         }
         if (!active.freeSaltBonus() && state.specialData() > 0) {
             state.specialData(state.specialData() - 1);
         }
-        int nextProgress = state.fuelProgressTenths() + 1;
-        if (nextProgress >= state.fuelTotalTenths() && active.output() != null && !access.hasOutputSpace(definition, state, active.output())) {
-            return 0;
+        if (active.waterEnhanced()) {
+            state.specialData2(state.specialData2() - WATER_PER_TICK);
         }
         state.fuelProgressTenths(nextProgress);
         if (nextProgress >= state.fuelTotalTenths()) {
@@ -92,6 +130,79 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
         }
         access.markDirty();
         return generation;
+    }
+
+    @Override
+    public SfxMachineStatusKey status(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, Location location, SfxEnergyGeneratorAccess access) {
+        WaterFill fill = waterFill(items, state);
+        if (state.hasActiveFuel()) {
+            Plan active = parseActive(state.activeFuelKey());
+            if (fill != null && !access.hasOutputSpace(definition, state, outputs(active.output(), fill.emptyContainer()))) {
+                return SfxMachineStatusKey.OUTPUT_FULL;
+            }
+            if (active.output() != null && !access.hasOutputSpace(definition, state, active.output())) {
+                return SfxMachineStatusKey.OUTPUT_FULL;
+            }
+            if (active.waterEnhanced() && state.specialData2() < WATER_PER_TICK) {
+                return SfxMachineStatusKey.MISSING_RESOURCE;
+            }
+            return SfxMachineStatusKey.WORKING;
+        }
+        Plan plan = plan(items, state, state.specialData2() >= WATER_PER_TICK || fill != null);
+        if (plan == null) {
+            if (fill != null && !access.hasOutputSpace(definition, state, fill.emptyContainer())) {
+                return SfxMachineStatusKey.OUTPUT_FULL;
+            }
+            return SfxMachineStatusKey.IDLE;
+        }
+        if (!access.hasOutputSpace(definition, state, outputs(plan.output(), fill == null ? null : fill.emptyContainer()))) {
+            return SfxMachineStatusKey.OUTPUT_FULL;
+        }
+        return SfxMachineStatusKey.IDLE;
+    }
+
+    @Override
+    public boolean excludeFromAutoPause(SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+        return state.specialData3() == PRODUCTION_MODE;
+    }
+
+    @Override
+    public int[] shiftInputSlots(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, ItemStack stack) {
+        int[] slots = definition.inputSlots();
+        SfxElectricStack electric = SfxElectricStack.fromItemStack(items, stack);
+        if (isWaterContainer(items, electric)) {
+            return new int[] {slots[WATER_INPUT]};
+        }
+        if (electric != null && electric.isSfxItem() && SALT_ID.equals(electric.itemId())) {
+            return new int[] {slots[SALT_INPUT]};
+        }
+        if (isValidMain(electric)) {
+            return new int[] {slots[MAIN_INPUT_FIRST], slots[MAIN_INPUT_SECOND]};
+        }
+        return slots;
+    }
+
+    @Override
+    public boolean acceptsInput(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, int logicalSlot, ItemStack stack) {
+        if (stack == null || stack.getType().isAir()) {
+            return true;
+        }
+        SfxElectricStack electric = SfxElectricStack.fromItemStack(items, stack);
+        return switch (logicalSlot) {
+            case MAIN_INPUT_FIRST, MAIN_INPUT_SECOND -> isValidMain(electric);
+            case WATER_INPUT -> isWaterContainer(items, electric);
+            case SALT_INPUT -> electric != null && electric.isSfxItem() && SALT_ID.equals(electric.itemId());
+            default -> false;
+        };
+    }
+
+    @Override
+    public boolean handleMenuClick(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, int rawSlot, ClickType clickType) {
+        if (rawSlot != MODE_DISPLAY_SLOT) {
+            return false;
+        }
+        state.specialData3(state.specialData3() == PRODUCTION_MODE ? POWER_MODE : PRODUCTION_MODE);
+        return true;
     }
 
     @Override
@@ -115,14 +226,29 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
         return true;
     }
 
-    private Plan plan(SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+    private WaterFill waterFill(SfxItems items, SfxEnergyNodeState state) {
+        SfxElectricStack input = state.input(WATER_INPUT);
+        if (isWaterBucket(input) && state.specialData2() + WATER_BUCKET_AMOUNT <= WATER_CAPACITY) {
+            return new WaterFill(WATER_BUCKET_AMOUNT, SfxElectricStack.vanilla(Material.BUCKET, 1));
+        }
+        if (isWaterBottle(items, input) && state.specialData2() + WATER_BOTTLE_AMOUNT <= WATER_CAPACITY) {
+            return new WaterFill(WATER_BOTTLE_AMOUNT, SfxElectricStack.vanilla(Material.GLASS_BOTTLE, 1));
+        }
+        return null;
+    }
+
+    private void absorbWater(SfxEnergyNodeState state, WaterFill fill) {
+        state.specialData2(Math.min(WATER_CAPACITY, state.specialData2() + fill.amount()));
+        consumeOne(state, WATER_INPUT);
+    }
+
+    private Plan plan(SfxItems items, SfxEnergyNodeState state, boolean water) {
         int mainInput = state.hasInput(MAIN_INPUT_FIRST) ? MAIN_INPUT_FIRST : MAIN_INPUT_SECOND;
         SfxElectricStack main = state.input(mainInput);
         if (main == null || main.amount() <= 0) {
             return null;
         }
         SfxElectricStack one = main.copyWithAmount(1);
-        boolean water = isWaterBucket(state.input(WATER_INPUT));
         boolean powder = isPowder(one);
         double value = SfxCopperVariants.copperValue(one);
         double generation = 24.0D;
@@ -132,9 +258,7 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
 
         if (value > 0.0D) {
             output = SfxCopperVariants.oxidizedProduct(items, one, water);
-            if (output == null) {
-                return null;
-            }
+            if (output == null) return null;
         } else if (isZinc(one)) {
             generation *= 1.5D;
         } else if (isMagnesium(one)) {
@@ -144,7 +268,6 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
         } else {
             return null;
         }
-
         if (powder) {
             generation *= 2.0D;
             ticks /= 3.0D;
@@ -153,8 +276,7 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
             generation *= 4.0D;
             ticks *= 0.8D;
         }
-        int plannedTicks = Math.max(1, (int) Math.ceil(ticks));
-        return new Plan(Math.max(1, (int) Math.ceil(generation)), plannedTicks, output, water, saltBonus, mainInput);
+        return new Plan(Math.max(1, (int) Math.ceil(generation)), Math.max(1, (int) Math.ceil(ticks)), output, water, saltBonus, mainInput);
     }
 
     private Plan parseActive(String key) {
@@ -171,17 +293,14 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
                     : SfxElectricStack.vanilla(Material.valueOf(parts[4]), 1);
         }
         boolean freeSaltBonus = parts.length >= 7 && Boolean.parseBoolean(parts[6]);
-        return new Plan(generation, ticks, output, false, freeSaltBonus, -1);
+        boolean waterEnhanced = parts.length >= 8 && Boolean.parseBoolean(parts[7]);
+        return new Plan(generation, ticks, output, waterEnhanced, freeSaltBonus, -1);
     }
 
     private int generationFor(Plan plan, SfxEnergyNodeState state) {
-        if (plan == null) {
-            return 0;
-        }
+        if (plan == null) return 0;
         double generation = plan.generation();
-        if (plan.freeSaltBonus() || state.specialData() > 0) {
-            generation *= 1.5D;
-        }
+        if (plan.freeSaltBonus() || state.specialData() > 0) generation *= 1.5D;
         return Math.max(0, (int) Math.ceil(generation));
     }
 
@@ -191,27 +310,38 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
         state.input(slot, input.amount() <= 1 ? null : input.copyWithAmount(input.amount() - 1));
     }
 
+    private boolean isWaterContainer(SfxItems items, SfxElectricStack stack) {
+        return isWaterBucket(stack) || isWaterBottle(items, stack);
+    }
+
     private boolean isWaterBucket(SfxElectricStack stack) {
         return stack != null && !stack.isSfxItem() && !stack.hasSnapshot() && stack.material() == Material.WATER_BUCKET;
     }
 
+    private boolean isWaterBottle(SfxItems items, SfxElectricStack stack) {
+        if (stack == null || stack.isSfxItem() || stack.material() != Material.POTION) return false;
+        ItemStack item = stack.toItemStack(items);
+        return item.getItemMeta() instanceof PotionMeta meta && meta.getBasePotionType() == PotionType.WATER;
+    }
+
+    private boolean isValidMain(SfxElectricStack stack) {
+        return stack != null && (SfxCopperVariants.copperValue(stack.copyWithAmount(1)) > 0.0D || isZinc(stack) || isMagnesium(stack));
+    }
+
     private boolean isPowder(SfxElectricStack stack) {
-        if (stack == null) return false;
-        return stack.isSfxItem() && (stack.itemId().endsWith("_dust") || stack.itemId().contains("copper_dust"));
+        return stack != null && stack.isSfxItem() && (stack.itemId().endsWith("_dust") || stack.itemId().contains("copper_dust"));
     }
 
     private boolean isZinc(SfxElectricStack stack) {
-        return stack.isSfxItem() && (ZINC_INGOT.equals(stack.itemId()) || ZINC_DUST.equals(stack.itemId()));
+        return stack != null && stack.isSfxItem() && (ZINC_INGOT.equals(stack.itemId()) || ZINC_DUST.equals(stack.itemId()));
     }
 
     private boolean isMagnesium(SfxElectricStack stack) {
-        return stack.isSfxItem() && (MAGNESIUM_INGOT.equals(stack.itemId()) || MAGNESIUM_DUST.equals(stack.itemId()) || MAGNESIUM_SALT.equals(stack.itemId()));
+        return stack != null && stack.isSfxItem() && (MAGNESIUM_INGOT.equals(stack.itemId()) || MAGNESIUM_DUST.equals(stack.itemId()) || MAGNESIUM_SALT.equals(stack.itemId()));
     }
 
     private int integer(String[] parts, int index) {
-        if (parts.length <= index || parts[index].isBlank()) {
-            return 0;
-        }
+        if (parts.length <= index || parts[index].isBlank()) return 0;
         try {
             return Integer.parseInt(parts[index]);
         } catch (NumberFormatException exception) {
@@ -219,41 +349,47 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
         }
     }
 
-    @Override
-    public Map<Integer, SfxMachineDisplayItem> displayItems(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
-        boolean stored = state.specialData() > 0;
-        return Map.of(
-                WATER_DISPLAY_SLOT, new SfxMachineDisplayItem(
-                        Material.POTION,
-                        "content-expansion.ui.water.name",
-                        List.of("content-expansion.ui.water.insert", "content-expansion.ui.water.effect", "content-expansion.ui.water.output"),
-                        Map.of(),
-                        false,
-                        0,
-                        0),
-                SALT_DISPLAY_SLOT, new SfxMachineDisplayItem(
-                        stored ? Material.GLOWSTONE_DUST : Material.SUGAR,
-                        "content-expansion.ui.salt.name",
-                        List.of("content-expansion.ui.salt.amount", "content-expansion.ui.salt.items", "content-expansion.ui.salt.effect", "content-expansion.ui.salt.insert"),
-                        Map.of(
-                                "stored", state.specialData(),
-                                "capacity", SALT.maxAmount(),
-                                "items", SALT.refundableItemsFloor(state.specialData()),
-                                "capacity_items", SALT.refundableItemsFloor(SALT.maxAmount())),
-                        stored,
-                        state.specialData(),
-                        SALT.maxAmount()));
+    private List<SfxElectricStack> outputs(SfxElectricStack... candidates) {
+        List<SfxElectricStack> outputs = new ArrayList<>();
+        for (SfxElectricStack candidate : candidates) {
+            if (candidate != null) outputs.add(candidate);
+        }
+        return List.copyOf(outputs);
     }
 
-    private record Plan(int generation, int ticks, SfxElectricStack output, boolean waterBucket, boolean freeSaltBonus, int mainInput) {
+    @Override
+    public Map<Integer, SfxMachineDisplayItem> displayItems(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+        boolean saltStored = state.specialData() > 0;
+        boolean waterStored = state.specialData2() > 0;
+        boolean production = state.specialData3() == PRODUCTION_MODE;
+        return Map.of(
+                WATER_DISPLAY_SLOT, new SfxMachineDisplayItem(
+                        waterStored ? Material.WATER_BUCKET : Material.GLASS_BOTTLE,
+                        "content-expansion.ui.water.name",
+                        List.of("content-expansion.ui.water.amount", "content-expansion.ui.water.insert", "content-expansion.ui.water.effect", "content-expansion.ui.water.output"),
+                        Map.of("stored", state.specialData2(), "capacity", WATER_CAPACITY, "consumption", WATER_PER_TICK),
+                        waterStored, state.specialData2(), WATER_CAPACITY),
+                MODE_DISPLAY_SLOT, new SfxMachineDisplayItem(
+                        production ? Material.OXIDIZED_COPPER : Material.REDSTONE,
+                        production ? "content-expansion.ui.mode.production.name" : "content-expansion.ui.mode.power.name",
+                        List.of(production ? "content-expansion.ui.mode.production.lore" : "content-expansion.ui.mode.power.lore", "content-expansion.ui.mode.toggle"),
+                        Map.of(), production, 0, 0),
+                SALT_DISPLAY_SLOT, new SfxMachineDisplayItem(
+                        saltStored ? Material.GLOWSTONE_DUST : Material.SUGAR,
+                        "content-expansion.ui.salt.name",
+                        List.of("content-expansion.ui.salt.amount", "content-expansion.ui.salt.items", "content-expansion.ui.salt.effect", "content-expansion.ui.salt.insert"),
+                        Map.of("stored", state.specialData(), "capacity", SALT.maxAmount(), "items", SALT.refundableItemsFloor(state.specialData()), "capacity_items", SALT.refundableItemsFloor(SALT.maxAmount())),
+                        saltStored, state.specialData(), SALT.maxAmount()));
+    }
+
+    private record WaterFill(int amount, SfxElectricStack emptyContainer) {
+    }
+
+    private record Plan(int generation, int ticks, SfxElectricStack output, boolean waterEnhanced, boolean freeSaltBonus, int mainInput) {
         String encode() {
-            String outputKind = "";
-            String outputId = "";
-            if (output != null) {
-                outputKind = output.isSfxItem() ? "sfx" : "material";
-                outputId = output.isSfxItem() ? output.itemId() : output.material().name();
-            }
-            return "oxidizing|" + generation + "|" + ticks + "|" + outputKind + "|" + outputId + "||" + freeSaltBonus;
+            String outputKind = output == null ? "" : output.isSfxItem() ? "sfx" : "material";
+            String outputId = output == null ? "" : output.isSfxItem() ? output.itemId() : output.material().name();
+            return "oxidizing|" + generation + "|" + ticks + "|" + outputKind + "|" + outputId + "||" + freeSaltBonus + "|" + waterEnhanced;
         }
     }
 }

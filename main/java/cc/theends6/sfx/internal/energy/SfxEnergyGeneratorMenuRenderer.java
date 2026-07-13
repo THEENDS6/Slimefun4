@@ -27,8 +27,10 @@ final class SfxEnergyGeneratorMenuRenderer {
     private final SfxMachineStatusIconRenderer statusIcons;
     private final SfxRechargeableItemService rechargeableItems;
     private final JavaPlugin plugin;
+    private final SfxEnergyService energy;
 
-    SfxEnergyGeneratorMenuRenderer(JavaPlugin plugin, SfxItems items, SfxLocalization localization, SfxRechargeableItemService rechargeableItems) {
+    SfxEnergyGeneratorMenuRenderer(SfxEnergyService energy, JavaPlugin plugin, SfxItems items, SfxLocalization localization, SfxRechargeableItemService rechargeableItems) {
+        this.energy = energy;
         this.plugin = plugin;
         this.items = items;
         this.localization = localization;
@@ -121,8 +123,8 @@ final class SfxEnergyGeneratorMenuRenderer {
                     .energy(displayedEnergy(state, definition), definition.capacity())
                     .build());
         }
-        if (status == SfxMachineStatusKey.OUTPUT_FULL) {
-            return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.OUTPUT_FULL)
+        if (status == SfxMachineStatusKey.OUTPUT_FULL || status == SfxMachineStatusKey.BLOCKED_OUTPUT) {
+            return statusIcons.render(SfxMachineStatusView.builder(status)
                     .energy(displayedEnergy(state, definition), definition.capacity())
                     .build());
         }
@@ -134,9 +136,17 @@ final class SfxEnergyGeneratorMenuRenderer {
                 .statusLore(localization.component("energy.generator.idle.lore"))
                     .build());
         }
+        if (status != SfxMachineStatusKey.WORKING) {
+            return statusIcons.render(SfxMachineStatusView.builder(status)
+                    .energy(displayedEnergy(state, definition), definition.capacity())
+                    .generation(currentGeneration)
+                    .build());
+        }
         int total = Math.max(1, state.fuelTotalTenths());
         int progress = Math.min(total, state.fuelProgressTenths());
-        int remainingTicks = (int) Math.ceil(Math.max(0, total - progress) / (double) Math.max(1, definition.fuelBurnRateTenths()));
+        int remainingTicks = provider == null
+                ? (int) Math.ceil(Math.max(0, total - progress) / (double) Math.max(1, definition.fuelBurnRateTenths()))
+                : Math.max(0, total - progress);
         return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.WORKING)
                 .material(definition.progressMaterial())
                 .name(localization.component("energy.generator.active.name"))
@@ -151,25 +161,31 @@ final class SfxEnergyGeneratorMenuRenderer {
     private ItemStack solarIcon(SfxEnergyComponentDefinition definition, SfxMachineStatusKey status, Location location) {
         World world = location == null ? null : location.getWorld();
         long ticks = world == null ? 0L : world.getTime();
-        int current = SfxEnergyService.solarGenerationAt(definition, location);
-        SfxMachineStatusKey viewStatus = status == SfxMachineStatusKey.NO_NETWORK || status == SfxMachineStatusKey.NETWORK_CONFLICT
-                ? status
-                : SfxMachineStatusKey.WORKING;
-        SfxMachineStatusView.Builder builder = SfxMachineStatusView.builder(viewStatus)
-                .material(definition.progressMaterial())
-                .name(localization.component("energy.generator.solar.name"))
-                .generation(current)
-                .includeDefaultStatusLore(viewStatus != SfxMachineStatusKey.WORKING)
-                .extraLore(localization.component("energy.generator.solar.current", Map.of("energy", current)))
+        SfxEnergyService.SolarGenerationState solar = energy.solarGenerationState(definition, location);
+        SfxMachineStatusView.Builder builder;
+        if (!solar.dimensionAllowed()) {
+            builder = SfxMachineStatusView.builder(Material.BARRIER, localization.component("energy.generator.solar.invalid-dimension.name"))
+                    .statusLore(localization.component("energy.generator.solar.invalid-dimension.lore"));
+        } else if (!solar.exposed()) {
+            builder = SfxMachineStatusView.builder(Material.RED_STAINED_GLASS_PANE, localization.component("energy.generator.solar.obstructed.name"))
+                    .statusLore(localization.component("energy.generator.solar.obstructed.lore"));
+        } else if (status == SfxMachineStatusKey.NO_NETWORK || status == SfxMachineStatusKey.NETWORK_CONFLICT) {
+            builder = SfxMachineStatusView.builder(status);
+        } else {
+            builder = SfxMachineStatusView.builder(definition.progressMaterial(), localization.component("energy.generator.solar.name"))
+                    .statusLore(localization.component(solar.daytime()
+                            ? "energy.generator.solar.day-active"
+                            : "energy.generator.solar.night-active"));
+        }
+        return statusIcons.render(builder
+                .includeDefaultStatusLore(status == SfxMachineStatusKey.NO_NETWORK || status == SfxMachineStatusKey.NETWORK_CONFLICT)
+                .extraLore(localization.component("energy.generator.solar.current", Map.of("energy", solar.generation())))
                 .extraLore(localization.component("energy.generator.solar.day", Map.of("energy", definition.energyPerTick())))
                 .extraLore(localization.component("energy.generator.solar.night", Map.of("energy", definition.nightEnergyPerTick())))
                 .extraLore(localization.component("energy.generator.solar.time", Map.of("time", formatGameTime(ticks), "ticks", ticks)))
                 .extraLore(localization.component("energy.generator.solar.day-range"))
-                .extraLore(localization.component("energy.generator.solar.night-range"));
-        if (world != null && (world.hasStorm() || world.isThundering())) {
-            builder.extraLore(localization.component("energy.generator.solar.weather-night"));
-        }
-        return statusIcons.render(builder.build());
+                .extraLore(localization.component("energy.generator.solar.night-range"))
+                .build());
     }
 
     private String formatGameTime(long ticks) {
