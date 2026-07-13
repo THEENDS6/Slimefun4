@@ -10,6 +10,9 @@ final class SfxGuideIconLibrary {
     private static final String LEFT_ARROW = "a185c97dbb8353de652698d24b64327b793a3f32a98be67b719fbedab35e";
     private static final String RIGHT_ARROW = "31c0ededd7115fc1b23d51ce966358b27195daf26ebb6e45a66c34c69c34091";
     private static final String CHAPTER_BACK = "67f046f1c5f8540735d436e6643b37a916506f1b9e33799351e3c39f0829c2ab";
+    private static final String CRAFTING_TABLE = "c511cdded8305305b23d1ef4199f8dc90f6889211d58cad182d9c33d2accb79";
+    private static final String FURNACE = "5d3c5315eec74ec8e56e13bd129d66af9ed97cc47c747b465ae65160701af50c";
+    private static final String OAK_LOG = "327859b7cea388362c19298bf221aed039ee7490335b2a2e2ba6be8d13c453a7";
     private static final String[] PAGE_NUMBERS = {
             "987444ed6d845690115b38588cf1a2644da9c71e6f31ae24651038cb1d476ea",
             "9e44b707b205b7d23e40a3c0df19b09b62d027807278ef301b3c2ab98b4f0d6",
@@ -56,6 +59,18 @@ final class SfxGuideIconLibrary {
 
     static ItemStack back(String name) {
         return textured(CHAPTER_BACK, name, new String[0], 1);
+    }
+
+    static ItemStack craftingTable(String name, String... lore) {
+        return textured(CRAFTING_TABLE, name, lore, 1);
+    }
+
+    static ItemStack furnace(String name, String... lore) {
+        return textured(FURNACE, name, lore, 1);
+    }
+
+    static ItemStack oakLog(String name, String... lore) {
+        return textured(OAK_LOG, name, lore, 1);
     }
 
     private static ItemStack textured(String hash, String name, String[] lore, int amount) {

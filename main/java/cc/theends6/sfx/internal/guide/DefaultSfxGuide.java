@@ -963,17 +963,13 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private ItemStack displaySectionButtonIcon(DisplaySection section, boolean active, boolean available) {
-        Material material = switch (section) {
-            case SOURCES -> Material.CRAFTING_TABLE;
-            case FUNCTIONS -> Material.FURNACE;
-            case USAGES -> Material.OAK_LOG;
+        String name = displaySectionName(section);
+        String lore = available ? tr("guide.recipe.section.select") : tr("guide.recipe.section.empty");
+        ItemStack icon = switch (section) {
+            case SOURCES -> SfxGuideIconLibrary.craftingTable(name, lore);
+            case FUNCTIONS -> SfxGuideIconLibrary.furnace(name, lore);
+            case USAGES -> SfxGuideIconLibrary.oakLog(name, lore);
         };
-        ItemStack icon = ItemBuilder.of(material)
-                .name(displaySectionName(section))
-                .lore(available
-                        ? tr("guide.recipe.section.select")
-                        : tr("guide.recipe.section.empty"))
-                .build();
         applyFixedProgress(icon, active ? 99 : 1, 100);
         return icon;
     }
