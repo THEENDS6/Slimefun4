@@ -31,13 +31,13 @@ content-expansion:
     oxidizing:
       copper:
       - <gray>氧化铜材料，并输出对应的氧化产物。</gray>
-      - <gray>基础发电量 <yellow>24 J/t</yellow>；铜粉发电翻倍且加工时间为三分之一。</gray>
+      - <gray>基础发电量 <yellow>24 J/t</yellow>，每单位铜基础加工时间 <yellow>120 tick</yellow>。</gray>
       zinc:
       - <gray>锌用于发电，不产生氧化产物。</gray>
-      - <gray>锌锭发电量 <yellow>36 J/t</yellow>；锌粉发电翻倍且加工时间为三分之一。</gray>
+      - <gray>锌锭与锌粉均为 <yellow>36 J/t</yellow>，基础加工时间 <yellow>80 tick</yellow>。</gray>
       magnesium:
       - <gray>镁用于高功率发电，不产生氧化产物。</gray>
-      - <gray>镁锭发电量 <yellow>72 J/t</yellow>且基础加工快 20%；镁粉发电翻倍。</gray>
+      - <gray>镁锭、镁粉与镁盐均为 <yellow>72 J/t</yellow>，基础加工时间 <yellow>60 tick</yellow>。</gray>
       salt:
       - <gray>每个盐提供 <yellow>600 tick</yellow>内部储量，最多储存 6000 tick。</gray>
       - <gray>有盐时发电量提高至 <yellow>1.5 倍</yellow>。</gray>

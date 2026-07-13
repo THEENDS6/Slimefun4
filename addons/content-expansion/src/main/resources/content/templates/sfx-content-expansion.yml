@@ -160,15 +160,15 @@ recipes:
     - IRON_BLOCK
     outputs: [sfx:cutting_machine]
   sfx:oxidize_exposed_copper_ingot:
-    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_exposed_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 472, source: sfx, runtime: false, input: COPPER_INGOT, outputs: [sfx:exposed_copper_ingot], time: 80}
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_exposed_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 472, source: sfx, runtime: false, input: COPPER_INGOT, outputs: [sfx:exposed_copper_ingot], time: 120}
   sfx:cut_exposed_copper_ingot:
     {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:cut_exposed_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:cutting_machine, operation: single, guide-order: 473, source: sfx, runtime: false, input: sfx:weathered_copper_ingot, outputs: [sfx:exposed_copper_ingot], time: 120}
   sfx:oxidize_weathered_copper_ingot:
-    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_weathered_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 474, source: sfx, runtime: false, input: sfx:exposed_copper_ingot, outputs: [sfx:weathered_copper_ingot], time: 80}
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_weathered_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 474, source: sfx, runtime: false, input: sfx:exposed_copper_ingot, outputs: [sfx:weathered_copper_ingot], time: 120}
   sfx:cut_weathered_copper_ingot:
     {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:cut_weathered_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:cutting_machine, operation: single, guide-order: 475, source: sfx, runtime: false, input: sfx:oxidized_copper_ingot, outputs: [sfx:weathered_copper_ingot], time: 120}
   sfx:oxidize_oxidized_copper_ingot:
-    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_oxidized_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 476, source: sfx, runtime: false, input: sfx:weathered_copper_ingot, outputs: [sfx:oxidized_copper_ingot], time: 80}
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_oxidized_copper_ingot, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 476, source: sfx, runtime: false, input: sfx:weathered_copper_ingot, outputs: [sfx:oxidized_copper_ingot], time: 120}
   sfx:water_oxidize_copper_ingot:
     @cf: templates.recipes.legacy-entry
     @io: true
@@ -181,13 +181,13 @@ recipes:
     runtime: false
     matrix: [~, ~, ~, ~, COPPER_INGOT, WATER_BUCKET, ~, ~, ~]
     outputs: [sfx:oxidized_copper_ingot]
-    time: 64
+    time: 96
   sfx:oxidize_exposed_copper_dust:
-    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_exposed_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 478, source: sfx, runtime: false, input: sf:copper_dust, outputs: [sfx:exposed_copper_dust], time: 27}
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_exposed_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 478, source: sfx, runtime: false, input: sf:copper_dust, outputs: [sfx:exposed_copper_dust], time: 120}
   sfx:oxidize_weathered_copper_dust:
-    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_weathered_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 480, source: sfx, runtime: false, input: sfx:exposed_copper_dust, outputs: [sfx:weathered_copper_dust], time: 27}
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_weathered_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 480, source: sfx, runtime: false, input: sfx:exposed_copper_dust, outputs: [sfx:weathered_copper_dust], time: 120}
   sfx:oxidize_oxidized_copper_dust:
-    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_oxidized_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 482, source: sfx, runtime: false, input: sfx:weathered_copper_dust, outputs: [sfx:oxidized_copper_dust], time: 27}
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: sfx:oxidize_oxidized_copper_dust, requires-feature: sfx:content_expansion, recipe-type: sfx:oxidizing_generator, operation: single, guide-order: 482, source: sfx, runtime: false, input: sfx:weathered_copper_dust, outputs: [sfx:oxidized_copper_dust], time: 120}
   sfx:water_oxidize_copper_dust:
     @cf: templates.recipes.legacy-entry
     @io: true
@@ -200,4 +200,4 @@ recipes:
     runtime: false
     matrix: [~, ~, ~, ~, sf:copper_dust, WATER_BUCKET, ~, ~, ~]
     outputs: [sfx:oxidized_copper_dust]
-    time: 22
+    time: 96

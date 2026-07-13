@@ -4106,9 +4106,14 @@ guide:
     page: <gray>当前配方 {current} / {total}</gray>
     alternative-source: <gray>点击打开这个来源的配方。</gray>
     alternative-source-group: <gray>也可由以下来源完成：</gray>
-    cycle-detected: 配方浏览形成循环，已停止继续展开。
+    cycle-detected: 你已经看过这个配方了，回退看看吧。
     depth-limit: 配方浏览已达到 100 层上限。
-    cycle-blocked: 无法继续查看此配方材料
+    cycle-blocked: 你已经看过这个配方了，回退看看吧
+    aggregate:
+      index: '&e第 {current} / {total} 个输入'
+      mode-cycle: '&e切换到轮询显示'
+      mode-list: '&e切换到列举显示'
+      toggle: '&7点击切换聚合配方的显示模式'
     executor: <yellow>可执行此配方的机器</yellow>
     machine-recipes: <yellow>此机器可执行的配方</yellow>
     consumable-fuel: <gold>可消耗燃料</gold>
