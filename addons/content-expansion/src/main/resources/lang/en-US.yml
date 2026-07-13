@@ -31,13 +31,13 @@ content-expansion:
     oxidizing:
       copper:
       - <gray>Oxidizes copper materials and outputs the corresponding oxidized product.</gray>
-      - <gray>Base generation is <yellow>24 J/t</yellow>; copper dust doubles generation and takes one third of the time.</gray>
+      - <gray>Base generation is <yellow>24 J/t</yellow> with <yellow>120 ticks</yellow> per copper unit.</gray>
       zinc:
       - <gray>Zinc generates power without producing an oxidized output.</gray>
-      - <gray>Zinc ingots generate <yellow>36 J/t</yellow>; zinc dust doubles generation and takes one third of the time.</gray>
+      - <gray>Zinc ingots and dust generate <yellow>36 J/t</yellow> for <yellow>80 ticks</yellow>.</gray>
       magnesium:
       - <gray>Magnesium provides high-power generation without an oxidized output.</gray>
-      - <gray>Magnesium ingots generate <yellow>72 J/t</yellow> and process 20% faster; magnesium dust doubles generation.</gray>
+      - <gray>Magnesium ingots, dust, and salt generate <yellow>72 J/t</yellow> for <yellow>60 ticks</yellow>.</gray>
       salt:
       - <gray>Each Salt stores <yellow>600 ticks</yellow>, up to 6000 ticks internally.</gray>
       - <gray>Stored Salt increases generation to <yellow>1.5x</yellow>.</gray>

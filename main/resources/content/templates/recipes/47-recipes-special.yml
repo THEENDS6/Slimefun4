@@ -193,6 +193,29 @@ recipes:
     input: WHEAT
     outputs:
     - sf:wheat_flour
+  classic:grind_blaze_rod: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_blaze_rod', recipe-type: 'sf:grind_stone', operation: single, guide-order: 12, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: BLAZE_ROD, outputs: ['BLAZE_POWDER*4'] }
+  classic:grind_bone: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_bone', recipe-type: 'sf:grind_stone', operation: single, guide-order: 13, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: BONE, outputs: ['BONE_MEAL*4'] }
+  classic:grind_bone_block: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_bone_block', recipe-type: 'sf:grind_stone', operation: single, guide-order: 14, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: BONE_BLOCK, outputs: ['BONE_MEAL*9'] }
+  classic:grind_cobblestone: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_cobblestone', recipe-type: 'sf:grind_stone', operation: single, guide-order: 15, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: COBBLESTONE, outputs: [GRAVEL] }
+  classic:grind_andesite: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_andesite', recipe-type: 'sf:grind_stone', operation: single, guide-order: 16, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: ANDESITE, outputs: [GRAVEL] }
+  classic:grind_blackstone: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_blackstone', recipe-type: 'sf:grind_stone', operation: single, guide-order: 17, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: BLACKSTONE, outputs: [GRAVEL] }
+  classic:grind_diorite: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_diorite', recipe-type: 'sf:grind_stone', operation: single, guide-order: 18, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: DIORITE, outputs: [GRAVEL] }
+  classic:grind_granite: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_granite', recipe-type: 'sf:grind_stone', operation: single, guide-order: 19, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: GRANITE, outputs: [GRAVEL] }
+  classic:grind_dirt: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_dirt', recipe-type: 'sf:grind_stone', operation: single, guide-order: 20, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: DIRT, outputs: ['sf:stone_chunk'] }
+  classic:grind_sandstone: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_sandstone', recipe-type: 'sf:grind_stone', operation: single, guide-order: 21, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: SANDSTONE, outputs: ['SAND*4'] }
+  classic:grind_red_sandstone: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_red_sandstone', recipe-type: 'sf:grind_stone', operation: single, guide-order: 22, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: RED_SANDSTONE, outputs: ['RED_SAND*4'] }
+  classic:grind_prismarine_bricks: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_prismarine_bricks', recipe-type: 'sf:grind_stone', operation: single, guide-order: 23, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: PRISMARINE_BRICKS, outputs: ['PRISMARINE*2'] }
+  classic:grind_prismarine: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_prismarine', recipe-type: 'sf:grind_stone', operation: single, guide-order: 24, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: PRISMARINE, outputs: ['PRISMARINE_SHARD*4'] }
+  classic:grind_nether_wart_block: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_nether_wart_block', recipe-type: 'sf:grind_stone', operation: single, guide-order: 25, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: NETHER_WART_BLOCK, outputs: ['NETHER_WART*9'] }
+  classic:grind_quartz_block: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_quartz_block', recipe-type: 'sf:grind_stone', operation: single, guide-order: 26, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: QUARTZ_BLOCK, outputs: ['QUARTZ*4'] }
+  classic:grind_basalt: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_basalt', recipe-type: 'sf:grind_stone', operation: single, guide-order: 27, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: {type: vanilla, material: BASALT, amount: 2}, outputs: [BLACKSTONE] }
+  classic:grind_amethyst_block: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_amethyst_block', recipe-type: 'sf:grind_stone', operation: single, guide-order: 28, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: AMETHYST_BLOCK, outputs: ['AMETHYST_SHARD*4'] }
+  classic:grind_cobbled_deepslate: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_cobbled_deepslate', recipe-type: 'sf:grind_stone', operation: single, guide-order: 29, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: COBBLED_DEEPSLATE, outputs: [GRAVEL] }
+  classic:grind_magic_lump_2: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_magic_lump_2', recipe-type: 'sf:grind_stone', operation: single, guide-order: 30, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: 'sf:magic_lump_2', outputs: ['sf:magic_lump_1*4'] }
+  classic:grind_magic_lump_3: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_magic_lump_3', recipe-type: 'sf:grind_stone', operation: single, guide-order: 31, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: 'sf:magic_lump_3', outputs: ['sf:magic_lump_2*4'] }
+  classic:grind_ender_lump_2: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_ender_lump_2', recipe-type: 'sf:grind_stone', operation: single, guide-order: 32, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: 'sf:ender_lump_2', outputs: ['sf:ender_lump_1*4'] }
+  classic:grind_ender_lump_3: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_ender_lump_3', recipe-type: 'sf:grind_stone', operation: single, guide-order: 33, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: 'sf:ender_lump_3', outputs: ['sf:ender_lump_2*4'] }
+  classic:grind_diamond: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:grind_diamond', recipe-type: 'sf:grind_stone', operation: single, guide-order: 34, source: slimefun-classic, runtime: true, runtime-machine-tags: [grind-stone], input: DIAMOND, outputs: ['sf:carbon*4'] }
   legacy:filled_flask_of_knowledge:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -359,7 +382,7 @@ recipes:
     - ore-crusher
     input: GOLD_ORE
     outputs:
-    - sf:gold_dust
+    - sf:gold_dust*2
   legacy:gold_dust_deepslate:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -373,7 +396,7 @@ recipes:
     - ore-crusher
     input: DEEPSLATE_GOLD_ORE
     outputs:
-    - sf:gold_dust
+    - sf:gold_dust*2
   legacy:iron_dust:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -387,7 +410,7 @@ recipes:
     - ore-crusher
     input: IRON_ORE
     outputs:
-    - sf:iron_dust
+    - sf:iron_dust*2
   legacy:iron_dust_deepslate:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -401,7 +424,7 @@ recipes:
     - ore-crusher
     input: DEEPSLATE_IRON_ORE
     outputs:
-    - sf:iron_dust
+    - sf:iron_dust*2
   legacy:pulverized_ore:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -447,6 +470,42 @@ recipes:
     input: sf:pure_ore_cluster
     outputs:
     - sf:tiny_uranium
+  classic:crush_blackstone: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_blackstone', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 40, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: {type: vanilla, material: BLACKSTONE, amount: 8}, outputs: [RED_SAND] }
+  classic:crush_cobblestone: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_cobblestone', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 41, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: {type: vanilla, material: COBBLESTONE, amount: 8}, outputs: [SAND] }
+  classic:crush_gold_4k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_4k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 42, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_4k', outputs: ['sf:gold_dust'] }
+  classic:crush_gold_6k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_6k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 43, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_6k', outputs: ['sf:gold_dust*2'] }
+  classic:crush_gold_8k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_8k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 44, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_8k', outputs: ['sf:gold_dust*2'] }
+  classic:crush_gold_10k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_10k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 45, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_10k', outputs: ['sf:gold_dust*3'] }
+  classic:crush_gold_12k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_12k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 46, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_12k', outputs: ['sf:gold_dust*3'] }
+  classic:crush_gold_14k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_14k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 47, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_14k', outputs: ['sf:gold_dust*4'] }
+  classic:crush_gold_16k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_16k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 48, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_16k', outputs: ['sf:gold_dust*4'] }
+  classic:crush_gold_18k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_18k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 49, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_18k', outputs: ['sf:gold_dust*5'] }
+  classic:crush_gold_20k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_20k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 50, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_20k', outputs: ['sf:gold_dust*5'] }
+  classic:crush_gold_22k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_22k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 51, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_22k', outputs: ['sf:gold_dust*6'] }
+  classic:crush_gold_24k: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gold_24k', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 52, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:gold_24k', outputs: ['sf:gold_dust*6'] }
+  classic:crush_gravel: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gravel', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 53, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: GRAVEL, outputs: [SAND] }
+  classic:crush_magma_block: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_magma_block', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 54, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: MAGMA_BLOCK, outputs: ['sf:sulfate'] }
+  classic:crush_carbon: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_carbon', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 55, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:carbon', outputs: ['COAL*8'] }
+  classic:crush_compressed_carbon: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_compressed_carbon', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 56, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: 'sf:compressed_carbon', outputs: ['sf:carbon*4'] }
+  classic:crush_cobbled_deepslate: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_cobbled_deepslate', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 57, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: {type: vanilla, material: COBBLED_DEEPSLATE, amount: 8}, outputs: [SAND] }
+  classic:crush_coal_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_coal_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 60, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: COAL_ORE, outputs: ['COAL*2'] }
+  classic:crush_deepslate_coal_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_deepslate_coal_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 61, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: DEEPSLATE_COAL_ORE, outputs: ['COAL*2'] }
+  classic:crush_lapis_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_lapis_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 62, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: LAPIS_ORE, outputs: ['LAPIS_LAZULI*14'] }
+  classic:crush_deepslate_lapis_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_deepslate_lapis_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 63, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: DEEPSLATE_LAPIS_ORE, outputs: ['LAPIS_LAZULI*14'] }
+  classic:crush_redstone_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_redstone_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 64, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: REDSTONE_ORE, outputs: ['REDSTONE*8'] }
+  classic:crush_deepslate_redstone_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_deepslate_redstone_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 65, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: DEEPSLATE_REDSTONE_ORE, outputs: ['REDSTONE*8'] }
+  classic:crush_diamond_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_diamond_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 66, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: DIAMOND_ORE, outputs: ['DIAMOND*2'] }
+  classic:crush_deepslate_diamond_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_deepslate_diamond_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 67, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: DEEPSLATE_DIAMOND_ORE, outputs: ['DIAMOND*2'] }
+  classic:crush_emerald_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_emerald_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 68, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: EMERALD_ORE, outputs: ['EMERALD*2'] }
+  classic:crush_deepslate_emerald_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_deepslate_emerald_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 69, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: DEEPSLATE_EMERALD_ORE, outputs: ['EMERALD*2'] }
+  classic:crush_nether_quartz_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_nether_quartz_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 70, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: NETHER_QUARTZ_ORE, outputs: ['QUARTZ*2'] }
+  classic:crush_nether_gold_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_nether_gold_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 71, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: NETHER_GOLD_ORE, outputs: ['GOLD_NUGGET*8'] }
+  classic:crush_gilded_blackstone: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_gilded_blackstone', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 72, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: GILDED_BLACKSTONE, outputs: ['GOLD_NUGGET*8'] }
+  classic:crush_raw_iron: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_raw_iron', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 73, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: RAW_IRON, outputs: ['sf:iron_dust'] }
+  classic:crush_raw_copper: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_raw_copper', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 74, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: RAW_COPPER, outputs: ['sf:copper_dust'] }
+  classic:crush_raw_gold: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_raw_gold', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 75, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: RAW_GOLD, outputs: ['sf:gold_dust'] }
+  classic:crush_copper_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_copper_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 77, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: COPPER_ORE, outputs: ['sf:copper_dust*2'] }
+  classic:crush_deepslate_copper_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_deepslate_copper_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 78, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: DEEPSLATE_COPPER_ORE, outputs: ['sf:copper_dust*2'] }
   legacy:aluminum_dust:
     '@cf': templates.recipes.legacy-entry
     '@io': true

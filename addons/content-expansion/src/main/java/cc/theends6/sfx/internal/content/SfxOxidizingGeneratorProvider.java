@@ -259,28 +259,25 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
             return null;
         }
         SfxElectricStack one = main.copyWithAmount(1);
-        boolean powder = isPowder(one);
         double value = SfxCopperVariants.copperValue(one);
         double generation = 24.0D;
-        double ticks = 80.0D * Math.max(1.0D, value);
+        double ticks;
         boolean saltBonus = false;
         SfxElectricStack output = null;
 
         if (value > 0.0D) {
+            ticks = 120.0D * value;
             output = SfxCopperVariants.oxidizedProduct(items, one, waterAtStart);
             if (output == null) return null;
         } else if (isZinc(one)) {
+            ticks = 80.0D;
             generation *= 1.5D;
         } else if (isMagnesium(one)) {
+            ticks = 60.0D;
             generation *= 3.0D;
-            ticks *= 0.8D;
             saltBonus = MAGNESIUM_SALT.equals(one.itemId());
         } else {
             return null;
-        }
-        if (powder) {
-            generation *= 2.0D;
-            ticks /= 3.0D;
         }
         return new Plan(Math.max(1, (int) Math.ceil(generation)), Math.max(1, (int) Math.ceil(ticks)), output, waterAtStart, saltBonus, mainInput, false);
     }
@@ -353,10 +350,6 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
 
     private boolean isValidMain(SfxElectricStack stack) {
         return stack != null && (SfxCopperVariants.copperValue(stack.copyWithAmount(1)) > 0.0D || isZinc(stack) || isMagnesium(stack));
-    }
-
-    private boolean isPowder(SfxElectricStack stack) {
-        return stack != null && stack.isSfxItem() && (stack.itemId().endsWith("_dust") || stack.itemId().contains("copper_dust"));
     }
 
     private boolean isZinc(SfxElectricStack stack) {

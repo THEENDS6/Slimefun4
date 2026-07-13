@@ -49,6 +49,18 @@ recipes:
     - sf:aluminum_dust
     outputs:
     - sf:aluminum_ingot
+  classic:iron_ingot:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: classic:iron_ingot
+    recipe-type: sf:simple_smelting
+    operation: shapeless
+    guide-order: 3
+    source: slimefun-classic
+    runtime: true
+    runtime-machine-tags: [simple-smeltery]
+    inputs: [sf:iron_dust]
+    outputs: [IRON_INGOT]
   legacy:billon_ingot:
     '@cf': templates.recipes.legacy-entry
     '@io': true

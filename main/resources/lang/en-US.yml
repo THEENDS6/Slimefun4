@@ -200,9 +200,14 @@ guide:
     page: <gray>Recipe {current} / {total}</gray>
     alternative-source: <gray>Click to open this recipe source.</gray>
     alternative-source-group: <gray>Also available in:</gray>
-    cycle-detected: Recipe browsing formed a cycle, so expansion stopped here.
+    cycle-detected: You have already viewed this recipe. Go back and take another look.
     depth-limit: Recipe browsing reached the 100-level limit.
-    cycle-blocked: Cannot continue through this recipe ingredient
+    cycle-blocked: You have already viewed this recipe. Go back and take another look
+    aggregate:
+      index: '&eInput {current} / {total}'
+      mode-cycle: '&eSwitch to cycling view'
+      mode-list: '&eSwitch to list view'
+      toggle: '&7Click to switch the aggregated recipe display mode'
     executor: <yellow>Machine that can execute this recipe</yellow>
     machine-recipes: <yellow>Recipes this machine can execute</yellow>
     consumable-fuel: <gold>Consumable fuel</gold>
