@@ -222,8 +222,12 @@ public final class SfxOxidizingGeneratorProvider implements SfxDynamicEnergyGene
         return Map.of(SALT_DISPLAY_SLOT, new SfxMachineDisplayItem(
                 stored ? Material.GLOWSTONE_DUST : Material.SUGAR,
                 "content-expansion.ui.salt.name",
-                List.of("content-expansion.ui.salt.amount", "content-expansion.ui.salt.insert"),
-                Map.of("stored", state.specialData(), "capacity", SALT.maxAmount()),
+                List.of("content-expansion.ui.salt.amount", "content-expansion.ui.salt.items", "content-expansion.ui.salt.effect", "content-expansion.ui.salt.insert"),
+                Map.of(
+                        "stored", state.specialData(),
+                        "capacity", SALT.maxAmount(),
+                        "items", SALT.refundableItemsFloor(state.specialData()),
+                        "capacity_items", SALT.refundableItemsFloor(SALT.maxAmount())),
                 stored,
                 state.specialData(),
                 SALT.maxAmount()));

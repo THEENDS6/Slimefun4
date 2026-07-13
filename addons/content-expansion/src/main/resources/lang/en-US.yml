@@ -2,8 +2,10 @@ content-expansion:
   ui:
     salt:
       name: <yellow>Salt Storage</yellow>
-      amount: '<gray>{stored} / {capacity} ticks</gray>'
-      insert: <yellow>Insert Salt below</yellow>
+      amount: '<gray>Stored: </gray><yellow>{stored}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> ticks</gray>'
+      items: '<gray>Equivalent: </gray><yellow>{items}</yellow><gray> / </gray><yellow>{capacity_items}</yellow><gray> Salt</gray>'
+      effect: <gray>Stored Salt increases generation to <yellow>1.5x</yellow></gray>
+      insert: <yellow>Insert Salt into the upper-right slot</yellow>
     wax:
       name: <gold>Wax Storage</gold>
       amount: '<gray>{stored} / {capacity} uses</gray>'

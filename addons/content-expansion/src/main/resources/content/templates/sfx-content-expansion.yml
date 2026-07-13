@@ -29,18 +29,18 @@ components:
       progress-material: COPPER_INGOT
     slots:
       input: [10, 1, 16]
-      output: [37, 46]
+      output: [37, 41]
     ui:
       inventory-size: 54
       status-slot: 49
       frame:
-      - slots: [0, 2, 3, 4, 5, 6, 8, 9, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 31, 40, 49]
+      - slots: [3, 4, 5, 12, 13, 14, 21, 22, 23, 31, 39, 49]
         item: {material: GRAY_STAINED_GLASS_PANE, name: " ", lore: []}
-      - slots: [27, 28, 29, 30, 36, 38, 39, 45, 47, 48]
+      - slots: [27, 28, 29, 30, 36, 38, 45, 46, 47, 48]
         item: {material: ORANGE_STAINED_GLASS_PANE, name-key: electric-ui.template.frame.output.name, lore: []}
-      - slots: [32, 33, 34, 35, 41, 42, 43, 44, 50, 51, 52, 53]
+      - slots: [0, 2, 9, 11, 18, 19, 20, 32, 33, 34, 35, 40, 43, 44, 50, 51, 52, 53]
         item: {material: BLUE_STAINED_GLASS_PANE, name-key: electric-ui.template.frame.input.name, lore: []}
-      - slots: [6, 8, 15, 17]
+      - slots: [6, 8, 15, 17, 24, 25, 26]
         item: {material: YELLOW_STAINED_GLASS_PANE, name-key: electric-ui.template.frame.input.name, lore: []}
       items: {}
       status: {}
@@ -60,14 +60,18 @@ machines:
       progress-material: HONEYCOMB
       working-name-key: electric-ui.action.waxing.name
       input-slots: [19, 13]
-      output-slots: [25, 34]
+      output-slots: [25]
     ui:
       inventory-size: 45
       status-slot: 22
       frame:
-      - slots: [0, 1, 2, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 20, 21, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44]
+      - slots: [0, 1, 2, 6, 7, 8, 30, 31, 32, 36, 37, 38, 39, 40, 41, 42, 43, 44]
         item: {material: GRAY_STAINED_GLASS_PANE, name: " ", lore: []}
-      - slots: [3, 5, 12, 14]
+      - slots: [9, 10, 11, 18, 20, 27, 28, 29]
+        item: {material: BLUE_STAINED_GLASS_PANE, name-key: electric-ui.template.frame.input.name, lore: []}
+      - slots: [15, 16, 17, 24, 26, 33, 34, 35]
+        item: {material: ORANGE_STAINED_GLASS_PANE, name-key: electric-ui.template.frame.output.name, lore: []}
+      - slots: [3, 5, 12, 14, 21, 23]
         item: {material: YELLOW_STAINED_GLASS_PANE, name-key: electric-ui.template.frame.input.name, lore: []}
       items: {}
       status: {}
@@ -105,7 +109,7 @@ recipes:
     - WATER_BUCKET
     - sf:medium_capacitor
     - COPPER_BLOCK
-    - sf:magnesium_generator
+    - sf:electric_motor
     - COPPER_BLOCK
     - sf:electro_magnet
     - sf:basic_circuit_board
