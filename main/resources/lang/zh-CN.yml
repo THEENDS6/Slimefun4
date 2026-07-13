@@ -4071,6 +4071,7 @@ guide:
     open-category: <gray>点击打开分类</gray>
     open-recipe: <gray>点击查看配方</gray>
     view-uses: <gray>右键查看用处</gray>
+    view-functions: <gray>中键查看功能</gray>
     open-machine: <gray>点击打开这台机器的科技书页面</gray>
     open-vanilla-recipe: <gray>点击查看原版配方</gray>
     back-guide: 返回科技书
@@ -4138,6 +4139,94 @@ guide:
       lava: <gold>岩浆</gold>
       water: <aqua>水</aqua>
       container-ignored: <gray>这里只显示产生的流体，不计算容器。</gray>
+      requires-empty-bucket: <gray>输入侧还需要一个空桶。</gray>
+    special:
+      auto-anvil:
+        label: 自动修复
+      auto-anvil-input:
+        lore: <gray>修复损坏物品时消耗强力胶带。</gray>
+      auto-anvil-output:
+        lore: <gray>输出为耐久被修复后的原物品。</gray>
+      duct-tape-machine:
+        lore: <gray>强力胶带可在自动铁砧中作为修复材料。</gray>
+      produce-milk:
+        label: 自动挤奶
+        input:
+          lore: <gray>放入空桶，并在范围内寻找成年牛或山羊。</gray>
+        output:
+          lore: <gray>输出牛奶桶。</gray>
+      produce-stew:
+        label: 自动盛蘑菇煲
+        input:
+          lore: <gray>放入碗，并在范围内寻找成年哞菇。</gray>
+        output:
+          lore: <gray>输出蘑菇煲。</gray>
+      auto-breeder:
+        label: 自动繁殖
+        input:
+          lore: <gray>消耗可繁殖动物的食物。</gray>
+        output:
+          lore: <gray>对范围内可繁殖动物执行繁殖行为。</gray>
+      animal-growth:
+        label: 动物成长
+        input:
+          lore: <gray>消耗动物可接受的食物。</gray>
+        output:
+          lore: <gray>加速范围内幼年动物成长。</gray>
+      crop-growth:
+        label: 作物生长
+        input:
+          lore: <gray>消耗骨粉。</gray>
+        output:
+          lore: <gray>加速范围内作物生长。</gray>
+      tree-growth:
+        label: 树木生长
+        input:
+          lore: <gray>消耗骨粉。</gray>
+        output:
+          lore: <gray>对范围内树苗尝试施加骨粉效果。</gray>
+      xp-collector:
+        label: 经验收集
+        input:
+          lore: <gray>收集范围内经验球。</gray>
+        output:
+          lore: <gray>将经验存入机器内部。</gray>
+      fluid-pump-water:
+        label: 抽取水
+        input:
+          lore: <gray>放入空桶，并在机器下方寻找水源。</gray>
+        output:
+          lore: <gray>输出水桶。</gray>
+      fluid-pump-lava:
+        label: 抽取岩浆
+        input:
+          lore: <gray>放入空桶，并在机器下方寻找岩浆源。</gray>
+        output:
+          lore: <gray>输出岩浆桶。</gray>
+      geo-miner:
+        label: GEO 挖掘
+        lore: <gray>根据区块 GEO 资源和 GPS 网络抽取资源。</gray>
+      oil-pump:
+        label: 抽取原油
+        input:
+          lore: <gray>放入空桶，并依赖区块 GEO 原油资源。</gray>
+        output:
+          lore: <gray>输出原油桶。</gray>
+      gps-transmitter:
+        label: GPS 信号
+        lore: <gray>向 GPS 网络提供信号容量。</gray>
+      iron-golem-assembler:
+        label: 组装铁傀儡
+        input:
+          lore: <gray>消耗铁傀儡结构材料。</gray>
+        output:
+          lore: <gray>在世界中生成铁傀儡。</gray>
+      wither-assembler:
+        label: 组装凋灵
+        input:
+          lore: <gray>消耗凋灵结构材料。</gray>
+        output:
+          lore: <gray>在世界中生成凋灵。</gray>
     vanilla:
       disabled: <dark_gray>原版配方查询已被禁用。</dark_gray>
       crafting: 工作台
