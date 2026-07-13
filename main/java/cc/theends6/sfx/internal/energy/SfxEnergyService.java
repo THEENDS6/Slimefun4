@@ -59,7 +59,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class SfxEnergyService implements Listener {
     private static final int RANGE = 6;
     private static final long FLUSH_INTERVAL = 20L;
-    private static final long SOLAR_EXPOSURE_CHECK_INTERVAL = 100L;
+    private static final long SOLAR_EXPOSURE_CHECK_INTERVAL_NANOS = 5_000_000_000L;
 
     final JavaPlugin plugin;
     final SfxRuntime runtime;
@@ -683,15 +683,23 @@ public final class SfxEnergyService implements Listener {
 
     private boolean solarExposed(Location location, World world) {
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(location);
-        long now = world.getFullTime();
+        long now = System.nanoTime();
         SolarExposureCache cached = solarExposureCache.get(key);
-        if (cached != null && now >= cached.checkedAt() && now - cached.checkedAt() < SOLAR_EXPOSURE_CHECK_INTERVAL) {
+        if (cached != null && now - cached.checkedAtNanos() < SOLAR_EXPOSURE_CHECK_INTERVAL_NANOS) {
             return cached.exposed();
         }
         boolean exposed = world.isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)
                 && location.getBlock().getRelative(BlockFace.UP).getLightFromSky() == 15;
         solarExposureCache.put(key, new SolarExposureCache(exposed, now));
         return exposed;
+    }
+
+    void refreshSolarExposure(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return;
+        }
+        solarExposureCache.remove(SfxBlockAnchorKey.fromLocation(location));
+        solarExposed(location, location.getWorld());
     }
 
     private int capacitorPriorityDistanceForPlacement(Location location) {
@@ -1530,6 +1538,6 @@ public final class SfxEnergyService implements Listener {
     record SolarGenerationState(int generation, boolean dimensionAllowed, boolean exposed, boolean daytime) {
     }
 
-    private record SolarExposureCache(boolean exposed, long checkedAt) {
+    private record SolarExposureCache(boolean exposed, long checkedAtNanos) {
     }
 }
