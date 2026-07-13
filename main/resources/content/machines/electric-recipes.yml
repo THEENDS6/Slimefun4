@@ -190,7 +190,7 @@ recipe-groups:
         amount: 1
       ticks: 4
       outputs:
-      - item: sf:copper_ingot
+      - material: COPPER_INGOT
         amount: 1
     - id: sf:electric_ingot_factory:silver
       recipe-type: sf:electric_processing
@@ -397,7 +397,7 @@ recipe-groups:
         amount: 1
     - id: sf:electric_press:copper_wire
       inputs:
-      - item: sf:copper_ingot
+      - material: COPPER_INGOT
         amount: 1
       ticks: 6
       outputs:
@@ -1311,7 +1311,7 @@ recipe-groups:
         amount: 1
     - id: sf:electric_ingot_pulverizer:copper
       inputs:
-      - item: sf:copper_ingot
+      - material: COPPER_INGOT
         amount: 1
       ticks: 3
       outputs:

@@ -15,7 +15,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
     private static final int INPUT = 0;
-    private static final int OUTPUT = 0;
     private static final int SNAPSHOT_INPUT = 0;
     private static final int SNAPSHOT_OUTPUT = 0;
 
@@ -35,7 +34,7 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
     @Override
     public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
         Plan plan = plan(items, state);
-        return (state.hasProgress() || (plan != null && canPush(items, state, plan.output()))) ? definition.energyConsumptionPerTick() : 0;
+        return (state.hasProgress() || (plan != null && canPush(items, definition, state, plan.output()))) ? definition.energyConsumptionPerTick() : 0;
     }
 
     @Override
@@ -47,7 +46,7 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
         if (plan == null) {
             return new SfxElectricMachineTickResult(state.hasAnyInput() ? SfxElectricMachineRenderStatus.NO_RECIPE : SfxElectricMachineRenderStatus.IDLE, 0, false, state.hasAnyInput());
         }
-        if (!canPush(items, state, plan.output())) {
+        if (!canPush(items, definition, state, plan.output())) {
             return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OUTPUT_FULL, true);
         }
         state.activeRecipeKey("sfx:cutting");
@@ -66,8 +65,8 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
             return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, 0, true);
         }
         SfxElectricStack output = state.specialOutput(SNAPSHOT_OUTPUT);
-        if (output == null || !canPush(items, state, output)) {
-            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OUTPUT_FULL, true);
+        if (output == null || !canPush(items, definition, state, output)) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.BLOCKED_OUTPUT, true);
         }
         if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
             return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_POWER, true);
@@ -79,7 +78,7 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
         if (state.progressWork() < Math.max(1, state.activeBaseTicks())) {
             return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
         }
-        push(state, output);
+        push(items, definition, state, output);
         interrupt(state);
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, definition.energyConsumptionPerTick(), true);
     }
@@ -123,14 +122,27 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
         state.input(INPUT, input.amount() <= 1 ? null : input.copyWithAmount(input.amount() - 1));
     }
 
-    private boolean canPush(SfxItems items, SfxElectricMachineState state, SfxElectricStack stack) {
-        SfxElectricStack current = state.output(OUTPUT);
-        return current == null || stack.canMerge(current, items);
+    private boolean canPush(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricStack stack) {
+        return outputSlot(items, definition, state, stack) >= 0;
     }
 
-    private void push(SfxElectricMachineState state, SfxElectricStack stack) {
-        SfxElectricStack current = state.output(OUTPUT);
-        state.output(OUTPUT, current == null ? stack : current.copyWithAmount(current.amount() + stack.amount()));
+    private void push(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricStack stack) {
+        int slot = outputSlot(items, definition, state, stack);
+        if (slot < 0) return;
+        SfxElectricStack current = state.output(slot);
+        state.output(slot, current == null ? stack : current.copyWithAmount(current.amount() + stack.amount()));
+    }
+
+    private int outputSlot(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricStack stack) {
+        int count = Math.min(definition.outputSlots().length, state.outputCapacity());
+        for (int slot = 0; slot < count; slot++) {
+            SfxElectricStack current = state.output(slot);
+            if (current != null && stack.canMerge(current, items)) return slot;
+        }
+        for (int slot = 0; slot < count; slot++) {
+            if (state.output(slot) == null) return slot;
+        }
+        return -1;
     }
 
     private record Plan(SfxElectricStack output, int ticks) {

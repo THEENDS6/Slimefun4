@@ -1095,8 +1095,28 @@ public final class DefaultSfxGuide implements SfxGuide {
                     fuelData(SfxRecipeSlot.sfx("sf:boosted_uranium"), 1500, "boosted_uranium")));
             case "sf:netherstar_reactor" -> fixedFuelDisplayEntries(netherStarReactorEnergyPerTick(), 10, mode, 300, List.of(
                     fuelData(SfxRecipeSlot.vanilla(Material.NETHER_STAR), 1800, "nether_star")));
+            case "sfx:oxidizing_generator" -> oxidizingGeneratorDisplayEntries(mode);
             default -> List.of();
         };
+    }
+
+    private List<DisplayEntry> oxidizingGeneratorDisplayEntries(GuideMode mode) {
+        return List.of(
+                oxidizingResourceEntry(SfxRecipeSlot.vanilla(Material.COPPER_INGOT), "copper", 1200, mode),
+                oxidizingResourceEntry(SfxRecipeSlot.sfx("sf:zinc_ingot"), "zinc", 1210, mode),
+                oxidizingResourceEntry(SfxRecipeSlot.sfx("sf:magnesium_ingot"), "magnesium", 1220, mode),
+                oxidizingResourceEntry(SfxRecipeSlot.sfx("sf:salt"), "salt", 1230, mode),
+                oxidizingResourceEntry(SfxRecipeSlot.vanilla(Material.WATER_BUCKET), "water", 1240, mode));
+    }
+
+    private DisplayEntry oxidizingResourceEntry(SfxRecipeSlot slot, String loreKey, int priority, GuideMode mode) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.addAll(localization.requiredList("content-expansion.guide.oxidizing." + loreKey).stream()
+                .map(Text::mm)
+                .toList());
+        ItemStack icon = withLore(ingredientIcon(slot), lore);
+        return DisplayEntry.single(icon, slotLabel(slot), priority, handlerForSlot(slot, mode), DisplayEntryKind.FUEL);
     }
 
     private List<DisplayEntry> compiledBioFuelDisplayEntries(String componentId, GuideMode mode, int startPriority) {

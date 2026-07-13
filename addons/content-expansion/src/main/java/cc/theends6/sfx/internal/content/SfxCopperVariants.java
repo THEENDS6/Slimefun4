@@ -12,7 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 final class SfxCopperVariants {
-    static final String COPPER_INGOT = "sf:copper_ingot";
+    static final String LEGACY_COPPER_INGOT = "sf:copper_ingot";
     static final String EXPOSED_COPPER_INGOT = "sfx:exposed_copper_ingot";
     static final String WEATHERED_COPPER_INGOT = "sfx:weathered_copper_ingot";
     static final String OXIDIZED_COPPER_INGOT = "sfx:oxidized_copper_ingot";
@@ -77,6 +77,9 @@ final class SfxCopperVariants {
             return null;
         }
         if (stack.isSfxItem()) {
+            if (EXPOSED_COPPER_INGOT.equals(stack.itemId())) {
+                return SfxElectricStack.vanilla(Material.COPPER_INGOT, stack.amount());
+            }
             String previous = previousCopperItem(stack.itemId());
             return previous == null ? null : SfxElectricStack.sfx(previous, stack.amount());
         }
@@ -100,7 +103,11 @@ final class SfxCopperVariants {
         UNWAXED.forEach((input, output) -> recipes.add(vanillaCuttingRecipe("unwax", input, output)));
         PREVIOUS_OXIDATION.forEach((input, output) -> recipes.add(vanillaCuttingRecipe("scrape", input, output)));
         STRIPPED.forEach((input, output) -> recipes.add(vanillaCuttingRecipe("strip", input, output)));
-        recipes.add(sfxCuttingRecipe("exposed_ingot", EXPOSED_COPPER_INGOT, COPPER_INGOT));
+        recipes.add(new SfxElectricRecipe(
+                "sfx:cut_exposed_ingot",
+                SfxRecipeSlot.sfx(EXPOSED_COPPER_INGOT),
+                SfxElectricStack.vanilla(Material.COPPER_INGOT, 1),
+                120));
         recipes.add(sfxCuttingRecipe("weathered_ingot", WEATHERED_COPPER_INGOT, EXPOSED_COPPER_INGOT));
         recipes.add(sfxCuttingRecipe("oxidized_ingot", OXIDIZED_COPPER_INGOT, WEATHERED_COPPER_INGOT));
         return List.copyOf(recipes);
@@ -127,6 +134,9 @@ final class SfxCopperVariants {
         if (stack.hasSnapshot()) {
             return null;
         }
+        if (stack.material() == Material.COPPER_INGOT) {
+            return SfxElectricStack.sfx(finalStage ? OXIDIZED_COPPER_INGOT : EXPOSED_COPPER_INGOT, stack.amount());
+        }
         Material next = finalStage ? FINAL_OXIDATION.get(stack.material()) : nextOxidation(stack.material());
         return next == null ? null : SfxElectricStack.vanilla(next, stack.amount());
     }
@@ -137,7 +147,7 @@ final class SfxCopperVariants {
         }
         if (stack.isSfxItem()) {
             String id = stack.itemId();
-            if (COPPER_INGOT.equals(id) || EXPOSED_COPPER_INGOT.equals(id) || WEATHERED_COPPER_INGOT.equals(id) || OXIDIZED_COPPER_INGOT.equals(id)) {
+            if (LEGACY_COPPER_INGOT.equals(id) || EXPOSED_COPPER_INGOT.equals(id) || WEATHERED_COPPER_INGOT.equals(id) || OXIDIZED_COPPER_INGOT.equals(id)) {
                 return stack.amount();
             }
             if (COPPER_DUST.equals(id) || EXPOSED_COPPER_DUST.equals(id) || WEATHERED_COPPER_DUST.equals(id) || OXIDIZED_COPPER_DUST.equals(id)) {
@@ -163,7 +173,7 @@ final class SfxCopperVariants {
 
     private static String nextCopperItem(String id) {
         return switch (id) {
-            case COPPER_INGOT -> EXPOSED_COPPER_INGOT;
+            case LEGACY_COPPER_INGOT -> EXPOSED_COPPER_INGOT;
             case EXPOSED_COPPER_INGOT -> WEATHERED_COPPER_INGOT;
             case WEATHERED_COPPER_INGOT -> OXIDIZED_COPPER_INGOT;
             case COPPER_DUST -> EXPOSED_COPPER_DUST;
@@ -175,7 +185,7 @@ final class SfxCopperVariants {
 
     private static String finalCopperItem(String id) {
         return switch (id) {
-            case COPPER_INGOT, EXPOSED_COPPER_INGOT, WEATHERED_COPPER_INGOT, OXIDIZED_COPPER_INGOT -> OXIDIZED_COPPER_INGOT;
+            case LEGACY_COPPER_INGOT, EXPOSED_COPPER_INGOT, WEATHERED_COPPER_INGOT, OXIDIZED_COPPER_INGOT -> OXIDIZED_COPPER_INGOT;
             case COPPER_DUST, EXPOSED_COPPER_DUST, WEATHERED_COPPER_DUST, OXIDIZED_COPPER_DUST -> OXIDIZED_COPPER_DUST;
             default -> null;
         };
@@ -183,7 +193,6 @@ final class SfxCopperVariants {
 
     private static String previousCopperItem(String id) {
         return switch (id) {
-            case EXPOSED_COPPER_INGOT -> COPPER_INGOT;
             case WEATHERED_COPPER_INGOT -> EXPOSED_COPPER_INGOT;
             case OXIDIZED_COPPER_INGOT -> WEATHERED_COPPER_INGOT;
             default -> null;

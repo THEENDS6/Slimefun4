@@ -84,7 +84,7 @@ final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
             return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, 0, true);
         }
         if (!canPush(state, RESULT_OUTPUT, output)) {
-            return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.OUTPUT_FULL, 0, changed, true);
+            return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.BLOCKED_OUTPUT, 0, changed, true);
         }
         if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
             return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_POWER, 0, changed, true);

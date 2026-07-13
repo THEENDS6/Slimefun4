@@ -45,4 +45,12 @@ public interface SfxDynamicEnergyGeneratorProvider extends SfxEnergyGeneratorPro
     default SfxMachineStatusKey status(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, Location location, SfxEnergyGeneratorAccess access) {
         return null;
     }
+
+    default String workingStatusLoreKey() {
+        return "energy.generator.active.lore";
+    }
+
+    default int remainingTicks(SfxEnergyNodeState state) {
+        return Math.max(0, state.fuelTotalTenths() - state.fuelProgressTenths());
+    }
 }

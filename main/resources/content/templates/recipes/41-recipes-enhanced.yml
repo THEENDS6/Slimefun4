@@ -500,10 +500,10 @@ recipes:
     - empty
     - sf:zinc_ingot
     - sf:sulfate
-    - sf:copper_ingot
+    - COPPER_INGOT
     - sf:zinc_ingot
     - sf:sulfate
-    - sf:copper_ingot
+    - COPPER_INGOT
     outputs:
     - sf:battery
   legacy:beef_jerky:
@@ -1534,9 +1534,9 @@ recipes:
     - empty
     - empty
     - empty
-    - sf:copper_ingot
-    - sf:copper_ingot
-    - sf:copper_ingot
+    - COPPER_INGOT
+    - COPPER_INGOT
+    - COPPER_INGOT
     - empty
     - empty
     - empty
@@ -1859,9 +1859,9 @@ recipes:
     - sf:electro_magnet
     - sf:electric_gold_pan
     - sf:electro_magnet
-    - sf:copper_ingot
-    - sf:copper_ingot
-    - sf:copper_ingot
+    - COPPER_INGOT
+    - COPPER_INGOT
+    - COPPER_INGOT
     outputs:
     - sf:electric_dust_washer
   legacy:electric_dust_washer_2:
@@ -4061,9 +4061,9 @@ recipes:
     runtime-machine-tags:
     - enhanced-crafting
     matrix:
-    - sf:copper_ingot
+    - COPPER_INGOT
     - empty
-    - sf:copper_ingot
+    - COPPER_INGOT
     - empty
     - sf:redstone_alloy
     - empty
@@ -5705,3 +5705,26 @@ recipes:
     - sf:bronze_ingot
     outputs:
     - sf:cargo_node*4
+  sfx:legacy_copper_ingot_conversion:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: sfx:legacy_copper_ingot_conversion
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 9995
+    source: slimefunx
+    runtime: true
+    runtime-machine-tags:
+    - enhanced-crafting
+    matrix:
+    - empty
+    - empty
+    - empty
+    - empty
+    - sf:copper_ingot
+    - empty
+    - empty
+    - empty
+    - empty
+    outputs:
+    - COPPER_INGOT

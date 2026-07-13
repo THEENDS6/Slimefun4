@@ -4,8 +4,11 @@ content-expansion:
       name: <blue>电解液</blue>
       amount: '<gray>储量：</gray><aqua>{stored}</aqua><gray> / </gray><aqua>{capacity} mB</aqua>'
       insert: <aqua>水桶提供 1000 mB，水瓶提供 100 mB</aqua>
-      effect: <gray>强化加工每 tick 消耗 <aqua>{consumption} mB</aqua>，发电提高至 4 倍且耗时缩短 20%</gray>
+      consumption: <gray>工作时每 tick 消耗 <aqua>{consumption} mB</aqua></gray>
+      bonus: <gray>有电解液时发电提高至 4 倍，加工速度提高至 1.25 倍</gray>
       output: <gray>容器转入储罐时立即从输出槽返还空桶或空瓶</gray>
+    oxidizing:
+      active: <gray>正在通过氧化反应处理材料并产生电力。</gray>
     mode:
       power:
         name: <yellow>发电模式</yellow>
@@ -24,6 +27,23 @@ content-expansion:
       name: <gold>蜂蜡储量</gold>
       amount: '<gray>{stored} / {capacity} 次</gray>'
       insert: <yellow>蜂蜜瓶 1 次，蜜脾 3 次，蜂巢 10 次</yellow>
+  guide:
+    oxidizing:
+      copper:
+      - <gray>氧化铜材料，并输出对应的氧化产物。</gray>
+      - <gray>基础发电量 <yellow>24 J/t</yellow>；铜粉发电翻倍且加工时间为三分之一。</gray>
+      zinc:
+      - <gray>锌用于发电，不产生氧化产物。</gray>
+      - <gray>锌锭发电量 <yellow>36 J/t</yellow>；锌粉发电翻倍且加工时间为三分之一。</gray>
+      magnesium:
+      - <gray>镁用于高功率发电，不产生氧化产物。</gray>
+      - <gray>镁锭发电量 <yellow>72 J/t</yellow>且基础加工快 20%；镁粉发电翻倍。</gray>
+      salt:
+      - <gray>每个盐提供 <yellow>600 tick</yellow>内部储量，最多储存 6000 tick。</gray>
+      - <gray>有盐时发电量提高至 <yellow>1.5 倍</yellow>。</gray>
+      water:
+      - <gray>水桶提供 1000 mB，水瓶提供 100 mB，并立即返还空容器。</gray>
+      - <gray>工作时消耗 <aqua>5 mB/t</aqua>，发电提高至 4 倍、加工速度提高至 1.25 倍。</gray>
 
 items:
   sfx.oxidizing_generator:
