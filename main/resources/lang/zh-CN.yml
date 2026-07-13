@@ -4115,14 +4115,18 @@ guide:
     depth-limit: 配方浏览已达到 100 层上限。
     cycle-blocked: 你已经看过这个配方了，回退看看吧
     section:
-      sources: '&e合成来源'
-      working: '&e可工作配方'
-      toggle: '&7点击切换合成来源 / 可工作配方'
+      sources: <yellow>关联：来源</yellow>
+      functions: <yellow>关联：功能</yellow>
+      usages: <yellow>关联：用途</yellow>
+      working: <yellow>关联：功能</yellow>
+      select: <gray>点击切换到这个关联分类</gray>
+      empty: <dark_gray>这个关联分类暂无内容</dark_gray>
+      toggle: <gray>点击切换关联：来源 / 用途</gray>
     aggregate:
-      index: '&e第 {current} / {total} 个输入'
-      mode-cycle: '&e切换到轮询显示'
-      mode-list: '&e切换到列举显示'
-      toggle: '&7点击切换聚合配方的显示模式'
+      index: <yellow>第 {current} / {total} 个输入</yellow>
+      mode-cycle: <yellow>切换到轮询显示</yellow>
+      mode-list: <yellow>切换到列举显示</yellow>
+      toggle: <gray>点击切换聚合配方的显示模式</gray>
     executor: <yellow>可执行此配方的机器</yellow>
     machine-recipes: <yellow>此机器可执行的配方</yellow>
     consumable-fuel: <gold>可消耗燃料</gold>
