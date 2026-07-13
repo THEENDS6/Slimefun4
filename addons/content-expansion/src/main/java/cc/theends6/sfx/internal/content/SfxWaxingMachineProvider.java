@@ -20,7 +20,7 @@ final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
     private static final int TARGET_INPUT = 0;
     private static final int WAX_INPUT = 1;
     private static final int RESULT_OUTPUT = 0;
-    private static final int BOTTLE_OUTPUT = 1;
+    private static final int BOTTLE_OUTPUT = RESULT_OUTPUT;
     private static final int WORK_TICKS = 80;
     private static final int WAX_MAX = 10;
     private static final int WAX_DISPLAY_SLOT = 4;

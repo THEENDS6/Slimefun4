@@ -964,7 +964,7 @@ public final class SfxEnergyService implements Listener {
         }
         SfxDynamicEnergyGeneratorProvider dynamicProvider = dynamicGenerator(definition);
         if (dynamicProvider != null) {
-            return dynamicProvider.generate(plugin, items, definition, state, generationLocation, new SfxEnergyGeneratorAccess() {
+            int generated = dynamicProvider.generate(plugin, items, definition, state, generationLocation, new SfxEnergyGeneratorAccess() {
                 @Override
                 public boolean hasOutputSpace(SfxEnergyComponentDefinition checkedDefinition, SfxEnergyNodeState checkedState, SfxElectricStack output) {
                     return findOutputSlot(checkedDefinition, checkedState, output) != null;
@@ -986,6 +986,13 @@ public final class SfxEnergyService implements Listener {
                     dirtyNodes.add(instance.instanceId());
                 }
             });
+            
+            
+            
+            if (instance != null) {
+                renderStorageSlots(instance.instanceId(), state);
+            }
+            return generated;
         }
         if (definition.isSolarGenerator()) {
             Location location = toLocation(instance.anchorKey());

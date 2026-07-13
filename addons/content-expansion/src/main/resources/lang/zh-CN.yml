@@ -2,8 +2,10 @@ content-expansion:
   ui:
     salt:
       name: <yellow>盐储量</yellow>
-      amount: '<gray>{stored} / {capacity} tick</gray>'
-      insert: <yellow>在下方放入盐</yellow>
+      amount: '<gray>已储存：</gray><yellow>{stored}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> tick</gray>'
+      items: '<gray>约合：</gray><yellow>{items}</yellow><gray> / </gray><yellow>{capacity_items}</yellow><gray> 个盐</gray>'
+      effect: <gray>有盐储量时，发电量提升至 <yellow>1.5 倍</yellow></gray>
+      insert: <yellow>在右上方空槽放入盐</yellow>
     wax:
       name: <gold>蜂蜡储量</gold>
       amount: '<gray>{stored} / {capacity} 次</gray>'

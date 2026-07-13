@@ -33,6 +33,11 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
     }
 
     @Override
+    public boolean locksInputsDuringProgress() {
+        return true;
+    }
+
+    @Override
     public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
         return (state.hasProgress() || plan(items, definition, state) != null) ? definition.energyConsumptionPerTick() : 0;
     }
@@ -55,7 +60,7 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
     }
 
     private SfxElectricMachineTickResult advance(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
-        if (!same(state.input(INPUT), state.specialInput(SNAPSHOT_INPUT))) {
+        if (!sameKindWithAvailableItem(state.input(INPUT), state.specialInput(SNAPSHOT_INPUT))) {
             interrupt(state);
             return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, 0, true);
         }
@@ -100,11 +105,8 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
         state.clearSpecialWorkData();
     }
 
-    private boolean same(SfxElectricStack left, SfxElectricStack right) {
-        if (left == null || right == null) {
-            return left == null && right == null;
-        }
-        return left.amount() == right.amount() && left.sameKind(right);
+    private boolean sameKindWithAvailableItem(SfxElectricStack current, SfxElectricStack snapshot) {
+        return current != null && current.amount() > 0 && snapshot != null && current.sameKind(snapshot);
     }
 
     private SfxElectricStack copy(SfxElectricStack stack) {
