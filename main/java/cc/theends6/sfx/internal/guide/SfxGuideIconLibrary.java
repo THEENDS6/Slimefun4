@@ -10,7 +10,7 @@ final class SfxGuideIconLibrary {
     private static final String LEFT_ARROW = "a185c97dbb8353de652698d24b64327b793a3f32a98be67b719fbedab35e";
     private static final String RIGHT_ARROW = "31c0ededd7115fc1b23d51ce966358b27195daf26ebb6e45a66c34c69c34091";
     private static final String CHAPTER_BACK = "67f046f1c5f8540735d436e6643b37a916506f1b9e33799351e3c39f0829c2ab";
-    private static final String CRAFTING_TABLE = "c511cdded8305305b23d1ef4199f8dc90f6889211d58cad182d9c33d2accb79";
+    private static final String CRAFTING_TABLE = "2cdc0feb7001e2c10fd5066e501b87e3d64793092b85a50c856d962f8be92c78";
     private static final String FURNACE = "5d3c5315eec74ec8e56e13bd129d66af9ed97cc47c747b465ae65160701af50c";
     private static final String OAK_LOG = "327859b7cea388362c19298bf221aed039ee7490335b2a2e2ba6be8d13c453a7";
     private static final String[] PAGE_NUMBERS = {

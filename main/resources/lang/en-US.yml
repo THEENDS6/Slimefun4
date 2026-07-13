@@ -160,6 +160,7 @@ guide:
     open-category: <gray>Click to open category</gray>
     open-recipe: <gray>Click to view recipe</gray>
     view-uses: <gray>Right click to view usages</gray>
+    view-functions: <gray>Middle click to view functions</gray>
     open-machine: <gray>Click to open this machine in the guide</gray>
     open-vanilla-recipe: <gray>Click to view vanilla recipes</gray>
     back-guide: Back to Guide
@@ -232,6 +233,94 @@ guide:
       lava: <gold>Lava</gold>
       water: <aqua>Water</aqua>
       container-ignored: <gray>This display represents the produced fluid, not its container.</gray>
+      requires-empty-bucket: <gray>The input side also requires an empty bucket.</gray>
+    special:
+      auto-anvil:
+        label: Automatic Repair
+      auto-anvil-input:
+        lore: <gray>Consumes Duct Tape when repairing damaged items.</gray>
+      auto-anvil-output:
+        lore: <gray>Outputs the same item with restored durability.</gray>
+      duct-tape-machine:
+        lore: <gray>Duct Tape can be used as repair material in Auto Anvils.</gray>
+      produce-milk:
+        label: Automatic Milking
+        input:
+          lore: <gray>Insert an empty bucket and keep an adult cow or goat nearby.</gray>
+        output:
+          lore: <gray>Outputs a milk bucket.</gray>
+      produce-stew:
+        label: Automatic Stew
+        input:
+          lore: <gray>Insert a bowl and keep an adult mooshroom nearby.</gray>
+        output:
+          lore: <gray>Outputs mushroom stew.</gray>
+      auto-breeder:
+        label: Automatic Breeding
+        input:
+          lore: <gray>Consumes food accepted by breedable animals.</gray>
+        output:
+          lore: <gray>Breeds valid nearby animals.</gray>
+      animal-growth:
+        label: Animal Growth
+        input:
+          lore: <gray>Consumes food accepted by the target animal.</gray>
+        output:
+          lore: <gray>Accelerates nearby baby animal growth.</gray>
+      crop-growth:
+        label: Crop Growth
+        input:
+          lore: <gray>Consumes bone meal.</gray>
+        output:
+          lore: <gray>Accelerates nearby crop growth.</gray>
+      tree-growth:
+        label: Tree Growth
+        input:
+          lore: <gray>Consumes bone meal.</gray>
+        output:
+          lore: <gray>Attempts bone-meal growth on nearby saplings.</gray>
+      xp-collector:
+        label: XP Collection
+        input:
+          lore: <gray>Collects nearby experience orbs.</gray>
+        output:
+          lore: <gray>Stores experience inside the machine.</gray>
+      fluid-pump-water:
+        label: Pump Water
+        input:
+          lore: <gray>Insert an empty bucket and place the machine above a water source.</gray>
+        output:
+          lore: <gray>Outputs a water bucket.</gray>
+      fluid-pump-lava:
+        label: Pump Lava
+        input:
+          lore: <gray>Insert an empty bucket and place the machine above a lava source.</gray>
+        output:
+          lore: <gray>Outputs a lava bucket.</gray>
+      geo-miner:
+        label: GEO Mining
+        lore: <gray>Extracts resources from chunk GEO data through the GPS network.</gray>
+      oil-pump:
+        label: Pump Oil
+        input:
+          lore: <gray>Insert an empty bucket and use chunk GEO oil resources.</gray>
+        output:
+          lore: <gray>Outputs a bucket of oil.</gray>
+      gps-transmitter:
+        label: GPS Signal
+        lore: <gray>Provides signal capacity to the GPS network.</gray>
+      iron-golem-assembler:
+        label: Assemble Iron Golem
+        input:
+          lore: <gray>Consumes iron golem structure materials.</gray>
+        output:
+          lore: <gray>Spawns an iron golem in the world.</gray>
+      wither-assembler:
+        label: Assemble Wither
+        input:
+          lore: <gray>Consumes wither structure materials.</gray>
+        output:
+          lore: <gray>Spawns a Wither in the world.</gray>
     vanilla:
       disabled: <dark_gray>Vanilla recipe lookup is disabled.</dark_gray>
       crafting: Crafting Table
