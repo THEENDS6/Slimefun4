@@ -4577,13 +4577,20 @@ energy:
       lore: <gray>请先解决多个调度器或共享节点冲突。</gray>
     solar:
       name: <yellow>太阳能发电机</yellow>
+      day-active: <yellow>当前处于白天发电时段</yellow>
+      night-active: <blue>当前处于夜间发电时段</blue>
       current: '<gray>当前发电：</gray><green>{energy} J/t</green>'
       day: '<gray>白天发电：</gray><yellow>{energy} J/t</yellow>'
       night: '<gray>夜晚发电：</gray><blue>{energy} J/t</blue>'
       time: '<gray>当前时间：</gray><aqua>{time}</aqua><dark_gray>（{ticks} tick）</dark_gray>'
       day-range: <gray>白天：<yellow>05:51–18:18</yellow>（0–12299、23851–23999 tick）</gray>
       night-range: <gray>夜晚：<blue>18:18–次日 05:51</blue>（12300–23850 tick）</gray>
-      weather-night: <gray>暴雨或雷暴期间按夜晚发电</gray>
+      obstructed:
+        name: <red>太阳能板被遮挡</red>
+        lore: <gray>天空光照不足 15，已停止发电；玻璃等不削弱天空光照的透明方块不算遮挡。</gray>
+      invalid-dimension:
+        name: <red>当前维度无法发电</red>
+        lore: <gray>太阳能发电机默认只能在主世界工作。</gray>
     buffer: '<gray>储能: </gray><yellow>{stored}</yellow><gray>/</gray><yellow>{capacity}</yellow><gray> J</gray>'
     production: '<gray>发电: </gray><green>{energy} J/t</green>'
   charging-bench:

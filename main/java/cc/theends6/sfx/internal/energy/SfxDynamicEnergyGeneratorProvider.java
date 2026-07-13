@@ -8,7 +8,10 @@ import cc.theends6.sfx.internal.electric.SfxElectricStack;
 import java.util.List;
 import java.util.Map;
 import org.bukkit.Location;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 
 public interface SfxDynamicEnergyGeneratorProvider extends SfxEnergyGeneratorProvider {
     int potentialGeneration(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, Location location);
@@ -25,5 +28,21 @@ public interface SfxDynamicEnergyGeneratorProvider extends SfxEnergyGeneratorPro
 
     default Map<Integer, SfxMachineDisplayItem> displayItems(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
         return Map.of();
+    }
+
+    default int[] shiftInputSlots(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, ItemStack stack) {
+        return definition.ui().inputSlots();
+    }
+
+    default boolean acceptsInput(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, int logicalSlot, ItemStack stack) {
+        return true;
+    }
+
+    default boolean handleMenuClick(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, int rawSlot, ClickType clickType) {
+        return false;
+    }
+
+    default SfxMachineStatusKey status(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, Location location, SfxEnergyGeneratorAccess access) {
+        return null;
     }
 }

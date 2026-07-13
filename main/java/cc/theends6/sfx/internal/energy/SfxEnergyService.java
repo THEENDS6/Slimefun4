@@ -58,6 +58,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class SfxEnergyService implements Listener {
     private static final int RANGE = 6;
     private static final long FLUSH_INTERVAL = 20L;
+    private static final long SOLAR_EXPOSURE_CHECK_INTERVAL = 20L;
 
     final JavaPlugin plugin;
     final SfxRuntime runtime;
@@ -80,6 +81,7 @@ public final class SfxEnergyService implements Listener {
     private final Set<UUID> activeNodes = ConcurrentHashMap.newKeySet();
     final Set<UUID> autoPausedGenerators = ConcurrentHashMap.newKeySet();
     private final Map<UUID, EnergyRuntimeGrid> runtimeGrids = new ConcurrentHashMap<>();
+    private final Map<SfxBlockAnchorKey, SolarExposureCache> solarExposureCache = new ConcurrentHashMap<>();
     private volatile long nodeGridStatusTopologyRevision = Long.MIN_VALUE;
     private volatile SfxFuelBurnTimeBridge fuelBurnTimeBridge;
     private volatile boolean running;
@@ -310,6 +312,7 @@ public final class SfxEnergyService implements Listener {
         dirtyNodes.remove(instanceId);
         activeNodes.remove(instanceId);
         autoPausedGenerators.remove(instanceId);
+        solarExposureCache.remove(SfxBlockAnchorKey.fromLocation(block.getLocation()));
         capacitorProjector.remove(instanceId);
         if (instance != null) {
             displayController.remove(instance.anchorKey());
@@ -328,6 +331,7 @@ public final class SfxEnergyService implements Listener {
         dirtyNodes.clear();
         activeNodes.clear();
         autoPausedGenerators.clear();
+        solarExposureCache.clear();
     }
 
     private void bootstrapLoadedStates() {
@@ -617,7 +621,7 @@ public final class SfxEnergyService implements Listener {
             if (location == null) {
                 return 0;
             }
-            return solarGenerationAt(definition, location);
+            return solarGenerationState(definition, location).generation();
         }
         if (state.hasPendingOutput() && findOutputSlot(definition, state, state.pendingOutput()) == null) {
             return 0;
@@ -661,17 +665,32 @@ public final class SfxEnergyService implements Listener {
         return Integer.compare(left.z(), right.z());
     }
 
-    static int solarGenerationAt(SfxEnergyComponentDefinition definition, Location location) {
+    SolarGenerationState solarGenerationState(SfxEnergyComponentDefinition definition, Location location) {
         if (definition == null || location == null) {
-            return 0;
+            return new SolarGenerationState(0, false, false, false);
         }
         World world = location.getWorld();
         if (world == null || world.getEnvironment() != World.Environment.NORMAL) {
-            return definition.nightEnergyPerTick();
+            return new SolarGenerationState(0, false, false, false);
         }
         long time = world.getTime();
-        boolean daytime = !world.hasStorm() && !world.isThundering() && (time < 12300L || time > 23850L);
-        return daytime ? definition.energyPerTick() : definition.nightEnergyPerTick();
+        boolean daytime = time < 12300L || time > 23850L;
+        boolean exposed = solarExposed(location, world);
+        int generation = exposed ? (daytime ? definition.energyPerTick() : definition.nightEnergyPerTick()) : 0;
+        return new SolarGenerationState(generation, true, exposed, daytime);
+    }
+
+    private boolean solarExposed(Location location, World world) {
+        SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(location);
+        long now = world.getFullTime();
+        SolarExposureCache cached = solarExposureCache.get(key);
+        if (cached != null && now >= cached.checkedAt() && now - cached.checkedAt() < SOLAR_EXPOSURE_CHECK_INTERVAL) {
+            return cached.exposed();
+        }
+        boolean exposed = world.isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)
+                && location.getBlock().getLightFromSky() >= 15;
+        solarExposureCache.put(key, new SolarExposureCache(exposed, now));
+        return exposed;
     }
 
     private int capacitorPriorityDistanceForPlacement(Location location) {
@@ -971,28 +990,7 @@ public final class SfxEnergyService implements Listener {
         }
         SfxDynamicEnergyGeneratorProvider dynamicProvider = dynamicGenerator(definition);
         if (dynamicProvider != null) {
-            int generated = dynamicProvider.generate(plugin, items, definition, state, generationLocation, new SfxEnergyGeneratorAccess() {
-                @Override
-                public boolean hasOutputSpace(SfxEnergyComponentDefinition checkedDefinition, SfxEnergyNodeState checkedState, SfxElectricStack output) {
-                    return findOutputSlot(checkedDefinition, checkedState, output) != null;
-                }
-
-                @Override
-                public boolean pushOutput(SfxEnergyComponentDefinition checkedDefinition, SfxEnergyNodeState checkedState, SfxElectricStack output) {
-                    Integer slot = findOutputSlot(checkedDefinition, checkedState, output);
-                    if (slot == null) {
-                        return false;
-                    }
-                    SfxEnergyService.this.pushOutput(checkedState, slot, output);
-                    dirtyNodes.add(instance.instanceId());
-                    return true;
-                }
-
-                @Override
-                public void markDirty() {
-                    dirtyNodes.add(instance.instanceId());
-                }
-            });
+            int generated = dynamicProvider.generate(plugin, items, definition, state, generationLocation, generatorAccess(instance));
             // Dynamic providers can consume inputs and produce outputs directly. Keep an
             // open inventory synchronized so its stale ItemStacks cannot be written back
             // over the authoritative state on the next click/close.
@@ -1006,7 +1004,7 @@ public final class SfxEnergyService implements Listener {
             if (location == null) {
                 return 0;
             }
-            return solarGenerationAt(definition, location);
+            return solarGenerationState(definition, location).generation();
         }
 
         if (state.hasPendingOutput()) {
@@ -1208,6 +1206,90 @@ public final class SfxEnergyService implements Listener {
             }
         }
         return null;
+    }
+
+    int[] findOutputSlots(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, List<SfxElectricStack> outputs) {
+        if (definition == null || outputs == null || outputs.size() > outputSlotCount(definition)) {
+            return null;
+        }
+        SfxElectricStack[] simulated = new SfxElectricStack[outputSlotCount(definition)];
+        for (int slot = 0; slot < simulated.length; slot++) {
+            simulated[slot] = state.output(slot);
+        }
+        int[] slots = new int[outputs.size()];
+        for (int outputIndex = 0; outputIndex < outputs.size(); outputIndex++) {
+            SfxElectricStack output = outputs.get(outputIndex);
+            if (output == null) {
+                return null;
+            }
+            Integer selected = null;
+            for (int slot = 0; slot < simulated.length; slot++) {
+                if (simulated[slot] != null && output.canMerge(simulated[slot], items)) {
+                    selected = slot;
+                    break;
+                }
+            }
+            if (selected == null) {
+                for (int slot = 0; slot < simulated.length; slot++) {
+                    if (simulated[slot] == null) {
+                        selected = slot;
+                        break;
+                    }
+                }
+            }
+            if (selected == null) {
+                return null;
+            }
+            slots[outputIndex] = selected;
+            SfxElectricStack current = simulated[selected];
+            simulated[selected] = current == null ? output : current.copyWithAmount(current.amount() + output.amount());
+        }
+        return slots;
+    }
+
+    SfxEnergyGeneratorAccess generatorAccess(SfxBlockInstanceRecord instance) {
+        return new SfxEnergyGeneratorAccess() {
+            @Override
+            public boolean hasOutputSpace(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, SfxElectricStack output) {
+                return findOutputSlot(definition, state, output) != null;
+            }
+
+            @Override
+            public boolean hasOutputSpace(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, List<SfxElectricStack> outputs) {
+                return findOutputSlots(definition, state, outputs) != null;
+            }
+
+            @Override
+            public boolean pushOutput(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, SfxElectricStack output) {
+                Integer slot = findOutputSlot(definition, state, output);
+                if (slot == null) {
+                    return false;
+                }
+                SfxEnergyService.this.pushOutput(state, slot, output);
+                markDirty();
+                return true;
+            }
+
+            @Override
+            public boolean pushOutputs(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, List<SfxElectricStack> outputs) {
+                int[] slots = findOutputSlots(definition, state, outputs);
+                if (slots == null) {
+                    return false;
+                }
+                for (int index = 0; index < outputs.size(); index++) {
+                    SfxEnergyService.this.pushOutput(state, slots[index], outputs.get(index));
+                }
+                markDirty();
+                return true;
+            }
+
+            @Override
+            public void markDirty() {
+                if (instance != null) {
+                    dirtyNodes.add(instance.instanceId());
+                }
+            }
+        };
     }
 
     private int inputSlotCount(SfxEnergyComponentDefinition definition) {
@@ -1444,9 +1526,9 @@ public final class SfxEnergyService implements Listener {
         return new SfxEnergyGridInspection(grid.regulatorKey(), grid.status(), grid.members().size(), generators, reactors, capacitors, connectors, consumers, displayedEnergy(stored, capacity), capacity, generation, consumption, autoPaused);
     }
 
+    record SolarGenerationState(int generation, boolean dimensionAllowed, boolean exposed, boolean daytime) {
+    }
 
-
-
-
-
+    private record SolarExposureCache(boolean exposed, long checkedAt) {
+    }
 }

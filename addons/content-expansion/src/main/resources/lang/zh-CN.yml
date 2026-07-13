@@ -2,9 +2,18 @@ content-expansion:
   ui:
     water:
       name: <blue>电解液</blue>
-      insert: <aqua>在左上方空槽放入水桶</aqua>
-      effect: <gray>水使发电量提高至 <aqua>4 倍</aqua>，加工时间缩短 <aqua>20%</aqua></gray>
-      output: <gray>处理铜时会加速氧化，并返还空桶</gray>
+      amount: '<gray>储量：</gray><aqua>{stored}</aqua><gray> / </gray><aqua>{capacity} mB</aqua>'
+      insert: <aqua>水桶提供 1000 mB，水瓶提供 100 mB</aqua>
+      effect: <gray>强化加工每 tick 消耗 <aqua>{consumption} mB</aqua>，发电提高至 4 倍且耗时缩短 20%</gray>
+      output: <gray>容器转入储罐时立即从输出槽返还空桶或空瓶</gray>
+    mode:
+      power:
+        name: <yellow>发电模式</yellow>
+        lore: <gray>电网储能充足时允许自动暂停加工</gray>
+      production:
+        name: <aqua>生产模式</aqua>
+        lore: <gray>即使电网储能充足也持续加工材料</gray>
+      toggle: <yellow>点击切换模式</yellow>
     salt:
       name: <yellow>盐储量</yellow>
       amount: '<gray>已储存：</gray><yellow>{stored}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> tick</gray>'
@@ -22,7 +31,7 @@ items:
     lore:
     - ''
     - '&7通过氧化铜、锌和镁进行发电'
-    - '&7可使用盐与水提高发电效率'
+    - '&7内部可储存 2000 mB 电解液，并支持发电/生产模式'
     - ''
     - '&6高级发电机'
     - '&8⇨ &e⚡ &765536 J 储能'

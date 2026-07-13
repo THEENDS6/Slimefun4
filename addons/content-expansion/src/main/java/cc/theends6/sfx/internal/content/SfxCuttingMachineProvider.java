@@ -34,7 +34,8 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
 
     @Override
     public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-        return (state.hasProgress() || plan(items, definition, state) != null) ? definition.energyConsumptionPerTick() : 0;
+        Plan plan = plan(items, state);
+        return (state.hasProgress() || (plan != null && canPush(items, state, plan.output()))) ? definition.energyConsumptionPerTick() : 0;
     }
 
     @Override
@@ -42,9 +43,12 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
         if (state.hasProgress()) {
             return advance(items, definition, state);
         }
-        Plan plan = plan(items, definition, state);
+        Plan plan = plan(items, state);
         if (plan == null) {
             return new SfxElectricMachineTickResult(state.hasAnyInput() ? SfxElectricMachineRenderStatus.NO_RECIPE : SfxElectricMachineRenderStatus.IDLE, 0, false, state.hasAnyInput());
+        }
+        if (!canPush(items, state, plan.output())) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OUTPUT_FULL, true);
         }
         state.activeRecipeKey("sfx:cutting");
         state.activeBaseTicks(plan.ticks());
@@ -80,7 +84,7 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, definition.energyConsumptionPerTick(), true);
     }
 
-    private Plan plan(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
+    private Plan plan(SfxItems items, SfxElectricMachineState state) {
         SfxElectricStack input = state.input(INPUT);
         if (input == null || input.amount() <= 0) {
             return null;
@@ -89,7 +93,7 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
         if (scrape != null) {
             int ticks = (int) Math.ceil(Math.max(1.0D, SfxCopperVariants.copperValue(input.copyWithAmount(1))) * 60.0D);
             SfxElectricStack output = scrape.copyWithAmount(1);
-            return canPush(items, state, output) ? new Plan(output, ticks) : null;
+            return new Plan(output, ticks);
         }
         return null;
     }

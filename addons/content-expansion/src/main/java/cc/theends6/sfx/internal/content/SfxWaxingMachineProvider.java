@@ -36,34 +36,58 @@ final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
     }
 
     @Override
-    public boolean locksInputsDuringProgress() {
-        return true;
-    }
-
-    @Override
     public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-        return plan(items, definition, state) == null ? 0 : definition.energyConsumptionPerTick();
+        Plan plan = plan(items, state);
+        return (state.hasProgress() || (plan != null && state.specialData() > 0 && canPush(state, RESULT_OUTPUT, plan.output())))
+                ? definition.energyConsumptionPerTick()
+                : 0;
     }
 
     @Override
     public SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, SfxMachineTickContext context) {
         boolean changed = refillWax(definition, state);
-        Plan plan = plan(items, definition, state);
+        if (state.hasProgress()) {
+            return advance(definition, state, changed);
+        }
+        Plan plan = plan(items, state);
         if (plan == null) {
             state.resetProgress();
             return new SfxElectricMachineTickResult(state.hasAnyInput() ? SfxElectricMachineRenderStatus.NO_RECIPE : SfxElectricMachineRenderStatus.IDLE, 0, changed, state.hasAnyInput() || state.specialData() > 0);
         }
         if (state.specialData() <= 0) {
+            if (waxContainerOutputBlocked(state)) {
+                return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.OUTPUT_FULL, 0, changed, true);
+            }
             return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_RECIPE, 0, changed, true);
+        }
+        if (!canPush(state, RESULT_OUTPUT, plan.output())) {
+            return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.OUTPUT_FULL, 0, changed, true);
         }
         if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
             return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_POWER, 0, changed, true);
         }
-        if (!state.hasProgress()) {
-            state.activeRecipeKey("sfx:waxing");
-            state.activeBaseTicks(WORK_TICKS);
-            state.progressWork(0);
-            changed = true;
+        SfxElectricStack reserved = state.input(TARGET_INPUT).copyWithAmount(1);
+        consumeOne(state, TARGET_INPUT);
+        state.specialData(Math.max(0, state.specialData() - 1));
+        state.reservedInput(reserved);
+        state.specialOutput(0, plan.output());
+        state.activeRecipeKey("sfx:waxing");
+        state.activeBaseTicks(WORK_TICKS);
+        state.progressWork(0);
+        return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, 0, true);
+    }
+
+    private SfxElectricMachineTickResult advance(SfxElectricMachineDefinition definition, SfxElectricMachineState state, boolean changed) {
+        SfxElectricStack output = state.specialOutput(0);
+        if (output == null) {
+            interrupt(state);
+            return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, 0, true);
+        }
+        if (!canPush(state, RESULT_OUTPUT, output)) {
+            return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.OUTPUT_FULL, 0, changed, true);
+        }
+        if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
+            return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_POWER, 0, changed, true);
         }
         if (definition.energyConsumptionPerTick() > 0) {
             state.storedEnergy(state.storedEnergy() - definition.energyConsumptionPerTick());
@@ -72,11 +96,14 @@ final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
         if (state.progressWork() < WORK_TICKS) {
             return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
         }
-        consumeOne(state, TARGET_INPUT);
-        state.specialData(Math.max(0, state.specialData() - 1));
-        push(state, RESULT_OUTPUT, plan.output());
-        state.resetProgress();
+        push(state, RESULT_OUTPUT, output);
+        interrupt(state);
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, definition.energyConsumptionPerTick(), true);
+    }
+
+    private void interrupt(SfxElectricMachineState state) {
+        state.resetProgress();
+        state.clearSpecialWorkData();
     }
 
     private boolean refillWax(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
@@ -93,7 +120,8 @@ final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
         if (units <= 0 || state.specialData() + units > WAX_MAX) {
             return false;
         }
-        if (wax.material() == Material.HONEY_BOTTLE && !canPush(state, BOTTLE_OUTPUT, SfxElectricStack.vanilla(Material.GLASS_BOTTLE, 1))) {
+        if (wax.material() == Material.HONEY_BOTTLE
+                && (state.hasProgress() || !canPush(state, BOTTLE_OUTPUT, SfxElectricStack.vanilla(Material.GLASS_BOTTLE, 1)))) {
             return false;
         }
         state.specialData(state.specialData() + units);
@@ -104,13 +132,19 @@ final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
         return true;
     }
 
-    private Plan plan(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
+    private Plan plan(SfxItems items, SfxElectricMachineState state) {
         SfxElectricStack target = state.input(TARGET_INPUT);
         SfxElectricStack output = SfxCopperVariants.waxed(items, target == null ? null : target.copyWithAmount(1));
-        if (output == null || !canPush(state, RESULT_OUTPUT, output)) {
-            return null;
-        }
-        return new Plan(output);
+        return output == null ? null : new Plan(output);
+    }
+
+    private boolean waxContainerOutputBlocked(SfxElectricMachineState state) {
+        SfxElectricStack wax = state.input(WAX_INPUT);
+        return wax != null
+                && !wax.isSfxItem()
+                && !wax.hasSnapshot()
+                && wax.material() == Material.HONEY_BOTTLE
+                && !canPush(state, BOTTLE_OUTPUT, SfxElectricStack.vanilla(Material.GLASS_BOTTLE, 1));
     }
 
     private void consumeOne(SfxElectricMachineState state, int slot) {

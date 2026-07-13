@@ -10,7 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class SfxEnergyNodeState {
-    private static final int SCHEMA = 5;
+    private static final int SCHEMA = 6;
     private static final int LEGACY_SCHEMA = 1;
     private static final Logger LOGGER = Logger.getLogger(SfxEnergyNodeState.class.getName());
 
@@ -25,6 +25,7 @@ public final class SfxEnergyNodeState {
     private SfxElectricStack pendingOutput;
     private int specialData;
     private int specialData2;
+    private int specialData3;
 
     public static SfxEnergyNodeState empty() {
         return new SfxEnergyNodeState();
@@ -36,7 +37,7 @@ public final class SfxEnergyNodeState {
         }
         try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(blob))) {
             int schema = input.readInt();
-            if (schema != SCHEMA && schema != LEGACY_SCHEMA && schema != 2 && schema != 3 && schema != 4) {
+            if (schema != SCHEMA && schema != LEGACY_SCHEMA && schema != 2 && schema != 3 && schema != 4 && schema != 5) {
                 LOGGER.warning("Unsupported energy node state schema " + schema + "; returning empty state to keep the node usable");
                 return empty();
             }
@@ -63,6 +64,9 @@ public final class SfxEnergyNodeState {
             if (schema >= 3) {
                 state.specialData = Math.max(0, input.readInt());
                 state.specialData2 = Math.max(0, input.readInt());
+            }
+            if (schema >= 6) {
+                state.specialData3 = Math.max(0, input.readInt());
             }
             return state;
         } catch (IOException | IllegalArgumentException exception) {
@@ -97,6 +101,7 @@ public final class SfxEnergyNodeState {
             }
             output.writeInt(specialData);
             output.writeInt(specialData2);
+            output.writeInt(specialData3);
             output.flush();
             return buffer.toByteArray();
         } catch (IOException exception) {
@@ -174,6 +179,14 @@ public final class SfxEnergyNodeState {
 
     public void specialData2(int specialData2) {
         this.specialData2 = Math.max(0, specialData2);
+    }
+
+    public int specialData3() {
+        return specialData3;
+    }
+
+    public void specialData3(int specialData3) {
+        this.specialData3 = Math.max(0, specialData3);
     }
 
     public boolean hasAnyInput() {

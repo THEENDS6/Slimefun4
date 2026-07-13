@@ -83,14 +83,29 @@ components:
     @cf: templates.energy.generator-output
     @io: true
     @d: {capacity: 0, generation: 4, burn-rate: 10, progress-material: DAYLIGHT_DETECTOR, fuels: []}
+    slots: {input: [], output: []}
+    ui: &solar-ui
+      inventory-size: 27
+      status-slot: 13
+      frame:
+      - slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+        item: {material: YELLOW_STAINED_GLASS_PANE, name: " ", lore: []}
+      - slots: [10, 11, 12, 14, 15, 16]
+        item: {material: GRAY_STAINED_GLASS_PANE, name: " ", lore: []}
+      items: {}
+      status: {}
   "sf:solar_generator_2":
     @cf: templates.energy.generator-output
     @io: true
     @d: {capacity: 0, generation: 16, burn-rate: 10, progress-material: DAYLIGHT_DETECTOR, fuels: []}
+    slots: {input: [], output: []}
+    ui: *solar-ui
   "sf:solar_generator_3":
     @cf: templates.energy.generator-output
     @io: true
     @d: {capacity: 0, generation: 64, burn-rate: 10, progress-material: DAYLIGHT_DETECTOR, fuels: []}
+    slots: {input: [], output: []}
+    ui: *solar-ui
   "sf:solar_generator_4":
     @cf: templates.energy.component-definition
     @io: true
@@ -103,3 +118,5 @@ components:
       vanilla-fuel: false
       progress-material: DAYLIGHT_DETECTOR
       fuels: []
+    slots: {input: [], output: []}
+    ui: *solar-ui

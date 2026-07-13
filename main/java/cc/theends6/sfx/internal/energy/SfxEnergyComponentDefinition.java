@@ -53,6 +53,10 @@ public record SfxEnergyComponentDefinition(
                 && providerKey == null;
     }
 
+    public int[] inputSlots() {
+        return ui.inputSlots();
+    }
+
     public record FuelRule(String key, SfxElectricStack input, SfxElectricStack output, int seconds) {
         public FuelRule {
             Objects.requireNonNull(key, "key");

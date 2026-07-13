@@ -35,7 +35,7 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
     SfxEnergyBackedElectricMenuService(SfxEnergyService energy, SfxRechargeableItemService rechargeableItems) {
         this.energy = energy;
         this.rechargeableItems = rechargeableItems;
-        this.renderer = new SfxEnergyGeneratorMenuRenderer(energy.plugin, energy.items, energy.localization, rechargeableItems);
+        this.renderer = new SfxEnergyGeneratorMenuRenderer(energy, energy.plugin, energy.items, energy.localization, rechargeableItems);
     }
 
     void open(Player player, SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition) {
@@ -111,9 +111,10 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
         }
         int[] inputSlots = clickDefinition.ui().inputSlots();
         int[] outputSlots = clickDefinition.ui().outputSlots();
+        SfxDynamicEnergyGeneratorProvider provider = energy.dynamicGenerator(clickDefinition);
         boolean topSlot = event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize();
         if (event.isShiftClick() && !topSlot) {
-            if (moveShiftClickedStackToInputs(event.getView().getTopInventory(), event.getCurrentItem(), clickDefinition)) {
+            if (moveShiftClickedStackToInputs(event.getView().getTopInventory(), event.getCurrentItem(), clickDefinition, provider)) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getAmount() <= 0) {
                     event.setCurrentItem(null);
                 }
@@ -127,8 +128,22 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
             return;
         }
         if (topSlot && (contains(inputSlots, event.getRawSlot()) || contains(outputSlots, event.getRawSlot()))) {
-            handleStorageSlotClick(event, holder, player, clickDefinition);
+            handleStorageSlotClick(event, holder, player, clickDefinition, provider);
             return;
+        }
+        if (topSlot && provider != null) {
+            syncTopInventoryToState(holder.instanceId(), event.getView().getTopInventory());
+            SfxBlockInstanceRecord instance = energy.blockData.findInstance(holder.instanceId()).orElse(null);
+            if (instance != null) {
+                SfxEnergyNodeState state = energy.currentState(holder.instanceId(), instance);
+                if (provider.handleMenuClick(energy.plugin, energy.items, clickDefinition, state, event.getRawSlot(), event.getClick())) {
+                    event.setCancelled(true);
+                    energy.markDirty(holder.instanceId());
+                    energy.markActive(holder.instanceId());
+                    render(sessionsByInstance.get(holder.instanceId()), instance, clickDefinition, event.getView().getTopInventory(), state);
+                    return;
+                }
+            }
         }
         if (topSlot && SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             traceChargingBench(clickDefinition, "dangerous-click cancelled action=" + event.getAction() + " click=" + event.getClick());
@@ -142,7 +157,7 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
         energy.runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
     }
 
-    private void handleStorageSlotClick(InventoryClickEvent event, SfxEnergyGeneratorHolder holder, Player player, SfxEnergyComponentDefinition definition) {
+    private void handleStorageSlotClick(InventoryClickEvent event, SfxEnergyGeneratorHolder holder, Player player, SfxEnergyComponentDefinition definition, SfxDynamicEnergyGeneratorProvider provider) {
         event.setCancelled(true);
         Inventory topInventory = event.getView().getTopInventory();
         int rawSlot = event.getRawSlot();
@@ -151,7 +166,7 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
         boolean inputSlot = contains(inputSlots, rawSlot);
         boolean outputSlot = contains(outputSlots, rawSlot);
         syncTopInventoryToState(holder.instanceId(), topInventory);
-        if (SfxMachineMenuTransactions.handleManagedHotbarOrOffhand(event, topInventory, rawSlot, player, inputSlot, outputSlot, stack -> isValidInputStack(definition, stack))) {
+        if (SfxMachineMenuTransactions.handleManagedHotbarOrOffhand(event, topInventory, rawSlot, player, inputSlot, outputSlot, stack -> isValidInputStack(definition, provider, rawSlot, stack))) {
             commitTopInventory(holder.instanceId(), topInventory);
             traceChargingBench(definition, "hotbar/offhand transaction handled raw=" + rawSlot);
             return;
@@ -193,7 +208,7 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
         if (!inputSlot) {
             return;
         }
-        if (SfxMachineMenuTransactions.handleInputSlotCursorTransaction(event, topInventory, rawSlot, stack -> isValidInputStack(definition, stack))) {
+        if (SfxMachineMenuTransactions.handleInputSlotCursorTransaction(event, topInventory, rawSlot, stack -> isValidInputStack(definition, provider, rawSlot, stack))) {
             commitTopInventory(holder.instanceId(), topInventory);
         } else {
             traceChargingBench(definition, "input-click cancelled raw=" + rawSlot + " current=" + describe(topInventory.getItem(rawSlot)) + " cursor=" + describe(event.getCursor()));
@@ -222,15 +237,14 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
             event.setCancelled(true);
             return;
         }
-        if (dragDefinition.isCharger()) {
-            boolean valid = event.getNewItems().entrySet().stream()
-                    .filter(entry -> entry.getKey() < topSize)
-                    .allMatch(entry -> contains(inputSlots, entry.getKey()) && isValidChargingBenchInput(entry.getValue()));
-            if (!valid) {
-                event.setCancelled(true);
-                traceChargingBench(dragDefinition, "drag-invalid cancelled rawSlots=" + event.getRawSlots());
-                return;
-            }
+        SfxDynamicEnergyGeneratorProvider dragProvider = energy.dynamicGenerator(dragDefinition);
+        boolean valid = event.getNewItems().entrySet().stream()
+                .filter(entry -> entry.getKey() < topSize)
+                .allMatch(entry -> contains(inputSlots, entry.getKey()) && isValidInputStack(dragDefinition, dragProvider, entry.getKey(), entry.getValue()));
+        if (!valid) {
+            event.setCancelled(true);
+            traceChargingBench(dragDefinition, "drag-invalid cancelled rawSlots=" + event.getRawSlots());
+            return;
         }
         energy.runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
     }
@@ -348,10 +362,17 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
             return SfxMachineStatusKey.NETWORK_CONFLICT;
         }
         boolean connected = gridStatus == SfxEnergyGridStatus.ONLINE;
-        SfxEnergyFuelMatch fuelMatch = definition.isSolarGenerator() ? null : energy.findFuelMatch(definition, state);
-        boolean hasFuelLoaded = definition.isSolarGenerator() || state.hasActiveFuel() || fuelMatch != null;
+        SfxDynamicEnergyGeneratorProvider provider = energy.dynamicGenerator(definition);
+        SfxEnergyFuelMatch fuelMatch = definition.isSolarGenerator() || provider != null ? null : energy.findFuelMatch(definition, state);
+        boolean hasFuelLoaded = definition.isSolarGenerator() || state.hasActiveFuel() || fuelMatch != null || (provider != null && state.hasAnyInput());
         if (!connected && hasFuelLoaded) {
             return SfxMachineStatusKey.NO_NETWORK;
+        }
+        if (provider != null) {
+            SfxMachineStatusKey providerStatus = provider.status(energy.plugin, energy.items, definition, state, energy.toLocation(instance.anchorKey()), energy.generatorAccess(instance));
+            if (providerStatus != null) {
+                return providerStatus;
+            }
         }
         if (state.hasPendingOutput() && energy.findOutputSlot(definition, state, state.pendingOutput()) == null) {
             return SfxMachineStatusKey.OUTPUT_FULL;
@@ -418,12 +439,32 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
         }
     }
 
-    private boolean moveShiftClickedStackToInputs(Inventory topInventory, ItemStack current, SfxEnergyComponentDefinition definition) {
-        return SfxInventorySlots.moveStackToSlots(topInventory, definition.ui().inputSlots(), current, (slot, stack) -> !definition.isCharger() || isValidChargingBenchInput(stack));
+    private boolean moveShiftClickedStackToInputs(Inventory topInventory, ItemStack current, SfxEnergyComponentDefinition definition, SfxDynamicEnergyGeneratorProvider provider) {
+        int[] slots = provider == null
+                ? definition.ui().inputSlots()
+                : provider.shiftInputSlots(energy.plugin, energy.items, definition, current);
+        return SfxInventorySlots.moveStackToSlots(topInventory, slots, current, (slot, stack) -> isValidInputStack(definition, provider, slot, stack));
     }
 
-    private boolean isValidInputStack(SfxEnergyComponentDefinition definition, ItemStack item) {
-        return definition == null || !definition.isCharger() || isValidChargingBenchInput(item);
+    private boolean isValidInputStack(SfxEnergyComponentDefinition definition, SfxDynamicEnergyGeneratorProvider provider, int rawSlot, ItemStack item) {
+        if (definition == null) {
+            return true;
+        }
+        if (definition.isCharger() && !isValidChargingBenchInput(item)) {
+            return false;
+        }
+        int logicalSlot = logicalInputSlot(definition, rawSlot);
+        return provider == null || logicalSlot < 0 || provider.acceptsInput(energy.plugin, energy.items, definition, logicalSlot, item);
+    }
+
+    private int logicalInputSlot(SfxEnergyComponentDefinition definition, int rawSlot) {
+        int[] inputSlots = definition.ui().inputSlots();
+        for (int index = 0; index < inputSlots.length; index++) {
+            if (inputSlots[index] == rawSlot) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     private boolean isValidChargingBenchInput(ItemStack item) {
