@@ -45,12 +45,20 @@ record GuideRecipePage(
         List<SfxRecipeSlot> matrix,
         Component note,
         int outputAmount,
-        boolean cycleMaterialVariants
+        boolean cycleMaterialVariants,
+        List<String> recipeIds,
+        List<SfxRecipeSlot> inputAlternatives
 ) {
+    GuideRecipePage {
+        matrix = List.copyOf(matrix);
+        recipeIds = List.copyOf(recipeIds);
+        inputAlternatives = List.copyOf(inputAlternatives);
+    }
+
     static GuideRecipePage noRecipe() {
         return new GuideRecipePage(0, GuideRecipeOrigin.SFX, "no-recipe", "no-recipe", "No Recipe", null,
                 ItemBuilder.of(Material.BARRIER).name("<red>No Recipe</red>").build(),
-                Collections.nCopies(9, SfxRecipeSlot.empty()), null, 1, false);
+                Collections.nCopies(9, SfxRecipeSlot.empty()), null, 1, false, List.of(), List.of());
     }
 
     boolean hasRecipe() {

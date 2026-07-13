@@ -162,7 +162,7 @@ recipes:
     inputs:
     - sf:copper_dust
     outputs:
-    - sf:copper_ingot
+    - COPPER_INGOT
   legacy:corinthian_bronze_ingot:
     '@cf': templates.recipes.legacy-entry
     '@io': true

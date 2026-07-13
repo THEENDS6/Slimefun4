@@ -25,7 +25,8 @@ public final class DefaultSfxRecipeRegistry {
             "sf:restored_backpack",
             "sf:organic_food",
             "sf:fertilizer",
-            "sf:debug_fish"
+            "sf:debug_fish",
+            "sf:copper_ingot"
     );
 
     private final Map<String, SfxRecipeDefinition> definitions = new LinkedHashMap<>();
