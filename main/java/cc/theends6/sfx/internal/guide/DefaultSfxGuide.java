@@ -550,6 +550,11 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private void openVanillaRecipe(Player player, GuideMode mode, Material material, int recipeIndex, Navigation navigation,
                                    List<String> trail) {
+        openVanillaRecipe(player, mode, material, recipeIndex, navigation, trail, 0);
+    }
+
+    private void openVanillaRecipe(Player player, GuideMode mode, Material material, int recipeIndex, Navigation navigation,
+                                   List<String> trail, int extraDisplayPage) {
         rememberLocation(player, GuideLocation.vanilla(mode, material, recipeIndex));
         if (!showVanillaRecipes()) {
             return;
@@ -584,63 +589,23 @@ public final class DefaultSfxGuide implements SfxGuide {
         };
         RecipePageOpener opener = (targetPlayer, nextRecipe, nextNavigation) -> openVanillaRecipe(targetPlayer, mode, material, nextRecipe, nextNavigation, trail);
         List<DisplayEntry> displayEntries = new ArrayList<>();
+        DisplayContent display = new DisplayContent(List.of(), DisplaySection.SOURCES, List.of(), false);
         if (!cycleTerminal) {
-            displayEntries.addAll(alternativeSourceEntries(pages, current, opener));
-            displayEntries.addAll(collapseExecutorEntries(executorEntriesFor(null, current, mode, material, nextTrail)));
+            display = displayContentFor(player, material, pages, current, mode, opener, nextTrail);
+            displayEntries.addAll(display.entries());
         }
         renderRecipe(player, mode, layout, materialName(material), output, pages, current, navigation, outputAction, null,
-                displayEntries, DisplaySection.SOURCES, List.of(), false, opener, 0, nextTrail);
+                displayEntries, display.section(), display.availableSections(), display.pairedLayout(), opener, extraDisplayPage, nextTrail);
     }
 
     private void openUses(Player player, GuideMode mode, SfxItemDefinition definition, int page, Navigation navigation) {
-        if (isGuideMachine(definition.id())) {
-            setDisplaySection(player, definition.id(), DisplaySection.FUNCTIONS);
-            openRecipe(player, mode, definition.id(), 0, navigation);
-            return;
-        }
-        openUsesMenu(player, mode, SfxRecipeSlot.sfx(definition.id()), itemDisplayName(definition), page, navigation);
+        setDisplaySection(player, displaySectionKey(definition), DisplaySection.USAGES);
+        openRecipe(player, mode, definition.id(), 0, navigation);
     }
 
     private void openUses(Player player, GuideMode mode, Material material, int page, Navigation navigation) {
-        openUsesMenu(player, mode, SfxRecipeSlot.vanilla(material), materialName(material), page, navigation);
-    }
-
-    private boolean isGuideMachine(String itemId) {
-        return manualMachines.machine(itemId).isPresent()
-                || cc.theends6.sfx.internal.machine.ExtraDeployStructures.machine(itemId).isPresent()
-                || electricMachines.stream().anyMatch(machine -> machine.id().equals(itemId));
-    }
-
-    private void openUsesMenu(Player player, GuideMode mode, SfxRecipeSlot ingredient, String subject,
-                              int page, Navigation navigation) {
-        List<UsageTarget> targets = usageTargets(ingredient, mode);
-        int pageCount = pageCount(targets.size());
-        int safePage = clampPage(page, pageCount);
-        SfxMenu.Builder builder = SfxMenu.builder(title(mode,
-                tr("guide.uses.title").replace("{item}", subject))).rows(6);
-        paintFrame(builder, mode, effectiveLayout(preferences(player)));
-
-        int from = safePage * CONTENT_SLOTS.length;
-        int to = Math.min(targets.size(), from + CONTENT_SLOTS.length);
-        for (int i = from; i < to; i++) {
-            UsageTarget target = targets.get(i);
-            builder.button(CONTENT_SLOTS[i - from], new SfxMenuButton(target.icon(), click -> target.handler().accept(click)));
-        }
-        if (targets.isEmpty()) {
-            builder.button(22, new SfxMenuButton(ItemBuilder.of(Material.BARRIER)
-                    .name(tr("guide.uses.none"))
-                    .build(), click -> { }));
-        }
-
-        builder.button(45, new SfxMenuButton(backIcon(tr("guide.actions.back-guide")), click -> goBack(click.player(), mode)));
-        ItemStack pageIcon = SfxGuideIconLibrary.page(
-                tr("guide.uses.page"), pageNumberLore(safePage, pageCount), safePage + 1);
-        applyPageProgress(pageIcon, safePage, pageCount);
-        builder.button(49, new SfxMenuButton(pageIcon, click -> { }));
-        addContentPagination(builder, safePage, pageCount,
-                previous -> openUsesMenu(previous, mode, ingredient, subject, safePage - 1, Navigation.REPLACE),
-                next -> openUsesMenu(next, mode, ingredient, subject, safePage + 1, Navigation.REPLACE));
-        showMenu(player, builder, navigation);
+        setDisplaySection(player, displaySectionKey(material), DisplaySection.USAGES);
+        openVanillaRecipe(player, mode, material, 0, navigation);
     }
 
     private List<UsageTarget> usageTargets(SfxRecipeSlot ingredient, GuideMode mode) {
@@ -702,6 +667,17 @@ public final class DefaultSfxGuide implements SfxGuide {
         int priority = 2000;
         for (UsageTarget target : usageTargets(ingredient, mode)) {
             entries.add(DisplayEntry.single(target.icon(), definition.id(), priority, target.handler(), DisplayEntryKind.RELATED));
+            priority += 10;
+        }
+        return entries;
+    }
+
+    private List<DisplayEntry> itemUsageEntries(Material material, GuideMode mode, List<String> trail) {
+        SfxRecipeSlot ingredient = SfxRecipeSlot.vanilla(material);
+        List<DisplayEntry> entries = new ArrayList<>();
+        int priority = 2000;
+        for (UsageTarget target : usageTargets(ingredient, mode)) {
+            entries.add(DisplayEntry.single(target.icon(), material.name(), priority, target.handler(), DisplayEntryKind.RELATED));
             priority += 10;
         }
         return entries;
@@ -918,20 +894,27 @@ public final class DefaultSfxGuide implements SfxGuide {
         builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-category")), click -> goBack(click.player(), mode)));
         builder.button(1, new SfxMenuButton(settingsIcon(), click -> openSettingsView(click.player(), mode, Navigation.OPEN)));
         builder.button(8, new SfxMenuButton(closeIcon(), click -> closeGuide(click.player())));
+        PageAction openDisplayPage = (target, targetPage) -> {
+            if (definition != null) {
+                openRecipe(target, mode, definition.id(), current.index(), targetPage, Navigation.REPLACE, parentTrail(trail));
+            } else if (outputItem != null && !outputItem.getType().isAir()) {
+                openVanillaRecipe(target, mode, outputItem.getType(), current.index(), Navigation.REPLACE, parentTrail(trail), targetPage);
+            }
+        };
 
         if (displayLayout == SfxDisplayLayout.PAIRED_GRID) {
             paintDetailDivider(builder, 27, current, pages.size());
-            addDisplaySectionButtons(builder, 27, displaySection, availableDisplaySections, definition, mode, current, parentTrail(trail));
+            addDisplaySectionButtons(builder, 27, displaySection, availableDisplaySections, displaySectionKey(definition, outputItem), opener, current);
             addDisplaySectionPagination(builder, 33, 34, 35, displayPage, displaySection, availableDisplaySections,
-                    definition, mode, current, parentTrail(trail));
+                    openDisplayPage);
             addRecipePagination(builder, 30, 31, 32, current.index(), pages.size(),
                     (target, targetPage) -> opener.open(target, targetPage, Navigation.REPLACE), current.sourceName());
             renderDisplayEntries(builder, displayPage.entries(), SFX_DISPLAY_SLOTS_PAIRED);
         } else {
             paintDetailDivider(builder, 36, current, pages.size());
-            addDisplaySectionButtons(builder, 36, displaySection, availableDisplaySections, definition, mode, current, parentTrail(trail));
+            addDisplaySectionButtons(builder, 36, displaySection, availableDisplaySections, displaySectionKey(definition, outputItem), opener, current);
             addDisplaySectionPagination(builder, 42, 43, 44, displayPage, displaySection, availableDisplaySections,
-                    definition, mode, current, parentTrail(trail));
+                    openDisplayPage);
             addRecipePagination(builder, 39, 40, 41, current.index(), pages.size(),
                     (target, targetPage) -> opener.open(target, targetPage, Navigation.REPLACE), current.sourceName());
             if (displayLayout == SfxDisplayLayout.COMPACT_LIST) {
@@ -943,12 +926,11 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private void addDisplaySectionPagination(SfxMenu.Builder builder, int previousSlot, int pageSlot, int nextSlot,
                                              DisplayPage page, DisplaySection section, List<DisplaySection> availableSections,
-                                             SfxItemDefinition definition, GuideMode mode, GuideRecipePage recipe,
-                                             List<String> parentTrail) {
+                                             PageAction openDisplayPage) {
         int pageCount = page.pageCount();
         builder.button(previousSlot, new SfxMenuButton(previousRecipeIcon(page.page(), pageCount), click -> {
-            if (page.page() > 0 && definition != null) {
-                openRecipe(click.player(), mode, definition.id(), recipe.index(), page.page() - 1, Navigation.REPLACE, parentTrail);
+            if (page.page() > 0) {
+                openDisplayPage.accept(click.player(), page.page() - 1);
             }
         }));
         String sectionName = displaySectionName(section);
@@ -956,15 +938,15 @@ public final class DefaultSfxGuide implements SfxGuide {
         applyPageProgress(pageIcon, page.page(), pageCount);
         builder.button(pageSlot, new SfxMenuButton(pageIcon, click -> { }));
         builder.button(nextSlot, new SfxMenuButton(nextRecipeIcon(page.page(), pageCount), click -> {
-            if (page.page() + 1 < pageCount && definition != null) {
-                openRecipe(click.player(), mode, definition.id(), recipe.index(), page.page() + 1, Navigation.REPLACE, parentTrail);
+            if (page.page() + 1 < pageCount) {
+                openDisplayPage.accept(click.player(), page.page() + 1);
             }
         }));
     }
 
     private void addDisplaySectionButtons(SfxMenu.Builder builder, int firstSlot, DisplaySection selected,
-                                          List<DisplaySection> availableSections, SfxItemDefinition definition,
-                                          GuideMode mode, GuideRecipePage recipe, List<String> parentTrail) {
+                                          List<DisplaySection> availableSections, String sectionKey,
+                                          RecipePageOpener opener, GuideRecipePage recipe) {
         DisplaySection[] sections = {DisplaySection.SOURCES, DisplaySection.FUNCTIONS, DisplaySection.USAGES};
         for (int i = 0; i < sections.length; i++) {
             DisplaySection section = sections[i];
@@ -972,9 +954,9 @@ public final class DefaultSfxGuide implements SfxGuide {
             boolean active = selected == section;
             ItemStack icon = displaySectionButtonIcon(section, active, available);
             builder.button(firstSlot + i, new SfxMenuButton(icon, click -> {
-                if (available && definition != null) {
-                    setDisplaySection(click.player(), definition.id(), section);
-                    openRecipe(click.player(), mode, definition.id(), recipe.index(), 0, Navigation.REPLACE, parentTrail);
+                if (available && sectionKey != null) {
+                    setDisplaySection(click.player(), sectionKey, section);
+                    opener.open(click.player(), recipe.index(), Navigation.REPLACE);
                 }
             }));
         }
@@ -1429,6 +1411,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         List<DisplayEntry> functions = new ArrayList<>();
         List<DisplayEntry> usages = new ArrayList<>();
         if (definition != null) {
+            sources.addAll(executorEntriesFor(definition, current, mode, trail));
             functions.addAll(specialDisplayEntries(definition, mode));
             functions.addAll(machineOutputEntries(definition, mode, trail));
             usages.addAll(itemUsageEntries(definition, mode, trail));
@@ -1440,7 +1423,25 @@ public final class DefaultSfxGuide implements SfxGuide {
         boolean pairedLayout = sfxDisplayLayout(sources) == SfxDisplayLayout.PAIRED_GRID
                 || sfxDisplayLayout(functions) == SfxDisplayLayout.PAIRED_GRID
                 || sfxDisplayLayout(usages) == SfxDisplayLayout.PAIRED_GRID;
-        DisplaySection section = selectedDisplaySection(player, definition == null ? null : definition.id());
+        DisplaySection section = selectedDisplaySection(player, definition == null ? null : displaySectionKey(definition));
+        if (!availableSections.contains(section)) {
+            section = availableSections.isEmpty() ? DisplaySection.SOURCES : availableSections.getFirst();
+        }
+        return new DisplayContent(entriesForDisplaySection(section, sources, functions, usages), section, availableSections, pairedLayout);
+    }
+
+    private DisplayContent displayContentFor(Player player, Material material, List<GuideRecipePage> pages,
+                                             GuideRecipePage current, GuideMode mode, RecipePageOpener opener, List<String> trail) {
+        List<DisplayEntry> sources = new ArrayList<>(alternativeSourceEntries(pages, current, opener));
+        sources.addAll(executorEntriesFor(null, current, mode, material, trail));
+        List<DisplayEntry> functions = List.of();
+        List<DisplayEntry> usages = itemUsageEntries(material, mode, trail);
+        sources = sortDisplayEntries(sources);
+        usages = sortDisplayEntries(usages);
+        List<DisplaySection> availableSections = availableDisplaySections(sources, functions, usages);
+        boolean pairedLayout = sfxDisplayLayout(sources) == SfxDisplayLayout.PAIRED_GRID
+                || sfxDisplayLayout(usages) == SfxDisplayLayout.PAIRED_GRID;
+        DisplaySection section = selectedDisplaySection(player, displaySectionKey(material));
         if (!availableSections.contains(section)) {
             section = availableSections.isEmpty() ? DisplaySection.SOURCES : availableSections.getFirst();
         }
@@ -1482,22 +1483,6 @@ public final class DefaultSfxGuide implements SfxGuide {
         return entries.stream().sorted(order).toList();
     }
 
-    private List<DisplayEntry> collapseExecutorEntries(List<DisplayEntry> entries) {
-        List<DisplayEntry> executors = entries.stream().filter(entry -> entry.kind() == DisplayEntryKind.EXECUTOR).toList();
-        if (executors.size() <= 1) {
-            return entries;
-        }
-        List<DisplayVariant> variants = executors.stream()
-                .map(entry -> new DisplayVariant(entry.primaryIcon(), entry.primaryHandler()))
-                .toList();
-        DisplayEntry rotating = DisplayEntry.rotating(variants, tr("guide.recipe.executor"),
-                executors.stream().mapToInt(DisplayEntry::priority).min().orElse(100), DisplayEntryKind.EXECUTOR);
-        List<DisplayEntry> result = new ArrayList<>();
-        result.add(rotating);
-        result.addAll(entries.stream().filter(entry -> entry.kind() != DisplayEntryKind.EXECUTOR).toList());
-        return result;
-    }
-
     private DisplaySection selectedDisplaySection(Player player, String itemId) {
         if (player == null || itemId == null) {
             return DisplaySection.SOURCES;
@@ -1511,6 +1496,24 @@ public final class DefaultSfxGuide implements SfxGuide {
             return;
         }
         displaySectionsByPlayer.computeIfAbsent(player.getUniqueId(), ignored -> new ConcurrentHashMap<>()).put(itemId, section);
+    }
+
+    private static String displaySectionKey(SfxItemDefinition definition) {
+        return definition == null ? null : "sfx:" + definition.id();
+    }
+
+    private static String displaySectionKey(Material material) {
+        return material == null ? null : "vanilla:" + material.name();
+    }
+
+    private static String displaySectionKey(SfxItemDefinition definition, ItemStack outputItem) {
+        if (definition != null) {
+            return displaySectionKey(definition);
+        }
+        if (outputItem == null || outputItem.getType().isAir()) {
+            return null;
+        }
+        return displaySectionKey(outputItem.getType());
     }
 
     private List<DisplayEntry> executorEntriesFor(SfxItemDefinition definition, GuideRecipePage current, GuideMode mode,
