@@ -1,5 +1,8 @@
 content-expansion:
   ui:
+    water:
+      name: <blue>水强化</blue>
+      insert: <aqua>在左上方空槽放入水桶</aqua>
     salt:
       name: <yellow>盐储量</yellow>
       amount: '<gray>已储存：</gray><yellow>{stored}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> tick</gray>'
@@ -9,7 +12,7 @@ content-expansion:
     wax:
       name: <gold>蜂蜡储量</gold>
       amount: '<gray>{stored} / {capacity} 次</gray>'
-      insert: <yellow>在下方放入蜂巢或蜂蜜瓶</yellow>
+      insert: <yellow>蜂蜜瓶 1 次，蜜脾 3 次，蜂巢 10 次</yellow>
 
 items:
   sfx.oxidizing_generator:

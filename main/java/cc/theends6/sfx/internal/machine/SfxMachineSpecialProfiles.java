@@ -214,6 +214,7 @@ public final class SfxMachineSpecialProfiles {
         recipeMachine(builder);
         builder.capability(SfxMachineCapability.ITEM_META_TRANSFORM)
                 .policyRef(SfxMachinePolicyRef.of("item-meta", "safe-copy-transform"))
+                .effect(SfxMachineEffect.marker("electric:special-tick", SfxMachinePhase.BEFORE_OPERATION_RESOLVE))
                 .effect(SfxMachineEffect.marker("meta:validate-input", SfxMachinePhase.BEFORE_INPUT))
                 .effect(SfxMachineEffect.marker("meta:apply-transform", SfxMachinePhase.ON_COMPLETE));
     }

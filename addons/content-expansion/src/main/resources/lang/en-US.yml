@@ -1,5 +1,8 @@
 content-expansion:
   ui:
+    water:
+      name: <blue>Water Boost</blue>
+      insert: <aqua>Insert a Water Bucket into the upper-left slot</aqua>
     salt:
       name: <yellow>Salt Storage</yellow>
       amount: '<gray>Stored: </gray><yellow>{stored}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> ticks</gray>'
@@ -9,7 +12,7 @@ content-expansion:
     wax:
       name: <gold>Wax Storage</gold>
       amount: '<gray>{stored} / {capacity} uses</gray>'
-      insert: <yellow>Insert Honeycomb or a Honey Bottle below</yellow>
+      insert: <yellow>Honey Bottle 1 use, Honeycomb 3 uses, Bee Nest 10 uses</yellow>
 
 items:
   sfx.oxidizing_generator:
