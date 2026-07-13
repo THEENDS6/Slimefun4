@@ -1880,7 +1880,7 @@ items:
   - legacy-sf
 - id: sf:copper_ingot
   category: sf:ingots
-  material: BRICK
+  material: COPPER_INGOT
   name-key: items.sf.copper_ingot.name
   priority: 235
   flags:

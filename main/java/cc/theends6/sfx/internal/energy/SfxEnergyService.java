@@ -46,6 +46,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -58,7 +59,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class SfxEnergyService implements Listener {
     private static final int RANGE = 6;
     private static final long FLUSH_INTERVAL = 20L;
-    private static final long SOLAR_EXPOSURE_CHECK_INTERVAL = 20L;
+    private static final long SOLAR_EXPOSURE_CHECK_INTERVAL = 100L;
 
     final JavaPlugin plugin;
     final SfxRuntime runtime;
@@ -688,7 +689,7 @@ public final class SfxEnergyService implements Listener {
             return cached.exposed();
         }
         boolean exposed = world.isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)
-                && location.getBlock().getLightFromSky() >= 15;
+                && location.getBlock().getRelative(BlockFace.UP).getLightFromSky() == 15;
         solarExposureCache.put(key, new SolarExposureCache(exposed, now));
         return exposed;
     }
