@@ -4,8 +4,11 @@ content-expansion:
       name: <blue>Electrolyte</blue>
       amount: '<gray>Stored: </gray><aqua>{stored}</aqua><gray> / </gray><aqua>{capacity} mB</aqua>'
       insert: <aqua>Water Buckets provide 1000 mB; Water Bottles provide 100 mB</aqua>
-      effect: <gray>Enhanced processing consumes <aqua>{consumption} mB/t</aqua>, generates 4x power, and takes 20% less time</gray>
+      consumption: <gray>Consumes <aqua>{consumption} mB</aqua> per tick while working</gray>
+      bonus: <gray>Electrolyte quadruples generation and increases processing speed to 1.25x</gray>
       output: <gray>The empty Bucket or Bottle is returned immediately when its water enters storage</gray>
+    oxidizing:
+      active: <gray>Processing materials through oxidation and generating power.</gray>
     mode:
       power:
         name: <yellow>Power Mode</yellow>
@@ -24,6 +27,23 @@ content-expansion:
       name: <gold>Wax Storage</gold>
       amount: '<gray>{stored} / {capacity} uses</gray>'
       insert: <yellow>Honey Bottle 1 use, Honeycomb 3 uses, Bee Nest 10 uses</yellow>
+  guide:
+    oxidizing:
+      copper:
+      - <gray>Oxidizes copper materials and outputs the corresponding oxidized product.</gray>
+      - <gray>Base generation is <yellow>24 J/t</yellow>; copper dust doubles generation and takes one third of the time.</gray>
+      zinc:
+      - <gray>Zinc generates power without producing an oxidized output.</gray>
+      - <gray>Zinc ingots generate <yellow>36 J/t</yellow>; zinc dust doubles generation and takes one third of the time.</gray>
+      magnesium:
+      - <gray>Magnesium provides high-power generation without an oxidized output.</gray>
+      - <gray>Magnesium ingots generate <yellow>72 J/t</yellow> and process 20% faster; magnesium dust doubles generation.</gray>
+      salt:
+      - <gray>Each Salt stores <yellow>600 ticks</yellow>, up to 6000 ticks internally.</gray>
+      - <gray>Stored Salt increases generation to <yellow>1.5x</yellow>.</gray>
+      water:
+      - <gray>Water Buckets provide 1000 mB and Bottles provide 100 mB, returning the empty container immediately.</gray>
+      - <gray>Consumes <aqua>5 mB/t</aqua>, quadruples generation, and increases processing speed to 1.25x.</gray>
 
 items:
   sfx.oxidizing_generator:

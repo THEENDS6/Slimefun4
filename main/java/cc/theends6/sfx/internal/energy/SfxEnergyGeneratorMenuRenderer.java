@@ -146,7 +146,7 @@ final class SfxEnergyGeneratorMenuRenderer {
         int progress = Math.min(total, state.fuelProgressTenths());
         int remainingTicks = provider == null
                 ? (int) Math.ceil(Math.max(0, total - progress) / (double) Math.max(1, definition.fuelBurnRateTenths()))
-                : Math.max(0, total - progress);
+                : provider.remainingTicks(state);
         return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.WORKING)
                 .material(definition.progressMaterial())
                 .name(localization.component("energy.generator.active.name"))
@@ -154,7 +154,9 @@ final class SfxEnergyGeneratorMenuRenderer {
                 .energy(displayedEnergy(state, definition), definition.capacity())
                 .generation(currentGeneration)
                 .includeDefaultStatusLore(false)
-                .statusLore(localization.component("energy.generator.active.lore"))
+                .statusLore(localization.component(provider == null
+                        ? "energy.generator.active.lore"
+                        : provider.workingStatusLoreKey()))
                 .build());
     }
 

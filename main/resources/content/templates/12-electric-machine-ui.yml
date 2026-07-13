@@ -514,7 +514,7 @@ templates:
             include-default-lore: true
             durability-mode: NONE
           output-full:
-            material: ORANGE_STAINED_GLASS_PANE
+            material: RED_STAINED_GLASS_PANE
             name-key: electric-ui.template.status.output-full.name
             lore-key: electric-ui.template.status.output-full.lore
             include-default-lore: true

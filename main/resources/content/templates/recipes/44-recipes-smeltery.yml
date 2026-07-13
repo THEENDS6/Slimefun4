@@ -80,7 +80,7 @@ recipes:
     inputs:
     - sf:copper_dust
     - sf:zinc_dust
-    - sf:copper_ingot
+    - COPPER_INGOT
     outputs:
     - sf:brass_ingot
   legacy:bronze_ingot:
@@ -97,7 +97,7 @@ recipes:
     inputs:
     - sf:copper_dust
     - sf:tin_dust
-    - sf:copper_ingot
+    - COPPER_INGOT
     outputs:
     - sf:bronze_ingot
   legacy:christmas_caramel:
