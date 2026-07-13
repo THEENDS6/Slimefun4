@@ -49,7 +49,8 @@ public record SfxEnergyComponentDefinition(
     public boolean isSolarGenerator() {
         return componentType == SfxEnergyComponentType.GENERATOR
                 && !usesVanillaCoalResolver
-                && fuelRules.isEmpty();
+                && fuelRules.isEmpty()
+                && providerKey == null;
     }
 
     public record FuelRule(String key, SfxElectricStack input, SfxElectricStack output, int seconds) {

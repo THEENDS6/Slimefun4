@@ -33,11 +33,6 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
     }
 
     @Override
-    public boolean locksInputsDuringProgress() {
-        return true;
-    }
-
-    @Override
     public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
         return (state.hasProgress() || plan(items, definition, state) != null) ? definition.energyConsumptionPerTick() : 0;
     }
@@ -54,13 +49,15 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
         state.activeRecipeKey("sfx:cutting");
         state.activeBaseTicks(plan.ticks());
         state.progressWork(0);
-        state.specialInput(SNAPSHOT_INPUT, copy(state.input(INPUT)));
+        SfxElectricStack reserved = state.input(INPUT).copyWithAmount(1);
+        consumeOne(state);
+        state.reservedInput(reserved);
         state.specialOutput(SNAPSHOT_OUTPUT, plan.output());
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, 0, true);
     }
 
     private SfxElectricMachineTickResult advance(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
-        if (!sameKindWithAvailableItem(state.input(INPUT), state.specialInput(SNAPSHOT_INPUT))) {
+        if (!ensureReservedInput(state)) {
             interrupt(state);
             return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, 0, true);
         }
@@ -78,7 +75,6 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
         if (state.progressWork() < Math.max(1, state.activeBaseTicks())) {
             return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
         }
-        consumeOne(state);
         push(state, output);
         interrupt(state);
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, definition.energyConsumptionPerTick(), true);
@@ -91,7 +87,7 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
         }
         SfxElectricStack scrape = SfxCopperVariants.cutOrScrape(items, input);
         if (scrape != null) {
-            int ticks = (int) Math.ceil(Math.max(1.0D, SfxCopperVariants.copperValue(input.copyWithAmount(1))) * 120.0D);
+            int ticks = (int) Math.ceil(Math.max(1.0D, SfxCopperVariants.copperValue(input.copyWithAmount(1))) * 60.0D);
             SfxElectricStack output = scrape.copyWithAmount(1);
             return canPush(items, state, output) ? new Plan(output, ticks) : null;
         }
@@ -99,18 +95,22 @@ final class SfxCuttingMachineProvider implements SfxElectricRecipeProvider {
     }
 
     private void interrupt(SfxElectricMachineState state) {
-        state.progressWork(0);
-        state.activeRecipeKey(null);
-        state.activeBaseTicks(0);
+        state.resetProgress();
         state.clearSpecialWorkData();
     }
 
-    private boolean sameKindWithAvailableItem(SfxElectricStack current, SfxElectricStack snapshot) {
-        return current != null && current.amount() > 0 && snapshot != null && current.sameKind(snapshot);
-    }
-
-    private SfxElectricStack copy(SfxElectricStack stack) {
-        return stack == null ? null : stack.copyWithAmount(stack.amount());
+    private boolean ensureReservedInput(SfxElectricMachineState state) {
+        if (state.reservedInput() != null) {
+            return true;
+        }
+        SfxElectricStack legacySnapshot = state.specialInput(SNAPSHOT_INPUT);
+        SfxElectricStack current = state.input(INPUT);
+        if (legacySnapshot == null || current == null || current.amount() <= 0 || !current.sameKind(legacySnapshot)) {
+            return false;
+        }
+        state.reservedInput(current.copyWithAmount(1));
+        consumeOne(state);
+        return true;
     }
 
     private void consumeOne(SfxElectricMachineState state) {

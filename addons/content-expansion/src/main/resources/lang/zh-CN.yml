@@ -1,8 +1,10 @@
 content-expansion:
   ui:
     water:
-      name: <blue>水强化</blue>
+      name: <blue>电解液</blue>
       insert: <aqua>在左上方空槽放入水桶</aqua>
+      effect: <gray>水使发电量提高至 <aqua>4 倍</aqua>，加工时间缩短 <aqua>20%</aqua></gray>
+      output: <gray>处理铜时会加速氧化，并返还空桶</gray>
     salt:
       name: <yellow>盐储量</yellow>
       amount: '<gray>已储存：</gray><yellow>{stored}</yellow><gray> / </gray><yellow>{capacity}</yellow><gray> tick</gray>'

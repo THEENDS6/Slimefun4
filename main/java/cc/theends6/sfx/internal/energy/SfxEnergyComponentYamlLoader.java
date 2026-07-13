@@ -113,7 +113,7 @@ final class SfxEnergyComponentYamlLoader {
         List<SfxEnergyComponentDefinition.FuelRule> fuels = parseFuelRules(section);
         String providerKey = providerKey(section);
         SfxEnergyComponentUiDefinition ui = parseUi(id, requiredSection(section, "ui"), strict);
-        int nightEnergyPerTick = type == SfxEnergyComponentType.GENERATOR && !vanillaFuel && fuels.isEmpty() ? consumption : 0;
+        int nightEnergyPerTick = type == SfxEnergyComponentType.GENERATOR && !vanillaFuel && fuels.isEmpty() && providerKey == null ? consumption : 0;
         int finalCapacity = finalCapacity(id, type, capacity);
         return new SfxEnergyComponentDefinition(id, type, finalCapacity, energyPerTick, nightEnergyPerTick, burnRate, vanillaFuel, progressMaterial, fuels, providerKey, ui);
     }

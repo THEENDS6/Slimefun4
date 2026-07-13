@@ -11,8 +11,11 @@ import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
 import java.util.Map;
+import java.util.Locale;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -33,9 +36,9 @@ final class SfxEnergyGeneratorMenuRenderer {
         this.statusIcons = new SfxMachineStatusIconRenderer(localization);
     }
 
-    void render(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider) {
+    void render(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider, Location location) {
         fillInventoryFrame(definition, inventory);
-        inventory.setItem(definition.ui().statusSlot(), progressIcon(definition, state, status));
+        inventory.setItem(definition.ui().statusSlot(), progressIcon(definition, state, status, provider, location));
         int[] inputSlots = definition.ui().inputSlots();
         for (int i = 0; i < inputSlots.length; i++) {
             inventory.setItem(inputSlots[i], state.input(i) == null ? null : state.input(i).toItemStack(items));
@@ -47,9 +50,9 @@ final class SfxEnergyGeneratorMenuRenderer {
         renderProviderItems(definition, inventory, state, provider);
     }
 
-    void renderStatusOnly(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider) {
+    void renderStatusOnly(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider, Location location) {
         fillInventoryFrame(definition, inventory);
-        inventory.setItem(definition.ui().statusSlot(), progressIcon(definition, state, status));
+        inventory.setItem(definition.ui().statusSlot(), progressIcon(definition, state, status, provider, location));
         renderProviderItems(definition, inventory, state, provider);
     }
 
@@ -98,10 +101,16 @@ final class SfxEnergyGeneratorMenuRenderer {
         return Math.max(0, Math.min(state.storedEnergy(), Math.max(0, definition.capacity())));
     }
 
-    private ItemStack progressIcon(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, SfxMachineStatusKey status) {
+    private ItemStack progressIcon(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider, Location location) {
         if (definition.isCharger()) {
             return chargingBenchIcon(definition, state);
         }
+        if (definition.isSolarGenerator()) {
+            return solarIcon(definition, status, location);
+        }
+        int currentGeneration = provider == null || location == null
+                ? definition.energyPerTick()
+                : Math.max(0, provider.potentialGeneration(plugin, items, definition, state, location));
         if (status == SfxMachineStatusKey.NO_NETWORK) {
             return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.NO_NETWORK)
                     .energy(displayedEnergy(state, definition), definition.capacity())
@@ -120,21 +129,11 @@ final class SfxEnergyGeneratorMenuRenderer {
         if (status == SfxMachineStatusKey.IDLE && !definition.isSolarGenerator()) {
             return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.IDLE)
                     .energy(displayedEnergy(state, definition), definition.capacity())
-                    .generation(definition.energyPerTick())
+                    .generation(currentGeneration)
                     .includeDefaultStatusLore(false)
                 .statusLore(localization.component("energy.generator.idle.lore"))
                     .build());
         }
-        if (definition.isSolarGenerator()) {
-            return statusIcons.render(SfxMachineStatusView.builder(SfxMachineStatusKey.WORKING)
-                    .material(definition.progressMaterial())
-                    .name(localization.component("energy.generator.solar.name"))
-                    .energy(displayedEnergy(state, definition), definition.capacity())
-                    .generation(definition.energyPerTick())
-                    .includeDefaultStatusLore(false)
-                    .build());
-        }
-
         int total = Math.max(1, state.fuelTotalTenths());
         int progress = Math.min(total, state.fuelProgressTenths());
         int remainingTicks = (int) Math.ceil(Math.max(0, total - progress) / (double) Math.max(1, definition.fuelBurnRateTenths()));
@@ -143,10 +142,40 @@ final class SfxEnergyGeneratorMenuRenderer {
                 .name(localization.component("energy.generator.active.name"))
                 .progress(progress, total, remainingTicks, true)
                 .energy(displayedEnergy(state, definition), definition.capacity())
-                .generation(definition.energyPerTick())
+                .generation(currentGeneration)
                 .includeDefaultStatusLore(false)
                 .statusLore(localization.component("energy.generator.active.lore"))
                 .build());
+    }
+
+    private ItemStack solarIcon(SfxEnergyComponentDefinition definition, SfxMachineStatusKey status, Location location) {
+        World world = location == null ? null : location.getWorld();
+        long ticks = world == null ? 0L : world.getTime();
+        int current = SfxEnergyService.solarGenerationAt(definition, location);
+        SfxMachineStatusKey viewStatus = status == SfxMachineStatusKey.NO_NETWORK || status == SfxMachineStatusKey.NETWORK_CONFLICT
+                ? status
+                : SfxMachineStatusKey.WORKING;
+        SfxMachineStatusView.Builder builder = SfxMachineStatusView.builder(viewStatus)
+                .material(definition.progressMaterial())
+                .name(localization.component("energy.generator.solar.name"))
+                .generation(current)
+                .includeDefaultStatusLore(viewStatus != SfxMachineStatusKey.WORKING)
+                .extraLore(localization.component("energy.generator.solar.current", Map.of("energy", current)))
+                .extraLore(localization.component("energy.generator.solar.day", Map.of("energy", definition.energyPerTick())))
+                .extraLore(localization.component("energy.generator.solar.night", Map.of("energy", definition.nightEnergyPerTick())))
+                .extraLore(localization.component("energy.generator.solar.time", Map.of("time", formatGameTime(ticks), "ticks", ticks)))
+                .extraLore(localization.component("energy.generator.solar.day-range"))
+                .extraLore(localization.component("energy.generator.solar.night-range"));
+        if (world != null && (world.hasStorm() || world.isThundering())) {
+            builder.extraLore(localization.component("energy.generator.solar.weather-night"));
+        }
+        return statusIcons.render(builder.build());
+    }
+
+    private String formatGameTime(long ticks) {
+        long normalized = Math.floorMod(ticks, 24000L);
+        long totalMinutes = Math.floorMod(normalized + 6000L, 24000L) * 1440L / 24000L;
+        return String.format(Locale.ROOT, "%02d:%02d", totalMinutes / 60L, totalMinutes % 60L);
     }
 
     private ItemStack chargingBenchIcon(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {

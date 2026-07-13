@@ -28,17 +28,17 @@ components:
       burn-rate: 10
       progress-material: COPPER_INGOT
     slots:
-      input: [46, 47, 10, 16]
-      output: [51, 52]
+      input: [37, 38, 10, 16]
+      output: [42, 43]
     ui:
       inventory-size: 54
-      status-slot: 22
+      status-slot: 13
       frame:
-      - slots: [3, 4, 5, 12, 13, 14, 21, 23, 31, 40, 49]
+      - slots: [3, 4, 5, 12, 14, 21, 22, 23, 31, 40, 49]
         item: {material: GRAY_STAINED_GLASS_PANE, name: " ", lore: []}
-      - slots: [27, 28, 29, 30, 36, 37, 38, 39, 45, 48]
+      - slots: [27, 28, 29, 30, 36, 39, 45, 46, 47, 48]
         item: {material: ORANGE_STAINED_GLASS_PANE, name-key: electric-ui.template.frame.output.name, lore: []}
-      - slots: [0, 2, 9, 11, 18, 19, 20, 32, 33, 34, 35, 41, 42, 43, 44, 50, 53]
+      - slots: [0, 2, 9, 11, 18, 19, 20, 32, 33, 34, 35, 41, 44, 50, 51, 52, 53]
         item: {material: BLUE_STAINED_GLASS_PANE, name-key: electric-ui.template.frame.input.name, lore: []}
       - slots: [6, 8, 15, 17, 24, 25, 26]
         item: {material: YELLOW_STAINED_GLASS_PANE, name-key: electric-ui.template.frame.input.name, lore: []}
@@ -84,7 +84,7 @@ machines:
       name-key: items.sfx.cutting_machine.name
       speed: 1
       capacity: 4096
-      consumption: 15
+      consumption: 30
       progress-material: JUKEBOX
       working-name-key: electric-ui.action.cutting.name
       input-slots: [19]
