@@ -310,12 +310,18 @@ enum DisplayEntryKind {
 
 enum DisplaySection {
     SOURCES,
-    WORKING
+    FUNCTIONS,
+    USAGES
 }
 
-record DisplayContent(List<DisplayEntry> entries, DisplaySection section, boolean switchable) {
+record DisplayContent(List<DisplayEntry> entries, DisplaySection section, List<DisplaySection> availableSections, boolean pairedLayout) {
     DisplayContent {
         entries = List.copyOf(entries);
+        availableSections = List.copyOf(availableSections);
+    }
+
+    boolean switchable() {
+        return availableSections.size() > 1;
     }
 }
 

@@ -209,14 +209,18 @@ guide:
     depth-limit: Recipe browsing reached the 100-level limit.
     cycle-blocked: You have already viewed this recipe. Go back and take another look
     section:
-      sources: '&eCrafting Sources'
-      working: '&eExecutable Recipes'
-      toggle: '&7Click to switch crafting sources / executable recipes'
+      sources: <yellow>Related: Sources</yellow>
+      functions: <yellow>Related: Functions</yellow>
+      usages: <yellow>Related: Usages</yellow>
+      working: <yellow>Related: Functions</yellow>
+      select: <gray>Click to switch this related category</gray>
+      empty: <dark_gray>No entries in this related category</dark_gray>
+      toggle: <gray>Click to switch related sources / usages</gray>
     aggregate:
-      index: '&eInput {current} / {total}'
-      mode-cycle: '&eSwitch to cycling view'
-      mode-list: '&eSwitch to list view'
-      toggle: '&7Click to switch the aggregated recipe display mode'
+      index: <yellow>Input {current} / {total}</yellow>
+      mode-cycle: <yellow>Switch to cycling view</yellow>
+      mode-list: <yellow>Switch to list view</yellow>
+      toggle: <gray>Click to switch the aggregated recipe display mode</gray>
     executor: <yellow>Machine that can execute this recipe</yellow>
     machine-recipes: <yellow>Recipes this machine can execute</yellow>
     consumable-fuel: <gold>Consumable fuel</gold>
