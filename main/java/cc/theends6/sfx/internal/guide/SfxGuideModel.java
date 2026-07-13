@@ -232,14 +232,15 @@ record DisplayEntry(
         int priority,
         ClickHandler primaryHandler,
         ClickHandler secondaryHandler,
-        DisplayEntryKind kind
+        DisplayEntryKind kind,
+        List<DisplayVariant> variants
 ) {
     static DisplayEntry single(ItemStack icon, String label, int priority, ClickHandler handler) {
         return single(icon, label, priority, handler, DisplayEntryKind.RELATED);
     }
 
     static DisplayEntry single(ItemStack icon, String label, int priority, ClickHandler handler, DisplayEntryKind kind) {
-        return new DisplayEntry(icon, null, label, priority, handler, null, kind);
+        return new DisplayEntry(icon, null, label, priority, handler, null, kind, List.of());
     }
 
     static DisplayEntry paired(ItemStack topIcon, ItemStack bottomIcon, String label, int priority, ClickHandler topHandler, ClickHandler bottomHandler) {
@@ -247,15 +248,37 @@ record DisplayEntry(
     }
 
     static DisplayEntry paired(ItemStack topIcon, ItemStack bottomIcon, String label, int priority, ClickHandler topHandler, ClickHandler bottomHandler, DisplayEntryKind kind) {
-        return new DisplayEntry(topIcon, bottomIcon, label, priority, topHandler, bottomHandler, kind);
+        return new DisplayEntry(topIcon, bottomIcon, label, priority, topHandler, bottomHandler, kind, List.of());
+    }
+
+    static DisplayEntry rotating(List<DisplayVariant> variants, String label, int priority, DisplayEntryKind kind) {
+        if (variants == null || variants.isEmpty()) {
+            throw new IllegalArgumentException("Rotating display entry requires at least one variant");
+        }
+        DisplayVariant first = variants.getFirst();
+        return new DisplayEntry(first.icon(), null, label, priority, first.handler(), null, kind, List.copyOf(variants));
     }
 
     boolean paired() {
         return secondaryIcon != null;
     }
+
+    boolean rotating() {
+        return variants.size() > 1;
+    }
 }
 
-record Cell(ItemStack icon, ClickHandler handler) {
+record DisplayVariant(ItemStack icon, ClickHandler handler) {
+}
+
+record Cell(ItemStack icon, ClickHandler handler, List<DisplayVariant> variants) {
+    static Cell fixed(ItemStack icon, ClickHandler handler) {
+        return new Cell(icon, handler, List.of());
+    }
+
+    static Cell rotating(DisplayEntry entry) {
+        return new Cell(entry.primaryIcon(), entry.primaryHandler(), entry.variants());
+    }
 }
 
 @FunctionalInterface
@@ -283,6 +306,17 @@ enum DisplayEntryKind {
     MACHINE_RECIPE,
     FUEL,
     RELATED
+}
+
+enum DisplaySection {
+    SOURCES,
+    WORKING
+}
+
+record DisplayContent(List<DisplayEntry> entries, DisplaySection section, boolean switchable) {
+    DisplayContent {
+        entries = List.copyOf(entries);
+    }
 }
 
 @FunctionalInterface

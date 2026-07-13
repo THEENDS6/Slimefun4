@@ -159,6 +159,7 @@ guide:
   actions:
     open-category: <gray>Click to open category</gray>
     open-recipe: <gray>Click to view recipe</gray>
+    view-uses: <gray>Right click to view usages</gray>
     open-machine: <gray>Click to open this machine in the guide</gray>
     open-vanilla-recipe: <gray>Click to view vanilla recipes</gray>
     back-guide: Back to Guide
@@ -181,6 +182,10 @@ guide:
     disabled: <red>Guide search is disabled.</red>
     no-results: <red>No matching items found</red>
     category: '<dark_gray>Category: {category}</dark_gray>'
+  uses:
+    title: 'Uses: {item}'
+    page: <yellow>Usage List</yellow>
+    none: <red>No usages were found for this item</red>
   locked: LOCKED
   locked-itemgroup:
     line1: To unlock this category you will
@@ -203,6 +208,10 @@ guide:
     cycle-detected: You have already viewed this recipe. Go back and take another look.
     depth-limit: Recipe browsing reached the 100-level limit.
     cycle-blocked: You have already viewed this recipe. Go back and take another look
+    section:
+      sources: '&eCrafting Sources'
+      working: '&eExecutable Recipes'
+      toggle: '&7Click to switch crafting sources / executable recipes'
     aggregate:
       index: '&eInput {current} / {total}'
       mode-cycle: '&eSwitch to cycling view'

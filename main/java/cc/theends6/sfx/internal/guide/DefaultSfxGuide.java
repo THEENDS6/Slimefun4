@@ -172,6 +172,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     final SfxResearchService researches;
     private final Map<UUID, GuidePreferences> preferencesByPlayer = new ConcurrentHashMap<>();
     private final Map<UUID, Map<String, AggregatedRecipeView>> aggregatedRecipeViews = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<String, DisplaySection>> displaySectionsByPlayer = new ConcurrentHashMap<>();
     private final Map<UUID, List<String>> activeRecipeTrails = new ConcurrentHashMap<>();
     private final Map<Material, List<GuideRecipePage>> vanillaRecipeCache = new ConcurrentHashMap<>();
     private volatile Map<String, SfxEnergyComponentDefinition> guideEnergyDefinitions;
@@ -315,21 +316,33 @@ public final class DefaultSfxGuide implements SfxGuide {
                     icon = withLore(icon, List.of(
                             Component.empty(),
                             Text.mm(tr("guide.cheat.machine-pack")),
-                            Text.mm(tr("guide.cheat.machine-kit"))
+                            Text.mm(tr("guide.cheat.machine-kit")),
+                            Text.mm(tr("guide.actions.view-uses"))
                     ));
                 } else {
                     icon = withLore(icon, List.of(
                             Component.empty(),
                             Text.mm(tr("guide.cheat.take-one")),
-                            Text.mm(tr("guide.cheat.take-stack"))
+                            Text.mm(tr("guide.cheat.take-stack")),
+                            Text.mm(tr("guide.actions.view-uses"))
                     ));
                 }
-                builder.button(slot, new SfxMenuButton(icon, click -> giveFromCheatGuide(click.player(), definition, click.clickType())));
+                builder.button(slot, new SfxMenuButton(icon, click -> {
+                    if (click.clickType().isRightClick()) {
+                        openUses(click.player(), mode, definition, 0, Navigation.OPEN);
+                    } else {
+                        giveFromCheatGuide(click.player(), definition, click.clickType());
+                    }
+                }));
             } else if (locked) {
                 builder.button(slot, new SfxMenuButton(icon, click -> unlockResearchAndRefresh(click.player(), mode, category.id(), safePage, definition, research)));
             } else {
-                icon = withLore(icon, List.of(Component.empty(), Text.mm(tr("guide.actions.open-recipe"))));
-                builder.button(slot, new SfxMenuButton(icon, click -> openRecipe(click.player(), mode, definition.id(), 0, Navigation.OPEN)));
+                icon = withLore(icon, List.of(Component.empty(),
+                        Text.mm(tr("guide.actions.open-recipe")), Text.mm(tr("guide.actions.view-uses"))));
+                builder.button(slot, new SfxMenuButton(icon, click -> {
+                    if (click.clickType().isRightClick()) openUses(click.player(), mode, definition, 0, Navigation.OPEN);
+                    else openRecipe(click.player(), mode, definition.id(), 0, Navigation.OPEN);
+                }));
             }
         }
 
@@ -392,11 +405,23 @@ public final class DefaultSfxGuide implements SfxGuide {
             ItemStack icon = locked ? lockedItemIcon(definition, research) : searchResultIcon(definition);
             int slot = CONTENT_SLOTS[i - from];
             if (mode == GuideMode.CHEAT) {
-                builder.button(slot, new SfxMenuButton(icon, click -> giveFromCheatGuide(click.player(), definition, click.clickType())));
+                icon = withLore(icon, List.of(
+                        Text.mm(tr("guide.cheat.take-one")),
+                        Text.mm(tr("guide.cheat.take-stack"))));
+                builder.button(slot, new SfxMenuButton(icon, click -> {
+                    if (click.clickType().isRightClick()) {
+                        openUses(click.player(), mode, definition, 0, Navigation.OPEN);
+                    } else {
+                        giveFromCheatGuide(click.player(), definition, click.clickType());
+                    }
+                }));
             } else if (locked) {
                 builder.button(slot, new SfxMenuButton(icon, click -> unlockResearchAndOpen(click.player(), mode, definition, research)));
             } else {
-                builder.button(slot, new SfxMenuButton(icon, click -> openRecipe(click.player(), mode, definition.id(), 0, Navigation.OPEN)));
+                builder.button(slot, new SfxMenuButton(icon, click -> {
+                    if (click.clickType().isRightClick()) openUses(click.player(), mode, definition, 0, Navigation.OPEN);
+                    else openRecipe(click.player(), mode, definition.id(), 0, Navigation.OPEN);
+                }));
             }
         }
         if (results.isEmpty()) {
@@ -422,6 +447,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
         lore.add(Component.empty());
         lore.add(Text.mm(tr("guide.actions.open-recipe")));
+        lore.add(Text.mm(tr("guide.actions.view-uses")));
         return withLore(items.create(definition, 1), lore);
     }
 
@@ -468,6 +494,10 @@ public final class DefaultSfxGuide implements SfxGuide {
         activeRecipeTrails.put(player.getUniqueId(), nextTrail);
         GuideLayout layout = effectiveLayout(preferences(player));
         OutputAction outputAction = (targetPlayer, clickType) -> {
+            if (clickType != null && clickType.isRightClick()) {
+                openUses(targetPlayer, mode, definition, 0, Navigation.OPEN);
+                return;
+            }
             if (mode == GuideMode.CHEAT) {
                 giveFromCheatGuide(targetPlayer, definition, clickType);
             }
@@ -484,10 +514,11 @@ public final class DefaultSfxGuide implements SfxGuide {
         if (cycleTerminal) {
             current = cycleTerminalPage(current, trail.size() >= 100);
         }
-        List<DisplayEntry> displayEntries = cycleTerminal
-                ? List.of()
-                : displayEntriesFor(definition, pages, current, mode, opener, nextTrail);
-        renderRecipe(player, mode, layout, itemDisplayName(definition), items.create(definition, current.outputAmount()), pages, current, navigation, outputAction, definition, displayEntries, opener, extraDisplayPage, nextTrail);
+        DisplayContent display = cycleTerminal
+                ? new DisplayContent(List.of(), DisplaySection.SOURCES, false)
+                : displayContentFor(player, definition, pages, current, mode, opener, nextTrail);
+        renderRecipe(player, mode, layout, itemDisplayName(definition), items.create(definition, current.outputAmount()), pages, current, navigation, outputAction, definition,
+                display.entries(), display.section(), display.switchable(), opener, extraDisplayPage, nextTrail);
     }
 
     private static List<String> appendTrail(List<String> trail, String node) {
@@ -508,7 +539,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         String reason = depthLimit ? tr("guide.recipe.depth-limit") : tr("guide.recipe.cycle-detected");
         return new GuideRecipePage(original.index(), original.origin(), original.sourceId(), "cycle-terminal",
                 original.sourceName(), null,
-                ItemBuilder.of(Material.BARRIER).name("<red>" + reason + "</red>").lore(reason).build(),
+                new ItemStack(Material.AIR),
                 emptyMatrix(), Text.mm(reason),
                 original.outputAmount(), false, original.recipeIds(), List.of());
     }
@@ -540,6 +571,10 @@ public final class DefaultSfxGuide implements SfxGuide {
         GuideLayout layout = effectiveLayout(preferences(player));
         ItemStack output = new ItemStack(material, current.outputAmount());
         OutputAction outputAction = (targetPlayer, clickType) -> {
+            if (clickType != null && clickType.isRightClick()) {
+                openUses(targetPlayer, mode, material, 0, Navigation.OPEN);
+                return;
+            }
             if (mode != GuideMode.CHEAT) {
                 return;
             }
@@ -551,10 +586,129 @@ public final class DefaultSfxGuide implements SfxGuide {
         List<DisplayEntry> displayEntries = new ArrayList<>();
         if (!cycleTerminal) {
             displayEntries.addAll(alternativeSourceEntries(pages, current, opener));
-            displayEntries.addAll(executorEntriesFor(null, current, mode, material, nextTrail));
+            displayEntries.addAll(collapseExecutorEntries(executorEntriesFor(null, current, mode, material, nextTrail)));
         }
         renderRecipe(player, mode, layout, materialName(material), output, pages, current, navigation, outputAction, null,
-                displayEntries, opener, 0, nextTrail);
+                displayEntries, DisplaySection.SOURCES, false, opener, 0, nextTrail);
+    }
+
+    private void openUses(Player player, GuideMode mode, SfxItemDefinition definition, int page, Navigation navigation) {
+        if (isGuideMachine(definition.id())) {
+            setDisplaySection(player, definition.id(), DisplaySection.WORKING);
+            openRecipe(player, mode, definition.id(), 0, navigation);
+            return;
+        }
+        openUsesMenu(player, mode, SfxRecipeSlot.sfx(definition.id()), itemDisplayName(definition), page, navigation);
+    }
+
+    private void openUses(Player player, GuideMode mode, Material material, int page, Navigation navigation) {
+        openUsesMenu(player, mode, SfxRecipeSlot.vanilla(material), materialName(material), page, navigation);
+    }
+
+    private boolean isGuideMachine(String itemId) {
+        return manualMachines.machine(itemId).isPresent()
+                || cc.theends6.sfx.internal.machine.ExtraDeployStructures.machine(itemId).isPresent()
+                || electricMachines.stream().anyMatch(machine -> machine.id().equals(itemId));
+    }
+
+    private void openUsesMenu(Player player, GuideMode mode, SfxRecipeSlot ingredient, String subject,
+                              int page, Navigation navigation) {
+        List<UsageTarget> targets = usageTargets(ingredient, mode);
+        int pageCount = pageCount(targets.size());
+        int safePage = clampPage(page, pageCount);
+        SfxMenu.Builder builder = SfxMenu.builder(title(mode,
+                tr("guide.uses.title").replace("{item}", subject))).rows(6);
+        paintFrame(builder, mode, effectiveLayout(preferences(player)));
+
+        int from = safePage * CONTENT_SLOTS.length;
+        int to = Math.min(targets.size(), from + CONTENT_SLOTS.length);
+        for (int i = from; i < to; i++) {
+            UsageTarget target = targets.get(i);
+            builder.button(CONTENT_SLOTS[i - from], new SfxMenuButton(target.icon(), click -> target.handler().accept(click)));
+        }
+        if (targets.isEmpty()) {
+            builder.button(22, new SfxMenuButton(ItemBuilder.of(Material.BARRIER)
+                    .name(tr("guide.uses.none"))
+                    .build(), click -> { }));
+        }
+
+        builder.button(45, new SfxMenuButton(backIcon(tr("guide.actions.back-guide")), click -> goBack(click.player(), mode)));
+        ItemStack pageIcon = SfxGuideIconLibrary.page(
+                tr("guide.uses.page"), pageNumberLore(safePage, pageCount), safePage + 1);
+        applyPageProgress(pageIcon, safePage, pageCount);
+        builder.button(49, new SfxMenuButton(pageIcon, click -> { }));
+        addContentPagination(builder, safePage, pageCount,
+                previous -> openUsesMenu(previous, mode, ingredient, subject, safePage - 1, Navigation.REPLACE),
+                next -> openUsesMenu(next, mode, ingredient, subject, safePage + 1, Navigation.REPLACE));
+        showMenu(player, builder, navigation);
+    }
+
+    private List<UsageTarget> usageTargets(SfxRecipeSlot ingredient, GuideMode mode) {
+        Map<String, UsageTarget> targets = new LinkedHashMap<>();
+        for (SfxItemDefinition result : registry.items()) {
+            List<GuideRecipePage> pages = sfxRecipePages(result);
+            for (int index = 0; index < pages.size(); index++) {
+                GuideRecipePage page = pages.get(index);
+                if (!pageUses(page, ingredient)) {
+                    continue;
+                }
+                int recipeIndex = index;
+                ItemStack icon = withLore(items.create(result, page.outputAmount()), List.of(
+                        Component.empty(), Text.mm(tr("guide.actions.open-recipe"))));
+                ClickHandler handler = click -> openRecipe(click.player(), mode, result.id(), recipeIndex, 0,
+                        preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, List.of());
+                targets.putIfAbsent("sfx:" + result.id() + "#" + recipeIndex,
+                        new UsageTarget(icon, handler));
+            }
+        }
+
+        if (showVanillaRecipes()) {
+            var iterator = Bukkit.recipeIterator();
+            while (iterator.hasNext()) {
+                Recipe recipe = iterator.next();
+                GuideRecipePage raw = createVanillaRecipePage(recipe, 0);
+                ItemStack result = recipe.getResult();
+                if (raw == null || result == null || result.getType().isAir() || !pageUses(raw, ingredient)) {
+                    continue;
+                }
+                List<GuideRecipePage> pages = vanillaRecipePages(result.getType());
+                String recipeId = vanillaRecipeId(recipe);
+                int recipeIndex = -1;
+                for (int index = 0; index < pages.size(); index++) {
+                    if (pages.get(index).recipeIds().contains(recipeId)) {
+                        recipeIndex = index;
+                        break;
+                    }
+                }
+                if (recipeIndex < 0) {
+                    continue;
+                }
+                int targetIndex = recipeIndex;
+                Material targetMaterial = result.getType();
+                ItemStack icon = withLore(result.clone(), List.of(
+                        Component.empty(), Text.mm(tr("guide.actions.open-vanilla-recipe"))));
+                ClickHandler handler = click -> openVanillaRecipe(click.player(), mode, targetMaterial, targetIndex,
+                        preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, List.of());
+                targets.putIfAbsent("vanilla:" + targetMaterial.name() + "#" + targetIndex,
+                        new UsageTarget(icon, handler));
+            }
+        }
+        return List.copyOf(targets.values());
+    }
+
+    private static boolean pageUses(GuideRecipePage page, SfxRecipeSlot ingredient) {
+        return page.matrix().stream().anyMatch(slot -> sameIngredient(slot, ingredient))
+                || page.inputAlternatives().stream().anyMatch(slot -> sameIngredient(slot, ingredient));
+    }
+
+    private static boolean sameIngredient(SfxRecipeSlot left, SfxRecipeSlot right) {
+        if (left == null || right == null || left.isEmpty() || right.isEmpty()) {
+            return false;
+        }
+        return left.isSfxItem() == right.isSfxItem()
+                && (left.isSfxItem()
+                ? Objects.equals(left.sfxItemId(), right.sfxItemId())
+                : left.material() == right.material());
     }
 
     private void openLockedResearchView(Player player, GuideMode mode, SfxItemDefinition definition, SfxResearchDefinition research, Navigation navigation) {
@@ -585,11 +739,14 @@ public final class DefaultSfxGuide implements SfxGuide {
             OutputAction outputAction,
             SfxItemDefinition definition,
             List<DisplayEntry> displayEntries,
+            DisplaySection displaySection,
+            boolean displaySwitchable,
             RecipePageOpener opener,
             int extraDisplayPage,
             List<String> trail
     ) {
-        renderSfxRecipe(player, mode, subjectTitle, outputItem, pages, current, navigation, outputAction, definition, displayEntries, opener, extraDisplayPage, trail);
+        renderSfxRecipe(player, mode, subjectTitle, outputItem, pages, current, navigation, outputAction, definition, displayEntries,
+                displaySection, displaySwitchable, opener, extraDisplayPage, trail);
     }
 
     private void renderRecipeWithoutEntries(
@@ -605,7 +762,8 @@ public final class DefaultSfxGuide implements SfxGuide {
             RecipePageOpener opener
     ) {
         GuideRecipePage empty = GuideRecipePage.noRecipe();
-        renderRecipe(player, mode, layout, subjectTitle, outputItem, List.of(empty), empty, navigation, outputAction, definition, displayEntries, opener, 0, List.of());
+        renderRecipe(player, mode, layout, subjectTitle, outputItem, List.of(empty), empty, navigation, outputAction, definition, displayEntries,
+                DisplaySection.SOURCES, false, opener, 0, List.of());
     }
 
     private void renderClassicRecipe(
@@ -680,6 +838,8 @@ public final class DefaultSfxGuide implements SfxGuide {
             OutputAction outputAction,
             SfxItemDefinition definition,
             List<DisplayEntry> displayEntries,
+            DisplaySection displaySection,
+            boolean displaySwitchable,
             RecipePageOpener opener,
             int extraDisplayPage,
             List<String> trail
@@ -700,7 +860,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             }
             builder.button(recipeCenterSlot, new SfxMenuButton(ItemBuilder.of(Material.BARRIER)
                     .name("<red>" + tr("guide.recipe.cycle-blocked") + "</red>")
-                    .loreComponents(List.of(current.note())).build(), click -> { }));
+                    .build(), click -> { }));
         } else if (aggregateView != null && aggregateView.listMode()) {
             int first = aggregateView.page() * 9;
             for (int i = 0; i < recipeSlots.length; i++) {
@@ -728,8 +888,8 @@ public final class DefaultSfxGuide implements SfxGuide {
             }));
         }
 
-        if (aggregateView != null && aggregateView.listMode()) {
-            builder.button(sourceSlot, aggregateModeButton(player, current, aggregateView, opener));
+        if ("cycle-terminal".equals(current.sourceFamily())) {
+            builder.button(sourceSlot, new SfxMenuButton(new ItemStack(Material.AIR), click -> { }));
         } else {
             builder.button(sourceSlot, recipeSourceButton(current, mode, trail));
         }
@@ -739,9 +899,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         )), click -> outputAction.accept(click.player(), click.clickType())));
 
         if (aggregateView != null) {
-            if (!aggregateView.listMode()) {
-                addAggregatedCycleControls(builder, player, current, recipeSlots, aggregateView, opener);
-            }
+            addAggregatedControls(builder, player, current, aggregateView, opener);
         }
 
         builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-category")), click -> goBack(click.player(), mode)));
@@ -750,27 +908,56 @@ public final class DefaultSfxGuide implements SfxGuide {
 
         if (displayLayout == SfxDisplayLayout.PAIRED_GRID) {
             paintDetailDivider(builder, 27, current, pages.size());
-            addRecipePagination(builder, 29, 30, 31, current.index(), pages.size(),
+            addDisplaySectionPagination(builder, 27, 28, 29, displayPage, displaySection, displaySwitchable,
+                    definition, mode, current, parentTrail(trail));
+            addRecipePagination(builder, 30, 31, 32, current.index(), pages.size(),
                     (target, targetPage) -> opener.open(target, targetPage, Navigation.REPLACE), current.sourceName());
-            if (definition != null) {
-                addExtraDisplayPagination(builder, 33, 34, 35, displayPage.page(), displayPage.pageCount(),
-                        (target, targetPage) -> openRecipe(target, mode, definition.id(), current.index(), targetPage,
-                                Navigation.REPLACE, parentTrail(trail)),
-                        displaySectionTitle(displayPage.entries()));
-            }
             renderDisplayEntries(builder, displayPage.entries(), SFX_DISPLAY_SLOTS_PAIRED);
         } else {
             paintDetailDivider(builder, 36, current, pages.size());
-            addRecipePagination(builder, 38, 40, 42, current.index(), pages.size(),
+            addDisplaySectionPagination(builder, 36, 37, 38, displayPage, displaySection, displaySwitchable,
+                    definition, mode, current, parentTrail(trail));
+            addRecipePagination(builder, 39, 40, 41, current.index(), pages.size(),
                     (target, targetPage) -> opener.open(target, targetPage, Navigation.REPLACE), current.sourceName());
             if (displayLayout == SfxDisplayLayout.COMPACT_LIST) {
                 renderDisplayEntries(builder, displayPage.entries(), SFX_DISPLAY_SLOTS_COMPACT);
             }
         }
         if (aggregateView != null && aggregateView.listMode()) {
-            addAggregatedListPagination(builder, player, current, aggregateView, opener);
+            addAggregatedListPagination(builder, player, current, aggregateView, opener, displayLayout);
         }
         showMenu(player, builder, navigation);
+    }
+
+    private void addDisplaySectionPagination(SfxMenu.Builder builder, int previousSlot, int pageSlot, int nextSlot,
+                                             DisplayPage page, DisplaySection section, boolean switchable,
+                                             SfxItemDefinition definition, GuideMode mode, GuideRecipePage recipe,
+                                             List<String> parentTrail) {
+        int pageCount = page.pageCount();
+        builder.button(previousSlot, new SfxMenuButton(previousRecipeIcon(page.page(), pageCount), click -> {
+            if (page.page() > 0 && definition != null) {
+                openRecipe(click.player(), mode, definition.id(), recipe.index(), page.page() - 1, Navigation.REPLACE, parentTrail);
+            }
+        }));
+        String sectionName = tr(section == DisplaySection.WORKING
+                ? "guide.recipe.section.working" : "guide.recipe.section.sources");
+        ItemStack pageIcon = SfxGuideIconLibrary.page(sectionName, pageNumberLore(page.page(), pageCount), page.page() + 1);
+        if (switchable) {
+            pageIcon = withLore(pageIcon, List.of(Text.mm(tr("guide.recipe.section.toggle"))));
+        }
+        applyPageProgress(pageIcon, page.page(), pageCount);
+        builder.button(pageSlot, new SfxMenuButton(pageIcon, click -> {
+            if (switchable && definition != null) {
+                setDisplaySection(click.player(), definition.id(), section == DisplaySection.SOURCES
+                        ? DisplaySection.WORKING : DisplaySection.SOURCES);
+                openRecipe(click.player(), mode, definition.id(), recipe.index(), 0, Navigation.REPLACE, parentTrail);
+            }
+        }));
+        builder.button(nextSlot, new SfxMenuButton(nextRecipeIcon(page.page(), pageCount), click -> {
+            if (page.page() + 1 < pageCount && definition != null) {
+                openRecipe(click.player(), mode, definition.id(), recipe.index(), page.page() + 1, Navigation.REPLACE, parentTrail);
+            }
+        }));
     }
 
     private AggregatedRecipeView aggregateView(Player player, GuideRecipePage page) {
@@ -782,35 +969,41 @@ public final class DefaultSfxGuide implements SfxGuide {
                 .computeIfAbsent(key, ignored -> new AggregatedRecipeView(false, 0));
     }
 
-    private void addAggregatedCycleControls(SfxMenu.Builder builder, Player player, GuideRecipePage page, int[] recipeSlots,
-                                            AggregatedRecipeView view, RecipePageOpener opener) {
-        int indicatorSlot = recipeSlots[2];
-        int toggleSlot = recipeSlots[5];
-        if (page.matrix().get(2).isEmpty()) {
+    private void addAggregatedControls(SfxMenu.Builder builder, Player player, GuideRecipePage page,
+                                       AggregatedRecipeView view, RecipePageOpener opener) {
+        int indicatorSlot = 17;
+        int toggleSlot = 26;
+        if (!view.listMode()) {
             SfxMenuButton fallback = new SfxMenuButton(aggregateIndexIcon(0, page.inputAlternatives().size()), click -> { });
             builder.dynamicButton(indicatorSlot, fallback, ignored -> aggregateIndexIcon(
                     rotatingIndex(page.inputAlternatives().size()), page.inputAlternatives().size()));
+        } else {
+            int first = Math.min(page.inputAlternatives().size() - 1, view.page() * 9);
+            builder.button(indicatorSlot, new SfxMenuButton(aggregateIndexIcon(first, page.inputAlternatives().size()), click -> { }));
         }
-        if (page.matrix().get(5).isEmpty()) {
-            builder.button(toggleSlot, aggregateModeButton(player, page, view, opener));
-        }
+        builder.button(toggleSlot, aggregateModeButton(player, page, view, opener));
     }
 
     private void addAggregatedListPagination(SfxMenu.Builder builder, Player player, GuideRecipePage page,
-                                             AggregatedRecipeView view, RecipePageOpener opener) {
+                                             AggregatedRecipeView view, RecipePageOpener opener,
+                                             SfxDisplayLayout displayLayout) {
         int pageCount = Math.max(1, (int) Math.ceil(page.inputAlternatives().size() / 9.0D));
         if (pageCount <= 1) {
             return;
         }
-        builder.button(37, new SfxMenuButton(previousRecipeIcon(view.page(), pageCount), click -> {
+        int firstSlot = displayLayout == SfxDisplayLayout.PAIRED_GRID ? 33 : 42;
+        builder.button(firstSlot, new SfxMenuButton(previousRecipeIcon(view.page(), pageCount), click -> {
             if (view.page() > 0) {
                 setAggregateView(click.player(), page, new AggregatedRecipeView(true, view.page() - 1));
                 opener.open(click.player(), page.index(), Navigation.REPLACE);
             }
         }));
-        builder.button(40, new SfxMenuButton(ItemBuilder.of(Material.PAPER)
-                .name("<yellow>" + (view.page() + 1) + " / " + pageCount + "</yellow>").build(), click -> { }));
-        builder.button(43, new SfxMenuButton(nextRecipeIcon(view.page(), pageCount), click -> {
+        ItemStack pageIcon = SfxGuideIconLibrary.page(
+                "<yellow>" + (view.page() + 1) + " / " + pageCount + "</yellow>",
+                pageNumberLore(view.page(), pageCount), view.page() + 1);
+        applyPageProgress(pageIcon, view.page(), pageCount);
+        builder.button(firstSlot + 1, new SfxMenuButton(pageIcon, click -> { }));
+        builder.button(firstSlot + 2, new SfxMenuButton(nextRecipeIcon(view.page(), pageCount), click -> {
             if (view.page() + 1 < pageCount) {
                 setAggregateView(click.player(), page, new AggregatedRecipeView(true, view.page() + 1));
                 opener.open(click.player(), page.index(), Navigation.REPLACE);
@@ -837,11 +1030,12 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private ItemStack aggregateIndexIcon(int index, int size) {
-        return ItemBuilder.of(Material.PAPER).amount(index + 1)
-                .name(tr("guide.recipe.aggregate.index")
-                        .replace("{current}", Integer.toString(index + 1))
-                        .replace("{total}", Integer.toString(size)))
-                .build();
+        String name = tr("guide.recipe.aggregate.index")
+                .replace("{current}", Integer.toString(index + 1))
+                .replace("{total}", Integer.toString(size));
+        ItemStack icon = SfxGuideIconLibrary.page(name, pageNumberLore(index, size), index + 1);
+        applyPageProgress(icon, index, size);
+        return icon;
     }
 
     private static int rotatingIndex(int size) {
@@ -898,7 +1092,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         List<GuideRecipePage> merged = new ArrayList<>();
         for (GuideRecipePage page : pages) {
             int inputIndex = singleInputIndex(page);
-            if (inputIndex < 0 || page.outputAmount() != 1 || page.matrix().get(inputIndex).amount() != 1) {
+            if (inputIndex < 0) {
                 merged.add(reindexPage(page, merged.size()));
                 continue;
             }
@@ -906,7 +1100,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             for (int i = 0; i < merged.size(); i++) {
                 GuideRecipePage candidate = merged.get(i);
                 if (singleInputIndex(candidate) == inputIndex
-                        && candidate.outputAmount() == 1
+                        && candidate.outputAmount() == page.outputAmount()
                         && Objects.equals(candidate.origin(), page.origin())
                         && Objects.equals(candidate.sourceId(), page.sourceId())
                         && Objects.equals(candidate.machineTargetId(), page.machineTargetId())
@@ -1184,20 +1378,64 @@ public final class DefaultSfxGuide implements SfxGuide {
         return matrix;
     }
 
-    private List<DisplayEntry> displayEntriesFor(SfxItemDefinition definition, List<GuideRecipePage> pages, GuideRecipePage current,
-                                                 GuideMode mode, RecipePageOpener opener, List<String> trail) {
-        List<DisplayEntry> entries = new ArrayList<>();
-        entries.addAll(alternativeSourceEntries(pages, current, opener));
+    private DisplayContent displayContentFor(Player player, SfxItemDefinition definition, List<GuideRecipePage> pages,
+                                             GuideRecipePage current, GuideMode mode, RecipePageOpener opener, List<String> trail) {
+        List<DisplayEntry> sources = new ArrayList<>(alternativeSourceEntries(pages, current, opener));
+        List<DisplayEntry> working = new ArrayList<>();
         if (definition != null) {
-            entries.addAll(executorEntriesFor(definition, current, mode, trail));
-            entries.addAll(specialDisplayEntries(definition, mode));
-            entries.addAll(machineOutputEntries(definition, mode, trail));
+            sources.addAll(collapseExecutorEntries(executorEntriesFor(definition, current, mode, trail)));
+            working.addAll(specialDisplayEntries(definition, mode));
+            working.addAll(machineOutputEntries(definition, mode, trail));
         }
+        sources = sortDisplayEntries(sources);
+        working = sortDisplayEntries(working);
+        boolean switchable = !sources.isEmpty() && !working.isEmpty();
+        DisplaySection section = selectedDisplaySection(player, definition == null ? null : definition.id());
+        if (section == DisplaySection.WORKING && working.isEmpty()) {
+            section = DisplaySection.SOURCES;
+        } else if (section == DisplaySection.SOURCES && sources.isEmpty() && !working.isEmpty()) {
+            section = DisplaySection.WORKING;
+        }
+        return new DisplayContent(section == DisplaySection.WORKING ? working : sources, section, switchable);
+    }
+
+    private List<DisplayEntry> sortDisplayEntries(List<DisplayEntry> entries) {
         boolean hasPairs = entries.stream().anyMatch(DisplayEntry::paired);
         Comparator<DisplayEntry> order = hasPairs
                 ? Comparator.comparingInt((DisplayEntry entry) -> entry.paired() ? 0 : 1).thenComparing(DISPLAY_ENTRY_ORDER)
                 : DISPLAY_ENTRY_ORDER;
         return entries.stream().sorted(order).toList();
+    }
+
+    private List<DisplayEntry> collapseExecutorEntries(List<DisplayEntry> entries) {
+        List<DisplayEntry> executors = entries.stream().filter(entry -> entry.kind() == DisplayEntryKind.EXECUTOR).toList();
+        if (executors.size() <= 1) {
+            return entries;
+        }
+        List<DisplayVariant> variants = executors.stream()
+                .map(entry -> new DisplayVariant(entry.primaryIcon(), entry.primaryHandler()))
+                .toList();
+        DisplayEntry rotating = DisplayEntry.rotating(variants, tr("guide.recipe.executor"),
+                executors.stream().mapToInt(DisplayEntry::priority).min().orElse(100), DisplayEntryKind.EXECUTOR);
+        List<DisplayEntry> result = new ArrayList<>();
+        result.add(rotating);
+        result.addAll(entries.stream().filter(entry -> entry.kind() != DisplayEntryKind.EXECUTOR).toList());
+        return result;
+    }
+
+    private DisplaySection selectedDisplaySection(Player player, String itemId) {
+        if (player == null || itemId == null) {
+            return DisplaySection.SOURCES;
+        }
+        return displaySectionsByPlayer.computeIfAbsent(player.getUniqueId(), ignored -> new ConcurrentHashMap<>())
+                .getOrDefault(itemId, DisplaySection.SOURCES);
+    }
+
+    private void setDisplaySection(Player player, String itemId, DisplaySection section) {
+        if (player == null || itemId == null || section == null) {
+            return;
+        }
+        displaySectionsByPlayer.computeIfAbsent(player.getUniqueId(), ignored -> new ConcurrentHashMap<>()).put(itemId, section);
     }
 
     private List<DisplayEntry> executorEntriesFor(SfxItemDefinition definition, GuideRecipePage current, GuideMode mode,
@@ -1582,27 +1820,50 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private ClickHandler handlerForSlot(SfxRecipeSlot slot, GuideMode mode) {
         if (slot.isSfxItem()) {
-            return click -> slot.sfxId().ifPresent(target -> openRecipe(click.player(), mode, target, 0, 0,
-                    preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
-                    activeRecipeTrails.getOrDefault(click.player().getUniqueId(), List.of())));
+            return click -> slot.sfxId().ifPresent(target -> registry.item(target).ifPresent(definition -> {
+                if (click.clickType().isRightClick()) {
+                    openUses(click.player(), mode, definition, 0, Navigation.OPEN);
+                } else {
+                    openRecipe(click.player(), mode, target, 0, 0,
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
+                            activeRecipeTrails.getOrDefault(click.player().getUniqueId(), List.of()));
+                }
+            }));
         }
         if (showVanillaRecipes() && slot.material() != null && !vanillaRecipePages(slot.material()).isEmpty()) {
-            return click -> openVanillaRecipe(click.player(), mode, slot.material(), 0,
-                    preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
-                    activeRecipeTrails.getOrDefault(click.player().getUniqueId(), List.of()));
+            return click -> {
+                if (click.clickType().isRightClick()) {
+                    openUses(click.player(), mode, slot.material(), 0, Navigation.OPEN);
+                } else {
+                    openVanillaRecipe(click.player(), mode, slot.material(), 0,
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
+                            activeRecipeTrails.getOrDefault(click.player().getUniqueId(), List.of()));
+                }
+            };
         }
         return null;
     }
 
     private ClickHandler handlerForSlot(SfxRecipeSlot slot, GuideMode mode, List<String> trail) {
         if (slot.isSfxItem()) {
-            return click -> slot.sfxId().ifPresent(target ->
+            return click -> slot.sfxId().ifPresent(target -> registry.item(target).ifPresent(definition -> {
+                if (click.clickType().isRightClick()) {
+                    openUses(click.player(), mode, definition, 0, Navigation.OPEN);
+                } else {
                     openRecipe(click.player(), mode, target, 0, 0,
-                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail));
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail);
+                }
+            }));
         }
         if (showVanillaRecipes() && slot.material() != null && !vanillaRecipePages(slot.material()).isEmpty()) {
-            return click -> openVanillaRecipe(click.player(), mode, slot.material(), 0,
-                    preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail);
+            return click -> {
+                if (click.clickType().isRightClick()) {
+                    openUses(click.player(), mode, slot.material(), 0, Navigation.OPEN);
+                } else {
+                    openVanillaRecipe(click.player(), mode, slot.material(), 0,
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail);
+                }
+            };
         }
         return null;
     }
@@ -1626,6 +1887,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         Map<String, DisplayEntry> entries = new LinkedHashMap<>();
         int order = 1000;
         for (ManualMachineRecipe recipe : manualMachines.recipesFor(machine.get().id())) {
+            boolean shaped = recipe.operation() == ManualMachineOperation.SHAPED_3X3;
             SfxRecipeSlot input = recipe.input().stream().filter(slot -> slot != null && !slot.isEmpty()).findFirst().orElse(null);
             if (input == null) {
                 continue;
@@ -1641,9 +1903,13 @@ public final class DefaultSfxGuide implements SfxGuide {
                             Component.empty(),
                             Text.mm(tr("guide.actions.open-recipe"))
                     ));
-                    entries.putIfAbsent(input + "->sfx:" + target, DisplayEntry.paired(ingredientIcon(input), icon, itemDisplayName(targetDefinition.get()), order,
-                            handlerForSlot(input, mode, trail), click -> openRecipe(click.player(), mode, target, 0, 0,
-                                    preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail), DisplayEntryKind.MACHINE_RECIPE));
+                    ClickHandler outputHandler = click -> openRecipe(click.player(), mode, target, 0, 0,
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail);
+                    DisplayEntry entry = shaped
+                            ? DisplayEntry.single(icon, itemDisplayName(targetDefinition.get()), order, outputHandler, DisplayEntryKind.MACHINE_RECIPE)
+                            : DisplayEntry.paired(ingredientIcon(input), icon, itemDisplayName(targetDefinition.get()), order,
+                            handlerForSlot(input, mode, trail), outputHandler, DisplayEntryKind.MACHINE_RECIPE);
+                    entries.putIfAbsent((shaped ? "" : input + "->") + "sfx:" + target, entry);
                 } else {
                     Material material = output.material();
                     ItemStack icon = withLore(new ItemStack(material, output.amount()), List.of(
@@ -1652,13 +1918,15 @@ public final class DefaultSfxGuide implements SfxGuide {
                                     ? tr("guide.actions.open-vanilla-recipe")
                                     : tr("guide.recipe.vanilla.disabled"))
                     ));
-                    entries.putIfAbsent(input + "->vanilla:" + material.name(), DisplayEntry.paired(ingredientIcon(input), icon, materialName(material), order,
-                            handlerForSlot(input, mode, trail),
-                            showVanillaRecipes()
-                                    ? click -> openVanillaRecipe(click.player(), mode, material, 0,
-                                    preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail)
-                                    : click -> {
-                            }, DisplayEntryKind.MACHINE_RECIPE));
+                    ClickHandler outputHandler = showVanillaRecipes()
+                            ? click -> openVanillaRecipe(click.player(), mode, material, 0,
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail)
+                            : click -> { };
+                    DisplayEntry entry = shaped
+                            ? DisplayEntry.single(icon, materialName(material), order, outputHandler, DisplayEntryKind.MACHINE_RECIPE)
+                            : DisplayEntry.paired(ingredientIcon(input), icon, materialName(material), order,
+                            handlerForSlot(input, mode, trail), outputHandler, DisplayEntryKind.MACHINE_RECIPE);
+                    entries.putIfAbsent((shaped ? "" : input + "->") + "vanilla:" + material.name(), entry);
                 }
                 order += 10;
             }
@@ -1743,10 +2011,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private boolean supportsMachineOutputDisplay(ManualMachineDefinition machine) {
-        return switch (machine.operation()) {
-            case SINGLE_INPUT, SHAPELESS_INPUT, HAND_INPUT -> true;
-            case SHAPED_3X3 -> false;
-        };
+        return true;
     }
 
     private SfxDisplayLayout sfxDisplayLayout(List<DisplayEntry> entries) {
@@ -1789,7 +2054,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         if (slots.length <= 9) {
             for (int i = 0; i < slots.length; i++) {
                 DisplayEntry entry = i < entries.size() ? entries.get(i) : null;
-                Cell cell = entry == null ? null : new Cell(entry.primaryIcon(), entry.primaryHandler());
+                Cell cell = entry == null ? null : (entry.rotating() ? Cell.rotating(entry) : Cell.fixed(entry.primaryIcon(), entry.primaryHandler()));
                 paintDisplayCell(builder, slots[i], cell);
             }
             return;
@@ -1805,8 +2070,8 @@ public final class DefaultSfxGuide implements SfxGuide {
                 if (column < 0) {
                     break;
                 }
-                top[column] = new Cell(entry.primaryIcon(), entry.primaryHandler());
-                bottom[column] = new Cell(entry.secondaryIcon(), entry.secondaryHandler());
+                top[column] = Cell.fixed(entry.primaryIcon(), entry.primaryHandler());
+                bottom[column] = Cell.fixed(entry.secondaryIcon(), entry.secondaryHandler());
                 continue;
             }
             int cell = firstFreeSingleCell(top, bottom);
@@ -1814,9 +2079,9 @@ public final class DefaultSfxGuide implements SfxGuide {
                 break;
             }
             if (cell < columns) {
-                top[cell] = new Cell(entry.primaryIcon(), entry.primaryHandler());
+                top[cell] = entry.rotating() ? Cell.rotating(entry) : Cell.fixed(entry.primaryIcon(), entry.primaryHandler());
             } else {
-                bottom[cell - columns] = new Cell(entry.primaryIcon(), entry.primaryHandler());
+                bottom[cell - columns] = entry.rotating() ? Cell.rotating(entry) : Cell.fixed(entry.primaryIcon(), entry.primaryHandler());
             }
         }
 
@@ -1855,11 +2120,23 @@ public final class DefaultSfxGuide implements SfxGuide {
             }));
             return;
         }
-        builder.button(slot, new SfxMenuButton(cell.icon(), click -> {
-            if (cell.handler() != null) {
-                cell.handler().accept(click);
-            }
-        }));
+        if (cell.variants() != null && cell.variants().size() > 1) {
+            SfxMenuButton fallback = new SfxMenuButton(cell.icon(), click -> {
+                ClickHandler handler = rotatingDisplayVariant(cell.variants()).handler();
+                if (handler != null) handler.accept(click);
+            });
+            builder.dynamicButton(slot, fallback, ignored -> rotatingDisplayVariant(cell.variants()).icon());
+        } else {
+            builder.button(slot, new SfxMenuButton(cell.icon(), click -> {
+                if (cell.handler() != null) {
+                    cell.handler().accept(click);
+                }
+            }));
+        }
+    }
+
+    private static DisplayVariant rotatingDisplayVariant(List<DisplayVariant> variants) {
+        return variants.get(rotatingIndex(variants.size()));
     }
 
     private SfxMenuButton ingredientButton(SfxRecipeSlot slot, GuideMode mode) {
@@ -1872,7 +2149,22 @@ public final class DefaultSfxGuide implements SfxGuide {
             });
         }
         ItemStack icon = ingredientIcon(slot);
-        return new SfxMenuButton(icon, click -> openIngredientRecipe(click.player(), slot, mode, trail));
+        return new SfxMenuButton(icon, click -> {
+            if (click.clickType().isRightClick()) {
+                openUsesForSlot(click.player(), mode, slot);
+            } else {
+                openIngredientRecipe(click.player(), slot, mode, trail);
+            }
+        });
+    }
+
+    private void openUsesForSlot(Player player, GuideMode mode, SfxRecipeSlot slot) {
+        if (slot.isSfxItem()) {
+            slot.sfxId().flatMap(registry::item)
+                    .ifPresent(definition -> openUses(player, mode, definition, 0, Navigation.OPEN));
+        } else if (slot.material() != null) {
+            openUses(player, mode, slot.material(), 0, Navigation.OPEN);
+        }
     }
 
     private void openIngredientRecipe(Player player, SfxRecipeSlot slot, GuideMode mode, List<String> trail) {
@@ -2049,8 +2341,14 @@ public final class DefaultSfxGuide implements SfxGuide {
     private void addIngredientButton(SfxMenu.Builder builder, int menuSlot, SfxRecipeSlot recipeSlot, GuideMode mode,
                                      boolean cycleVariants, List<SfxRecipeSlot> inputAlternatives, List<String> trail) {
         if (inputAlternatives.size() > 1 && inputAlternatives.contains(recipeSlot)) {
-            SfxMenuButton fallback = new SfxMenuButton(ingredientIcon(inputAlternatives.getFirst()), click ->
-                    openIngredientRecipe(click.player(), rotatingVariant(inputAlternatives), mode, trail));
+            SfxMenuButton fallback = new SfxMenuButton(ingredientIcon(inputAlternatives.getFirst()), click -> {
+                SfxRecipeSlot selected = rotatingVariant(inputAlternatives);
+                if (click.clickType().isRightClick()) {
+                    openUsesForSlot(click.player(), mode, selected);
+                } else {
+                    openIngredientRecipe(click.player(), selected, mode, trail);
+                }
+            });
             builder.dynamicButton(menuSlot, fallback, player -> ingredientIcon(rotatingVariant(inputAlternatives)));
             return;
         }
@@ -2782,6 +3080,9 @@ public final class DefaultSfxGuide implements SfxGuide {
         private AggregatedRecipeView {
             page = Math.max(0, page);
         }
+    }
+
+    private record UsageTarget(ItemStack icon, ClickHandler handler) {
     }
 
 
