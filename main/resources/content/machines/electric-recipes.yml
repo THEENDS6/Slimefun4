@@ -395,14 +395,6 @@ recipe-groups:
       outputs:
       - material: BRICKS
         amount: 1
-    - id: sf:electric_press:copper_wire
-      inputs:
-      - material: COPPER_INGOT
-        amount: 1
-      ticks: 6
-      outputs:
-      - item: sf:copper_wire
-        amount: 3
     - id: sf:electric_press:steel_plate
       inputs:
       - item: sf:steel_ingot
@@ -419,14 +411,6 @@ recipe-groups:
       outputs:
       - item: sf:reinforced_plate
         amount: 1
-    - id: sf:electric_press:magic_lump_1
-      inputs:
-      - material: NETHER_WART
-        amount: 1
-      ticks: 8
-      outputs:
-      - item: sf:magic_lump_1
-        amount: 2
     - id: sf:electric_press:magic_lump_2
       inputs:
       - item: sf:magic_lump_1
@@ -443,14 +427,6 @@ recipe-groups:
       outputs:
       - item: sf:magic_lump_3
         amount: 1
-    - id: sf:electric_press:ender_lump_1
-      inputs:
-      - material: ENDER_EYE
-        amount: 1
-      ticks: 10
-      outputs:
-      - item: sf:ender_lump_1
-        amount: 2
     - id: sf:electric_press:ender_lump_2
       inputs:
       - item: sf:ender_lump_1
