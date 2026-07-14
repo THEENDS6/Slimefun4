@@ -395,12 +395,12 @@ final class SfxAreaElectricMachineProviders {
             case NO_TARGET -> SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
             case OUTPUT_FULL -> SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OUTPUT_FULL, true);
             case READY -> isToolProduceAction(start.action())
-                    ? startToolProduceWork(definition, state, start.inputSlot(), start.primaryOutput(), PRODUCE_WORK_TICKS, "sf:produce_collector:" + start.action().key())
+                    ? startToolProduceWork(definition, state, start.inputSlot(), PRODUCE_WORK_TICKS, "sf:produce_collector:" + start.action().key())
                     : startTimedWork(definition, state, start.inputSlot(), start.primaryOutput(), PRODUCE_WORK_TICKS, "sf:produce_collector:" + start.action().key());
         };
     }
 
-    private static SfxElectricMachineTickResult startToolProduceWork(SfxElectricMachineDefinition definition, SfxElectricMachineState state, int inputSlot, SfxElectricStack output, int workTicks, String key) {
+    private static SfxElectricMachineTickResult startToolProduceWork(SfxElectricMachineDefinition definition, SfxElectricMachineState state, int inputSlot, int workTicks, String key) {
         if (state.storedEnergy() < definition.energyConsumptionPerTick()) {
             return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_POWER, true);
         }
@@ -411,7 +411,7 @@ final class SfxAreaElectricMachineProviders {
         state.activeRecipeKey(key);
         state.activeInputSlot(inputSlot);
         state.activeBaseTicks(workTicks);
-        state.activeOutputs(output == null ? List.of() : List.of(output));
+        state.activeOutputs(List.of());
         state.reservedInputs(List.of());
         state.pendingOutput(null);
         state.progressWork(0);
@@ -419,6 +419,7 @@ final class SfxAreaElectricMachineProviders {
     }
 
     private static SfxElectricMachineTickResult advanceProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        recoverLegacyReservedProduceTool(state);
         return advanceTimedAction(definition, state, () -> {
             ProduceAction action = ProduceAction.fromKey(state.activeRecipeKey());
             if (action == null) {
@@ -501,6 +502,25 @@ final class SfxAreaElectricMachineProviders {
             return new SfxElectricMachineTickResult(result.status(), definition.energyConsumptionPerTick() + result.consumedEnergy(), true, result.keepActive());
         }
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
+    }
+
+    private static void recoverLegacyReservedProduceTool(SfxElectricMachineState state) {
+        ProduceAction action = ProduceAction.fromKey(state.activeRecipeKey());
+        if (!isToolProduceAction(action)) {
+            return;
+        }
+        int slot = state.activeInputSlot();
+        if (slot < 0 || slot >= state.inputCapacity() || state.input(slot) != null) {
+            return;
+        }
+        Material expected = expectedTool(action);
+        for (SfxElectricStack reserved : state.reservedInputs()) {
+            if (isExpectedTool(reserved, expected)) {
+                state.input(slot, reserved);
+                state.reservedInputs(List.of());
+                return;
+            }
+        }
     }
 
     private static SfxElectricMachineTickResult continueProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
@@ -753,7 +773,7 @@ final class SfxAreaElectricMachineProviders {
         if (maxDurability > 0 && currentDamage >= maxDurability) {
             return null;
         }
-        int appliedDamage = rollToolDamage(item, Math.max(1, damage));
+        int appliedDamage = Math.max(1, damage);
         int rawDamage = currentDamage + appliedDamage;
         boolean overDamaged = maxDurability > 0 && rawDamage >= maxDurability;
         if (overDamaged && !hasDurabilityProtection(item)) {
@@ -790,20 +810,6 @@ final class SfxAreaElectricMachineProviders {
     private static boolean hasDurabilityProtection(ItemStack item) {
         return item.getEnchantmentLevel(Enchantment.UNBREAKING) > 0
                 || item.getEnchantmentLevel(Enchantment.MENDING) > 0;
-    }
-
-    private static int rollToolDamage(ItemStack item, int baseDamage) {
-        int unbreakingLevel = Math.max(0, item.getEnchantmentLevel(Enchantment.UNBREAKING));
-        if (unbreakingLevel <= 0) {
-            return baseDamage;
-        }
-        int applied = 0;
-        for (int i = 0; i < baseDamage; i++) {
-            if (ThreadLocalRandom.current().nextInt(unbreakingLevel + 1) == 0) {
-                applied++;
-            }
-        }
-        return applied;
     }
 
     private static Material woolMaterial(Sheep sheep) {
