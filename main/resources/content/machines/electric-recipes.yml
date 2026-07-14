@@ -1269,7 +1269,7 @@ recipe-groups:
       outputs:
       - item: sf:gold_dust
         amount: 1
-    - id: sf:electric_ingot_pulverizer:copper_vanilla
+    - id: sf:electric_ingot_pulverizer:copper
       inputs:
       - material: COPPER_INGOT
         amount: 1
@@ -1284,14 +1284,6 @@ recipe-groups:
       ticks: 3
       outputs:
       - item: sf:tin_dust
-        amount: 1
-    - id: sf:electric_ingot_pulverizer:copper
-      inputs:
-      - material: COPPER_INGOT
-        amount: 1
-      ticks: 3
-      outputs:
-      - item: sf:copper_dust
         amount: 1
     - id: sf:electric_ingot_pulverizer:silver
       inputs:
