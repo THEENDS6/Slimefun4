@@ -138,12 +138,16 @@ public final class SfxPlaceableBlockListener implements Listener {
         if (item == null || !isAxe(item.getType())) {
             return;
         }
-        denyVanillaBlockMutation(event);
+        denyVanillaHeldItemMutation(event);
     }
 
     private static void denyVanillaBlockMutation(PlayerInteractEvent event) {
         event.setCancelled(true);
         event.setUseInteractedBlock(Event.Result.DENY);
+        event.setUseItemInHand(Event.Result.DENY);
+    }
+
+    private static void denyVanillaHeldItemMutation(PlayerInteractEvent event) {
         event.setUseItemInHand(Event.Result.DENY);
     }
 
