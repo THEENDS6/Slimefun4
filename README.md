@@ -2,6 +2,8 @@
 
 [English](#slimefunx) | [简体中文](#简体中文) | [Download latest release](https://github.com/THEENDS6/Slimefun4/releases/latest)
 
+> Put simply: SlimeFunX is a ground-up reimplementation of Slimefun, written by a veteran player with the help of AI. It is completely incompatible with Slimefun4; instead, it carefully recreates the classic content and improves the underlying systems, interactions, and details.
+
 SlimeFunX is an experimental, heavily diverged fork of Slimefun4 for modern Paper servers.
 
 It tries to keep the classic Slimefun gameplay feel while rebuilding large parts of the runtime underneath it. It is not an official Slimefun4 build and it is not currently intended to be a safe drop-in replacement for an existing production Slimefun4 server.
@@ -187,6 +189,8 @@ SlimeFunX is a heavily diverged fork of Slimefun4. This package includes a GPL-3
 # 简体中文
 
 [English](#slimefunx) | [下载最新版本](https://github.com/THEENDS6/Slimefun4/releases/latest)
+
+> 直白地说：SFX 是一个粘液科技老玩家在 AI 帮助下，从头开始重写出来的粘液科技。它完全不兼容 Slimefun4；经典内容都经过细致还原，并在此基础上重新实现和优化。
 
 SlimeFunX 是面向现代 Paper 服务端的实验性 Slimefun4 深度分支。它保留经典 Slimefun 的主要玩法体验，同时重写机器、能源、货运、数据存储、指南与扩展加载等底层系统。
 
