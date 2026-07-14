@@ -39,6 +39,7 @@ import org.bukkit.entity.MushroomCow;
 import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Wither;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionType;
@@ -552,7 +553,8 @@ final class SfxAreaElectricMachineProviders {
     }
 
     private static ProduceStart produceStartForAction(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, int slot, ProduceAction action) {
-        List<SfxElectricStack> outputs = previewProduceOutputs(location, action);
+        SfxElectricStack tool = slot >= 0 && slot < state.inputCapacity() ? state.input(slot) : null;
+        List<SfxElectricStack> outputs = previewProduceOutputs(location, action, tool);
         if (outputs.isEmpty()) {
             return ProduceStart.noTarget();
         }
@@ -563,7 +565,8 @@ final class SfxAreaElectricMachineProviders {
     }
 
     private static ProduceCompletion completeProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, ProduceAction action) {
-        ProduceTarget target = findProduceTarget(location, action);
+        SfxElectricStack tool = state.reservedInputs().isEmpty() ? null : state.reservedInputs().getFirst();
+        ProduceTarget target = findProduceTarget(location, action, tool);
         if (target == null) {
             restoreReservedAndReset(items, definition, state);
             return ProduceCompletion.status(SfxElectricMachineRenderStatus.NO_TARGET);
@@ -579,12 +582,12 @@ final class SfxAreaElectricMachineProviders {
         return ProduceCompletion.status(SfxElectricMachineRenderStatus.WORKING);
     }
 
-    private static List<SfxElectricStack> previewProduceOutputs(Location location, ProduceAction action) {
-        ProduceTarget target = findProduceTarget(location, action);
+    private static List<SfxElectricStack> previewProduceOutputs(Location location, ProduceAction action, SfxElectricStack tool) {
+        ProduceTarget target = findProduceTarget(location, action, tool);
         return target == null ? List.of() : target.outputs();
     }
 
-    private static ProduceTarget findProduceTarget(Location location, ProduceAction action) {
+    private static ProduceTarget findProduceTarget(Location location, ProduceAction action, SfxElectricStack tool) {
         if (location == null || location.getWorld() == null) {
             return null;
         }
@@ -603,9 +606,9 @@ final class SfxAreaElectricMachineProviders {
                     yield null;
                 }
                 Material wool = woolMaterial(sheep);
-                yield new ProduceTarget(List.of(
-                        SfxElectricStack.vanilla(wool, 1),
-                        SfxElectricStack.vanilla(Material.SHEARS, 1)
+                yield new ProduceTarget(appendIfNotNull(
+                        List.of(SfxElectricStack.vanilla(wool, 1)),
+                        damagedToolOutput(tool, Material.SHEARS, 1)
                 ), () -> sheep.setSheared(true));
             }
             case HONEY_BOTTLE -> {
@@ -615,17 +618,17 @@ final class SfxAreaElectricMachineProviders {
             }
             case HONEYCOMB -> {
                 Block hive = firstNearbyHoneyHive(location);
-                yield hive == null ? null : new ProduceTarget(List.of(
-                        SfxElectricStack.vanilla(Material.HONEYCOMB, 3),
-                        SfxElectricStack.vanilla(Material.SHEARS, 1)
+                yield hive == null ? null : new ProduceTarget(appendIfNotNull(
+                        List.of(SfxElectricStack.vanilla(Material.HONEYCOMB, 3)),
+                        damagedToolOutput(tool, Material.SHEARS, 1)
                 ), () -> drainHoney(hive));
             }
             case ARMADILLO_SCUTE -> {
                 Entity target = firstNearbyEntity(location, PRODUCE_RANGE, PRODUCE_RANGE,
                         entity -> entity.getType() == EntityType.ARMADILLO);
-                yield target == null ? null : new ProduceTarget(List.of(
-                        SfxElectricStack.vanilla(Material.ARMADILLO_SCUTE, 1),
-                        SfxElectricStack.vanilla(Material.BRUSH, 1)
+                yield target == null ? null : new ProduceTarget(appendIfNotNull(
+                        List.of(SfxElectricStack.vanilla(Material.ARMADILLO_SCUTE, 1)),
+                        damagedToolOutput(tool, Material.BRUSH, 16)
                 ), () -> {});
             }
             default -> null;
@@ -638,6 +641,35 @@ final class SfxAreaElectricMachineProviders {
                 || material == Material.SHEARS
                 || material == Material.GLASS_BOTTLE
                 || material == Material.BRUSH;
+    }
+
+    private static List<SfxElectricStack> appendIfNotNull(List<SfxElectricStack> base, SfxElectricStack extra) {
+        if (extra == null) {
+            return base;
+        }
+        List<SfxElectricStack> result = new ArrayList<>(base.size() + 1);
+        result.addAll(base);
+        result.add(extra);
+        return List.copyOf(result);
+    }
+
+    private static SfxElectricStack damagedToolOutput(SfxElectricStack tool, Material expected, int damage) {
+        ItemStack item = tool != null && tool.hasSnapshot() ? tool.snapshot() : new ItemStack(expected);
+        if (item == null || item.getType() != expected) {
+            item = new ItemStack(expected);
+        }
+        item.setAmount(1);
+        if (!(item.getItemMeta() instanceof Damageable damageable)) {
+            return SfxElectricStack.snapshot(item);
+        }
+        int maxDurability = expected.getMaxDurability();
+        int newDamage = damageable.getDamage() + Math.max(1, damage);
+        if (maxDurability > 0 && newDamage >= maxDurability) {
+            return null;
+        }
+        damageable.setDamage(newDamage);
+        item.setItemMeta(damageable);
+        return SfxElectricStack.snapshot(item);
     }
 
     private static Material woolMaterial(Sheep sheep) {

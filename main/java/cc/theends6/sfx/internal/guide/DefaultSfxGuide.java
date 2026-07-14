@@ -1436,7 +1436,9 @@ public final class DefaultSfxGuide implements SfxGuide {
         if (definition != null) {
             sources.addAll(executorEntriesFor(definition, current, mode, trail));
             functions.addAll(specialDisplayEntries(definition, mode));
-            functions.addAll(machineOutputEntries(definition, mode, trail));
+            if (!usesSpecialOnlyFunctionDisplay(definition.id())) {
+                functions.addAll(machineOutputEntries(definition, mode, trail));
+            }
             usages.addAll(itemUsageEntries(definition, mode, trail));
         }
         sources = sortDisplayEntries(sources);
@@ -1692,7 +1694,8 @@ public final class DefaultSfxGuide implements SfxGuide {
                     SfxRecipeSlot.vanilla(Material.SAND, 2), SfxRecipeSlot.vanilla(Material.SOUL_SAND),
                     SfxRecipeSlot.vanilla(Material.WHEAT, 4), SfxRecipeSlot.vanilla(Material.NETHER_WART)
             ), mode);
-            case "sf:crucible" -> crucibleDisplayEntries(mode);
+            case "sf:crucible", "sf:electrified_crucible", "sf:electrified_crucible_2", "sf:electrified_crucible_3" ->
+                    crucibleDisplayEntries(mode);
             case "sf:auto_anvil", "sf:auto_anvil_2" -> autoAnvilDisplayEntries(mode);
             case "sf:duct_tape" -> ductTapeDisplayEntries(mode);
             case "sf:produce_collector" -> produceCollectorDisplayEntries(mode);
@@ -1727,6 +1730,12 @@ public final class DefaultSfxGuide implements SfxGuide {
             case "sfx:oxidizing_generator" -> oxidizingGeneratorDisplayEntries(mode);
             default -> List.of();
         };
+    }
+
+    private boolean usesSpecialOnlyFunctionDisplay(String itemId) {
+        return "sf:electrified_crucible".equals(itemId)
+                || "sf:electrified_crucible_2".equals(itemId)
+                || "sf:electrified_crucible_3".equals(itemId);
     }
 
     private List<DisplayEntry> autoAnvilDisplayEntries(GuideMode mode) {
@@ -2209,7 +2218,9 @@ public final class DefaultSfxGuide implements SfxGuide {
                 SfxRecipeSlot.vanilla(Material.OAK_LEAVES, 16),
                 SfxRecipeSlot.vanilla(Material.BLACKSTONE, 8),
                 SfxRecipeSlot.vanilla(Material.BASALT, 12),
-                SfxRecipeSlot.vanilla(Material.COBBLED_DEEPSLATE, 12));
+                SfxRecipeSlot.vanilla(Material.COBBLED_DEEPSLATE, 12),
+                SfxRecipeSlot.vanilla(Material.DEEPSLATE, 12),
+                SfxRecipeSlot.vanilla(Material.TUFF, 12));
         List<DisplayEntry> entries = new ArrayList<>();
         for (int i = 0; i < inputs.size(); i++) {
             boolean water = i == 5;
