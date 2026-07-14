@@ -4166,7 +4166,7 @@ guide:
         input:
           lore: <gray>放入剪刀，并在范围内寻找未剪毛的成年羊。</gray>
         output:
-          lore: <gray>输出对应颜色的羊毛，并返还剪刀。</gray>
+          lore: <gray>输出对应颜色的羊毛，并返还损耗后的剪刀。</gray>
       produce-honey-bottle:
         label: 自动装蜂蜜
         input:
@@ -4178,13 +4178,13 @@ guide:
         input:
           lore: <gray>放入剪刀，并在范围内寻找满蜂蜜的蜂箱或蜂巢。</gray>
         output:
-          lore: <gray>输出蜜脾，并返还剪刀。</gray>
+          lore: <gray>输出蜜脾，并返还损耗后的剪刀。</gray>
       produce-armadillo-scute:
         label: 自动刷犰狳鳞甲
         input:
           lore: <gray>放入刷子，并在范围内寻找犰狳。</gray>
         output:
-          lore: <gray>输出犰狳鳞甲，并返还刷子。</gray>
+          lore: <gray>输出犰狳鳞甲，并返还损耗后的刷子。</gray>
       auto-breeder:
         label: 自动繁殖
         input:

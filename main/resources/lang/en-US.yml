@@ -260,7 +260,7 @@ guide:
         input:
           lore: <gray>Insert shears and keep an unsheared adult sheep nearby.</gray>
         output:
-          lore: <gray>Outputs matching wool and returns the shears.</gray>
+          lore: <gray>Outputs matching wool and returns the damaged shears.</gray>
       produce-honey-bottle:
         label: Automatic Honey Bottling
         input:
@@ -272,13 +272,13 @@ guide:
         input:
           lore: <gray>Insert shears and keep a full beehive or bee nest nearby.</gray>
         output:
-          lore: <gray>Outputs honeycomb and returns the shears.</gray>
+          lore: <gray>Outputs honeycomb and returns the damaged shears.</gray>
       produce-armadillo-scute:
         label: Automatic Armadillo Brushing
         input:
           lore: <gray>Insert a brush and keep an armadillo nearby.</gray>
         output:
-          lore: <gray>Outputs an armadillo scute and returns the brush.</gray>
+          lore: <gray>Outputs an armadillo scute and returns the damaged brush.</gray>
       auto-breeder:
         label: Automatic Breeding
         input:
