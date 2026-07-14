@@ -511,6 +511,8 @@ final class SfxAreaElectricMachineProviders {
         }
         int slot = state.activeInputSlot();
         if (slot < 0 || slot >= state.inputCapacity() || state.input(slot) != null) {
+            state.reservedInputs(List.of());
+            state.activeOutputs(List.of());
             return;
         }
         Material expected = expectedTool(action);
@@ -518,9 +520,12 @@ final class SfxAreaElectricMachineProviders {
             if (isExpectedTool(reserved, expected)) {
                 state.input(slot, reserved);
                 state.reservedInputs(List.of());
+                state.activeOutputs(List.of());
                 return;
             }
         }
+        state.reservedInputs(List.of());
+        state.activeOutputs(List.of());
     }
 
     private static SfxElectricMachineTickResult continueProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
