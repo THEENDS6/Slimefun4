@@ -8,7 +8,7 @@ plugins {
 }
 
 group = 'cc.theends6'
-version = 'SFX-20260524c1'
+version = 'SFX-20260714a1'
 
 description = 'SlimeFunX restored single-module workspace.'
 
@@ -30,10 +30,29 @@ ext {
     slimeEasyCompleteSourceZipName = 'SlimeEasy-sieve-animation-complete-source.zip'
     slimeEasyJarName = 'SlimeEasy.jar'
     slimeEasyGradleUserHomeName = 'build/slimeeasy/gradle-user-home'
+    justEnoughGuideDeliveryDirName = 'tools/just-enough-guide-classic'
+    justEnoughGuideSourceDirName = 'external/JustEnoughGuide-en-master'
+    justEnoughGuideCompleteSourceZipName = 'JustEnoughGuide-en-master-source.zip'
+    justEnoughGuideBuiltJarName = 'JustEnoughGuide vEN-22.jar'
+    justEnoughGuideRuntimeJarName = 'JustEnoughGuide.jar'
     foliaRuntimeJarName = 'folia-1.21.8-6.jar'
     legacyRuntimeDirName = 'run-legacy-slimefun-1.21.8'
-    legacySlimefunDownloadUrl = 'https://github.com/rutwok-labs/SlimefunCore-V.4.0/releases/download/2647/SlimefunCore4-2647.jar'
-    legacySlimefunJarName = 'SlimefunCore4-2647.jar'
+    legacySlimefunDownloadUrl = 'https://builds.guizhanss.com/api/download/SlimefunGuguProject/Slimefun4/master/254'
+    legacySlimefunJarName = 'Slimefun-b79ae49-Beta.jar'
+    legacySlimefunSha256 = '485430f5f5365b75f87ecde909bd65ad9f6895d0d2be91e79dbbfc12adc66bc6'
+    guguJustEnoughGuideDownloadUrl = 'https://github.com/balugaq/JustEnoughGuide/releases/download/2.1.27/JustEnoughGuide.v2.1.27.jar'
+    guguJustEnoughGuideUpstreamJarName = 'JustEnoughGuide-2.1.27-upstream.jar'
+    guguJustEnoughGuideJarName = 'JustEnoughGuide.jar'
+    guguJustEnoughGuideSha256 = '6ca983a4f955db74d82b4c58adfc5d3e26a53e8d2e2a3c7b91cc768964bcc301'
+    guguHeavenDownloadUrl = 'https://repo1.maven.org/maven2/com/github/houbb/heaven/0.13.0/heaven-0.13.0.jar'
+    guguHeavenJarName = 'heaven-0.13.0.jar'
+    guguHeavenSha256 = '1f259aa14711f45467011e6f9fdd054f57f48e654938c6e81c6c3c8ee608ba97'
+    guguNlpCommonDownloadUrl = 'https://repo1.maven.org/maven2/com/github/houbb/nlp-common/0.0.5/nlp-common-0.0.5.jar'
+    guguNlpCommonJarName = 'nlp-common-0.0.5.jar'
+    guguNlpCommonSha256 = '50b0c3944e2fea5381db0d0e7b924a15424b6ed37104763a57e5d59b3b930d90'
+    guizhanLibPluginDownloadUrl = 'https://builds.guizhanss.com/api/download/ybw0014/GuizhanLibPlugin/master/62'
+    guizhanLibPluginJarName = 'GuizhanLibPlugin.jar'
+    guizhanLibPluginSha256 = '9ad7dd0fad8af984ec056f1e11dfad3afa71d4e766df6aa8d3a5487ba044dfa9'
     serverEncodingJvmArgs = [
             '-Dfile.encoding=UTF-8',
             '-Dstdout.encoding=UTF-8',
@@ -3459,6 +3478,123 @@ lang
     }
 }
 
+tasks.register('generateJustEnoughGuideClassicSource') {
+    group = 'just-enough-guide'
+    description = 'Regenerates the classic-Slimefun JustEnoughGuide en-master source tree from a pinned upstream commit.'
+    inputs.dir(layout.projectDirectory.dir(rootProject.ext.justEnoughGuideDeliveryDirName))
+    outputs.dir(layout.projectDirectory.dir(rootProject.ext.justEnoughGuideSourceDirName))
+    outputs.file(layout.buildDirectory.file("just-enough-guide/${rootProject.ext.justEnoughGuideCompleteSourceZipName}"))
+    doLast {
+        def deliveryDir = layout.projectDirectory.dir(rootProject.ext.justEnoughGuideDeliveryDirName).asFile
+        def generator = new File(deliveryDir, 'generate-source.py')
+        if (!generator.isFile()) {
+            throw new GradleException("Missing JustEnoughGuide source generator: ${generator}")
+        }
+
+        def outputZip = layout.buildDirectory.file("just-enough-guide/${rootProject.ext.justEnoughGuideCompleteSourceZipName}").get().asFile
+        outputZip.parentFile.mkdirs()
+        exec {
+            commandLine 'python', generator.absolutePath, '--output', outputZip.absolutePath
+        }
+
+        def externalDir = layout.projectDirectory.dir('external').asFile
+        def sourceDir = layout.projectDirectory.dir(rootProject.ext.justEnoughGuideSourceDirName).asFile
+        delete sourceDir
+        copy {
+            from zipTree(outputZip)
+            into externalDir
+        }
+    }
+}
+
+tasks.register('buildJustEnoughGuideClassic') {
+    group = 'just-enough-guide'
+    description = 'Builds the pinned JustEnoughGuide en-master source with Maven and Java 21.'
+    doLast {
+        def sourceDir = layout.projectDirectory.dir(rootProject.ext.justEnoughGuideSourceDirName).asFile
+        if (!new File(sourceDir, 'pom.xml').isFile()) {
+            throw new GradleException('Missing JustEnoughGuide source tree. Run generateJustEnoughGuideClassicSource first.')
+        }
+
+        def mavenHome = System.getenv('MAVEN_HOME')
+        def mavenCandidates = []
+        if (mavenHome != null && !mavenHome.isBlank()) {
+            mavenCandidates << file("${mavenHome}/bin/mvn.cmd")
+        }
+        mavenCandidates.addAll([
+                file('D:/MyApp/IDEA/IntelliJ IDEA 2025.3.3/plugins/maven/lib/maven3/bin/mvn.cmd'),
+                file('C:/Program Files/JetBrains/IntelliJ IDEA 2025.3/plugins/maven/lib/maven3/bin/mvn.cmd')
+        ])
+        def mavenCommand = mavenCandidates.find { it.isFile() }
+        if (mavenCommand == null) {
+            throw new GradleException('Maven was not found. Set MAVEN_HOME or install IntelliJ IDEA with bundled Maven.')
+        }
+
+        def java21Home = [
+                file('C:/Program Files/Java/jdk-21'),
+                file('D:/MyApp/java/jdk-21')
+        ].find { new File(it, 'bin/java.exe').isFile() }
+        if (java21Home == null) {
+            throw new GradleException('Java 21 is required because JEG en-master targets Java 16, which Java 25 no longer compiles.')
+        }
+
+        exec {
+            workingDir sourceDir
+            environment 'JAVA_HOME', java21Home.absolutePath
+            environment 'PATH', "${new File(java21Home, 'bin').absolutePath}${File.pathSeparator}${System.getenv('PATH')}"
+            commandLine mavenCommand.absolutePath, 'clean', 'package', '-DskipTests', '-B'
+        }
+
+        def builtJar = new File(sourceDir, "target/${rootProject.ext.justEnoughGuideBuiltJarName}")
+        if (!builtJar.isFile()) {
+            throw new GradleException("Missing JustEnoughGuide shaded jar: ${builtJar}")
+        }
+        def pluginDescriptor = zipTree(builtJar).matching { include 'plugin.yml' }.singleFile.getText(StandardCharsets.UTF_8.name())
+        if (!pluginDescriptor.contains('name: JustEnoughGuide')
+                || !pluginDescriptor.contains('version: EN-22')
+                || !pluginDescriptor.contains('  - Slimefun')) {
+            throw new GradleException("Unexpected plugin.yml in ${builtJar}")
+        }
+        if (zipTree(builtJar).matching {
+            include 'net/guizhanss/guizhanlib/minecraft/helper/inventory/ItemStackHelper.class'
+        }.files.size() != 1) {
+            throw new GradleException("Missing bundled GuizhanLib ItemStackHelper in ${builtJar}")
+        }
+        logger.lifecycle("Built and verified ${builtJar}")
+    }
+}
+
+tasks.register('deployJustEnoughGuideClassic') {
+    group = 'just-enough-guide'
+    description = 'Builds JustEnoughGuide en-master and deploys it to the classic Slimefun Paper 1.21.8 runtime.'
+    dependsOn 'buildJustEnoughGuideClassic', 'prepareLegacySlimefunRuntime'
+    doLast {
+        def sourceDir = layout.projectDirectory.dir(rootProject.ext.justEnoughGuideSourceDirName).asFile
+        def builtJar = new File(sourceDir, "target/${rootProject.ext.justEnoughGuideBuiltJarName}")
+        def pluginsDir = layout.projectDirectory.dir("${rootProject.ext.legacyRuntimeDirName}/plugins").asFile
+        def slimefunJar = pluginsDir.listFiles()?.find {
+            it.isFile() && it.name.toLowerCase(Locale.ROOT).startsWith('slimefun') && it.name.endsWith('.jar')
+        }
+        if (slimefunJar == null) {
+            throw new GradleException("Classic Slimefun is not installed under ${pluginsDir}. Run deployLegacySlimefunRuntime first.")
+        }
+
+        pluginsDir.listFiles()?.findAll {
+            it.isFile() && it.name.toLowerCase(Locale.ROOT).startsWith('justenoughguide')
+        }?.each { oldJar ->
+            if (oldJar.name != rootProject.ext.justEnoughGuideRuntimeJarName) {
+                oldJar.delete()
+            }
+        }
+        copy {
+            from builtJar
+            into pluginsDir
+            rename { rootProject.ext.justEnoughGuideRuntimeJarName }
+        }
+        logger.lifecycle("Deployed ${builtJar.name} as ${new File(pluginsDir, rootProject.ext.justEnoughGuideRuntimeJarName)}")
+    }
+}
+
 tasks.register('deployToPaperRuntime', Copy) {
     group = 'deployment'
     description = 'Builds the plugin and copies it to run-paper-1.21.8/plugins.'
@@ -3830,201 +3966,329 @@ tasks.register('deployToFoliaRuntime', Copy) {
 
 tasks.register('fetchLegacySlimefun') {
     group = 'deployment'
-    description = 'Downloads the classic Slimefun4-compatible 1.21.x jar used by the legacy runtime.'
+    description = 'Downloads and verifies SlimefunGuguProject Build 254 for the Paper 1.21.8 test runtime.'
     def outputFile = layout.buildDirectory.file("legacy-runtime/${rootProject.ext.legacySlimefunJarName}")
     outputs.file(outputFile)
     doLast {
         def target = outputFile.get().asFile
         target.parentFile.mkdirs()
-        if (target.exists() && target.length() > 0L) {
-            logger.lifecycle("Using cached legacy Slimefun jar: ${target}")
-            return
+        if (!target.exists() || target.length() == 0L) {
+            logger.lifecycle("Downloading SlimefunGuguProject Build 254 from ${rootProject.ext.legacySlimefunDownloadUrl}")
+            new URL(rootProject.ext.legacySlimefunDownloadUrl).withInputStream { input ->
+                target.withOutputStream { output -> output << input }
+            }
         }
 
-        logger.lifecycle("Downloading legacy Slimefun from ${rootProject.ext.legacySlimefunDownloadUrl}")
-        new URL(rootProject.ext.legacySlimefunDownloadUrl).withInputStream { input ->
-            target.withOutputStream { output -> output << input }
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        target.withInputStream { input ->
+            byte[] buffer = new byte[1024 * 1024]
+            int count
+            while ((count = input.read(buffer)) >= 0) {
+                if (count > 0) {
+                    digest.update(buffer, 0, count)
+                }
+            }
         }
+        def actual = digest.digest().encodeHex().toString()
+        if (actual != rootProject.ext.legacySlimefunSha256) {
+            target.delete()
+            throw new GradleException("Slimefun Build 254 SHA-256 mismatch: expected ${rootProject.ext.legacySlimefunSha256}, got ${actual}")
+        }
+        logger.lifecycle("Verified SlimefunGuguProject Build 254: ${target}")
     }
 }
 
-tasks.register('prepareLegacySlimefunRuntime') {
+tasks.register('fetchGuguSlimefunCompanions') {
     group = 'deployment'
-    description = 'Prepares a dedicated Paper 1.21.8 runtime directory for classic Slimefun.'
-    dependsOn 'prepareRuntimeDirs'
+    description = 'Downloads and verifies JEG 2.1.27, its missing runtime libraries, and GuizhanLibPlugin Build 62.'
+    def jegOutput = layout.buildDirectory.file("legacy-runtime/${rootProject.ext.guguJustEnoughGuideUpstreamJarName}")
+    def heavenOutput = layout.buildDirectory.file("legacy-runtime/${rootProject.ext.guguHeavenJarName}")
+    def nlpOutput = layout.buildDirectory.file("legacy-runtime/${rootProject.ext.guguNlpCommonJarName}")
+    def libOutput = layout.buildDirectory.file("legacy-runtime/${rootProject.ext.guizhanLibPluginJarName}")
+    outputs.files(jegOutput, heavenOutput, nlpOutput, libOutput)
     doLast {
-        def sourceDir = layout.projectDirectory.dir('run-paper-1.21.8').asFile
-        def targetDir = layout.projectDirectory.dir(rootProject.ext.legacyRuntimeDirName).asFile
-        def sourcePaperJar = new File(sourceDir, rootProject.ext.paperRuntimeJarName)
-        if (!sourcePaperJar.exists()) {
-            throw new GradleException("Missing Paper runtime jar: ${sourcePaperJar}. Prepare run-paper-1.21.8 first.")
-        }
-
-        copy {
-            from sourcePaperJar
-            into targetDir
-        }
-
-        [
-                'eula.txt',
-                'server.properties',
-                'ops.json',
-                'bukkit.yml',
-                'spigot.yml',
-                'commands.yml',
-                'help.yml',
-                'permissions.yml'
-        ].each { fileName ->
-            def sourceFile = new File(sourceDir, fileName)
-            def targetFile = new File(targetDir, fileName)
-            if (sourceFile.exists() && !targetFile.exists()) {
-                copy {
-                    from sourceFile
-                    into targetDir
+        def downloadVerified = { String label, String url, String expectedSha256, File target ->
+            target.parentFile.mkdirs()
+            if (!target.exists() || target.length() == 0L) {
+                logger.lifecycle("Downloading ${label} from ${url}")
+                new URL(url).withInputStream { input ->
+                    target.withOutputStream { output -> output << input }
                 }
             }
+
+            def digest = java.security.MessageDigest.getInstance('SHA-256')
+            target.withInputStream { input ->
+                byte[] buffer = new byte[1024 * 1024]
+                int count
+                while ((count = input.read(buffer)) >= 0) {
+                    if (count > 0) {
+                        digest.update(buffer, 0, count)
+                    }
+                }
+            }
+            def actual = digest.digest().encodeHex().toString()
+            if (actual != expectedSha256) {
+                target.delete()
+                throw new GradleException("${label} SHA-256 mismatch: expected ${expectedSha256}, got ${actual}")
+            }
+            logger.lifecycle("Verified ${label}: ${target}")
         }
 
-        new File(targetDir, 'plugins').mkdirs()
-        new File(targetDir, 'logs').mkdirs()
+        downloadVerified(
+                'JustEnoughGuide 2.1.27',
+                rootProject.ext.guguJustEnoughGuideDownloadUrl,
+                rootProject.ext.guguJustEnoughGuideSha256,
+                jegOutput.get().asFile)
+        downloadVerified(
+                'heaven 0.13.0',
+                rootProject.ext.guguHeavenDownloadUrl,
+                rootProject.ext.guguHeavenSha256,
+                heavenOutput.get().asFile)
+        downloadVerified(
+                'nlp-common 0.0.5',
+                rootProject.ext.guguNlpCommonDownloadUrl,
+                rootProject.ext.guguNlpCommonSha256,
+                nlpOutput.get().asFile)
+        downloadVerified(
+                'GuizhanLibPlugin Build 62',
+                rootProject.ext.guizhanLibPluginDownloadUrl,
+                rootProject.ext.guizhanLibPluginSha256,
+                libOutput.get().asFile)
     }
 }
 
-tasks.register('deployLegacySlimefunRuntime', Copy) {
-    group = 'deployment'
-    description = 'Downloads a classic Slimefun4-compatible 1.21.x jar, deploys it to the legacy Paper runtime, and removes SlimeFunX from that runtime.'
-    dependsOn 'fetchLegacySlimefun', 'prepareLegacySlimefunRuntime'
-    from(layout.buildDirectory.file("legacy-runtime/${rootProject.ext.legacySlimefunJarName}"))
-    into(layout.projectDirectory.dir("${rootProject.ext.legacyRuntimeDirName}/plugins"))
-    rename { rootProject.ext.legacySlimefunJarName }
-    doLast {
-        def pluginsDir = layout.projectDirectory.dir("${rootProject.ext.legacyRuntimeDirName}/plugins").asFile
-        pluginsDir.listFiles()?.findAll { it.isFile() && it.name.toLowerCase(Locale.ROOT).startsWith('slimefun') && it.name != rootProject.ext.legacySlimefunJarName }?.each { jarFile ->
-            jarFile.delete()
-        }
+tasks.register('prepareGuguJustEnoughGuideRuntimeJar', Jar) {
+    group = 'just-enough-guide'
+    description = 'Adds the two transitive libraries omitted by JEG 2.1.27 runtime loading to its deployable jar.'
+    dependsOn 'fetchGuguSlimefunCompanions'
+    archiveFileName = rootProject.ext.guguJustEnoughGuideJarName
+    destinationDirectory = layout.buildDirectory.dir('legacy-runtime/patched')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude 'META-INF
 
-        def sfxJar = new File(pluginsDir, rootProject.ext.pluginJarName)
-        if (sfxJar.exists()) {
-            sfxJar.delete()
-        }
 
-        def sfxDataDir = new File(pluginsDir, 'SlimeFunX')
-        if (sfxDataDir.exists()) {
-            delete(sfxDataDir)
-        }
-    }
-}
 
-def preferredJavaExecutable = {
-    def java21 = file('C:/Program Files/Java/jdk-21/bin/java.exe')
-    java21.exists() ? java21.absolutePath : 'java'
-}
 
-def preferredJava25Executable = {
-    def java25Candidates = [
-            file('D:/MyApp/java/jdk-25/bin/java.exe'),
-            file('C:/Program Files/Java/jdk-25/bin/java.exe'),
-            file('C:/Program Files/Java/jdk-25.0.1/bin/java.exe'),
-            file('C:/Program Files/Java/jdk-25.0.2/bin/java.exe')
-    ]
-    def java25 = java25Candidates.find { it.exists() }
-    java25 != null ? java25.absolutePath : 'java'
-}
 
-tasks.register('runPaper') {
-    group = 'application'
-    description = 'Builds the plugin, deploys it to the Paper runtime, and starts Paper 1.21.8.'
-    dependsOn 'ensurePaperRuntimeTestConfig', 'deployToPaperRuntime'
-    doLast {
-        def workingDirFile = layout.projectDirectory.dir('run-paper-1.21.8').asFile
-        def command = [preferredJavaExecutable()]
-        command.addAll(rootProject.ext.serverEncodingJvmArgs)
-        command.addAll(['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui'])
 
-        logger.lifecycle('Starting Paper 1.21.8 with heartbeat output to avoid idle timeout false positives.')
 
-        def process = new ProcessBuilder(command)
-                .directory(workingDirFile)
-                .redirectErrorStream(true)
-                .start()
 
-        def inputThread = Thread.startDaemon('runPaper-input-forwarder') {
-            def processInput = process.outputStream
-            try {
-                byte[] buffer = new byte[1024]
-                int read
-                while (process.isAlive() && (read = System.in.read(buffer)) != -1) {
-                    processInput.write(buffer, 0, read)
-                    processInput.flush()
-                }
-            } catch (IOException ignored) {
-                // Ignore stdin forwarding errors during shutdown.
-            } finally {
-                try {
-                    processInput.close()
-                } catch (IOException ignored) {
-                    // Ignore close failure during shutdown.
-                }
-            }
-        }
 
-        def forwardThread = Thread.startDaemon('runPaper-output-forwarder') {
-            process.inputStream.withReader(StandardCharsets.UTF_8.name()) { reader ->
-                String line
-                while ((line = reader.readLine()) != null) {
-                    println line
-                }
-            }
-        }
 
-        try {
-            while (process.isAlive()) {
-                if (!process.waitFor(30, TimeUnit.SECONDS)) {
-                    logger.lifecycle('[runPaper] still running...')
-                }
-            }
-            inputThread.join(1000)
-            forwardThread.join(1000)
-        } finally {
-            if (process.isAlive()) {
-                process.destroy()
-            }
-        }
 
-        def exitCode = process.exitValue()
-        if (exitCode != 0) {
-            throw new GradleException("Paper 1.21.8 exited with code ${exitCode}.")
-        }
-    }
-}
 
-tasks.register('runPaper261', Exec) {
-    group = 'application'
-    description = 'Builds the plugin, deploys it to the Paper 26.1 runtime, and starts Paper 26.1 using Java 25 when available.'
-    dependsOn 'deployToPaper261Runtime'
-    workingDir layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName).asFile
-    executable preferredJava25Executable()
-    standardInput = System.in
-    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paper261RuntimeJarName, 'nogui']
-}
 
-tasks.register('runFolia', Exec) {
-    group = 'application'
-    description = 'Builds the plugin, deploys it to the Folia runtime, and starts Folia 1.21.8.'
-    dependsOn 'deployToFoliaRuntime'
-    workingDir layout.projectDirectory.dir('run-folia-1.21.8').asFile
-    executable preferredJavaExecutable()
-    standardInput = System.in
-    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.foliaRuntimeJarName, 'nogui']
-}
 
-tasks.register('runLegacySlimefun', Exec) {
-    group = 'application'
-    description = 'Deploys a classic Slimefun4-compatible plugin to a dedicated Paper 1.21.8 runtime and starts it.'
-    dependsOn 'deployLegacySlimefunRuntime'
-    workingDir layout.projectDirectory.dir(rootProject.ext.legacyRuntimeDirName).asFile
-    executable preferredJavaExecutable()
-    standardInput = System.in
-    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui']
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
