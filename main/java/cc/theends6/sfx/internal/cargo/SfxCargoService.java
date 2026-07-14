@@ -128,6 +128,8 @@ public final class SfxCargoService implements Listener {
     private volatile long cargoStateRevision;
     private final Map<UUID, UUID> visualizers = new ConcurrentHashMap<>();
     private final Map<UUID, CargoTransferStats> managerStats = new ConcurrentHashMap<>();
+    private final Map<UUID, SfxCargoEndpoint.TransientInventory> transientMachineInventories = new ConcurrentHashMap<>();
+    private final Set<UUID> pendingTransientInventoryClears = ConcurrentHashMap.newKeySet();
     private volatile boolean running;
 
     public SfxCargoService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxVirtualContainerService virtualContainers, SfxFloatingTextDisplayService floatingText, SfxElectricMachineService electricMachines, SfxMachineRuntimeEngine machineRuntime) {
@@ -478,6 +480,8 @@ public final class SfxCargoService implements Listener {
         dropPluginBlock(block, typeId);
         states.remove(instanceId);
         dirtyStates.remove(instanceId);
+        transientMachineInventories.remove(instanceId);
+        pendingTransientInventoryClears.remove(instanceId);
         blockData.unregisterAt(block.getLocation());
         scheduleTopologyRefresh();
     }
@@ -500,6 +504,8 @@ public final class SfxCargoService implements Listener {
         runtimeNetworks.clear();
         visualizers.clear();
         managerStats.clear();
+        transientMachineInventories.clear();
+        pendingTransientInventoryClears.clear();
     }
 
     private void bootstrapLoadedStates() {
@@ -547,6 +553,7 @@ public final class SfxCargoService implements Listener {
 
     private void tickCargo() {
         virtualContainers.hydrateExternalBeforeLogic();
+        clearPendingTransientMachineInventories();
         topology.rebuildIfStale();
         updateManagerDisplays();
         for (SfxTopologyComponent component : topology.components()) {
@@ -929,7 +936,7 @@ public final class SfxCargoService implements Listener {
 
     private SfxCargoEndpoint resolveOutputEndpoint(SfxBlockInstanceRecord node, SfxCargoNodeState state, SfxVirtualContainer sourceContainer, Map<SfxCargoEndpointCacheKey, Optional<SfxCargoEndpoint>> endpointCache) {
         SfxCargoEndpoint endpoint = resolveEndpointAt(node, state.attachedFace, true, endpointCache);
-        if (endpoint != null && (endpoint.trash() || endpoint.container() != sourceContainer)) {
+        if (endpoint != null && endpoint.container() != sourceContainer) {
             return endpoint;
         }
         for (BlockFace face : List.of(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST)) {
@@ -937,7 +944,7 @@ public final class SfxCargoService implements Listener {
                 continue;
             }
             endpoint = resolveEndpointAt(node, face, true, endpointCache);
-            if (endpoint != null && (endpoint.trash() || endpoint.container() != sourceContainer)) {
+            if (endpoint != null && endpoint.container() != sourceContainer) {
                 state.attachedFace = face;
                 persistState(node.instanceId(), state);
                 return endpoint;
@@ -982,7 +989,7 @@ public final class SfxCargoService implements Listener {
             if (targetInstance != null) {
                 SfxCargoComponentDefinition targetDefinition = definitions.get(targetInstance.typeId());
                 if (targetDefinition != null && targetDefinition.type() == SfxCargoComponentType.TRASH_CAN && outputSide) {
-                    endpoint = trashEndpoint();
+                    endpoint = transientMachineInventoryEndpoint(targetInstance.instanceId());
                 } else if (electricMachines.supportsType(targetInstance.typeId())) {
                     endpoint = electricMachineEndpoint(targetInstance.instanceId(), outputSide);
                 }
@@ -1561,12 +1568,27 @@ public final class SfxCargoService implements Listener {
         return SfxCargoEndpoint.container(virtualContainers, electricMachines, container);
     }
 
-    private SfxCargoEndpoint trashEndpoint() {
-        return SfxCargoEndpoint.trash(virtualContainers, electricMachines);
+    private SfxCargoEndpoint transientMachineInventoryEndpoint(UUID instanceId) {
+        SfxCargoEndpoint.TransientInventory inventory = transientMachineInventories.computeIfAbsent(instanceId, id ->
+                new SfxCargoEndpoint.TransientInventory(() -> pendingTransientInventoryClears.add(id)));
+        return SfxCargoEndpoint.transientInventory(virtualContainers, electricMachines, instanceId.toString(), inventory);
     }
 
     private SfxCargoEndpoint electricMachineEndpoint(UUID instanceId, boolean insertIntoInputs) {
         return SfxCargoEndpoint.electric(virtualContainers, electricMachines, instanceId, insertIntoInputs);
+    }
+
+    private void clearPendingTransientMachineInventories() {
+        if (pendingTransientInventoryClears.isEmpty()) {
+            return;
+        }
+        for (UUID instanceId : Set.copyOf(pendingTransientInventoryClears)) {
+            pendingTransientInventoryClears.remove(instanceId);
+            SfxCargoEndpoint.TransientInventory inventory = transientMachineInventories.get(instanceId);
+            if (inventory != null) {
+                inventory.clear();
+            }
+        }
     }
 
 }

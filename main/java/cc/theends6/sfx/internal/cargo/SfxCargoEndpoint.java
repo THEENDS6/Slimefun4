@@ -7,6 +7,7 @@ import cc.theends6.sfx.internal.inventory.SfxStorageKey;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainer;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService.PlannedStack;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -18,7 +19,8 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
     private final SfxVirtualContainer container;
     private final UUID electricMachineId;
     private final boolean electricInputTarget;
-    private final boolean trash;
+    private final TransientInventory transientInventory;
+    private final String transientStorageKey;
 
     private SfxCargoEndpoint(
             SfxVirtualContainerService virtualContainers,
@@ -26,35 +28,32 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
             SfxVirtualContainer container,
             UUID electricMachineId,
             boolean electricInputTarget,
-            boolean trash
+            TransientInventory transientInventory,
+            String transientStorageKey
     ) {
         this.virtualContainers = virtualContainers;
         this.electricMachines = electricMachines;
         this.container = container;
         this.electricMachineId = electricMachineId;
         this.electricInputTarget = electricInputTarget;
-        this.trash = trash;
+        this.transientInventory = transientInventory;
+        this.transientStorageKey = transientStorageKey;
     }
 
     static SfxCargoEndpoint container(SfxVirtualContainerService virtualContainers, SfxElectricMachineService electricMachines, SfxVirtualContainer container) {
-        return new SfxCargoEndpoint(virtualContainers, electricMachines, container, null, false, false);
+        return new SfxCargoEndpoint(virtualContainers, electricMachines, container, null, false, null, null);
     }
 
-    static SfxCargoEndpoint trash(SfxVirtualContainerService virtualContainers, SfxElectricMachineService electricMachines) {
-        return new SfxCargoEndpoint(virtualContainers, electricMachines, null, null, false, true);
+    static SfxCargoEndpoint transientInventory(SfxVirtualContainerService virtualContainers, SfxElectricMachineService electricMachines, String storageKey, TransientInventory inventory) {
+        return new SfxCargoEndpoint(virtualContainers, electricMachines, null, null, false, inventory, storageKey);
     }
 
     static SfxCargoEndpoint electric(SfxVirtualContainerService virtualContainers, SfxElectricMachineService electricMachines, UUID instanceId, boolean insertIntoInputs) {
-        return new SfxCargoEndpoint(virtualContainers, electricMachines, null, instanceId, insertIntoInputs, false);
+        return new SfxCargoEndpoint(virtualContainers, electricMachines, null, instanceId, insertIntoInputs, null, null);
     }
 
     boolean canExtract() {
         return container != null || (electricMachineId != null && !electricInputTarget);
-    }
-
-
-    boolean trash() {
-        return trash;
     }
 
     SfxVirtualContainer container() {
@@ -73,8 +72,8 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
 
     @Override
     public SfxStorageKey storageKey() {
-        if (trash) {
-            return new SfxStorageKey("trash");
+        if (transientInventory != null) {
+            return new SfxStorageKey("transient:" + transientStorageKey);
         }
         if (container != null) {
             return new SfxStorageKey("container:" + container.key());
@@ -87,7 +86,7 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
 
     @Override
     public SfxInventoryAccessState accessState() {
-        return trash || container != null || electricMachineId != null
+        return transientInventory != null || container != null || electricMachineId != null
                 ? SfxInventoryAccessState.READY
                 : SfxInventoryAccessState.UNAVAILABLE;
     }
@@ -143,8 +142,8 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
     }
 
     int capacityFor(ItemStack stack, boolean smartFill) {
-        if (trash) {
-            return stack == null ? 0 : stack.getAmount();
+        if (transientInventory != null) {
+            return transientInventory.capacityFor(stack);
         }
         if (container != null) {
             return virtualContainers.capacityFor(container, stack, smartFill);
@@ -158,8 +157,8 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
     }
 
     int capacityForSingleSlot(ItemStack stack, boolean smartFill) {
-        if (trash) {
-            return stack == null ? 0 : stack.getAmount();
+        if (transientInventory != null) {
+            return transientInventory.capacityFor(stack);
         }
         if (container != null) {
             return virtualContainers.capacityForSingleSlot(container, stack, smartFill);
@@ -174,8 +173,11 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
 
     @Override
     public ItemStack insert(ItemStack stack, boolean smartFill) {
-        if (trash || isEmpty(stack)) {
+        if (isEmpty(stack)) {
             return null;
+        }
+        if (transientInventory != null) {
+            return transientInventory.insert(stack);
         }
         if (container != null) {
             return virtualContainers.insert(container, stack, smartFill);
@@ -191,6 +193,9 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
 
     @Override
     public Object snapshot() {
+        if (transientInventory != null) {
+            return transientInventory.snapshot();
+        }
         if (container != null) {
             return container.snapshot();
         }
@@ -199,6 +204,10 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
 
     @Override
     public void restoreSnapshot(Object snapshot) {
+        if (transientInventory != null) {
+            transientInventory.restoreSnapshot(snapshot);
+            return;
+        }
         if (container != null && snapshot instanceof ItemStack[] contents) {
             container.setContents(contents);
         }
@@ -206,8 +215,11 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
 
     @Override
     public ItemStack insertSingleSlot(ItemStack stack, boolean smartFill) {
-        if (trash || isEmpty(stack)) {
+        if (isEmpty(stack)) {
             return null;
+        }
+        if (transientInventory != null) {
+            return transientInventory.insert(stack);
         }
         if (container != null) {
             return virtualContainers.insertSingleSlot(container, stack, smartFill);
@@ -222,5 +234,53 @@ final class SfxCargoEndpoint implements SfxStorageEndpoint {
 
     private boolean isEmpty(ItemStack stack) {
         return stack == null || stack.getType().isAir() || stack.getAmount() <= 0;
+    }
+
+    static final class TransientInventory {
+        private final Runnable onInsert;
+        private final List<ItemStack> pending = new ArrayList<>();
+
+        TransientInventory(Runnable onInsert) {
+            this.onInsert = onInsert;
+        }
+
+        synchronized int capacityFor(ItemStack stack) {
+            return stack == null || stack.getType().isAir() ? 0 : Math.max(0, stack.getAmount());
+        }
+
+        synchronized ItemStack insert(ItemStack stack) {
+            if (stack == null || stack.getType().isAir() || stack.getAmount() <= 0) {
+                return null;
+            }
+            pending.add(stack.clone());
+            if (onInsert != null) {
+                onInsert.run();
+            }
+            return null;
+        }
+
+        synchronized Object snapshot() {
+            ArrayList<ItemStack> copy = new ArrayList<>(pending.size());
+            for (ItemStack stack : pending) {
+                copy.add(stack == null ? null : stack.clone());
+            }
+            return copy;
+        }
+
+        synchronized void restoreSnapshot(Object snapshot) {
+            if (!(snapshot instanceof List<?> list)) {
+                return;
+            }
+            pending.clear();
+            for (Object entry : list) {
+                if (entry instanceof ItemStack stack) {
+                    pending.add(stack.clone());
+                }
+            }
+        }
+
+        synchronized void clear() {
+            pending.clear();
+        }
     }
 }
