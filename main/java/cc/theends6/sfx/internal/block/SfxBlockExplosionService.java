@@ -70,6 +70,10 @@ public final class SfxBlockExplosionService {
         for (Block block : targets) {
             SfxAnchorRecord anchor = blockData.findAnchor(block.getLocation()).orElse(null);
             SfxBlockInstanceRecord instance = anchor == null ? null : blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (anchor != null && !witherExplosion) {
+                blocks.remove(block);
+                continue;
+            }
             if (instance != null && isExplosionProtected(instance.typeId(), witherExplosion)) {
                 blocks.remove(block);
                 continue;

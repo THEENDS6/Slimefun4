@@ -260,7 +260,9 @@ public final class SfxAndroidService implements Listener {
                 return;
             }
             try {
-                tickAndroids(androidTick.incrementAndGet());
+                if (!runtime.isGameTickFrozen()) {
+                    tickAndroids(androidTick.incrementAndGet());
+                }
             } catch (Throwable throwable) {
                 plugin.getLogger().warning("Android scheduler failed: " + throwable.getMessage());
             } finally {
@@ -290,7 +292,9 @@ public final class SfxAndroidService implements Listener {
                 return;
             }
             try {
-                burnActiveFuelSeconds();
+                if (!runtime.isGameTickFrozen()) {
+                    burnActiveFuelSeconds();
+                }
             } catch (Throwable throwable) {
                 plugin.getLogger().warning("Android fuel scheduler failed: " + throwable.getMessage());
             } finally {

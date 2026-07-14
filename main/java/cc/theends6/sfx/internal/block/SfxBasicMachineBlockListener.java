@@ -602,6 +602,10 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private void completeComposter(Block block, ItemStack output) {
+        if (runtime.isGameTickFrozen()) {
+            runtime.executeAtLater(block.getLocation(), 1L, () -> completeComposter(block, output));
+            return;
+        }
         Optional<Inventory> outputChest = findOutputChestFor(block, output);
         Location dropLocation = block.getRelative(BlockFace.UP).getLocation().add(0.5, 0.5, 0.5);
         if (outputChest.isPresent()) {
@@ -614,6 +618,10 @@ public final class SfxBasicMachineBlockListener implements Listener {
 
     private void generateLiquid(SfxBlockAnchorKey anchorKey, UUID token, Block block, boolean water) {
         if (!isCrucibleProcessActive(anchorKey, token)) {
+            return;
+        }
+        if (runtime.isGameTickFrozen()) {
+            runtime.executeAtLater(block.getLocation(), 1L, () -> generateLiquid(anchorKey, token, block, water));
             return;
         }
         if (water && block.getWorld().getEnvironment() == World.Environment.NETHER
@@ -642,6 +650,10 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (!isCrucibleProcessActive(anchorKey, token)) {
             return;
         }
+        if (runtime.isGameTickFrozen()) {
+            runtime.executeAtLater(block.getLocation(), 1L, () -> addLiquidLevel(anchorKey, token, block, water));
+            return;
+        }
         Levelled levelled = (Levelled) block.getBlockData();
         int level = levelled.getLevel();
         if (level > 7) {
@@ -659,6 +671,10 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (!isCrucibleProcessActive(anchorKey, token)) {
             return;
         }
+        if (runtime.isGameTickFrozen()) {
+            runtime.executeAtLater(block.getLocation(), 1L, () -> placeLiquid(anchorKey, token, block, water));
+            return;
+        }
         if (block.getType().isAir()) {
             cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, instanceTypeAt(block.getLocation()), block, water ? Material.WATER : Material.LAVA, false, "basic", "placeLiquid");
         } else if (water && block.getBlockData() instanceof Waterlogged waterlogged) {
@@ -674,6 +690,10 @@ public final class SfxBasicMachineBlockListener implements Listener {
 
     private void runCruciblePostTask(SfxBlockAnchorKey anchorKey, UUID token, Block block, boolean water, int times) {
         if (!isCrucibleProcessActive(anchorKey, token)) {
+            return;
+        }
+        if (runtime.isGameTickFrozen()) {
+            runtime.executeAtLater(block.getLocation(), 1L, () -> runCruciblePostTask(anchorKey, token, block, water, times));
             return;
         }
         if (!(block.getBlockData() instanceof Levelled levelled)) {
@@ -864,6 +884,10 @@ public final class SfxBasicMachineBlockListener implements Listener {
     private void scheduleEnhancedFurnaceTick() {
         runtime.executeGlobalLater(1L, () -> {
             if (!furnaceTickerRunning) {
+                return;
+            }
+            if (runtime.isGameTickFrozen()) {
+                scheduleEnhancedFurnaceTick();
                 return;
             }
             long currentTick = ++furnaceTickCounter;

@@ -783,6 +783,10 @@ public final class SfxConfigurableMachineService implements Listener {
             if (!running) {
                 return;
             }
+            if (runtime.isGameTickFrozen()) {
+                scheduleTick();
+                return;
+            }
             tickCounter++;
             for (UUID instanceId : List.copyOf(activeInstances)) {
                 SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
