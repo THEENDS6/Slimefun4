@@ -28,7 +28,9 @@ final class SfxBasicMachineFrameworkBridge {
         return hasFuel ? SfxMachineStatus.IDLE : SfxMachineStatus.NO_INPUT;
     }
     private static SfxMachineDefinition furnace(String id) {
-        return cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(new SfxMachineDefinition(id, id, SfxMachineCategory.BASIC, List.of(0, 1), List.of(2), -1, 1))
+        return cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(
+                        new SfxMachineDefinition(id, id, SfxMachineCategory.BASIC, List.of(0, 1), List.of(2), -1, 1),
+                        "vanilla_furnace")
                 .toBuilder()
                 .build();
     }

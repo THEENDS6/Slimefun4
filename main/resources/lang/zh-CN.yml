@@ -1907,7 +1907,7 @@ items:
     name: '&7强化熔炉 &7- &eII'
     lore:
     - '&8⇨ &b处理速度：&f2x'
-    - '&8⇨ &6燃料效率：&f1x'
+    - '&8⇨ &6燃料效率：&f2x'
     - '&8⇨ &d时运等级：&f1x'
   sf.enhanced_furnace_3:
     name: '&7强化熔炉 &7- &eIII'
