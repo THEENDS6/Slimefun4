@@ -4161,6 +4161,30 @@ guide:
           lore: <gray>放入碗，并在范围内寻找成年哞菇。</gray>
         output:
           lore: <gray>输出蘑菇煲。</gray>
+      produce-wool:
+        label: 自动剪羊毛
+        input:
+          lore: <gray>放入剪刀，并在范围内寻找未剪毛的成年羊。</gray>
+        output:
+          lore: <gray>输出对应颜色的羊毛，并返还剪刀。</gray>
+      produce-honey-bottle:
+        label: 自动装蜂蜜
+        input:
+          lore: <gray>放入玻璃瓶，并在范围内寻找满蜂蜜的蜂箱或蜂巢。</gray>
+        output:
+          lore: <gray>输出蜂蜜瓶。</gray>
+      produce-honeycomb:
+        label: 自动剪蜜脾
+        input:
+          lore: <gray>放入剪刀，并在范围内寻找满蜂蜜的蜂箱或蜂巢。</gray>
+        output:
+          lore: <gray>输出蜜脾，并返还剪刀。</gray>
+      produce-armadillo-scute:
+        label: 自动刷犰狳鳞甲
+        input:
+          lore: <gray>放入刷子，并在范围内寻找犰狳。</gray>
+        output:
+          lore: <gray>输出犰狳鳞甲，并返还刷子。</gray>
       auto-breeder:
         label: 自动繁殖
         input:
@@ -4176,15 +4200,15 @@ guide:
       crop-growth:
         label: 作物生长
         input:
-          lore: <gray>消耗骨粉。</gray>
+          lore: <gray>消耗任意有机肥料。</gray>
         output:
           lore: <gray>加速范围内作物生长。</gray>
       tree-growth:
         label: 树木生长
         input:
-          lore: <gray>消耗骨粉。</gray>
+          lore: <gray>消耗任意有机肥料。</gray>
         output:
-          lore: <gray>对范围内树苗尝试施加骨粉效果。</gray>
+          lore: <gray>加速范围内树苗生长。</gray>
       xp-collector:
         label: 经验收集
         input:

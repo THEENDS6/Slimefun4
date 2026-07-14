@@ -26,6 +26,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Levelled;
+import org.bukkit.block.data.type.Beehive;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.Cow;
 import org.bukkit.entity.Entity;
@@ -35,6 +36,7 @@ import org.bukkit.entity.Goat;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.MushroomCow;
+import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Wither;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -532,6 +534,14 @@ final class SfxAreaElectricMachineProviders {
             ProduceStart start = switch (material) {
                 case BUCKET -> produceStartForAction(items, definition, state, location, slot, ProduceAction.MILK);
                 case BOWL -> produceStartForAction(items, definition, state, location, slot, ProduceAction.STEW);
+                case SHEARS -> {
+                    ProduceStart wool = produceStartForAction(items, definition, state, location, slot, ProduceAction.WOOL);
+                    yield wool.status() == ProduceStartStatus.READY || wool.status() == ProduceStartStatus.OUTPUT_FULL
+                            ? wool
+                            : produceStartForAction(items, definition, state, location, slot, ProduceAction.HONEYCOMB);
+                }
+                case GLASS_BOTTLE -> produceStartForAction(items, definition, state, location, slot, ProduceAction.HONEY_BOTTLE);
+                case BRUSH -> produceStartForAction(items, definition, state, location, slot, ProduceAction.ARMADILLO_SCUTE);
                 default -> ProduceStart.noTarget();
             };
             if (start.status() == ProduceStartStatus.READY || start.status() == ProduceStartStatus.OUTPUT_FULL) {
@@ -587,12 +597,98 @@ final class SfxAreaElectricMachineProviders {
                 Entity target = firstNearbyEntity(location, PRODUCE_RANGE, PRODUCE_RANGE, entity -> entity instanceof MushroomCow cow && cow.isAdult());
                 yield target == null ? null : new ProduceTarget(List.of(SfxElectricStack.vanilla(Material.MUSHROOM_STEW, 1)), () -> {});
             }
+            case WOOL -> {
+                Entity target = firstNearbyEntity(location, PRODUCE_RANGE, PRODUCE_RANGE, entity -> entity instanceof Sheep sheep && sheep.isAdult() && !sheep.isSheared());
+                if (!(target instanceof Sheep sheep)) {
+                    yield null;
+                }
+                Material wool = woolMaterial(sheep);
+                yield new ProduceTarget(List.of(
+                        SfxElectricStack.vanilla(wool, 1),
+                        SfxElectricStack.vanilla(Material.SHEARS, 1)
+                ), () -> sheep.setSheared(true));
+            }
+            case HONEY_BOTTLE -> {
+                Block hive = firstNearbyHoneyHive(location);
+                yield hive == null ? null : new ProduceTarget(List.of(SfxElectricStack.vanilla(Material.HONEY_BOTTLE, 1)),
+                        () -> drainHoney(hive));
+            }
+            case HONEYCOMB -> {
+                Block hive = firstNearbyHoneyHive(location);
+                yield hive == null ? null : new ProduceTarget(List.of(
+                        SfxElectricStack.vanilla(Material.HONEYCOMB, 3),
+                        SfxElectricStack.vanilla(Material.SHEARS, 1)
+                ), () -> drainHoney(hive));
+            }
+            case ARMADILLO_SCUTE -> {
+                Entity target = firstNearbyEntity(location, PRODUCE_RANGE, PRODUCE_RANGE,
+                        entity -> entity.getType() == EntityType.ARMADILLO);
+                yield target == null ? null : new ProduceTarget(List.of(
+                        SfxElectricStack.vanilla(Material.ARMADILLO_SCUTE, 1),
+                        SfxElectricStack.vanilla(Material.BRUSH, 1)
+                ), () -> {});
+            }
             default -> null;
         };
     }
 
     private static boolean isProduceTool(Material material) {
-        return material == Material.BUCKET || material == Material.BOWL;
+        return material == Material.BUCKET
+                || material == Material.BOWL
+                || material == Material.SHEARS
+                || material == Material.GLASS_BOTTLE
+                || material == Material.BRUSH;
+    }
+
+    private static Material woolMaterial(Sheep sheep) {
+        return switch (sheep.getColor()) {
+            case ORANGE -> Material.ORANGE_WOOL;
+            case MAGENTA -> Material.MAGENTA_WOOL;
+            case LIGHT_BLUE -> Material.LIGHT_BLUE_WOOL;
+            case YELLOW -> Material.YELLOW_WOOL;
+            case LIME -> Material.LIME_WOOL;
+            case PINK -> Material.PINK_WOOL;
+            case GRAY -> Material.GRAY_WOOL;
+            case LIGHT_GRAY -> Material.LIGHT_GRAY_WOOL;
+            case CYAN -> Material.CYAN_WOOL;
+            case PURPLE -> Material.PURPLE_WOOL;
+            case BLUE -> Material.BLUE_WOOL;
+            case BROWN -> Material.BROWN_WOOL;
+            case GREEN -> Material.GREEN_WOOL;
+            case RED -> Material.RED_WOOL;
+            case BLACK -> Material.BLACK_WOOL;
+            case WHITE -> Material.WHITE_WOOL;
+        };
+    }
+
+    private static Block firstNearbyHoneyHive(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return null;
+        }
+        Block center = location.getBlock();
+        int radius = PRODUCE_RANGE;
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+                for (int z = -radius; z <= radius; z++) {
+                    Block block = center.getRelative(x, y, z);
+                    if ((block.getType() == Material.BEEHIVE || block.getType() == Material.BEE_NEST)
+                            && block.getBlockData() instanceof Beehive hive
+                            && hive.getHoneyLevel() >= hive.getMaximumHoneyLevel()) {
+                        return block;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void drainHoney(Block hiveBlock) {
+        if (hiveBlock == null || !(hiveBlock.getBlockData() instanceof Beehive hive)) {
+            return;
+        }
+        hive.setHoneyLevel(0);
+        cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setBlockData(null, "sf:produce_collector",
+                hiveBlock, hive, false, "electric-area", "produce-collector");
     }
 
     private static boolean growCropWithBoneMealParticles(Block crop) {

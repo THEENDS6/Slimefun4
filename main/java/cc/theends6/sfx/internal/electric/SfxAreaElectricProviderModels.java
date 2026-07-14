@@ -71,7 +71,11 @@ enum ProduceStartStatus {
 
 enum ProduceAction {
     MILK("milk"),
-    STEW("stew");
+    STEW("stew"),
+    WOOL("wool"),
+    HONEY_BOTTLE("honey_bottle"),
+    HONEYCOMB("honeycomb"),
+    ARMADILLO_SCUTE("armadillo_scute");
 
     private final String key;
 

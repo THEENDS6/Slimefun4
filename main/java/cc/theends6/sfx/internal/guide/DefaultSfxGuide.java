@@ -1697,9 +1697,9 @@ public final class DefaultSfxGuide implements SfxGuide {
             case "sf:duct_tape" -> ductTapeDisplayEntries(mode);
             case "sf:produce_collector" -> produceCollectorDisplayEntries(mode);
             case "sf:auto_breeder" -> List.of(functionPair(Material.WHEAT, Material.COW_SPAWN_EGG, "auto-breeder", 300, mode));
-            case "sf:animal_growth_accelerator" -> List.of(functionPair(Material.WHEAT, Material.COW_SPAWN_EGG, "animal-growth", 300, mode));
-            case "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2" -> List.of(functionPair(Material.BONE_MEAL, Material.WHEAT, "crop-growth", 300, mode));
-            case "sf:tree_growth_accelerator" -> List.of(functionPair(Material.BONE_MEAL, Material.OAK_SAPLING, "tree-growth", 300, mode));
+            case "sf:animal_growth_accelerator" -> List.of(functionPair(SfxRecipeSlot.sfx("sf:organic_food"), SfxRecipeSlot.vanilla(Material.COW_SPAWN_EGG), "animal-growth", 300, mode));
+            case "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2" -> List.of(functionPair(SfxRecipeSlot.sfx("sf:fertilizer"), SfxRecipeSlot.vanilla(Material.WHEAT), "crop-growth", 300, mode));
+            case "sf:tree_growth_accelerator" -> List.of(functionPair(SfxRecipeSlot.sfx("sf:fertilizer"), SfxRecipeSlot.vanilla(Material.OAK_SAPLING), "tree-growth", 300, mode));
             case "sf:xp_collector" -> List.of(functionPair(Material.EXPERIENCE_BOTTLE, Material.EXPERIENCE_BOTTLE, "xp-collector", 300, mode));
             case "sf:fluid_pump" -> fluidPumpDisplayEntries(mode);
             case "sf:geo_miner" -> List.of(functionSingle(Material.DIAMOND_PICKAXE, "geo-miner", 300));
@@ -1750,7 +1750,11 @@ public final class DefaultSfxGuide implements SfxGuide {
     private List<DisplayEntry> produceCollectorDisplayEntries(GuideMode mode) {
         return List.of(
                 functionPair(Material.BUCKET, Material.MILK_BUCKET, "produce-milk", 300, mode),
-                functionPair(Material.BOWL, Material.MUSHROOM_STEW, "produce-stew", 310, mode));
+                functionPair(Material.BOWL, Material.MUSHROOM_STEW, "produce-stew", 310, mode),
+                functionPair(Material.SHEARS, Material.WHITE_WOOL, "produce-wool", 320, mode),
+                functionPair(Material.GLASS_BOTTLE, Material.HONEY_BOTTLE, "produce-honey-bottle", 330, mode),
+                functionPair(Material.SHEARS, Material.HONEYCOMB, "produce-honeycomb", 340, mode),
+                functionPair(Material.BRUSH, Material.ARMADILLO_SCUTE, "produce-armadillo-scute", 350, mode));
     }
 
     private List<DisplayEntry> fluidPumpDisplayEntries(GuideMode mode) {
@@ -1774,13 +1778,17 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private DisplayEntry functionPair(Material input, Material output, String key, int priority, GuideMode mode) {
+        return functionPair(SfxRecipeSlot.vanilla(input), SfxRecipeSlot.vanilla(output), key, priority, mode);
+    }
+
+    private DisplayEntry functionPair(SfxRecipeSlot input, SfxRecipeSlot output, String key, int priority, GuideMode mode) {
         return DisplayEntry.paired(
                 functionIcon(input, key + ".input"),
                 functionIcon(output, key + ".output"),
                 tr("guide.recipe.special." + key + ".label"),
                 priority,
-                handlerForSlot(SfxRecipeSlot.vanilla(input), mode),
-                handlerForSlot(SfxRecipeSlot.vanilla(output), mode),
+                handlerForSlot(input, mode),
+                handlerForSlot(output, mode),
                 DisplayEntryKind.MACHINE_RECIPE);
     }
 
