@@ -359,7 +359,9 @@ public final class SfxEnergyService implements Listener {
             if (!running) {
                 return;
             }
-            tickAllRegulators();
+            if (!runtime.isGameTickFrozen()) {
+                tickAllRegulators();
+            }
             scheduleTick();
         });
     }

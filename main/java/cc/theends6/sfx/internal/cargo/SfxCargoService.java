@@ -517,8 +517,10 @@ public final class SfxCargoService implements Listener {
             if (!running) {
                 return;
             }
-            tickCargo();
-            clearOpenTrashMenus();
+            if (!runtime.isGameTickFrozen()) {
+                tickCargo();
+                clearOpenTrashMenus();
+            }
             scheduleTick();
         });
     }

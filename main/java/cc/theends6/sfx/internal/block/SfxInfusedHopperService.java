@@ -153,8 +153,10 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
             if (!running) {
                 return;
             }
-            tickClock += baseInterval;
-            tickAll(tickClock);
+            if (!runtime.isGameTickFrozen()) {
+                tickClock += baseInterval;
+                tickAll(tickClock);
+            }
             scheduleTick();
         });
     }

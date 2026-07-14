@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import org.bukkit.Location;
+import org.bukkit.ServerTickManager;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -93,6 +94,20 @@ public final class PaperSfxRuntime implements SfxRuntime {
             return;
         }
         plugin.getServer().getAsyncScheduler().runNow(plugin, scheduledTask -> task.run());
+    }
+
+    @Override
+    public boolean isGameTickFrozen() {
+        try {
+            ServerTickManager tickManager = plugin.getServer().getServerTickManager();
+            return tickManager != null
+                    && tickManager.isFrozen()
+                    && !tickManager.isStepping()
+                    && !tickManager.isSprinting()
+                    && tickManager.getFrozenTicksToRun() <= 0;
+        } catch (LinkageError | UnsupportedOperationException exception) {
+            return false;
+        }
     }
 
     @Override

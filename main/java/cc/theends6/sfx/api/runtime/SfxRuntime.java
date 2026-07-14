@@ -23,10 +23,11 @@ public interface SfxRuntime {
 
     void executeAsync(Runnable task);
 
+    boolean isGameTickFrozen();
+
     boolean isOwnedByCurrentRegion(Location location);
 
     <T> T supplyAt(Location location, Supplier<T> supplier);
 
     <T> CompletableFuture<T> supplyAtAsync(Location location, Supplier<T> supplier);
 }
-

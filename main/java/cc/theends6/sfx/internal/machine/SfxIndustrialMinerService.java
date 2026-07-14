@@ -253,6 +253,10 @@ public final class SfxIndustrialMinerService implements Listener {
             if (!isActive(task)) {
                 return;
             }
+            if (runtime.isGameTickFrozen()) {
+                schedule(task, 1L, action);
+                return;
+            }
             action.run();
         });
     }
