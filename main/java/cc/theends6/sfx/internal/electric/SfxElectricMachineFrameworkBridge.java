@@ -21,7 +21,8 @@ final class SfxElectricMachineFrameworkBridge {
     static SfxMachineDefinition toFrameworkDefinition(SfxElectricMachineDefinition definition) {
         int statusSlot = definition.ui().statusSlot();
         SfxMachineDefinition frameworkDefinition = new SfxMachineDefinition(definition.id(), definition.id(), SfxMachineCategory.ELECTRIC, ints(definition.inputSlots()), ints(definition.outputSlots()), statusSlot, 1);
-        return cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(frameworkDefinition);
+        String profile = definition.recipeProvider().hasWorldAction() ? "electric_world_action" : null;
+        return cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles.apply(frameworkDefinition, profile);
     }
     static SfxMachineStatus status(SfxElectricMachineRenderStatus status) {
         if (status == null) return SfxMachineStatus.ERROR;
