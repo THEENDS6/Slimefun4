@@ -565,6 +565,16 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
 
     private static SfxElectricMachineTickResult advanceProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, boolean sfxBalance) {
         recoverLegacyReservedProduceTool(state);
+        ProduceAction activeAction = ProduceAction.fromKey(state.activeRecipeKey());
+        if (activeAction != null && activeAction.usesDurableTool() && !isExpectedTool(currentActiveInput(state), expectedTool(activeAction))) {
+            if (activeAction == ProduceAction.ARMADILLO_SCUTE) {
+                debugProduce("advanceProduce interrupted missing tool action=" + activeAction
+                        + " active=" + describeActiveState(state)
+                        + " input=" + describeStack(currentActiveInput(state)));
+            }
+            state.resetProgress();
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_INPUT, true);
+        }
         return advanceTimedAction(definition, state, () -> {
             ProduceAction action = ProduceAction.fromKey(state.activeRecipeKey());
             if (action == null) {
@@ -1028,7 +1038,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
             }
             return null;
         }
-        int appliedDamage = Math.max(1, damage);
+        int appliedDamage = rollDurabilityDamage(item, damage);
         int rawDamage = currentDamage + appliedDamage;
         boolean overDamaged = maxDurability > 0 && rawDamage >= maxDurability;
         if (overDamaged && !hasDurabilityProtection(item)) {
@@ -1052,6 +1062,21 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
                     + " protected=" + hasDurabilityProtection(item));
         }
         return new ToolDamageResult(SfxElectricStack.snapshot(item), overDamaged);
+    }
+
+    private static int rollDurabilityDamage(ItemStack item, int damage) {
+        int rolls = Math.max(1, damage);
+        int unbreaking = UNBREAKING == null ? 0 : item.getEnchantmentLevel(UNBREAKING);
+        if (unbreaking <= 0) {
+            return rolls;
+        }
+        int applied = 0;
+        for (int roll = 0; roll < rolls; roll++) {
+            if (ThreadLocalRandom.current().nextInt(unbreaking + 1) == 0) {
+                applied++;
+            }
+        }
+        return applied;
     }
 
     private static SfxElectricStack possibleProtectedZeroToolOutput(SfxElectricStack tool, Material expected, int damage) {
