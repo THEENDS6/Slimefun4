@@ -2129,7 +2129,7 @@ items:
     name: '&7Enhanced Furnace - &eII'
     lore:
     - '&7Processing Speed: &e2x'
-    - '&7Fuel Efficiency: &e1x'
+    - '&7Fuel Efficiency: &e2x'
     - '&7Fortune Level: &e1x'
   sf.enhanced_furnace_3:
     name: '&7Enhanced Furnace - &eIII'

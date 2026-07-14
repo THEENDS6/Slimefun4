@@ -34,7 +34,7 @@ machine-catalog:
 basic-machines:
   @ot: content/machines/basic-machines.yml
   sf:enhanced_furnace: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 2, fuel-efficiency: 1, fortune-level: 1}}}
-  sf:enhanced_furnace_2: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 2, fuel-efficiency: 1, fortune-level: 1}}}
+  sf:enhanced_furnace_2: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 2, fuel-efficiency: 2, fortune-level: 1}}}
   sf:enhanced_furnace_3: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 3, fuel-efficiency: 2, fortune-level: 1}}}
   sf:enhanced_furnace_4: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 3, fuel-efficiency: 3, fortune-level: 1}}}
   sf:enhanced_furnace_5: {runtime: {executor: sf:enhanced_furnace, stats: {processing-speed: 4, fuel-efficiency: 3, fortune-level: 1}}}
