@@ -14,6 +14,9 @@ import java.util.Set;
 public final class DefaultManualMachineRegistry implements SfxManualMachineRegistry {
     private final Map<String, ManualMachineDefinition> machines = new LinkedHashMap<>();
     private final Map<String, List<ManualMachineRecipe>> recipes = new LinkedHashMap<>();
+    private final Map<String, Map<ManualRecipeHash, List<ManualMachineRecipe>>> orderedRecipeIndex = new LinkedHashMap<>();
+    private final Map<String, Map<ManualRecipeHash, List<ManualMachineRecipe>>> unorderedRecipeIndex = new LinkedHashMap<>();
+    private volatile long revision;
 
     @Override
     public void registerMachine(ManualMachineDefinition definition) {
@@ -33,11 +36,45 @@ public final class DefaultManualMachineRegistry implements SfxManualMachineRegis
             throw new IllegalArgumentException("Recipe operation does not match manual machine: " + recipe.machineId());
         }
         recipes.computeIfAbsent(recipe.machineId(), ignored -> new ArrayList<>()).add(recipe);
+        if (recipe.operation() == ManualMachineOperation.SHAPED_3X3) {
+            index(orderedRecipeIndex, recipe.machineId(), ManualRecipeHash.orderedRecipe(recipe.input()), recipe);
+        } else if (recipe.operation() == ManualMachineOperation.SHAPELESS_INPUT) {
+            index(unorderedRecipeIndex, recipe.machineId(), ManualRecipeHash.unorderedRecipe(recipe.input()), recipe);
+        }
+        revision++;
     }
 
     public void clear() {
         machines.clear();
         recipes.clear();
+        orderedRecipeIndex.clear();
+        unorderedRecipeIndex.clear();
+        revision++;
+    }
+
+    private void index(Map<String, Map<ManualRecipeHash, List<ManualMachineRecipe>>> index, String machineId,
+                       ManualRecipeHash hash, ManualMachineRecipe recipe) {
+        index.computeIfAbsent(machineId, ignored -> new LinkedHashMap<>())
+                .computeIfAbsent(hash, ignored -> new ArrayList<>())
+                .add(recipe);
+    }
+
+    List<ManualMachineRecipe> orderedCandidates(String machineId, ManualRecipeHash hash) {
+        return candidates(orderedRecipeIndex, machineId, hash);
+    }
+
+    List<ManualMachineRecipe> unorderedCandidates(String machineId, ManualRecipeHash hash) {
+        return candidates(unorderedRecipeIndex, machineId, hash);
+    }
+
+    private List<ManualMachineRecipe> candidates(Map<String, Map<ManualRecipeHash, List<ManualMachineRecipe>>> index,
+                                                 String machineId, ManualRecipeHash hash) {
+        Map<ManualRecipeHash, List<ManualMachineRecipe>> byHash = index.get(SfxItemDefinition.normalizeId(machineId));
+        return byHash == null ? List.of() : List.copyOf(byHash.getOrDefault(hash, List.of()));
+    }
+
+    long revision() {
+        return revision;
     }
 
 

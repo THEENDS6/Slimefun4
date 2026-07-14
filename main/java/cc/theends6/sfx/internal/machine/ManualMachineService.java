@@ -10,7 +10,9 @@ import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.Text;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
@@ -40,6 +42,7 @@ public final class ManualMachineService {
     private static final long COMPRESSOR_COMPLETE_TICKS = 60L;
     private static final long ARMOR_FORGE_WORK_TICKS = 20L;
     private static final long ARMOR_FORGE_COMPLETE_TICKS = 60L;
+    private static final int MATCH_CACHE_LIMIT = 512;
 
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
@@ -47,6 +50,12 @@ public final class ManualMachineService {
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxBasicMachineBlockListener basicBlockMachines;
+    private final Map<MatchCacheKey, List<ManualMachineRecipe>> matchCache = new LinkedHashMap<>(64, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<MatchCacheKey, List<ManualMachineRecipe>> eldest) {
+            return size() > MATCH_CACHE_LIMIT;
+        }
+    };
 
     public ManualMachineService(JavaPlugin plugin, SfxRuntime runtime, DefaultManualMachineRegistry registry, SfxItems items, SfxLocalization localization, SfxBasicMachineBlockListener basicBlockMachines) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -111,16 +120,15 @@ public final class ManualMachineService {
             return;
         }
 
-        if (hasShapelessRecipes(recipes)) {
-            runShapelessMachine(player, clickedBlock, definition, input, output, recipes);
-            return;
-        }
-
         boolean matchedInput = false;
         boolean outputBlocked = false;
         List<ManualMachineRecipe> singleCraftable = new ArrayList<>();
         List<ShapedMatchPlan> shapedCraftable = new ArrayList<>();
-        for (ManualMachineRecipe recipe : recipes) {
+        ItemStack[] inputContents = input.getContents();
+        ManualRecipeHash orderedHash = ManualRecipeHash.orderedInput(inputContents, items);
+        List<ManualMachineRecipe> orderedCandidates = cachedCandidates(definition.id(), MatchKind.ORDERED, orderedHash,
+                registry.orderedCandidates(definition.id(), orderedHash));
+        for (ManualMachineRecipe recipe : orderedCandidates) {
             if (recipe.operation() == ManualMachineOperation.SHAPED_3X3) {
                 ShapedMatchPlan plan = planShaped(input, recipe);
                 if (plan == null) {
@@ -133,7 +141,10 @@ public final class ManualMachineService {
                 } else {
                     outputBlocked = true;
                 }
-            } else {
+            }
+        }
+        for (ManualMachineRecipe recipe : recipes) {
+            if (recipe.operation() == ManualMachineOperation.SINGLE_INPUT) {
                 MatchResult result = matchSingle(input, output, recipe);
                 if (result == MatchResult.INPUT_MATCH_AND_FITS) {
                     singleCraftable.add(recipe);
@@ -154,6 +165,22 @@ public final class ManualMachineService {
             return;
         }
 
+        ShapelessMatchPlan shapeless = findShapelessMatch(definition.id(), inputContents, recipes);
+        if (shapeless != null) {
+            if (!canFitAfterShapelessConsume(input, output, shapeless)) {
+                message(player, localization.text("machines.output-full"));
+                return;
+            }
+            List<ManualMachineOutput> outputs = selectedOutputs(shapeless.recipe());
+            applyShapelessConsumption(input, shapeless);
+            if (isDelayedCompletionMachine(definition)) startDelayedCompletion(clickedBlock, definition, outputs);
+            else {
+                addOutputs(output, outputs);
+                success(clickedBlock, definition);
+            }
+            return;
+        }
+
         if (outputBlocked && matchedInput) {
             message(player, localization.text("machines.output-full"));
             return;
@@ -162,48 +189,35 @@ public final class ManualMachineService {
         message(player, noMatchMessage(definition));
     }
 
-    private boolean hasShapelessRecipes(Collection<ManualMachineRecipe> recipes) {
-        for (ManualMachineRecipe recipe : recipes) {
-            if (recipe.operation() == ManualMachineOperation.SHAPELESS_INPUT) {
-                return true;
-            }
-        }
-        return false;
+    private ShapelessMatchPlan findShapelessMatch(String machineId, ItemStack[] contents, Collection<ManualMachineRecipe> allRecipes) {
+        ManualRecipeHash hash = ManualRecipeHash.unorderedInput(contents, items);
+        List<ManualMachineRecipe> indexed = cachedCandidates(machineId, MatchKind.UNORDERED, hash,
+                registry.unorderedCandidates(machineId, hash));
+        ShapelessMatchPlan best = bestShapeless(contents, indexed);
+        if (best != null) return best;
+        // Existing shapeless semantics permit unrelated extra input identities, so retain a correctness fallback.
+        return bestShapeless(contents, allRecipes);
     }
 
-    private void runShapelessMachine(Player player, Block clickedBlock, ManualMachineDefinition definition, Inventory input, Inventory output, Collection<ManualMachineRecipe> recipes) {
+    private ShapelessMatchPlan bestShapeless(ItemStack[] contents, Collection<ManualMachineRecipe> recipes) {
         ShapelessMatchPlan best = null;
         for (ManualMachineRecipe recipe : recipes) {
-            if (recipe.operation() != ManualMachineOperation.SHAPELESS_INPUT) {
-                continue;
-            }
-            ShapelessMatchPlan plan = planShapeless(input, recipe);
-            if (plan == null) {
-                continue;
-            }
-            if (best == null || recipe.priority() > best.recipe().priority()) {
-                best = plan;
-            }
+            if (recipe.operation() != ManualMachineOperation.SHAPELESS_INPUT) continue;
+            ShapelessMatchPlan plan = planShapeless(contents, recipe);
+            if (plan != null && (best == null || recipe.priority() > best.recipe().priority())) best = plan;
         }
+        return best;
+    }
 
-        if (best == null) {
-            message(player, noMatchMessage(definition));
-            return;
-        }
-
-        ManualMachineRecipe recipe = best.recipe();
-        if (!canFitAfterShapelessConsume(input, output, best)) {
-            message(player, localization.text("machines.output-full"));
-            return;
-        }
-
-        List<ManualMachineOutput> outputs = selectedOutputs(recipe);
-        applyShapelessConsumption(input, best);
-        if (isDelayedCompletionMachine(definition)) {
-            startDelayedCompletion(clickedBlock, definition, outputs);
-        } else {
-            addOutputs(output, outputs);
-            success(clickedBlock, definition);
+    private List<ManualMachineRecipe> cachedCandidates(String machineId, MatchKind kind, ManualRecipeHash hash,
+                                                        List<ManualMachineRecipe> indexed) {
+        MatchCacheKey key = new MatchCacheKey(registry.revision(), machineId, kind, hash);
+        synchronized (matchCache) {
+            List<ManualMachineRecipe> cached = matchCache.get(key);
+            if (cached != null) return cached;
+            List<ManualMachineRecipe> candidates = List.copyOf(indexed);
+            matchCache.put(key, candidates);
+            return candidates;
         }
     }
 
@@ -567,7 +581,11 @@ public final class ManualMachineService {
     }
 
     private ShapelessMatchPlan planShapeless(Inventory input, ManualMachineRecipe recipe) {
-        ItemStack[] inputCopy = cloneContents(input);
+        return planShapeless(input.getContents(), recipe);
+    }
+
+    private ShapelessMatchPlan planShapeless(ItemStack[] contents, ManualMachineRecipe recipe) {
+        ItemStack[] inputCopy = cloneContents(contents);
         int[] consumed = new int[inputCopy.length];
 
         for (SfxRecipeSlot required : recipe.input()) {
@@ -592,6 +610,10 @@ public final class ManualMachineService {
 
         return new ShapelessMatchPlan(recipe, consumed, inputCopy);
     }
+
+    private enum MatchKind { ORDERED, UNORDERED }
+
+    private record MatchCacheKey(long revision, String machineId, MatchKind kind, ManualRecipeHash hash) {}
 
     private boolean canFitAfterShapelessConsume(Inventory input, Inventory output, ShapelessMatchPlan plan) {
         ItemStack[] contents = outputContentsAfterInputConsumption(input, output, plan.inputAfterConsume());
