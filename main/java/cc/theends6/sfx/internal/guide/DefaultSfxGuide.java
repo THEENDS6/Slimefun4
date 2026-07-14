@@ -496,11 +496,13 @@ public final class DefaultSfxGuide implements SfxGuide {
         GuideLayout layout = effectiveLayout(preferences(player));
         OutputAction outputAction = (targetPlayer, clickType) -> {
             if (clickType == ClickType.MIDDLE) {
-                openFunctions(targetPlayer, mode, definition, 0, Navigation.OPEN);
+                openWithDisplayPreference(targetPlayer, mode, definition, safeRecipe, Navigation.REPLACE, trail,
+                        DisplaySection.FUNCTIONS, DisplaySection.USAGES, DisplaySection.SOURCES);
                 return;
             }
             if (clickType != null && clickType.isRightClick()) {
-                openUses(targetPlayer, mode, definition, 0, Navigation.OPEN);
+                openWithDisplayPreference(targetPlayer, mode, definition, safeRecipe, Navigation.REPLACE, trail,
+                        DisplaySection.USAGES, DisplaySection.FUNCTIONS, DisplaySection.SOURCES);
                 return;
             }
             if (mode == GuideMode.CHEAT) {
@@ -582,11 +584,13 @@ public final class DefaultSfxGuide implements SfxGuide {
         ItemStack output = new ItemStack(material, current.outputAmount());
         OutputAction outputAction = (targetPlayer, clickType) -> {
             if (clickType == ClickType.MIDDLE) {
-                openFunctions(targetPlayer, mode, material, 0, Navigation.OPEN);
+                openWithDisplayPreference(targetPlayer, mode, material, safeRecipe, Navigation.REPLACE, trail,
+                        DisplaySection.FUNCTIONS, DisplaySection.USAGES, DisplaySection.SOURCES);
                 return;
             }
             if (clickType != null && clickType.isRightClick()) {
-                openUses(targetPlayer, mode, material, 0, Navigation.OPEN);
+                openWithDisplayPreference(targetPlayer, mode, material, safeRecipe, Navigation.REPLACE, trail,
+                        DisplaySection.USAGES, DisplaySection.FUNCTIONS, DisplaySection.SOURCES);
                 return;
             }
             if (mode != GuideMode.CHEAT) {
@@ -608,27 +612,35 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private void openUses(Player player, GuideMode mode, SfxItemDefinition definition, int page, Navigation navigation) {
-        setPreferredDisplaySections(player, displaySectionKey(definition),
+        openWithDisplayPreference(player, mode, definition, page, navigation, List.of(),
                 DisplaySection.USAGES, DisplaySection.FUNCTIONS, DisplaySection.SOURCES);
-        openRecipe(player, mode, definition.id(), 0, navigation);
     }
 
     private void openUses(Player player, GuideMode mode, Material material, int page, Navigation navigation) {
-        setPreferredDisplaySections(player, displaySectionKey(material),
+        openWithDisplayPreference(player, mode, material, page, navigation, List.of(),
                 DisplaySection.USAGES, DisplaySection.FUNCTIONS, DisplaySection.SOURCES);
-        openVanillaRecipe(player, mode, material, 0, navigation);
     }
 
     private void openFunctions(Player player, GuideMode mode, SfxItemDefinition definition, int page, Navigation navigation) {
-        setPreferredDisplaySections(player, displaySectionKey(definition),
+        openWithDisplayPreference(player, mode, definition, page, navigation, List.of(),
                 DisplaySection.FUNCTIONS, DisplaySection.USAGES, DisplaySection.SOURCES);
-        openRecipe(player, mode, definition.id(), 0, navigation);
     }
 
     private void openFunctions(Player player, GuideMode mode, Material material, int page, Navigation navigation) {
-        setPreferredDisplaySections(player, displaySectionKey(material),
+        openWithDisplayPreference(player, mode, material, page, navigation, List.of(),
                 DisplaySection.FUNCTIONS, DisplaySection.USAGES, DisplaySection.SOURCES);
-        openVanillaRecipe(player, mode, material, 0, navigation);
+    }
+
+    private void openWithDisplayPreference(Player player, GuideMode mode, SfxItemDefinition definition, int recipeIndex,
+                                           Navigation navigation, List<String> trail, DisplaySection... sections) {
+        setPreferredDisplaySections(player, displaySectionKey(definition), sections);
+        openRecipe(player, mode, definition.id(), recipeIndex, 0, navigation, trail == null ? List.of() : trail);
+    }
+
+    private void openWithDisplayPreference(Player player, GuideMode mode, Material material, int recipeIndex,
+                                           Navigation navigation, List<String> trail, DisplaySection... sections) {
+        setPreferredDisplaySections(player, displaySectionKey(material), sections);
+        openVanillaRecipe(player, mode, material, recipeIndex, navigation, trail == null ? List.of() : trail);
     }
 
     private List<UsageTarget> usageTargets(SfxRecipeSlot ingredient, GuideMode mode) {
@@ -2062,57 +2074,52 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private ClickHandler handlerForSlot(SfxRecipeSlot slot, GuideMode mode) {
-        if (slot.isSfxItem()) {
-            return click -> slot.sfxId().ifPresent(target -> registry.item(target).ifPresent(definition -> {
-                if (click.clickType() == ClickType.MIDDLE) {
-                    openFunctions(click.player(), mode, definition, 0, Navigation.OPEN);
-                } else if (click.clickType().isRightClick()) {
-                    openUses(click.player(), mode, definition, 0, Navigation.OPEN);
-                } else {
-                    openRecipe(click.player(), mode, target, 0, 0,
-                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
-                            activeRecipeTrails.getOrDefault(click.player().getUniqueId(), List.of()));
-                }
-            }));
+        return handlerForSlot(slot, mode, null);
+    }
+
+    private List<String> clickTrail(Player player, List<String> trail) {
+        if (trail != null) {
+            return trail;
         }
-        if (showVanillaRecipes() && slot.material() != null && !vanillaRecipePages(slot.material()).isEmpty()) {
-            return click -> {
-                if (click.clickType() == ClickType.MIDDLE) {
-                    openFunctions(click.player(), mode, slot.material(), 0, Navigation.OPEN);
-                } else if (click.clickType().isRightClick()) {
-                    openUses(click.player(), mode, slot.material(), 0, Navigation.OPEN);
-                } else {
-                    openVanillaRecipe(click.player(), mode, slot.material(), 0,
-                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
-                            activeRecipeTrails.getOrDefault(click.player().getUniqueId(), List.of()));
-                }
-            };
-        }
-        return null;
+        return activeRecipeTrails.getOrDefault(player.getUniqueId(), List.of());
     }
 
     private ClickHandler handlerForSlot(SfxRecipeSlot slot, GuideMode mode, List<String> trail) {
         if (slot.isSfxItem()) {
             return click -> slot.sfxId().ifPresent(target -> registry.item(target).ifPresent(definition -> {
                 if (click.clickType() == ClickType.MIDDLE) {
-                    openFunctions(click.player(), mode, definition, 0, Navigation.OPEN);
+                    openWithDisplayPreference(click.player(), mode, definition, 0,
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
+                            clickTrail(click.player(), trail),
+                            DisplaySection.FUNCTIONS, DisplaySection.USAGES, DisplaySection.SOURCES);
                 } else if (click.clickType().isRightClick()) {
-                    openUses(click.player(), mode, definition, 0, Navigation.OPEN);
+                    openWithDisplayPreference(click.player(), mode, definition, 0,
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
+                            clickTrail(click.player(), trail),
+                            DisplaySection.USAGES, DisplaySection.FUNCTIONS, DisplaySection.SOURCES);
                 } else {
                     openRecipe(click.player(), mode, target, 0, 0,
-                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail);
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
+                            clickTrail(click.player(), trail));
                 }
             }));
         }
         if (showVanillaRecipes() && slot.material() != null && !vanillaRecipePages(slot.material()).isEmpty()) {
             return click -> {
                 if (click.clickType() == ClickType.MIDDLE) {
-                    openFunctions(click.player(), mode, slot.material(), 0, Navigation.OPEN);
+                    openWithDisplayPreference(click.player(), mode, slot.material(), 0,
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
+                            clickTrail(click.player(), trail),
+                            DisplaySection.FUNCTIONS, DisplaySection.USAGES, DisplaySection.SOURCES);
                 } else if (click.clickType().isRightClick()) {
-                    openUses(click.player(), mode, slot.material(), 0, Navigation.OPEN);
+                    openWithDisplayPreference(click.player(), mode, slot.material(), 0,
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
+                            clickTrail(click.player(), trail),
+                            DisplaySection.USAGES, DisplaySection.FUNCTIONS, DisplaySection.SOURCES);
                 } else {
                     openVanillaRecipe(click.player(), mode, slot.material(), 0,
-                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail);
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE,
+                            clickTrail(click.player(), trail));
                 }
             };
         }
@@ -2414,8 +2421,12 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
         ItemStack icon = ingredientIcon(slot);
         return new SfxMenuButton(icon, click -> {
-            if (click.clickType().isRightClick()) {
-                openUsesForSlot(click.player(), mode, slot);
+            if (click.clickType() == ClickType.MIDDLE) {
+                openPreferredSectionForSlot(click.player(), mode, slot, trail,
+                        DisplaySection.FUNCTIONS, DisplaySection.USAGES, DisplaySection.SOURCES);
+            } else if (click.clickType().isRightClick()) {
+                openPreferredSectionForSlot(click.player(), mode, slot, trail,
+                        DisplaySection.USAGES, DisplaySection.FUNCTIONS, DisplaySection.SOURCES);
             } else {
                 openIngredientRecipe(click.player(), slot, mode, trail);
             }
@@ -2423,11 +2434,18 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private void openUsesForSlot(Player player, GuideMode mode, SfxRecipeSlot slot) {
+        openPreferredSectionForSlot(player, mode, slot, List.of(),
+                DisplaySection.USAGES, DisplaySection.FUNCTIONS, DisplaySection.SOURCES);
+    }
+
+    private void openPreferredSectionForSlot(Player player, GuideMode mode, SfxRecipeSlot slot, List<String> trail, DisplaySection... sections) {
         if (slot.isSfxItem()) {
             slot.sfxId().flatMap(registry::item)
-                    .ifPresent(definition -> openUses(player, mode, definition, 0, Navigation.OPEN));
+                    .ifPresent(definition -> openWithDisplayPreference(player, mode, definition, 0,
+                            preferences(player).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail, sections));
         } else if (slot.material() != null) {
-            openUses(player, mode, slot.material(), 0, Navigation.OPEN);
+            openWithDisplayPreference(player, mode, slot.material(), 0,
+                    preferences(player).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail, sections);
         }
     }
 
@@ -2437,7 +2455,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                     preferences(player).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail));
         } else if (showVanillaRecipes() && slot.material() != null && !vanillaRecipePages(slot.material()).isEmpty()) {
             openVanillaRecipe(player, mode, slot.material(), 0,
-                    preferences(player).recordHistory() ? Navigation.OPEN : Navigation.REPLACE);
+                    preferences(player).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail);
         }
     }
 
@@ -2607,8 +2625,12 @@ public final class DefaultSfxGuide implements SfxGuide {
         if (inputAlternatives.size() > 1 && inputAlternatives.contains(recipeSlot)) {
             SfxMenuButton fallback = new SfxMenuButton(ingredientIcon(inputAlternatives.getFirst()), click -> {
                 SfxRecipeSlot selected = rotatingVariant(inputAlternatives);
-                if (click.clickType().isRightClick()) {
-                    openUsesForSlot(click.player(), mode, selected);
+                if (click.clickType() == ClickType.MIDDLE) {
+                    openPreferredSectionForSlot(click.player(), mode, selected, trail,
+                            DisplaySection.FUNCTIONS, DisplaySection.USAGES, DisplaySection.SOURCES);
+                } else if (click.clickType().isRightClick()) {
+                    openPreferredSectionForSlot(click.player(), mode, selected, trail,
+                            DisplaySection.USAGES, DisplaySection.FUNCTIONS, DisplaySection.SOURCES);
                 } else {
                     openIngredientRecipe(click.player(), selected, mode, trail);
                 }
