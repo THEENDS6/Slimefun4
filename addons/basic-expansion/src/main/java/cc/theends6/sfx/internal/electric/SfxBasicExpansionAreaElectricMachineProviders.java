@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.logging.Logger;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -54,6 +55,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
 final class SfxBasicExpansionAreaElectricMachineProviders {
+    private static final Logger LOGGER = Logger.getLogger("SlimeFunX");
+    private static final String PRODUCE_DEBUG_PREFIX = "[SFX Debug][BasicProduceCollector] ";
     private static final int PRODUCE_RANGE = 2;
     private static final int ACTION_WORK_TICKS = 10;
     private static final int PRODUCE_WORK_TICKS = 100;
@@ -185,7 +188,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         return new SfxBasicExpansionWorldActionProvider() {
             @Override
             public SfxElectricMachineTickResult tickWorldAction(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
-                if (isActive(state, "sf:produce_collector:")) {
+                if (isActiveProduce(state)) {
                     return advanceProduce(plugin, items, definition, state, location, sfxBalance);
                 }
                 ProduceStart start = findProduceStart(plugin, items, definition, state, location, sfxBalance);
@@ -504,19 +507,64 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         state.reservedInputs(List.of(reserved));
         state.pendingOutput(null);
         state.progressWork(0);
+        if (isBrushProduceKey(key) || isBrushStack(reserved)) {
+            debugProduce("unexpected timed path consumed input key=" + key
+                    + " slot=" + inputSlot
+                    + " reserved=" + describeStack(reserved));
+        }
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, 0, true);
     }
 
     private static SfxElectricMachineTickResult startProduce(SfxElectricMachineDefinition definition, SfxElectricMachineState state, ProduceStart start) {
+        if (start.action() == ProduceAction.ARMADILLO_SCUTE || isBrushStack(slotInput(state, start.inputSlot()))) {
+            debugProduce("startProduce status=" + start.status()
+                    + " action=" + start.action()
+                    + " route=" + (start.action() != null && start.action().usesDurableTool() ? "tool" : "timed")
+                    + " slot=" + start.inputSlot()
+                    + " input=" + describeStack(slotInput(state, start.inputSlot()))
+                    + " activeBefore=" + describeActiveState(state));
+        }
         return switch (start.status()) {
             case NO_INPUT -> SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_INPUT, false);
             case NO_TARGET -> SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
             case OUTPUT_FULL -> SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.OUTPUT_FULL, true);
-            case READY -> startTimedWork(definition, state, start.inputSlot(), start.primaryOutput(), PRODUCE_WORK_TICKS, "sf:produce_collector:" + start.action().key());
+            case READY -> start.action().usesDurableTool()
+                    ? startToolProduceWork(definition, state, start.inputSlot(), PRODUCE_WORK_TICKS, "sf:produce_collector:" + start.action().key())
+                    : startTimedWork(definition, state, start.inputSlot(), start.primaryOutput(), PRODUCE_WORK_TICKS, "sf:produce_collector:" + start.action().key());
         };
     }
 
+    private static SfxElectricMachineTickResult startToolProduceWork(SfxElectricMachineDefinition definition, SfxElectricMachineState state, int inputSlot, int workTicks, String key) {
+        if (state.storedEnergy() < definition.energyConsumptionPerTick()) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_POWER, true);
+        }
+        SfxElectricStack tool = state.input(inputSlot);
+        if (tool == null || tool.isSfxItem() || tool.amount() <= 0) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_INPUT, false);
+        }
+        if (isBrushProduceKey(key) || isBrushStack(tool)) {
+            debugProduce("startToolProduceWork key=" + key
+                    + " slot=" + inputSlot
+                    + " toolBefore=" + describeStack(tool)
+                    + " storedEnergy=" + state.storedEnergy()
+                    + " workTicks=" + workTicks);
+        }
+        state.activeRecipeKey(key);
+        state.activeInputSlot(inputSlot);
+        state.activeBaseTicks(workTicks);
+        state.activeOutputs(List.of());
+        state.reservedInputs(List.of());
+        state.pendingOutput(null);
+        state.progressWork(0);
+        if (isBrushProduceKey(key) || isBrushStack(tool)) {
+            debugProduce("startToolProduceWork activeAfter=" + describeActiveState(state)
+                    + " toolAfter=" + describeStack(state.input(inputSlot)));
+        }
+        return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, 0, true);
+    }
+
     private static SfxElectricMachineTickResult advanceProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, boolean sfxBalance) {
+        recoverLegacyReservedProduceTool(state);
         return advanceTimedAction(definition, state, () -> {
             ProduceAction action = ProduceAction.fromKey(state.activeRecipeKey());
             if (action == null) {
@@ -635,6 +683,46 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
     }
 
+    private static void recoverLegacyReservedProduceTool(SfxElectricMachineState state) {
+        ProduceAction action = ProduceAction.fromKey(state.activeRecipeKey());
+        if (action == null || !action.usesDurableTool()) {
+            return;
+        }
+        int slot = state.activeInputSlot();
+        if (slot < 0 || slot >= state.inputCapacity() || state.input(slot) != null) {
+            if (action == ProduceAction.ARMADILLO_SCUTE && !state.reservedInputs().isEmpty()) {
+                debugProduce("recoverLegacyReservedProduceTool clear reserved without restore action=" + action
+                        + " slot=" + slot
+                        + " input=" + describeStack(slotInput(state, slot))
+                        + " reserved=" + describeStacks(state.reservedInputs()));
+            }
+            state.reservedInputs(List.of());
+            state.activeOutputs(List.of());
+            return;
+        }
+        Material expected = expectedTool(action);
+        for (SfxElectricStack reserved : state.reservedInputs()) {
+            if (isExpectedTool(reserved, expected)) {
+                if (action == ProduceAction.ARMADILLO_SCUTE) {
+                    debugProduce("recoverLegacyReservedProduceTool restored action=" + action
+                            + " slot=" + slot
+                            + " reserved=" + describeStack(reserved));
+                }
+                state.input(slot, reserved);
+                state.reservedInputs(List.of());
+                state.activeOutputs(List.of());
+                return;
+            }
+        }
+        if (action == ProduceAction.ARMADILLO_SCUTE && !state.reservedInputs().isEmpty()) {
+            debugProduce("recoverLegacyReservedProduceTool drop non-matching reserved action=" + action
+                    + " slot=" + slot
+                    + " reserved=" + describeStacks(state.reservedInputs()));
+        }
+        state.reservedInputs(List.of());
+        state.activeOutputs(List.of());
+    }
+
     private static SfxElectricMachineTickResult continueProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, boolean sfxBalance) {
         ProduceStart start = findProduceStart(plugin, items, definition, state, location, sfxBalance);
         return startProduce(definition, state, start);
@@ -735,10 +823,15 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
     }
 
     private static ProduceStart produceStartForAction(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, int slot, ProduceAction action) {
+        SfxElectricStack tool = slot >= 0 && slot < state.inputCapacity() ? state.input(slot) : null;
+        if (action.usesDurableTool() && !isExpectedTool(tool, expectedTool(action))) {
+            return ProduceStart.noTarget();
+        }
         List<SfxElectricStack> outputs = previewProduceOutputs(location, action);
         if (outputs.isEmpty()) {
             return ProduceStart.noTarget();
         }
+        outputs = withPossibleProtectedToolOutput(outputs, tool, action);
         if (!canFitOutputs(items, definition, state, outputs)) {
             return ProduceStart.outputFull();
         }
@@ -746,35 +839,72 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
     }
 
     private static ProduceCompletion completeProduce(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, ProduceAction action, boolean sfxBalance) {
-        SfxElectricStack reserved = state.reservedInputs().isEmpty() ? null : state.reservedInputs().getFirst();
+        SfxElectricStack tool = action.usesDurableTool()
+                ? currentActiveInput(state)
+                : state.reservedInputs().isEmpty() ? null : state.reservedInputs().getFirst();
+        if (action == ProduceAction.ARMADILLO_SCUTE) {
+            debugProduce("completeProduce begin location=" + describeLocation(location)
+                    + " active=" + describeActiveState(state)
+                    + " tool=" + describeStack(tool)
+                    + " reserved=" + describeStacks(state.reservedInputs()));
+        }
+        if (action.usesDurableTool() && !isExpectedTool(tool, expectedTool(action))) {
+            if (action == ProduceAction.ARMADILLO_SCUTE) {
+                debugProduce("completeProduce no expected tool expected=" + expectedTool(action)
+                        + " tool=" + describeStack(tool));
+            }
+            state.resetProgress();
+            return ProduceCompletion.status(SfxElectricMachineRenderStatus.NO_INPUT);
+        }
         ProduceTarget target = findProduceTarget(location, action);
         if (target == null) {
-            restoreReservedAndReset(items, definition, state);
+            if (action == ProduceAction.ARMADILLO_SCUTE) {
+                debugProduce("completeProduce no target tool=" + describeStack(tool)
+                        + " location=" + describeLocation(location));
+            }
+            if (action.usesDurableTool()) {
+                state.resetProgress();
+            } else {
+                restoreReservedAndReset(items, definition, state);
+            }
             return ProduceCompletion.status(SfxElectricMachineRenderStatus.NO_TARGET);
         }
         List<SfxElectricStack> outputs = target.outputs();
-        ToolUseResult toolUse = ToolUseResult.noTool();
+        ToolDamageResult toolDamage = null;
         if (action.usesDurableTool()) {
-            toolUse = useDurableTool(items, reserved);
-            if (toolUse.status() == ToolUseStatus.OUTPUT_TOOL) {
-                outputs = append(outputs, toolUse.tool());
+            toolDamage = damageToolStack(tool, expectedTool(action), toolDamage(action));
+            if (toolDamage != null && toolDamage.moveToOutput() && toolDamage.stack() != null) {
+                outputs = append(outputs, toolDamage.stack());
+            }
+            if (action == ProduceAction.ARMADILLO_SCUTE) {
+                debugProduce("completeProduce damageResult damage=" + toolDamage(action)
+                        + " result=" + describeToolDamage(toolDamage)
+                        + " outputs=" + describeStacks(outputs));
             }
         }
         if (!canFitOutputs(items, definition, state, outputs)) {
+            if (action == ProduceAction.ARMADILLO_SCUTE) {
+                debugProduce("completeProduce blockedOutput outputs=" + describeStacks(outputs));
+            }
             return ProduceCompletion.status(SfxElectricMachineRenderStatus.BLOCKED_OUTPUT);
         }
+        if (action.usesDurableTool()) {
+            applyToolDamageToActiveInput(state, toolDamage);
+        }
         target.apply().run();
-        for (SfxElectricStack output : target.outputs()) {
+        for (SfxElectricStack output : outputs) {
             pushOutput(items, definition, state, output);
         }
-        if (action.usesDurableTool()) {
-            if (toolUse.status() == ToolUseStatus.RESTORE_TOOL) {
-                restoreOrOutput(items, definition, state, state.activeInputSlot(), toolUse.tool());
-            } else if (toolUse.status() == ToolUseStatus.OUTPUT_TOOL) {
-                pushOutput(items, definition, state, toolUse.tool());
-            }
+        if (action == ProduceAction.ARMADILLO_SCUTE) {
+            debugProduce("completeProduce success active=" + describeActiveState(state)
+                    + " inputAfter=" + describeStack(slotInput(state, state.activeInputSlot())));
         }
         return ProduceCompletion.status(SfxElectricMachineRenderStatus.WORKING);
+    }
+
+    private static SfxElectricStack currentActiveInput(SfxElectricMachineState state) {
+        int slot = state.activeInputSlot();
+        return slot < 0 || slot >= state.inputCapacity() ? null : state.input(slot);
     }
 
     private static List<SfxElectricStack> previewProduceOutputs(Location location, ProduceAction action) {
@@ -831,6 +961,121 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
             return true;
         }
         return sfxBalance && (material == Material.SHEARS || material == Material.GLASS_BOTTLE || material == Material.BRUSH);
+    }
+
+    private static boolean isExpectedTool(SfxElectricStack tool, Material expected) {
+        return expected != null && tool != null && !tool.isSfxItem() && tool.material() == expected;
+    }
+
+    private static List<SfxElectricStack> withPossibleProtectedToolOutput(List<SfxElectricStack> outputs, SfxElectricStack tool, ProduceAction action) {
+        if (!action.usesDurableTool()) {
+            return outputs;
+        }
+        SfxElectricStack possible = possibleProtectedZeroToolOutput(tool, expectedTool(action), toolDamage(action));
+        return appendIfNotNull(outputs, possible);
+    }
+
+    private static List<SfxElectricStack> appendIfNotNull(List<SfxElectricStack> base, SfxElectricStack extra) {
+        if (extra == null) {
+            return base;
+        }
+        List<SfxElectricStack> result = new ArrayList<>(base.size() + 1);
+        result.addAll(base);
+        result.add(extra);
+        return List.copyOf(result);
+    }
+
+    private static Material expectedTool(ProduceAction action) {
+        return switch (action) {
+            case SHEEP_WOOL, HONEYCOMB, MOOSHROOM_SHEAR -> Material.SHEARS;
+            case ARMADILLO_SCUTE -> Material.BRUSH;
+            default -> null;
+        };
+    }
+
+    private static int toolDamage(ProduceAction action) {
+        return action == ProduceAction.ARMADILLO_SCUTE ? 16 : 1;
+    }
+
+    private static void applyToolDamageToActiveInput(SfxElectricMachineState state, ToolDamageResult result) {
+        int slot = state.activeInputSlot();
+        if (slot < 0 || slot >= state.inputCapacity()) {
+            return;
+        }
+        if (result == null || result.moveToOutput()) {
+            state.input(slot, null);
+            return;
+        }
+        state.input(slot, result.stack());
+    }
+
+    private static ToolDamageResult damageToolStack(SfxElectricStack tool, Material expected, int damage) {
+        ItemStack item = tool.hasSnapshot() ? tool.snapshot() : new ItemStack(expected);
+        item.setAmount(1);
+        if (!(item.getItemMeta() instanceof Damageable damageable)) {
+            if (expected == Material.BRUSH) {
+                debugProduce("damageToolStack no Damageable tool=" + describeStack(tool));
+            }
+            return new ToolDamageResult(SfxElectricStack.snapshot(item), false);
+        }
+        int maxDurability = expected.getMaxDurability();
+        int currentDamage = damageable.getDamage();
+        if (maxDurability > 0 && currentDamage >= maxDurability) {
+            if (expected == Material.BRUSH) {
+                debugProduce("damageToolStack already zero durability currentDamage=" + currentDamage
+                        + " max=" + maxDurability
+                        + " tool=" + describeStack(tool));
+            }
+            return null;
+        }
+        int appliedDamage = Math.max(1, damage);
+        int rawDamage = currentDamage + appliedDamage;
+        boolean overDamaged = maxDurability > 0 && rawDamage >= maxDurability;
+        if (overDamaged && !hasDurabilityProtection(item)) {
+            if (expected == Material.BRUSH) {
+                debugProduce("damageToolStack break unprotected currentDamage=" + currentDamage
+                        + " applied=" + appliedDamage
+                        + " max=" + maxDurability
+                        + " tool=" + describeStack(tool));
+            }
+            return null;
+        }
+        int newDamage = maxDurability > 0 ? Math.min(maxDurability, rawDamage) : rawDamage;
+        damageable.setDamage(newDamage);
+        item.setItemMeta(damageable);
+        if (expected == Material.BRUSH) {
+            debugProduce("damageToolStack applied currentDamage=" + currentDamage
+                    + " applied=" + appliedDamage
+                    + " newDamage=" + newDamage
+                    + " max=" + maxDurability
+                    + " overDamaged=" + overDamaged
+                    + " protected=" + hasDurabilityProtection(item));
+        }
+        return new ToolDamageResult(SfxElectricStack.snapshot(item), overDamaged);
+    }
+
+    private static SfxElectricStack possibleProtectedZeroToolOutput(SfxElectricStack tool, Material expected, int damage) {
+        if (!isExpectedTool(tool, expected)) {
+            return null;
+        }
+        ItemStack item = tool.hasSnapshot() ? tool.snapshot() : new ItemStack(expected);
+        item.setAmount(1);
+        if (!(item.getItemMeta() instanceof Damageable damageable)) {
+            return null;
+        }
+        int maxDurability = expected.getMaxDurability();
+        int currentDamage = damageable.getDamage();
+        if (maxDurability <= 0 || currentDamage >= maxDurability || currentDamage + Math.max(1, damage) < maxDurability || !hasDurabilityProtection(item)) {
+            return null;
+        }
+        damageable.setDamage(maxDurability);
+        item.setItemMeta(damageable);
+        return SfxElectricStack.snapshot(item);
+    }
+
+    private static boolean hasDurabilityProtection(ItemStack item) {
+        return (UNBREAKING != null && item.getEnchantmentLevel(UNBREAKING) > 0)
+                || (MENDING != null && item.getEnchantmentLevel(MENDING) > 0);
     }
 
     private static boolean hasOverlappingCropAccelerator(SfxAreaMachineRuntime areaMachines, Location location) {
@@ -1048,37 +1293,6 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
             case RED -> Material.RED_WOOL;
             case BLACK -> Material.BLACK_WOOL;
         };
-    }
-
-    private static ToolUseResult useDurableTool(SfxItems items, SfxElectricStack reserved) {
-        if (reserved == null) {
-            return ToolUseResult.broken();
-        }
-        ItemStack stack = reserved.toItemStack(items);
-        short maxDurability = stack.getType().getMaxDurability();
-        if (maxDurability <= 0) {
-            return ToolUseResult.restore(SfxElectricStack.fromItemStack(items, stack));
-        }
-        int unbreaking = UNBREAKING == null ? 0 : stack.getEnchantmentLevel(UNBREAKING);
-        boolean consumeDurability = unbreaking <= 0 || ThreadLocalRandom.current().nextInt(unbreaking + 1) == 0;
-        if (!consumeDurability) {
-            return ToolUseResult.restore(SfxElectricStack.fromItemStack(items, stack));
-        }
-        ItemMeta meta = stack.getItemMeta();
-        if (!(meta instanceof Damageable damageable)) {
-            return ToolUseResult.restore(SfxElectricStack.fromItemStack(items, stack));
-        }
-        int nextDamage = damageable.getDamage() + 1;
-        if (nextDamage >= maxDurability) {
-            return ToolUseResult.broken();
-        }
-        damageable.setDamage(nextDamage);
-        stack.setItemMeta(meta);
-        boolean hasMending = MENDING != null && stack.containsEnchantment(MENDING);
-        if (hasMending && maxDurability - nextDamage <= 1) {
-            return ToolUseResult.output(SfxElectricStack.fromItemStack(items, stack));
-        }
-        return ToolUseResult.restore(SfxElectricStack.fromItemStack(items, stack));
     }
 
     private static void restoreOrOutput(SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, int slot, SfxElectricStack stack) {
@@ -1324,8 +1538,92 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         return null;
     }
 
+    private static boolean isActiveProduce(SfxElectricMachineState state) {
+        if (state.activeRecipeKey() == null || !state.activeRecipeKey().startsWith("sf:produce_collector:") || !state.hasProgress()) {
+            return false;
+        }
+        ProduceAction action = ProduceAction.fromKey(state.activeRecipeKey());
+        return action != null && action.usesDurableTool() || state.hasReservedInput();
+    }
+
     private static boolean isActive(SfxElectricMachineState state, String key) {
         return state.activeRecipeKey() != null && state.activeRecipeKey().startsWith(key) && state.hasReservedInput();
+    }
+
+    private static boolean isBrushProduceKey(String key) {
+        return key != null && key.contains("armadillo_scute");
+    }
+
+    private static boolean isBrushStack(SfxElectricStack stack) {
+        return stack != null && !stack.isSfxItem() && stack.material() == Material.BRUSH;
+    }
+
+    private static SfxElectricStack slotInput(SfxElectricMachineState state, int slot) {
+        return slot < 0 || slot >= state.inputCapacity() ? null : state.input(slot);
+    }
+
+    private static void debugProduce(String message) {
+        LOGGER.warning(PRODUCE_DEBUG_PREFIX + message);
+    }
+
+    private static String describeActiveState(SfxElectricMachineState state) {
+        return "key=" + state.activeRecipeKey()
+                + ",slot=" + state.activeInputSlot()
+                + ",progress=" + state.progressWork() + "/" + state.activeBaseTicks()
+                + ",reserved=" + state.reservedInputs().size()
+                + ",outputs=" + state.activeOutputs().size()
+                + ",hasProgress=" + state.hasProgress()
+                + ",hasReserved=" + state.hasReservedInput();
+    }
+
+    private static String describeStacks(List<SfxElectricStack> stacks) {
+        if (stacks == null) {
+            return "null";
+        }
+        List<String> descriptions = new ArrayList<>(stacks.size());
+        for (SfxElectricStack stack : stacks) {
+            descriptions.add(describeStack(stack));
+        }
+        return descriptions.toString();
+    }
+
+    private static String describeStack(SfxElectricStack stack) {
+        if (stack == null) {
+            return "null";
+        }
+        if (stack.isSfxItem()) {
+            return "sfx:" + stack.itemId() + "x" + stack.amount()
+                    + ",snapshot=" + stack.hasSnapshot();
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append(stack.material()).append('x').append(stack.amount())
+                .append(",snapshot=").append(stack.hasSnapshot());
+        ItemStack snapshot = stack.snapshot();
+        if (snapshot != null && snapshot.getItemMeta() instanceof Damageable damageable) {
+            builder.append(",damage=").append(damageable.getDamage())
+                    .append('/').append(stack.material().getMaxDurability());
+        } else if (stack.material() != null && stack.material().getMaxDurability() > 0) {
+            builder.append(",damage=0/").append(stack.material().getMaxDurability());
+        }
+        return builder.toString();
+    }
+
+    private static String describeToolDamage(ToolDamageResult result) {
+        if (result == null) {
+            return "null";
+        }
+        return "moveToOutput=" + result.moveToOutput()
+                + ",stack=" + describeStack(result.stack());
+    }
+
+    private static String describeLocation(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return "null";
+        }
+        return location.getWorld().getName()
+                + "@" + location.getBlockX()
+                + "," + location.getBlockY()
+                + "," + location.getBlockZ();
     }
 
     private static int requestedFluidPumpEnergy(SfxAreaMachineRules rules, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
@@ -1789,12 +2087,6 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         }
     }
 
-    private enum ToolUseStatus {
-        RESTORE_TOOL,
-        OUTPUT_TOOL,
-        BROKEN
-    }
-
     private record ProduceStart(ProduceStartStatus status, int inputSlot, ProduceAction action, SfxElectricStack primaryOutput) {
         static ProduceStart noInput() {
             return new ProduceStart(ProduceStartStatus.NO_INPUT, -1, null, null);
@@ -1822,22 +2114,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
         }
     }
 
-    private record ToolUseResult(ToolUseStatus status, SfxElectricStack tool) {
-        static ToolUseResult restore(SfxElectricStack tool) {
-            return new ToolUseResult(ToolUseStatus.RESTORE_TOOL, tool);
-        }
-
-        static ToolUseResult output(SfxElectricStack tool) {
-            return new ToolUseResult(ToolUseStatus.OUTPUT_TOOL, tool);
-        }
-
-        static ToolUseResult broken() {
-            return new ToolUseResult(ToolUseStatus.BROKEN, null);
-        }
-
-        static ToolUseResult noTool() {
-            return new ToolUseResult(ToolUseStatus.BROKEN, null);
-        }
+    private record ToolDamageResult(SfxElectricStack stack, boolean moveToOutput) {
     }
 
     private record FlushResult(boolean changed, int consumedEnergy) {
