@@ -1,0 +1,66 @@
+categories:
+  sfx_example:
+    debug:
+      name: '&cDEBUG 物品'
+
+category-icons:
+  sfx_example:
+    debug:
+      name: '&cDEBUG 科技书'
+
+items:
+  sfx_example:
+    debug_book:
+      name: '&cDEBUG 科技书'
+      lore:
+      - '&7SFX 官方调试与 API 示例物品。'
+      - '&7该分类默认只对服务器管理员显示。'
+    slime_block_iv:
+      name: '&a粘液块 IV'
+      lore:
+      - '&7IV 代表 Slimefun 4。'
+      - '&7完全通过 YAML 声明的普通示例物品。'
+    debug_energy_unit:
+      name: '&eDEBUG 电力单元'
+      lore:
+      - '&7可调式电网测试节点。'
+      - '&7支持停止、发电和用电模式。'
+      - '&c仅限管理员调试使用。'
+    debug_transport_dispatcher:
+      name: '&6DEBUG 运输调度'
+      lore:
+      - '&7区域型运输调度和拓扑缓存测试节点。'
+      - '&c仅限管理员调试使用。'
+    debug_fish:
+      name: '&bDEBUG 鱼'
+      lore:
+      - '&7向经典 Slimefun4 DEBUG 鱼致敬。'
+      - '&7使用真实鱼实体测试碰撞和生命周期。'
+      - '&c仅限管理员调试使用。'
+    magic_slime_block:
+      name: '&d魔法粘液块'
+      lore:
+      - '&7在粘液块与蜂蜜块之间循环。'
+      - '&7用于验证公开彩虹方块 API。'
+      - '&c仅限管理员调试使用。'
+
+researches:
+  sfx_example:
+    debug:
+      name: DEBUG API 示例
+
+example-energy:
+  mode:
+    name: '&e切换模式'
+    lore: '&7当前：{mode}，点击在停止/发电/用电间切换。'
+  rate-down: {name: '&c降低功率'}
+  rate-up: {name: '&a提高功率'}
+  rate-exact: {name: '&e精确输入功率'}
+  rate: {lore: '&7当前功率：{rate} J/t；右键 10，Shift 1000。'}
+  capacity-down: {name: '&c降低容量'}
+  capacity-up: {name: '&a提高容量'}
+  capacity-exact: {name: '&e精确输入容量'}
+  capacity: {lore: '&7当前容量：{capacity} J。'}
+  empty: {name: '&f清空内部电量'}
+  fill: {name: '&6填满内部电量'}
+  storage: {lore: '&7内部电量：{stored}/{capacity} J。'}

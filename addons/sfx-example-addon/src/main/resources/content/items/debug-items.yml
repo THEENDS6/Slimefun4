@@ -1,0 +1,73 @@
+categories:
+- id: sfx_example:debug
+  requires-feature: sfx:example
+  name-key: categories.sfx_example.debug.name
+  priority: 9000
+  permission: sfx.example.debug
+  icon:
+    material: ENCHANTED_BOOK
+    name-key: category-icons.sfx_example.debug.name
+
+items:
+- id: sfx_example:debug_book
+  requires-feature: sfx:example
+  category: sfx_example:debug
+  material: ENCHANTED_BOOK
+  name-key: items.sfx_example.debug_book.name
+  lore-key: items.sfx_example.debug_book.lore
+  priority: 1
+  permission: sfx.example.debug
+  use-permission: sfx.example.debug
+  flags: [visual-glint]
+- id: sfx_example:slime_block_iv
+  requires-feature: sfx:example
+  category: sfx_example:debug
+  material: SLIME_BLOCK
+  name-key: items.sfx_example.slime_block_iv.name
+  lore-key: items.sfx_example.slime_block_iv.lore
+  priority: 2
+  permission: sfx.example.debug
+  use-permission: sfx.example.debug
+- id: sfx_example:debug_energy_unit
+  requires-feature: sfx:example
+  category: sfx_example:debug
+  material: REDSTONE_BLOCK
+  name-key: items.sfx_example.debug_energy_unit.name
+  lore-key: items.sfx_example.debug_energy_unit.lore
+  priority: 3
+  permission: sfx.example.debug
+  use-permission: sfx.example.debug
+  flags: [placeable-block]
+- id: sfx_example:debug_transport_dispatcher
+  requires-feature: sfx:example
+  category: sfx_example:debug
+  material: COMMAND_BLOCK
+  name-key: items.sfx_example.debug_transport_dispatcher.name
+  lore-key: items.sfx_example.debug_transport_dispatcher.lore
+  priority: 4
+  permission: sfx.example.debug
+  use-permission: sfx.example.debug
+  flags: [placeable-block]
+- id: sfx_example:debug_fish
+  requires-feature: sfx:example
+  category: sfx_example:debug
+  material: COD
+  name-key: items.sfx_example.debug_fish.name
+  lore-key: items.sfx_example.debug_fish.lore
+  priority: 5
+  permission: sfx.example.debug
+  use-permission: sfx.example.debug
+  components:
+    use-cooldown:
+      seconds: 1.0
+      group: sfx_example:debug_fish
+- id: sfx_example:magic_slime_block
+  requires-feature: sfx:example
+  category: sfx_example:debug
+  material: SLIME_BLOCK
+  name-key: items.sfx_example.magic_slime_block.name
+  lore-key: items.sfx_example.magic_slime_block.lore
+  priority: 6
+  permission: sfx.example.debug
+  use-permission: sfx.example.debug
+  flags: [placeable-block]

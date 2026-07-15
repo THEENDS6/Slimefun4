@@ -106,6 +106,12 @@ sourceSets {
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
         runtimeClasspath += output + compileClasspath
     }
+    exampleAddon {
+        java.srcDirs = ['addons/sfx-example-addon/src/main/java']
+        resources.srcDirs = ['addons/sfx-example-addon/src/main/resources']
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
 }
 
 dependencies {
@@ -130,7 +136,7 @@ processResources {
 }
 
 tasks.named('jar') {
-    dependsOn 'validateSfxTemplateCompile', 'basicExpansionJar', 'contentExpansionJar'
+    dependsOn 'validateSfxTemplateCompile', 'basicExpansionJar', 'contentExpansionJar', 'exampleAddonJar'
     archiveBaseName.set('SlimeFunX')
     archiveVersion.set('')
     from {
@@ -143,6 +149,9 @@ tasks.named('jar') {
         into 'bundled-addons'
     }
     from(tasks.named('contentExpansionJar').flatMap { it.archiveFile }) {
+        into 'bundled-addons'
+    }
+    from(tasks.named('exampleAddonJar').flatMap { it.archiveFile }) {
         into 'bundled-addons'
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -169,6 +178,62 @@ tasks.register('basicExpansionJar', Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+tasks.register('exampleAddonJar', Jar) {
+    group = 'build'
+    description = 'Packages the official SFX Example/Debug addon as a standalone addon jar.'
+    dependsOn 'exampleAddonClasses'
+    archiveFileName.set('sfx-example-addon.jar')
+    destinationDirectory.set(layout.buildDirectory.dir('addons'))
+    from(sourceSets.exampleAddon.output)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register('validateSfxAddonPublicApiBoundary') {
+    group = 'verification'
+    description = 'Rejects public API and bundled addon references to cc.theends6.sfx.internal.'
+    dependsOn 'basicExpansionJar', 'contentExpansionJar', 'exampleAddonJar'
+    inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/java'))
+    inputs.dir(layout.projectDirectory.dir('addons/content-expansion/src/main/java'))
+    inputs.dir(layout.projectDirectory.dir('addons/sfx-example-addon/src/main/java'))
+    inputs.dir(layout.projectDirectory.dir('main/java/cc/theends6/sfx/api'))
+    doLast {
+        def violations = []
+        [
+                layout.projectDirectory.dir('main/java/cc/theends6/sfx/api').asFile,
+                layout.projectDirectory.dir('addons/basic-expansion/src/main/java').asFile,
+                layout.projectDirectory.dir('addons/content-expansion/src/main/java').asFile,
+                layout.projectDirectory.dir('addons/sfx-example-addon/src/main/java').asFile
+        ].each { root ->
+            fileTree(root).matching { include '**/*.java' }.files.each { source ->
+                if (source.getText('UTF-8').contains('cc.theends6.sfx.internal')) {
+                    violations << "source references internal API: ${source}"
+                }
+            }
+        }
+        [tasks.named('basicExpansionJar').get().archiveFile.get().asFile,
+         tasks.named('contentExpansionJar').get().archiveFile.get().asFile,
+         tasks.named('exampleAddonJar').get().archiveFile.get().asFile].each { addonJar ->
+            def zip = new java.util.zip.ZipFile(addonJar)
+            try {
+                zip.entries().each { entry ->
+                    if (entry.name.endsWith('.class')) {
+                        def constants = new String(zip.getInputStream(entry).readAllBytes(), java.nio.charset.StandardCharsets.ISO_8859_1)
+                        if (constants.contains('cc/theends6/sfx/internal/')) {
+                            violations << "bytecode references internal API: ${addonJar.name}!/${entry.name}"
+                        }
+                    }
+                }
+            } finally {
+                zip.close()
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException("SFX addon public API boundary validation failed:\n" + violations.join('\n'))
+        }
+        logger.lifecycle('Validated the public SFX API and bundled addons contain no internal references.')
+    }
+}
+
 tasks.register('validateSfxBasicExpansionClassLinkage', JavaExec) {
     group = 'verification'
     description = 'Links every Basic Expansion class through an isolated addon classloader.'
@@ -183,8 +248,29 @@ tasks.register('validateSfxBasicExpansionClassLinkage', JavaExec) {
     }
 }
 
+tasks.register('validateSfxContentExpansionClassLinkage', JavaExec) {
+    group = 'verification'
+    description = 'Links every Content Expansion class through an isolated addon classloader.'
+    dependsOn 'classes', 'contentExpansionJar'
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.addon.SfxAddonClassLinkageSmokeCli')
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) })
+    doFirst { args = [tasks.named('contentExpansionJar').get().archiveFile.get().asFile.absolutePath] }
+}
+
+tasks.register('validateSfxExampleAddonClassLinkage', JavaExec) {
+    group = 'verification'
+    description = 'Links every official Example Addon class through an isolated addon classloader.'
+    dependsOn 'classes', 'exampleAddonJar'
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.addon.SfxAddonClassLinkageSmokeCli')
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) })
+    doFirst { args = [tasks.named('exampleAddonJar').get().archiveFile.get().asFile.absolutePath] }
+}
+
 tasks.named('check') {
-    dependsOn 'validateSfxBasicExpansionClassLinkage'
+    dependsOn 'validateSfxBasicExpansionClassLinkage', 'validateSfxContentExpansionClassLinkage',
+            'validateSfxExampleAddonClassLinkage', 'validateSfxAddonPublicApiBoundary'
 }
 
 def sameFileContent = { File left, File right ->
@@ -587,6 +673,7 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
     inputs.dir(layout.projectDirectory.dir('main/resources/content/templates'))
     inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources'))
     inputs.dir(layout.projectDirectory.dir('addons/content-expansion/src/main/resources'))
+    inputs.dir(layout.projectDirectory.dir('addons/sfx-example-addon/src/main/resources'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/machine-catalog.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/machines/manual-machines.yml'))
     inputs.file(layout.projectDirectory.file('main/resources/content/templates/machines/configurable/reactors.yml'))
@@ -620,6 +707,10 @@ tasks.register('validateSfxTemplateCompile', JavaExec) {
         copy {
             from layout.projectDirectory.dir('addons/content-expansion/src/main/resources/content')
             into new File(sourceRoot, 'addons/content_expansion/content')
+        }
+        copy {
+            from layout.projectDirectory.dir('addons/sfx-example-addon/src/main/resources/content')
+            into new File(sourceRoot, 'addons/example/content')
         }
         args = [
                 new File(sourceRoot, 'templates').absolutePath,
@@ -898,65 +989,86 @@ tasks.register('validateSfxFeatureGates') {
     inputs.file(layout.projectDirectory.file('main/resources/config.yml'))
     inputs.dir(layout.projectDirectory.dir('main/resources/content'))
     inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/resources/content'))
+    inputs.dir(layout.projectDirectory.dir('addons/content-expansion/src/main/resources/content'))
+    inputs.dir(layout.projectDirectory.dir('addons/sfx-example-addon/src/main/resources/content'))
     doLast {
-        def addonFile = layout.projectDirectory.file('addons/basic-expansion/src/main/java/cc/theends6/sfx/addons/basic/SfxBasicExpansionAddon.java').asFile
-        def addonText = addonFile.getText('UTF-8')
-        def constants = [:]
-        (addonText =~ /private static final String\s+([A-Z0-9_]+)\s*=\s*"([^"]+)"/).each { match ->
-            constants[match[1]] = match[2]
-        }
-        def registered = [] as Set
-        (addonText =~ /context\.features\(\)\.registerBoolean\(\s*([A-Z0-9_]+|"[^"]+")\s*,/).each { match ->
-            def token = match[1]
-            if (token.startsWith('"')) {
-                registered << token.replaceAll(/^"|"$/, '')
-            } else if (constants.containsKey(token)) {
-                registered << constants[token]
-            }
-        }
-        if (registered.isEmpty()) {
-            throw new GradleException('No bundled addon features were detected in SfxBasicExpansionAddon.')
-        }
-        def violations = []
+        def addonRoots = [
+                layout.projectDirectory.dir('addons/basic-expansion/src/main/java').asFile,
+                layout.projectDirectory.dir('addons/content-expansion/src/main/java').asFile,
+                layout.projectDirectory.dir('addons/sfx-example-addon/src/main/java').asFile
+        ]
+        def addonFiles = addonRoots.collectMany { root -> fileTree(root).matching { include '**
 
-        def registeredConfigPaths = [] as Set
-        (addonText =~ /context\.features\(\)\.registerBoolean\(\s*(?:[A-Z0-9_]+|"[^"]+")\s*,\s*"([^"]+)"/).each { match ->
-            registeredConfigPaths << match[1]
-        }
-        def configFile = layout.projectDirectory.file('main/resources/config.yml').asFile
-        def configPaths = [] as Set
-        def pathStack = []
-        configFile.readLines('UTF-8').each { line ->
-            if (line.trim().isEmpty() || line.trim().startsWith('#')) {
-                return
-            }
-            def matcher = line =~ /^(\s*)([A-Za-z0-9_.-]+):(?:\s*(.*))?$/
-            if (!matcher.matches()) {
-                return
-            }
-            int level = ((String) matcher.group(1)).length().intdiv(2)
-            while (pathStack.size() > level) {
-                pathStack.remove(pathStack.size() - 1)
-            }
-            pathStack.add(matcher.group(2))
-            configPaths << pathStack.join('.')
-        }
-        registeredConfigPaths.each { path ->
-            if (!configPaths.contains(path)) {
-                violations << "SfxBasicExpansionAddon registers feature config path ${path}, but main/resources/config.yml does not declare it"
-            }
-        }
 
-        [
-                layout.projectDirectory.dir('main/resources/content').asFile,
-                layout.projectDirectory.dir('addons/basic-expansion/src/main/resources/content').asFile
-        ].each { contentRoot ->
-            fileTree(contentRoot) {
-                include '**/*.yml'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*.yml'
             }.files.sort { it.path }.each { file ->
                 def relative = layout.projectDirectory.asFile.toPath().relativize(file.toPath()).toString().replace('\\', '/')
                 file.readLines('UTF-8').eachWithIndex { line, index ->
-                    def requires = line =~ /requires-feature:\s*(.+?)\s*$/
+                    def requires = line =~ /requires-feature:\s*(\[[^\]]*\]|[^,}\]]+)/
                     if (requires.find()) {
                         (requires.group(1) =~ /sfx:[A-Za-z0-9_:-]+/).each { featureMatch ->
                             def feature = featureMatch instanceof List ? featureMatch[0] : featureMatch
@@ -965,7 +1077,7 @@ tasks.register('validateSfxFeatureGates') {
                             }
                         }
                     }
-                    def excludes = line =~ /excludes-feature:\s*(.+?)\s*$/
+                    def excludes = line =~ /excludes-feature:\s*(\[[^\]]*\]|[^,}\]]+)/
                     if (excludes.find()) {
                         (excludes.group(1) =~ /sfx:[A-Za-z0-9_:-]+/).each { featureMatch ->
                             def feature = featureMatch instanceof List ? featureMatch[0] : featureMatch
@@ -1090,10 +1202,12 @@ tasks.register('validateSfxAddonApiDocs') {
     description = 'Validates addon API documentation matches the current experimental addon contract.'
     inputs.file(layout.projectDirectory.file('README.md'))
     inputs.file(layout.projectDirectory.file('docs/addon-api.md'))
+    inputs.file(layout.projectDirectory.file('docs/addon-api.zh-CN.md'))
     doLast {
         def violations = []
         def readme = layout.projectDirectory.file('README.md').asFile.getText('UTF-8')
         def docs = layout.projectDirectory.file('docs/addon-api.md').asFile.getText('UTF-8')
+        def chineseDocs = layout.projectDirectory.file('docs/addon-api.zh-CN.md').asFile.getText('UTF-8')
         if (readme.contains('Addon/addition support should be designed after the core runtime is stable')) {
             violations << 'README still says addon support is not designed.'
         }
@@ -1108,16 +1222,69 @@ tasks.register('validateSfxAddonApiDocs') {
                 'SfxAddonContext',
                 'Technical gadget behavior providers',
                 'id: example:config_pack',
-                'default-enabled: true'
+                'default-enabled: true',
+                'api-version: 1',
+                'onDisable()',
+                'cc.theends6.sfx.internal'
         ].each { token ->
             if (!docs.contains(token)) {
                 violations << "docs/addon-api.md is missing ${token}"
+            }
+        }
+        ['SFX Addon API（中文版）', '独立数据目录', 'Folia', 'onDisable', 'cc.theends6.sfx.internal'].each { token ->
+            if (!chineseDocs.contains(token)) {
+                violations << "docs/addon-api.zh-CN.md is missing ${token}"
             }
         }
         if (!violations.isEmpty()) {
             throw new GradleException("SFX addon API documentation validation failed:\n" + violations.join('\n'))
         }
         logger.lifecycle("Validated SFX addon API documentation.")
+    }
+}
+
+tasks.register('validateSfxAddonLifecycle') {
+    group = 'verification'
+    description = 'Validates addon shutdown and complete runtime reload ordering.'
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/SlimeFunXPlugin.java'))
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/SfxPluginAddonModule.java'))
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/addon/SfxAddonManager.java'))
+    inputs.file(layout.projectDirectory.file('docs/addon-api.md'))
+    inputs.file(layout.projectDirectory.file('docs/addon-api.zh-CN.md'))
+    doLast {
+        def violations = []
+        def pluginSource = layout.projectDirectory.file('main/java/cc/theends6/sfx/SlimeFunXPlugin.java').asFile.getText('UTF-8')
+        def addonModule = layout.projectDirectory.file('main/java/cc/theends6/sfx/SfxPluginAddonModule.java').asFile.getText('UTF-8')
+        def addonManager = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/addon/SfxAddonManager.java').asFile.getText('UTF-8')
+        def docs = layout.projectDirectory.file('docs/addon-api.md').asFile.getText('UTF-8')
+        def chineseDocs = layout.projectDirectory.file('docs/addon-api.zh-CN.md').asFile.getText('UTF-8')
+
+        int reloadStart = pluginSource.indexOf('boolean reloadAllContent()')
+        int addonUnload = pluginSource.indexOf('SfxPluginAddonModule.unloadAddons(this)', reloadStart)
+        int moduleDisable = pluginSource.indexOf('moduleManager.disableAllReverse()', reloadStart)
+        int addonLoad = pluginSource.indexOf('SfxPluginAddonModule.loadAddons(this)', reloadStart)
+        if (reloadStart < 0 || addonUnload < reloadStart || moduleDisable < addonUnload || addonLoad < moduleDisable) {
+            violations << 'Complete runtime reload must unload addons before stopping modules and reload addons after core configuration reset.'
+        }
+        if (!addonModule.contains('static void unloadAddons(SlimeFunXPlugin plugin)')
+                || !addonModule.contains('plugin.addonManager.close()')
+                || !addonModule.contains('plugin.addonManager = null')) {
+            violations << 'SfxPluginAddonModule must provide an idempotent addon unload boundary.'
+        }
+        if (addonManager.contains('public synchronized void close()')
+                || !addonManager.contains('catch (Throwable exception)')) {
+            violations << 'SfxAddonManager.close must invoke addon callbacks outside its monitor and isolate addon shutdown failures.'
+        }
+        if (!docs.contains('/slimefunx reload runtime') || !docs.contains('complete runtime reload')) {
+            violations << 'English addon documentation is missing the complete runtime reload contract.'
+        }
+        if (!chineseDocs.contains('/slimefunx reload runtime') || !chineseDocs.contains('完整运行时重载')) {
+            violations << 'Chinese addon documentation is missing the complete runtime reload contract.'
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException("SFX addon lifecycle validation failed:\n" + violations.join('\n'))
+        }
+        logger.lifecycle('Validated SFX addon shutdown and complete runtime reload ordering.')
     }
 }
 
@@ -1136,11 +1303,11 @@ tasks.register('validateSfxElectricProviderAddonPolicy') {
         def definitionConfig = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxElectricMachineDefinitionConfig.java').asFile.getText('UTF-8')
         def areaProviders = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/electric/SfxAreaElectricMachineProviders.java').asFile.getText('UTF-8')
         def addon = fileTree(layout.projectDirectory.dir('addons/basic-expansion/src/main/java')) {
-            include '**/*.java'
-        }.files.collect { it.getText('UTF-8') }.join('\n')
-        def registrar = layout.projectDirectory.file('main/java/cc/theends6/sfx/api/behavior/SfxBehaviorRegistrar.java').asFile.getText('UTF-8')
-        def behaviorApiFiles = fileTree(layout.projectDirectory.dir('main/java/cc/theends6/sfx/api/behavior')) {
-            include '**/*.java'
+            include '**
+
+
+
+*.java'
         }.files
         behaviorApiFiles.each { apiFile ->
             def apiText = apiFile.getText('UTF-8')
@@ -1267,38 +1434,38 @@ tasks.register('validateSfxCompiledContent') {
     doLast {
         def root = layout.buildDirectory.dir('sfx-template-compiled').get().asFile
         def compiledFiles = fileTree(root) {
-            include '**/*.yml'
-            exclude '_source-map.yml'
-        }.files
-        def forbiddenTokens = [
-                'menu-style:',
-                'layout:',
-                '@cf',
-                '@copyfrom',
-                '@d',
-                '@define',
-                '@g',
-                '@global',
-                '@io',
-                '@isoutput',
-                '@it',
-                '@istemplate',
-                '@ot',
-                '@outputtarget',
-                '@p',
-                '@project',
-                '${',
-                'tag-fuels',
-                'expand:',
-                'id-prefix:',
-                'input-prefix:',
-                'input-amount:',
-                '&id',
-                '*id'
-        ]
-        def violations = []
-        def recipeFiles = fileTree(new File(root, 'content/recipes')) {
-            include '**/*.yml'
+            include '**
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*.yml'
         }.files
         def validRecipeOperations = ['shaped', 'shapeless', 'single', 'hand'] as Set
         def recipeMachineReferences = []
@@ -1488,6 +1655,10 @@ tasks.register('validateSfxCompiledContent') {
             include '**/lang/*.yml'
         }.files.sort { it.path }
         addonLanguageFiles.addAll(contentAddonLanguageFiles)
+        def exampleAddonLanguageFiles = fileTree(layout.projectDirectory.dir('addons/sfx-example-addon/src/main/resources')) {
+            include '**/lang/*.yml'
+        }.files.sort { it.path }
+        addonLanguageFiles.addAll(exampleAddonLanguageFiles)
         def languageKeysByFile = languageFiles.collectEntries { file ->
             def keys = flattenLanguageKeys(file)
             addonLanguageFiles.findAll { it.name == file.name }.each { addonFile ->
@@ -1810,25 +1981,25 @@ tasks.register('validateSfxCompiledContent') {
         def catalogMachineTags = [] as Set
         def catalogMachineTagsById = [:].withDefault { [] as Set }
         if (catalogCompiledFiles.isEmpty()) {
-            violations << "compiled machine catalog output missing content/machines/machine-catalog/*.yml"
-        } else {
-            def catalogText = catalogCompiledFiles.collect { it.getText('UTF-8') }.join('\n')
-            catalogCompiledCount = (catalogText =~ /(?m)^  ['"]?[A-Za-z0-9_.-]+:[^'"\r\n]+['"]?:\s*$/).count
-            if (catalogCompiledCount != 187) {
-                violations << "compiled machine catalog entry count expected 187, got ${catalogCompiledCount}"
-            }
-            ['category:', 'display-name:', 'input-slots:', 'output-slots:', 'status-slot:', 'tick-interval:', 'tags:', 'capabilities:', 'input-provider:', 'output-provider:', 'policies:', 'effects:'].each { token ->
-                def count = (catalogText =~ /(?m)^\s+${java.util.regex.Pattern.quote(token)}/).count
-                if (count < 187) {
-                    violations << "compiled machine catalog expected ${token} on every entry, got ${count}"
-                }
-            }
-            def providerSlotCount = (catalogText =~ /(?m)^      slots:\s*/).count
+            violations << "compiled machine catalog output missing content/machines/machine-catalog
+
+
+
+
+
+
+
+
+
+
+
+
+).count
             def providerDescriptionCount = (catalogText =~ /(?m)^      description:\s*/).count
-            if (providerSlotCount != 374) {
+            if (providerSlotCount != 376) {
                 violations << "compiled machine catalog expected provider slots on every input/output provider, got ${providerSlotCount}"
             }
-            if (providerDescriptionCount != 374) {
+            if (providerDescriptionCount != 376) {
                 violations << "compiled machine catalog expected provider description on every input/output provider, got ${providerDescriptionCount}"
             }
             def currentMachine = null
@@ -2178,9 +2349,23 @@ tasks.register('validateSfxCompiledContent') {
             violations << "compiled item output missing content/items
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ).count
-            if (compiledItemCount != 565) {
-                violations << "compiled item count expected 565, got ${compiledItemCount}"
+            if (compiledItemCount != 571) {
+                violations << "compiled item count expected 571, got ${compiledItemCount}"
             }
             [
                     'category'      : (itemText =~ /(?m)^(?:  category:|- category:)\s*/).count,
@@ -2188,7 +2373,7 @@ tasks.register('validateSfxCompiledContent') {
                     'name-key'      : (itemText =~ /(?m)^(?:  name-key:|- name-key:)\s*/).count,
                     'priority/order': (itemText =~ /(?m)^(?:  (priority|order|pos):|- (priority|order|pos):)\s*/).count
             ].each { field, count ->
-                if (count != 565) {
+                if (count != 571) {
                     violations << "compiled items expected ${field} on every entry, got ${count}"
                 }
             }
@@ -3087,6 +3272,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
 
 
 lang
+
 
 
 

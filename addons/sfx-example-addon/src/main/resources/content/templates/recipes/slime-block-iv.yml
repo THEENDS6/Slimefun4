@@ -1,0 +1,24 @@
+recipes:
+  '@ot': content/recipes.yml
+  sfx_example:slime_block_iv:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: sfx_example:slime_block_iv
+    requires-feature: sfx:example
+    recipe-type: sf:enhanced_crafting_table
+    operation: shaped
+    guide-order: 9000
+    source: sfx-example-addon
+    runtime: true
+    runtime-machine-tags: [enhanced-crafting]
+    matrix:
+    - SLIME_BALL
+    - SLIME_BALL
+    - SLIME_BALL
+    - SLIME_BALL
+    - SLIME_BLOCK
+    - SLIME_BALL
+    - SLIME_BALL
+    - SLIME_BALL
+    - SLIME_BALL
+    outputs: [sfx_example:slime_block_iv]

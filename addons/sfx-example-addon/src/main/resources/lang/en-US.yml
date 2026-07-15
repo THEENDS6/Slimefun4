@@ -1,0 +1,66 @@
+categories:
+  sfx_example:
+    debug:
+      name: '&cDEBUG Items'
+
+category-icons:
+  sfx_example:
+    debug:
+      name: '&cDEBUG Technology Book'
+
+items:
+  sfx_example:
+    debug_book:
+      name: '&cDEBUG Technology Book'
+      lore:
+      - '&7Official SFX debugging and API example items.'
+      - '&7This category is visible to server administrators only.'
+    slime_block_iv:
+      name: '&aSlime Block IV'
+      lore:
+      - '&7IV stands for Slimefun 4.'
+      - '&7A normal example item declared entirely in YAML.'
+    debug_energy_unit:
+      name: '&eDEBUG Energy Unit'
+      lore:
+      - '&7A configurable energy-grid test node.'
+      - '&7Supports stopped, generating, and consuming modes.'
+      - '&cAdministrator debugging only.'
+    debug_transport_dispatcher:
+      name: '&6DEBUG Transport Dispatcher'
+      lore:
+      - '&7Tests regional cargo dispatch and topology caches.'
+      - '&cAdministrator debugging only.'
+    debug_fish:
+      name: '&bDEBUG Fish'
+      lore:
+      - '&7A tribute to the classic Slimefun4 DEBUG fish.'
+      - '&7Uses a real fish entity to test collision and lifecycle handling.'
+      - '&cAdministrator debugging only.'
+    magic_slime_block:
+      name: '&dMagic Slime Block'
+      lore:
+      - '&7Cycles between slime and honey blocks.'
+      - '&7Validates the public rainbow-block API.'
+      - '&cAdministrator debugging only.'
+
+researches:
+  sfx_example:
+    debug:
+      name: DEBUG API Examples
+
+example-energy:
+  mode:
+    name: '&eSwitch mode'
+    lore: '&7Current: {mode}; click to cycle stop/generate/consume.'
+  rate-down: {name: '&cDecrease power'}
+  rate-up: {name: '&aIncrease power'}
+  rate-exact: {name: '&eEnter exact power'}
+  rate: {lore: '&7Power: {rate} J/t; right click 10, Shift 1000.'}
+  capacity-down: {name: '&cDecrease capacity'}
+  capacity-up: {name: '&aIncrease capacity'}
+  capacity-exact: {name: '&eEnter exact capacity'}
+  capacity: {lore: '&7Capacity: {capacity} J.'}
+  empty: {name: '&fEmpty stored energy'}
+  fill: {name: '&6Fill stored energy'}
+  storage: {lore: '&7Stored: {stored}/{capacity} J.'}

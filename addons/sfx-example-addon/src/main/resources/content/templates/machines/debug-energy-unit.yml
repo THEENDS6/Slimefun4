@@ -1,0 +1,23 @@
+machine-catalog:
+  sfx_example:debug_energy_unit:
+    requires-feature: sfx:example
+    category: ENERGY
+    display-name: sfx_example:debug_energy_unit
+    status-slot: 22
+    tick-interval: 1
+    tags: [machine, energy, debug]
+    profile: energy_node
+
+components:
+  @ot: content/machines/energy-components.yml
+  sfx_example:debug_energy_unit:
+    @cf: templates.energy.generator-output
+    @io: true
+    requires-feature: sfx:example
+    @d:
+      capacity: 1000000000
+      generation: 0
+      burn-rate: 10
+      progress-material: REDSTONE_BLOCK
+    slots: {input: [], output: []}
+    runtime: {provider: sfx_example:debug_energy_unit}

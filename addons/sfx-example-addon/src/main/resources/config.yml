@@ -1,0 +1,24 @@
+enabled: true
+
+debug-energy-unit:
+  max-rate: 1000000
+  max-capacity: 1000000000
+  default-rate: 100
+  default-capacity: 100000
+
+debug-transport-dispatcher:
+  max-range: 32
+  default-range-x: 8
+  default-range-y: 4
+  default-range-z: 8
+  default-interval-ticks: 20
+  max-transfers-per-run: 64
+
+debug-fish:
+  damage: 6.0
+  lifetime-ticks: 100
+  max-distance: 64.0
+  speed: 1.6
+
+magic-slime-block:
+  interval-ticks: 20
