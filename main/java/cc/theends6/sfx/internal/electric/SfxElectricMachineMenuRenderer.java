@@ -5,6 +5,7 @@ import cc.theends6.sfx.api.machine.runtime.*;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.machine.SfxMachineDisplayItem;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
+import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.util.UUID;
 import java.util.Map;
@@ -54,6 +55,9 @@ final class SfxElectricMachineMenuRenderer {
             meta.displayName(localization.component(display.nameKey(), display.placeholders()));
             meta.lore(display.loreKeys().stream().map(key -> localization.component(key, display.placeholders())).toList());
             meta.setEnchantmentGlintOverride(display.glint());
+            if (display.headTextureHash() != null) {
+                HeadTextures.apply(meta, display.headTextureHash());
+            }
             stack.setItemMeta(meta);
         }
         if (display.capacity() > 0) {

@@ -92,6 +92,9 @@ final class SfxEnergyGeneratorMenuRenderer {
             meta.displayName(localization.component(display.nameKey(), display.placeholders()));
             meta.lore(display.loreKeys().stream().map(key -> localization.component(key, display.placeholders())).toList());
             meta.setEnchantmentGlintOverride(display.glint());
+            if (display.headTextureHash() != null) {
+                HeadTextures.apply(meta, display.headTextureHash());
+            }
             stack.setItemMeta(meta);
         }
         if (display.capacity() > 0) {
