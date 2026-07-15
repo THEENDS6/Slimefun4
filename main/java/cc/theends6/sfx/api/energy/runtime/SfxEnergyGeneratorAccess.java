@@ -16,5 +16,11 @@ public interface SfxEnergyGeneratorAccess {
 
     boolean pushOutputs(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, List<SfxElectricStack> outputs);
 
+    
+    long fillGridEnergy();
+
+    
+    long clearGridEnergy();
+
     void markDirty();
 }

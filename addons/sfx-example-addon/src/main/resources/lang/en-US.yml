@@ -10,16 +10,11 @@ category-icons:
 
 items:
   sfx_example:
-    debug_book:
-      name: '&cDEBUG Technology Book'
-      lore:
-      - '&7Official SFX debugging and API example items.'
-      - '&7This category is visible to server administrators only.'
     slime_block_iv:
       name: '&aSlime Block IV'
       lore:
       - '&7IV stands for Slimefun 4.'
-      - '&7A normal example item declared entirely in YAML.'
+      - '&7A placeable example block declared entirely in YAML.'
     debug_energy_unit:
       name: '&eDEBUG Energy Unit'
       lore:
@@ -30,6 +25,7 @@ items:
       name: '&6DEBUG Transport Dispatcher'
       lore:
       - '&7Tests regional cargo dispatch and topology caches.'
+      - '&7Coexists with a normal Cargo Manager and controls the network.'
       - '&cAdministrator debugging only.'
     debug_fish:
       name: '&bDEBUG Fish'
@@ -56,11 +52,37 @@ example-energy:
   rate-down: {name: '&cDecrease power'}
   rate-up: {name: '&aIncrease power'}
   rate-exact: {name: '&eEnter exact power'}
-  rate: {lore: '&7Power: {rate} J/t; right click 10, Shift 1000.'}
-  capacity-down: {name: '&cDecrease capacity'}
-  capacity-up: {name: '&aIncrease capacity'}
-  capacity-exact: {name: '&eEnter exact capacity'}
-  capacity: {lore: '&7Capacity: {capacity} J.'}
-  empty: {name: '&fEmpty stored energy'}
-  fill: {name: '&6Fill stored energy'}
+  rate: {lore: '&7Power: {rate} J/t. Click to enter a value in chat.'}
+  adjust: {lore: '&7Left 1, right 10, Shift-left 100, Shift-right 1000.'}
+  storage-down: {name: '&cDecrease stored energy'}
+  storage-up: {name: '&aIncrease stored energy'}
+  storage-exact: {name: '&eEnter stored energy'}
   storage: {lore: '&7Stored: {stored}/{capacity} J.'}
+  grid-empty:
+    name: '&fEmpty entire grid'
+    lore: '&7Sets every energy store in the connected grid to 0 J.'
+  grid-fill:
+    name: '&6Fill entire grid'
+    lore: '&7Fills every energy store in the connected grid to capacity.'
+
+example-cargo:
+  title: '&6DEBUG Transport Dispatcher'
+  state:
+    name: '&eNetwork state: {state}'
+    lore: '&7Current speed multiplier: x{speed}.'
+  enable:
+    name: '&aEnable cargo network'
+    lore: '&7Allows the connected network to transfer items.'
+  disable:
+    name: '&cDisable cargo network'
+    lore: '&7Pauses all transfers in the connected network.'
+  speed-down:
+    name: '&cDecrease dispatch speed'
+  speed-up:
+    name: '&aIncrease dispatch speed'
+  speed:
+    name: '&eDispatch speed: x{speed}'
+    lore: '&7Click adjusts 1; Shift-click adjusts 10; maximum x{max_speed}.'
+  visualizer:
+    name: '&dToggle cargo particles'
+    lore: '&7Toggles network particles for the current player.'

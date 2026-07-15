@@ -7,6 +7,7 @@ import cc.theends6.sfx.api.cargo.SfxCargoNodeDefinition;
 import cc.theends6.sfx.api.cargo.SfxCargoNodeKind;
 import cc.theends6.sfx.example.fish.DebugFishModule;
 import cc.theends6.sfx.example.energy.DebugEnergyUnitProvider;
+import cc.theends6.sfx.example.cargo.DebugTransportDispatcherProvider;
 import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.Bukkit;
@@ -49,7 +50,9 @@ public final class SfxExampleAddon implements SfxAddon {
                 SfxCargoNodeKind.MANAGER,
                 context.configInt("debug-transport-dispatcher.default-range-x", 8),
                 context.configInt("debug-transport-dispatcher.default-range-y", 4),
-                context.configInt("debug-transport-dispatcher.default-range-z", 8)
+                context.configInt("debug-transport-dispatcher.default-range-z", 8),
+                true,
+                new DebugTransportDispatcherProvider(context)
         ));
 
         

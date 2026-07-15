@@ -581,6 +581,20 @@ public final class SfxConfigurableMachineService implements Listener {
         return currentState(instanceId, instance).storedEnergy();
     }
 
+    public int setStoredEnergy(UUID instanceId, int amount) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        SfxConfigurableMachineDefinition definition = instance == null ? null : definitions.get(instance.typeId());
+        if (definition == null || (!definition.isConsumer() && !definition.isProducer())) {
+            return 0;
+        }
+        SfxConfigurableMachineState state = currentState(instanceId, instance);
+        int updated = Math.max(0, Math.min(definition.capacity(), amount));
+        state.storedEnergy(updated);
+        dirtyInstances.add(instanceId);
+        activeInstances.add(instanceId);
+        return updated;
+    }
+
     public int chargeConsumer(UUID instanceId, int amount) {
         if (amount <= 0) {
             return 0;

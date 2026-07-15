@@ -9,6 +9,9 @@ import cc.theends6.sfx.api.behavior.SfxCargoInputTransferContext;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferDecision;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferPolicy;
 import cc.theends6.sfx.api.cargo.SfxCargoNodeDefinition;
+import cc.theends6.sfx.api.cargo.SfxCargoManagerAccess;
+import cc.theends6.sfx.api.cargo.SfxCargoManagerProvider;
+import cc.theends6.sfx.api.cargo.SfxCargoManagerState;
 import cc.theends6.sfx.api.cargo.SfxCargoNodeKind;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
@@ -156,11 +159,11 @@ public final class SfxCargoService implements Listener {
                     case ADVANCED_INPUT -> SfxCargoComponentType.ADVANCED_INPUT_NODE;
                     case OUTPUT -> SfxCargoComponentType.OUTPUT_NODE;
                     case ADVANCED_OUTPUT -> SfxCargoComponentType.ADVANCED_OUTPUT_NODE;
-                }, node.rangeX(), node.rangeY(), node.rangeZ()));
+                }, node.rangeX(), node.rangeY(), node.rangeZ(), node.coexistsWithManagers(), node.managerProvider()));
             }
         }
         registerFrameworkEffects();
-        this.topology = new SfxTopologyService(blockData, new SfxCargoTopologyPolicy(definitions), new SfxCargoConnectivityPolicy(RANGE, blockData, definitions));
+        this.topology = new SfxTopologyService(blockData, new SfxCargoTopologyPolicy(definitions, blockData), new SfxCargoConnectivityPolicy(RANGE, blockData, definitions));
         bootstrapLoadedStates();
         topology.rebuild();
     }
@@ -313,7 +316,7 @@ public final class SfxCargoService implements Listener {
         if (SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             return;
         }
-        SfxCargoComponentDefinition definition = typeDefinition(holder.type());
+        SfxCargoComponentDefinition definition = definitions.get(holder.typeId());
         if (definition != null) {
             SfxMachineLegacyHookBridge.menuClick(machineRuntime, definition.id(), holder.instanceId(), null, "cargo", "SfxCargoService.onInventoryClick");
         }
@@ -367,6 +370,15 @@ public final class SfxCargoService implements Listener {
         SfxCargoNodeState state = currentState(holder.instanceId());
         int slot = event.getRawSlot();
         ClickType click = event.getClick();
+        SfxCargoManagerProvider managerProvider = definition.managerProvider();
+        if (holder.type() == SfxCargoComponentType.MANAGER && managerProvider != null) {
+            if (managerProvider.handleMenuClick(plugin, items, managerState(state), player, slot, click,
+                    managerAccess(holder.instanceId(), player))) {
+                persistState(holder.instanceId(), state);
+                renderMenu(top, holder.instanceId(), holder.typeId(), holder.type(), state);
+            }
+            return;
+        }
         boolean changed = false;
         if (isPrevChannelSlot(holder.type(), slot)) {
             adjustChannel(state, -1, click.isShiftClick());
@@ -405,7 +417,7 @@ public final class SfxCargoService implements Listener {
         }
         syncFilterFromInventory(top, state);
         persistState(holder.instanceId(), state);
-        renderMenu(top, holder.instanceId(), holder.type(), state);
+        renderMenu(top, holder.instanceId(), holder.typeId(), holder.type(), state);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -578,10 +590,18 @@ public final class SfxCargoService implements Listener {
         topology.rebuildIfStale();
         updateManagerDisplays();
         for (SfxTopologyComponent component : topology.components()) {
-            if (component.status() != SfxTopologyStatus.ONLINE || component.controllers().size() != 1 || component.terminals().isEmpty()) {
+            if (component.status() != SfxTopologyStatus.ONLINE || component.terminals().isEmpty()) {
                 continue;
             }
-            UUID managerId = component.controllers().iterator().next();
+            UUID managerId = effectiveManager(component);
+            if (managerId == null) {
+                continue;
+            }
+            UUID controlId = customManagerController(component);
+            SfxCargoNodeState controlState = controlId == null ? null : currentState(controlId);
+            if (controlState != null && !controlState.enabled) {
+                continue;
+            }
             SfxBlockInstanceRecord manager = blockData.findInstance(managerId).orElse(null);
             Location managerLocation = manager == null ? null : toLocation(manager.anchorKey());
             if (managerLocation == null) {
@@ -596,7 +616,10 @@ public final class SfxCargoService implements Listener {
                     SfxNetworkReadiness.READY,
                     () -> {
                         SfxMachineLegacyHookBridge.beforeNetworkTick(machineRuntime, "sf:cargo_manager", managerId, managerLocation, "cargo", "SfxCargoService.tickCargo");
-                        processCargoNetwork(network);
+                        int multiplier = controlState == null ? 1 : SfxCargoNodeState.clamp(controlState.managerSpeedMultiplier, 1, 64);
+                        for (int pass = 0; pass < multiplier; pass++) {
+                            processCargoNetwork(network);
+                        }
                         SfxMachineLegacyHookBridge.afterNetworkTick(machineRuntime, "sf:cargo_manager", managerId, managerLocation, "cargo", "SfxCargoService.tickCargo");
                     }));
         }
@@ -817,7 +840,7 @@ public final class SfxCargoService implements Listener {
     }
 
     private Component managerDisplayText(SfxTopologyComponent component) {
-        if (component != null && (component.status() == SfxTopologyStatus.MULTIPLE_CONTROLLERS || component.controllers().size() > 1)) {
+        if (component != null && component.status() == SfxTopologyStatus.MULTIPLE_CONTROLLERS) {
             return lc("cargo.status.multiple-regulators");
         }
         if (component == null || component.members().size() <= 1) {
@@ -1094,6 +1117,8 @@ public final class SfxCargoService implements Listener {
             topology.rebuildIfStale();
             if (player.isSneaking()) {
                 toggleVisualizer(player, instance);
+            } else if (definition.managerProvider() != null) {
+                openMenu(player, instance, definition.type());
             } else {
                 showManagerStatus(player, instance);
             }
@@ -1146,10 +1171,16 @@ public final class SfxCargoService implements Listener {
     private void openMenu(Player player, SfxBlockInstanceRecord instance, SfxCargoComponentType type) {
         SfxCargoNodeState state = currentState(instance.instanceId());
         int size = type == SfxCargoComponentType.OUTPUT_NODE ? OUTPUT_INVENTORY_SIZE : FILTER_INVENTORY_SIZE;
-        SfxCargoSessionHolder holder = new SfxCargoSessionHolder(instance.instanceId(), type);
-        Inventory inventory = plugin.getServer().createInventory(holder, size, titleFor(type));
+        SfxCargoComponentDefinition definition = definitions.get(instance.typeId());
+        SfxCargoManagerProvider managerProvider = definition == null ? null : definition.managerProvider();
+        if (managerProvider != null) {
+            size = normalizeMenuSize(managerProvider.menuSize());
+        }
+        SfxCargoSessionHolder holder = new SfxCargoSessionHolder(instance.instanceId(), instance.typeId(), type);
+        Inventory inventory = plugin.getServer().createInventory(holder, size,
+                managerProvider == null ? titleFor(type) : lc(managerProvider.titleKey()));
         holder.bind(inventory);
-        renderMenu(inventory, instance.instanceId(), type, state);
+        renderMenu(inventory, instance.instanceId(), instance.typeId(), type, state);
         openMenus.put(instance.instanceId(), inventory);
         player.openInventory(inventory);
     }
@@ -1163,8 +1194,20 @@ public final class SfxCargoService implements Listener {
         player.openInventory(inventory);
     }
 
-    private void renderMenu(Inventory inventory, UUID instanceId, SfxCargoComponentType type, SfxCargoNodeState state) {
+    private void renderMenu(Inventory inventory, UUID instanceId, String typeId, SfxCargoComponentType type, SfxCargoNodeState state) {
         inventory.clear();
+        SfxCargoComponentDefinition definition = definitions.get(typeId);
+        SfxCargoManagerProvider managerProvider = definition == null ? null : definition.managerProvider();
+        if (type == SfxCargoComponentType.MANAGER && managerProvider != null) {
+            fillSlots(inventory, java.util.stream.IntStream.range(0, inventory.getSize()).toArray(), Material.GRAY_STAINED_GLASS_PANE);
+            for (Map.Entry<Integer, cc.theends6.sfx.api.machine.SfxMachineDisplayItem> entry
+                    : managerProvider.displayItems(plugin, items, managerState(state)).entrySet()) {
+                if (entry.getKey() >= 0 && entry.getKey() < inventory.getSize()) {
+                    inventory.setItem(entry.getKey(), displayItem(entry.getValue()));
+                }
+            }
+            return;
+        }
         if (type == SfxCargoComponentType.OUTPUT_NODE) {
             fillSlots(inventory, OUTPUT_BORDER, Material.CYAN_STAINED_GLASS_PANE);
             renderChannelSelector(inventory, state, 12, 13, 14);
@@ -1200,6 +1243,85 @@ public final class SfxCargoService implements Listener {
         if (type == SfxCargoComponentType.ADVANCED_OUTPUT_NODE) {
             inventory.setItem(16, priorityItem(state.priority));
         }
+    }
+
+    private SfxCargoManagerState managerState(SfxCargoNodeState state) {
+        return new SfxCargoManagerState(state.enabled, state.managerSpeedMultiplier);
+    }
+
+    private SfxCargoManagerAccess managerAccess(UUID instanceId, Player player) {
+        return new SfxCargoManagerAccess() {
+            @Override
+            public void setEnabled(boolean enabled) {
+                currentState(instanceId).enabled = enabled;
+                markDirty();
+            }
+
+            @Override
+            public void setSpeedMultiplier(int multiplier) {
+                currentState(instanceId).managerSpeedMultiplier = SfxCargoNodeState.clamp(multiplier, 1, 64);
+                markDirty();
+            }
+
+            @Override
+            public void toggleVisualizer(Player actor) {
+                SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+                if (instance != null && actor != null) {
+                    SfxCargoService.this.toggleVisualizer(actor, instance);
+                }
+            }
+
+            @Override
+            public void markDirty() {
+                persistState(instanceId, currentState(instanceId));
+            }
+        };
+    }
+
+    private UUID effectiveManager(SfxTopologyComponent component) {
+        return component.controllers().stream()
+                .sorted(Comparator.comparing(UUID::toString))
+                .filter(id -> {
+                    SfxBlockInstanceRecord instance = blockData.findInstance(id).orElse(null);
+                    SfxCargoComponentDefinition definition = instance == null ? null : definitions.get(instance.typeId());
+                    return definition != null && !definition.coexistsWithManagers();
+                })
+                .findFirst()
+                .orElseGet(() -> component.controllers().stream()
+                        .sorted(Comparator.comparing(UUID::toString))
+                        .findFirst()
+                        .orElse(null));
+    }
+
+    private UUID customManagerController(SfxTopologyComponent component) {
+        return component.controllers().stream()
+                .sorted(Comparator.comparing(UUID::toString))
+                .filter(id -> {
+                    SfxBlockInstanceRecord instance = blockData.findInstance(id).orElse(null);
+                    SfxCargoComponentDefinition definition = instance == null ? null : definitions.get(instance.typeId());
+                    return definition != null && definition.managerProvider() != null;
+                })
+                .findFirst()
+                .orElse(null);
+    }
+
+    private int normalizeMenuSize(int requested) {
+        int rows = Math.max(1, Math.min(6, (requested + 8) / 9));
+        return rows * 9;
+    }
+
+    private ItemStack displayItem(cc.theends6.sfx.api.machine.SfxMachineDisplayItem display) {
+        ItemStack stack = new ItemStack(display.material());
+        ItemMeta meta = stack.getItemMeta();
+        if (meta != null) {
+            meta.displayName(localization.component(display.nameKey(), display.placeholders()));
+            meta.lore(display.loreKeys().stream()
+                    .map(key -> localization.component(key, display.placeholders()))
+                    .toList());
+            meta.setEnchantmentGlintOverride(display.glint());
+            stack.setItemMeta(meta);
+        }
+        return stack;
     }
 
     private void renderChannelSelector(Inventory inventory, SfxCargoNodeState state, int prevSlot, int currentSlot, int nextSlot) {

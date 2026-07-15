@@ -9,16 +9,6 @@ categories:
     name-key: category-icons.sfx_example.debug.name
 
 items:
-- id: sfx_example:debug_book
-  requires-feature: sfx:example
-  category: sfx_example:debug
-  material: ENCHANTED_BOOK
-  name-key: items.sfx_example.debug_book.name
-  lore-key: items.sfx_example.debug_book.lore
-  priority: 1
-  permission: sfx.example.debug
-  use-permission: sfx.example.debug
-  flags: [visual-glint]
 - id: sfx_example:slime_block_iv
   requires-feature: sfx:example
   category: sfx_example:debug
@@ -28,6 +18,7 @@ items:
   priority: 2
   permission: sfx.example.debug
   use-permission: sfx.example.debug
+  flags: [placeable-block]
 - id: sfx_example:debug_energy_unit
   requires-feature: sfx:example
   category: sfx_example:debug
@@ -58,6 +49,7 @@ items:
   permission: sfx.example.debug
   use-permission: sfx.example.debug
   components:
+    consumable: false
     use-cooldown:
       seconds: 1.0
       group: sfx_example:debug_fish

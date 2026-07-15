@@ -30,6 +30,7 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
+import cc.theends6.sfx.internal.topology.SfxTopologyStatus;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxEventGuards;
@@ -1363,12 +1364,68 @@ public final class SfxEnergyService implements Listener {
             }
 
             @Override
+            public long fillGridEnergy() {
+                return setGridEnergy(instance, true);
+            }
+
+            @Override
+            public long clearGridEnergy() {
+                return setGridEnergy(instance, false);
+            }
+
+            @Override
             public void markDirty() {
                 if (instance != null) {
                     dirtyNodes.add(instance.instanceId());
                 }
             }
         };
+    }
+
+    private long setGridEnergy(SfxBlockInstanceRecord source, boolean fill) {
+        if (source == null) {
+            return 0L;
+        }
+        SfxTopologyComponent component = topology.componentForMember(source.instanceId()).orElse(null);
+        if (component == null || component.status() != SfxTopologyStatus.ONLINE) {
+            return 0L;
+        }
+        long total = 0L;
+        for (UUID memberId : component.members()) {
+            SfxBlockInstanceRecord member = blockData.findInstance(memberId).orElse(null);
+            if (member == null) {
+                continue;
+            }
+            SfxEnergyComponentDefinition energyDefinition = definitions.get(member.typeId());
+            if (energyDefinition != null) {
+                SfxEnergyNodeState node = currentState(memberId, member);
+                int value = fill ? Math.max(0, energyDefinition.capacity()) : 0;
+                node.storedEnergy(value);
+                dirtyNodes.add(memberId);
+                activeNodes.add(memberId);
+                total += value;
+                if (energyDefinition.componentType() == SfxEnergyComponentType.CAPACITOR) {
+                    scheduleCapacitorAppearanceUpdate(new SfxEnergyNodeRef(member, energyDefinition, node));
+                }
+                continue;
+            }
+            if (electricMachines.supportsType(member.typeId())) {
+                int value = fill ? electricMachines.consumerCapacity(member.typeId()) : 0;
+                total += electricMachines.setConsumerStoredEnergy(memberId, value);
+                continue;
+            }
+            if (configurableMachines.isConsumer(member.typeId())) {
+                int value = fill ? configurableMachines.consumerCapacity(member.typeId()) : 0;
+                total += configurableMachines.setStoredEnergy(memberId, value);
+                continue;
+            }
+            if (configurableMachines.isProducer(member.typeId())) {
+                int value = fill ? configurableMachines.producerCapacity(member.typeId()) : 0;
+                total += configurableMachines.setStoredEnergy(memberId, value);
+            }
+        }
+        refreshOpenSfxEnergyGeneratorSessions();
+        return total;
     }
 
     private int inputSlotCount(SfxEnergyComponentDefinition definition) {

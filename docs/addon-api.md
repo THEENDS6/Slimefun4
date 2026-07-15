@@ -205,6 +205,10 @@ Localized list post-processors can adjust generated item lore and other language
 
 Plain `/slimefunx reload` only reloads core configuration and language. `/slimefunx reload runtime` and `/slimefunx reload all` perform a complete runtime reload: addons receive `onDisable()`, old provider and feature registrations are discarded, core runtime modules stop, and fresh addon instances/classloaders are created before content and services restart. API version 1 does not support installing, removing, or reloading one Java addon independently.
 
+An addon-defined cargo manager may attach an `SfxCargoManagerProvider` through `SfxCargoNodeDefinition` to supply a custom menu plus network enable and speed controls. A manager declared with `coexistsWithManagers=true` does not create a multiple-controller conflict with a normal Cargo Manager: the normal manager remains the network anchor when present, while the compatible manager remains a control surface and can also dispatch by itself.
+
+Dynamic energy providers may fully own the top inventory with `customMenuLayout()` and safely fill or clear the connected grid through `SfxEnergyGeneratorAccess.fillGridEnergy()` / `clearGridEnergy()`. To retain an edible vanilla material without allowing consumption, declare `components.consumable: false` on the item.
+
 ## Manifest And Identity
 
 - `id` must be lowercase `namespace:name` and must equal `SfxAddon.id()`.

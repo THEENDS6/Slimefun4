@@ -299,6 +299,9 @@ public final class SfxYamlContentLoader {
             if (cooldown instanceof Map<?, ?> cooldownMap) {
                 builder.useCooldown((float) decimal(cooldownMap.get("seconds")), string(cooldownMap.get("group")));
             }
+            if (Boolean.FALSE.equals(componentMap.get("consumable"))) {
+                builder.consumable(false);
+            }
         }
         if (entry.containsKey("variant")) {
             builder.variant(string(entry.get("variant")));

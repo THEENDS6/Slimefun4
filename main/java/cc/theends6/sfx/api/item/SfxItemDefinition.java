@@ -30,6 +30,7 @@ public final class SfxItemDefinition {
     private final String usePermission;
     private final Float cooldownSeconds;
     private final String cooldownGroup;
+    private final boolean consumable;
     private final SfxItemKind kind;
     private final String variant;
     private final String headTextureHash;
@@ -62,6 +63,7 @@ public final class SfxItemDefinition {
         this.cooldownSeconds = builder.cooldownSeconds;
         this.cooldownGroup = builder.cooldownGroup == null || builder.cooldownGroup.isBlank()
                 ? null : builder.cooldownGroup.trim().toLowerCase();
+        this.consumable = builder.consumable;
         this.kind = builder.kind == null ? SfxItemKind.ITEM : builder.kind;
         this.variant = Objects.requireNonNullElse(builder.variant, "default");
         this.headTextureHash = normalizeTextureHash(builder.headTextureHash);
@@ -183,6 +185,11 @@ public final class SfxItemDefinition {
         return cooldownGroup;
     }
 
+    
+    public boolean consumable() {
+        return consumable;
+    }
+
     public SfxItemKind kind() {
         return kind;
     }
@@ -238,6 +245,7 @@ public final class SfxItemDefinition {
         private String usePermission;
         private Float cooldownSeconds;
         private String cooldownGroup;
+        private boolean consumable = true;
         private SfxItemKind kind = SfxItemKind.ITEM;
         private String variant = "default";
         private String headTextureHash;
@@ -390,6 +398,11 @@ public final class SfxItemDefinition {
             }
             this.cooldownSeconds = seconds;
             this.cooldownGroup = group;
+            return this;
+        }
+
+        public Builder consumable(boolean consumable) {
+            this.consumable = consumable;
             return this;
         }
 

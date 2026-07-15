@@ -218,6 +218,10 @@ public final class DefaultSfxItems implements SfxItems {
     }
 
     private void applyDataComponents(ItemStack item, SfxItemDefinition definition) {
+        if (!definition.consumable()) {
+            item.unsetData(DataComponentTypes.FOOD);
+            item.unsetData(DataComponentTypes.CONSUMABLE);
+        }
         if (definition.cooldownSeconds() != null) {
             String rawGroup = definition.cooldownGroup() == null ? definition.id() : definition.cooldownGroup();
             Key group = Key.key(rawGroup);

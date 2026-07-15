@@ -10,16 +10,11 @@ category-icons:
 
 items:
   sfx_example:
-    debug_book:
-      name: '&cDEBUG 科技书'
-      lore:
-      - '&7SFX 官方调试与 API 示例物品。'
-      - '&7该分类默认只对服务器管理员显示。'
     slime_block_iv:
       name: '&a粘液块 IV'
       lore:
       - '&7IV 代表 Slimefun 4。'
-      - '&7完全通过 YAML 声明的普通示例物品。'
+      - '&7完全通过 YAML 声明的可放置示例方块。'
     debug_energy_unit:
       name: '&eDEBUG 电力单元'
       lore:
@@ -30,6 +25,7 @@ items:
       name: '&6DEBUG 运输调度'
       lore:
       - '&7区域型运输调度和拓扑缓存测试节点。'
+      - '&7可与普通运输调度器共存并控制网络。'
       - '&c仅限管理员调试使用。'
     debug_fish:
       name: '&bDEBUG 鱼'
@@ -56,11 +52,37 @@ example-energy:
   rate-down: {name: '&c降低功率'}
   rate-up: {name: '&a提高功率'}
   rate-exact: {name: '&e精确输入功率'}
-  rate: {lore: '&7当前功率：{rate} J/t；右键 10，Shift 1000。'}
-  capacity-down: {name: '&c降低容量'}
-  capacity-up: {name: '&a提高容量'}
-  capacity-exact: {name: '&e精确输入容量'}
-  capacity: {lore: '&7当前容量：{capacity} J。'}
-  empty: {name: '&f清空内部电量'}
-  fill: {name: '&6填满内部电量'}
+  rate: {lore: '&7当前功率：{rate} J/t。点击后在聊天框输入。'}
+  adjust: {lore: '&7左键 1，右键 10，Shift 左键 100，Shift 右键 1000。'}
+  storage-down: {name: '&c降低储能'}
+  storage-up: {name: '&a提高储能'}
+  storage-exact: {name: '&e精确输入储能'}
   storage: {lore: '&7内部电量：{stored}/{capacity} J。'}
+  grid-empty:
+    name: '&f清空整个电网'
+    lore: '&7将当前连接电网内所有储能设为 0 J。'
+  grid-fill:
+    name: '&6填满整个电网'
+    lore: '&7将当前连接电网内所有储能填至容量上限。'
+
+example-cargo:
+  title: '&6DEBUG 运输调度'
+  state:
+    name: '&e网络运行状态：{state}'
+    lore: '&7当前速度倍率：x{speed}。'
+  enable:
+    name: '&a启用运输网络'
+    lore: '&7允许当前网络继续运输。'
+  disable:
+    name: '&c关闭运输网络'
+    lore: '&7暂停当前网络的全部运输。'
+  speed-down:
+    name: '&c降低调度倍率'
+  speed-up:
+    name: '&a提高调度倍率'
+  speed:
+    name: '&e调度速度：x{speed}'
+    lore: '&7普通点击调整 1，Shift 点击调整 10；最大 x{max_speed}。'
+  visualizer:
+    name: '&d切换运输粒子'
+    lore: '&7为当前玩家开启或关闭网络粒子显示。'

@@ -54,6 +54,11 @@ public interface SfxDynamicEnergyGeneratorProvider extends SfxEnergyGeneratorPro
         return Map.of();
     }
 
+    
+    default boolean customMenuLayout() {
+        return false;
+    }
+
     default int[] shiftInputSlots(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, ItemStack stack) {
         return definition.ui().inputSlots();
     }

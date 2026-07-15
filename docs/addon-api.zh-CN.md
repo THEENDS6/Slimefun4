@@ -74,6 +74,10 @@ public final class ExampleAddon implements SfxAddon {
 
 普通 `/slimefunx reload` 只刷新核心配置和语言。`/slimefunx reload runtime` 与 `/slimefunx reload all` 会执行完整运行时重载：先调用 Addon 的 `onDisable()`，丢弃旧 Provider 与 Feature 注册，再关闭核心运行时模块，随后创建新的 Addon 实例和 classloader，并重建内容与服务。版本 1 不支持单独安装、卸载或热重载某一个 Java Addon。
 
+Addon 可通过 `SfxCargoNodeDefinition` 为运输调度器提供 `SfxCargoManagerProvider` 自定义菜单和启停、速度倍率控制。`coexistsWithManagers=true` 的调度器不会与普通调度器形成多控制器冲突：有普通调度器时由普通调度器承担网络锚点，自定义调度器仍可作为控制面；只有它自身时也可独立调度。
+
+动态能源 Provider 可用 `customMenuLayout()` 完整接管顶部菜单，并通过 `SfxEnergyGeneratorAccess.fillGridEnergy()` / `clearGridEnergy()` 安全修改当前连接电网。需要保留原版食物材质但禁止食用时，在物品 `components` 中声明 `consumable: false`。
+
 ## SfxAddonContext
 
 - `api()`：公开 SFX API；

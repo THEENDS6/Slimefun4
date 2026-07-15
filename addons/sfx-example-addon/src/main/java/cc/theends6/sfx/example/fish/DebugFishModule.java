@@ -25,6 +25,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerBucketEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -74,6 +75,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         }
         Player player = event.getPlayer();
         event.setCancelled(true);
+        event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
         if (!player.hasPermission(ExamplePermissions.DEBUG) || !context.api().items().canUse(player, marker.itemId())) {
             return;
         }
@@ -85,6 +87,14 @@ public final class DebugFishModule implements Listener, AutoCloseable {
             player.setCooldown(stack, ticks);
         });
         launch(player);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onConsume(PlayerItemConsumeEvent event) {
+        SfxItemMarker marker = context.api().items().readMarker(event.getItem()).orElse(null);
+        if (marker != null && ExampleIds.DEBUG_FISH.equals(marker.itemId())) {
+            event.setCancelled(true);
+        }
     }
 
     private void launch(Player shooter) {

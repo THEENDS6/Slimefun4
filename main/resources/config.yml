@@ -177,7 +177,7 @@ cargo:
     advanced-input-interface:
       enabled: true
   visualizer:
-    enabled: false
+    enabled: true
     particle: dust
     include-manager: false
     view-distance-squared: 1024

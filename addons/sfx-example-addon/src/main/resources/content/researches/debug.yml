@@ -4,14 +4,12 @@ researches:
   name-key: researches.sfx_example.debug.name
   cost: 0
   items:
-  - sfx_example:debug_book
   - sfx_example:slime_block_iv
   - sfx_example:debug_energy_unit
   - sfx_example:debug_transport_dispatcher
   - sfx_example:debug_fish
   - sfx_example:magic_slime_block
   item-feature-gates:
-    sfx_example:debug_book: sfx:example
     sfx_example:slime_block_iv: sfx:example
     sfx_example:debug_energy_unit: sfx:example
     sfx_example:debug_transport_dispatcher: sfx:example

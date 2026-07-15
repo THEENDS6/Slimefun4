@@ -43,6 +43,11 @@ final class SfxEnergyGeneratorMenuRenderer {
     }
 
     void render(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider, Location location) {
+        if (provider != null && provider.customMenuLayout()) {
+            inventory.clear();
+            renderProviderItems(definition, inventory, state, provider);
+            return;
+        }
         fillInventoryFrame(definition, inventory);
         inventory.setItem(definition.ui().statusSlot(), progressIcon(definition, state, status, provider, location));
         int[] inputSlots = definition.ui().inputSlots();
@@ -57,6 +62,11 @@ final class SfxEnergyGeneratorMenuRenderer {
     }
 
     void renderStatusOnly(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider, Location location) {
+        if (provider != null && provider.customMenuLayout()) {
+            inventory.clear();
+            renderProviderItems(definition, inventory, state, provider);
+            return;
+        }
         fillInventoryFrame(definition, inventory);
         inventory.setItem(definition.ui().statusSlot(), progressIcon(definition, state, status, provider, location));
         renderProviderItems(definition, inventory, state, provider);

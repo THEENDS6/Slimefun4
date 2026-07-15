@@ -1,8 +1,21 @@
 package cc.theends6.sfx.internal.cargo;
 
-public record SfxCargoComponentDefinition(String id, SfxCargoComponentType type, int rangeX, int rangeY, int rangeZ) {
+import cc.theends6.sfx.api.cargo.SfxCargoManagerProvider;
+
+public record SfxCargoComponentDefinition(
+        String id,
+        SfxCargoComponentType type,
+        int rangeX,
+        int rangeY,
+        int rangeZ,
+        boolean coexistsWithManagers,
+        SfxCargoManagerProvider managerProvider) {
     public SfxCargoComponentDefinition(String id, SfxCargoComponentType type) {
-        this(id, type, 0, 0, 0);
+        this(id, type, 0, 0, 0, false, null);
+    }
+
+    public SfxCargoComponentDefinition(String id, SfxCargoComponentType type, int rangeX, int rangeY, int rangeZ) {
+        this(id, type, rangeX, rangeY, rangeZ, false, null);
     }
 
     public boolean hasAreaRange() {

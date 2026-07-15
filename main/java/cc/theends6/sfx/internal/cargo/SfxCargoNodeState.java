@@ -27,6 +27,7 @@ final class SfxCargoNodeState {
     int priority = 1;
     int roundRobinCursor = 0;
     boolean enabled = true;
+    int managerSpeedMultiplier = 1;
     String selectedRecipeKey = "";
     ItemStack[] filterItems = new ItemStack[FILTER_SIZE];
 
@@ -74,6 +75,9 @@ final class SfxCargoNodeState {
             } else {
                 state.batchLimit = normalizeBatchLimit(state.maxItemsPerCycle);
             }
+            if (version >= 4) {
+                state.managerSpeedMultiplier = clamp(input.readInt(), 1, 64);
+            }
             int filterLength = input.readInt();
             state.filterItems = new ItemStack[FILTER_SIZE];
             for (int i = 0; i < filterLength; i++) {
@@ -101,7 +105,7 @@ final class SfxCargoNodeState {
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             try (DataOutputStream output = new DataOutputStream(buffer)) {
-                output.writeInt(3);
+                output.writeInt(4);
                 output.writeUTF(attachedFace.name());
                 output.writeInt(clamp(channel, 0, 15));
                 output.writeUTF(filterMode.name());
@@ -117,6 +121,7 @@ final class SfxCargoNodeState {
                 output.writeBoolean(roundRobin);
                 output.writeBoolean(allowMultipleSlots);
                 output.writeInt(normalizeBatchLimit(batchLimit));
+                output.writeInt(clamp(managerSpeedMultiplier, 1, 64));
                 output.writeInt(filterItems.length);
                 for (ItemStack stack : filterItems) {
                     output.writeBoolean(stack != null && !stack.getType().isAir());

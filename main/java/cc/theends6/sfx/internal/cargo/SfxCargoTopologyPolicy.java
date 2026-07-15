@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.cargo;
 
 import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.topology.SfxTopologyCapabilities;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyDomainKey;
@@ -13,9 +14,11 @@ final class SfxCargoTopologyPolicy implements SfxTopologyDomainPolicy {
     static final SfxTopologyDomainKey DOMAIN = SfxTopologyDomainKey.of("sfx", "cargo");
 
     private final Map<String, SfxCargoComponentDefinition> definitions;
+    private final SfxBlockDataService blockData;
 
-    SfxCargoTopologyPolicy(Map<String, SfxCargoComponentDefinition> definitions) {
+    SfxCargoTopologyPolicy(Map<String, SfxCargoComponentDefinition> definitions, SfxBlockDataService blockData) {
         this.definitions = Objects.requireNonNull(definitions, "definitions");
+        this.blockData = Objects.requireNonNull(blockData, "blockData");
     }
 
     @Override
@@ -34,10 +37,20 @@ final class SfxCargoTopologyPolicy implements SfxTopologyDomainPolicy {
 
     @Override
     public SfxTopologyStatus evaluateStatus(SfxTopologyComponent component) {
-        int controllers = component.controllers().size();
-        if (controllers <= 0) {
+        int exclusiveControllers = 0;
+        int compatibleControllers = 0;
+        for (var controllerId : component.controllers()) {
+            var instance = blockData.findInstance(controllerId).orElse(null);
+            SfxCargoComponentDefinition definition = instance == null ? null : definitions.get(instance.typeId());
+            if (definition == null || !definition.coexistsWithManagers()) {
+                exclusiveControllers++;
+            } else {
+                compatibleControllers++;
+            }
+        }
+        if (exclusiveControllers + compatibleControllers <= 0) {
             return SfxTopologyStatus.INACTIVE;
         }
-        return controllers == 1 ? SfxTopologyStatus.ONLINE : SfxTopologyStatus.MULTIPLE_CONTROLLERS;
+        return exclusiveControllers <= 1 ? SfxTopologyStatus.ONLINE : SfxTopologyStatus.MULTIPLE_CONTROLLERS;
     }
 }

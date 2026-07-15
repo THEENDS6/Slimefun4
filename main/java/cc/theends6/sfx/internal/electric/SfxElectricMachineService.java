@@ -656,6 +656,20 @@ public final class SfxElectricMachineService implements Listener {
         return currentState(instanceId, instance).storedEnergy();
     }
 
+    public int setConsumerStoredEnergy(UUID instanceId, int amount) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null || !registry.contains(instance.typeId())) {
+            return 0;
+        }
+        int capacity = consumerCapacity(instance.typeId());
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        int updated = Math.max(0, Math.min(capacity, amount));
+        state.storedEnergy(updated);
+        dirtyInstances.add(instanceId);
+        activeInstances.add(instanceId);
+        return updated;
+    }
+
     public int drainRecentEnergyConsumption(Collection<UUID> instanceIds) {
         if (instanceIds == null || instanceIds.isEmpty()) {
             return 0;

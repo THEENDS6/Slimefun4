@@ -88,18 +88,13 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
     public boolean handleMenuClick(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition,
                                    SfxEnergyNodeState state, int rawSlot, ClickType clickType) {
         validate(state);
-        int step = clickType.isShiftClick() ? 1000 : clickType.isRightClick() ? 10 : 1;
+        int step = adjustmentStep(clickType);
         switch (rawSlot) {
             case 4 -> state.specialData((mode(state) + 1) % 3);
-            case 20 -> state.specialData2(clamp(rate(state) - step, 1, maxRate));
-            case 24 -> state.specialData2(clamp(rate(state) + step, 1, maxRate));
-            case 30 -> {
-                state.specialData3(clamp(capacity(state) - step * 100, 1, maxCapacity));
-                state.storedEnergy(Math.min(state.storedEnergy(), capacity(state)));
-            }
-            case 32 -> state.specialData3(clampLong((long) capacity(state) + step * 100L, 1, maxCapacity));
-            case 38 -> state.storedEnergy(0);
-            case 42 -> state.storedEnergy(capacity(state));
+            case 9 -> state.specialData2(clamp(rate(state) - step, 1, maxRate));
+            case 11 -> state.specialData2(clamp(rate(state) + step, 1, maxRate));
+            case 12 -> state.storedEnergy(clamp(state.storedEnergy() - step, 0, capacity(state)));
+            case 14 -> state.storedEnergy(clampLong((long) state.storedEnergy() + step, 0, capacity(state)));
             default -> { return false; }
         }
         validate(state);
@@ -110,13 +105,13 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
     public boolean handleMenuClick(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition,
                                    SfxEnergyNodeState state, Location location, Player player, int rawSlot,
                                    ClickType clickType, SfxEnergyGeneratorAccess access) {
-        if (rawSlot == 13 || rawSlot == 31) {
-            boolean rateInput = rawSlot == 13;
+        if (rawSlot == 10 || rawSlot == 13) {
+            boolean rateInput = rawSlot == 10;
             player.closeInventory();
             player.sendMessage(rateInput
                     ? "§e请输入新的功率（1-" + maxRate + "），输入 cancel 取消。"
-                    : "§e请输入新的容量（1-" + maxCapacity + "），输入 cancel 取消。");
-            String owner = "sfx-example:debug-energy-" + (rateInput ? "rate" : "capacity");
+                    : "§e请输入新的储能（0-" + capacity(state) + "），输入 cancel 取消。");
+            String owner = "sfx-example:debug-energy-" + (rateInput ? "rate" : "stored");
             context.api().chatInput().await(player, owner, Duration.ofSeconds(30), input -> {
                 if (input.equalsIgnoreCase("cancel")) return;
                 try {
@@ -124,8 +119,7 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
                     if (rateInput) {
                         state.specialData2(clampLong(parsed, 1, maxRate));
                     } else {
-                        state.specialData3(clampLong(parsed, 1, maxCapacity));
-                        state.storedEnergy(Math.min(state.storedEnergy(), capacity(state)));
+                        state.storedEnergy(clampLong(parsed, 0, capacity(state)));
                     }
                     validate(state);
                     access.markDirty();
@@ -136,7 +130,22 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
             }, () -> player.sendMessage("§7输入已超时，参数未修改。"));
             return true;
         }
+        if (rawSlot == 21) {
+            access.clearGridEnergy();
+            player.sendMessage("§a已清空当前电网能量。");
+            return true;
+        }
+        if (rawSlot == 23) {
+            access.fillGridEnergy();
+            player.sendMessage("§a已填满当前电网能量。");
+            return true;
+        }
         return handleMenuClick(plugin, items, definition, state, rawSlot, clickType);
+    }
+
+    @Override
+    public boolean customMenuLayout() {
+        return true;
     }
 
     @Override
@@ -148,15 +157,15 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
                 "rate", rate(state), "stored", state.storedEnergy(), "capacity", capacity(state));
         return Map.of(
                 4, item(Material.COMPARATOR, "example-energy.mode.name", "example-energy.mode.lore", values, mode(state) != STOPPED),
-                13, item(Material.NAME_TAG, "example-energy.rate-exact.name", "example-energy.rate.lore", values, false),
-                20, item(Material.RED_DYE, "example-energy.rate-down.name", "example-energy.rate.lore", values, false),
-                24, item(Material.LIME_DYE, "example-energy.rate-up.name", "example-energy.rate.lore", values, false),
-                30, item(Material.REDSTONE, "example-energy.capacity-down.name", "example-energy.capacity.lore", values, false),
-                31, item(Material.NAME_TAG, "example-energy.capacity-exact.name", "example-energy.capacity.lore", values, false),
-                32, item(Material.REDSTONE_BLOCK, "example-energy.capacity-up.name", "example-energy.capacity.lore", values, false),
-                38, item(Material.BUCKET, "example-energy.empty.name", "example-energy.storage.lore", values, false),
-                42, new SfxMachineDisplayItem(Material.LAVA_BUCKET, "example-energy.fill.name",
-                        List.of("example-energy.storage.lore"), values, false, state.storedEnergy(), capacity(state)));
+                9, item(Material.RED_DYE, "example-energy.rate-down.name", "example-energy.adjust.lore", values, false),
+                10, item(Material.NAME_TAG, "example-energy.rate-exact.name", "example-energy.rate.lore", values, false),
+                11, item(Material.LIME_DYE, "example-energy.rate-up.name", "example-energy.adjust.lore", values, false),
+                12, item(Material.REDSTONE, "example-energy.storage-down.name", "example-energy.adjust.lore", values, false),
+                13, new SfxMachineDisplayItem(Material.REDSTONE_BLOCK, "example-energy.storage-exact.name",
+                        List.of("example-energy.storage.lore"), values, false, state.storedEnergy(), capacity(state)),
+                14, item(Material.GLOWSTONE_DUST, "example-energy.storage-up.name", "example-energy.adjust.lore", values, false),
+                21, item(Material.BUCKET, "example-energy.grid-empty.name", "example-energy.grid-empty.lore", values, false),
+                23, item(Material.LAVA_BUCKET, "example-energy.grid-fill.name", "example-energy.grid-fill.lore", values, false));
     }
 
     @Override
@@ -172,16 +181,22 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
 
     private void validate(SfxEnergyNodeState state) {
         if (state.specialData2() <= 0) state.specialData2(defaultRate);
-        if (state.specialData3() <= 0) state.specialData3(defaultCapacity);
+        
+        state.specialData3(defaultCapacity);
         state.specialData(Math.min(CONSUMING, Math.max(STOPPED, state.specialData())));
         state.specialData2(clamp(state.specialData2(), 1, maxRate));
-        state.specialData3(clamp(state.specialData3(), 1, maxCapacity));
         state.storedEnergy(Math.min(state.storedEnergy(), capacity(state)));
     }
 
     private int mode(SfxEnergyNodeState state) { return state.specialData(); }
     private int rate(SfxEnergyNodeState state) { return state.specialData2(); }
     private int capacity(SfxEnergyNodeState state) { return state.specialData3(); }
+    private static int adjustmentStep(ClickType clickType) {
+        if (clickType == ClickType.SHIFT_RIGHT) return 1000;
+        if (clickType == ClickType.SHIFT_LEFT) return 100;
+        if (clickType.isRightClick()) return 10;
+        return 1;
+    }
     private static int clamp(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
     private static int clampLong(long value, int min, int max) { return (int) Math.max(min, Math.min((long) max, value)); }
 }
