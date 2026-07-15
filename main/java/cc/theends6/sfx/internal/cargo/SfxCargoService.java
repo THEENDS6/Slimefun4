@@ -45,6 +45,7 @@ import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
 import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.topology.SfxTopologyStatus;
+import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxEventGuards;
@@ -1319,6 +1320,9 @@ public final class SfxCargoService implements Listener {
                     .map(key -> localization.component(key, display.placeholders()))
                     .toList());
             meta.setEnchantmentGlintOverride(display.glint());
+            if (display.headTextureHash() != null) {
+                HeadTextures.apply(meta, display.headTextureHash());
+            }
             stack.setItemMeta(meta);
         }
         return stack;
