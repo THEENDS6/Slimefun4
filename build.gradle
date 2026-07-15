@@ -3891,32 +3891,41 @@ def readRconPacket = { InputStream input ->
 }
 
 def sendPaperRconCommand = { String commandText ->
-    def output = new ByteArrayOutputStream()
-    def script = layout.projectDirectory.file('tools/paper-rcon.ps1').asFile
-    def result = exec {
-        executable = 'powershell.exe'
-        args = [
-                '-NoProfile',
-                '-ExecutionPolicy', 'Bypass',
-                '-File', script.absolutePath,
-                '-HostName', rootProject.ext.paperRuntimeRconHost,
-                '-Port', rootProject.ext.paperRuntimeRconPort.toString(),
-                '-Password', rootProject.ext.paperRuntimeRconPassword,
-                '-CommandText', commandText,
-                '-TimeoutMs', '5000'
-        ]
-        standardOutput = output
-        errorOutput = output
-        ignoreExitValue = true
+    def socket = new java.net.Socket()
+    try {
+        socket.connect(new java.net.InetSocketAddress(
+                rootProject.ext.paperRuntimeRconHost,
+                rootProject.ext.paperRuntimeRconPort as int), 5000)
+        socket.setSoTimeout(5000)
+        def input = socket.getInputStream()
+        def output = socket.getOutputStream()
+        int authId = 0x53465801
+        sendRconPacket(output, authId, 3, rootProject.ext.paperRuntimeRconPassword)
+        def auth = readRconPacket(input)
+        if (auth.id != authId && auth.id != -1) {
+            auth = readRconPacket(input)
+        }
+        if (auth.id == -1 || auth.id != authId) {
+            throw new IOException('Paper RCON authentication failed.')
+        }
+        int commandId = 0x53465802
+        sendRconPacket(output, commandId, 2, commandText)
+        def response = readRconPacket(input)
+        if (response.id == -1 || response.id != commandId) {
+            throw new IOException("Invalid Paper RCON response for command: ${commandText}")
+        }
+        def responseText = String.valueOf(response.payload).trim()
+        if (!responseText.isBlank()) {
+            logger.lifecycle(responseText)
+        }
+        return responseText
+    } finally {
+        try {
+            socket.close()
+        } catch (IOException ignored) {
+            // Nothing else can be recovered when closing a local verification socket.
+        }
     }
-    def responseText = output.toString(StandardCharsets.UTF_8.name()).trim()
-    if (responseText != null && !responseText.isBlank()) {
-        logger.lifecycle(responseText)
-    }
-    if (result.exitValue != 0) {
-        throw new IOException(responseText.isBlank() ? "RCON command failed: ${commandText}" : responseText)
-    }
-    responseText
 }
 
 def sendPaperRconCommandWithRetry = { String commandText, int attempts = 3, long delayMs = 1000L ->
@@ -4030,6 +4039,9 @@ tasks.register('plugmanReloadPaperRuntime') {
             def builtJar = tasks.named('jar').get().archiveFile.get().asFile
             def targetJar = layout.projectDirectory.file("run-paper-1.21.8/plugins/${rootProject.ext.pluginJarName}").asFile
             java.nio.file.Files.copy(builtJar.toPath(), targetJar.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            if (java.nio.file.Files.mismatch(builtJar.toPath(), targetJar.toPath()) != -1L) {
+                throw new GradleException('Copied Paper runtime jar does not match the freshly built SlimeFunX jar.')
+            }
             logger.lifecycle("Copied ${builtJar.name} to ${targetJar}")
             Thread.sleep(1500L)
             long loadLogOffset = logFile.exists() ? logFile.length() : 0L
@@ -4037,6 +4049,21 @@ tasks.register('plugmanReloadPaperRuntime') {
             if (!waitForSfxEnable(logFile, loadLogOffset, 20000L)) {
                 throw new GradleException('PlugManX load command was sent, but SlimeFunX enable was not observed in latest.log.')
             }
+            def reloadLog = readNewLogText(logFile, loadLogOffset)
+            def fatalReloadMarkers = [
+                    '[SlimeFunX] SlimeFunX failed to start:',
+                    'Error occurred while enabling SlimeFunX',
+                    '[SlimeFunX] Missing language key:',
+                    '[SlimeFunX] Failed to load addon language resource'
+            ]
+            def fatalMarker = fatalReloadMarkers.find { reloadLog.contains(it) }
+            if (fatalMarker != null) {
+                throw new GradleException("SlimeFunX reloaded but failed post-load log validation: ${fatalMarker}")
+            }
+            if (reloadLog.contains('The server has not responded for')) {
+                logger.warn('PlugManX reload completed, but Paper Watchdog observed a main-thread stall. Use a full restart for stable or production servers.')
+            }
+            sendPaperRconCommandWithRetry('list', 5, 1000L)
             logger.lifecycle('Requested PlugManX unload/load for SlimeFunX on Paper 1.21.8.')
         } catch (IOException exception) {
             throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled. Start it with runPaper first.', exception)

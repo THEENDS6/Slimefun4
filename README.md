@@ -74,6 +74,8 @@ For SlimeFunX on the local Paper 26.1 runtime:
 
 The Paper 26.1 runtime lives under `run-paper-26.1` and expects `paper-26.1.jar` plus PacketEvents in `plugins`.
 
+For the Paper 1.21.8 development runtime, see [Hot reload and runtime reload](docs/hot-reload.md). Bytecode reload through PlugManX is intended only for this local test server; use a full restart for stable servers.
+
 For the SlimeEasy sieve-animation patch:
 
 ```powershell
