@@ -12,6 +12,16 @@
 
 ## 选择正确的加载方式
 
+先按变更范围判断：
+
+| 变更内容 | 使用任务 | 原因 |
+| --- | --- | --- |
+| 外置配置、语言文件，且运行时 reload 会重新读取 | `reloadPaperRuntime` | 只需通过 RCON 执行 `/sfx reload runtime` |
+| 新 JAR 只需为下次重启准备 | `stageAndReloadPaperRuntime` | 当前进程仍使用旧字节码 |
+| Java、公共 API、addon 类或 JAR 内嵌资源 | `plugmanReloadPaperRuntime` | 必须替换 JAR 并重新加载插件 |
+
+因此，能由 `/sfx reload runtime` 完整生效的修改只执行 RCON，也属于一次完整的 runtime 热加载操作；不要额外卸载插件。凡涉及 Java 或内嵌 addon 资源的修改，都不能降级为 RCON-only。
+
 仅修改外置配置、语言或已加载字节码能够重新读取的内容：
 
 ```powershell
