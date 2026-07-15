@@ -20,4 +20,8 @@ components:
       burn-rate: 10
       progress-material: REDSTONE_BLOCK
     slots: {input: [], output: []}
+    ui:
+      inventory-size: 27
+      status-slot: 22
+      frame: []
     runtime: {provider: sfx_example:debug_energy_unit}

@@ -19,6 +19,10 @@ import org.bukkit.entity.Player;
 
 
 public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorProvider {
+    private static final String COAL_GENERATOR_TEXTURE =
+            "9343ce58da54c79924a2c9331cfc417fe8ccbbea9be45a7ac85860a6c730";
+    private static final String CAPACITOR_TEXTURE =
+            "91361e576b493cbfdfae328661cedd1add55fab4e5eb418b92cebf6275f8bb4";
     private static final int STOPPED = 0;
     private static final int GENERATING = 1;
     private static final int CONSUMING = 2;
@@ -171,12 +175,12 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
                 }, Map.of()),
                 "rate", rate(state), "stored", state.storedEnergy(), "capacity", capacity(state));
         return Map.ofEntries(
-                Map.entry(1, item(Material.YELLOW_STAINED_GLASS_PANE, "example-energy.power-section.name",
-                        "example-energy.power-section.lore", values, false)),
+                Map.entry(2, head(COAL_GENERATOR_TEXTURE, "example-energy.power-section.name",
+                        "example-energy.power-section.lore", values)),
                 Map.entry(4, item(Material.COMPARATOR, "example-energy.mode.name", "example-energy.mode.lore", values,
                         mode(state) != STOPPED)),
-                Map.entry(7, item(Material.ORANGE_STAINED_GLASS_PANE, "example-energy.capacity-section.name",
-                        "example-energy.capacity-section.lore", values, false)),
+                Map.entry(6, head(CAPACITOR_TEXTURE, "example-energy.capacity-section.name",
+                        "example-energy.capacity-section.lore", values)),
                 Map.entry(10, item(Material.RED_DYE, "example-energy.rate-down.name", "example-energy.adjust.lore", values, false)),
                 Map.entry(11, item(Material.NAME_TAG, "example-energy.rate-exact.name", "example-energy.rate.lore", values, false)),
                 Map.entry(12, item(Material.LIME_DYE, "example-energy.rate-up.name", "example-energy.adjust.lore", values, false)),
@@ -198,6 +202,10 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
 
     private SfxMachineDisplayItem item(Material material, String name, String lore, Map<String, Object> values, boolean glint) {
         return new SfxMachineDisplayItem(material, name, List.of(lore), values, glint, 0, 0);
+    }
+
+    private SfxMachineDisplayItem head(String texture, String name, String lore, Map<String, Object> values) {
+        return new SfxMachineDisplayItem(Material.PLAYER_HEAD, name, List.of(lore), values, false, 0, 0, texture);
     }
 
     private String localized(String key, Map<String, ?> placeholders) {
