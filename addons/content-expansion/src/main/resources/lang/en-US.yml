@@ -47,7 +47,7 @@ content-expansion:
 
 items:
   sfx.oxidizing_generator:
-    name: '&6Oxidizing Generator'
+    name: '&2Oxidizing Generator'
     lore:
     - '&7Generates power from metal oxidation.'
     - '&7Stores up to 2000 mB of electrolyte and supports power/production modes.'
@@ -56,7 +56,7 @@ items:
     - '&8⇨ &e⚡ &765536 J Buffer'
     - '&8⇨ &e⚡ &724 J/t'
   sfx.waxing_machine:
-    name: '&6Waxing Machine'
+    name: '&eWaxing Machine'
     lore:
     - '&7Automatically waxes copper items.'
     - '&7Consumes wax stored inside the machine.'
@@ -65,7 +65,7 @@ items:
     - '&8⇨ &b⚡ &7Speed: &b1x'
     - '&8⇨ &e⚡ &76 J/t'
   sfx.cutting_machine:
-    name: '&6Cutting Machine'
+    name: '&cCutting Machine'
     lore:
     - '&7Cuts blocks and scrapes copper.'
     - '&7Removes wax before scraping oxidation.'

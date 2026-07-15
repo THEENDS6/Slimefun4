@@ -51,6 +51,11 @@ public final class DefaultSfxMenus implements SfxMenus {
             if (history == null) {
                 history = new ArrayDeque<>();
             }
+            if (returnsToPrevious(menu, history)) {
+                history.pop();
+                openInternal(player, menu, history);
+                return;
+            }
             pushCurrent(previous, history);
             openInternal(player, menu, history);
         });
@@ -287,6 +292,12 @@ public final class DefaultSfxMenus implements SfxMenus {
         if (previous != null) {
             history.push(previous.menu());
         }
+    }
+
+    private boolean returnsToPrevious(SfxMenu target, Deque<SfxMenu> history) {
+        return target.historyKey() != null
+                && !history.isEmpty()
+                && target.historyKey().equals(history.peek().historyKey());
     }
 
     private record Session(SfxMenu menu, Inventory inventory, Deque<SfxMenu> history) {

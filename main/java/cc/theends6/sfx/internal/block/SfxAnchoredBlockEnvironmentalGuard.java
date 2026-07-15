@@ -57,7 +57,7 @@ public final class SfxAnchoredBlockEnvironmentalGuard {
         if (blockData.findAnchor(block.getRelative(BlockFace.DOWN).getLocation()).isPresent()) {
             scheduleWaterSourceCheck(block);
         } else if (blockData.findAnchor(block.getLocation()).isPresent()) {
-            if (isSkullBlock(block.getType())) {
+            if (isSkullBlock(block.getType()) || isGravityAffected(block.getType())) {
                 event.setCancelled(true);
             }
             scheduleWaterSourceCheckAbove(block);
@@ -88,6 +88,10 @@ public final class SfxAnchoredBlockEnvironmentalGuard {
 
     private boolean isSkullBlock(Material material) {
         return material == Material.PLAYER_HEAD || material == Material.PLAYER_WALL_HEAD;
+    }
+
+    private boolean isGravityAffected(Material material) {
+        return material.hasGravity();
     }
 
     private void scheduleWaterSourceCheckAbove(Block anchoredBlock) {

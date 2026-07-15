@@ -6,6 +6,7 @@ items:
     material: LIME_TERRACOTTA
     name-key: items.sf.bio_reactor.name
     priority: 362
+    guide-order: 362
     lore-key: items.sf.bio_reactor.lore
     flags:
     - legacy-sf

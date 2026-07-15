@@ -254,7 +254,8 @@ public final class DefaultSfxGuide implements SfxGuide {
         int pageCount = pageCount(visibleCategories.size());
         int safePage = clampPage(page, pageCount);
 
-        SfxMenu.Builder builder = SfxMenu.builder(title(mode, tr("guide.main.title"))).rows(6);
+        SfxMenu.Builder builder = SfxMenu.builder(title(mode, tr("guide.main.title"))).rows(6)
+                .historyKey("guide:main:" + mode + ":" + safePage);
         paintFrame(builder, mode, effectiveLayout(preferences(player)));
 
         int from = safePage * CONTENT_SLOTS.length;
@@ -274,8 +275,8 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
 
         addContentPagination(builder, safePage, pageCount,
-                previous -> openMain(previous, mode, safePage - 1, Navigation.REPLACE),
-                next -> openMain(next, mode, safePage + 1, Navigation.REPLACE));
+                previous -> openMain(previous, mode, safePage - 1, Navigation.OPEN),
+                next -> openMain(next, mode, safePage + 1, Navigation.OPEN));
         builder.button(49, new SfxMenuButton(infoIcon(mode, safePage, pageCount), click -> closeGuide(click.player())));
         showMenu(player, builder, navigation);
     }
@@ -307,7 +308,8 @@ public final class DefaultSfxGuide implements SfxGuide {
         int pageCount = pageCount(entries.size());
         int safePage = clampPage(page, pageCount);
 
-        SfxMenu.Builder builder = SfxMenu.builder(title(mode, plainCategoryName(category))).rows(6);
+        SfxMenu.Builder builder = SfxMenu.builder(title(mode, plainCategoryName(category))).rows(6)
+                .historyKey("guide:category:" + mode + ":" + category.id() + ":" + safePage);
         paintFrame(builder, mode, effectiveLayout(preferences(player)));
 
         int from = safePage * CONTENT_SLOTS.length;
@@ -357,8 +359,8 @@ public final class DefaultSfxGuide implements SfxGuide {
 
         builder.button(1, new SfxMenuButton(backIcon(tr("guide.actions.back-main")), click -> goBack(click.player(), mode)));
         addContentPagination(builder, safePage, pageCount,
-                previous -> openCategory(previous, mode, category.id(), safePage - 1, Navigation.REPLACE),
-                next -> openCategory(next, mode, category.id(), safePage + 1, Navigation.REPLACE));
+                previous -> openCategory(previous, mode, category.id(), safePage - 1, Navigation.OPEN),
+                next -> openCategory(next, mode, category.id(), safePage + 1, Navigation.OPEN));
         builder.button(49, new SfxMenuButton(infoIcon(mode, safePage, pageCount), click -> closeGuide(click.player())));
         showMenu(player, builder, navigation);
     }
@@ -402,7 +404,8 @@ public final class DefaultSfxGuide implements SfxGuide {
                 .toList();
         int pageCount = pageCount(results.size());
         int safePage = clampPage(page, pageCount);
-        SfxMenu.Builder builder = SfxMenu.builder(title(mode, tr("guide.search.title").replace("{query}", query))).rows(6);
+        SfxMenu.Builder builder = SfxMenu.builder(title(mode, tr("guide.search.title").replace("{query}", query))).rows(6)
+                .historyKey("guide:search:" + mode + ":" + query + ":" + safePage);
         paintFrame(builder, mode, effectiveLayout(preferences(player)));
 
         int from = safePage * CONTENT_SLOTS.length;
@@ -440,8 +443,8 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
         builder.button(1, new SfxMenuButton(backIcon(tr("guide.actions.back-guide")), click -> goBack(click.player(), mode)));
         addContentPagination(builder, safePage, pageCount,
-                previous -> openSearchResults(previous, mode, query, safePage - 1, Navigation.REPLACE),
-                next -> openSearchResults(next, mode, query, safePage + 1, Navigation.REPLACE));
+                previous -> openSearchResults(previous, mode, query, safePage - 1, Navigation.OPEN),
+                next -> openSearchResults(next, mode, query, safePage + 1, Navigation.OPEN));
         builder.button(49, new SfxMenuButton(infoIcon(mode, safePage, pageCount), click -> closeGuide(click.player())));
         showMenu(player, builder, navigation);
     }
@@ -1648,10 +1651,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                     Text.mm(tr("guide.actions.open-recipe"))
             ));
             String label = machine.map(this::itemDisplayName).orElseGet(() -> machineDisplayName(manualMachine.orElseThrow()));
-            ClickHandler handler = machine.isPresent()
-                     ? click -> openRecipe(click.player(), mode, executorId, 0,
-                     0, preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail)
-                     : null;
+            ClickHandler handler = machine.isPresent() ? machineAssociationHandler(mode, executorId, trail) : null;
             entries.add(DisplayEntry.single(icon, label, priority, handler, DisplayEntryKind.EXECUTOR));
             priority += 10;
         }
@@ -2134,6 +2134,22 @@ public final class DefaultSfxGuide implements SfxGuide {
         return null;
     }
 
+    private ClickHandler machineAssociationHandler(GuideMode mode, String machineId, List<String> trail) {
+        return click -> registry.item(machineId).ifPresent(machine -> {
+            Navigation navigation = preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE;
+            List<String> clickTrail = clickTrail(click.player(), trail);
+            if (click.clickType() == ClickType.MIDDLE) {
+                openWithDisplayPreference(click.player(), mode, machine, 0, navigation, clickTrail,
+                        DisplaySection.FUNCTIONS, DisplaySection.USAGES, DisplaySection.SOURCES);
+            } else if (click.clickType().isRightClick()) {
+                openWithDisplayPreference(click.player(), mode, machine, 0, navigation, clickTrail,
+                        DisplaySection.USAGES, DisplaySection.FUNCTIONS, DisplaySection.SOURCES);
+            } else {
+                openRecipe(click.player(), mode, machineId, 0, 0, navigation, clickTrail);
+            }
+        });
+    }
+
     private List<DisplayEntry> alternativeSourceEntries(List<GuideRecipePage> pages, GuideRecipePage current, RecipePageOpener opener) {
         
         
@@ -2476,8 +2492,8 @@ public final class DefaultSfxGuide implements SfxGuide {
                 .name(tr("guide.recipe.no-recipe.name"))
                 .build();
         if (current.machineTargetId() != null && machineLinksEnabled()) {
-            return new SfxMenuButton(icon, click -> openRecipe(click.player(), mode, current.machineTargetId(), 0, 0,
-                    preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, trail));
+            ClickHandler handler = machineAssociationHandler(mode, current.machineTargetId(), trail);
+            return new SfxMenuButton(icon, handler::accept);
         }
         return new SfxMenuButton(icon, click -> {
         });
@@ -3107,7 +3123,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     void showMenu(Player player, SfxMenu.Builder builder, Navigation navigation) {
-        builder.restorePreviousOnClose(preferences(player).closeReturns());
+        builder.restorePreviousOnClose(true);
         SfxMenu menu = builder.build();
         switch (navigation) {
             case ROOT -> menus.openRoot(player, menu);
@@ -3117,7 +3133,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     void closeGuide(Player player) {
-        menus.close(player, false);
+        menus.close(player, true);
     }
 
     void goBack(Player player, GuideMode fallbackMode) {

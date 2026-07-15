@@ -2,14 +2,14 @@
 items:
   "sf:electric_smeltery":
     category: sf:electricity
-    material: FURNACE
+    material: BLAST_FURNACE
     name-key: items.sf.electric_smeltery.name
     priority: 408
     lore-key: items.sf.electric_smeltery.lore
     flags: [legacy-sf]
   "sf:electric_smeltery_2":
     category: sf:electricity
-    material: FURNACE
+    material: BLAST_FURNACE
     name-key: items.sf.electric_smeltery_2.name
     priority: 409
     lore-key: items.sf.electric_smeltery_2.lore

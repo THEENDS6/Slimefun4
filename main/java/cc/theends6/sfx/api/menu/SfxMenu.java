@@ -17,6 +17,7 @@ public final class SfxMenu {
     private final boolean cancelPlayerClicks;
     private final Consumer<org.bukkit.entity.Player> closeHandler;
     private final boolean restorePreviousOnClose;
+    private final String historyKey;
 
     private SfxMenu(Builder builder) {
         this.rows = builder.rows;
@@ -26,6 +27,7 @@ public final class SfxMenu {
         this.cancelPlayerClicks = builder.cancelPlayerClicks;
         this.closeHandler = builder.closeHandler;
         this.restorePreviousOnClose = builder.restorePreviousOnClose;
+        this.historyKey = builder.historyKey;
     }
 
     public int rows() {
@@ -56,6 +58,10 @@ public final class SfxMenu {
         return restorePreviousOnClose;
     }
 
+    public String historyKey() {
+        return historyKey;
+    }
+
     public static Builder builder(Component title) {
         return new Builder(title);
     }
@@ -68,6 +74,7 @@ public final class SfxMenu {
         private boolean cancelPlayerClicks = true;
         private Consumer<org.bukkit.entity.Player> closeHandler;
         private boolean restorePreviousOnClose;
+        private String historyKey;
 
         private Builder(Component title) {
             this.title = title;
@@ -105,6 +112,11 @@ public final class SfxMenu {
 
         public Builder restorePreviousOnClose(boolean restorePreviousOnClose) {
             this.restorePreviousOnClose = restorePreviousOnClose;
+            return this;
+        }
+
+        public Builder historyKey(String historyKey) {
+            this.historyKey = historyKey == null || historyKey.isBlank() ? null : historyKey;
             return this;
         }
 

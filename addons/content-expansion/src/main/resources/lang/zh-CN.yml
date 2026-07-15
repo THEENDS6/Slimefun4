@@ -47,7 +47,7 @@ content-expansion:
 
 items:
   sfx.oxidizing_generator:
-    name: '&6氧化发电机'
+    name: '&2氧化发电机'
     lore:
     - ''
     - '&7通过氧化铜、锌和镁进行发电'
@@ -57,7 +57,7 @@ items:
     - '&8⇨ &e⚡ &765536 J 储能'
     - '&8⇨ &e⚡ &724 J/t'
   sfx.waxing_machine:
-    name: '&6打蜡机'
+    name: '&e打蜡机'
     lore:
     - ''
     - '&7消耗内部储存的蜡'
@@ -67,7 +67,7 @@ items:
     - '&8⇨ &b⚡ &7速度：&b1x'
     - '&8⇨ &e⚡ &76 J/t'
   sfx.cutting_machine:
-    name: '&6切削机'
+    name: '&c切削机'
     lore:
     - ''
     - '&7自动执行切削类处理'

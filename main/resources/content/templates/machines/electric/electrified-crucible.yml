@@ -4,7 +4,7 @@ items:
     @d:
       suffix: ""
     category: sf:electricity
-    material: RED_TERRACOTTA
+    material: RED_CONCRETE_POWDER
     name-key: items.sf.electrified_crucible${suffix}.name
     priority: 412
     lore-key: items.sf.electrified_crucible${suffix}.lore

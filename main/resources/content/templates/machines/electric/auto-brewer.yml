@@ -5,6 +5,7 @@ items:
     material: SMOKER
     name-key: items.sf.auto_brewer.name
     priority: 360
+    guide-order: 360
     lore-key: items.sf.auto_brewer.lore
     flags: [legacy-sf]
 machine-catalog:

@@ -84,18 +84,6 @@ final class SfxGuideSettingsView {
                 }
         ));
 
-        builder.button(25, guide.toggleButton(
-                Material.OAK_DOOR,
-                guide.tr("guide.settings.close-behavior.name"),
-                guide.tr("guide.settings.close-behavior.lore"),
-                preferences.closeReturns(),
-                click -> {
-                    preferences.setCloseReturns(!preferences.closeReturns());
-                    guide.persistPreferences(click.player(), preferences, true);
-                    guide.openSettingsView(click.player(), mode, Navigation.REPLACE);
-                }
-        ));
-
         builder.button(39, guide.toggleButton(
                 Material.FIREWORK_ROCKET,
                 guide.tr("guide.settings.fireworks.name"),
