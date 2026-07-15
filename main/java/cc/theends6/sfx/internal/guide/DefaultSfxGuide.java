@@ -1,5 +1,9 @@
 package cc.theends6.sfx.internal.guide;
 
+import cc.theends6.sfx.api.energy.runtime.*;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.guide.GuideMode;
 import cc.theends6.sfx.api.chat.SfxChatInputService;
 import cc.theends6.sfx.api.guide.SfxGuide;
@@ -14,17 +18,17 @@ import cc.theends6.sfx.api.menu.SfxMenuButton;
 import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.energy.SfxEnergyBalance;
-import cc.theends6.sfx.internal.energy.SfxEnergyComponentDefinition;
+import cc.theends6.sfx.api.energy.runtime.SfxEnergyComponentDefinition;
 import cc.theends6.sfx.internal.energy.SfxEnergyDefinitions;
-import cc.theends6.sfx.internal.electric.SfxElectricStack;
-import cc.theends6.sfx.internal.electric.SfxElectricRecipe;
-import cc.theends6.sfx.internal.electric.SfxElectricMachineDefinition;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricStack;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricRecipe;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricMachineDefinition;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
-import cc.theends6.sfx.internal.machine.ManualMachineDefinition;
-import cc.theends6.sfx.internal.machine.ManualMachineOperation;
-import cc.theends6.sfx.internal.machine.ManualMachineOutput;
-import cc.theends6.sfx.internal.machine.ManualMachineRecipe;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineDefinition;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOperation;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOutput;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineRecipe;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
 import cc.theends6.sfx.internal.research.SfxResearchDefinition;
@@ -34,7 +38,7 @@ import cc.theends6.sfx.internal.recipe.SfxRecipeDefinition;
 import cc.theends6.sfx.internal.recipe.SfxRecipeOutputDefinition;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.Month;
@@ -292,6 +296,10 @@ public final class DefaultSfxGuide implements SfxGuide {
             return;
         }
         SfxItemCategory category = optionalCategory.get();
+        if (!accessPolicy.canViewCategory(player, mode, category)) {
+            openMain(player, mode, 0, navigation == Navigation.ROOT ? Navigation.ROOT : Navigation.REPLACE);
+            return;
+        }
         List<SfxItemDefinition> entries = LegacySfGuideResolver.visibleItemsInCategory(registry, category.id()).stream()
                 .filter(item -> accessPolicy.canViewItem(player, mode, item))
                 .toList();
@@ -311,7 +319,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             boolean locked = mode == GuideMode.SURVIVAL && research != null && !isUnlocked(player, research);
             ItemStack icon = locked ? lockedItemIcon(definition, research) : items.create(definition, 1);
             if (mode == GuideMode.CHEAT) {
-                Optional<ManualMachineDefinition> manualMachine = manualMachines.machine(definition.id())
+                Optional<SfxManualMachineDefinition> manualMachine = manualMachines.machine(definition.id())
                         .or(() -> cc.theends6.sfx.internal.machine.ExtraDeployStructures.machine(definition.id()));
                 if (manualMachine.isPresent()) {
                     icon = withLore(icon, List.of(
@@ -1244,7 +1252,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                     List.of(recipe.id()), List.of());
         }
 
-        Optional<ManualMachineDefinition> machine = manualMachines.machine(recipe.recipeType());
+        Optional<SfxManualMachineDefinition> machine = manualMachines.machine(recipe.recipeType());
         if (machine.isPresent()) {
             return new GuideRecipePage(index, GuideRecipeOrigin.SFX, machine.get().id(), familyKey(machine.get().id()), machineDisplayName(machine.get()),
                     machine.get().id(), machineSourceIcon(machine.get()), normalizeMatrix(recipe.matrix()), recipe.note(), recipe.outputAmount(),
@@ -1363,10 +1371,10 @@ public final class DefaultSfxGuide implements SfxGuide {
         return matrix;
     }
 
-    private boolean usesVerticalSingleLayout(ManualMachineDefinition machine, SfxRecipe recipe) {
+    private boolean usesVerticalSingleLayout(SfxManualMachineDefinition machine, SfxRecipe recipe) {
         return usesVerticalSingleLayout(machine.id(), recipe)
-                || machine.operation() == ManualMachineOperation.SINGLE_INPUT
-                || machine.operation() == ManualMachineOperation.HAND_INPUT;
+                || machine.operation() == SfxManualMachineOperation.SINGLE_INPUT
+                || machine.operation() == SfxManualMachineOperation.HAND_INPUT;
     }
 
     private boolean usesVerticalSingleLayout(String recipeType, SfxRecipe recipe) {
@@ -1628,7 +1636,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                 continue;
             }
             Optional<SfxItemDefinition> machine = registry.item(executorId);
-            Optional<ManualMachineDefinition> manualMachine = manualMachines.machine(executorId);
+            Optional<SfxManualMachineDefinition> manualMachine = manualMachines.machine(executorId);
             if (machine.isEmpty() && manualMachine.isEmpty()) {
                 continue;
             }
@@ -2134,7 +2142,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     }
 
     private List<DisplayEntry> machineOutputEntries(SfxItemDefinition definition, GuideMode mode, List<String> trail) {
-        Optional<ManualMachineDefinition> machine = manualMachines.machine(definition.id());
+        Optional<SfxManualMachineDefinition> machine = manualMachines.machine(definition.id());
         if (machine.isEmpty()) {
             List<DisplayEntry> electric = electricMachineProcessEntries(definition.id(), mode, trail);
             return electric.isEmpty() ? compiledMachineProcessEntries(definition.id(), mode, trail) : electric;
@@ -2144,13 +2152,13 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
         Map<String, DisplayEntry> entries = new LinkedHashMap<>();
         int order = 1000;
-        for (ManualMachineRecipe recipe : manualMachines.recipesFor(machine.get().id())) {
-            boolean shaped = recipe.operation() == ManualMachineOperation.SHAPED_3X3;
+        for (SfxManualMachineRecipe recipe : manualMachines.recipesFor(machine.get().id())) {
+            boolean shaped = recipe.operation() == SfxManualMachineOperation.SHAPED_3X3;
             SfxRecipeSlot input = recipe.input().stream().filter(slot -> slot != null && !slot.isEmpty()).findFirst().orElse(null);
             if (input == null) {
                 continue;
             }
-            for (ManualMachineOutput output : recipe.outputs()) {
+            for (SfxManualMachineOutput output : recipe.outputs()) {
                 if (output.isSfxItem()) {
                     String target = output.sfxItemId();
                     Optional<SfxItemDefinition> targetDefinition = registry.item(target);
@@ -2274,7 +2282,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         return entries;
     }
 
-    private boolean supportsMachineOutputDisplay(ManualMachineDefinition machine) {
+    private boolean supportsMachineOutputDisplay(SfxManualMachineDefinition machine) {
         return true;
     }
 
@@ -2494,7 +2502,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             return;
         }
 
-        Optional<ManualMachineDefinition> manualMachine = manualMachines.machine(definition.id())
+        Optional<SfxManualMachineDefinition> manualMachine = manualMachines.machine(definition.id())
                 .or(() -> cc.theends6.sfx.internal.machine.ExtraDeployStructures.machine(definition.id()));
         if (manualMachine.isPresent()) {
             giveManualMachineFromCheatGuide(player, manualMachine.get(), clickType != null && clickType.isShiftClick());
@@ -2511,7 +2519,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         });
     }
 
-    private void giveManualMachineFromCheatGuide(Player player, ManualMachineDefinition definition, boolean fullKit) {
+    private void giveManualMachineFromCheatGuide(Player player, SfxManualMachineDefinition definition, boolean fullKit) {
         runtime.executeForPlayer(player, () -> {
             if (fullKit || !definition.deployable()) {
                 for (ItemStack part : definition.structureKit()) {
@@ -2875,6 +2883,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     private List<SfxItemCategory> visibleCategoriesFor(Player player, GuideMode mode) {
         return LegacySfGuideResolver.visibleCategories(registry, mode).stream()
                 .filter(category -> isCategoryVisible(category.id()))
+                .filter(category -> accessPolicy.canViewCategory(player, mode, category))
                 .toList();
     }
 
@@ -2988,7 +2997,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         return withLore(item, lore);
     }
 
-    private ItemStack machineSourceIcon(ManualMachineDefinition machine) {
+    private ItemStack machineSourceIcon(SfxManualMachineDefinition machine) {
         return ItemBuilder.of(machine.triggerMaterial())
                 .name("<green>" + machineDisplayName(machine) + "</green>")
                 .build();
@@ -3328,7 +3337,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         return plainText(localization.itemName(definition.id()));
     }
 
-    private String machineDisplayName(ManualMachineDefinition definition) {
+    private String machineDisplayName(SfxManualMachineDefinition definition) {
         return plainText(localization.itemName(definition.id()));
     }
 

@@ -1,6 +1,6 @@
 package cc.theends6.sfx.internal.configurable;
 
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Location;

@@ -6,7 +6,7 @@ import cc.theends6.sfx.api.behavior.SfxRechargeableItemKind;
 import cc.theends6.sfx.api.behavior.SfxRechargeableItemProvider;
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.LinkedHashMap;

@@ -1,14 +1,18 @@
 package cc.theends6.sfx.internal.energy;
 
+import cc.theends6.sfx.api.energy.runtime.*;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.machine.SfxMachineDisplayItem;
-import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricStack;
 import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
 import cc.theends6.sfx.internal.technical.SfxTechnicalGadgetBalance;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
-import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
 import java.util.Map;
 import java.util.Locale;

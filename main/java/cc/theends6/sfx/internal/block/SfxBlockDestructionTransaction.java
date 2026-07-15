@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+
 import cc.theends6.sfx.internal.core.SfxErrorCode;
 import cc.theends6.sfx.internal.core.SfxResult;
 import java.util.Optional;

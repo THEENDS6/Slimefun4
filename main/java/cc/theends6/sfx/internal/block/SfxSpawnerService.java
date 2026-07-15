@@ -1,10 +1,16 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
+
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.machine.*;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;

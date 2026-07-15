@@ -1,6 +1,6 @@
 package cc.theends6.sfx.internal.topology;
 
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 
 public interface SfxTopologyDomainPolicy {
     SfxTopologyDomainKey domain();

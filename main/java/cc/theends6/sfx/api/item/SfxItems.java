@@ -16,6 +16,15 @@ public interface SfxItems {
 
     Optional<SfxItemMarker> readMarker(ItemStack item);
 
+    Optional<SfxItemDefinition> definition(String id);
+
+    default boolean canUse(Player player, String id) {
+        return definition(id)
+                .map(definition -> definition.usePermission() == null
+                        || player.hasPermission(definition.usePermission()))
+                .orElse(true);
+    }
+
     Optional<GuideMode> readGuideMode(ItemStack item);
 
     boolean isSfxItem(ItemStack item);

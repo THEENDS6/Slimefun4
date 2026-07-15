@@ -1,10 +1,14 @@
 package cc.theends6.sfx.internal.decoration;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.behavior.SfxBehaviorRegistry;
+import cc.theends6.sfx.api.block.SfxCyclingBlockDefinition;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.machine.SfxMachineCategory;
 import cc.theends6.sfx.internal.machine.SfxMachineDefinition;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
@@ -14,7 +18,7 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineSpecialProfiles;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -92,16 +96,20 @@ public final class SfxDecorationService implements Listener {
     private final Map<String, SfxDecorationDefinition> definitions = new ConcurrentHashMap<>();
     private final Set<UUID> animatedInstances = ConcurrentHashMap.newKeySet();
     private final Map<UUID, SfxDecorationState> states = new ConcurrentHashMap<>();
-    private long animationPhase;
+    private long animationTicks;
     private boolean shutdown;
 
-    public SfxDecorationService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxBlockDataService blockData, SfxMachineRuntimeEngine machineRuntime) {
+    public SfxDecorationService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxBlockDataService blockData, SfxMachineRuntimeEngine machineRuntime, SfxBehaviorRegistry behaviors) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.machineRuntime = Objects.requireNonNull(machineRuntime, "machineRuntime");
         registerDefaults();
+        for (SfxCyclingBlockDefinition definition : Objects.requireNonNull(behaviors, "behaviors").cyclingBlocks()) {
+            register(new SfxDecorationDefinition(definition.itemId(), true, false, definition.materials(),
+                    definition.intervalTicks(), null, null, null));
+        }
         registerFrameworkDefinitions();
     }
 
@@ -206,7 +214,7 @@ public final class SfxDecorationService implements Listener {
     }
 
     private void animateLoadedDecorations() {
-        animationPhase++;
+        animationTicks += 10L;
         List<UUID> snapshot = new ArrayList<>(animatedInstances);
         for (UUID instanceId : snapshot) {
             SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
@@ -223,7 +231,7 @@ public final class SfxDecorationService implements Listener {
             if (location == null || location.getWorld() == null || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
                 continue;
             }
-            runtime.executeAt(location, () -> applyState(location, instance, animationPhase));
+            runtime.executeAt(location, () -> applyState(location, instance, animationTicks));
         }
     }
 
@@ -322,10 +330,10 @@ public final class SfxDecorationService implements Listener {
     private void registerDefaults() {
         register(new SfxDecorationDefinition("sf:gps_teleporter_pylon", true, true,
                 List.of(Material.CYAN_STAINED_GLASS, Material.PURPLE_STAINED_GLASS),
-                Material.CYAN_STAINED_GLASS, Material.PURPLE_STAINED_GLASS, Material.RED_STAINED_GLASS));
-        register(new SfxDecorationDefinition("sf:hardened_glass", false, false, List.of(Material.LIGHT_GRAY_STAINED_GLASS), null, null, null));
-        register(new SfxDecorationDefinition("sf:wither_proof_obsidian", false, false, List.of(Material.OBSIDIAN), null, null, null));
-        register(new SfxDecorationDefinition("sf:wither_proof_glass", false, false, List.of(Material.PURPLE_STAINED_GLASS), null, null, null));
+                10, Material.CYAN_STAINED_GLASS, Material.PURPLE_STAINED_GLASS, Material.RED_STAINED_GLASS));
+        register(new SfxDecorationDefinition("sf:hardened_glass", false, false, List.of(Material.LIGHT_GRAY_STAINED_GLASS), 10, null, null, null));
+        register(new SfxDecorationDefinition("sf:wither_proof_obsidian", false, false, List.of(Material.OBSIDIAN), 10, null, null, null));
+        register(new SfxDecorationDefinition("sf:wither_proof_glass", false, false, List.of(Material.PURPLE_STAINED_GLASS), 10, null, null, null));
         registerRainbow("sf:rainbow_wool", WOOL_RAINBOW);
         registerRainbow("sf:rainbow_glass", GLASS_RAINBOW);
         registerRainbow("sf:rainbow_clay", TERRACOTTA_RAINBOW);
@@ -353,7 +361,7 @@ public final class SfxDecorationService implements Listener {
     }
 
     private void registerRainbow(String id, List<Material> materials) {
-        register(new SfxDecorationDefinition(id, true, false, materials, null, null, null));
+        register(new SfxDecorationDefinition(id, true, false, materials, 10, null, null, null));
     }
 
     private void register(SfxDecorationDefinition definition) {

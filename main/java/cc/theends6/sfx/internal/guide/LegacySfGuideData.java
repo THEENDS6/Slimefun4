@@ -3,7 +3,7 @@ package cc.theends6.sfx.internal.guide;
 import cc.theends6.sfx.api.item.SfxItemCategory;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.ItemBuilder;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;

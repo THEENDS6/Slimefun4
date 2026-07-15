@@ -14,7 +14,7 @@ import cc.theends6.sfx.internal.research.SfxResearchDefinition;
 import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.template.SfxTemplateCompileReport;
 import cc.theends6.sfx.internal.util.ItemBuilder;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -134,6 +134,11 @@ public final class SfxCommand implements CommandExecutor, TabCompleter {
         }
         if (!definition.giveable()) {
             player.sendMessage(Text.prefixed(plugin, tr("command.give.not-giveable")));
+            return;
+        }
+        if (!api.items().canUse(player, definition.id())
+                || (definition.permission() != null && !player.hasPermission(definition.permission()))) {
+            player.sendMessage(Text.prefixed(plugin, tr("messages.no-item-permission")));
             return;
         }
         int inserted = giveStacks(player.getInventory(), definition, amount);

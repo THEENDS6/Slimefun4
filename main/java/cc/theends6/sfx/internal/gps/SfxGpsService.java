@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.gps;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.SlimeFunXPlugin;
 import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionContext;
@@ -15,9 +17,9 @@ import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.persistence.SfxDirtyPersistenceService;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.decoration.SfxDecorationState;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
@@ -28,13 +30,13 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
-import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricStack;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;

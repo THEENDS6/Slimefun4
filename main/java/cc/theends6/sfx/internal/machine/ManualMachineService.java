@@ -1,5 +1,10 @@
 package cc.theends6.sfx.internal.machine;
 
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineDefinition;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineRecipe;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOperation;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOutput;
+
 import static cc.theends6.sfx.internal.bootstrap.BaseContentBootstrap.*;
 
 import cc.theends6.sfx.api.item.SfxItems;
@@ -7,7 +12,7 @@ import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxBasicMachineBlockListener;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -50,9 +55,9 @@ public final class ManualMachineService {
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxBasicMachineBlockListener basicBlockMachines;
-    private final Map<MatchCacheKey, List<ManualMachineRecipe>> matchCache = new LinkedHashMap<>(64, 0.75f, true) {
+    private final Map<MatchCacheKey, List<SfxManualMachineRecipe>> matchCache = new LinkedHashMap<>(64, 0.75f, true) {
         @Override
-        protected boolean removeEldestEntry(Map.Entry<MatchCacheKey, List<ManualMachineRecipe>> eldest) {
+        protected boolean removeEldestEntry(Map.Entry<MatchCacheKey, List<SfxManualMachineRecipe>> eldest) {
             return size() > MATCH_CACHE_LIMIT;
         }
     };
@@ -70,8 +75,8 @@ public final class ManualMachineService {
         if (clickedBlock == null) {
             return false;
         }
-        ManualMachineDefinition matched = null;
-        for (ManualMachineDefinition definition : registry.machines()) {
+        SfxManualMachineDefinition matched = null;
+        for (SfxManualMachineDefinition definition : registry.machines()) {
             if (definition.matches(clickedBlock)) {
                 matched = definition;
                 break;
@@ -80,12 +85,12 @@ public final class ManualMachineService {
         if (matched == null) {
             return false;
         }
-        ManualMachineDefinition definition = matched;
+        SfxManualMachineDefinition definition = matched;
         runtime.executeAt(clickedBlock.getLocation(), () -> runMachine(player, clickedBlock, definition));
         return true;
     }
 
-    private void runMachine(Player player, Block clickedBlock, ManualMachineDefinition definition) {
+    private void runMachine(Player player, Block clickedBlock, SfxManualMachineDefinition definition) {
         if (!definition.matches(clickedBlock)) {
             message(player, localization.text("machines.structure-changed"));
             return;
@@ -96,7 +101,7 @@ public final class ManualMachineService {
             return;
         }
 
-        if (definition.operation() == ManualMachineOperation.HAND_INPUT) {
+        if (definition.operation() == SfxManualMachineOperation.HAND_INPUT) {
             runHandMachine(player, clickedBlock, definition);
             return;
         }
@@ -109,7 +114,7 @@ public final class ManualMachineService {
 
         Inventory input = dispenser.getInventory();
         Inventory output = resolveOutputInventory(definition, clickedBlock, dispenser, input);
-        Collection<ManualMachineRecipe> recipes = registry.recipesFor(definition.id());
+        Collection<SfxManualMachineRecipe> recipes = registry.recipesFor(definition.id());
         if (recipes.isEmpty()) {
             message(player, localization.text("machines.no-recipes"));
             return;
@@ -122,14 +127,14 @@ public final class ManualMachineService {
 
         boolean matchedInput = false;
         boolean outputBlocked = false;
-        List<ManualMachineRecipe> singleCraftable = new ArrayList<>();
+        List<SfxManualMachineRecipe> singleCraftable = new ArrayList<>();
         List<ShapedMatchPlan> shapedCraftable = new ArrayList<>();
         ItemStack[] inputContents = input.getContents();
         ManualRecipeHash orderedHash = ManualRecipeHash.orderedInput(inputContents, items);
-        List<ManualMachineRecipe> orderedCandidates = cachedCandidates(definition.id(), MatchKind.ORDERED, orderedHash,
+        List<SfxManualMachineRecipe> orderedCandidates = cachedCandidates(definition.id(), MatchKind.ORDERED, orderedHash,
                 registry.orderedCandidates(definition.id(), orderedHash));
-        for (ManualMachineRecipe recipe : orderedCandidates) {
-            if (recipe.operation() == ManualMachineOperation.SHAPED_3X3) {
+        for (SfxManualMachineRecipe recipe : orderedCandidates) {
+            if (recipe.operation() == SfxManualMachineOperation.SHAPED_3X3) {
                 ShapedMatchPlan plan = planShaped(input, recipe);
                 if (plan == null) {
                     continue;
@@ -143,8 +148,8 @@ public final class ManualMachineService {
                 }
             }
         }
-        for (ManualMachineRecipe recipe : recipes) {
-            if (recipe.operation() == ManualMachineOperation.SINGLE_INPUT) {
+        for (SfxManualMachineRecipe recipe : recipes) {
+            if (recipe.operation() == SfxManualMachineOperation.SINGLE_INPUT) {
                 MatchResult result = matchSingle(input, output, recipe);
                 if (result == MatchResult.INPUT_MATCH_AND_FITS) {
                     singleCraftable.add(recipe);
@@ -171,7 +176,7 @@ public final class ManualMachineService {
                 message(player, localization.text("machines.output-full"));
                 return;
             }
-            List<ManualMachineOutput> outputs = selectedOutputs(shapeless.recipe());
+            List<SfxManualMachineOutput> outputs = selectedOutputs(shapeless.recipe());
             applyShapelessConsumption(input, shapeless);
             if (isDelayedCompletionMachine(definition)) startDelayedCompletion(clickedBlock, definition, outputs);
             else {
@@ -189,9 +194,9 @@ public final class ManualMachineService {
         message(player, noMatchMessage(definition));
     }
 
-    private ShapelessMatchPlan findShapelessMatch(String machineId, ItemStack[] contents, Collection<ManualMachineRecipe> allRecipes) {
+    private ShapelessMatchPlan findShapelessMatch(String machineId, ItemStack[] contents, Collection<SfxManualMachineRecipe> allRecipes) {
         ManualRecipeHash hash = ManualRecipeHash.unorderedInput(contents, items);
-        List<ManualMachineRecipe> indexed = cachedCandidates(machineId, MatchKind.UNORDERED, hash,
+        List<SfxManualMachineRecipe> indexed = cachedCandidates(machineId, MatchKind.UNORDERED, hash,
                 registry.unorderedCandidates(machineId, hash));
         ShapelessMatchPlan best = bestShapeless(contents, indexed);
         if (best != null) return best;
@@ -199,39 +204,39 @@ public final class ManualMachineService {
         return bestShapeless(contents, allRecipes);
     }
 
-    private ShapelessMatchPlan bestShapeless(ItemStack[] contents, Collection<ManualMachineRecipe> recipes) {
+    private ShapelessMatchPlan bestShapeless(ItemStack[] contents, Collection<SfxManualMachineRecipe> recipes) {
         ShapelessMatchPlan best = null;
-        for (ManualMachineRecipe recipe : recipes) {
-            if (recipe.operation() != ManualMachineOperation.SHAPELESS_INPUT) continue;
+        for (SfxManualMachineRecipe recipe : recipes) {
+            if (recipe.operation() != SfxManualMachineOperation.SHAPELESS_INPUT) continue;
             ShapelessMatchPlan plan = planShapeless(contents, recipe);
             if (plan != null && (best == null || recipe.priority() > best.recipe().priority())) best = plan;
         }
         return best;
     }
 
-    private List<ManualMachineRecipe> cachedCandidates(String machineId, MatchKind kind, ManualRecipeHash hash,
-                                                        List<ManualMachineRecipe> indexed) {
+    private List<SfxManualMachineRecipe> cachedCandidates(String machineId, MatchKind kind, ManualRecipeHash hash,
+                                                        List<SfxManualMachineRecipe> indexed) {
         MatchCacheKey key = new MatchCacheKey(registry.revision(), machineId, kind, hash);
         synchronized (matchCache) {
-            List<ManualMachineRecipe> cached = matchCache.get(key);
+            List<SfxManualMachineRecipe> cached = matchCache.get(key);
             if (cached != null) return cached;
-            List<ManualMachineRecipe> candidates = List.copyOf(indexed);
+            List<SfxManualMachineRecipe> candidates = List.copyOf(indexed);
             matchCache.put(key, candidates);
             return candidates;
         }
     }
 
-    private boolean requiresIgnitionFire(ManualMachineDefinition definition) {
+    private boolean requiresIgnitionFire(SfxManualMachineDefinition definition) {
         return SMELTERY.equals(definition.id()) || MAKESHIFT_SMELTERY.equals(definition.id());
     }
 
-    private boolean hasIgnitionFire(ManualMachineDefinition definition, Block clickedBlock) {
+    private boolean hasIgnitionFire(SfxManualMachineDefinition definition, Block clickedBlock) {
         Block fireBlock = definition.centerBlock(clickedBlock).getRelative(BlockFace.DOWN);
         Material type = fireBlock.getType();
         return type == Material.FIRE || type == Material.SOUL_FIRE;
     }
 
-    private Dispenser resolveInputDispenser(ManualMachineDefinition definition, Block clickedBlock) {
+    private Dispenser resolveInputDispenser(SfxManualMachineDefinition definition, Block clickedBlock) {
         if (MAGIC_WORKBENCH.equals(definition.id())) {
             Block center = definition.centerBlock(clickedBlock);
             for (BlockFace face : List.of(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST)) {
@@ -247,14 +252,14 @@ public final class ManualMachineService {
         return state instanceof Dispenser dispenser ? dispenser : null;
     }
 
-    private Inventory resolveOutputInventory(ManualMachineDefinition definition, Block clickedBlock, Dispenser input, Inventory inputInventory) {
+    private Inventory resolveOutputInventory(SfxManualMachineDefinition definition, Block clickedBlock, Dispenser input, Inventory inputInventory) {
         Block center = definition.centerBlock(clickedBlock);
         Block inventoryBlock = MAGIC_WORKBENCH.equals(definition.id()) ? input.getBlock() : definition.inventoryBlock(clickedBlock);
         Inventory found = adjacentInventory(center, inventoryBlock, input.getBlock());
         return found == null ? inputInventory : found;
     }
 
-    private Inventory resolveHandOutputInventory(ManualMachineDefinition definition, Block clickedBlock) {
+    private Inventory resolveHandOutputInventory(SfxManualMachineDefinition definition, Block clickedBlock) {
         Block center = definition.centerBlock(clickedBlock);
         Block inventoryBlock = definition.inventoryBlock(clickedBlock);
         return adjacentInventory(center, inventoryBlock, null);
@@ -273,27 +278,27 @@ public final class ManualMachineService {
         return null;
     }
 
-    private String emptyMessage(ManualMachineDefinition definition) {
-        if (definition.operation() == ManualMachineOperation.SHAPED_3X3) {
+    private String emptyMessage(SfxManualMachineDefinition definition) {
+        if (definition.operation() == SfxManualMachineOperation.SHAPED_3X3) {
             return localization.text("machines.inventory-empty");
         }
-        if (definition.operation() == ManualMachineOperation.HAND_INPUT) {
+        if (definition.operation() == SfxManualMachineOperation.HAND_INPUT) {
             return localization.text("machines.empty");
         }
         return localization.text("machines.empty");
     }
 
-    private String noMatchMessage(ManualMachineDefinition definition) {
-        if (definition.operation() == ManualMachineOperation.SHAPED_3X3) {
+    private String noMatchMessage(SfxManualMachineDefinition definition) {
+        if (definition.operation() == SfxManualMachineOperation.SHAPED_3X3) {
             return localization.text("machines.pattern-not-found");
         }
-        if (definition.operation() == ManualMachineOperation.HAND_INPUT) {
+        if (definition.operation() == SfxManualMachineOperation.HAND_INPUT) {
             return localization.text("machines.unknown-material");
         }
         return localization.text("machines.unknown-material");
     }
 
-    private ShapedMatchPlan planShaped(Inventory input, ManualMachineRecipe recipe) {
+    private ShapedMatchPlan planShaped(Inventory input, SfxManualMachineRecipe recipe) {
         ItemStack[] inputCopy = cloneContents(input);
         int[] consumed = new int[inputCopy.length];
         for (int i = 0; i < 9; i++) {
@@ -313,7 +318,7 @@ public final class ManualMachineService {
         return new ShapedMatchPlan(recipe, consumed, inputCopy);
     }
 
-    private void craftShaped(Block clickedBlock, Inventory input, Inventory output, ShapedMatchPlan plan, ManualMachineDefinition definition) {
+    private void craftShaped(Block clickedBlock, Inventory input, Inventory output, ShapedMatchPlan plan, SfxManualMachineDefinition definition) {
         if (plan.outputPlan() == null) {
             return;
         }
@@ -330,7 +335,7 @@ public final class ManualMachineService {
         }
     }
 
-    private MatchResult matchSingle(Inventory input, Inventory output, ManualMachineRecipe recipe) {
+    private MatchResult matchSingle(Inventory input, Inventory output, SfxManualMachineRecipe recipe) {
         SfxRecipeSlot required = recipe.input().get(0);
         for (int i = 0; i < input.getSize(); i++) {
             ItemStack current = input.getItem(i);
@@ -344,7 +349,7 @@ public final class ManualMachineService {
         return MatchResult.NO_INPUT_MATCH;
     }
 
-    private void craftSingle(Block clickedBlock, Inventory input, Inventory output, ManualMachineRecipe recipe, ManualMachineDefinition definition) {
+    private void craftSingle(Block clickedBlock, Inventory input, Inventory output, SfxManualMachineRecipe recipe, SfxManualMachineDefinition definition) {
         SfxRecipeSlot required = recipe.input().get(0);
         for (int i = 0; i < input.getSize(); i++) {
             ItemStack current = input.getItem(i);
@@ -357,7 +362,7 @@ public final class ManualMachineService {
             if (!fits) {
                 return;
             }
-            List<ManualMachineOutput> outputs = selectedOutputs(recipe);
+            List<SfxManualMachineOutput> outputs = selectedOutputs(recipe);
             consume(input, i, required.amount());
             if (isDelayedCompletionMachine(definition)) {
                 startDelayedCompletion(clickedBlock, definition, outputs);
@@ -369,8 +374,8 @@ public final class ManualMachineService {
         }
     }
 
-    private void runHandMachine(Player player, Block clickedBlock, ManualMachineDefinition definition) {
-        Collection<ManualMachineRecipe> recipes = registry.recipesFor(definition.id());
+    private void runHandMachine(Player player, Block clickedBlock, SfxManualMachineDefinition definition) {
+        Collection<SfxManualMachineRecipe> recipes = registry.recipesFor(definition.id());
         if (recipes.isEmpty()) {
             message(player, localization.text("machines.no-recipes"));
             return;
@@ -382,8 +387,8 @@ public final class ManualMachineService {
             return;
         }
 
-        List<ManualMachineRecipe> craftable = new ArrayList<>();
-        for (ManualMachineRecipe recipe : recipes) {
+        List<SfxManualMachineRecipe> craftable = new ArrayList<>();
+        for (SfxManualMachineRecipe recipe : recipes) {
             SfxRecipeSlot required = recipe.input().get(0);
             if (matchesSlot(held, required, false)) {
                 craftable.add(recipe);
@@ -395,8 +400,8 @@ public final class ManualMachineService {
             return;
         }
 
-        ManualMachineRecipe recipe = craftable.get(ThreadLocalRandom.current().nextInt(craftable.size()));
-        List<ManualMachineOutput> outputs = selectedOutputs(recipe);
+        SfxManualMachineRecipe recipe = craftable.get(ThreadLocalRandom.current().nextInt(craftable.size()));
+        List<SfxManualMachineOutput> outputs = selectedOutputs(recipe);
         Inventory output = resolveHandOutputInventory(definition, clickedBlock);
         if (output != null && !canFitAll(cloneContents(output), outputs)) {
             message(player, localization.text("machines.output-full"));
@@ -415,21 +420,21 @@ public final class ManualMachineService {
         success(clickedBlock, definition);
     }
 
-    private List<ManualMachineOutput> selectedOutputs(ManualMachineRecipe recipe) {
+    private List<SfxManualMachineOutput> selectedOutputs(SfxManualMachineRecipe recipe) {
         if (!recipe.hasRandomOutputs()) {
             return recipe.fixedOutputs();
         }
-        List<ManualMachineOutput> selected = new ArrayList<>(recipe.fixedOutputs());
-        List<ManualMachineOutput> randomOutputs = recipe.randomOutputs();
+        List<SfxManualMachineOutput> selected = new ArrayList<>(recipe.fixedOutputs());
+        List<SfxManualMachineOutput> randomOutputs = recipe.randomOutputs();
         selected.add(randomOutputs.get(ThreadLocalRandom.current().nextInt(randomOutputs.size())));
         return selected;
     }
 
-    private boolean isDelayedCompletionMachine(ManualMachineDefinition definition) {
+    private boolean isDelayedCompletionMachine(SfxManualMachineDefinition definition) {
         return MANUAL_COMPRESSOR.equals(definition.id()) || PRESSURE_CHAMBER.equals(definition.id());
     }
 
-    private void startDelayedCompletion(Block clickedBlock, ManualMachineDefinition definition, List<ManualMachineOutput> outputs) {
+    private void startDelayedCompletion(Block clickedBlock, SfxManualMachineDefinition definition, List<SfxManualMachineOutput> outputs) {
         if (PRESSURE_CHAMBER.equals(definition.id())) {
             startPressureChamberCompletion(clickedBlock, definition, outputs);
             return;
@@ -441,7 +446,7 @@ public final class ManualMachineService {
         runDelayedAt(origin, COMPRESSOR_COMPLETE_TICKS, () -> completeDelayedOperation(origin, definition, outputs));
     }
 
-    private void startArmorForgeCompletion(Block clickedBlock, ManualMachineDefinition definition, List<ManualMachineOutput> outputs) {
+    private void startArmorForgeCompletion(Block clickedBlock, SfxManualMachineDefinition definition, List<SfxManualMachineOutput> outputs) {
         Location origin = clickedBlock.getLocation().clone();
         armorForgeTick(origin, false);
         runDelayedAt(origin, ARMOR_FORGE_WORK_TICKS, () -> armorForgeTick(origin, false));
@@ -449,7 +454,7 @@ public final class ManualMachineService {
         runDelayedAt(origin, ARMOR_FORGE_COMPLETE_TICKS, () -> completeArmorForgeOperation(origin, definition, outputs));
     }
 
-    private void startPressureChamberCompletion(Block clickedBlock, ManualMachineDefinition definition, List<ManualMachineOutput> outputs) {
+    private void startPressureChamberCompletion(Block clickedBlock, SfxManualMachineDefinition definition, List<SfxManualMachineOutput> outputs) {
         Location origin = clickedBlock.getLocation().clone();
         pressureChamberTick(origin, false);
         runDelayedAt(origin, 20L, () -> pressureChamberTick(origin, false));
@@ -486,7 +491,7 @@ public final class ManualMachineService {
         }
     }
 
-    private void completeDelayedOperation(Location origin, ManualMachineDefinition definition, List<ManualMachineOutput> outputs) {
+    private void completeDelayedOperation(Location origin, SfxManualMachineDefinition definition, List<SfxManualMachineOutput> outputs) {
         Block clickedBlock = origin.getBlock();
         Inventory output = null;
         if (definition.matches(clickedBlock)) {
@@ -504,7 +509,7 @@ public final class ManualMachineService {
         playBlockSound(origin, Sound.ENTITY_ARROW_HIT_PLAYER, 0.8f, 1.0f);
     }
 
-    private void completeArmorForgeOperation(Location origin, ManualMachineDefinition definition, List<ManualMachineOutput> outputs) {
+    private void completeArmorForgeOperation(Location origin, SfxManualMachineDefinition definition, List<SfxManualMachineOutput> outputs) {
         Block clickedBlock = origin.getBlock();
         Inventory output = null;
         if (definition.matches(clickedBlock)) {
@@ -522,7 +527,7 @@ public final class ManualMachineService {
         armorForgeTick(origin, true);
     }
 
-    private void completePressureChamberOperation(Location origin, ManualMachineDefinition definition, List<ManualMachineOutput> outputs) {
+    private void completePressureChamberOperation(Location origin, SfxManualMachineDefinition definition, List<SfxManualMachineOutput> outputs) {
         Block clickedBlock = origin.getBlock();
         Inventory output = null;
         if (definition.matches(clickedBlock)) {
@@ -544,31 +549,31 @@ public final class ManualMachineService {
         plugin.getServer().getRegionScheduler().runDelayed(plugin, location, scheduledTask -> task.run(), delayTicks);
     }
 
-    private void addOutputs(Inventory inventory, List<ManualMachineOutput> outputs) {
-        for (ManualMachineOutput output : outputs) {
+    private void addOutputs(Inventory inventory, List<SfxManualMachineOutput> outputs) {
+        for (SfxManualMachineOutput output : outputs) {
             cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.insertAll(inventory, output.create(items), false, "manual-machine:output");
         }
     }
 
-    private void addOutputsOrDrop(Location origin, Inventory inventory, List<ManualMachineOutput> outputs) {
+    private void addOutputsOrDrop(Location origin, Inventory inventory, List<SfxManualMachineOutput> outputs) {
         Location dropLocation = origin.clone().add(0.5, 0.8, 0.5);
-        for (ManualMachineOutput output : outputs) {
+        for (SfxManualMachineOutput output : outputs) {
             ItemStack stack = output.create(items);
             cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.insertAllOrDrop(inventory, stack, false, dropLocation, "manual-machine:output-or-drop");
         }
     }
 
-    private void dropOutputs(Block clickedBlock, List<ManualMachineOutput> outputs) {
+    private void dropOutputs(Block clickedBlock, List<SfxManualMachineOutput> outputs) {
         dropOutputs(clickedBlock.getLocation(), outputs);
     }
 
-    private void dropOutputs(Location origin, List<ManualMachineOutput> outputs) {
+    private void dropOutputs(Location origin, List<SfxManualMachineOutput> outputs) {
         World world = origin.getWorld();
         if (world == null) {
             return;
         }
         var location = origin.clone().add(0.5, 0.8, 0.5);
-        for (ManualMachineOutput output : outputs) {
+        for (SfxManualMachineOutput output : outputs) {
             world.dropItemNaturally(location, output.create(items));
         }
     }
@@ -580,11 +585,11 @@ public final class ManualMachineService {
         return items.matches(current, required);
     }
 
-    private ShapelessMatchPlan planShapeless(Inventory input, ManualMachineRecipe recipe) {
+    private ShapelessMatchPlan planShapeless(Inventory input, SfxManualMachineRecipe recipe) {
         return planShapeless(input.getContents(), recipe);
     }
 
-    private ShapelessMatchPlan planShapeless(ItemStack[] contents, ManualMachineRecipe recipe) {
+    private ShapelessMatchPlan planShapeless(ItemStack[] contents, SfxManualMachineRecipe recipe) {
         ItemStack[] inputCopy = cloneContents(contents);
         int[] consumed = new int[inputCopy.length];
 
@@ -649,7 +654,7 @@ public final class ManualMachineService {
         return current.getType() == required.material();
     }
 
-    private boolean canFitAfterConsume(Inventory input, Inventory output, ManualMachineRecipe recipe, List<ManualMachineOutput> outputs) {
+    private boolean canFitAfterConsume(Inventory input, Inventory output, SfxManualMachineRecipe recipe, List<SfxManualMachineOutput> outputs) {
         ItemStack[] inputCopy = cloneContents(input);
         for (int i = 0; i < 9; i++) {
             SfxRecipeSlot required = recipe.input().get(i);
@@ -660,22 +665,22 @@ public final class ManualMachineService {
         return canFitAll(outputContentsAfterInputConsumption(input, output, inputCopy), outputs);
     }
 
-    private boolean canFitAfterConsume(Inventory input, Inventory output, int consumedSlot, int consumedAmount, List<ManualMachineOutput> outputs) {
+    private boolean canFitAfterConsume(Inventory input, Inventory output, int consumedSlot, int consumedAmount, List<SfxManualMachineOutput> outputs) {
         ItemStack[] inputCopy = cloneContents(input);
         consume(inputCopy[consumedSlot], consumedAmount);
         return canFitAll(outputContentsAfterInputConsumption(input, output, inputCopy), outputs);
     }
 
-    private boolean canFitRandomAfterConsume(Inventory input, Inventory output, int consumedSlot, int consumedAmount, ManualMachineRecipe recipe) {
+    private boolean canFitRandomAfterConsume(Inventory input, Inventory output, int consumedSlot, int consumedAmount, SfxManualMachineRecipe recipe) {
         ItemStack[] inputCopy = cloneContents(input);
         consume(inputCopy[consumedSlot], consumedAmount);
         ItemStack[] contents = outputContentsAfterInputConsumption(input, output, inputCopy);
         return canFitRandomRecipe(contents, recipe);
     }
 
-    private boolean canFitRandomRecipe(ItemStack[] contents, ManualMachineRecipe recipe) {
+    private boolean canFitRandomRecipe(ItemStack[] contents, SfxManualMachineRecipe recipe) {
         ItemStack[] simulated = cloneContents(contents);
-        for (ManualMachineOutput fixedOutput : recipe.fixedOutputs()) {
+        for (SfxManualMachineOutput fixedOutput : recipe.fixedOutputs()) {
             ItemStack stack = fixedOutput.create(items);
             if (!canFit(simulated, stack)) {
                 return false;
@@ -704,9 +709,9 @@ public final class ManualMachineService {
         return copy;
     }
 
-    private boolean canFitAll(ItemStack[] contents, List<ManualMachineOutput> outputs) {
+    private boolean canFitAll(ItemStack[] contents, List<SfxManualMachineOutput> outputs) {
         ItemStack[] simulated = cloneContents(contents);
-        for (ManualMachineOutput output : outputs) {
+        for (SfxManualMachineOutput output : outputs) {
             ItemStack stack = output.create(items);
             if (!canFit(simulated, stack)) {
                 return false;
@@ -715,10 +720,10 @@ public final class ManualMachineService {
         }
         return true;
     }
-    private OutputPlan planOutputAfterConsume(Inventory input, Inventory output, ItemStack[] inputAfterConsume, List<ManualMachineOutput> outputs) {
+    private OutputPlan planOutputAfterConsume(Inventory input, Inventory output, ItemStack[] inputAfterConsume, List<SfxManualMachineOutput> outputs) {
         ItemStack[] planned = outputContentsAfterInputConsumption(input, output, inputAfterConsume);
         planned = cloneContents(planned);
-        for (ManualMachineOutput outputItem : outputs) {
+        for (SfxManualMachineOutput outputItem : outputs) {
             ItemStack stack = outputItem.create(items);
             if (!tryPlace(planned, stack)) {
                 return null;
@@ -860,12 +865,12 @@ public final class ManualMachineService {
         }
     }
 
-    private void success(Block clickedBlock, ManualMachineDefinition definition) {
+    private void success(Block clickedBlock, SfxManualMachineDefinition definition) {
         playEffect(clickedBlock, definition);
         handlePostCraftSideEffects(clickedBlock, definition);
     }
 
-    private void handlePostCraftSideEffects(Block clickedBlock, ManualMachineDefinition definition) {
+    private void handlePostCraftSideEffects(Block clickedBlock, SfxManualMachineDefinition definition) {
         if (MAKESHIFT_SMELTERY.equals(definition.id())) {
             extinguishIgnitionFire(clickedBlock, definition);
             return;
@@ -878,7 +883,7 @@ public final class ManualMachineService {
         }
     }
 
-    private void extinguishIgnitionFire(Block clickedBlock, ManualMachineDefinition definition) {
+    private void extinguishIgnitionFire(Block clickedBlock, SfxManualMachineDefinition definition) {
         if (SMELTERY.equals(definition.id())) {
             Dispenser dispenser = resolveInputDispenser(definition, clickedBlock);
             if (dispenser != null && basicBlockMachines.useIgnitionChamber(null, dispenser.getBlock())) {
@@ -892,7 +897,7 @@ public final class ManualMachineService {
         }
     }
 
-    private void playEffect(Block clickedBlock, ManualMachineDefinition definition) {
+    private void playEffect(Block clickedBlock, SfxManualMachineDefinition definition) {
         var world = clickedBlock.getWorld();
         var location = clickedBlock.getLocation().add(0.5, 0.5, 0.5);
         switch (definition.id()) {

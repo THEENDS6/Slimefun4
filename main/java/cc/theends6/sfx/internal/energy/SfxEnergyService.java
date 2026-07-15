@@ -1,20 +1,24 @@
 package cc.theends6.sfx.internal.energy;
 
+import cc.theends6.sfx.api.energy.runtime.*;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.behavior.SfxEnergyGeneratorProviderContext;
 import cc.theends6.sfx.api.behavior.SfxEnergyGeneratorProviderRegistration;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxAnchoredInteraction;
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
-import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
-import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricStack;
 import cc.theends6.sfx.internal.network.SfxNetworkDomain;
 import cc.theends6.sfx.internal.network.SfxNetworkExecution;
 import cc.theends6.sfx.internal.network.SfxNetworkReadiness;
@@ -23,7 +27,7 @@ import cc.theends6.sfx.internal.technical.SfxTechnicalGadgetBalance;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyService;
@@ -31,7 +35,7 @@ import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxEventGuards;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -254,6 +258,11 @@ public final class SfxEnergyService implements Listener {
         SfxMachineLegacyHookBridge.interact(machineRuntime, instance.typeId(), instance.instanceId(), interaction.block().getLocation(), "energy", "SfxEnergyService.onInteract");
         SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
         if (definition == null) {
+            return;
+        }
+        if (!items.canUse(event.getPlayer(), instance.typeId())) {
+            SfxEventGuards.denyBlockAndItemUse(event);
+            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("messages.no-item-permission")));
             return;
         }
         if (definition.componentType() == SfxEnergyComponentType.CONNECTOR || definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
@@ -542,6 +551,65 @@ public final class SfxEnergyService implements Listener {
             total += configurableMachines.producerPotentialGeneration(producer.instanceId());
         }
         return total;
+    }
+
+    int requestedDynamicGeneratorEnergy(List<SfxEnergyNodeRef> generatorRefs) {
+        int total = 0;
+        for (SfxEnergyNodeRef generator : generatorRefs) {
+            SfxDynamicEnergyGeneratorProvider provider = dynamicGenerator(generator.definition());
+            if (provider == null) {
+                continue;
+            }
+            Location location = toLocation(generator.instance().anchorKey());
+            total += Math.max(0, provider.requestedConsumption(plugin, items, generator.definition(), generator.state(), location));
+        }
+        return total;
+    }
+
+    int dynamicGeneratorDemand(SfxEnergyNodeRef generator) {
+        SfxDynamicEnergyGeneratorProvider provider = dynamicGenerator(generator.definition());
+        if (provider == null) {
+            return 0;
+        }
+        return Math.max(0, provider.requestedConsumption(plugin, items, generator.definition(), generator.state(),
+                toLocation(generator.instance().anchorKey())));
+    }
+
+    boolean dynamicGeneratorManagesStorage(SfxEnergyNodeRef generator) {
+        SfxDynamicEnergyGeneratorProvider provider = dynamicGenerator(generator.definition());
+        return provider != null && provider.managesStoredEnergy();
+    }
+
+    int chargeDynamicGenerator(SfxEnergyNodeRef generator, int offered) {
+        SfxDynamicEnergyGeneratorProvider provider = dynamicGenerator(generator.definition());
+        if (provider == null || offered <= 0) {
+            return 0;
+        }
+        int accepted = provider.acceptEnergy(plugin, items, generator.definition(), generator.state(),
+                toLocation(generator.instance().anchorKey()), offered, generatorAccess(generator.instance()));
+        return Math.max(0, Math.min(offered, accepted));
+    }
+
+    int drainCapacitorsToDynamicGenerator(List<SfxEnergyNodeRef> capacitorRefs, Set<UUID> dirtyNodes,
+                                           SfxEnergyNodeRef consumer, int remainingDemand, boolean hiddenOnly) {
+        int remaining = Math.max(0, remainingDemand);
+        for (SfxEnergyNodeRef capacitor : capacitorRefs) {
+            if (remaining <= 0) {
+                break;
+            }
+            int available = capacitorDrainableEnergy(capacitor, hiddenOnly);
+            if (available <= 0) {
+                continue;
+            }
+            int accepted = chargeDynamicGenerator(consumer, Math.min(available, remaining));
+            if (accepted <= 0) {
+                break;
+            }
+            capacitor.state().storedEnergy(capacitor.state().storedEnergy() - accepted);
+            dirtyNodes.add(capacitor.instance().instanceId());
+            remaining -= accepted;
+        }
+        return remaining;
     }
 
     void applyGeneratorAutoPause(

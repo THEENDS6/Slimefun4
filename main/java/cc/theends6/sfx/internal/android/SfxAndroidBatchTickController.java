@@ -1,10 +1,12 @@
 package cc.theends6.sfx.internal.android;
 
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.machine.runtime.*;
+
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;

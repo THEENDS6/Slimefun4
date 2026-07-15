@@ -1,9 +1,11 @@
 package cc.theends6.sfx.internal.machine;
 
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineRecipe;
+
 import org.bukkit.inventory.ItemStack;
 
-record ShapedMatchPlan(ManualMachineRecipe recipe, int[] consumed, ItemStack[] inputAfterConsume, OutputPlan outputPlan) {
-    ShapedMatchPlan(ManualMachineRecipe recipe, int[] consumed, ItemStack[] inputAfterConsume) {
+record ShapedMatchPlan(SfxManualMachineRecipe recipe, int[] consumed, ItemStack[] inputAfterConsume, OutputPlan outputPlan) {
+    ShapedMatchPlan(SfxManualMachineRecipe recipe, int[] consumed, ItemStack[] inputAfterConsume) {
         this(recipe, consumed, inputAfterConsume, null);
     }
 
@@ -15,7 +17,7 @@ record ShapedMatchPlan(ManualMachineRecipe recipe, int[] consumed, ItemStack[] i
 record OutputPlan(ItemStack[] contents) {
 }
 
-record ShapelessMatchPlan(ManualMachineRecipe recipe, int[] consumed, ItemStack[] inputAfterConsume) {
+record ShapelessMatchPlan(SfxManualMachineRecipe recipe, int[] consumed, ItemStack[] inputAfterConsume) {
 }
 
 enum MatchResult {

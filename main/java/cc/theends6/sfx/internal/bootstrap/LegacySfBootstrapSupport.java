@@ -1,7 +1,7 @@
 package cc.theends6.sfx.internal.bootstrap;
 
 import cc.theends6.sfx.internal.util.HeadTextures;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;

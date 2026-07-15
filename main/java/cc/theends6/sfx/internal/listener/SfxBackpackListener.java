@@ -9,7 +9,7 @@ import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
 import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

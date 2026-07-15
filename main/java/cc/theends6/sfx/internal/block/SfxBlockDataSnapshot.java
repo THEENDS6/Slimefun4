@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+
 import java.util.List;
 import java.util.Objects;
 

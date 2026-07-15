@@ -1,8 +1,10 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.behavior.SfxAreaMachineRules;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;

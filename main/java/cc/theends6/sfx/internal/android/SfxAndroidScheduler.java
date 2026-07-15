@@ -1,6 +1,6 @@
 package cc.theends6.sfx.internal.android;
 
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import java.util.ArrayList;
 import java.util.Comparator;

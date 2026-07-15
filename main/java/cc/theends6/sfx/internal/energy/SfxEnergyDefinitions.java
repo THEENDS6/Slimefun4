@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.energy;
 
+import cc.theends6.sfx.api.energy.runtime.*;
+
 import java.util.Map;
 import org.bukkit.plugin.java.JavaPlugin;
 

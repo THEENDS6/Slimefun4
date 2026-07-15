@@ -1,6 +1,6 @@
 package cc.theends6.sfx.internal.virtualcontainer;
 
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import java.util.Objects;
 import java.util.UUID;
 import org.bukkit.Location;

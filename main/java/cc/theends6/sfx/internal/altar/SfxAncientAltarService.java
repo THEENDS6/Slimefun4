@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.altar;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.api.item.SfxItemRegistry;
 import cc.theends6.sfx.api.item.SfxItems;
@@ -8,10 +10,10 @@ import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxAnchoredInteraction;
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
-import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
@@ -19,11 +21,11 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;

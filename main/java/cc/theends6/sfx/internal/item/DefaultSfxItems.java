@@ -8,10 +8,11 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Consumable;
 import io.papermc.paper.datacomponent.item.FoodProperties;
+import io.papermc.paper.datacomponent.item.UseCooldown;
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
 import java.util.List;
 import java.util.Locale;
@@ -141,6 +142,11 @@ public final class DefaultSfxItems implements SfxItems {
     }
 
     @Override
+    public Optional<SfxItemDefinition> definition(String id) {
+        return registry.item(id);
+    }
+
+    @Override
     public Optional<GuideMode> readGuideMode(ItemStack item) {
         Optional<SfxItemMarker> marker = readMarker(item);
         if (marker.isEmpty() || marker.get().kind() != SfxItemKind.GUIDE) {
@@ -212,6 +218,12 @@ public final class DefaultSfxItems implements SfxItems {
     }
 
     private void applyDataComponents(ItemStack item, SfxItemDefinition definition) {
+        if (definition.cooldownSeconds() != null) {
+            String rawGroup = definition.cooldownGroup() == null ? definition.id() : definition.cooldownGroup();
+            Key group = Key.key(rawGroup);
+            item.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(definition.cooldownSeconds())
+                    .cooldownGroup(group));
+        }
         FoodSpec spec = foodSpec(definition.id());
         if (spec == null) {
             return;

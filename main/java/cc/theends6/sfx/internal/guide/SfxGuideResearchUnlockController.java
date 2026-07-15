@@ -3,7 +3,7 @@ package cc.theends6.sfx.internal.guide;
 import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
 import cc.theends6.sfx.internal.research.SfxResearchDefinition;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import org.bukkit.entity.Player;
 
 

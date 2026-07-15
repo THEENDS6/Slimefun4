@@ -1,9 +1,11 @@
 package cc.theends6.sfx.internal.energy;
 
+import cc.theends6.sfx.api.energy.runtime.*;
+
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import java.util.ArrayDeque;

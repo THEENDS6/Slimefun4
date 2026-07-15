@@ -1,8 +1,10 @@
 package cc.theends6.sfx.internal.machine;
 
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineDefinition;
+
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,7 +47,7 @@ public final class SfxManualMachineDeployListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         ItemStack item = event.getItemInHand();
-        ManualMachineDefinition definition = resolveDefinition(item);
+        SfxManualMachineDefinition definition = resolveDefinition(item);
         if (definition == null) {
             return;
         }
@@ -68,7 +70,7 @@ public final class SfxManualMachineDeployListener implements Listener {
             return;
         }
         ItemStack item = event.getItem();
-        ManualMachineDefinition definition = resolveDefinition(item);
+        SfxManualMachineDefinition definition = resolveDefinition(item);
         if (definition == null) {
             return;
         }
@@ -101,7 +103,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-success")));
     }
 
-    private ManualMachineDefinition resolveDefinition(ItemStack item) {
+    private SfxManualMachineDefinition resolveDefinition(ItemStack item) {
         Optional<String> machineId = ManualMachineDeployPacks.readMachineId(plugin, item);
         if (machineId.isEmpty()) {
             return null;
@@ -137,7 +139,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         return block != null && blockData.findAnchor(block.getLocation()).isPresent();
     }
 
-    private DeploymentPlan deploymentPlan(Block anchor, ManualMachineDefinition definition, BlockFace sideDirection) {
+    private DeploymentPlan deploymentPlan(Block anchor, SfxManualMachineDefinition definition, BlockFace sideDirection) {
         Material[] pattern = definition.pattern();
         int anchorRow = anchorRow(definition, pattern);
         Block center = switch (anchorRow) {
@@ -154,7 +156,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         return new DeploymentPlan(anchor, center, placements);
     }
 
-    private int anchorRow(ManualMachineDefinition definition, Material[] pattern) {
+    private int anchorRow(SfxManualMachineDefinition definition, Material[] pattern) {
         if (usesVirtualFireBase(definition)) {
             return 2;
         }
@@ -176,7 +178,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         return false;
     }
 
-    private boolean usesVirtualFireBase(ManualMachineDefinition definition) {
+    private boolean usesVirtualFireBase(SfxManualMachineDefinition definition) {
         String id = definition.id();
         return "sf:smeltery".equals(id) || "sf:makeshift_smeltery".equals(id);
     }
@@ -187,7 +189,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         blocks.put(middle.getRelative(BlockFace.DOWN), bottom);
     }
 
-    private void applyDeployment(DeploymentPlan plan, ManualMachineDefinition definition, BlockFace sideDirection, BlockFace playerFacing) {
+    private void applyDeployment(DeploymentPlan plan, SfxManualMachineDefinition definition, BlockFace sideDirection, BlockFace playerFacing) {
         List<Block> placedBlocks = new ArrayList<>();
         for (Map.Entry<Block, Material> entry : plan.placements().entrySet()) {
             Material material = entry.getValue();
@@ -217,7 +219,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         }
     }
 
-    private BlockData orientedData(Block block, Block center, ManualMachineDefinition definition, BlockFace sideDirection, BlockFace playerFacing) {
+    private BlockData orientedData(Block block, Block center, SfxManualMachineDefinition definition, BlockFace sideDirection, BlockFace playerFacing) {
         BlockData data = block.getBlockData();
         if (!(data instanceof Directional directional)) {
             return null;
@@ -243,7 +245,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         };
     }
 
-    private BlockFace facingFor(Material material, int dx, int dy, int dz, ManualMachineDefinition definition, BlockFace sideDirection, BlockFace playerFacing) {
+    private BlockFace facingFor(Material material, int dx, int dy, int dz, SfxManualMachineDefinition definition, BlockFace sideDirection, BlockFace playerFacing) {
         if (isIndustrialMiner(definition)) {
             if (material == Material.PISTON || material == Material.STICKY_PISTON) {
                 return BlockFace.UP;
@@ -282,7 +284,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         return dz > 0 ? BlockFace.NORTH : BlockFace.SOUTH;
     }
 
-    private boolean isIndustrialMiner(ManualMachineDefinition definition) {
+    private boolean isIndustrialMiner(SfxManualMachineDefinition definition) {
         return "sf:industrial_miner".equals(definition.id()) || "sf:advanced_industrial_miner".equals(definition.id());
     }
 

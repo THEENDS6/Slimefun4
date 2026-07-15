@@ -1,9 +1,11 @@
 package cc.theends6.sfx.internal.energy;
 
+import cc.theends6.sfx.api.energy.runtime.*;
+
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import java.util.Map;
 import java.util.UUID;

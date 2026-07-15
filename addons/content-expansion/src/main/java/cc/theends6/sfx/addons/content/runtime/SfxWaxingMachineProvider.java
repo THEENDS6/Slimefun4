@@ -1,0 +1,183 @@
+package cc.theends6.sfx.addons.content.runtime;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
+import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.machine.SfxMachineDisplayItem;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricMachineDefinition;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricMachineRenderStatus;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricMachineState;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricMachineTickResult;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricRecipe;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricRecipeProvider;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricStack;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
+import java.util.List;
+import java.util.Map;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.plugin.java.JavaPlugin;
+
+final class SfxWaxingMachineProvider implements SfxElectricRecipeProvider {
+    private static final int TARGET_INPUT = 0;
+    private static final int WAX_INPUT = 1;
+    private static final int RESULT_OUTPUT = 0;
+    private static final int BOTTLE_OUTPUT = RESULT_OUTPUT;
+    private static final int WORK_TICKS = 80;
+    private static final int WAX_MAX = 10;
+    private static final int WAX_DISPLAY_SLOT = 4;
+
+    @Override
+    public List<SfxElectricRecipe> recipes() {
+        return SfxCopperVariants.waxingRecipes();
+    }
+
+    @Override
+    public boolean hasSpecialTick() {
+        return true;
+    }
+
+    @Override
+    public int requestedEnergyConsumption(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location) {
+        Plan plan = plan(items, state);
+        return (state.hasProgress() || (plan != null && state.specialData() > 0 && canPush(state, RESULT_OUTPUT, plan.output())))
+                ? definition.energyConsumptionPerTick()
+                : 0;
+    }
+
+    @Override
+    public SfxElectricMachineTickResult tickSpecial(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, SfxMachineTickContext context) {
+        boolean changed = refillWax(definition, state);
+        if (state.hasProgress()) {
+            return advance(definition, state, changed);
+        }
+        Plan plan = plan(items, state);
+        if (plan == null) {
+            state.resetProgress();
+            return new SfxElectricMachineTickResult(state.hasAnyInput() ? SfxElectricMachineRenderStatus.NO_RECIPE : SfxElectricMachineRenderStatus.IDLE, 0, changed, state.hasAnyInput() || state.specialData() > 0);
+        }
+        if (state.specialData() <= 0) {
+            if (waxContainerOutputBlocked(state)) {
+                return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.OUTPUT_FULL, 0, changed, true);
+            }
+            return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_RECIPE, 0, changed, true);
+        }
+        if (!canPush(state, RESULT_OUTPUT, plan.output())) {
+            return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.OUTPUT_FULL, 0, changed, true);
+        }
+        if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
+            return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_POWER, 0, changed, true);
+        }
+        SfxElectricStack reserved = state.input(TARGET_INPUT).copyWithAmount(1);
+        consumeOne(state, TARGET_INPUT);
+        state.specialData(Math.max(0, state.specialData() - 1));
+        state.reservedInput(reserved);
+        state.specialOutput(0, plan.output());
+        state.activeRecipeKey("sfx:waxing");
+        state.activeBaseTicks(WORK_TICKS);
+        state.progressWork(0);
+        return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, 0, true);
+    }
+
+    private SfxElectricMachineTickResult advance(SfxElectricMachineDefinition definition, SfxElectricMachineState state, boolean changed) {
+        SfxElectricStack output = state.specialOutput(0);
+        if (output == null) {
+            interrupt(state);
+            return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, 0, true);
+        }
+        if (!canPush(state, RESULT_OUTPUT, output)) {
+            return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.BLOCKED_OUTPUT, 0, changed, true);
+        }
+        if (definition.energyConsumptionPerTick() > 0 && state.storedEnergy() < definition.energyConsumptionPerTick()) {
+            return new SfxElectricMachineTickResult(SfxElectricMachineRenderStatus.NO_POWER, 0, changed, true);
+        }
+        if (definition.energyConsumptionPerTick() > 0) {
+            state.storedEnergy(state.storedEnergy() - definition.energyConsumptionPerTick());
+        }
+        state.progressWork(state.progressWork() + Math.max(1, definition.speed()));
+        if (state.progressWork() < WORK_TICKS) {
+            return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
+        }
+        push(state, RESULT_OUTPUT, output);
+        interrupt(state);
+        return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.IDLE, definition.energyConsumptionPerTick(), true);
+    }
+
+    private void interrupt(SfxElectricMachineState state) {
+        state.resetProgress();
+        state.clearSpecialWorkData();
+    }
+
+    private boolean refillWax(SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
+        SfxElectricStack wax = state.input(WAX_INPUT);
+        if (wax == null || wax.isSfxItem() || wax.hasSnapshot() || state.specialData() >= WAX_MAX) {
+            return false;
+        }
+        int units = switch (wax.material()) {
+            case HONEY_BOTTLE -> 1;
+            case HONEYCOMB -> 3;
+            case BEE_NEST -> 10;
+            default -> 0;
+        };
+        if (units <= 0 || state.specialData() + units > WAX_MAX) {
+            return false;
+        }
+        if (wax.material() == Material.HONEY_BOTTLE
+                && (state.hasProgress() || !canPush(state, BOTTLE_OUTPUT, SfxElectricStack.vanilla(Material.GLASS_BOTTLE, 1)))) {
+            return false;
+        }
+        state.specialData(state.specialData() + units);
+        consumeOne(state, WAX_INPUT);
+        if (wax.material() == Material.HONEY_BOTTLE) {
+            push(state, BOTTLE_OUTPUT, SfxElectricStack.vanilla(Material.GLASS_BOTTLE, 1));
+        }
+        return true;
+    }
+
+    private Plan plan(SfxItems items, SfxElectricMachineState state) {
+        SfxElectricStack target = state.input(TARGET_INPUT);
+        SfxElectricStack output = SfxCopperVariants.waxed(items, target == null ? null : target.copyWithAmount(1));
+        return output == null ? null : new Plan(output);
+    }
+
+    private boolean waxContainerOutputBlocked(SfxElectricMachineState state) {
+        SfxElectricStack wax = state.input(WAX_INPUT);
+        return wax != null
+                && !wax.isSfxItem()
+                && !wax.hasSnapshot()
+                && wax.material() == Material.HONEY_BOTTLE
+                && !canPush(state, BOTTLE_OUTPUT, SfxElectricStack.vanilla(Material.GLASS_BOTTLE, 1));
+    }
+
+    private void consumeOne(SfxElectricMachineState state, int slot) {
+        SfxElectricStack input = state.input(slot);
+        if (input == null) return;
+        state.input(slot, input.amount() <= 1 ? null : input.copyWithAmount(input.amount() - 1));
+    }
+
+    private boolean canPush(SfxElectricMachineState state, int slot, SfxElectricStack stack) {
+        SfxElectricStack current = state.output(slot);
+        return current == null || stack.canMerge(current, null);
+    }
+
+    private void push(SfxElectricMachineState state, int slot, SfxElectricStack stack) {
+        SfxElectricStack current = state.output(slot);
+        state.output(slot, current == null ? stack : current.copyWithAmount(current.amount() + stack.amount()));
+    }
+
+    @Override
+    public Map<Integer, SfxMachineDisplayItem> displayItems(JavaPlugin plugin, SfxItems items, SfxElectricMachineDefinition definition, SfxElectricMachineState state) {
+        boolean stored = state.specialData() > 0;
+        return Map.of(WAX_DISPLAY_SLOT, new SfxMachineDisplayItem(
+                stored ? Material.HONEYCOMB_BLOCK : Material.COBBLESTONE,
+                "content-expansion.ui.wax.name",
+                List.of("content-expansion.ui.wax.amount", "content-expansion.ui.wax.insert"),
+                Map.of("stored", state.specialData(), "capacity", WAX_MAX),
+                stored,
+                state.specialData(),
+                WAX_MAX));
+    }
+
+    private record Plan(SfxElectricStack output) {
+    }
+}

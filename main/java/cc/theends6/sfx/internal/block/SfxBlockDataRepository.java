@@ -1,5 +1,9 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
+
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+
 import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;

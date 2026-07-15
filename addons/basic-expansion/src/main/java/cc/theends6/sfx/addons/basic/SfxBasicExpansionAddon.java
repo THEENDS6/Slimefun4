@@ -29,7 +29,7 @@ import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRuleContext;
 import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRules;
 import cc.theends6.sfx.api.behavior.SfxUtilityRuleContext;
 import cc.theends6.sfx.api.behavior.SfxUtilityRules;
-import cc.theends6.sfx.internal.electric.SfxBasicExpansionElectricProviders;
+import cc.theends6.sfx.addons.basic.electric.SfxBasicExpansionElectricProviders;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -128,6 +128,11 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         context.behaviors().registerAutoBrewerBehaviorProvider(new BasicAutoBrewerBehavior());
         context.behaviors().registerLocalizedListPostProcessor((listContext, currentValues) ->
                 localizedList(context, listContext, currentValues));
+    }
+
+    @Override
+    public void onDisable() {
+        SfxBasicExpansionElectricProviders.disable();
     }
 
     private static double speedScaledEnhancedFurnaceFuel(SfxAddonContext context, SfxEnhancedFurnaceFuelContext fuelContext, double currentMultiplier) {

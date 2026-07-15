@@ -1,0 +1,79 @@
+package cc.theends6.sfx.api.text;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public final class Text {
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
+    private static final LegacyComponentSerializer LEGACY_AMPERSAND = LegacyComponentSerializer.legacyAmpersand();
+    private static final Pattern LEGACY_FORMAT = Pattern.compile("(?i).*[&\\u00A7][0-9A-FK-OR].*");
+
+    private Text() {
+    }
+
+    public static Component mm(String input) {
+        if (input == null || input.isBlank()) {
+            return Component.empty();
+        }
+        return noItalic(MINI_MESSAGE.deserialize(input));
+    }
+
+
+    public static Component legacy(String input) {
+        if (input == null || input.isBlank()) {
+            return Component.empty();
+        }
+        return noItalic(LEGACY_AMPERSAND.deserialize(input.replace('\u00A7', '&')));
+    }
+
+    public static List<Component> legacyLore(String... lines) {
+        List<Component> result = new ArrayList<>();
+        if (lines == null) {
+            return result;
+        }
+        for (String line : lines) {
+            result.add(legacy(line));
+        }
+        return result;
+    }
+
+    public static List<Component> lore(String... lines) {
+        List<Component> result = new ArrayList<>();
+        if (lines == null) {
+            return result;
+        }
+        for (String line : lines) {
+            result.add(renderFlexible(line));
+        }
+        return result;
+    }
+
+    public static Component prefixed(JavaPlugin plugin, String message) {
+        String prefix = plugin.getConfig().getString("messages.prefix", "<dark_gray>[<green>SFX</green><dark_gray>] ");
+        return noItalic(mm(prefix).append(renderFlexible(message)));
+    }
+
+    public static Component renderFlexible(String input) {
+        if (input == null || input.isBlank()) {
+            return Component.empty();
+        }
+        return LEGACY_FORMAT.matcher(input).matches() ? legacy(input) : mm(input);
+    }
+
+    public static Component noItalic(Component component) {
+        return component.decoration(TextDecoration.ITALIC, false);
+    }
+
+    public static String toLegacy(Component component) {
+        if (component == null) {
+            return "";
+        }
+        return LEGACY_AMPERSAND.serialize(component);
+    }
+}

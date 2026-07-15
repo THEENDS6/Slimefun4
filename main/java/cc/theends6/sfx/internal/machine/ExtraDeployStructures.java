@@ -1,15 +1,18 @@
 package cc.theends6.sfx.internal.machine;
 
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineDefinition;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOperation;
+
+import cc.theends6.sfx.api.text.Text;
 import java.util.Map;
 import java.util.Optional;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 
 public final class ExtraDeployStructures {
-    private static final Map<String, ManualMachineDefinition> DEFINITIONS = Map.of(
+    private static final Map<String, SfxManualMachineDefinition> DEFINITIONS = Map.of(
             "sf:industrial_miner",
-            new ManualMachineDefinition(
+            new SfxManualMachineDefinition(
                     "sf:industrial_miner",
                     Text.legacy("&bIndustrial Miner"),
                     Material.GOLDEN_PICKAXE,
@@ -20,10 +23,10 @@ public final class ExtraDeployStructures {
                     },
                     BlockFace.SELF,
                     BlockFace.SELF,
-                    ManualMachineOperation.HAND_INPUT
+                    SfxManualMachineOperation.HAND_INPUT
             ),
             "sf:advanced_industrial_miner",
-            new ManualMachineDefinition(
+            new SfxManualMachineDefinition(
                     "sf:advanced_industrial_miner",
                     Text.legacy("&cAdvanced Industrial Miner"),
                     Material.DIAMOND_PICKAXE,
@@ -34,14 +37,14 @@ public final class ExtraDeployStructures {
                     },
                     BlockFace.SELF,
                     BlockFace.SELF,
-                    ManualMachineOperation.HAND_INPUT
+                    SfxManualMachineOperation.HAND_INPUT
             )
     );
 
     private ExtraDeployStructures() {
     }
 
-    public static Optional<ManualMachineDefinition> machine(String id) {
+    public static Optional<SfxManualMachineDefinition> machine(String id) {
         return Optional.ofNullable(DEFINITIONS.get(id));
     }
 }

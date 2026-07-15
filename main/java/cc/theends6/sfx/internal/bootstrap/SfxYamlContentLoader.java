@@ -10,7 +10,7 @@ import cc.theends6.sfx.internal.feature.SfxFeatureSwitch;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -100,6 +100,9 @@ public final class SfxYamlContentLoader {
     private void loadYaml(YamlConfiguration yaml, String sourceName, boolean strict) {
         for (Map<?, ?> entry : yaml.getMapList("categories")) {
             try {
+                if (!isFeatureEnabled(entry)) {
+                    continue;
+                }
                 if (strict) {
                     validateCompiledContentEntry(entry, "category");
                 }
@@ -232,6 +235,7 @@ public final class SfxYamlContentLoader {
         String nameKey = string(required(entry, "name-key"));
         int order = integer(requiredAny(entry, "priority", "order"));
         boolean hidden = Boolean.TRUE.equals(entry.get("hidden"));
+        String permission = optionalString(entry.get("permission"));
         @SuppressWarnings("unchecked")
         Map<String, Object> icon = (Map<String, Object>) required(entry, "icon");
         Material iconMaterial = parseMaterial(string(required(icon, "material")));
@@ -247,7 +251,7 @@ public final class SfxYamlContentLoader {
             }
         }
         Component parsedName = Text.renderFlexible(requiredLanguageString(nameKey));
-        return new SfxItemCategory(id, parsedName, LegacySfBootstrapSupport.icon(iconMaterial, Text.renderFlexible(requiredLanguageString(iconNameKey)), headTexture, colorRgb), order, hidden);
+        return new SfxItemCategory(id, parsedName, LegacySfBootstrapSupport.icon(iconMaterial, Text.renderFlexible(requiredLanguageString(iconNameKey)), headTexture, colorRgb), order, hidden, permission);
     }
 
     private SfxItemDefinition parseItem(Map<?, ?> entry) {
@@ -280,6 +284,21 @@ public final class SfxYamlContentLoader {
         }
         if (Boolean.FALSE.equals(entry.get("giveable"))) {
             builder.giveable(false);
+        }
+        String permission = optionalString(entry.get("permission"));
+        if (permission != null) {
+            builder.permission(permission);
+        }
+        String usePermission = optionalString(entry.get("use-permission"));
+        if (usePermission != null) {
+            builder.usePermission(usePermission);
+        }
+        Object components = entry.get("components");
+        if (components instanceof Map<?, ?> componentMap) {
+            Object cooldown = componentMap.get("use-cooldown");
+            if (cooldown instanceof Map<?, ?> cooldownMap) {
+                builder.useCooldown((float) decimal(cooldownMap.get("seconds")), string(cooldownMap.get("group")));
+            }
         }
         if (entry.containsKey("variant")) {
             builder.variant(string(entry.get("variant")));

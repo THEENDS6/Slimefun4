@@ -1,6 +1,8 @@
 package cc.theends6.sfx.internal.gps;
 
-import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.api.machine.runtime.*;
+
+import cc.theends6.sfx.api.machine.runtime.SfxElectricStack;
 
 public record SfxGpsExtractionResult(
         boolean scanned,

@@ -1,13 +1,15 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusDefaults;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
-import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

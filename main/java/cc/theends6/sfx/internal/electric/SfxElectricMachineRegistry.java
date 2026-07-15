@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;

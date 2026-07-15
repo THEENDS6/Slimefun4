@@ -1,5 +1,12 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
+
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.SlimeFunXPlugin;
 import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.item.SfxItems;
@@ -7,7 +14,7 @@ import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelContext;
 import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelPolicy;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.energy.SfxFuelBurnTimeBridge;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineExecution;
@@ -22,7 +29,7 @@ import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;

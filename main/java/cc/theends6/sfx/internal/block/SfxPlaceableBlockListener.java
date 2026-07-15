@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.altar.SfxAncientAltarService;
@@ -11,6 +13,8 @@ import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
+import cc.theends6.sfx.internal.util.SfxLocalization;
+import cc.theends6.sfx.api.text.Text;
 import java.util.Objects;
 import java.util.logging.Logger;
 import org.bukkit.Material;
@@ -51,6 +55,7 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxBlockPlacementRouter placementRouter;
     private final SfxBlockExplosionService explosionService;
     private final SfxAnchoredBlockEnvironmentalGuard environmentalGuard;
+    private final SfxLocalization localization;
 
     public SfxPlaceableBlockListener(
             SfxItems items,
@@ -69,10 +74,12 @@ public final class SfxPlaceableBlockListener implements Listener {
             SfxInfusedHopperService infusedHopperService,
             SfxHologramProjectorService hologramProjectorService,
             SfxRuntime runtime,
-            SfxMachineRuntimeEngine machineRuntime
+            SfxMachineRuntimeEngine machineRuntime,
+            SfxLocalization localization
     ) {
         this.items = Objects.requireNonNull(items, "items");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
+        this.localization = Objects.requireNonNull(localization, "localization");
         Objects.requireNonNull(runtime, "runtime");
         Objects.requireNonNull(machineRuntime, "machineRuntime");
         this.lifecycleRouter = new SfxBlockLifecycleRouter(
@@ -118,6 +125,14 @@ public final class SfxPlaceableBlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
+        String itemId = items.readMarker(event.getItemInHand()).map(marker -> marker.itemId()).orElse(null);
+        if (itemId != null && !items.canUse(event.getPlayer(), itemId)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(Text.prefixed(
+                    org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(getClass()),
+                    localization.text("messages.no-item-permission")));
+            return;
+        }
         placementRouter.handlePlace(event);
     }
 

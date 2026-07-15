@@ -3,6 +3,9 @@ package cc.theends6.sfx.api.runtime;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -30,4 +33,10 @@ public interface SfxRuntime {
     <T> T supplyAt(Location location, Supplier<T> supplier);
 
     <T> CompletableFuture<T> supplyAtAsync(Location location, Supplier<T> supplier);
+
+    
+    boolean setBlockType(String machineId, Block block, Material material, boolean applyPhysics, String domain, String source);
+
+    
+    boolean setBlockData(String machineId, Block block, BlockData blockData, boolean applyPhysics, String domain, String source);
 }

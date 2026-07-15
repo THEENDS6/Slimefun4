@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.SlimeFunXPlugin;
 import cc.theends6.sfx.api.behavior.SfxAutoBrewerBehaviorProvider;
 import cc.theends6.sfx.api.behavior.SfxAutoBrewerInputContext;
@@ -8,8 +10,8 @@ import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxAnchoredInteraction;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
-import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
@@ -18,7 +20,7 @@ import cc.theends6.sfx.internal.gps.SfxGpsElectricBridge;
 import cc.theends6.sfx.internal.gps.SfxGpsExtractionResult;
 import cc.theends6.sfx.internal.gps.SfxGeoChunkKey;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
@@ -35,7 +37,7 @@ import cc.theends6.sfx.internal.util.SfxEventGuards;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxInventorySlots;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
 import java.util.ArrayList;
 import java.util.Collection;

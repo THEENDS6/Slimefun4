@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.util;
 
+import cc.theends6.sfx.api.text.Text;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;

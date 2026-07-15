@@ -1,7 +1,9 @@
 package cc.theends6.sfx.internal.electric;
 
-import cc.theends6.sfx.internal.machine.ManualMachineOutput;
-import cc.theends6.sfx.internal.machine.ManualMachineRecipe;
+import cc.theends6.sfx.api.machine.runtime.*;
+
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOutput;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineRecipe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -9,14 +11,14 @@ import java.util.List;
 final class SfxElectricSmelteryRecipeProvider implements SfxElectricRecipeProvider {
     private final List<SfxElectricRecipe> recipes;
 
-    SfxElectricSmelteryRecipeProvider(Collection<ManualMachineRecipe> smelteryRecipes, int baseSeconds) {
+    SfxElectricSmelteryRecipeProvider(Collection<SfxManualMachineRecipe> smelteryRecipes, int baseSeconds) {
         List<SfxElectricRecipe> bridged = new ArrayList<>();
-        for (ManualMachineRecipe recipe : smelteryRecipes) {
+        for (SfxManualMachineRecipe recipe : smelteryRecipes) {
             if (recipe.input().size() < 2 || recipe.input().size() > SfxElectricMachineState.MAX_INPUTS || recipe.hasRandomOutputs() || recipe.fixedOutputs().isEmpty() || recipe.fixedOutputs().size() > SfxElectricMachineState.MAX_OUTPUTS) {
                 continue;
             }
             List<SfxElectricStack> outputs = new ArrayList<>(recipe.fixedOutputs().size());
-            for (ManualMachineOutput output : recipe.fixedOutputs()) {
+            for (SfxManualMachineOutput output : recipe.fixedOutputs()) {
                 outputs.add(output.isSfxItem()
                         ? SfxElectricStack.sfx(output.sfxItemId(), output.amount())
                         : SfxElectricStack.vanilla(output.material(), output.amount()));

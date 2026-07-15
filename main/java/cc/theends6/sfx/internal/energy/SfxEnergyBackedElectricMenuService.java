@@ -1,14 +1,18 @@
 package cc.theends6.sfx.internal.energy;
 
+import cc.theends6.sfx.api.energy.runtime.*;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
-import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricStack;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.technical.SfxRechargeableItemService;
 import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
-import cc.theends6.sfx.internal.ui.SfxMachineStatusKey;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineStatusKey;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.util.SfxInventorySlots;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.List;
 import java.util.UUID;
 import java.util.Map;
@@ -139,7 +143,9 @@ final class SfxEnergyBackedElectricMenuService implements Listener {
             SfxBlockInstanceRecord instance = energy.blockData.findInstance(holder.instanceId()).orElse(null);
             if (instance != null) {
                 SfxEnergyNodeState state = energy.currentState(holder.instanceId(), instance);
-                if (provider.handleMenuClick(energy.plugin, energy.items, clickDefinition, state, event.getRawSlot(), event.getClick())) {
+                if (provider.handleMenuClick(energy.plugin, energy.items, clickDefinition, state,
+                        energy.toLocation(instance.anchorKey()), player, event.getRawSlot(), event.getClick(),
+                        energy.generatorAccess(instance))) {
                     event.setCancelled(true);
                     energy.markDirty(holder.instanceId());
                     energy.markActive(holder.instanceId());

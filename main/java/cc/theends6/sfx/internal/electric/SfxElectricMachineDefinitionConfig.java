@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.SlimeFunXPlugin;
 import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderKeyContext;
 import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderKeyPolicy;
@@ -7,7 +9,7 @@ import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.energy.SfxEnergyBalance;
 import cc.theends6.sfx.internal.feature.SfxFeatureSwitch;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
-import cc.theends6.sfx.internal.ui.SfxDurabilityBarMode;
+import cc.theends6.sfx.api.machine.runtime.SfxDurabilityBarMode;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

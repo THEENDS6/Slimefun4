@@ -1,18 +1,18 @@
 package cc.theends6.sfx.api.machine;
 
-import cc.theends6.sfx.internal.machine.ManualMachineDefinition;
-import cc.theends6.sfx.internal.machine.ManualMachineRecipe;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineDefinition;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineRecipe;
 import java.util.Collection;
 import java.util.Optional;
 
 public interface SfxManualMachineRegistry {
-    void registerMachine(ManualMachineDefinition definition);
+    void registerMachine(SfxManualMachineDefinition definition);
 
-    void registerRecipe(ManualMachineRecipe recipe);
+    void registerRecipe(SfxManualMachineRecipe recipe);
 
-    Optional<ManualMachineDefinition> machine(String id);
+    Optional<SfxManualMachineDefinition> machine(String id);
 
-    Collection<ManualMachineDefinition> machines();
+    Collection<SfxManualMachineDefinition> machines();
 
-    Collection<ManualMachineRecipe> recipesFor(String machineId);
+    Collection<SfxManualMachineRecipe> recipesFor(String machineId);
 }

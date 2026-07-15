@@ -1,14 +1,16 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
-import cc.theends6.sfx.internal.machine.ManualMachineOutput;
-import cc.theends6.sfx.internal.machine.ManualMachineRecipe;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOutput;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineRecipe;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService.CraftingTransactionResult;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService.CraftingTransactionStatus;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService.IngredientRequest;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,21 +40,21 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
     private final Kind kind;
     private final SfxVirtualContainerService virtualContainers;
     private final SfxItems items;
-    private final List<ManualMachineRecipe> manualRecipes;
+    private final List<SfxManualMachineRecipe> manualRecipes;
 
     static SfxAutoCrafterRecipeProvider vanilla(SfxVirtualContainerService virtualContainers, SfxItems items) {
         return new SfxAutoCrafterRecipeProvider(Kind.VANILLA, virtualContainers, items, List.of());
     }
 
-    static SfxAutoCrafterRecipeProvider enhanced(SfxVirtualContainerService virtualContainers, SfxItems items, List<ManualMachineRecipe> recipes) {
+    static SfxAutoCrafterRecipeProvider enhanced(SfxVirtualContainerService virtualContainers, SfxItems items, List<SfxManualMachineRecipe> recipes) {
         return new SfxAutoCrafterRecipeProvider(Kind.ENHANCED, virtualContainers, items, recipes);
     }
 
-    static SfxAutoCrafterRecipeProvider armor(SfxVirtualContainerService virtualContainers, SfxItems items, List<ManualMachineRecipe> recipes) {
+    static SfxAutoCrafterRecipeProvider armor(SfxVirtualContainerService virtualContainers, SfxItems items, List<SfxManualMachineRecipe> recipes) {
         return new SfxAutoCrafterRecipeProvider(Kind.ARMOR, virtualContainers, items, recipes);
     }
 
-    private SfxAutoCrafterRecipeProvider(Kind kind, SfxVirtualContainerService virtualContainers, SfxItems items, List<ManualMachineRecipe> manualRecipes) {
+    private SfxAutoCrafterRecipeProvider(Kind kind, SfxVirtualContainerService virtualContainers, SfxItems items, List<SfxManualMachineRecipe> manualRecipes) {
         this.kind = kind;
         this.virtualContainers = virtualContainers;
         this.items = items;
@@ -185,7 +187,7 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
             return choices;
         }
         String itemId = items.readMarker(hand).map(marker -> marker.itemId()).orElse(null);
-        ManualMachineRecipe recipe = findManualRecipe(itemId);
+        SfxManualMachineRecipe recipe = findManualRecipe(itemId);
         return recipe == null ? List.of() : List.of(manualChoice(itemId, recipe));
     }
 
@@ -197,11 +199,11 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
             Recipe recipe = findVanillaRecipe(plugin, key);
             return recipe == null ? null : new SfxAutoCrafterRecipeChoice(key, previewInputs(recipe), recipe.getResult());
         }
-        ManualMachineRecipe recipe = findManualRecipe(key);
+        SfxManualMachineRecipe recipe = findManualRecipe(key);
         return recipe == null ? null : manualChoice(key, recipe);
     }
 
-    private SfxAutoCrafterRecipeChoice manualChoice(String key, ManualMachineRecipe recipe) {
+    private SfxAutoCrafterRecipeChoice manualChoice(String key, SfxManualMachineRecipe recipe) {
         ItemStack[] preview = new ItemStack[9];
         List<SfxRecipeSlot> inputs = recipe.input();
         for (int i = 0; i < Math.min(9, inputs.size()); i++) {
@@ -283,7 +285,7 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
     }
 
     private CraftRequest manualCraftRequest(String selected) {
-        ManualMachineRecipe recipe = findManualRecipe(selected);
+        SfxManualMachineRecipe recipe = findManualRecipe(selected);
         if (recipe == null) {
             return CraftRequest.status(SfxElectricMachineRenderStatus.NO_RECIPE);
         }
@@ -295,7 +297,7 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
             ingredients.add(new IngredientRequest(stack -> matchesSlot(stack, slot), Math.max(1, slot.amount())));
         }
         List<ItemStack> outputs = new ArrayList<>();
-        for (ManualMachineOutput output : recipe.fixedOutputs()) {
+        for (SfxManualMachineOutput output : recipe.fixedOutputs()) {
             ItemStack stack = output.create(items);
             if (!isEmpty(stack)) {
                 outputs.add(stack);
@@ -307,12 +309,12 @@ final class SfxAutoCrafterRecipeProvider implements SfxElectricRecipeProvider {
         return new CraftRequest(SfxElectricMachineRenderStatus.WORKING, ingredients, outputs);
     }
 
-    private ManualMachineRecipe findManualRecipe(String selected) {
+    private SfxManualMachineRecipe findManualRecipe(String selected) {
         if (selected == null || selected.isBlank()) {
             return null;
         }
-        for (ManualMachineRecipe recipe : manualRecipes) {
-            for (ManualMachineOutput output : recipe.fixedOutputs()) {
+        for (SfxManualMachineRecipe recipe : manualRecipes) {
+            for (SfxManualMachineOutput output : recipe.fixedOutputs()) {
                 if (output.isSfxItem() && selected.equals(output.sfxItemId())) {
                     return recipe;
                 }

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class DefaultSfxFeatureRegistry implements SfxFeatureRegistry {
@@ -20,7 +21,8 @@ public final class DefaultSfxFeatureRegistry implements SfxFeatureRegistry {
         features.clear();
     }
 
-    public synchronized void registerBoolean(String addonId, String featureId, String configPath, boolean defaultEnabled) {
+    public synchronized void registerBoolean(String addonId, String featureId, String configPath, boolean defaultEnabled,
+                                             FileConfiguration addonConfig) {
         if (addonId == null || addonId.isBlank()) {
             throw new IllegalArgumentException("Feature addon id must not be blank.");
         }
@@ -30,7 +32,7 @@ public final class DefaultSfxFeatureRegistry implements SfxFeatureRegistry {
         if (configPath == null || configPath.isBlank()) {
             throw new IllegalArgumentException("Feature config path must not be blank.");
         }
-        Entry previous = features.putIfAbsent(featureId, new Entry(addonId, featureId, configPath, defaultEnabled));
+        Entry previous = features.putIfAbsent(featureId, new Entry(addonId, featureId, configPath, defaultEnabled, addonConfig));
         if (previous != null) {
             throw new IllegalStateException("Duplicate SFX feature id: " + featureId);
         }
@@ -56,12 +58,12 @@ public final class DefaultSfxFeatureRegistry implements SfxFeatureRegistry {
         if (entry == null) {
             return false;
         }
-        return plugin.getConfig().getBoolean(entry.configPath(), entry.defaultEnabled());
+        return entry.config().getBoolean(entry.configPath(), entry.defaultEnabled());
     }
 
-    private record Entry(String addonId, String id, String configPath, boolean defaultEnabled) {
+    private record Entry(String addonId, String id, String configPath, boolean defaultEnabled, FileConfiguration config) {
         SfxFeature toFeature(JavaPlugin plugin) {
-            return new SfxFeature(id, addonId, configPath, defaultEnabled, plugin.getConfig().getBoolean(configPath, defaultEnabled));
+            return new SfxFeature(id, addonId, configPath, defaultEnabled, config.getBoolean(configPath, defaultEnabled));
         }
     }
 }

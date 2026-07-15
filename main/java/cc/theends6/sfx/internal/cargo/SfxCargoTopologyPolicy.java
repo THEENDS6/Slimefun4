@@ -1,6 +1,6 @@
 package cc.theends6.sfx.internal.cargo;
 
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.topology.SfxTopologyCapabilities;
 import cc.theends6.sfx.internal.topology.SfxTopologyComponent;
 import cc.theends6.sfx.internal.topology.SfxTopologyDomainKey;

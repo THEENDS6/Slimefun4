@@ -1,9 +1,12 @@
 package cc.theends6.sfx.internal.machine;
 
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineDefinition;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOperation;
+
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -113,7 +116,7 @@ public final class SfxManualMachineYamlLoader {
         return Map.copyOf(result);
     }
 
-    private ManualMachineDefinition parse(String id, ConfigurationSection section, Set<String> acceptedRecipeTypes) {
+    private SfxManualMachineDefinition parse(String id, ConfigurationSection section, Set<String> acceptedRecipeTypes) {
         if (section.contains("name")) {
             throw new IllegalArgumentException("literal field is not allowed in compiled manual machine content: name (use name-key)");
         }
@@ -123,9 +126,9 @@ public final class SfxManualMachineYamlLoader {
         Material[] displayPattern = parsePattern(section.getList("display-pattern"));
         BlockFace triggerFace = parseFace(requiredString(section, "trigger-face"));
         BlockFace inventoryFace = parseFace(requiredString(section, "inventory-face"));
-        ManualMachineOperation operation = ManualMachineOperation.valueOf(requiredString(section, "operation").trim().replace('-', '_').toUpperCase(Locale.ROOT));
+        SfxManualMachineOperation operation = SfxManualMachineOperation.valueOf(requiredString(section, "operation").trim().replace('-', '_').toUpperCase(Locale.ROOT));
         boolean deployable = requiredBoolean(section, "deployable");
-        return new ManualMachineDefinition(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, stringSet(section.getList("tags")), acceptedRecipeTypes);
+        return new SfxManualMachineDefinition(id, name, icon, pattern, displayPattern, triggerFace, inventoryFace, operation, deployable, stringSet(section.getList("tags")), acceptedRecipeTypes);
     }
 
     private String requiredLanguageString(ConfigurationSection section, String path) {

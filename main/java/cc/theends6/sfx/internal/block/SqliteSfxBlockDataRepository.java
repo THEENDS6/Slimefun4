@@ -1,5 +1,10 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
+
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;

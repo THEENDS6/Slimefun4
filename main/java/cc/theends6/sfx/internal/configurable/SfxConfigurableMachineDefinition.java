@@ -1,6 +1,8 @@
 package cc.theends6.sfx.internal.configurable;
 
-import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.api.machine.runtime.*;
+
+import cc.theends6.sfx.api.machine.runtime.SfxElectricStack;
 import java.util.List;
 import java.util.Objects;
 import org.bukkit.Material;

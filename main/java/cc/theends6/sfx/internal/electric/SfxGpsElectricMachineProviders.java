@@ -1,9 +1,11 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.gps.SfxGpsElectricBridge;
 import cc.theends6.sfx.internal.gps.SfxGpsExtractionResult;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.Material;

@@ -1,8 +1,10 @@
 package cc.theends6.sfx.internal.machine;
 
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineDefinition;
+
 import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,7 +21,7 @@ public final class ManualMachineDeployPacks {
     private ManualMachineDeployPacks() {
     }
 
-    public static ItemStack create(JavaPlugin plugin, ManualMachineDefinition definition, SfxLocalization localization) {
+    public static ItemStack create(JavaPlugin plugin, SfxManualMachineDefinition definition, SfxLocalization localization) {
         Objects.requireNonNull(plugin, "plugin");
         Objects.requireNonNull(definition, "definition");
         if (!definition.deployable()) {

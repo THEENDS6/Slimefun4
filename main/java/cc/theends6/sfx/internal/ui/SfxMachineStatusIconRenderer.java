@@ -1,7 +1,7 @@
 package cc.theends6.sfx.internal.ui;
 
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.android;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.SlimeFunXPlugin;
 import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.behavior.SfxAndroidWoodcutterContext;
@@ -11,8 +13,8 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
-import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
@@ -20,13 +22,13 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.ItemBuilder;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -2239,7 +2241,7 @@ public final class SfxAndroidService implements Listener {
         });
     }
 
-    Location toLocation(cc.theends6.sfx.internal.block.SfxBlockAnchorKey key) {
+    Location toLocation(cc.theends6.sfx.api.block.SfxBlockAnchorKey key) {
         if (key == null) {
             return null;
         }

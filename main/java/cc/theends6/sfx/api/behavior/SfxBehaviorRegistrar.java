@@ -1,5 +1,8 @@
 package cc.theends6.sfx.api.behavior;
 
+import cc.theends6.sfx.api.block.SfxCyclingBlockDefinition;
+import cc.theends6.sfx.api.cargo.SfxCargoNodeDefinition;
+
 public interface SfxBehaviorRegistrar {
     void registerEnhancedFurnaceFuelPolicy(SfxEnhancedFurnaceFuelPolicy policy);
 
@@ -36,4 +39,8 @@ public interface SfxBehaviorRegistrar {
     void registerAutoBrewerBehaviorProvider(SfxAutoBrewerBehaviorProvider provider);
 
     void registerLocalizedListPostProcessor(SfxLocalizedListPostProcessor processor);
+
+    void registerCyclingBlock(SfxCyclingBlockDefinition definition);
+
+    void registerCargoNode(SfxCargoNodeDefinition definition);
 }

@@ -6,7 +6,7 @@ import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.ItemBuilder;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

@@ -1,5 +1,9 @@
 package cc.theends6.sfx.internal.ui;
 
+import cc.theends6.sfx.api.machine.runtime.SfxDurabilityBarMode;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import net.kyori.adventure.text.Component;

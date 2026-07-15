@@ -5,7 +5,7 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.util.SfxEventGuards;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.Objects;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -65,6 +65,15 @@ public final class SfxItemUseDispatcher implements Listener {
 
         String itemId = items.readMarker(item).map(SfxItemMarker::itemId).orElse(null);
         if (itemId == null) {
+            return;
+        }
+
+        if (!items.canUse(event.getPlayer(), itemId)) {
+            SfxEventGuards.denyBlockAndItemUse(event);
+            event.getPlayer().sendMessage(Text.prefixed(
+                    org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(getClass()),
+                    localization.text("messages.no-item-permission")
+            ));
             return;
         }
 

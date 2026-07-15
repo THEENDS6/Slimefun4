@@ -2,8 +2,8 @@ package cc.theends6.sfx.addons.content;
 
 import cc.theends6.sfx.api.addon.SfxAddon;
 import cc.theends6.sfx.api.addon.SfxAddonContext;
-import cc.theends6.sfx.internal.content.SfxContentExpansionElectricProviders;
-import cc.theends6.sfx.internal.content.SfxOxidizingGeneratorProvider;
+import cc.theends6.sfx.addons.content.runtime.SfxContentExpansionElectricProviders;
+import cc.theends6.sfx.addons.content.runtime.SfxOxidizingGeneratorProvider;
 
 public final class SfxContentExpansionAddon implements SfxAddon {
     public static final String ID = "sfx:content_expansion";

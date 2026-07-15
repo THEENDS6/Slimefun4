@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.ui;
 
+import cc.theends6.sfx.api.machine.runtime.SfxDurabilityBarMode;
+
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;

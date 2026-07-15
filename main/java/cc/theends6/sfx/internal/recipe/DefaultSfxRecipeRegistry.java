@@ -5,10 +5,10 @@ import cc.theends6.sfx.api.item.SfxRecipe;
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
-import cc.theends6.sfx.internal.machine.ManualMachineOperation;
-import cc.theends6.sfx.internal.machine.ManualMachineOutput;
-import cc.theends6.sfx.internal.machine.ManualMachineRecipe;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOperation;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOutput;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineRecipe;
+import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -120,19 +120,19 @@ public final class DefaultSfxRecipeRegistry {
         }
 
         Component note = toGuideNote(definition);
-        List<ManualMachineOutput> fixedOutputs = toManualOutputs(definition.outputs());
-        List<ManualMachineOutput> randomOutputs = toManualOutputs(definition.randomOutputs());
+        List<SfxManualMachineOutput> fixedOutputs = toManualOutputs(definition.outputs());
+        List<SfxManualMachineOutput> randomOutputs = toManualOutputs(definition.randomOutputs());
 
         for (String machineId : runtimeMachineIds) {
-            ManualMachineRecipe recipe = switch (definition.operation()) {
-                case SHAPED -> ManualMachineRecipe.shaped(machineId, definition.inputs(), fixedOutputs, note);
+            SfxManualMachineRecipe recipe = switch (definition.operation()) {
+                case SHAPED -> SfxManualMachineRecipe.shaped(machineId, definition.inputs(), fixedOutputs, note);
                 case SHAPELESS -> definition.matchPriority() == null
-                        ? ManualMachineRecipe.shapeless(machineId, definition.inputs(), fixedOutputs, note)
-                        : ManualMachineRecipe.shapeless(machineId, definition.inputs(), fixedOutputs, note, definition.matchPriority());
-                case HAND -> ManualMachineRecipe.hand(machineId, definition.inputs().getFirst(), fixedOutputs, note);
+                        ? SfxManualMachineRecipe.shapeless(machineId, definition.inputs(), fixedOutputs, note)
+                        : SfxManualMachineRecipe.shapeless(machineId, definition.inputs(), fixedOutputs, note, definition.matchPriority());
+                case HAND -> SfxManualMachineRecipe.hand(machineId, definition.inputs().getFirst(), fixedOutputs, note);
                 case SINGLE -> randomOutputs.isEmpty()
-                        ? ManualMachineRecipe.single(machineId, definition.inputs().getFirst(), fixedOutputs, note)
-                        : ManualMachineRecipe.randomSingle(machineId, definition.inputs().getFirst(), randomOutputs, fixedOutputs, note);
+                        ? SfxManualMachineRecipe.single(machineId, definition.inputs().getFirst(), fixedOutputs, note)
+                        : SfxManualMachineRecipe.randomSingle(machineId, definition.inputs().getFirst(), randomOutputs, fixedOutputs, note);
             };
 
             try {
@@ -153,13 +153,13 @@ public final class DefaultSfxRecipeRegistry {
                 .toList();
     }
 
-    private List<ManualMachineOutput> toManualOutputs(List<SfxRecipeOutputDefinition> outputs) {
-        List<ManualMachineOutput> mapped = new ArrayList<>(outputs.size());
+    private List<SfxManualMachineOutput> toManualOutputs(List<SfxRecipeOutputDefinition> outputs) {
+        List<SfxManualMachineOutput> mapped = new ArrayList<>(outputs.size());
         for (SfxRecipeOutputDefinition output : outputs) {
             if (output.isSfxItem()) {
-                mapped.add(ManualMachineOutput.sfx(output.sfxItemId(), output.amount()));
+                mapped.add(SfxManualMachineOutput.sfx(output.sfxItemId(), output.amount()));
             } else {
-                mapped.add(ManualMachineOutput.vanilla(output.material(), output.amount()));
+                mapped.add(SfxManualMachineOutput.vanilla(output.material(), output.amount()));
             }
         }
         return mapped;
@@ -231,7 +231,7 @@ public final class DefaultSfxRecipeRegistry {
         for (var machine : machines.machines()) {
             recipeOutputs.add(machine.id());
             for (var recipe : machines.recipesFor(machine.id())) {
-                for (ManualMachineOutput output : recipe.outputs()) {
+                for (SfxManualMachineOutput output : recipe.outputs()) {
                     if (output.isSfxItem()) {
                         recipeOutputs.add(output.sfxItemId());
                     }

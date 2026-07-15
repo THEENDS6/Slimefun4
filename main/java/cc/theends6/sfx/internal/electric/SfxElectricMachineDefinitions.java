@@ -1,5 +1,9 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.SlimeFunXPlugin;
 import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderKeyContext;
 import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderKeyPolicy;
@@ -147,10 +151,10 @@ final class SfxElectricMachineDefinitions {
             return false;
         }
         java.util.UUID currentId = blockData.findAnchor(location).map(anchor -> anchor.instanceId()).orElse(null);
-        cc.theends6.sfx.internal.block.SfxBlockAnchorKey current =
-                cc.theends6.sfx.internal.block.SfxBlockAnchorKey.fromLocation(location);
+        cc.theends6.sfx.api.block.SfxBlockAnchorKey current =
+                cc.theends6.sfx.api.block.SfxBlockAnchorKey.fromLocation(location);
         for (var anchor : blockData.anchors()) {
-            cc.theends6.sfx.internal.block.SfxBlockInstanceRecord instance =
+            cc.theends6.sfx.api.block.SfxBlockInstanceRecord instance =
                     blockData.findInstance(anchor.instanceId()).orElse(null);
             if (instance == null || java.util.Objects.equals(instance.instanceId(), currentId)) {
                 continue;
@@ -161,7 +165,7 @@ final class SfxElectricMachineDefinitions {
             if (!matchingType) {
                 continue;
             }
-            cc.theends6.sfx.internal.block.SfxBlockAnchorKey other = instance.anchorKey();
+            cc.theends6.sfx.api.block.SfxBlockAnchorKey other = instance.anchorKey();
             if (!other.worldId().equals(current.worldId())) {
                 continue;
             }

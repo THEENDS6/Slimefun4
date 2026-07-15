@@ -1,9 +1,11 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
-import cc.theends6.sfx.internal.machine.ManualMachineOutput;
-import cc.theends6.sfx.internal.machine.ManualMachineOperation;
-import cc.theends6.sfx.internal.machine.ManualMachineRecipe;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOutput;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineOperation;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineRecipe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -15,8 +17,8 @@ public final class SfxClassicOreGrinderRecipeProvider implements SfxElectricReci
     private final List<SfxElectricRecipe> recipes;
 
     public SfxClassicOreGrinderRecipeProvider(
-            Collection<ManualMachineRecipe> grindStoneRecipes,
-            Collection<ManualMachineRecipe> oreCrusherRecipes,
+            Collection<SfxManualMachineRecipe> grindStoneRecipes,
+            Collection<SfxManualMachineRecipe> oreCrusherRecipes,
             int baseSeconds
     ) {
         List<SfxElectricRecipe> collected = new ArrayList<>();
@@ -32,13 +34,13 @@ public final class SfxClassicOreGrinderRecipeProvider implements SfxElectricReci
         return recipes;
     }
 
-    private void registerImportedRecipes(List<SfxElectricRecipe> target, Set<String> signatures, Collection<ManualMachineRecipe> manualRecipes, String keyPrefix) {
+    private void registerImportedRecipes(List<SfxElectricRecipe> target, Set<String> signatures, Collection<SfxManualMachineRecipe> manualRecipes, String keyPrefix) {
         int index = 0;
-        for (ManualMachineRecipe recipe : manualRecipes) {
-            if (recipe.operation() != ManualMachineOperation.SINGLE_INPUT || recipe.hasRandomOutputs() || recipe.fixedOutputs().size() != 1) {
+        for (SfxManualMachineRecipe recipe : manualRecipes) {
+            if (recipe.operation() != SfxManualMachineOperation.SINGLE_INPUT || recipe.hasRandomOutputs() || recipe.fixedOutputs().size() != 1) {
                 continue;
             }
-            ManualMachineOutput output = recipe.fixedOutputs().getFirst();
+            SfxManualMachineOutput output = recipe.fixedOutputs().getFirst();
             SfxElectricRecipe electricRecipe = new SfxElectricRecipe(
                     keyPrefix + ":" + index++,
                     recipe.input().getFirst(),

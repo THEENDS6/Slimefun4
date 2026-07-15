@@ -2,14 +2,14 @@ package cc.theends6.sfx.internal.energy;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.block.SfxAnchoredInteraction;
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
 import cc.theends6.sfx.internal.behavior.SfxUtilityRulesResolver;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;

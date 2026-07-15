@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.internal.machine.SfxMachineCategory;
 import cc.theends6.sfx.internal.machine.SfxMachineDefinition;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;

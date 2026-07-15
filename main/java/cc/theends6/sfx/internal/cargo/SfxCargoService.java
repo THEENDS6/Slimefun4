@@ -1,19 +1,23 @@
 package cc.theends6.sfx.internal.cargo;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.SlimeFunXPlugin;
 import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.behavior.SfxCargoDistribution;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferContext;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferDecision;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferPolicy;
+import cc.theends6.sfx.api.cargo.SfxCargoNodeDefinition;
+import cc.theends6.sfx.api.cargo.SfxCargoNodeKind;
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxAnchoredInteraction;
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
-import cc.theends6.sfx.internal.block.SfxBlockLifecycleState;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;
@@ -28,7 +32,7 @@ import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.network.SfxNetworkDomain;
 import cc.theends6.sfx.internal.network.SfxNetworkExecution;
@@ -43,7 +47,7 @@ import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxEventGuards;
 import cc.theends6.sfx.internal.util.SfxInteractionRules;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import org.bukkit.Color;
 import org.bukkit.Particle;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainer;
@@ -143,8 +147,20 @@ public final class SfxCargoService implements Listener {
         this.electricMachines = Objects.requireNonNull(electricMachines, "electricMachines");
         this.machineRuntime = machineRuntime == null ? new SfxMachineRuntimeEngine() : machineRuntime;
         this.definitions = SfxCargoDefinitions.load(plugin);
+        if (plugin instanceof SlimeFunXPlugin sfx) {
+            for (SfxCargoNodeDefinition node : sfx.api().behaviors().cargoNodes()) {
+                definitions.put(node.itemId(), new SfxCargoComponentDefinition(node.itemId(), switch (node.kind()) {
+                    case MANAGER -> SfxCargoComponentType.MANAGER;
+                    case CONNECTOR -> SfxCargoComponentType.CONNECTOR;
+                    case INPUT -> SfxCargoComponentType.INPUT_NODE;
+                    case ADVANCED_INPUT -> SfxCargoComponentType.ADVANCED_INPUT_NODE;
+                    case OUTPUT -> SfxCargoComponentType.OUTPUT_NODE;
+                    case ADVANCED_OUTPUT -> SfxCargoComponentType.ADVANCED_OUTPUT_NODE;
+                }, node.rangeX(), node.rangeY(), node.rangeZ()));
+            }
+        }
         registerFrameworkEffects();
-        this.topology = new SfxTopologyService(blockData, new SfxCargoTopologyPolicy(definitions), new SfxCargoConnectivityPolicy(RANGE));
+        this.topology = new SfxTopologyService(blockData, new SfxCargoTopologyPolicy(definitions), new SfxCargoConnectivityPolicy(RANGE, blockData, definitions));
         bootstrapLoadedStates();
         topology.rebuild();
     }
@@ -252,6 +268,11 @@ public final class SfxCargoService implements Listener {
         SfxMachineLegacyHookBridge.interact(machineRuntime, instance.typeId(), instance.instanceId(), interaction.block().getLocation(), "cargo", "SfxCargoService.onInteract");
         SfxCargoComponentDefinition definition = definitions.get(instance.typeId());
         if (definition == null) {
+            return;
+        }
+        if (!items.canUse(event.getPlayer(), instance.typeId())) {
+            SfxEventGuards.denyBlockAndItemUse(event);
+            event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("messages.no-item-permission")));
             return;
         }
         if (definition.type() == SfxCargoComponentType.CONNECTOR && SfxInteractionRules.isPlaceableHeldItem(items, event.getItem())) {

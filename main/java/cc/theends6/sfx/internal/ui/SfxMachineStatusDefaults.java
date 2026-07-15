@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.ui;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;

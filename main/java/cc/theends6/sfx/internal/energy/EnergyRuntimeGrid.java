@@ -1,7 +1,7 @@
 package cc.theends6.sfx.internal.energy;
 
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;

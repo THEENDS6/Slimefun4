@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxWorldMutationBridge;
 import org.bukkit.Location;

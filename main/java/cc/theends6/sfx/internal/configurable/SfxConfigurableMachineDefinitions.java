@@ -1,7 +1,9 @@
 package cc.theends6.sfx.internal.configurable;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.internal.diagnostics.SfxValidationDiagnostics;
-import cc.theends6.sfx.internal.electric.SfxElectricStack;
+import cc.theends6.sfx.api.machine.runtime.SfxElectricStack;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import java.io.File;
 import java.util.ArrayList;

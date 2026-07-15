@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.util;
 
+import cc.theends6.sfx.api.text.Text;
+
 import cc.theends6.sfx.SlimeFunXPlugin;
 import cc.theends6.sfx.internal.addon.SfxAddonJarResources;
 import cc.theends6.sfx.api.addon.SfxAddon;
@@ -30,7 +32,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class SfxLocalization {
+public final class SfxLocalization implements cc.theends6.sfx.api.localization.SfxLocalizationView {
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{([a-zA-Z0-9_.-]+)}");
 
     private final JavaPlugin plugin;

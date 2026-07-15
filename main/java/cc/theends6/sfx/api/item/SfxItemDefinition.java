@@ -26,6 +26,10 @@ public final class SfxItemDefinition {
     private final int version;
     private final boolean hidden;
     private final boolean giveable;
+    private final String permission;
+    private final String usePermission;
+    private final Float cooldownSeconds;
+    private final String cooldownGroup;
     private final SfxItemKind kind;
     private final String variant;
     private final String headTextureHash;
@@ -53,6 +57,11 @@ public final class SfxItemDefinition {
         this.version = Math.max(1, builder.version);
         this.hidden = builder.hidden;
         this.giveable = builder.giveable;
+        this.permission = normalizePermission(builder.permission);
+        this.usePermission = normalizePermission(builder.usePermission);
+        this.cooldownSeconds = builder.cooldownSeconds;
+        this.cooldownGroup = builder.cooldownGroup == null || builder.cooldownGroup.isBlank()
+                ? null : builder.cooldownGroup.trim().toLowerCase();
         this.kind = builder.kind == null ? SfxItemKind.ITEM : builder.kind;
         this.variant = Objects.requireNonNullElse(builder.variant, "default");
         this.headTextureHash = normalizeTextureHash(builder.headTextureHash);
@@ -106,6 +115,10 @@ public final class SfxItemDefinition {
         return name;
     }
 
+    private static String normalizePermission(String permission) {
+        return permission == null || permission.isBlank() ? null : permission.trim().toLowerCase();
+    }
+
     public String nameKey() {
         return nameKey;
     }
@@ -148,6 +161,26 @@ public final class SfxItemDefinition {
 
     public boolean giveable() {
         return giveable;
+    }
+
+    
+    public String permission() {
+        return permission;
+    }
+
+    
+    public String usePermission() {
+        return usePermission;
+    }
+
+    
+    public Float cooldownSeconds() {
+        return cooldownSeconds;
+    }
+
+    
+    public String cooldownGroup() {
+        return cooldownGroup;
     }
 
     public SfxItemKind kind() {
@@ -201,6 +234,10 @@ public final class SfxItemDefinition {
         private int version = 1;
         private boolean hidden;
         private boolean giveable = true;
+        private String permission;
+        private String usePermission;
+        private Float cooldownSeconds;
+        private String cooldownGroup;
         private SfxItemKind kind = SfxItemKind.ITEM;
         private String variant = "default";
         private String headTextureHash;
@@ -335,6 +372,25 @@ public final class SfxItemDefinition {
 
         public SfxItemDefinition build() {
             return new SfxItemDefinition(this);
+        }
+
+        public Builder permission(String permission) {
+            this.permission = permission;
+            return this;
+        }
+
+        public Builder usePermission(String usePermission) {
+            this.usePermission = usePermission;
+            return this;
+        }
+
+        public Builder useCooldown(float seconds, String group) {
+            if (!Float.isFinite(seconds) || seconds <= 0.0f) {
+                throw new IllegalArgumentException("Use cooldown must be a positive finite number.");
+            }
+            this.cooldownSeconds = seconds;
+            this.cooldownGroup = group;
+            return this;
         }
 
         private static String defaultNameKey(String id) {

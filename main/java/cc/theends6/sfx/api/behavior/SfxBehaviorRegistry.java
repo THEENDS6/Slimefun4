@@ -1,5 +1,7 @@
 package cc.theends6.sfx.api.behavior;
 
+import cc.theends6.sfx.api.block.SfxCyclingBlockDefinition;
+import cc.theends6.sfx.api.cargo.SfxCargoNodeDefinition;
 import java.util.List;
 
 public interface SfxBehaviorRegistry {
@@ -38,4 +40,8 @@ public interface SfxBehaviorRegistry {
     List<SfxAutoBrewerBehaviorProvider> autoBrewerBehaviorProviders();
 
     List<SfxLocalizedListPostProcessor> localizedListPostProcessors();
+
+    List<SfxCyclingBlockDefinition> cyclingBlocks();
+
+    List<SfxCargoNodeDefinition> cargoNodes();
 }

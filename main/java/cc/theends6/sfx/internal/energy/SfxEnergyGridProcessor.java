@@ -1,10 +1,14 @@
 package cc.theends6.sfx.internal.energy;
 
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.energy.runtime.*;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.internal.feature.SfxFeatureSwitch;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -108,7 +112,8 @@ final class SfxEnergyGridProcessor {
         List<SfxBlockInstanceRecord> configurableRuntimeMachines = service.join(configurableConsumers, configurableProducers);
         int requestedConsumption = service.electricMachines.requestedEnergyConsumption(electricConsumerIds)
                 + service.configurableMachines.requestedEnergyConsumption(configurableConsumerIds)
-                + service.requestedChargerEnergy(chargerRefs);
+                + service.requestedChargerEnergy(chargerRefs)
+                + service.requestedDynamicGeneratorEnergy(generatorRefs);
         int totalStoredBefore = service.totalStoredEnergy(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
                 + service.configurableMachines.totalStoredEnergy(configurableRuntimeMachines);
         int totalCapacityBefore = service.totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
@@ -133,12 +138,14 @@ final class SfxEnergyGridProcessor {
             if (!SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), energyTick, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework), generatorFramework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
                 continue;
             }
-            if (generator.state().storedEnergy() > 0) {
+            boolean consuming = service.dynamicGeneratorDemand(generator) > 0;
+            if (!consuming && !service.dynamicGeneratorManagesStorage(generator) && generator.state().storedEnergy() > 0) {
                 available += generator.state().storedEnergy();
                 generator.state().storedEnergy(0);
                 service.dirtyNodes.add(generator.instance().instanceId());
             }
-            int produced = service.autoPausedGenerators.contains(generator.instance().instanceId()) ? 0 : service.generate(generator.instance(), generator.definition(), generator.state());
+            int produced = consuming || service.autoPausedGenerators.contains(generator.instance().instanceId())
+                    ? 0 : service.generate(generator.instance(), generator.definition(), generator.state());
             generatorFramework.put("energy.generated", produced);
             SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.AFTER_PROGRESS, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), energyTick, null, produced > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework), generatorFramework, SfxMachinePhase.AFTER_PROGRESS.name());
             available += produced;
@@ -200,6 +207,18 @@ final class SfxEnergyGridProcessor {
             }
         }
 
+        for (SfxEnergyNodeRef consumer : generatorRefs) {
+            if (available <= 0) {
+                break;
+            }
+            int demand = service.dynamicGeneratorDemand(consumer);
+            if (demand <= 0) {
+                continue;
+            }
+            int accepted = service.chargeDynamicGenerator(consumer, Math.min(available, demand));
+            available -= accepted;
+        }
+
         for (SfxBlockInstanceRecord consumer : electricConsumers) {
             int remainingDemand = Math.max(0, service.electricMachines.consumerCapacity(consumer.typeId()) - service.electricMachines.consumerStoredEnergy(consumer.instanceId()));
             if (remainingDemand <= 0) {
@@ -232,6 +251,17 @@ final class SfxEnergyGridProcessor {
             }
         }
 
+        for (SfxEnergyNodeRef consumer : generatorRefs) {
+            int remainingDemand = service.dynamicGeneratorDemand(consumer);
+            if (remainingDemand <= 0) {
+                continue;
+            }
+            remainingDemand = service.drainCapacitorsToDynamicGenerator(capacitorRefs, service.dirtyNodes, consumer, remainingDemand, true);
+            if (remainingDemand > 0) {
+                service.drainCapacitorsToDynamicGenerator(capacitorRefs, service.dirtyNodes, consumer, remainingDemand, false);
+            }
+        }
+
         for (SfxEnergyNodeRef charger : chargerRefs) {
             Map<String, Object> chargerFramework = service.energyFrameworkAttributes(grid, charger.instance(), charger.definition(), charger.state());
             int storedBeforeCharge = charger.state().storedEnergy();
@@ -256,7 +286,7 @@ final class SfxEnergyGridProcessor {
         }
 
         for (SfxEnergyNodeRef generator : generatorRefs) {
-            if (available <= 0 || generator.definition().capacity() <= 0) {
+            if (available <= 0 || generator.definition().capacity() <= 0 || service.dynamicGeneratorManagesStorage(generator)) {
                 continue;
             }
             int stored = generator.state().storedEnergy();

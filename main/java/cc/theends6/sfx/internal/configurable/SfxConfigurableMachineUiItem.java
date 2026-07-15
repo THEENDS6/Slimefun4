@@ -1,8 +1,8 @@
 package cc.theends6.sfx.internal.configurable;
 
-import cc.theends6.sfx.internal.ui.SfxUiItems;
+import cc.theends6.sfx.api.ui.SfxUiItems;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.List;
 import java.util.Objects;
 import net.kyori.adventure.text.Component;

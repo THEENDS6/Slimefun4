@@ -9,6 +9,7 @@ public record SfxDecorationDefinition(
         boolean animated,
         boolean structural,
         List<Material> cycle,
+        int intervalTicks,
         Material readyMaterial,
         Material activeMaterial,
         Material errorMaterial
@@ -16,6 +17,7 @@ public record SfxDecorationDefinition(
     public SfxDecorationDefinition {
         Objects.requireNonNull(itemId, "itemId");
         cycle = cycle == null || cycle.isEmpty() ? List.of(Material.WHITE_WOOL) : List.copyOf(cycle);
+        intervalTicks = Math.max(1, intervalTicks);
         readyMaterial = readyMaterial == null ? cycle.get(0) : readyMaterial;
         activeMaterial = activeMaterial == null ? readyMaterial : activeMaterial;
         errorMaterial = errorMaterial == null ? readyMaterial : errorMaterial;
@@ -23,7 +25,7 @@ public record SfxDecorationDefinition(
 
     public Material materialFor(SfxDecorationState state, long phase) {
         if (animated && !cycle.isEmpty()) {
-            int index = Math.floorMod((int) phase, cycle.size());
+            int index = Math.floorMod((int) (phase / intervalTicks), cycle.size());
             return cycle.get(index);
         }
         return switch (state == null ? SfxDecorationState.DEFAULT : state) {

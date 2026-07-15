@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.machine;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.internal.core.SfxErrorCode;
 import cc.theends6.sfx.internal.core.SfxResult;
 import java.util.Collection;

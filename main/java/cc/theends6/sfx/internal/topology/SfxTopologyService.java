@@ -1,9 +1,9 @@
 package cc.theends6.sfx.internal.topology;
 
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import cc.theends6.sfx.internal.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;

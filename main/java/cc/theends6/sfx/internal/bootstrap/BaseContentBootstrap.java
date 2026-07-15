@@ -8,9 +8,9 @@ import cc.theends6.sfx.api.item.SfxRecipe;
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.machine.DefaultManualMachineRegistry;
-import cc.theends6.sfx.internal.machine.ManualMachineDefinition;
+import cc.theends6.sfx.api.machine.manual.SfxManualMachineDefinition;
 import cc.theends6.sfx.internal.util.ItemBuilder;
-import cc.theends6.sfx.internal.util.Text;
+import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Material;
@@ -44,7 +44,7 @@ public final class BaseContentBootstrap {
     }
 
     public static void syncManualMachineGuideContent(DefaultSfxItemRegistry registry, DefaultManualMachineRegistry machines) {
-        for (ManualMachineDefinition machine : machines.machines()) {
+        for (SfxManualMachineDefinition machine : machines.machines()) {
             registry.item(machine.id()).ifPresent(machineItem ->
                     registry.replaceItem(withAddedRecipe(machineItem, structureRecipe(machine))));
         }
@@ -80,7 +80,7 @@ public final class BaseContentBootstrap {
                 .build());
     }
 
-    private static SfxRecipe structureRecipe(ManualMachineDefinition machine) {
+    private static SfxRecipe structureRecipe(SfxManualMachineDefinition machine) {
         return SfxRecipe.shaped("multiblock-structure", toRecipeMatrix(machine.displayPattern()), null);
     }
 

@@ -1,6 +1,6 @@
 package cc.theends6.sfx.internal.energy;
 
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayMode;
 import cc.theends6.sfx.internal.display.SfxFloatingTextKey;

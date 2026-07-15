@@ -4315,6 +4315,7 @@ materials:
   blast_furnace: 高炉
   nether_star: 下界之星
 messages:
+  no-item-permission: <red>你没有使用这个物品的权限。</red>
   no-tome-yourself: '&c你不能从自己的学识之书中学习。'
   tome-of-knowledge-sharing:
     bound: '&a这本学识之书已经绑定给你。'

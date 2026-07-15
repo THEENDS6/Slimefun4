@@ -4358,6 +4358,7 @@ materials:
   blast_furnace: Blast Furnace
   nether_star: Nether Star
 messages:
+  no-item-permission: <red>You do not have permission to use this item.</red>
   no-tome-yourself: '&cYou cannot learn from your own Tome of Knowledge.'
   tome-of-knowledge-sharing:
     bound: '&aThis Tome of Knowledge has been bound to you.'

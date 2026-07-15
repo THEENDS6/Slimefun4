@@ -1,5 +1,9 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.internal.altar.SfxAncientAltarService;
 import cc.theends6.sfx.internal.android.SfxAndroidService;
@@ -13,7 +17,7 @@ import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import java.util.UUID;
 import java.util.logging.Level;

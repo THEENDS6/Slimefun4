@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.electric;
 
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import java.util.Map;
 import org.bukkit.inventory.Inventory;

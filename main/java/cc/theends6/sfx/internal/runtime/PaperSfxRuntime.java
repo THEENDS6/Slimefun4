@@ -11,6 +11,10 @@ import org.bukkit.Location;
 import org.bukkit.ServerTickManager;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import cc.theends6.sfx.internal.machine.SfxWorldMutationBridge;
 
 public final class PaperSfxRuntime implements SfxRuntime {
     private static final long CROSS_REGION_WAIT_TIMEOUT_MILLIS = 1000L;
@@ -185,5 +189,15 @@ public final class PaperSfxRuntime implements SfxRuntime {
             return false;
         }
         return plugin.getServer().isOwnedByCurrentRegion(location);
+    }
+
+    @Override
+    public boolean setBlockType(String machineId, Block block, Material material, boolean applyPhysics, String domain, String source) {
+        return SfxWorldMutationBridge.setType(null, machineId, block, material, applyPhysics, domain, source);
+    }
+
+    @Override
+    public boolean setBlockData(String machineId, Block block, BlockData blockData, boolean applyPhysics, String domain, String source) {
+        return SfxWorldMutationBridge.setBlockData(null, machineId, block, blockData, applyPhysics, domain, source);
     }
 }

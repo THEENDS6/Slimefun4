@@ -1,7 +1,7 @@
 package cc.theends6.sfx.internal.virtualcontainer;
 
 import cc.theends6.sfx.api.runtime.SfxRuntime;
-import cc.theends6.sfx.internal.block.SfxBlockAnchorKey;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.inventory.SfxInventoryAccessState;
 import java.util.ArrayList;
 import java.util.Collection;

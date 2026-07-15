@@ -1,8 +1,14 @@
 package cc.theends6.sfx.internal.block;
 
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
+
+import cc.theends6.sfx.api.block.*;
+
+import cc.theends6.sfx.api.machine.runtime.*;
+
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
-import cc.theends6.sfx.internal.machine.SfxMachineTickContext;
+import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;

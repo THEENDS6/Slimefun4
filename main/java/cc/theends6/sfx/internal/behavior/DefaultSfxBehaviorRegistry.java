@@ -2,6 +2,8 @@ package cc.theends6.sfx.internal.behavior;
 
 import cc.theends6.sfx.api.behavior.SfxBehaviorRegistrar;
 import cc.theends6.sfx.api.behavior.SfxBehaviorRegistry;
+import cc.theends6.sfx.api.block.SfxCyclingBlockDefinition;
+import cc.theends6.sfx.api.cargo.SfxCargoNodeDefinition;
 import cc.theends6.sfx.api.behavior.SfxAndroidWoodcutterPolicy;
 import cc.theends6.sfx.api.behavior.SfxAreaMachineRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxAutoBrewerBehaviorProvider;
@@ -46,6 +48,8 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     private final List<SfxEnergyGeneratorProviderRegistration> energyGeneratorProviders = new ArrayList<>();
     private final List<SfxAutoBrewerBehaviorProvider> autoBrewerBehaviorProviders = new ArrayList<>();
     private final List<SfxLocalizedListPostProcessor> localizedListPostProcessors = new ArrayList<>();
+    private final List<SfxCyclingBlockDefinition> cyclingBlocks = new ArrayList<>();
+    private final List<SfxCargoNodeDefinition> cargoNodes = new ArrayList<>();
 
     public synchronized void clear() {
         enhancedFurnaceFuelPolicies.clear();
@@ -66,6 +70,8 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         energyGeneratorProviders.clear();
         autoBrewerBehaviorProviders.clear();
         localizedListPostProcessors.clear();
+        cyclingBlocks.clear();
+        cargoNodes.clear();
     }
 
     @Override
@@ -282,5 +288,33 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     @Override
     public synchronized List<SfxLocalizedListPostProcessor> localizedListPostProcessors() {
         return Collections.unmodifiableList(new ArrayList<>(localizedListPostProcessors));
+    }
+
+    @Override
+    public synchronized void registerCyclingBlock(SfxCyclingBlockDefinition definition) {
+        Objects.requireNonNull(definition, "definition");
+        if (cyclingBlocks.stream().anyMatch(existing -> existing.itemId().equals(definition.itemId()))) {
+            throw new IllegalArgumentException("Cycling block already registered: " + definition.itemId());
+        }
+        cyclingBlocks.add(definition);
+    }
+
+    @Override
+    public synchronized List<SfxCyclingBlockDefinition> cyclingBlocks() {
+        return Collections.unmodifiableList(new ArrayList<>(cyclingBlocks));
+    }
+
+    @Override
+    public synchronized void registerCargoNode(SfxCargoNodeDefinition definition) {
+        Objects.requireNonNull(definition, "definition");
+        if (cargoNodes.stream().anyMatch(existing -> existing.itemId().equals(definition.itemId()))) {
+            throw new IllegalArgumentException("Cargo node already registered: " + definition.itemId());
+        }
+        cargoNodes.add(definition);
+    }
+
+    @Override
+    public synchronized List<SfxCargoNodeDefinition> cargoNodes() {
+        return Collections.unmodifiableList(new ArrayList<>(cargoNodes));
     }
 }

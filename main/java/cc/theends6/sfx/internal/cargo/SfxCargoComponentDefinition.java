@@ -1,6 +1,13 @@
 package cc.theends6.sfx.internal.cargo;
 
-public record SfxCargoComponentDefinition(String id, SfxCargoComponentType type) {
+public record SfxCargoComponentDefinition(String id, SfxCargoComponentType type, int rangeX, int rangeY, int rangeZ) {
+    public SfxCargoComponentDefinition(String id, SfxCargoComponentType type) {
+        this(id, type, 0, 0, 0);
+    }
+
+    public boolean hasAreaRange() {
+        return type == SfxCargoComponentType.MANAGER && (rangeX > 0 || rangeY > 0 || rangeZ > 0);
+    }
     public boolean isTopologyBackbone() {
         return type == SfxCargoComponentType.MANAGER || type == SfxCargoComponentType.CONNECTOR;
     }

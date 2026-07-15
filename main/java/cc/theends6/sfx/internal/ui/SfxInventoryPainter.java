@@ -1,5 +1,7 @@
 package cc.theends6.sfx.internal.ui;
 
+import cc.theends6.sfx.api.ui.SfxUiItems;
+
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
