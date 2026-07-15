@@ -110,6 +110,8 @@ public final class SfxDecorationService implements Listener {
             register(new SfxDecorationDefinition(definition.itemId(), true, false, definition.materials(),
                     definition.intervalTicks(), null, null, null));
         }
+        definitions.values().forEach(definition ->
+                blockData.registerMaterialVariants(definition.itemId(), materialVariants(definition)));
         registerFrameworkDefinitions();
     }
 
@@ -310,6 +312,14 @@ public final class SfxDecorationService implements Listener {
             machineRuntime.registerDefinitionIfAbsent(SfxMachineSpecialProfiles.apply(
                     new SfxMachineDefinition(definition.itemId(), definition.itemId(), SfxMachineCategory.SPECIAL, List.of(), List.of(), -1, 10)));
         }
+    }
+
+    private static List<Material> materialVariants(SfxDecorationDefinition definition) {
+        List<Material> variants = new ArrayList<>(definition.cycle());
+        variants.add(definition.readyMaterial());
+        variants.add(definition.activeMaterial());
+        variants.add(definition.errorMaterial());
+        return variants;
     }
 
     private Map<String, Object> frameworkAttributes(SfxDecorationDefinition definition, SfxDecorationState state, Location location, long phase) {

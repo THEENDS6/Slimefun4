@@ -33,6 +33,7 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
     private final SfxBlockDataRepository repository;
     private final Map<SfxBlockAnchorKey, SfxAnchorRecord> anchors = new ConcurrentHashMap<>();
     private final Map<UUID, SfxBlockInstanceRecord> instances = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> materialVariants = new ConcurrentHashMap<>();
     private final Set<SfxBlockAnchorKey> dirtyAnchorKeys = ConcurrentHashMap.newKeySet();
     private final Set<UUID> dirtyInstanceIds = ConcurrentHashMap.newKeySet();
     private final Set<SfxBlockAnchorKey> pendingAnchorDeletes = ConcurrentHashMap.newKeySet();
@@ -119,6 +120,44 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
 
     public Optional<SfxBlockInstanceRecord> findInstance(UUID instanceId) {
         return Optional.ofNullable(instances.get(instanceId));
+    }
+
+    public synchronized void registerMaterialVariants(String typeId, Iterable<Material> materials) {
+        if (typeId == null || typeId.isBlank() || materials == null) {
+            return;
+        }
+        Set<String> keys = new HashSet<>();
+        for (Material material : materials) {
+            if (material != null && material.isBlock()) {
+                keys.add(material.key().toString());
+            }
+        }
+        if (!keys.isEmpty()) {
+            String normalizedTypeId = typeId.trim().toLowerCase(java.util.Locale.ROOT);
+            materialVariants.put(normalizedTypeId, Set.copyOf(keys));
+            revalidateRegisteredVariants(normalizedTypeId, keys);
+        }
+    }
+
+    private void revalidateRegisteredVariants(String typeId, Set<String> keys) {
+        for (SfxAnchorRecord anchor : List.copyOf(anchors.values())) {
+            if (anchor.integrityState() == SfxBlockIntegrityState.VALID) {
+                continue;
+            }
+            SfxBlockInstanceRecord instance = instances.get(anchor.instanceId());
+            if (instance == null || !typeId.equals(instance.typeId())) {
+                continue;
+            }
+            SfxBlockAnchorKey key = anchor.key();
+            World world = Bukkit.getWorld(key.worldId());
+            if (world == null || !world.isChunkLoaded(key.x() >> 4, key.z() >> 4)) {
+                continue;
+            }
+            Material actual = world.getBlockAt(key.x(), key.y(), key.z()).getType();
+            if (!actual.isAir() && keys.contains(actual.key().toString())) {
+                markAnchorIntegritySync(key, anchor, SfxBlockIntegrityState.VALID);
+            }
+        }
     }
 
     public List<SfxAnchorRecord> anchorsForInstance(UUID instanceId) {
@@ -376,6 +415,10 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
             return false;
         }
         String id = typeId.toLowerCase(java.util.Locale.ROOT);
+        Set<String> registered = materialVariants.get(id);
+        if (registered != null && registered.contains(actual.key().toString())) {
+            return true;
+        }
         String material = actual.name();
         if (id.startsWith("sf:rainbow_glass_pane")) {
             return material.endsWith("_STAINED_GLASS_PANE");
