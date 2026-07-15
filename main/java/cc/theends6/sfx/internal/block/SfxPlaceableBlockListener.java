@@ -120,6 +120,7 @@ public final class SfxPlaceableBlockListener implements Listener {
                 machineRuntime,
                 LOGGER);
         blockPlacerService.bindPlacementRouter(this.placementRouter);
+        androidService.bindBlockLifecycleRouter(this.lifecycleRouter);
         this.explosionService = new SfxBlockExplosionService(this.blockData, this.lifecycleRouter, machineRuntime);
         this.environmentalGuard = new SfxAnchoredBlockEnvironmentalGuard(this.blockData, runtime);
     }

@@ -13,6 +13,7 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
+import cc.theends6.sfx.internal.block.SfxBlockLifecycleRouter;
 import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
@@ -127,6 +128,8 @@ public final class SfxAndroidService implements Listener {
     private volatile boolean running;
     private long tickInterval;
     int maxActivePerRegion;
+    private volatile SfxBlockLifecycleRouter blockLifecycleRouter;
+    private boolean minerCanBreakSfxBlocks;
 
     public SfxAndroidService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxItemRegistry itemRegistry, SfxLocalization localization, SfxBlockDataService blockData, SqliteSfxAndroidScriptRepository scripts, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -147,11 +150,16 @@ public final class SfxAndroidService implements Listener {
         }
         tickInterval = Math.max(1L, plugin.getConfig().getLong("androids.tick-interval-ticks", 10L));
         maxActivePerRegion = Math.max(1, plugin.getConfig().getInt("androids.max-active-per-region-per-tick", 64));
+        minerCanBreakSfxBlocks = plugin.getConfig().getBoolean("androids.miner.allow-break-sfx-blocks", false);
         running = true;
         rebuildIndex();
         scheduleTick();
         scheduleFuelTick();
         scheduleOpenMainInventoryRefresh();
+    }
+
+    public void bindBlockLifecycleRouter(SfxBlockLifecycleRouter blockLifecycleRouter) {
+        this.blockLifecycleRouter = Objects.requireNonNull(blockLifecycleRouter, "blockLifecycleRouter");
     }
 
     public void shutdown() {
@@ -486,10 +494,13 @@ public final class SfxAndroidService implements Listener {
     }
 
     boolean canClearTargetForMoveAndDig(SfxAndroidState state, Block target) {
+        SfxAnchorRecord anchor = target == null ? null : blockData.findAnchor(target.getLocation()).orElse(null);
+        if (anchor != null) {
+            return minerCanBreakSfxBlocks && blockLifecycleRouter != null;
+        }
         if (target == null
                 || target.getType().isAir()
-                || isUnbreakable(target.getType())
-                || blockData.findAnchor(target.getLocation()).isPresent()) {
+                || isUnbreakable(target.getType())) {
             return false;
         }
         List<ItemStack> drops = collectMineDrops(target);
@@ -549,9 +560,23 @@ public final class SfxAndroidService implements Listener {
     }
 
     private boolean dig(SfxAndroidState state, Block androidBlock, Block target, boolean moveAfter, String typeId) {
-        if (target == null || target.getType().isAir() || isUnbreakable(target.getType()) || blockData.findAnchor(target.getLocation()).isPresent()) {
+        if (target == null || target.getType().isAir() || isUnbreakable(target.getType())) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
+        }
+        SfxAnchorRecord anchor = blockData.findAnchor(target.getLocation()).orElse(null);
+        if (anchor != null) {
+            SfxBlockLifecycleRouter router = blockLifecycleRouter;
+            SfxBlockInstanceRecord anchoredInstance = blockData.findInstance(anchor.instanceId()).orElse(null);
+            if (!minerCanBreakSfxBlocks || router == null || anchoredInstance == null) {
+                state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+                return false;
+            }
+            playBlockBreakEffect(target);
+            router.destroyAnchoredBlock(target, anchoredInstance.instanceId(), anchoredInstance.typeId());
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, typeId, target, Material.AIR, false, "android", "dig-sfx");
+            state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
+            return true;
         }
         List<ItemStack> drops = collectMineDrops(target);
         if (drops.isEmpty()) {

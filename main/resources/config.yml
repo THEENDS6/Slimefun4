@@ -321,6 +321,10 @@ androids:
   tick-interval-ticks: 10
   max-active-per-region-per-tick: 64
   max-script-length: 54
+  miner:
+    
+    
+    allow-break-sfx-blocks: false
   
   
   

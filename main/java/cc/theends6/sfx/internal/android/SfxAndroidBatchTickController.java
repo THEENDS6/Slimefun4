@@ -114,11 +114,13 @@ final class SfxAndroidBatchTickController {
                 service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.BLOCKED, frameworkAttributes);
                 continue;
             }
-            if (success) {
-                if (SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.RUNNING, frameworkAttributes), frameworkAttributes, SfxMachinePhase.ON_COMPLETE.name())) {
-                    state.advance();
-                }
+            if (success && !SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_COMPLETE, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.RUNNING, frameworkAttributes), frameworkAttributes, SfxMachinePhase.ON_COMPLETE.name())) {
+                service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, frameworkTick, null, SfxMachineStatus.BLOCKED, frameworkAttributes);
+                continue;
             }
+            
+            
+            state.advance();
             service.machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.AFTER_TICK, instance.instanceId(), location, frameworkTick, null, success ? SfxMachineStatus.RUNNING : SfxMachineStatus.IDLE, frameworkAttributes);
             if (state.runtimeState() == SfxAndroidRuntimeState.ACTIVE) {
                 state.resetNoEffectTicks();
