@@ -51,7 +51,7 @@ items:
   components:
     consumable: false
     use-cooldown:
-      seconds: 1.0
+      seconds: 0.5
       group: sfx_example:debug_fish
 - id: sfx_example:magic_slime_block
   requires-feature: sfx:example

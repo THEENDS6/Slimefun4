@@ -28,10 +28,11 @@ items:
       - '&7Coexists with a normal Cargo Manager and controls the network.'
       - '&cAdministrator debugging only.'
     debug_fish:
-      name: '&bDEBUG Fish'
+      name: '&bDEBUG Bouncy Fish Ball'
       lore:
       - '&7A tribute to the classic Slimefun4 DEBUG fish.'
-      - '&7Uses a real fish entity to test collision and lifecycle handling.'
+      - '&7Falls under gravity and bounces off blocks or entities.'
+      - '&7Keeps sliding after low-speed ground impacts.'
       - '&cAdministrator debugging only.'
     magic_slime_block:
       name: '&dMagic Slime Block'

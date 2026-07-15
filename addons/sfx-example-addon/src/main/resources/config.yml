@@ -20,6 +20,12 @@ debug-fish:
   lifetime-ticks: 100
   max-distance: 64.0
   speed: 1.6
+  gravity-per-tick: 0.045
+  bounce-retention: 0.72
+  surface-retention: 0.90
+  ground-friction: 0.94
+  stop-bounce-speed: 0.12
+  entity-bounce-retention: 0.80
 
 magic-slime-block:
   interval-ticks: 20
