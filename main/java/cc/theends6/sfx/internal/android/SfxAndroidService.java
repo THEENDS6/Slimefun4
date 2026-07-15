@@ -204,6 +204,10 @@ public final class SfxAndroidService implements Listener {
     }
 
     public void handlePlaced(UUID instanceId, String typeId, Player player, Block block) {
+        handlePlaced(instanceId, typeId, SfxAndroidBlockAppearance.facingFromPlayer(player), block);
+    }
+
+    public void handlePlaced(UUID instanceId, String typeId, BlockFace rotation, Block block) {
         if (instanceId == null || typeId == null || block == null) {
             return;
         }
@@ -211,12 +215,12 @@ public final class SfxAndroidService implements Listener {
         if (type == null) {
             return;
         }
-        BlockFace rotation = SfxAndroidBlockAppearance.facingFromPlayer(player);
-        SfxAndroidState state = SfxAndroidState.createDefault(rotation);
+        BlockFace placedRotation = rotation == null ? BlockFace.NORTH : rotation;
+        SfxAndroidState state = SfxAndroidState.createDefault(placedRotation);
         states.put(instanceId, state);
         persist(instanceId, state);
-        SfxAndroidBlockAppearance.apply(machineRuntime, itemRegistry, block, typeId, rotation);
-        runtime.executeAtLater(block.getLocation(), 1L, () -> SfxAndroidBlockAppearance.apply(machineRuntime, itemRegistry, block, typeId, rotation));
+        SfxAndroidBlockAppearance.apply(machineRuntime, itemRegistry, block, typeId, placedRotation);
+        runtime.executeAtLater(block.getLocation(), 1L, () -> SfxAndroidBlockAppearance.apply(machineRuntime, itemRegistry, block, typeId, placedRotation));
     }
 
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {

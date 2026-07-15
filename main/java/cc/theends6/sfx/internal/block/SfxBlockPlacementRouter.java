@@ -14,6 +14,7 @@ import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
+import cc.theends6.sfx.internal.machine.SfxWorldMutationBridge;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,6 +25,11 @@ import java.util.logging.Logger;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.Orientable;
+import org.bukkit.block.data.Rotatable;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -143,6 +149,53 @@ public final class SfxBlockPlacementRouter {
         });
     }
 
+    public boolean placeFromBlockPlacer(String itemId, ItemStack stack, Block target, UUID ownerId, BlockFace facing) {
+        if (itemId == null || stack == null || target == null || !target.getType().isAir()) {
+            return false;
+        }
+        var marker = items.readMarker(stack).orElse(null);
+        var definition = items.definition(itemId).orElse(null);
+        if (marker == null || definition == null || !isPlaceableMarker(itemId, marker.flags())) {
+            return false;
+        }
+        SfxBlockPlacementContext context = new SfxBlockPlacementContext(
+                itemId, target.getLocation(), definition.material(), ownerId, null, stack);
+        SfxBlockPlacementTransaction transaction = new SfxBlockPlacementTransaction(
+                blockData,
+                new SfxDelegatingBlockBehavior(itemId, (placedContext, instanceId) -> {
+                    applyPlacementFacing(target, facing, itemId);
+                    initializePlacedDomain(placedContext, instanceId, facing);
+                }),
+                logger);
+        return transaction.commit(context).success();
+    }
+
+    static void applyPlacementFacing(Block block, BlockFace facing, String typeId) {
+        if (block == null || facing == null) {
+            return;
+        }
+        BlockData data = block.getBlockData();
+        boolean changed = false;
+        if (data instanceof Directional directional && directional.getFaces().contains(facing)) {
+            directional.setFacing(facing);
+            changed = true;
+        } else if (data instanceof Rotatable rotatable && facing.getModY() == 0) {
+            rotatable.setRotation(facing);
+            changed = true;
+        } else if (data instanceof Orientable orientable) {
+            org.bukkit.Axis axis = facing.getModY() != 0 ? org.bukkit.Axis.Y
+                    : facing.getModX() != 0 ? org.bukkit.Axis.X : org.bukkit.Axis.Z;
+            if (orientable.getAxes().contains(axis)) {
+                orientable.setAxis(axis);
+                changed = true;
+            }
+        }
+        if (changed) {
+            SfxWorldMutationBridge.setBlockData(null, typeId, block, data, false,
+                    "block-placement", "apply-placer-facing");
+        }
+    }
+
     public boolean isPlaceableMarker(String itemId, List<String> flags) {
         if (basicMachines.supportsType(itemId)
                 || electricMachines.supportsType(itemId)
@@ -163,6 +216,10 @@ public final class SfxBlockPlacementRouter {
     }
 
     private void initializePlacedDomain(SfxBlockPlacementContext context, UUID instanceId) {
+        initializePlacedDomain(context, instanceId, null);
+    }
+
+    private void initializePlacedDomain(SfxBlockPlacementContext context, UUID instanceId, BlockFace programmaticFacing) {
         String typeId = context.typeId();
         if (decorationService.supportsType(typeId)) {
             decorationService.handlePlaced(instanceId, typeId);
@@ -174,7 +231,11 @@ public final class SfxBlockPlacementRouter {
             ancientAltarService.handlePlaced(instanceId, typeId);
         }
         if (androidService.supportsType(typeId)) {
-            androidService.handlePlaced(instanceId, typeId, context.player(), context.location().getBlock());
+            if (programmaticFacing == null) {
+                androidService.handlePlaced(instanceId, typeId, context.player(), context.location().getBlock());
+            } else {
+                androidService.handlePlaced(instanceId, typeId, programmaticFacing, context.location().getBlock());
+            }
         }
         if (spawnerService.supportsType(typeId)) {
             spawnerService.handlePlaced(instanceId, typeId, context.itemInHand());

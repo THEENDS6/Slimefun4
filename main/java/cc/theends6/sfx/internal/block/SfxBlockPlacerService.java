@@ -45,6 +45,7 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
     private final SfxHologramProjectorService holograms;
     private final SfxInfusedHopperService infusedHoppers;
     private final SfxMachineRuntimeEngine machineRuntime;
+    private volatile SfxBlockPlacementRouter placementRouter;
 
     public SfxBlockPlacerService(SfxRuntime runtime, SfxItems items, SfxBlockDataService blockData, SfxSpawnerService spawners, SfxHologramProjectorService holograms, SfxInfusedHopperService infusedHoppers, SfxMachineRuntimeEngine machineRuntime) {
         this.runtime = Objects.requireNonNull(runtime, "runtime");
@@ -66,6 +67,10 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
                 .effect(SfxMachineEffect.marker("placer:place-block", SfxMachinePhase.ON_COMPLETE))
                 .effect(SfxMachineEffect.marker("placer:rollback-on-fail", SfxMachinePhase.ON_ERROR))
                 .build());
+    }
+
+    public void bindPlacementRouter(SfxBlockPlacementRouter placementRouter) {
+        this.placementRouter = Objects.requireNonNull(placementRouter, "placementRouter");
     }
 
     public SfxMachinePhaseResult frameworkEffect(String effectName, SfxMachinePhaseContext context) {
@@ -90,7 +95,8 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
             boolean placed = false;
             if (target != null && one != null && canReplace(target)) {
                 target.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, one.getType());
-                placed = placeOne(one, target, ownerId);
+                BlockFace facing = context.attachment("placer.facing", BlockFace.class).orElse(BlockFace.NORTH);
+                placed = placeOne(one, target, ownerId, facing);
             }
             context.put("placer.placed", placed);
             return placed ? SfxMachinePhaseResult.cont() : SfxMachinePhaseResult.failed("block placer placement failed");
@@ -192,6 +198,7 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
             java.util.Map<String, Object> framework = frameworkAttributes(instance, dispenserBlock, target, one);
             framework.put("placer.sourceItem", dispensed);
             framework.put("placer.ownerId", ownerId);
+            framework.put("placer.facing", directional.getFacing());
             SfxMachineTickContext tickContext = new SfxMachineTickContext(0L, 1L, false);
             if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
                 machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.ON_ERROR, instance.instanceId(), dispenserBlock.getLocation(), tickContext, null, SfxMachineStatus.ERROR, framework);
@@ -209,28 +216,18 @@ public final class SfxBlockPlacerService implements Listener, SfxProgrammaticBlo
         });
     }
 
-    private boolean placeOne(ItemStack stack, Block target, UUID ownerId) {
+    private boolean placeOne(ItemStack stack, Block target, UUID ownerId, BlockFace facing) {
         String itemId = items.readMarker(stack).map(SfxItemMarker::itemId).orElse(null);
         if (itemId != null) {
-            if (spawners.supportsType(itemId)) {
-                return spawners.placeFromBlockPlacer(itemId, stack, target, ownerId);
-            }
-            if (holograms.supportsType(itemId)) {
-                return holograms.placeFromBlockPlacer(itemId, stack, target, ownerId);
-            }
-            if (infusedHoppers.supportsType(itemId)) {
-                return infusedHoppers.placeFromBlockPlacer(itemId, stack, target, ownerId);
-            }
-            if (supportsType(itemId)) {
-                return placeFromBlockPlacer(itemId, stack, target, ownerId);
-            }
-            return false;
+            SfxBlockPlacementRouter router = placementRouter;
+            return router != null && router.placeFromBlockPlacer(itemId, stack, target, ownerId, facing);
         }
         Material material = stack.getType();
         if (!material.isBlock() || UNSAFE_VANILLA_PLACEMENTS.contains(material) || material.name().endsWith("_SPAWN_EGG")) {
             return false;
         }
         cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, BLOCK_PLACER, target, material, true, "placer", "place-block");
+        SfxBlockPlacementRouter.applyPlacementFacing(target, facing, BLOCK_PLACER);
         applyCustomName(stack, target);
         return true;
     }
