@@ -67,7 +67,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         double maxDistance = clamp(context.configDouble("debug-fish.max-distance", 64.0), 1.0, 512.0);
         maxDistanceSquared = maxDistance * maxDistance;
         speed = clamp(context.configDouble("debug-fish.speed", 1.6), 0.1, 8.0);
-        gravityPerTick = clamp(context.configDouble("debug-fish.gravity-per-tick", 0.045), 0.0, 1.0);
+        gravityPerTick = clamp(context.configDouble("debug-fish.gravity-per-tick", 0.10), 0.0, 1.0);
         bounceRetention = clamp(context.configDouble("debug-fish.bounce-retention", 0.72), 0.0, 1.25);
         surfaceRetention = clamp(context.configDouble("debug-fish.surface-retention", 0.90), 0.0, 1.0);
         groundFriction = clamp(context.configDouble("debug-fish.ground-friction", 0.94), 0.0, 1.0);
@@ -77,13 +77,19 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         cleanupLoadedProjectiles();
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onUse(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND
                 || (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK)) {
             return;
         }
         ItemStack stack = event.getItem();
+        if (stack == null) {
+            stack = event.getPlayer().getInventory().getItemInMainHand();
+        }
+        if (stack == null || stack.getType().isAir()) {
+            return;
+        }
         SfxItemMarker marker = context.api().items().readMarker(stack).orElse(null);
         if (marker == null || !ExampleIds.DEBUG_FISH.equals(marker.itemId())) {
             return;
@@ -97,9 +103,10 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         if (player.hasCooldown(stack)) {
             return;
         }
+        ItemStack usedStack = stack;
         context.api().items().definition(marker.itemId()).ifPresent(definition -> {
             int ticks = definition.cooldownSeconds() == null ? 20 : Math.max(1, Math.round(definition.cooldownSeconds() * 20.0f));
-            player.setCooldown(stack, ticks);
+            player.setCooldown(usedStack, ticks);
         });
         launch(player);
     }
@@ -126,6 +133,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         });
         Flight flight = new Flight(fish, shooter.getUniqueId(), origin.clone(), velocity.clone());
         flights.put(fish.getUniqueId(), flight);
+        origin.getWorld().spawnParticle(Particle.SPLASH, origin, 12, 0.18, 0.18, 0.18, 0.08);
         schedule(flight);
     }
 
@@ -204,8 +212,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
                 if (bounceEffect) {
                     playBounceEffect(destination);
                 }
-                destination.getWorld().spawnParticle(
-                        Particle.BUBBLE_POP, destination, 1, 0.05, 0.05, 0.05, 0.0);
+                spawnTrail(destination);
                 flight.advance();
                 schedule(flight);
             });
@@ -242,8 +249,14 @@ public final class DebugFishModule implements Listener, AutoCloseable {
     }
 
     private void playBounceEffect(Location location) {
-        location.getWorld().spawnParticle(Particle.BUBBLE_POP, location, 6, 0.12, 0.12, 0.12, 0.02);
+        location.getWorld().spawnParticle(Particle.BUBBLE_POP, location, 10, 0.16, 0.16, 0.16, 0.03);
+        location.getWorld().spawnParticle(Particle.SPLASH, location, 8, 0.20, 0.12, 0.20, 0.08);
         location.getWorld().playSound(location, Sound.ENTITY_SLIME_SQUISH, 0.45f, 1.35f);
+    }
+
+    private void spawnTrail(Location location) {
+        location.getWorld().spawnParticle(Particle.BUBBLE_POP, location, 4, 0.08, 0.08, 0.08, 0.01);
+        location.getWorld().spawnParticle(Particle.SPLASH, location, 2, 0.10, 0.06, 0.10, 0.02);
     }
 
     private static Location collisionDestination(

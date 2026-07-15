@@ -50,6 +50,15 @@ example-energy:
   mode:
     name: '&e切换模式'
     lore: '&7当前：{mode}，点击在停止/发电/用电间切换。'
+    stopped: '&c停止'
+    generating: '&a发电'
+    consuming: '&6用电'
+  power-section:
+    name: '&e功率控制'
+    lore: '&7当前功率：{rate} J/t。'
+  capacity-section:
+    name: '&6储能控制'
+    lore: '&7当前容量：{capacity} J。'
   rate-down: {name: '&c降低功率'}
   rate-up: {name: '&a提高功率'}
   rate-exact: {name: '&e精确输入功率'}
@@ -59,18 +68,31 @@ example-energy:
   capacity-up: {name: '&a提高储能容量'}
   storage-exact: {name: '&e精确输入储能容量'}
   storage: {lore: '&7储能容量：{capacity} J；当前内部电量：{stored} J。'}
+  overview:
+    name: '&c电力单元概览'
+    lore: '&7模式：{mode} &8| &7功率：{rate} J/t &8| &7电量：{stored}/{capacity} J'
   grid-empty:
     name: '&f清空整个电网'
     lore: '&7将当前连接电网内所有储能设为 0 J。'
   grid-fill:
     name: '&6填满整个电网'
     lore: '&7将当前连接电网内所有储能填至容量上限。'
+  message:
+    rate-prompt: '&e请输入新的功率（1-{max}），输入 cancel 取消。'
+    capacity-prompt: '&e请输入新的储能容量（0-{max}），输入 cancel 取消。'
+    updated: '&aDEBUG 电力单元参数已更新，重新打开方块即可查看。'
+    invalid: '&c无效整数，参数未修改。'
+    timeout: '&7输入已超时，参数未修改。'
+    grid-cleared: '&a已清空当前电网能量。'
+    grid-filled: '&a已填满当前电网能量。'
 
 example-cargo:
   title: '&6DEBUG 运输调度'
   state:
     name: '&e网络运行状态：{state}'
     lore: '&7当前速度倍率：x{speed}。'
+    enabled: '&a已启用'
+    disabled: '&c已关闭'
   enable:
     name: '&a启用运输网络'
     lore: '&7允许当前网络继续运输。'

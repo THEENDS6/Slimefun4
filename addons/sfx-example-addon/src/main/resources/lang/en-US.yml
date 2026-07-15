@@ -50,6 +50,15 @@ example-energy:
   mode:
     name: '&eSwitch mode'
     lore: '&7Current: {mode}; click to cycle stop/generate/consume.'
+    stopped: '&cStopped'
+    generating: '&aGenerating'
+    consuming: '&6Consuming'
+  power-section:
+    name: '&ePower controls'
+    lore: '&7Current power: {rate} J/t.'
+  capacity-section:
+    name: '&6Storage controls'
+    lore: '&7Current capacity: {capacity} J.'
   rate-down: {name: '&cDecrease power'}
   rate-up: {name: '&aIncrease power'}
   rate-exact: {name: '&eEnter exact power'}
@@ -59,18 +68,31 @@ example-energy:
   capacity-up: {name: '&aIncrease storage capacity'}
   storage-exact: {name: '&eEnter storage capacity'}
   storage: {lore: '&7Capacity: {capacity} J; currently stored: {stored} J.'}
+  overview:
+    name: '&cEnergy unit overview'
+    lore: '&7Mode: {mode} &8| &7Power: {rate} J/t &8| &7Energy: {stored}/{capacity} J'
   grid-empty:
     name: '&fEmpty entire grid'
     lore: '&7Sets every energy store in the connected grid to 0 J.'
   grid-fill:
     name: '&6Fill entire grid'
     lore: '&7Fills every energy store in the connected grid to capacity.'
+  message:
+    rate-prompt: '&eEnter a new power value (1-{max}), or type cancel.'
+    capacity-prompt: '&eEnter a new capacity (0-{max}), or type cancel.'
+    updated: '&aDEBUG Energy Unit settings updated. Reopen the block to view them.'
+    invalid: '&cInvalid integer; nothing was changed.'
+    timeout: '&7Input timed out; nothing was changed.'
+    grid-cleared: '&aThe connected grid has been emptied.'
+    grid-filled: '&aThe connected grid has been filled.'
 
 example-cargo:
   title: '&6DEBUG Transport Dispatcher'
   state:
     name: '&eNetwork state: {state}'
     lore: '&7Current speed multiplier: x{speed}.'
+    enabled: '&aEnabled'
+    disabled: '&cDisabled'
   enable:
     name: '&aEnable cargo network'
     lore: '&7Allows the connected network to transfer items.'

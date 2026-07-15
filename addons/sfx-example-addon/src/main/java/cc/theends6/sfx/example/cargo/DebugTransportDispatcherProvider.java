@@ -16,8 +16,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class DebugTransportDispatcherProvider implements SfxCargoManagerProvider {
     private final int maxSpeedMultiplier;
+    private final SfxAddonContext context;
 
     public DebugTransportDispatcherProvider(SfxAddonContext context) {
+        this.context = context;
         maxSpeedMultiplier = Math.max(1, Math.min(64,
                 context.configInt("debug-transport-dispatcher.max-speed-multiplier", 16)));
     }
@@ -31,7 +33,9 @@ public final class DebugTransportDispatcherProvider implements SfxCargoManagerPr
     public Map<Integer, SfxMachineDisplayItem> displayItems(
             JavaPlugin plugin, SfxItems items, SfxCargoManagerState state) {
         Map<String, Object> values = Map.of(
-                "state", state.enabled() ? "ON" : "OFF",
+                "state", context.api().localization().requiredText(state.enabled()
+                        ? "example-cargo.state.enabled"
+                        : "example-cargo.state.disabled"),
                 "speed", state.speedMultiplier(),
                 "max_speed", maxSpeedMultiplier);
         return Map.of(

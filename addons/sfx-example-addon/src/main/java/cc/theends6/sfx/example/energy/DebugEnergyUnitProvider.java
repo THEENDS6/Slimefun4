@@ -91,13 +91,13 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
         int step = adjustmentStep(clickType);
         switch (rawSlot) {
             case 4 -> state.specialData((mode(state) + 1) % 3);
-            case 9 -> state.specialData2(clamp(rate(state) - step, 1, maxRate));
-            case 11 -> state.specialData2(clamp(rate(state) + step, 1, maxRate));
-            case 12 -> {
+            case 10 -> state.specialData2(clamp(rate(state) - step, 1, maxRate));
+            case 12 -> state.specialData2(clamp(rate(state) + step, 1, maxRate));
+            case 14 -> {
                 state.specialData3(clamp(capacity(state) - step, 0, maxCapacity));
                 state.storedEnergy(Math.min(state.storedEnergy(), capacity(state)));
             }
-            case 14 -> state.specialData3(clampLong((long) capacity(state) + step, 0, maxCapacity));
+            case 16 -> state.specialData3(clampLong((long) capacity(state) + step, 0, maxCapacity));
             default -> { return false; }
         }
         validate(state);
@@ -108,12 +108,12 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
     public boolean handleMenuClick(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition,
                                    SfxEnergyNodeState state, Location location, Player player, int rawSlot,
                                    ClickType clickType, SfxEnergyGeneratorAccess access) {
-        if (rawSlot == 10 || rawSlot == 13) {
-            boolean rateInput = rawSlot == 10;
+        if (rawSlot == 11 || rawSlot == 15) {
+            boolean rateInput = rawSlot == 11;
             player.closeInventory();
-            player.sendMessage(rateInput
-                    ? "§e请输入新的功率（1-" + maxRate + "），输入 cancel 取消。"
-                    : "§e请输入新的储能容量（0-" + maxCapacity + "），输入 cancel 取消。");
+            player.sendMessage(localized(rateInput
+                    ? "example-energy.message.rate-prompt"
+                    : "example-energy.message.capacity-prompt", Map.of("max", rateInput ? maxRate : maxCapacity)));
             String owner = "sfx-example:debug-energy-" + (rateInput ? "rate" : "stored");
             context.api().chatInput().await(player, owner, Duration.ofSeconds(30), input -> {
                 if (input.equalsIgnoreCase("cancel")) return;
@@ -127,21 +127,21 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
                     }
                     validate(state);
                     access.markDirty();
-                    player.sendMessage("§aDEBUG 电力单元参数已更新。重新打开方块即可查看。");
+                    player.sendMessage(localized("example-energy.message.updated", Map.of()));
                 } catch (NumberFormatException exception) {
-                    player.sendMessage("§c无效整数，参数未修改。");
+                    player.sendMessage(localized("example-energy.message.invalid", Map.of()));
                 }
-            }, () -> player.sendMessage("§7输入已超时，参数未修改。"));
+            }, () -> player.sendMessage(localized("example-energy.message.timeout", Map.of())));
             return true;
         }
         if (rawSlot == 21) {
             access.clearGridEnergy();
-            player.sendMessage("§a已清空当前电网能量。");
+            player.sendMessage(localized("example-energy.message.grid-cleared", Map.of()));
             return true;
         }
         if (rawSlot == 23) {
             access.fillGridEnergy();
-            player.sendMessage("§a已填满当前电网能量。");
+            player.sendMessage(localized("example-energy.message.grid-filled", Map.of()));
             return true;
         }
         return handleMenuClick(plugin, items, definition, state, rawSlot, clickType);
@@ -164,19 +164,29 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
                                                             SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
         validate(state);
         Map<String, Object> values = Map.of(
-                "mode", switch (mode(state)) { case GENERATING -> "GEN"; case CONSUMING -> "LOAD"; default -> "STOP"; },
+                "mode", localized(switch (mode(state)) {
+                    case GENERATING -> "example-energy.mode.generating";
+                    case CONSUMING -> "example-energy.mode.consuming";
+                    default -> "example-energy.mode.stopped";
+                }, Map.of()),
                 "rate", rate(state), "stored", state.storedEnergy(), "capacity", capacity(state));
-        return Map.of(
-                4, item(Material.COMPARATOR, "example-energy.mode.name", "example-energy.mode.lore", values, mode(state) != STOPPED),
-                9, item(Material.RED_DYE, "example-energy.rate-down.name", "example-energy.adjust.lore", values, false),
-                10, item(Material.NAME_TAG, "example-energy.rate-exact.name", "example-energy.rate.lore", values, false),
-                11, item(Material.LIME_DYE, "example-energy.rate-up.name", "example-energy.adjust.lore", values, false),
-                12, item(Material.REDSTONE, "example-energy.capacity-down.name", "example-energy.adjust.lore", values, false),
-                13, new SfxMachineDisplayItem(Material.REDSTONE_BLOCK, "example-energy.storage-exact.name",
-                        List.of("example-energy.storage.lore"), values, false, state.storedEnergy(), capacity(state)),
-                14, item(Material.GLOWSTONE_DUST, "example-energy.capacity-up.name", "example-energy.adjust.lore", values, false),
-                21, item(Material.BUCKET, "example-energy.grid-empty.name", "example-energy.grid-empty.lore", values, false),
-                23, item(Material.LAVA_BUCKET, "example-energy.grid-fill.name", "example-energy.grid-fill.lore", values, false));
+        return Map.ofEntries(
+                Map.entry(1, item(Material.YELLOW_STAINED_GLASS_PANE, "example-energy.power-section.name",
+                        "example-energy.power-section.lore", values, false)),
+                Map.entry(4, item(Material.COMPARATOR, "example-energy.mode.name", "example-energy.mode.lore", values,
+                        mode(state) != STOPPED)),
+                Map.entry(7, item(Material.ORANGE_STAINED_GLASS_PANE, "example-energy.capacity-section.name",
+                        "example-energy.capacity-section.lore", values, false)),
+                Map.entry(10, item(Material.RED_DYE, "example-energy.rate-down.name", "example-energy.adjust.lore", values, false)),
+                Map.entry(11, item(Material.NAME_TAG, "example-energy.rate-exact.name", "example-energy.rate.lore", values, false)),
+                Map.entry(12, item(Material.LIME_DYE, "example-energy.rate-up.name", "example-energy.adjust.lore", values, false)),
+                Map.entry(14, item(Material.REDSTONE, "example-energy.capacity-down.name", "example-energy.adjust.lore", values, false)),
+                Map.entry(15, item(Material.NAME_TAG, "example-energy.storage-exact.name", "example-energy.storage.lore", values, false)),
+                Map.entry(16, item(Material.GLOWSTONE_DUST, "example-energy.capacity-up.name", "example-energy.adjust.lore", values, false)),
+                Map.entry(21, item(Material.BUCKET, "example-energy.grid-empty.name", "example-energy.grid-empty.lore", values, false)),
+                Map.entry(22, new SfxMachineDisplayItem(Material.REDSTONE_BLOCK, "example-energy.overview.name",
+                        List.of("example-energy.overview.lore"), values, false, state.storedEnergy(), capacity(state))),
+                Map.entry(23, item(Material.LAVA_BUCKET, "example-energy.grid-fill.name", "example-energy.grid-fill.lore", values, false)));
     }
 
     @Override
@@ -188,6 +198,14 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
 
     private SfxMachineDisplayItem item(Material material, String name, String lore, Map<String, Object> values, boolean glint) {
         return new SfxMachineDisplayItem(material, name, List.of(lore), values, glint, 0, 0);
+    }
+
+    private String localized(String key, Map<String, ?> placeholders) {
+        String value = context.api().localization().requiredText(key);
+        for (Map.Entry<String, ?> entry : placeholders.entrySet()) {
+            value = value.replace("{" + entry.getKey() + "}", String.valueOf(entry.getValue()));
+        }
+        return value.replace('&', '§');
     }
 
     private void validate(SfxEnergyNodeState state) {

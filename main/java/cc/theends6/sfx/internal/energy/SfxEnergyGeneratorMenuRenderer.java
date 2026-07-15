@@ -12,6 +12,8 @@ import cc.theends6.sfx.internal.technical.SfxTechnicalGadgetBalance;
 import cc.theends6.sfx.internal.util.HeadTextures;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusIconRenderer;
+import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
+import cc.theends6.sfx.api.ui.SfxUiItems;
 import cc.theends6.sfx.api.machine.runtime.SfxMachineStatusKey;
 import cc.theends6.sfx.internal.ui.SfxMachineStatusView;
 import java.util.Map;
@@ -44,7 +46,7 @@ final class SfxEnergyGeneratorMenuRenderer {
 
     void render(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider, Location location) {
         if (provider != null && provider.customMenuLayout()) {
-            inventory.clear();
+            SfxInventoryPainter.fill(inventory, SfxUiItems.blankPane(Material.GRAY_STAINED_GLASS_PANE));
             renderProviderItems(definition, inventory, state, provider);
             return;
         }
@@ -63,7 +65,7 @@ final class SfxEnergyGeneratorMenuRenderer {
 
     void renderStatusOnly(SfxEnergyComponentDefinition definition, Inventory inventory, SfxEnergyNodeState state, SfxMachineStatusKey status, SfxDynamicEnergyGeneratorProvider provider, Location location) {
         if (provider != null && provider.customMenuLayout()) {
-            inventory.clear();
+            SfxInventoryPainter.fill(inventory, SfxUiItems.blankPane(Material.GRAY_STAINED_GLASS_PANE));
             renderProviderItems(definition, inventory, state, provider);
             return;
         }
