@@ -15,6 +15,7 @@ import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
 import cc.theends6.sfx.internal.machine.SfxWorldMutationBridge;
+import cc.theends6.sfx.internal.util.HeadTextures;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,8 +25,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.Nameable;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Skull;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.Orientable;
@@ -165,9 +169,27 @@ public final class SfxBlockPlacementRouter {
                 new SfxDelegatingBlockBehavior(itemId, (placedContext, instanceId) -> {
                     applyPlacementFacing(target, facing, itemId);
                     initializePlacedDomain(placedContext, instanceId, facing);
+                    applyPlacedItemMetadata(target, stack, definition);
                 }),
                 logger);
         return transaction.commit(context).success();
+    }
+
+    private static void applyPlacedItemMetadata(Block block, ItemStack stack, cc.theends6.sfx.api.item.SfxItemDefinition definition) {
+        if (block == null || stack == null || definition == null) {
+            return;
+        }
+        BlockState state = block.getState();
+        if (state instanceof Skull skull && definition.headTextureHash() != null) {
+            HeadTextures.apply(skull, definition.headTextureHash());
+            state = block.getState();
+        }
+        if (state instanceof Nameable nameable
+                && stack.hasItemMeta()
+                && stack.getItemMeta().hasDisplayName()) {
+            nameable.customName(stack.getItemMeta().displayName());
+            state.update(true, false);
+        }
     }
 
     static void applyPlacementFacing(Block block, BlockFace facing, String typeId) {
