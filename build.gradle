@@ -1105,7 +1105,7 @@ tasks.register('validateSfxFeatureGates') {
 
 tasks.register('validateSfxAddonJarResourceOverlay') {
     group = 'verification'
-    description = 'Validates external Java addon jars can contribute content and language overlays.'
+    description = 'Validates bundled and external Java addon jars can contribute content and language overlays.'
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/addon/SfxAddonManager.java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/template/SfxTemplatePrecompiler.java'))
     inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/util/SfxLocalization.java'))
@@ -1118,6 +1118,9 @@ tasks.register('validateSfxAddonJarResourceOverlay') {
         def bootstrap = layout.projectDirectory.file('main/java/cc/theends6/sfx/SfxPluginBootstrap.java').asFile.getText('UTF-8')
         if (!manager.contains('externalAddonJars()') || !manager.contains('externalJars.put(addon.id(), file)')) {
             violations << 'SfxAddonManager must retain successfully loaded external addon jar files.'
+        }
+        if (!manager.contains('addonResourceJars()') || !manager.contains('resourceJars.put(addon.id(), file)')) {
+            violations << 'SfxAddonManager must retain every loaded addon jar as a current language-resource base.'
         }
         if (!manager.contains('loadConfigAddons') || !manager.contains('ConfigAddon')
                 || !manager.contains('addon.yml')) {
@@ -1142,8 +1145,9 @@ tasks.register('validateSfxAddonJarResourceOverlay') {
         if (!precompiler.contains('content/addons/') || !precompiler.contains('content/')) {
             violations << 'SfxTemplatePrecompiler must support both bundled-style and jar-root addon content paths.'
         }
-        if (!localization.contains('loadExternalAddonJarOverlay') || !localization.contains('lang/" + language + ".yml"')) {
-            violations << 'SfxLocalization must overlay language files from external addon jars.'
+        if (!localization.contains('loadAddonJarOverlay') || !localization.contains('addonResourceJars()')
+                || !localization.contains('lang/" + language + ".yml"')) {
+            violations << 'SfxLocalization must overlay current language files from bundled and external addon jars.'
         }
         if (!localization.contains('content/addons/') || !localization.contains('/lang/" + language + ".yml"')) {
             violations << 'SfxLocalization must support bundled-style addon jar language paths.'
@@ -1158,7 +1162,7 @@ tasks.register('validateSfxAddonJarResourceOverlay') {
         if (!violations.isEmpty()) {
             throw new GradleException("SFX addon jar resource overlay validation failed:\n" + violations.join('\n'))
         }
-        logger.lifecycle("Validated SFX external addon jar content and language overlay hooks.")
+        logger.lifecycle("Validated SFX bundled/external addon jar content and language overlay hooks.")
     }
 }
 

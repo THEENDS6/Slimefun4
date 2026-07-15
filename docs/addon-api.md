@@ -228,6 +228,7 @@ Runtime SPI packages are split by responsibility:
 - `api.block`: block instance, anchor, lifecycle value objects, and cycling-block declarations.
 - `api.cargo`: public cargo node kinds and indexed area-topology declarations.
 - `api.runtime.SfxRuntime`: Folia-aware scheduling and audited block mutations.
+- `api.localization.SfxLocalizationView`: read-only access to the active merged core/addon language layer.
 
 Provider implementations belong to the addon's own package. Bundled implementations use `cc.theends6.sfx.addons.<addon>` and must not declare an `internal` package.
 

@@ -44,6 +44,7 @@ public final class SfxAddonManager implements AutoCloseable {
     private final DefaultSfxBehaviorRegistry behaviors;
     private final Map<String, SfxAddon> loaded = new LinkedHashMap<>();
     private final Map<String, File> externalJars = new LinkedHashMap<>();
+    private final Map<String, File> resourceJars = new LinkedHashMap<>();
     private final List<Closeable> externalLoaders = new ArrayList<>();
 
     public SfxAddonManager(JavaPlugin plugin, Logger logger, SfxApi api, DefaultSfxFeatureRegistry features, DefaultSfxBehaviorRegistry behaviors) {
@@ -295,6 +296,10 @@ public final class SfxAddonManager implements AutoCloseable {
         return Collections.unmodifiableList(new ArrayList<>(externalJars.values()));
     }
 
+    public synchronized List<File> addonResourceJars() {
+        return Collections.unmodifiableList(new ArrayList<>(resourceJars.values()));
+    }
+
     private void loadAddonJar(File file, String source, boolean exposeJarResources) {
         try {
             if (exposeJarResources) {
@@ -332,6 +337,7 @@ public final class SfxAddonManager implements AutoCloseable {
                 expandDefaultResources(file, addonDirectory);
                 load(addon, source, addonDirectory, id);
                 synchronized (this) {
+                    resourceJars.put(addon.id(), file);
                     if (exposeJarResources) {
                         externalJars.put(addon.id(), file);
                     }
@@ -419,6 +425,7 @@ public final class SfxAddonManager implements AutoCloseable {
             loaders = new ArrayList<>(externalLoaders);
             externalLoaders.clear();
             externalJars.clear();
+            resourceJars.clear();
             loaded.clear();
         }
         Collections.reverse(addons);

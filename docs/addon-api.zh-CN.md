@@ -16,6 +16,7 @@ Addon 不得引用 `cc.theends6.sfx.internal`，也不得通过反射或强制�
 - `api.block`：方块实例、锚点、生命周期值对象与循环方块声明；
 - `api.cargo`：运输节点类型与基于索引的区域拓扑声明；
 - `api.runtime.SfxRuntime`：Folia 调度与经过机器审计链的方块修改。
+- `api.localization.SfxLocalizationView`：只读访问当前合并后的核心与 addon 语言层。
 
 Addon 实现必须位于自己的命名空间；内置实现使用 `cc.theends6.sfx.addons.<addon>`，不得声明 `internal` 包。
 

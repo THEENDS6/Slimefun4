@@ -10,6 +10,7 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.api.feature.SfxFeatureRegistry;
+import cc.theends6.sfx.api.localization.SfxLocalizationView;
 
 public interface SfxApi {
     SfxRuntime runtime();
@@ -21,6 +22,10 @@ public interface SfxApi {
     SfxMenus menus();
 
     SfxChatInputService chatInput();
+
+    default SfxLocalizationView localization() {
+        throw new UnsupportedOperationException("This SfxApi implementation does not expose localization.");
+    }
 
     SfxGuide guide();
 

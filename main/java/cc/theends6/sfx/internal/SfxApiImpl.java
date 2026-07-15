@@ -6,6 +6,7 @@ import cc.theends6.sfx.api.chat.SfxChatInputService;
 import cc.theends6.sfx.api.guide.SfxGuide;
 import cc.theends6.sfx.api.item.SfxItemRegistry;
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.localization.SfxLocalizationView;
 import cc.theends6.sfx.api.machine.SfxManualMachineRegistry;
 import cc.theends6.sfx.api.machine.SfxMachineRuntime;
 import cc.theends6.sfx.api.menu.SfxMenus;
@@ -34,6 +35,7 @@ public final class SfxApiImpl implements SfxApi {
     private final DefaultSfxItems items;
     private final DefaultSfxMenus menus;
     private final DefaultSfxChatInputService chatInput;
+    private final SfxLocalizationView localization;
     private final DefaultSfxGuide guide;
     private final SfxFeatureRegistry features;
     private final SfxBehaviorRegistry behaviors;
@@ -46,6 +48,7 @@ public final class SfxApiImpl implements SfxApi {
             DefaultSfxItems items,
             DefaultSfxMenus menus,
             DefaultSfxChatInputService chatInput,
+            SfxLocalizationView localization,
             DefaultSfxGuide guide,
             SfxFeatureRegistry features,
             SfxBehaviorRegistry behaviors,
@@ -57,6 +60,7 @@ public final class SfxApiImpl implements SfxApi {
         this.items = items;
         this.menus = menus;
         this.chatInput = chatInput;
+        this.localization = localization;
         this.guide = guide;
         this.features = features;
         this.behaviors = behaviors;
@@ -72,7 +76,8 @@ public final class SfxApiImpl implements SfxApi {
         DefaultSfxMenus menus = new DefaultSfxMenus(runtime);
         DefaultSfxChatInputService chatInput = new DefaultSfxChatInputService(runtime);
         DefaultSfxGuide guide = new DefaultSfxGuide(plugin, runtime, itemRegistry, items, menus, chatInput, new PermissionGuideAccessPolicy(), manualMachines, localization, profiles, researches);
-        return new SfxApiImpl(runtime, itemRegistry, items, menus, chatInput, guide, features, behaviors, manualMachines, new DefaultSfxMachineRuntimeApi());
+        return new SfxApiImpl(runtime, itemRegistry, items, menus, chatInput, localization, guide, features, behaviors,
+                manualMachines, new DefaultSfxMachineRuntimeApi());
     }
 
     @Override
@@ -98,6 +103,11 @@ public final class SfxApiImpl implements SfxApi {
     @Override
     public SfxChatInputService chatInput() {
         return chatInput;
+    }
+
+    @Override
+    public SfxLocalizationView localization() {
+        return localization;
     }
 
     @Override

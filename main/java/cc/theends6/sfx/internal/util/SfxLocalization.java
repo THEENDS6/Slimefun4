@@ -403,7 +403,7 @@ public final class SfxLocalization implements cc.theends6.sfx.api.localization.S
         YamlConfiguration merged = new YamlConfiguration();
         Set<String> loadedAddonFolders = loadedAddonFolders();
         loadBundledAddonOverlay(merged, language, loadedAddonFolders);
-        loadExternalAddonJarOverlay(merged, language);
+        loadAddonJarOverlay(merged, language);
         loadDataFolderAddonOverlay(merged, new File(plugin.getDataFolder(), "content/addons"), language, loadedAddonFolders);
         loadDataFolderAddonOverlay(merged, new File(plugin.getDataFolder(), "addons"), language, loadedAddonFolders);
         return merged;
@@ -508,16 +508,16 @@ public final class SfxLocalization implements cc.theends6.sfx.api.localization.S
         return slash < 0 ? remainder : remainder.substring(0, slash);
     }
 
-    private void loadExternalAddonJarOverlay(YamlConfiguration merged, String language) {
+    private void loadAddonJarOverlay(YamlConfiguration merged, String language) {
         if (!(plugin instanceof SlimeFunXPlugin sfx) || sfx.addonManager() == null) {
             return;
         }
-        for (File addonJar : sfx.addonManager().externalAddonJars()) {
-            loadExternalAddonJarOverlay(merged, addonJar, language);
+        for (File addonJar : sfx.addonManager().addonResourceJars()) {
+            loadAddonJarOverlay(merged, addonJar, language);
         }
     }
 
-    private void loadExternalAddonJarOverlay(YamlConfiguration merged, File addonJar, String language) {
+    private void loadAddonJarOverlay(YamlConfiguration merged, File addonJar, String language) {
         if (addonJar == null || !addonJar.isFile()) {
             return;
         }
