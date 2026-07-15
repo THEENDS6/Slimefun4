@@ -9,4 +9,12 @@ public interface SfxAddon {
 
     default void onLoad(SfxAddonContext context) {
     }
+
+    
+
+
+
+
+    default void onDisable() {
+    }
 }

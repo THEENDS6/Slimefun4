@@ -10,6 +10,10 @@ final class SfxPluginShutdown {
             plugin.api.menus().closeAll();
         }
 
+        
+        
+        SfxPluginAddonModule.unloadAddons(plugin);
+
         if (plugin.moduleManager != null) {
             plugin.moduleManager.disableAllReverse();
             plugin.moduleManager = null;
@@ -28,9 +32,11 @@ final class SfxPluginShutdown {
             cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.clearDefaultRuntime(plugin.machineRuntime);
             plugin.machineRuntime.clear();
         }
-        if (plugin.addonManager != null) {
-            plugin.addonManager.close();
-            plugin.addonManager = null;
+        if (plugin.behaviorRegistry != null) {
+            plugin.behaviorRegistry.clear();
+        }
+        if (plugin.featureRegistry != null) {
+            plugin.featureRegistry.clear();
         }
         if (plugin.packetEventsLoaded) {
             plugin.packetEventsLoaded = false;

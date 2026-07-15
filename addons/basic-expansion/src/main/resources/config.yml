@@ -1,0 +1,61 @@
+gps:
+  sfx-extensions:
+    transmitter-gui:
+      enabled: true
+
+plugin-blocks:
+  enhanced-furnace:
+    speed-affects-fuel-consumption: true
+
+technical-gadgets:
+  sfx-balance:
+    enabled: true
+    rechargeable-multiplier: 5
+    charging-bench:
+      energy-loss: 0.80
+  sfx-extensions:
+    jetpacks-and-jetboots:
+      enabled: true
+
+electric-machines:
+  sfx-balance:
+    crop-growth-accelerator: true
+    tree-growth-accelerator: true
+    auto-breeder: true
+    animal-growth-accelerator: true
+    produce-collector: true
+    electric-ore-grinder-3: true
+    xp-collector:
+      enabled: true
+      flask-energy-cost: 4096
+  sfx-extensions:
+    fluid-pump-optimization:
+      enabled: true
+      check-interval-ticks: 1000
+      water-source-threshold: 4
+      lava-source-threshold: 300
+    auto-brewer:
+      enabled: true
+
+energy:
+  generator-balance:
+    use-sfx-balance: true
+    pause-generators-when-grid-full: true
+    electrified-crucible-consumption-multiplier: 1.5
+
+tools:
+  multimeter:
+    use-sfx-enhanced: true
+
+cargo:
+  sfx-extensions:
+    advanced-input-interface:
+      enabled: true
+
+radiation:
+  sfx-rework:
+    enabled: true
+
+androids:
+  woodcutter:
+    batch-replant-bottom-layer: true

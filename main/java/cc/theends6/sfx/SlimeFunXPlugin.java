@@ -217,6 +217,10 @@ public final class SlimeFunXPlugin extends JavaPlugin {
             if (api != null) {
                 api.menus().closeAll();
             }
+            
+            
+            
+            SfxPluginAddonModule.unloadAddons(this);
             if (moduleManager != null) {
                 moduleManager.disableAllReverse();
                 moduleManager = null;

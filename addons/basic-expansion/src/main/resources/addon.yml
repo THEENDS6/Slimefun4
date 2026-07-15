@@ -1,6 +1,7 @@
 id: sfx:basic_expansion
 name: SFX Basic Expansion
 version: 1.0.0
+api-version: 1
 main: cc.theends6.sfx.addons.basic.SfxBasicExpansionAddon
 enabled: true
 java:

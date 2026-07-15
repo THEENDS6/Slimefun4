@@ -6,14 +6,22 @@ final class SfxPluginAddonModule {
     private SfxPluginAddonModule() {
     }
 
-    static void loadAddons(SlimeFunXPlugin plugin) {
-        if (plugin.addonManager != null) {
-            plugin.addonManager.close();
+    static void unloadAddons(SlimeFunXPlugin plugin) {
+        if (plugin.addonManager == null) {
+            return;
         }
+        plugin.addonManager.close();
+        plugin.addonManager = null;
+    }
+
+    static void loadAddons(SlimeFunXPlugin plugin) {
+        unloadAddons(plugin);
         plugin.featureRegistry.clear();
         plugin.behaviorRegistry.clear();
         plugin.addonManager = new SfxAddonManager(plugin, plugin.getLogger(), plugin.api, plugin.featureRegistry, plugin.behaviorRegistry);
-        plugin.addonManager.loadBundledAddons(plugin.getConfig().getBoolean("addons.basic-expansion.enabled", true));
+        plugin.addonManager.loadBundledAddons(
+                plugin.getConfig().getBoolean("addons.basic-expansion.enabled", true),
+                plugin.getConfig().getBoolean("addons.example.enabled", true));
         plugin.addonManager.loadExternalAddons(new java.io.File(plugin.getDataFolder(), "addons"));
     }
 }

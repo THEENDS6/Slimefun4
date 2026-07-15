@@ -1,5 +1,7 @@
 # SFX Addon API
 
+Chinese version: [addon-api.zh-CN.md](addon-api.zh-CN.md). The current addon API version is `1`.
+
 SFX addons are split into configuration content and Java capabilities.
 
 Configuration content declares items, recipes, machines, UI, energy entries, researches, and language text. Java addons register runtime capabilities through the SFX API. All content still compiles into explicit runtime data before it is loaded.
@@ -58,6 +60,8 @@ Each Java addon jar must contain `addon.yml`:
 ```yaml
 id: example:demo
 name: Example Demo
+version: 1.0.0
+api-version: 1
 enabled: true
 main: com.example.sfxaddon.ExampleAddon
 java:
@@ -89,7 +93,8 @@ public final class ExampleAddon implements SfxAddon {
 - `api()` for the public SFX API.
 - `features()` for feature registration.
 - `behaviors()` for behavior/capability providers.
-- `configBoolean`, `configInt`, `configDouble`, and `configString` for addon-owned configuration values.
+- `dataDirectory()` for `plugins/SlimeFunX/addons/<addon-id>/`.
+- `config()` plus `configBoolean`, `configInt`, `configDouble`, and `configString` for the addon's own `config.yml`; these never read the core config.
 
 ## Content And Language
 
@@ -161,6 +166,21 @@ Feature-gated content is rejected unless the feature is registered and enabled. 
 
 Java addons can register behavior providers for runtime capability points, including enhanced furnace fuel scaling, Android woodcutter behavior, radiation rules, cargo input transfer, GPS transmitter interaction, technical gadget rules, rechargeable item definitions, energy balance rules, area-machine rules, utility rules, and localized list post-processing.
 
+API version 1 also exposes three composable contracts used by the official `sfx:example` addon:
+
+- `SfxCyclingBlockDefinition` declares a material sequence and interval; the shared decoration service owns scheduling, chunks, persistence, destruction, and custom-item drops.
+- `SfxCargoNodeDefinition` registers cargo managers/connectors/terminals. Area managers resolve their X/Y/Z range from the SFX block index during topology rebuilds, never by scanning world blocks each tick.
+- `SfxDynamicEnergyGeneratorProvider` may declare dynamic consumption and accept grid energy, allowing one persistent node to switch safely between producer and consumer modes.
+
+Item YAML may declare separate `permission` and `use-permission` values. The first controls guide discovery and the second is checked at commands, placement, item behavior, GUI, and network interaction boundaries. A vanilla shared cooldown component is declared with:
+
+```yaml
+components:
+  use-cooldown:
+    seconds: 1.0
+    group: example:shared_tool
+```
+
 Providers receive the current rule or decision and may return an adjusted one. The core runtime supplies classic defaults; addons layer their behavior through these APIs.
 
 Rechargeable item providers may register new rechargeable items or override classic SF rechargeable definitions. Basic Expansion uses this to provide the SFX jetpack and jetboots rework, plus the fuel jetpack definition, while core keeps the classic SF definitions.
@@ -178,3 +198,41 @@ Electric special provider key policies may redirect a compiled `sf:special_provi
 Electric special provider factories may register the runtime provider behind an addon provider key. The factory receives the active plugin, item registry, and block-data service when electric machine definitions are built, so addon jars can provide Java-backed machine executors while the core only resolves the compiled provider contract.
 
 Localized list post-processors can adjust generated item lore and other language lists after the core language lookup is complete. The context exposes the requested language key plus raw text/list lookup helpers so addon-owned text stays in addon language files.
+
+## Lifecycle
+
+`onLoad(context)` runs once after manifest and configuration validation. `onDisable()` runs once in reverse load order, while the core services exposed during `onLoad` are still available and before addon classloaders close. Addons must cancel tasks, unregister listeners, close input/GUI sessions, remove temporary entities and previews, detach network nodes, and clear owned caches. Cleanup must be idempotent.
+
+Plain `/slimefunx reload` only reloads core configuration and language. `/slimefunx reload runtime` and `/slimefunx reload all` perform a complete runtime reload: addons receive `onDisable()`, old provider and feature registrations are discarded, core runtime modules stop, and fresh addon instances/classloaders are created before content and services restart. API version 1 does not support installing, removing, or reloading one Java addon independently.
+
+## Manifest And Identity
+
+- `id` must be lowercase `namespace:name` and must equal `SfxAddon.id()`.
+- `api-version` must be `1`; unsupported versions are rejected before `onLoad`.
+- Java addons require `main`; ids, features, providers, items, language, permissions, and PDC keys must be namespace-owned and globally unique.
+- API version 1 does not support addon dependency ordering or version ranges. Check a required capability explicitly during `onLoad`.
+
+## Public API Boundary
+
+Addon source and bytecode must not reference `cc.theends6.sfx.internal`. Bundled and external addons follow the same rule. Missing capabilities must become general public APIs; do not use reflection, internal casts, or core checks for a particular addon/item id. Do not shade SFX API or server-provided Paper classes into addon jars.
+
+Runtime SPI packages are split by responsibility:
+
+- `api.machine.runtime`: electric recipes, stacks, definitions and state, tick results, UI models, provider contracts, and safe output insertion.
+- `api.machine.manual`: manual-machine definitions, operations, recipes, and outputs used by `SfxManualMachineRegistry`.
+- `api.energy.runtime`: energy definitions and state, generator access, provider contracts, and energy UI models.
+- `api.block`: block instance, anchor, lifecycle value objects, and cycling-block declarations.
+- `api.cargo`: public cargo node kinds and indexed area-topology declarations.
+- `api.runtime.SfxRuntime`: Folia-aware scheduling and audited block mutations.
+
+Provider implementations belong to the addon's own package. Bundled implementations use `cc.theends6.sfx.addons.<addon>` and must not declare an `internal` package.
+
+## Folia, Security, And Validation
+
+World, entity, inventory and player work must use the scheduler for the owning region/entity. Revalidate state after asynchronous work, make shared state thread-safe, and avoid one repeating task per placed block. Hiding guide content is not authorization: check permission at every command, use, placement, GUI, chat-input, and network effect. Treat configuration, persisted state, and user input as untrusted and clamp values again before applying them.
+
+## Build And Verification
+
+Package `addon.yml`, optional `config.yml`, `content/`, and `lang/` at the jar root and install the jar under `plugins/SlimeFunX/addons/`. Verify load, content compilation, interaction, chunk unload/reload, shutdown, and a second startup. Bundled tasks are `basicExpansionJar`, `contentExpansionJar`, and `exampleAddonJar`; `check` runs contract and isolated linkage validation for all three.
+
+API version 1 does not yet promise stable binary compatibility, independent per-addon hot loading, dependency graphs, or a complete public extension surface for every specialized world-interaction machine family.

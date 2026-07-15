@@ -4,6 +4,9 @@ addons:
   basic-expansion:
     
     enabled: true
+  example:
+    
+    enabled: true
 
 content:
   compile-templates-on-startup: false

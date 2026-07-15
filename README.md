@@ -155,7 +155,7 @@ The public API is not stable yet. The current `api` package separates intended e
 
 SFX now has experimental addon support. Java addons implement `SfxAddon` and are loaded from `plugins/SlimeFunX/addons/*.jar`; configuration content and language files can be shipped inside addon jars or under the plugin data directory. Behavior should be registered through `SfxAddonContext.features()` and `SfxAddonContext.behaviors()`, not by depending on internal packages.
 
-See `docs/addon-api.md` for the current addon contract.
+See `docs/addon-api.md` for the current addon contract. The complete Chinese version is `docs/addon-api.zh-CN.md`.
 
 ### Bundled addons
 
@@ -249,7 +249,7 @@ SlimeFunX 已不再只是对 Slimefun4 打少量补丁，而是一条独立演�
 
 SlimeFunX 已提供实验性的 Addon 加载框架。Java Addon 实现 `SfxAddon`，并从 `plugins/SlimeFunX/addons/*.jar` 加载；内容配置和语言文件既可以放在 Addon jar 内，也可以放在插件数据目录中。
 
-Addon 应通过 `SfxAddonContext.features()` 和 `SfxAddonContext.behaviors()` 注册能力，不应直接依赖 SlimeFunX 的内部包。当前接口说明见 [`docs/addon-api.md`](docs/addon-api.md)。
+Addon 应通过 `SfxAddonContext.features()` 和 `SfxAddonContext.behaviors()` 注册能力，不应直接依赖 SlimeFunX 的内部包。当前接口说明见 [`docs/addon-api.md`](docs/addon-api.md)，完整中文版见 [`docs/addon-api.zh-CN.md`](docs/addon-api.zh-CN.md)。
 
 当前发行包内置两个 Addon，无需额外下载：
 
