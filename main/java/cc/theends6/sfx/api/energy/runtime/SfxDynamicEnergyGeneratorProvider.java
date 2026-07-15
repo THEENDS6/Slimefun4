@@ -42,6 +42,12 @@ public interface SfxDynamicEnergyGeneratorProvider extends SfxEnergyGeneratorPro
         return false;
     }
 
+    
+    default int effectiveCapacity(JavaPlugin plugin, SfxItems items,
+                                  SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
+        return Math.max(0, definition.capacity());
+    }
+
     default List<SfxElectricStack> dropsOnDestroy(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state, Location location) {
         return List.of();
     }

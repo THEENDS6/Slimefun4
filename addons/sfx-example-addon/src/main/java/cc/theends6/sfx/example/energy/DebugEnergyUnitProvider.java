@@ -34,7 +34,7 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
         maxRate = clamp(context.configInt("debug-energy-unit.max-rate", 1_000_000), 1, Integer.MAX_VALUE);
         maxCapacity = clamp(context.configInt("debug-energy-unit.max-capacity", 1_000_000_000), 1, Integer.MAX_VALUE);
         defaultRate = clamp(context.configInt("debug-energy-unit.default-rate", 100), 1, maxRate);
-        defaultCapacity = clamp(context.configInt("debug-energy-unit.default-capacity", 100_000), 1, maxCapacity);
+        defaultCapacity = clamp(context.configInt("debug-energy-unit.default-capacity", 0), 0, maxCapacity);
     }
 
     @Override
@@ -93,8 +93,11 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
             case 4 -> state.specialData((mode(state) + 1) % 3);
             case 9 -> state.specialData2(clamp(rate(state) - step, 1, maxRate));
             case 11 -> state.specialData2(clamp(rate(state) + step, 1, maxRate));
-            case 12 -> state.storedEnergy(clamp(state.storedEnergy() - step, 0, capacity(state)));
-            case 14 -> state.storedEnergy(clampLong((long) state.storedEnergy() + step, 0, capacity(state)));
+            case 12 -> {
+                state.specialData3(clamp(capacity(state) - step, 0, maxCapacity));
+                state.storedEnergy(Math.min(state.storedEnergy(), capacity(state)));
+            }
+            case 14 -> state.specialData3(clampLong((long) capacity(state) + step, 0, maxCapacity));
             default -> { return false; }
         }
         validate(state);
@@ -110,7 +113,7 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
             player.closeInventory();
             player.sendMessage(rateInput
                     ? "§e请输入新的功率（1-" + maxRate + "），输入 cancel 取消。"
-                    : "§e请输入新的储能（0-" + capacity(state) + "），输入 cancel 取消。");
+                    : "§e请输入新的储能容量（0-" + maxCapacity + "），输入 cancel 取消。");
             String owner = "sfx-example:debug-energy-" + (rateInput ? "rate" : "stored");
             context.api().chatInput().await(player, owner, Duration.ofSeconds(30), input -> {
                 if (input.equalsIgnoreCase("cancel")) return;
@@ -119,7 +122,8 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
                     if (rateInput) {
                         state.specialData2(clampLong(parsed, 1, maxRate));
                     } else {
-                        state.storedEnergy(clampLong(parsed, 0, capacity(state)));
+                        state.specialData3(clampLong(parsed, 0, maxCapacity));
+                        state.storedEnergy(Math.min(state.storedEnergy(), capacity(state)));
                     }
                     validate(state);
                     access.markDirty();
@@ -149,6 +153,13 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
     }
 
     @Override
+    public int effectiveCapacity(JavaPlugin plugin, SfxItems items, SfxEnergyComponentDefinition definition,
+                                 SfxEnergyNodeState state) {
+        validate(state);
+        return capacity(state);
+    }
+
+    @Override
     public Map<Integer, SfxMachineDisplayItem> displayItems(JavaPlugin plugin, SfxItems items,
                                                             SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
         validate(state);
@@ -160,10 +171,10 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
                 9, item(Material.RED_DYE, "example-energy.rate-down.name", "example-energy.adjust.lore", values, false),
                 10, item(Material.NAME_TAG, "example-energy.rate-exact.name", "example-energy.rate.lore", values, false),
                 11, item(Material.LIME_DYE, "example-energy.rate-up.name", "example-energy.adjust.lore", values, false),
-                12, item(Material.REDSTONE, "example-energy.storage-down.name", "example-energy.adjust.lore", values, false),
+                12, item(Material.REDSTONE, "example-energy.capacity-down.name", "example-energy.adjust.lore", values, false),
                 13, new SfxMachineDisplayItem(Material.REDSTONE_BLOCK, "example-energy.storage-exact.name",
                         List.of("example-energy.storage.lore"), values, false, state.storedEnergy(), capacity(state)),
-                14, item(Material.GLOWSTONE_DUST, "example-energy.storage-up.name", "example-energy.adjust.lore", values, false),
+                14, item(Material.GLOWSTONE_DUST, "example-energy.capacity-up.name", "example-energy.adjust.lore", values, false),
                 21, item(Material.BUCKET, "example-energy.grid-empty.name", "example-energy.grid-empty.lore", values, false),
                 23, item(Material.LAVA_BUCKET, "example-energy.grid-fill.name", "example-energy.grid-fill.lore", values, false));
     }
@@ -181,10 +192,10 @@ public final class DebugEnergyUnitProvider implements SfxDynamicEnergyGeneratorP
 
     private void validate(SfxEnergyNodeState state) {
         if (state.specialData2() <= 0) state.specialData2(defaultRate);
-        
-        state.specialData3(defaultCapacity);
+        if (state.specialData3() <= 0 && defaultCapacity > 0) state.specialData3(defaultCapacity);
         state.specialData(Math.min(CONSUMING, Math.max(STOPPED, state.specialData())));
         state.specialData2(clamp(state.specialData2(), 1, maxRate));
+        state.specialData3(clamp(state.specialData3(), 0, maxCapacity));
         state.storedEnergy(Math.min(state.storedEnergy(), capacity(state)));
     }
 

@@ -76,7 +76,7 @@ public final class ExampleAddon implements SfxAddon {
 
 Addon 可通过 `SfxCargoNodeDefinition` 为运输调度器提供 `SfxCargoManagerProvider` 自定义菜单和启停、速度倍率控制。`coexistsWithManagers=true` 的调度器不会与普通调度器形成多控制器冲突：有普通调度器时由普通调度器承担网络锚点，自定义调度器仍可作为控制面；只有它自身时也可独立调度。
 
-动态能源 Provider 可用 `customMenuLayout()` 完整接管顶部菜单，并通过 `SfxEnergyGeneratorAccess.fillGridEnergy()` / `clearGridEnergy()` 安全修改当前连接电网。需要保留原版食物材质但禁止食用时，在物品 `components` 中声明 `consumable: false`。
+动态能源 Provider 可用 `customMenuLayout()` 完整接管顶部菜单，通过 `effectiveCapacity()` 向电网公开持久化的动态容量，并通过 `SfxEnergyGeneratorAccess.fillGridEnergy()` / `clearGridEnergy()` 安全修改当前连接电网。需要保留原版食物材质但禁止食用时，在物品 `components` 中声明 `consumable: false`。
 
 ## SfxAddonContext
 

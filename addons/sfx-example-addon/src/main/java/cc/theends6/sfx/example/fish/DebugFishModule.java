@@ -99,6 +99,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
 
     private void launch(Player shooter) {
         Location origin = shooter.getEyeLocation().add(shooter.getEyeLocation().getDirection().multiply(0.8));
+        Vector velocity = shooter.getEyeLocation().getDirection().normalize().multiply(speed);
         Cod fish = origin.getWorld().spawn(origin, Cod.class, spawned -> {
             spawned.setAI(false);
             spawned.setGravity(false);
@@ -106,9 +107,9 @@ public final class DebugFishModule implements Listener, AutoCloseable {
             spawned.setPersistent(false);
             spawned.setSilent(true);
             spawned.getPersistentDataContainer().set(PROJECTILE_KEY, PersistentDataType.BYTE, (byte) 1);
-            spawned.setVelocity(shooter.getEyeLocation().getDirection().normalize().multiply(speed));
+            spawned.setVelocity(velocity);
         });
-        Flight flight = new Flight(fish, shooter.getUniqueId(), origin.clone(), origin.clone(), 0);
+        Flight flight = new Flight(fish, shooter.getUniqueId(), origin.clone(), velocity.clone(), 0);
         flights.put(fish.getUniqueId(), flight);
         schedule(flight);
     }
@@ -128,23 +129,23 @@ public final class DebugFishModule implements Listener, AutoCloseable {
             return;
         }
         Location current = fish.getLocation();
+        Location next = current.clone().add(flight.velocity());
         if (current.getWorld() != flight.origin().getWorld()
-                || current.distanceSquared(flight.origin()) > maxDistanceSquared) {
+                || next.distanceSquared(flight.origin()) > maxDistanceSquared) {
             finish(flight);
             return;
         }
 
-        Location previous = flight.previous();
-        Vector segment = current.toVector().subtract(previous.toVector());
+        Vector segment = flight.velocity().clone();
         double distance = segment.length();
         if (distance > 0.001) {
             Vector direction = segment.clone().normalize();
-            RayTraceResult blockHit = current.getWorld().rayTraceBlocks(previous, direction, distance);
-            RayTraceResult entityHit = current.getWorld().rayTraceEntities(previous, direction, distance, 0.35,
+            RayTraceResult blockHit = current.getWorld().rayTraceBlocks(current, direction, distance);
+            RayTraceResult entityHit = current.getWorld().rayTraceEntities(current, direction, distance, 0.35,
                     entity -> validTarget(flight, entity));
             if (entityHit != null && (blockHit == null
-                    || entityHit.getHitPosition().distanceSquared(previous.toVector())
-                    <= blockHit.getHitPosition().distanceSquared(previous.toVector()))) {
+                    || entityHit.getHitPosition().distanceSquared(current.toVector())
+                    <= blockHit.getHitPosition().distanceSquared(current.toVector()))) {
                 LivingEntity target = (LivingEntity) entityHit.getHitEntity();
                 Player shooter = Bukkit.getPlayer(flight.shooterId());
                 target.damage(damage, shooter == null ? fish : shooter);
@@ -156,9 +157,21 @@ public final class DebugFishModule implements Listener, AutoCloseable {
                 return;
             }
         }
-        current.getWorld().spawnParticle(Particle.BUBBLE_POP, current, 1, 0.05, 0.05, 0.05, 0.0);
-        flight.advance(current);
-        schedule(flight);
+        
+        
+        
+        fish.teleportAsync(next).thenAccept(moved -> {
+            Location owner = moved ? next : current;
+            context.api().runtime().executeAt(owner, () -> {
+                if (!moved || closed || !fish.isValid()) {
+                    finish(flight);
+                    return;
+                }
+                next.getWorld().spawnParticle(Particle.BUBBLE_POP, next, 1, 0.05, 0.05, 0.05, 0.0);
+                flight.advance();
+                schedule(flight);
+            });
+        });
     }
 
     private boolean validTarget(Flight flight, Entity entity) {
@@ -254,25 +267,24 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         private final Cod fish;
         private final UUID shooterId;
         private final Location origin;
-        private Location previous;
+        private final Vector velocity;
         private int ageTicks;
 
-        private Flight(Cod fish, UUID shooterId, Location origin, Location previous, int ageTicks) {
+        private Flight(Cod fish, UUID shooterId, Location origin, Vector velocity, int ageTicks) {
             this.fish = fish;
             this.shooterId = shooterId;
             this.origin = origin;
-            this.previous = previous;
+            this.velocity = velocity;
             this.ageTicks = ageTicks;
         }
 
         Cod fish() { return fish; }
         UUID shooterId() { return shooterId; }
         Location origin() { return origin; }
-        Location previous() { return previous; }
+        Vector velocity() { return velocity; }
         int ageTicks() { return ageTicks; }
 
-        void advance(Location current) {
-            previous = current.clone();
+        void advance() {
             ageTicks++;
         }
     }

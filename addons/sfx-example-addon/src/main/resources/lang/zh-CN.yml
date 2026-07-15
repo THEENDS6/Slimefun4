@@ -54,10 +54,10 @@ example-energy:
   rate-exact: {name: '&e精确输入功率'}
   rate: {lore: '&7当前功率：{rate} J/t。点击后在聊天框输入。'}
   adjust: {lore: '&7左键 1，右键 10，Shift 左键 100，Shift 右键 1000。'}
-  storage-down: {name: '&c降低储能'}
-  storage-up: {name: '&a提高储能'}
-  storage-exact: {name: '&e精确输入储能'}
-  storage: {lore: '&7内部电量：{stored}/{capacity} J。'}
+  capacity-down: {name: '&c降低储能容量'}
+  capacity-up: {name: '&a提高储能容量'}
+  storage-exact: {name: '&e精确输入储能容量'}
+  storage: {lore: '&7储能容量：{capacity} J；当前内部电量：{stored} J。'}
   grid-empty:
     name: '&f清空整个电网'
     lore: '&7将当前连接电网内所有储能设为 0 J。'

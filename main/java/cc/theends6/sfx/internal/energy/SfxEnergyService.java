@@ -910,7 +910,7 @@ public final class SfxEnergyService implements Listener {
             total += Math.max(0, capacitor.definition().capacity());
         }
         for (SfxEnergyNodeRef generator : generatorRefs) {
-            total += Math.max(0, generator.definition().capacity());
+            total += energyNodeCapacity(generator);
         }
         return total;
     }
@@ -942,7 +942,7 @@ public final class SfxEnergyService implements Listener {
             total += capacitor.definition().capacity();
         }
         for (SfxEnergyNodeRef generator : generatorRefs) {
-            total += generator.definition().capacity();
+            total += energyNodeCapacity(generator);
         }
         for (SfxEnergyNodeRef charger : chargerRefs) {
             total += charger.definition().capacity();
@@ -951,6 +951,16 @@ public final class SfxEnergyService implements Listener {
             total += electricMachines.consumerCapacity(consumer.typeId());
         }
         return total;
+    }
+
+    int energyNodeCapacity(SfxEnergyNodeRef node) {
+        if (node == null) {
+            return 0;
+        }
+        SfxDynamicEnergyGeneratorProvider provider = dynamicGenerator(node.definition());
+        return provider == null
+                ? Math.max(0, node.definition().capacity())
+                : Math.max(0, provider.effectiveCapacity(plugin, items, node.definition(), node.state()));
     }
 
     int requestedChargerEnergy(List<SfxEnergyNodeRef> chargerRefs) {
@@ -1399,13 +1409,14 @@ public final class SfxEnergyService implements Listener {
             SfxEnergyComponentDefinition energyDefinition = definitions.get(member.typeId());
             if (energyDefinition != null) {
                 SfxEnergyNodeState node = currentState(memberId, member);
-                int value = fill ? Math.max(0, energyDefinition.capacity()) : 0;
+                SfxEnergyNodeRef nodeRef = new SfxEnergyNodeRef(member, energyDefinition, node);
+                int value = fill ? energyNodeCapacity(nodeRef) : 0;
                 node.storedEnergy(value);
                 dirtyNodes.add(memberId);
                 activeNodes.add(memberId);
                 total += value;
                 if (energyDefinition.componentType() == SfxEnergyComponentType.CAPACITOR) {
-                    scheduleCapacitorAppearanceUpdate(new SfxEnergyNodeRef(member, energyDefinition, node));
+                    scheduleCapacitorAppearanceUpdate(nodeRef);
                 }
                 continue;
             }
@@ -1609,7 +1620,7 @@ public final class SfxEnergyService implements Listener {
             if (definition != null) {
                 SfxEnergyNodeState state = currentState(memberId, instance);
                 stored += state.storedEnergy();
-                capacity += definition.capacity();
+                capacity += energyNodeCapacity(new SfxEnergyNodeRef(instance, definition, state));
                 switch (definition.componentType()) {
                     case GENERATOR -> {
                         generators++;

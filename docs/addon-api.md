@@ -207,7 +207,7 @@ Plain `/slimefunx reload` only reloads core configuration and language. `/slimef
 
 An addon-defined cargo manager may attach an `SfxCargoManagerProvider` through `SfxCargoNodeDefinition` to supply a custom menu plus network enable and speed controls. A manager declared with `coexistsWithManagers=true` does not create a multiple-controller conflict with a normal Cargo Manager: the normal manager remains the network anchor when present, while the compatible manager remains a control surface and can also dispatch by itself.
 
-Dynamic energy providers may fully own the top inventory with `customMenuLayout()` and safely fill or clear the connected grid through `SfxEnergyGeneratorAccess.fillGridEnergy()` / `clearGridEnergy()`. To retain an edible vanilla material without allowing consumption, declare `components.consumable: false` on the item.
+Dynamic energy providers may fully own the top inventory with `customMenuLayout()`, expose persisted dynamic capacity through `effectiveCapacity()`, and safely fill or clear the connected grid through `SfxEnergyGeneratorAccess.fillGridEnergy()` / `clearGridEnergy()`. To retain an edible vanilla material without allowing consumption, declare `components.consumable: false` on the item.
 
 ## Manifest And Identity
 

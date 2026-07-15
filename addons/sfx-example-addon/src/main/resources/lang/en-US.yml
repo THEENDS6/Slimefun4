@@ -54,10 +54,10 @@ example-energy:
   rate-exact: {name: '&eEnter exact power'}
   rate: {lore: '&7Power: {rate} J/t. Click to enter a value in chat.'}
   adjust: {lore: '&7Left 1, right 10, Shift-left 100, Shift-right 1000.'}
-  storage-down: {name: '&cDecrease stored energy'}
-  storage-up: {name: '&aIncrease stored energy'}
-  storage-exact: {name: '&eEnter stored energy'}
-  storage: {lore: '&7Stored: {stored}/{capacity} J.'}
+  capacity-down: {name: '&cDecrease storage capacity'}
+  capacity-up: {name: '&aIncrease storage capacity'}
+  storage-exact: {name: '&eEnter storage capacity'}
+  storage: {lore: '&7Capacity: {capacity} J; currently stored: {stored} J.'}
   grid-empty:
     name: '&fEmpty entire grid'
     lore: '&7Sets every energy store in the connected grid to 0 J.'
