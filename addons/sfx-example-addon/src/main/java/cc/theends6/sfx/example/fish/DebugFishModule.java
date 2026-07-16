@@ -46,6 +46,9 @@ import org.bukkit.util.Vector;
 
 public final class DebugFishModule implements Listener, AutoCloseable {
     private static final NamespacedKey PROJECTILE_KEY = new NamespacedKey("sfx_example", "debug_fish_projectile");
+    private static final long PARTICLE_DELAY_TICKS = 2L;
+    private static final double TRAIL_SAMPLE_SPACING = 0.24;
+    private static final double TRAIL_BACK_EXTENSION = 0.65;
 
     private final SfxAddonContext context;
     private final Map<UUID, Flight> flights = new ConcurrentHashMap<>();
@@ -53,6 +56,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
     private final int lifetimeTicks;
     private final double maxDistanceSquared;
     private final double speed;
+    private final double airDrag;
     private final double gravityPerTick;
     private final double bounceRetention;
     private final double surfaceRetention;
@@ -68,6 +72,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         double maxDistance = clamp(context.configDouble("debug-fish.max-distance", 64.0), 1.0, 512.0);
         maxDistanceSquared = maxDistance * maxDistance;
         speed = clamp(context.configDouble("debug-fish.speed", 1.6), 0.1, 8.0);
+        airDrag = clamp(context.configDouble("debug-fish.air-drag", 0.995), 0.8, 1.0);
         gravityPerTick = clamp(context.configDouble("debug-fish.gravity-per-tick", 0.15), 0.0, 1.0);
         bounceRetention = clamp(context.configDouble("debug-fish.bounce-retention", 0.72), 0.0, 1.25);
         surfaceRetention = clamp(context.configDouble("debug-fish.surface-retention", 0.90), 0.0, 1.0);
@@ -134,7 +139,8 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         });
         Flight flight = new Flight(fish, shooter.getUniqueId(), origin.clone(), velocity.clone());
         flights.put(fish.getUniqueId(), flight);
-        origin.getWorld().spawnParticle(Particle.SPLASH, origin, 12, 0.18, 0.18, 0.18, 0.08);
+        spawnParticlesLater(origin, location ->
+                location.getWorld().spawnParticle(Particle.SPLASH, location, 12, 0.18, 0.18, 0.18, 0.08));
         schedule(flight);
     }
 
@@ -160,7 +166,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         if (flight.sliding()) {
             movement.setY(0.0).multiply(groundFriction);
         } else {
-            movement.add(new Vector(0.0, -gravityPerTick, 0.0));
+            movement.multiply(airDrag).add(new Vector(0.0, -gravityPerTick, 0.0));
         }
         flight.velocity().copy(movement);
         Location next = current.clone().add(movement);
@@ -235,7 +241,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
                 if (bounceEffect) {
                     playBounceEffect(destination);
                 }
-                spawnTrail(destination);
+                spawnTrail(current, destination);
                 flight.advance();
                 schedule(flight);
             });
@@ -272,14 +278,47 @@ public final class DebugFishModule implements Listener, AutoCloseable {
     }
 
     private void playBounceEffect(Location location) {
-        location.getWorld().spawnParticle(Particle.BUBBLE_POP, location, 10, 0.16, 0.16, 0.16, 0.03);
-        location.getWorld().spawnParticle(Particle.SPLASH, location, 8, 0.20, 0.12, 0.20, 0.08);
+        spawnParticlesLater(location, delayed -> {
+            delayed.getWorld().spawnParticle(Particle.BUBBLE_POP, delayed, 10, 0.16, 0.16, 0.16, 0.03);
+            delayed.getWorld().spawnParticle(Particle.SPLASH, delayed, 8, 0.20, 0.12, 0.20, 0.08);
+        });
         location.getWorld().playSound(location, Sound.ENTITY_SLIME_SQUISH, 0.45f, 1.35f);
     }
 
-    private void spawnTrail(Location location) {
-        location.getWorld().spawnParticle(Particle.BUBBLE_POP, location, 4, 0.08, 0.08, 0.08, 0.01);
-        location.getWorld().spawnParticle(Particle.SPLASH, location, 2, 0.10, 0.06, 0.10, 0.02);
+    private void spawnTrail(Location from, Location to) {
+        if (from.getWorld() != to.getWorld()) {
+            return;
+        }
+        Vector segment = to.toVector().subtract(from.toVector());
+        double distance = segment.length();
+        if (distance < 1.0E-4) {
+            spawnParticlesLater(to, delayed ->
+                    delayed.getWorld().spawnParticle(Particle.BUBBLE_POP, delayed, 2, 0.05, 0.05, 0.05, 0.005));
+            return;
+        }
+        Vector direction = segment.clone().multiply(1.0 / distance);
+        Location trailStart = from.clone().subtract(direction.clone().multiply(TRAIL_BACK_EXTENSION));
+        double trailLength = distance + TRAIL_BACK_EXTENSION;
+        int samples = Math.max(2, (int) Math.ceil(trailLength / TRAIL_SAMPLE_SPACING));
+        spawnParticlesLater(to, ignored -> {
+            for (int index = 0; index <= samples; index++) {
+                double offset = trailLength * index / samples;
+                Location point = trailStart.clone().add(direction.clone().multiply(offset));
+                point.getWorld().spawnParticle(Particle.BUBBLE_POP, point, 1, 0.035, 0.035, 0.035, 0.004);
+                if ((index & 1) == 0) {
+                    point.getWorld().spawnParticle(Particle.SPLASH, point, 1, 0.045, 0.025, 0.045, 0.008);
+                }
+            }
+        });
+    }
+
+    private void spawnParticlesLater(Location location, java.util.function.Consumer<Location> particles) {
+        Location snapshot = location.clone();
+        context.api().runtime().executeAtLater(snapshot, PARTICLE_DELAY_TICKS, () -> {
+            if (!closed && snapshot.getWorld() != null) {
+                particles.accept(snapshot);
+            }
+        });
     }
 
     private static Location collisionDestination(
