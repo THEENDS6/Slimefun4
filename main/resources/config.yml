@@ -154,6 +154,9 @@ technical-gadgets:
   
   rechargeable:
     base-multiplier: 20
+  charging-bench:
+    
+    eject-non-rechargeable-items: true
   sfx-balance:
     enabled: true
     rechargeable-multiplier: 5

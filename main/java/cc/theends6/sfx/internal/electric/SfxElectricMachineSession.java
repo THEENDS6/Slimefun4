@@ -11,6 +11,8 @@ final class SfxElectricMachineSession {
     private final Inventory inventory;
     private long lastRenderedTick = Long.MIN_VALUE;
     private SfxElectricMachineRenderStatus lastRenderedStatus;
+    private boolean inventoryMutationPending;
+    private long inventoryMutationEpoch;
 
     SfxElectricMachineSession(UUID viewerId, UUID instanceId, Inventory inventory) {
         this.viewerId = viewerId;
@@ -41,5 +43,24 @@ final class SfxElectricMachineSession {
     void markRendered(long tick, SfxElectricMachineRenderStatus status) {
         this.lastRenderedTick = tick;
         this.lastRenderedStatus = status;
+    }
+
+    synchronized long beginInventoryMutation() {
+        inventoryMutationPending = true;
+        return ++inventoryMutationEpoch;
+    }
+
+    synchronized boolean inventoryMutationPending() {
+        return inventoryMutationPending;
+    }
+
+    synchronized boolean isCurrentInventoryMutation(long epoch) {
+        return inventoryMutationPending && inventoryMutationEpoch == epoch;
+    }
+
+    synchronized void finishInventoryMutation(long epoch) {
+        if (inventoryMutationEpoch == epoch) {
+            inventoryMutationPending = false;
+        }
     }
 }

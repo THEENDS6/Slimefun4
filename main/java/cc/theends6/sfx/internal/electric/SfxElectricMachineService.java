@@ -461,11 +461,11 @@ public final class SfxElectricMachineService implements Listener {
             boolean managedOutput = contains(clickDefinition.outputSlots(), event.getRawSlot());
             Predicate<ItemStack> validator = stack -> isValidMachineInput(clickDefinition, event.getRawSlot(), stack);
             if (SfxMachineMenuTransactions.handleManagedHotbarOrOffhand(event, event.getView().getTopInventory(), event.getRawSlot(), player, managedInput, managedOutput, validator)) {
-                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+                queueInventoryMutationReconcile(player, holder.instanceId());
                 return;
             }
             if ((managedInput || managedOutput) && SfxMachineMenuTransactions.handleManagedDoubleClick(event, event.getView().getTopInventory(), player, slot -> contains(managedOutput ? clickDefinition.outputSlots() : clickDefinition.inputSlots(), slot))) {
-                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+                queueInventoryMutationReconcile(player, holder.instanceId());
                 return;
             }
         }
@@ -486,7 +486,7 @@ public final class SfxElectricMachineService implements Listener {
                     event.setCurrentItem(null);
                 }
                 event.setCancelled(true);
-                runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+                queueInventoryMutationReconcile(player, holder.instanceId());
             } else {
                 event.setCancelled(true);
             }
@@ -506,7 +506,7 @@ public final class SfxElectricMachineService implements Listener {
             if (SfxMachineMenuTransactions.dropFromTopSlot(event, event.getView().getTopInventory(), event.getRawSlot(), player)) {
                 event.setCancelled(true);
             }
-            runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+            queueInventoryMutationReconcile(player, holder.instanceId());
             return;
         }
         if (topSlot && !contains(clickDefinition.inputSlots(), event.getRawSlot())) {
@@ -528,18 +528,18 @@ public final class SfxElectricMachineService implements Listener {
             }
         }
         if (topSlot && event.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-            runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+            queueInventoryMutationReconcile(player, holder.instanceId());
             return;
         }
         if (topSlot && SfxMachineMenuTransactions.dropFromTopSlot(event, event.getView().getTopInventory(), event.getRawSlot(), player)) {
             event.setCancelled(true);
-            runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+            queueInventoryMutationReconcile(player, holder.instanceId());
             return;
         }
         if (topSlot && SfxMachineMenuTransactions.cancelUnsupportedManagedClick(event)) {
             return;
         }
-        runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+        queueInventoryMutationReconcile(player, holder.instanceId());
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -580,7 +580,7 @@ public final class SfxElectricMachineService implements Listener {
             event.setCancelled(true);
             return;
         }
-        runtime.executeForPlayerLater(player, 1L, () -> refreshSession(holder.instanceId()));
+        queueInventoryMutationReconcile(player, holder.instanceId());
     }
 
     @EventHandler
@@ -954,6 +954,25 @@ public final class SfxElectricMachineService implements Listener {
         render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), sessionRenderStatus(definition, state, session));
     }
 
+    private void queueInventoryMutationReconcile(Player player, UUID instanceId) {
+        SfxElectricMachineSession session = sessionsByInstance.get(instanceId);
+        if (session == null || !session.viewerId().equals(player.getUniqueId())) {
+            return;
+        }
+        long epoch = session.beginInventoryMutation();
+        runtime.executeForPlayerLater(player, 1L, () -> {
+            SfxElectricMachineSession current = sessionsByInstance.get(instanceId);
+            if (current != session || !session.isCurrentInventoryMutation(epoch)) {
+                return;
+            }
+            try {
+                refreshSession(instanceId);
+            } finally {
+                session.finishInventoryMutation(epoch);
+            }
+        });
+    }
+
     private SfxElectricMachineRenderStatus sessionRenderStatus(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineSession session) {
         if (!state.enabled()) {
             return SfxElectricMachineRenderStatus.PAUSED;
@@ -1011,6 +1030,9 @@ public final class SfxElectricMachineService implements Listener {
 
 
     public SfxVirtualContainerService.PlannedStack planFirstCargoOutput(UUID instanceId, Predicate<ItemStack> filter, int maxAmount) {
+        if (hasPendingInventoryMutation(instanceId)) {
+            return new SfxVirtualContainerService.PlannedStack(null, List.of());
+        }
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         SfxElectricMachineDefinition definition = definitionForInstance(instance);
         if (definition == null || definition.outputSlots().length <= 0) {
@@ -1036,6 +1058,9 @@ public final class SfxElectricMachineService implements Listener {
 
     public List<SfxVirtualContainerService.PlannedStack> planCargoOutputBatch(UUID instanceId, Predicate<ItemStack> filter, int maxItems, int maxDistinctTypes, boolean allowMultipleSlots) {
         List<SfxVirtualContainerService.PlannedStack> result = new ArrayList<>();
+        if (hasPendingInventoryMutation(instanceId)) {
+            return result;
+        }
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         SfxElectricMachineDefinition definition = definitionForInstance(instance);
         if (definition == null || definition.outputSlots().length <= 0 || maxItems <= 0) {
@@ -1077,6 +1102,9 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     public boolean canRemoveCargoOutput(UUID instanceId, List<SfxVirtualContainerService.SlotTake> takes) {
+        if (hasPendingInventoryMutation(instanceId)) {
+            return false;
+        }
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         SfxElectricMachineDefinition definition = definitionForInstance(instance);
         if (definition == null || takes == null || takes.isEmpty()) {
@@ -1187,6 +1215,9 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private CargoInventorySnapshot cargoInventorySnapshot(UUID instanceId, boolean inputInventory) {
+        if (hasPendingInventoryMutation(instanceId)) {
+            return null;
+        }
         SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         SfxElectricMachineDefinition definition = definitionForInstance(instance);
         if (definition == null) {
@@ -1203,6 +1234,11 @@ public final class SfxElectricMachineService implements Listener {
             contents[slot] = electricStack == null ? null : electricStack.toItemStack(items);
         }
         return new CargoInventorySnapshot(instanceId, state, inputInventory, contents);
+    }
+
+    private boolean hasPendingInventoryMutation(UUID instanceId) {
+        SfxElectricMachineSession session = sessionsByInstance.get(instanceId);
+        return session != null && session.inventoryMutationPending();
     }
 
     private void writeCargoInventory(CargoInventorySnapshot snapshot) {

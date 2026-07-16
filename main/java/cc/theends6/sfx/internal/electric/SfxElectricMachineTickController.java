@@ -32,6 +32,10 @@ final class SfxElectricMachineTickController {
         }
         SfxElectricMachineState state = service.currentState(instanceId, instance);
         SfxElectricMachineSession session = service.sessionsByInstance.get(instanceId);
+        if (session != null && session.inventoryMutationPending()) {
+            service.activeInstances.add(instanceId);
+            return;
+        }
         if (session != null) {
             service.syncInventoryToState(session.inventory(), state);
         }

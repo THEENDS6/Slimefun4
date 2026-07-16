@@ -999,16 +999,21 @@ public final class SfxEnergyService implements Listener {
         SfxEnergyNodeState state = charger.state();
         for (int slot = 0; slot < inputSlotCount(charger.definition()); slot++) {
             SfxElectricStack input = state.input(slot);
-            if (input == null || input.amount() != 1) {
+            if (input == null) {
                 continue;
             }
             ItemStack item = input.toItemStack(items);
             if (!rechargeableItems.isRechargeable(item)) {
                 traceChargingBench(charger.definition(), "tick non-rechargeable input slot=" + slot + " stack=" + describe(item) + " sfx=" + items.isSfxItem(item));
-                if (items.isSfxItem(item)) {
-                    moveChargingBenchInputToOutput(charger, slot, input);
+                if (ejectNonRechargeableChargingBenchItems() || items.isSfxItem(item)) {
+                    if (moveChargingBenchInputToOutput(charger, slot, input)) {
+                        continue;
+                    }
                 }
                 return;
+            }
+            if (input.amount() != 1) {
+                continue;
             }
             double currentCharge = rechargeableItems.charge(item);
             double capacity = rechargeableItems.capacity(item);
@@ -1062,15 +1067,20 @@ public final class SfxEnergyService implements Listener {
         return SfxTechnicalGadgetBalance.clamp01(1.0D - SfxTechnicalGadgetBalance.rules(plugin).chargingBenchEnergyLoss());
     }
 
-    private void moveChargingBenchInputToOutput(SfxEnergyNodeRef charger, int inputSlot, SfxElectricStack stack) {
+    private boolean ejectNonRechargeableChargingBenchItems() {
+        return plugin.getConfig().getBoolean("technical-gadgets.charging-bench.eject-non-rechargeable-items", true);
+    }
+
+    private boolean moveChargingBenchInputToOutput(SfxEnergyNodeRef charger, int inputSlot, SfxElectricStack stack) {
         Integer outputSlot = findOutputSlot(charger.definition(), charger.state(), stack);
         if (outputSlot == null) {
-            return;
+            return false;
         }
         charger.state().input(inputSlot, null);
         pushOutput(charger.state(), outputSlot, stack);
         dirtyNodes.add(charger.instance().instanceId());
         renderStorageSlots(charger.instance().instanceId(), charger.state());
+        return true;
     }
 
     int generate(SfxBlockInstanceRecord instance, SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
