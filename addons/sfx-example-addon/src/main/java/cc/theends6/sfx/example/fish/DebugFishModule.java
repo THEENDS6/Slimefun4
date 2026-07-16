@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
+import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
@@ -56,7 +57,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
     private final double bounceRetention;
     private final double surfaceRetention;
     private final double groundFriction;
-    private final double stopBounceSpeed;
+    private final double slideNormalSpeed;
     private final double entityBounceRetention;
     private volatile boolean closed;
 
@@ -67,11 +68,11 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         double maxDistance = clamp(context.configDouble("debug-fish.max-distance", 64.0), 1.0, 512.0);
         maxDistanceSquared = maxDistance * maxDistance;
         speed = clamp(context.configDouble("debug-fish.speed", 1.6), 0.1, 8.0);
-        gravityPerTick = clamp(context.configDouble("debug-fish.gravity-per-tick", 0.10), 0.0, 1.0);
+        gravityPerTick = clamp(context.configDouble("debug-fish.gravity-per-tick", 0.15), 0.0, 1.0);
         bounceRetention = clamp(context.configDouble("debug-fish.bounce-retention", 0.72), 0.0, 1.25);
         surfaceRetention = clamp(context.configDouble("debug-fish.surface-retention", 0.90), 0.0, 1.0);
         groundFriction = clamp(context.configDouble("debug-fish.ground-friction", 0.94), 0.0, 1.0);
-        stopBounceSpeed = clamp(context.configDouble("debug-fish.stop-bounce-speed", 0.12), 0.0, 2.0);
+        slideNormalSpeed = clamp(context.configDouble("debug-fish.slide-normal-speed", 0.24), 0.0, 2.0);
         entityBounceRetention = clamp(context.configDouble("debug-fish.entity-bounce-retention", 0.80), 0.0, 1.25);
         Bukkit.getPluginManager().registerEvents(this, context.api().runtime().plugin());
         cleanupLoadedProjectiles();
@@ -152,7 +153,15 @@ public final class DebugFishModule implements Listener, AutoCloseable {
             return;
         }
         Location current = fish.getLocation();
-        Vector movement = flight.velocity().clone().add(new Vector(0.0, -gravityPerTick, 0.0));
+        if (flight.sliding() && traceSolidBlock(current, new Vector(0.0, -1.0, 0.0), 0.20) == null) {
+            flight.setSliding(false);
+        }
+        Vector movement = flight.velocity().clone();
+        if (flight.sliding()) {
+            movement.setY(0.0).multiply(groundFriction);
+        } else {
+            movement.add(new Vector(0.0, -gravityPerTick, 0.0));
+        }
         flight.velocity().copy(movement);
         Location next = current.clone().add(movement);
         if (current.getWorld() != flight.origin().getWorld()
@@ -166,10 +175,14 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         boolean bounced = false;
         if (distance > 0.001) {
             Vector direction = segment.clone().normalize();
-            RayTraceResult blockHit = current.getWorld().rayTraceBlocks(current, direction, distance);
+            RayTraceResult blockHit = traceSolidBlock(current, direction, distance);
             RayTraceResult entityHit = current.getWorld().rayTraceEntities(current, direction, distance, 0.35,
                     entity -> validTarget(flight, entity));
-            if (entityHit != null && (blockHit == null
+            if (flight.sliding() && entityHit != null) {
+                damageOnce(flight, (LivingEntity) entityHit.getHitEntity());
+                flight.rememberHit(entityHit.getHitEntity().getUniqueId());
+            }
+            if (!flight.sliding() && entityHit != null && (blockHit == null
                     || entityHit.getHitPosition().distanceSquared(current.toVector())
                     <= blockHit.getHitPosition().distanceSquared(current.toVector()))) {
                 LivingEntity target = (LivingEntity) entityHit.getHitEntity();
@@ -178,6 +191,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
                         target.getLocation().add(0.0, target.getHeight() * 0.5, 0.0).toVector());
                 normal = collisionNormal(normal, movement);
                 flight.velocity().copy(bounceVelocity(movement, normal, entityBounceRetention, surfaceRetention));
+                flight.setSliding(false);
                 next = collisionDestination(current, entityHit, normal, flight.velocity());
                 flight.rememberHit(target.getUniqueId());
                 bounced = true;
@@ -187,14 +201,23 @@ public final class DebugFishModule implements Listener, AutoCloseable {
                         ? movement.clone().multiply(-1.0).normalize()
                         : new Vector(face.getModX(), face.getModY(), face.getModZ());
                 normal = collisionNormal(normal, movement);
-                double tangentRetention = normal.getY() > 0.5 ? groundFriction : surfaceRetention;
-                Vector bouncedVelocity = bounceVelocity(movement, normal, bounceRetention, tangentRetention);
-                if (normal.getY() > 0.5 && bouncedVelocity.getY() < stopBounceSpeed) {
-                    bouncedVelocity.setY(0.0);
+                double incomingNormalSpeed = Math.abs(movement.dot(normal));
+                if (!flight.sliding() && normal.getY() > 0.5 && incomingNormalSpeed <= slideNormalSpeed) {
+                    Vector slidingVelocity = movement.clone()
+                            .subtract(normal.clone().multiply(movement.dot(normal)))
+                            .multiply(groundFriction);
+                    slidingVelocity.setY(0.0);
+                    flight.velocity().copy(slidingVelocity);
+                    flight.setSliding(true);
+                    next = collisionDestination(current, blockHit, normal, flight.velocity());
+                } else {
+                    double tangentRetention = normal.getY() > 0.5 ? groundFriction : surfaceRetention;
+                    Vector bouncedVelocity = bounceVelocity(movement, normal, bounceRetention, tangentRetention);
+                    if (flight.sliding()) bouncedVelocity.setY(0.0);
+                    flight.velocity().copy(bouncedVelocity);
+                    next = collisionDestination(current, blockHit, normal, flight.velocity());
+                    bounced = true;
                 }
-                flight.velocity().copy(bouncedVelocity);
-                next = collisionDestination(current, blockHit, normal, flight.velocity());
-                bounced = true;
             }
         }
         
@@ -266,6 +289,11 @@ public final class DebugFishModule implements Listener, AutoCloseable {
             destination.setDirection(outgoingVelocity);
         }
         return destination;
+    }
+
+    private static RayTraceResult traceSolidBlock(Location start, Vector direction, double distance) {
+        return start.getWorld().rayTraceBlocks(
+                start, direction, distance, FluidCollisionMode.NEVER, true);
     }
 
     private static Vector collisionNormal(Vector candidate, Vector incoming) {
@@ -372,6 +400,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         private final Set<UUID> damagedTargets = ConcurrentHashMap.newKeySet();
         private final Map<UUID, Integer> recentEntityHits = new ConcurrentHashMap<>();
         private int ageTicks;
+        private boolean sliding;
 
         private Flight(Cod fish, UUID shooterId, Location origin, Vector velocity) {
             this.fish = fish;
@@ -386,6 +415,8 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         Vector velocity() { return velocity; }
         Set<UUID> damagedTargets() { return damagedTargets; }
         int ageTicks() { return ageTicks; }
+        boolean sliding() { return sliding; }
+        void setSliding(boolean sliding) { this.sliding = sliding; }
 
         boolean recentlyHit(UUID entityId) {
             Integer hitAge = recentEntityHits.get(entityId);
