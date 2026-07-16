@@ -727,29 +727,6 @@ static Map<String, Integer> createClassicBasicMachineOrder() {
     return Collections.unmodifiableMap(map);
 }
 
-static Map<String, Integer> createClassicItemOrderOverrides() {
-    Map<String, Integer> map = new LinkedHashMap<>();
-    int order = 10;
-    order = putRange(map, order, "sf:energy_regulator", "sf:energy_connector");
-    order = putRange(map, order, "sf:small_capacitor", "sf:medium_capacitor", "sf:big_capacitor", "sf:large_capacitor", "sf:carbonado_edged_capacitor", "sf:energized_capacitor");
-    order = putRange(map, order, "sf:solar_generator", "sf:solar_generator_2", "sf:solar_generator_3", "sf:solar_generator_4");
-    order = putRange(map, order, "sf:charging_bench");
-    order = putRange(map, order, "sf:electric_furnace", "sf:electric_furnace_2", "sf:electric_furnace_3");
-    order = putRange(map, order, "sf:electric_gold_pan", "sf:electric_gold_pan_2", "sf:electric_gold_pan_3");
-    order = putRange(map, order, "sf:electric_dust_washer", "sf:electric_dust_washer_2", "sf:electric_dust_washer_3");
-    order = putRange(map, order, "sf:electric_ingot_factory", "sf:electric_ingot_factory_2", "sf:electric_ingot_factory_3");
-    order = putRange(map, order, "sf:electrified_crucible", "sf:electrified_crucible_2", "sf:electrified_crucible_3");
-    order = putRange(map, order, "sf:electric_ore_grinder", "sf:electric_ore_grinder_2", "sf:electric_ore_grinder_3");
-    order = putRange(map, order, "sf:electric_ingot_pulverizer");
-    order = putRange(map, order, "sf:heated_pressure_chamber", "sf:heated_pressure_chamber_2");
-    order = putRange(map, order, "sf:electric_smeltery", "sf:electric_smeltery_2");
-    order = putRange(map, order, "sf:electric_press", "sf:electric_press_2");
-    order = putRange(map, order, "sf:refinery", "sf:combustion_reactor", "sf:nuclear_reactor", "sf:magnesium_generator");
-    order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:bio_reactor");
-    order += 10;
-    return Collections.unmodifiableMap(map);
-}
-
 static Map<String, Integer> createClassicCargoOrder() {
     Map<String, Integer> map = new LinkedHashMap<>();
     int order = 10;
@@ -809,47 +786,6 @@ static Map<String, List<String>> createLockedCategoryParents() {
     map.put("guide:sf:gps", List.of("guide:sf:basic_machines"));
     map.put("guide:sf:androids", List.of("guide:sf:basic_machines"));
     map.put("guide:sf:ender_talismans", List.of("guide:sf:talismans"));
-    return Collections.unmodifiableMap(map);
-}
-
-static Map<String, Integer> createClassicElectricityOrder() {
-    Map<String, Integer> map = new LinkedHashMap<>();
-    int order = 10;
-    order = putRange(map, order, "sf:energy_regulator", "sf:energy_connector");
-    order = putRange(map, order, "sf:small_capacitor", "sf:medium_capacitor", "sf:big_capacitor", "sf:large_capacitor", "sf:carbonado_edged_capacitor", "sf:energized_capacitor");
-    order = putRange(map, order, "sf:solar_generator", "sf:solar_generator_2", "sf:solar_generator_3", "sf:solar_generator_4");
-    order = putRange(map, order, "sf:charging_bench");
-    order = putRange(map, order, "sf:electric_furnace", "sf:electric_furnace_2", "sf:electric_furnace_3");
-    order = putRange(map, order, "sf:electric_gold_pan", "sf:electric_gold_pan_2", "sf:electric_gold_pan_3");
-    order = putRange(map, order, "sf:electric_dust_washer", "sf:electric_dust_washer_2", "sf:electric_dust_washer_3");
-    order = putRange(map, order, "sf:electric_ingot_factory", "sf:electric_ingot_factory_2", "sf:electric_ingot_factory_3");
-    order = putRange(map, order, "sf:electrified_crucible", "sf:electrified_crucible_2", "sf:electrified_crucible_3");
-    order = putRange(map, order, "sf:electric_ore_grinder", "sf:electric_ore_grinder_2", "sf:electric_ore_grinder_3");
-    order = putRange(map, order, "sf:heated_pressure_chamber", "sf:heated_pressure_chamber_2");
-    order = putRange(map, order, "sf:electric_ingot_pulverizer");
-    order = putRange(map, order, "sf:electric_press", "sf:electric_press_2");
-    order = putRange(map, order, "sf:refinery");
-    order = putRange(map, order, "sf:combustion_reactor");
-    order = putRange(map, order, "sf:coal_generator", "sf:coal_generator_2", "sf:lava_generator", "sf:lava_generator_2", "sf:magnesium_generator", "sf:bio_reactor");
-    order += 10;
-    order = putRange(map, order, "sf:nuclear_reactor", "sf:netherstar_reactor");
-    order = putRange(map, order, "sf:fluid_pump");
-    order = putRange(map, order, "sf:carbon_press", "sf:carbon_press_2", "sf:carbon_press_3");
-    order = putRange(map, order, "sf:electric_smeltery", "sf:electric_smeltery_2");
-    order = putRange(map, order, "sf:iron_golem_assembler", "sf:wither_assembler");
-    order = putRange(map, order, "sf:produce_collector");
-    order = putRange(map, order, "sf:freezer", "sf:freezer_2", "sf:freezer_3");
-    order = putRange(map, order, "sf:auto_drier");
-    order = putRange(map, order, "sf:auto_enchanter", "sf:auto_enchanter_2");
-    order = putRange(map, order, "sf:auto_disenchanter", "sf:auto_disenchanter_2");
-    order = putRange(map, order, "sf:auto_anvil", "sf:auto_anvil_2");
-    order = putRange(map, order, "sf:auto_brewer");
-    order += 10;
-    order = putRange(map, order, "sf:book_binder");
-    order = putRange(map, order, "sf:auto_breeder");
-    order = putRange(map, order, "sf:animal_growth_accelerator", "sf:crop_growth_accelerator", "sf:crop_growth_accelerator_2", "sf:tree_growth_accelerator");
-    order = putRange(map, order, "sf:food_fabricator", "sf:food_fabricator_2", "sf:food_composter", "sf:food_composter_2");
-    order = putRange(map, order, "sf:xp_collector");
     return Collections.unmodifiableMap(map);
 }
 

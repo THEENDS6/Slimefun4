@@ -26,6 +26,7 @@ public final class SfxTemplatePrecompiler {
             "content/templates/10-electric-machine-definitions.yml",
             "content/templates/12-electric-machine-ui.yml",
             "content/templates/30-energy-components.yml",
+            "content/templates/guide/classic-electricity-order.yml",
             "content/templates/machines/electric/assemblers.yml",
             "content/templates/machines/electric/auto-breeder.yml",
             "content/templates/machines/electric/auto-brewer.yml",

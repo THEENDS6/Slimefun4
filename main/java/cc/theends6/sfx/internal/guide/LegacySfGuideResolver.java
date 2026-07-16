@@ -30,8 +30,6 @@ public final class LegacySfGuideResolver {
     private static final Map<String, Integer> CLASSIC_MAGICAL_GADGETS_ORDER = LegacySfGuideData.createClassicMagicalGadgetsOrder();
     private static final Map<String, Integer> CLASSIC_CARGO_ORDER = LegacySfGuideData.createClassicCargoOrder();
     private static final Map<String, Integer> CLASSIC_ARMOR_ORDER = LegacySfGuideData.createClassicArmorOrder();
-    private static final Map<String, Integer> CLASSIC_ELECTRICITY_ORDER = LegacySfGuideData.createClassicElectricityOrder();
-    private static final Map<String, Integer> CLASSIC_ITEM_ORDER_OVERRIDES = LegacySfGuideData.createClassicItemOrderOverrides();
     private static final Map<String, List<String>> LOCKED_CATEGORY_PARENTS = LegacySfGuideData.createLockedCategoryParents();
     private static final Set<String> SEASONAL_CATEGORIES = Set.of(
             "guide:sf:christmas",
@@ -125,16 +123,6 @@ public final class LegacySfGuideResolver {
             if (armorOrder != null) {
                 return armorOrder;
             }
-        }
-        if ("guide:sf:electricity".equals(guideCategory)) {
-            Integer electricityOrder = CLASSIC_ELECTRICITY_ORDER.get(item.id());
-            if (electricityOrder != null) {
-                return electricityOrder;
-            }
-        }
-        Integer overridden = CLASSIC_ITEM_ORDER_OVERRIDES.get(item.id());
-        if (overridden != null) {
-            return overridden;
         }
         if (item.order() != SfxItemDefinition.DEFAULT_ORDER) {
             return item.order();

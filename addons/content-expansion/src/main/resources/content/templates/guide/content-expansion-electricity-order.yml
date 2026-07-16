@@ -1,0 +1,6 @@
+
+guide-order-tables:
+  classic-electricity:
+    "sfx:oxidizing_generator": {guide-order: 780}
+    "sfx:waxing_machine": {guide-order: 790}
+    "sfx:cutting_machine": {guide-order: 800}

@@ -1,0 +1,6 @@
+
+
+guide-order-tables:
+  classic-electricity:
+    "sf:bio_reactor_2": {guide-order: 371}
+    "sf:auto_brewer_2": {guide-order: 391}
