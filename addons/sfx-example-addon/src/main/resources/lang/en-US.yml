@@ -31,8 +31,8 @@ items:
       name: '&bDEBUG Bouncy Fish Ball'
       lore:
       - '&7A tribute to the classic Slimefun4 DEBUG fish.'
-      - '&7Falls under gravity and bounces off blocks or entities.'
-      - '&7Keeps sliding after low-speed ground impacts.'
+      - '&7Inherits launch velocity and damages entities on contact.'
+      - '&7Bounces off blocks and slides without drag after gentle landings.'
       - '&cAdministrator debugging only.'
     magic_slime_block:
       name: '&dMagic Slime Block'

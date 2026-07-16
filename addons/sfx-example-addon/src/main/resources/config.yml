@@ -24,9 +24,9 @@ debug-fish:
   gravity-per-tick: 0.15
   bounce-retention: 0.72
   surface-retention: 0.90
-  ground-friction: 0.94
-  slide-normal-speed: 0.24
-  entity-bounce-retention: 0.80
+  slide-drag: 0.0
+  ground-bounce-tangent-retention: 0.94
+  slide-normal-speed: 0.45
 
 magic-slime-block:
   interval-ticks: 20

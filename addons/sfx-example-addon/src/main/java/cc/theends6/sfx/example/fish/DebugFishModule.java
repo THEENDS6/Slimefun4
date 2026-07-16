@@ -60,9 +60,9 @@ public final class DebugFishModule implements Listener, AutoCloseable {
     private final double gravityPerTick;
     private final double bounceRetention;
     private final double surfaceRetention;
-    private final double groundFriction;
+    private final double slideDrag;
+    private final double groundBounceTangentRetention;
     private final double slideNormalSpeed;
-    private final double entityBounceRetention;
     private volatile boolean closed;
 
     public DebugFishModule(SfxAddonContext context) {
@@ -76,9 +76,10 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         gravityPerTick = clamp(context.configDouble("debug-fish.gravity-per-tick", 0.15), 0.0, 1.0);
         bounceRetention = clamp(context.configDouble("debug-fish.bounce-retention", 0.72), 0.0, 1.25);
         surfaceRetention = clamp(context.configDouble("debug-fish.surface-retention", 0.90), 0.0, 1.0);
-        groundFriction = clamp(context.configDouble("debug-fish.ground-friction", 0.94), 0.0, 1.0);
-        slideNormalSpeed = clamp(context.configDouble("debug-fish.slide-normal-speed", 0.24), 0.0, 2.0);
-        entityBounceRetention = clamp(context.configDouble("debug-fish.entity-bounce-retention", 0.80), 0.0, 1.25);
+        slideDrag = clamp(context.configDouble("debug-fish.slide-drag", 0.0), 0.0, 1.0);
+        groundBounceTangentRetention = clamp(
+                context.configDouble("debug-fish.ground-bounce-tangent-retention", 0.94), 0.0, 1.0);
+        slideNormalSpeed = clamp(context.configDouble("debug-fish.slide-normal-speed", 0.45), 0.0, 2.0);
         Bukkit.getPluginManager().registerEvents(this, context.api().runtime().plugin());
         cleanupLoadedProjectiles();
     }
@@ -127,7 +128,8 @@ public final class DebugFishModule implements Listener, AutoCloseable {
 
     private void launch(Player shooter) {
         Location origin = shooter.getEyeLocation().add(shooter.getEyeLocation().getDirection().multiply(0.8));
-        Vector velocity = shooter.getEyeLocation().getDirection().normalize().multiply(speed);
+        Vector velocity = shooter.getEyeLocation().getDirection().normalize().multiply(speed)
+                .add(shooter.getVelocity());
         Cod fish = origin.getWorld().spawn(origin, Cod.class, spawned -> {
             spawned.setAI(false);
             spawned.setGravity(false);
@@ -159,12 +161,13 @@ public final class DebugFishModule implements Listener, AutoCloseable {
             return;
         }
         Location current = fish.getLocation();
+        flight.clearSeparatedEntityContacts(current);
         if (flight.sliding() && traceSolidBlock(current, new Vector(0.0, -1.0, 0.0), 0.20) == null) {
             flight.setSliding(false);
         }
         Vector movement = flight.velocity().clone();
         if (flight.sliding()) {
-            movement.setY(0.0).multiply(groundFriction);
+            movement.setY(0.0).multiply(1.0 - slideDrag);
         } else {
             movement.multiply(airDrag).add(new Vector(0.0, -gravityPerTick, 0.0));
         }
@@ -182,26 +185,25 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         if (distance > 0.001) {
             Vector direction = segment.clone().normalize();
             RayTraceResult blockHit = traceSolidBlock(current, direction, distance);
-            RayTraceResult entityHit = current.getWorld().rayTraceEntities(current, direction, distance, 0.35,
-                    entity -> validTarget(flight, entity));
-            if (flight.sliding() && entityHit != null) {
-                damageOnce(flight, (LivingEntity) entityHit.getHitEntity());
-                flight.rememberHit(entityHit.getHitEntity().getUniqueId());
-            }
-            if (!flight.sliding() && entityHit != null && (blockHit == null
-                    || entityHit.getHitPosition().distanceSquared(current.toVector())
-                    <= blockHit.getHitPosition().distanceSquared(current.toVector()))) {
+            double blockDistanceSquared = blockHit == null
+                    ? Double.POSITIVE_INFINITY
+                    : blockHit.getHitPosition().distanceSquared(current.toVector());
+            Set<UUID> tracedEntityIds = new java.util.HashSet<>();
+            while (true) {
+                RayTraceResult entityHit = current.getWorld().rayTraceEntities(
+                        current, direction, distance, 0.35,
+                        entity -> validTarget(flight, entity) && !tracedEntityIds.contains(entity.getUniqueId()));
+                if (entityHit == null || entityHit.getHitEntity() == null
+                        || entityHit.getHitPosition().distanceSquared(current.toVector()) > blockDistanceSquared) {
+                    break;
+                }
                 LivingEntity target = (LivingEntity) entityHit.getHitEntity();
-                damageOnce(flight, target);
-                Vector normal = entityHit.getHitPosition().clone().subtract(
-                        target.getLocation().add(0.0, target.getHeight() * 0.5, 0.0).toVector());
-                normal = collisionNormal(normal, movement);
-                flight.velocity().copy(bounceVelocity(movement, normal, entityBounceRetention, surfaceRetention));
-                flight.setSliding(false);
-                next = collisionDestination(current, entityHit, normal, flight.velocity());
-                flight.rememberHit(target.getUniqueId());
-                bounced = true;
-            } else if (blockHit != null) {
+                tracedEntityIds.add(target.getUniqueId());
+                if (flight.beginEntityContact(target.getUniqueId())) {
+                    damageOnContact(flight, target);
+                }
+            }
+            if (blockHit != null) {
                 BlockFace face = blockHit.getHitBlockFace();
                 Vector normal = face == null
                         ? movement.clone().multiply(-1.0).normalize()
@@ -211,13 +213,15 @@ public final class DebugFishModule implements Listener, AutoCloseable {
                 if (!flight.sliding() && normal.getY() > 0.5 && incomingNormalSpeed <= slideNormalSpeed) {
                     Vector slidingVelocity = movement.clone()
                             .subtract(normal.clone().multiply(movement.dot(normal)))
-                            .multiply(groundFriction);
+                            .multiply(groundBounceTangentRetention);
                     slidingVelocity.setY(0.0);
                     flight.velocity().copy(slidingVelocity);
                     flight.setSliding(true);
                     next = collisionDestination(current, blockHit, normal, flight.velocity());
                 } else {
-                    double tangentRetention = normal.getY() > 0.5 ? groundFriction : surfaceRetention;
+                    double tangentRetention = normal.getY() > 0.5
+                            ? groundBounceTangentRetention
+                            : surfaceRetention;
                     Vector bouncedVelocity = bounceVelocity(movement, normal, bounceRetention, tangentRetention);
                     if (flight.sliding()) bouncedVelocity.setY(0.0);
                     flight.velocity().copy(bouncedVelocity);
@@ -250,8 +254,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
 
     private boolean validTarget(Flight flight, Entity entity) {
         if (!(entity instanceof LivingEntity living) || entity.getUniqueId().equals(flight.fish().getUniqueId())
-                || entity.getUniqueId().equals(flight.shooterId()) || entity.isDead()
-                || flight.recentlyHit(entity.getUniqueId())) {
+                || entity.getUniqueId().equals(flight.shooterId()) || entity.isDead()) {
             return false;
         }
         Player shooter = Bukkit.getPlayer(flight.shooterId());
@@ -264,14 +267,12 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         return true;
     }
 
-    private void damageOnce(Flight flight, LivingEntity target) {
-        if (!flight.damagedTargets().add(target.getUniqueId())) {
-            return;
-        }
+    private void damageOnContact(Flight flight, LivingEntity target) {
         Location targetLocation = target.getLocation();
         context.api().runtime().executeAt(targetLocation, () -> {
             if (!closed && target.isValid() && !target.isDead()) {
                 Player shooter = Bukkit.getPlayer(flight.shooterId());
+                target.setNoDamageTicks(0);
                 target.damage(damage, shooter == null ? flight.fish() : shooter);
             }
         });
@@ -436,8 +437,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         private final UUID shooterId;
         private final Location origin;
         private final Vector velocity;
-        private final Set<UUID> damagedTargets = ConcurrentHashMap.newKeySet();
-        private final Map<UUID, Integer> recentEntityHits = new ConcurrentHashMap<>();
+        private final Set<UUID> activeEntityContacts = ConcurrentHashMap.newKeySet();
         private int ageTicks;
         private boolean sliding;
 
@@ -452,23 +452,25 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         UUID shooterId() { return shooterId; }
         Location origin() { return origin; }
         Vector velocity() { return velocity; }
-        Set<UUID> damagedTargets() { return damagedTargets; }
         int ageTicks() { return ageTicks; }
         boolean sliding() { return sliding; }
         void setSliding(boolean sliding) { this.sliding = sliding; }
 
-        boolean recentlyHit(UUID entityId) {
-            Integer hitAge = recentEntityHits.get(entityId);
-            return hitAge != null && ageTicks - hitAge < 4;
+        void clearSeparatedEntityContacts(Location current) {
+            Vector point = current.toVector();
+            activeEntityContacts.removeIf(entityId -> {
+                Entity entity = Bukkit.getEntity(entityId);
+                return entity == null || !entity.isValid()
+                        || !entity.getBoundingBox().clone().expand(0.35).contains(point);
+            });
         }
 
-        void rememberHit(UUID entityId) {
-            recentEntityHits.put(entityId, ageTicks);
+        boolean beginEntityContact(UUID entityId) {
+            return activeEntityContacts.add(entityId);
         }
 
         void advance() {
             ageTicks++;
-            recentEntityHits.entrySet().removeIf(entry -> ageTicks - entry.getValue() >= 4);
         }
     }
 }
