@@ -43,7 +43,7 @@ Paper 1.21.8 already bundles spark. A separate `spark.jar` is not installed.
 
 ## BasicTeleporter independent repository
 
-`external/BasicTeleporter` is an independent Git repository imported from `BasicTeleporter-src-1.0.2.zip`. The main SlimeFunX repository ignores the whole directory; its source history and build outputs stay separate.
+`external/BasicTeleporter` is an independent Git repository imported from `BasicTeleporter-src-1.0.2.zip` and extended locally as BasicTeleporter 1.1.0 with Chunky-backed RTP. The main SlimeFunX repository ignores the whole directory; its source history and build outputs stay separate.
 
 ```powershell
 .\gradlew.bat buildBasicTeleporter --console=plain

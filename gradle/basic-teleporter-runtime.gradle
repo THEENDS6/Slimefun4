@@ -1,5 +1,5 @@
 def basicTeleporterProjectDir = layout.projectDirectory.dir('external/BasicTeleporter')
-def basicTeleporterJar = basicTeleporterProjectDir.file('build/libs/BasicTeleporter-1.0.2.jar')
+def basicTeleporterJar = basicTeleporterProjectDir.file('build/libs/BasicTeleporter-1.1.0.jar')
 def survivePluginsDir = layout.projectDirectory.dir('run-paper-slimefunx-survive-1.21.8/plugins')
 
 tasks.register('buildBasicTeleporter', GradleBuild) {
@@ -21,7 +21,7 @@ tasks.register('deployBasicTeleporterToSurviveRuntime', Copy) {
         if (!target.exists() || target.length() == 0L) {
             throw new GradleException("BasicTeleporter deployment failed: ${target}")
         }
-        logger.lifecycle("Deployed BasicTeleporter 1.0.2 to ${target}")
+        logger.lifecycle("Deployed BasicTeleporter 1.1.0 to ${target}")
     }
 }
 
