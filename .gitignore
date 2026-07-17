@@ -4,6 +4,7 @@ build/
 out/
 output/
 run-paper-1.21.8/
+run-paper-slimefunx-survive-1.21.8/
 run-paper-26.1/
 run-folia-1.21.8/
 run-legacy-slimefun-1.21.8/
@@ -14,3 +15,4 @@ build-log*.txt
 SFX_FRAMEWORK_REFACTOR_NOTES.md
 gradle/wrapper/
 /tools/
+/external/BasicTeleporter/

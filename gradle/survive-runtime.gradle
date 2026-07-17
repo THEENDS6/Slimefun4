@@ -1,0 +1,221 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+def surviveRuntimeDir = layout.projectDirectory.dir('run-paper-slimefunx-survive-1.21.8')
+def survivePluginsDir = surviveRuntimeDir.dir('plugins')
+def survivePaperJarName = 'paper-1.21.8-60.jar'
+def surviveMrcConfigFile = survivePluginsDir.file('MinecraftRemoteConsole/config.yml').asFile
+def surviveLatestLog = surviveRuntimeDir.file('logs/latest.log').asFile
+
+def readSurviveMrcSettings = {
+    if (!surviveMrcConfigFile.exists()) {
+        throw new GradleException("Missing survival MRC config: ${surviveMrcConfigFile}")
+    }
+    def text = surviveMrcConfigFile.getText('UTF-8')
+    def portMatch = text =~ /(?m)^\s{2}port:\s*(\d+)\s*$/
+    def tokenMatch = text =~ /(?m)^\s{2}token:\s*['\"]?([^'\"\r\n]+)['\"]?\s*$/
+    if (!portMatch.find() || !tokenMatch.find()) {
+        throw new GradleException("Missing server.port or server.token in ${surviveMrcConfigFile}")
+    }
+    [port: Integer.parseInt(portMatch.group(1)), token: tokenMatch.group(1).trim()]
+}
+
+def requestJson = { URL url, String token, String method, Object body, int timeoutMs ->
+    def connection = (java.net.HttpURLConnection) url.openConnection()
+    try {
+        connection.requestMethod = method
+        connection.connectTimeout = 5000
+        connection.readTimeout = timeoutMs
+        connection.setRequestProperty('Authorization', "Bearer ${token}")
+        connection.setRequestProperty('Content-Type', 'application/json; charset=UTF-8')
+        if (body != null) {
+            connection.doOutput = true
+            connection.outputStream.withCloseable { output ->
+                output.write(JsonOutput.toJson(body).getBytes(java.nio.charset.StandardCharsets.UTF_8))
+            }
+        }
+        int status = connection.responseCode
+        def stream = status >= 400 ? connection.errorStream : connection.inputStream
+        def responseText = stream == null ? '' : stream.getText('UTF-8')
+        if (status < 200 || status >= 300) {
+            throw new GradleException("HTTP ${status} from ${url}: ${responseText}")
+        }
+        responseText.isBlank() ? [:] : new JsonSlurper().parseText(responseText)
+    } finally {
+        connection.disconnect()
+    }
+}
+
+def sendSurviveMrcCommand = { String commandText, int waitMs = 60000 ->
+    def settings = readSurviveMrcSettings()
+    def result = requestJson(
+            new URL("http:
+            settings.token,
+            'POST',
+            [command: commandText, waitMs: waitMs],
+            waitMs + 5000)
+    def command = result.command
+    if (command?.state == 'FAILED' || command?.dispatchResult == false) {
+        throw new GradleException("MRC command failed: ${commandText}; ${command?.error ?: 'dispatchResult=false'}")
+    }
+    logger.lifecycle("MRC ${command?.state ?: 'accepted'}: ${commandText}")
+    result
+}
+
+rootProject.ext.sendSurviveMrcCommand = sendSurviveMrcCommand
+
+def waitForSurviveLog = { offsetValue, expectedValue, timeoutValue ->
+    long offset = offsetValue as long
+    String expected = expectedValue.toString()
+    long timeoutMs = timeoutValue as long
+    long deadline = System.currentTimeMillis() + timeoutMs
+    while (System.currentTimeMillis() <= deadline) {
+        if (surviveLatestLog.exists() && surviveLatestLog.length() > offset) {
+            def input = new RandomAccessFile(surviveLatestLog, 'r')
+            def text = input.withCloseable {
+                it.seek(offset)
+                byte[] bytes = new byte[(int) Math.min(Integer.MAX_VALUE, it.length() - offset)]
+                it.readFully(bytes)
+                new String(bytes, java.nio.charset.StandardCharsets.UTF_8)
+            }
+            if (text.contains('[SlimeFunX] SlimeFunX failed to start:') || text.contains('Error occurred while enabling SlimeFunX')) {
+                return false
+            }
+            if (text.contains(expected)) {
+                return true
+            }
+        }
+        Thread.sleep(500L)
+    }
+    false
+}
+
+tasks.register('deployToSurviveRuntime', Copy) {
+    group = 'deployment'
+    description = 'Builds SlimeFunX and deploys it to the isolated Paper 1.21.8 survival test server.'
+    dependsOn 'validateSfxBundledCompiledContent'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(survivePluginsDir)
+    rename { rootProject.ext.pluginJarName }
+}
+
+tasks.register('stageSurviveRuntimeUpdate', Copy) {
+    group = 'deployment'
+    description = 'Stages SlimeFunX for the next managed survival-server restart.'
+    dependsOn 'validateSfxBundledCompiledContent'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(survivePluginsDir.dir('update'))
+    rename { rootProject.ext.pluginJarName }
+}
+
+tasks.register('surviveMrc') {
+    group = 'application'
+    description = 'Sends -Pcmd="..." to the survival test server through MRC.'
+    doLast {
+        def commandText = project.findProperty('cmd')?.toString()
+        if (commandText == null || commandText.isBlank()) {
+            throw new GradleException('Missing command. Use: .\\gradlew.bat surviveMrc -Pcmd="list"')
+        }
+        sendSurviveMrcCommand(commandText)
+    }
+}
+
+tasks.register('reloadSurviveRuntime') {
+    group = 'application'
+    description = 'Reloads SFX runtime data on the survival test server through MRC.'
+    doLast {
+        sendSurviveMrcCommand('sfx reload runtime')
+    }
+}
+
+tasks.register('plugmanReloadSurviveRuntime') {
+    group = 'application'
+    description = 'Builds SFX, then unloads, replaces and loads it on the survival server through MRC.'
+    dependsOn 'validateSfxBundledCompiledContent'
+    doLast {
+        sendSurviveMrcCommand('plugman unload SlimeFunX')
+        def builtJar = tasks.named('jar').get().archiveFile.get().asFile
+        def targetJar = survivePluginsDir.file(rootProject.ext.pluginJarName).asFile
+        java.nio.file.Files.copy(builtJar.toPath(), targetJar.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        if (builtJar.length() != targetJar.length()
+                || !java.util.Arrays.equals(builtJar.bytes, targetJar.bytes)) {
+            throw new GradleException('Survival runtime SlimeFunX.jar does not match the current build.')
+        }
+        long offset = surviveLatestLog.exists() ? surviveLatestLog.length() : 0L
+        sendSurviveMrcCommand('plugman load SlimeFunX')
+        if (!waitForSurviveLog(offset, '[SlimeFunX] SFX enabled.', 40000L)) {
+            throw new GradleException('SlimeFunX enablement was not confirmed in the survival runtime log.')
+        }
+    }
+}
+
+tasks.register('restartSurviveRuntime') {
+    group = 'application'
+    description = 'Stages SFX and asks the persistent local MRC controller to restart and verify the survival server.'
+    dependsOn 'stageSurviveRuntimeUpdate'
+    doLast {
+        def settings = readSurviveMrcSettings()
+        def configFile = layout.projectDirectory.file('external/MinecraftRemoteConsole/build/controller/data/config.json').asFile
+        def controllerConfig = configFile.exists() ? new JsonSlurper().parse(configFile) : [:]
+        def controllerPort = (controllerConfig.port ?: 8765) as int
+        def controllerToken = controllerConfig.token?.toString()
+        if (controllerToken == null || controllerToken.isBlank()) {
+            throw new GradleException("Missing controller token in ${configFile}")
+        }
+        def controllerBase = "http://127.0.0.1:${controllerPort}"
+        def scan = requestJson(new URL("${controllerBase}/api/v1/controller/scan"), controllerToken, 'POST', [:], 15000)
+        def expectedRoot = surviveRuntimeDir.asFile.canonicalPath
+        def server = scan.servers?.find {
+            new File(it.rootPath.toString()).canonicalPath.equalsIgnoreCase(expectedRoot)
+        }
+        if (server == null) {
+            throw new GradleException("MRC controller did not discover ${expectedRoot}")
+        }
+        requestJson(
+                new URL("${controllerBase}/api/v1/controller/servers/${server.id}/restart"),
+                controllerToken,
+                'POST',
+                [:],
+                30000)
+
+        long startDeadline = System.currentTimeMillis() + 120000L
+        boolean listening = false
+        while (System.currentTimeMillis() <= startDeadline) {
+            def socket = new Socket()
+            try {
+                socket.connect(new InetSocketAddress('127.0.0.1', settings.port as int), 750)
+                listening = true
+                break
+            } catch (IOException ignored) {
+                Thread.sleep(1000L)
+            } finally {
+                try {
+                    socket.close()
+                } catch (IOException ignored) {
+                    
+                }
+            }
+        }
+        if (!listening) {
+            throw new GradleException('Survival MRC did not return after the managed restart.')
+        }
+        def logText = surviveLatestLog.exists() ? surviveLatestLog.getText('UTF-8') : ''
+        if (!logText.contains('[SlimeFunX] SFX enabled.')) {
+            throw new GradleException('The server restarted, but SFX enablement was not found in latest.log.')
+        }
+        sendSurviveMrcCommand('list', 5000)
+        logger.lifecycle("MRC controller restarted ${server.name} (${server.id}) and passed SFX/MRC verification.")
+    }
+}
+
+tasks.register('runSurvivePaper', Exec) {
+    group = 'application'
+    description = 'Builds SFX, deploys it and starts the isolated Paper 1.21.8 survival test server.'
+    dependsOn 'deployToSurviveRuntime'
+    workingDir surviveRuntimeDir.asFile
+    executable file('C:/Program Files/Java/jdk-21/bin/java.exe').exists()
+            ? file('C:/Program Files/Java/jdk-21/bin/java.exe').absolutePath
+            : 'java'
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms2G', '-Xmx4G', '-jar', survivePaperJarName, 'nogui']
+}

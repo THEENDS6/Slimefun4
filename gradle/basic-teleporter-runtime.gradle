@@ -1,0 +1,52 @@
+def basicTeleporterProjectDir = layout.projectDirectory.dir('external/BasicTeleporter')
+def basicTeleporterJar = basicTeleporterProjectDir.file('build/libs/BasicTeleporter-1.0.1.jar')
+def survivePluginsDir = layout.projectDirectory.dir('run-paper-slimefunx-survive-1.21.8/plugins')
+
+tasks.register('buildBasicTeleporter', GradleBuild) {
+    group = 'basic-teleporter'
+    description = 'Builds the independent external/BasicTeleporter repository with its own Gradle project.'
+    dir = basicTeleporterProjectDir.asFile
+    tasks = ['clean', 'build']
+}
+
+tasks.register('deployBasicTeleporterToSurviveRuntime', Copy) {
+    group = 'basic-teleporter'
+    description = 'Builds and deploys BasicTeleporter.jar to the isolated survival test server.'
+    dependsOn 'buildBasicTeleporter'
+    from(basicTeleporterJar)
+    into(survivePluginsDir)
+    rename { 'BasicTeleporter.jar' }
+    doLast {
+        def target = survivePluginsDir.file('BasicTeleporter.jar').asFile
+        if (!target.exists() || target.length() == 0L) {
+            throw new GradleException("BasicTeleporter deployment failed: ${target}")
+        }
+        logger.lifecycle("Deployed BasicTeleporter 1.0.1 to ${target}")
+    }
+}
+
+tasks.register('reloadBasicTeleporterConfig') {
+    group = 'basic-teleporter'
+    description = 'Reloads BasicTeleporter configuration on the survival server through MRC.'
+    doLast {
+        rootProject.ext.sendSurviveMrcCommand('basicteleporter reload')
+    }
+}
+
+tasks.register('plugmanReloadBasicTeleporter') {
+    group = 'basic-teleporter'
+    description = 'Builds and hot-replaces BasicTeleporter on the survival server through MRC and PlugManX.'
+    dependsOn 'buildBasicTeleporter'
+    doLast {
+        rootProject.ext.sendSurviveMrcCommand('plugman unload BasicTeleporter')
+        def builtJar = basicTeleporterJar.asFile
+        def targetJar = survivePluginsDir.file('BasicTeleporter.jar').asFile
+        java.nio.file.Files.copy(builtJar.toPath(), targetJar.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        if (builtJar.length() != targetJar.length()
+                || !java.util.Arrays.equals(builtJar.bytes, targetJar.bytes)) {
+            throw new GradleException('BasicTeleporter runtime JAR does not match the independent build output.')
+        }
+        rootProject.ext.sendSurviveMrcCommand('plugman load BasicTeleporter')
+        rootProject.ext.sendSurviveMrcCommand('plugman info BasicTeleporter')
+    }
+}
