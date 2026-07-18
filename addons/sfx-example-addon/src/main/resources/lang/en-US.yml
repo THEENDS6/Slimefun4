@@ -90,7 +90,7 @@ example-cargo:
   title: '&6DEBUG Transport Dispatcher'
   state:
     name: '&eNetwork state: {state}'
-    lore: '&7Current speed multiplier: x{speed}.'
+    lore: '&7Current work interval: {interval} ticks.'
     enabled: '&aEnabled'
     disabled: '&cDisabled'
   enable:
@@ -99,13 +99,18 @@ example-cargo:
   disable:
     name: '&cDisable cargo network'
     lore: '&7Pauses all transfers in the connected network.'
-  speed-down:
-    name: '&cDecrease dispatch speed'
-  speed-up:
-    name: '&aIncrease dispatch speed'
-  speed:
-    name: '&eDispatch speed: x{speed}'
-    lore: '&7Click adjusts 1; Shift-click adjusts 10; maximum x{max_speed}.'
+  interval-down:
+    name: '&cShorten work interval'
+  interval-up:
+    name: '&aLengthen work interval'
+  interval:
+    name: '&eWork interval: {interval} ticks'
+    lore: '&7Left-click adjusts 0.1, right-click 1; Shift-left 10, Shift-right 100. Click the clock for exact input. 0 runs every tick until all possible transfers finish. Maximum: {max_interval} ticks.'
   visualizer:
     name: '&dToggle cargo particles'
     lore: '&7Toggles network particles for the current player.'
+  message:
+    interval-prompt: '&eEnter a work interval from 0 to {max} ticks (decimals allowed), or type cancel.'
+    updated: '&aThe current cargo network now works every {interval} ticks.'
+    invalid: '&cEnter a valid number from 0 to {max}.'
+    timeout: '&7Input timed out; the work interval was not changed.'

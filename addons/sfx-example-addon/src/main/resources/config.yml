@@ -11,9 +11,9 @@ debug-transport-dispatcher:
   default-range-x: 8
   default-range-y: 4
   default-range-z: 8
-  default-interval-ticks: 20
-  max-transfers-per-run: 64
-  max-speed-multiplier: 16
+  default-work-interval-ticks: 10.0
+  max-work-interval-ticks: 1200.0
+  instant-max-passes-per-tick: 4096
 
 debug-fish:
   damage: 6.0

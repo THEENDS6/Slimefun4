@@ -27,7 +27,7 @@ final class SfxCargoNodeState {
     int priority = 1;
     int roundRobinCursor = 0;
     boolean enabled = true;
-    int managerSpeedMultiplier = 1;
+    double managerWorkIntervalTicks = Double.NaN;
     String selectedRecipeKey = "";
     ItemStack[] filterItems = new ItemStack[FILTER_SIZE];
 
@@ -75,8 +75,11 @@ final class SfxCargoNodeState {
             } else {
                 state.batchLimit = normalizeBatchLimit(state.maxItemsPerCycle);
             }
-            if (version >= 4) {
-                state.managerSpeedMultiplier = clamp(input.readInt(), 1, 64);
+            if (version >= 5) {
+                state.managerWorkIntervalTicks = normalizeWorkInterval(input.readDouble(), 10.0D);
+            } else if (version >= 4) {
+                int legacyMultiplier = clamp(input.readInt(), 1, 64);
+                state.managerWorkIntervalTicks = 10.0D / legacyMultiplier;
             }
             int filterLength = input.readInt();
             state.filterItems = new ItemStack[FILTER_SIZE];
@@ -105,7 +108,7 @@ final class SfxCargoNodeState {
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             try (DataOutputStream output = new DataOutputStream(buffer)) {
-                output.writeInt(4);
+                output.writeInt(5);
                 output.writeUTF(attachedFace.name());
                 output.writeInt(clamp(channel, 0, 15));
                 output.writeUTF(filterMode.name());
@@ -121,7 +124,7 @@ final class SfxCargoNodeState {
                 output.writeBoolean(roundRobin);
                 output.writeBoolean(allowMultipleSlots);
                 output.writeInt(normalizeBatchLimit(batchLimit));
-                output.writeInt(clamp(managerSpeedMultiplier, 1, 64));
+                output.writeDouble(normalizeWorkInterval(managerWorkIntervalTicks, 10.0D));
                 output.writeInt(filterItems.length);
                 for (ItemStack stack : filterItems) {
                     output.writeBoolean(stack != null && !stack.getType().isAir());
@@ -142,6 +145,11 @@ final class SfxCargoNodeState {
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to encode cargo node state", exception);
         }
+    }
+
+    static double normalizeWorkInterval(double value, double fallback) {
+        double safeFallback = Double.isFinite(fallback) ? Math.max(0.0D, fallback) : 10.0D;
+        return Double.isFinite(value) ? Math.max(0.0D, value) : safeFallback;
     }
 
     private static SfxCargoFilterMode safeFilter(String raw) {

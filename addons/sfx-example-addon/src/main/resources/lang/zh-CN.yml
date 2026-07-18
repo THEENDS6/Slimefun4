@@ -90,7 +90,7 @@ example-cargo:
   title: '&6DEBUG 运输调度'
   state:
     name: '&e网络运行状态：{state}'
-    lore: '&7当前速度倍率：x{speed}。'
+    lore: '&7当前工作间隔：{interval} tick。'
     enabled: '&a已启用'
     disabled: '&c已关闭'
   enable:
@@ -99,13 +99,18 @@ example-cargo:
   disable:
     name: '&c关闭运输网络'
     lore: '&7暂停当前网络的全部运输。'
-  speed-down:
-    name: '&c降低调度倍率'
-  speed-up:
-    name: '&a提高调度倍率'
-  speed:
-    name: '&e调度速度：x{speed}'
-    lore: '&7普通点击调整 1，Shift 点击调整 10；最大 x{max_speed}。'
+  interval-down:
+    name: '&c缩短工作间隔'
+  interval-up:
+    name: '&a延长工作间隔'
+  interval:
+    name: '&e工作间隔：{interval} tick'
+    lore: '&7左键调整 0.1，右键调整 1；Shift+左键 10，Shift+右键 100。点击时钟可精确输入；0 表示每 tick 瞬间搬完。最大 {max_interval} tick。'
   visualizer:
     name: '&d切换运输粒子'
     lore: '&7为当前玩家开启或关闭网络粒子显示。'
+  message:
+    interval-prompt: '&e请输入工作间隔（0-{max} tick，支持小数），输入 cancel 取消。'
+    updated: '&a当前运输网络的工作间隔已更新为 {interval} tick。'
+    invalid: '&c请输入 0-{max} 之间的有效数字。'
+    timeout: '&7输入已超时，工作间隔未修改。'

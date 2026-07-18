@@ -1,8 +1,10 @@
 package cc.theends6.sfx.api.cargo;
 
 
-public record SfxCargoManagerState(boolean enabled, int speedMultiplier) {
+public record SfxCargoManagerState(boolean enabled, double workIntervalTicks) {
     public SfxCargoManagerState {
-        speedMultiplier = Math.max(1, Math.min(64, speedMultiplier));
+        workIntervalTicks = Double.isFinite(workIntervalTicks)
+                ? Math.max(0.0D, workIntervalTicks)
+                : 10.0D;
     }
 }

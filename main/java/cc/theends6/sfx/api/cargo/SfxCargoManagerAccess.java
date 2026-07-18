@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 public interface SfxCargoManagerAccess {
     void setEnabled(boolean enabled);
 
-    void setSpeedMultiplier(int multiplier);
+    void setWorkIntervalTicks(double intervalTicks);
 
     void toggleVisualizer(Player player);
 

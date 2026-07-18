@@ -9,6 +9,18 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 
 public interface SfxCargoManagerProvider {
+    default double defaultWorkIntervalTicks() {
+        return 10.0D;
+    }
+
+    default int instantWorkPassLimit() {
+        return 4096;
+    }
+
+    default boolean ignoresGlobalVisualizerSetting() {
+        return false;
+    }
+
     default int menuSize() {
         return 27;
     }
