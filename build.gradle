@@ -3699,7 +3699,6 @@ lang
 
 
 
-
 *.jar'
         }.files.sort { it.absolutePath }
         if (libraryJars.isEmpty()) {
@@ -3710,7 +3709,6 @@ lang
             workingDir runDir
             standardInput = System.in
             environment 'JAVA_HOME', java25Home.absolutePath
-            environment 'PATH', "${new File(java25Home, 'bin').absolutePath}${File.pathSeparator}${System.getenv('PATH')}"
             commandLine new File(java25Home, 'bin/java.exe').absolutePath,
                     '-Xms2G',
                     '-Xmx2G',
@@ -3786,7 +3784,6 @@ tasks.register('buildJustEnoughGuideClassic') {
         exec {
             workingDir sourceDir
             environment 'JAVA_HOME', java21Home.absolutePath
-            environment 'PATH', "${new File(java21Home, 'bin').absolutePath}${File.pathSeparator}${System.getenv('PATH')}"
             commandLine mavenCommand.absolutePath, 'clean', 'package', '-DskipTests', '-B'
         }
 
@@ -3945,13 +3942,13 @@ def readRconPacket = { InputStream input ->
     [id: requestId, type: type, payload: new String(payload, StandardCharsets.UTF_8)]
 }
 
-def sendPaperRconCommand = { String commandText ->
+def sendPaperRconCommand = { String commandText, int responseTimeoutMs = 5000 ->
     def socket = new java.net.Socket()
     try {
         socket.connect(new java.net.InetSocketAddress(
                 rootProject.ext.paperRuntimeRconHost,
                 rootProject.ext.paperRuntimeRconPort as int), 5000)
-        socket.setSoTimeout(5000)
+        socket.setSoTimeout(responseTimeoutMs)
         def input = socket.getInputStream()
         def output = socket.getOutputStream()
         int authId = 0x53465801
@@ -3983,11 +3980,12 @@ def sendPaperRconCommand = { String commandText ->
     }
 }
 
-def sendPaperRconCommandWithRetry = { String commandText, int attempts = 3, long delayMs = 1000L ->
+def sendPaperRconCommandWithRetry = { String commandText, int attempts = 3, int delayMs = 1000,
+                                      int responseTimeoutMs = 5000 ->
     IOException lastIo = null
     for (int attempt = 1; attempt <= attempts; attempt++) {
         try {
-            return sendPaperRconCommand(commandText)
+            return sendPaperRconCommand(commandText, responseTimeoutMs)
         } catch (IOException exception) {
             lastIo = exception
             if (attempt < attempts) {
@@ -4085,7 +4083,7 @@ tasks.register('plugmanReloadPaperRuntime') {
             sendPaperRconCommandWithRetry('list')
             def logFile = layout.projectDirectory.file('run-paper-1.21.8/logs/latest.log').asFile
             long unloadLogOffset = logFile.exists() ? logFile.length() : 0L
-            def unloadResponse = sendPaperRconCommandWithRetry('plugman unload SlimeFunX')
+            def unloadResponse = sendPaperRconCommandWithRetry('plugman unload SlimeFunX', 1, 0, 60000)
             if (!String.valueOf(unloadResponse).contains('SlimeFunX has been unloaded')
                     && !String.valueOf(unloadResponse).contains('That is not a valid plugin')
                     && !waitForLogMatch(logFile, unloadLogOffset, ['[SlimeFunX] Disabling SlimeFunX'], 10000L)) {
@@ -4100,7 +4098,7 @@ tasks.register('plugmanReloadPaperRuntime') {
             logger.lifecycle("Copied ${builtJar.name} to ${targetJar}")
             Thread.sleep(1500L)
             long loadLogOffset = logFile.exists() ? logFile.length() : 0L
-            sendPaperRconCommandWithRetry('plugman load SlimeFunX', 5, 1500L)
+            sendPaperRconCommandWithRetry('plugman load SlimeFunX', 1, 0, 60000)
             if (!waitForSfxEnable(logFile, loadLogOffset, 20000L)) {
                 throw new GradleException('PlugManX load command was sent, but SlimeFunX enable was not observed in latest.log.')
             }
