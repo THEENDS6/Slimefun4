@@ -6,6 +6,7 @@ import cc.theends6.sfx.internal.listener.SfxAncientRuneEffectListener;
 import cc.theends6.sfx.internal.listener.SfxArmorEffectListener;
 import cc.theends6.sfx.internal.listener.SfxBackpackListener;
 import cc.theends6.sfx.internal.listener.SfxGuideListener;
+import cc.theends6.sfx.internal.listener.SfxGuideBookGrantListener;
 import cc.theends6.sfx.internal.listener.SfxItemUseDispatcher;
 import cc.theends6.sfx.internal.listener.SfxLegacyCombatToolListener;
 import cc.theends6.sfx.internal.listener.SfxLegacyFoodListener;
@@ -36,6 +37,7 @@ final class SfxPluginListenerWiring {
         plugin.listenerRegistrar.register(plugin.api.chatInput());
         plugin.listenerRegistrar.register(new SfxFloatingTextDisplayListener(plugin.floatingTextDisplayService));
         plugin.listenerRegistrar.register(new SfxPlayerProfileListener(plugin.playerDataService));
+        plugin.listenerRegistrar.register(new SfxGuideBookGrantListener(plugin, plugin.api.items(), plugin.localization));
         plugin.listenerRegistrar.register(plugin.radiationService);
         plugin.listenerRegistrar.register(new SfxGuideListener(plugin, plugin.api.items(), plugin.api.guide()));
         plugin.listenerRegistrar.register(new SfxItemUseDispatcher(plugin.api.items(), plugin.backpackListener, utilityListener, combatToolListener, foodListener, plugin.researchService, plugin.localization));

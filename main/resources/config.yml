@@ -68,6 +68,9 @@ diagnostics:
     machine-yaml: false
 
 guide:
+  
+  
+  give-book-on-join: true
   allow-right-click-open: true
   allow-left-click-open: false
   shift-right-click-settings: true

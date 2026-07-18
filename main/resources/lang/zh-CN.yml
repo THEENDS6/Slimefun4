@@ -3986,6 +3986,7 @@ categories:
   sf.cargo:
     name: '&fCargo'
 guide:
+  auto-book-received: <green>已自动领取 SFX 科技书。</green>
   errors:
     no-open: <red>你没有打开这本科技书的权限。</red>
     no-settings: <red>你没有打开科技书设置的权限。</red>

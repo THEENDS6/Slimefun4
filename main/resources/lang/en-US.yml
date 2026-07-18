@@ -75,6 +75,7 @@ radiation:
     v:
       description: Your body is being destroyed by radiation
 guide:
+  auto-book-received: <green>You automatically received the SFX guide book.</green>
   errors:
     no-open: <red>You do not have permission to open this guide.</red>
     no-settings: <red>You do not have permission to open the guide settings.</red>
