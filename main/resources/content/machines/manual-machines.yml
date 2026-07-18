@@ -488,6 +488,7 @@ machines:
     - basic
     - hand-input-transform
     - manual
+    - automated-panning
     pattern:
     - type: empty
     - type: empty

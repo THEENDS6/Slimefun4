@@ -401,8 +401,12 @@ public final class ManualMachineService {
         }
 
         SfxManualMachineRecipe recipe = craftable.get(ThreadLocalRandom.current().nextInt(craftable.size()));
-        List<SfxManualMachineOutput> outputs = selectedOutputs(recipe);
         Inventory output = resolveHandOutputInventory(definition, clickedBlock);
+        if (output != null && recipe.hasRandomOutputs() && !canFitRandomRecipe(cloneContents(output), recipe)) {
+            message(player, localization.text("machines.output-full"));
+            return;
+        }
+        List<SfxManualMachineOutput> outputs = selectedOutputs(recipe);
         if (output != null && !canFitAll(cloneContents(output), outputs)) {
             message(player, localization.text("machines.output-full"));
             return;
@@ -426,7 +430,20 @@ public final class ManualMachineService {
         }
         List<SfxManualMachineOutput> selected = new ArrayList<>(recipe.fixedOutputs());
         List<SfxManualMachineOutput> randomOutputs = recipe.randomOutputs();
-        selected.add(randomOutputs.get(ThreadLocalRandom.current().nextInt(randomOutputs.size())));
+        double totalWeight = 0.0D;
+        for (SfxManualMachineOutput output : randomOutputs) {
+            totalWeight += output.chance() == null ? 1.0D : output.chance();
+        }
+        double roll = ThreadLocalRandom.current().nextDouble(totalWeight);
+        SfxManualMachineOutput chosen = randomOutputs.getLast();
+        for (SfxManualMachineOutput output : randomOutputs) {
+            roll -= output.chance() == null ? 1.0D : output.chance();
+            if (roll < 0.0D) {
+                chosen = output;
+                break;
+            }
+        }
+        selected.add(chosen);
         return selected;
     }
 

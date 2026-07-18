@@ -29,7 +29,7 @@ machine-catalog:
   sf:magic_workbench: {category: BASIC, display-name: sf:magic_workbench, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, magic, magic-workbench]}
   sf:table_saw: {category: BASIC, display-name: sf:table_saw, status-slot: -1, tick-interval: 1, tags: [machine, basic, hand-input-transform, manual], profile: hand_input_transform}
   sf:juicer: {category: BASIC, display-name: sf:juicer, status-slot: -1, tick-interval: 1, tags: [machine, basic, manual, juicer]}
-  sf:automated_panning_machine: {category: BASIC, display-name: sf:automated_panning_machine, status-slot: -1, tick-interval: 1, tags: [machine, basic, hand-input-transform, manual], profile: hand_input_transform}
+  sf:automated_panning_machine: {category: BASIC, display-name: sf:automated_panning_machine, status-slot: -1, tick-interval: 1, tags: [machine, basic, hand-input-transform, manual, automated-panning], profile: hand_input_transform}
 
 basic-machines:
   @ot: content/machines/basic-machines.yml
@@ -45,4 +45,4 @@ basic-machines:
   sf:magic_workbench: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:magic_workbench]}}}
   sf:table_saw: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: []}}}
   sf:juicer: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:juicer]}}}
-  sf:automated_panning_machine: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: []}}}
+  sf:automated_panning_machine: {runtime: {executor: sf:manual_machine, accepts: {recipe-types: [sf:automated_panning_machine]}}}

@@ -1805,10 +1805,13 @@ tasks.register('validateSfxCompiledContent') {
                 return
             }
             def rel = root.toPath().relativize(file.toPath()).toString()
-            ['id', 'source', 'recipe-type', 'operation', 'guide-order', 'runtime', 'outputs'].each { field ->
+            ['id', 'source', 'recipe-type', 'operation', 'guide-order', 'runtime'].each { field ->
                 if (!recipe.fields.contains(field)) {
                     violations << "${rel}: recipe ${recipe.key} missing ${field}"
                 }
+            }
+            if (!recipe.fields.contains('outputs') && !recipe.fields.contains('random-outputs')) {
+                violations << "${rel}: recipe ${recipe.key} missing outputs/random-outputs"
             }
             if (recipe.id != null && recipe.id != recipe.key) {
                 violations << "${rel}: recipe ${recipe.key} id field mismatches entry key ${recipe.id}"
@@ -1845,8 +1848,8 @@ tasks.register('validateSfxCompiledContent') {
             } else if (!recipe.fields.contains('input')) {
                 violations << "${rel}: recipe ${recipe.key} ${operation} operation missing input"
             }
-            if (recipe.outputsCount < 1) {
-                violations << "${rel}: recipe ${recipe.key} outputs must contain at least one entry"
+            if (recipe.outputsCount + recipe.randomOutputsCount < 1) {
+                violations << "${rel}: recipe ${recipe.key} outputs/random-outputs must contain at least one entry"
             }
             if (recipe.runtime == 'true'
                     && !recipe.fields.contains('runtime-machine-tags')) {
@@ -1920,6 +1923,7 @@ tasks.register('validateSfxCompiledContent') {
                             matrixCount : 0,
                             inputsCount : 0,
                             outputsCount: 0,
+                            randomOutputsCount: 0,
                             machineRefs : [],
                             machineTagRefs: [],
                             scalarSlot  : false,
@@ -1985,6 +1989,8 @@ tasks.register('validateSfxCompiledContent') {
                         currentRecipe.inputsCount++
                     } else if (currentRecipe.section == 'outputs') {
                         currentRecipe.outputsCount++
+                    } else if (currentRecipe.section == 'random-outputs') {
+                        currentRecipe.randomOutputsCount++
                     } else if (currentRecipe.section == 'runtime-machines') {
                         currentRecipe.machineRefs << cleanScalar(itemText)
                     } else if (currentRecipe.section == 'runtime-machine-tags') {
@@ -2687,8 +2693,8 @@ tasks.register('validateSfxCompiledContent') {
                 violations << "compiled electric recipes must not use provider grouping"
             }
             electricRecipeCompiledEntryCount = (electricRecipeText =~ /(?m)^- id:\s*/).count
-            if (electricRecipeCompiledEntryCount != 182) {
-                violations << "compiled electric recipe entry count expected 182, got ${electricRecipeCompiledEntryCount}"
+            if (electricRecipeCompiledEntryCount != 178) {
+                violations << "compiled electric recipe entry count expected 178, got ${electricRecipeCompiledEntryCount}"
             }
             ['id:', 'inputs:', 'ticks:'].each { token ->
                 if (!electricRecipeText.contains(token)) {

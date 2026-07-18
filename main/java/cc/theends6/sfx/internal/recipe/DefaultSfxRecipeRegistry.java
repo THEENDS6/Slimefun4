@@ -129,7 +129,9 @@ public final class DefaultSfxRecipeRegistry {
                 case SHAPELESS -> definition.matchPriority() == null
                         ? SfxManualMachineRecipe.shapeless(machineId, definition.inputs(), fixedOutputs, note)
                         : SfxManualMachineRecipe.shapeless(machineId, definition.inputs(), fixedOutputs, note, definition.matchPriority());
-                case HAND -> SfxManualMachineRecipe.hand(machineId, definition.inputs().getFirst(), fixedOutputs, note);
+                case HAND -> randomOutputs.isEmpty()
+                        ? SfxManualMachineRecipe.hand(machineId, definition.inputs().getFirst(), fixedOutputs, note)
+                        : SfxManualMachineRecipe.randomHand(machineId, definition.inputs().getFirst(), randomOutputs, fixedOutputs, note);
                 case SINGLE -> randomOutputs.isEmpty()
                         ? SfxManualMachineRecipe.single(machineId, definition.inputs().getFirst(), fixedOutputs, note)
                         : SfxManualMachineRecipe.randomSingle(machineId, definition.inputs().getFirst(), randomOutputs, fixedOutputs, note);
@@ -157,9 +159,9 @@ public final class DefaultSfxRecipeRegistry {
         List<SfxManualMachineOutput> mapped = new ArrayList<>(outputs.size());
         for (SfxRecipeOutputDefinition output : outputs) {
             if (output.isSfxItem()) {
-                mapped.add(SfxManualMachineOutput.sfx(output.sfxItemId(), output.amount()));
+                mapped.add(SfxManualMachineOutput.sfx(output.sfxItemId(), output.amount(), output.chance()));
             } else {
-                mapped.add(SfxManualMachineOutput.vanilla(output.material(), output.amount()));
+                mapped.add(SfxManualMachineOutput.vanilla(output.material(), output.amount(), output.chance()));
             }
         }
         return mapped;

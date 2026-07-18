@@ -219,6 +219,7 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     public void bindRecipeRegistry(DefaultSfxRecipeRegistry recipeRegistry) {
         this.recipeRegistry = Objects.requireNonNull(recipeRegistry, "recipeRegistry");
+        vanillaRecipeCache.clear();
     }
 
     public void bindElectricMachines(Collection<SfxElectricMachineDefinition> definitions) {
@@ -675,6 +676,39 @@ public final class DefaultSfxGuide implements SfxGuide {
                         preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, List.of());
                 targets.putIfAbsent("sfx:" + result.id() + "#" + recipeIndex,
                         new UsageTarget(icon, handler));
+            }
+        }
+
+        DefaultSfxRecipeRegistry compiledRecipes = recipeRegistry;
+        if (compiledRecipes != null) {
+            for (SfxRecipeDefinition recipe : compiledRecipes.definitions()) {
+                if (!recipe.inputs().stream().anyMatch(slot -> sameIngredient(slot, ingredient))) {
+                    continue;
+                }
+                for (SfxRecipeOutputDefinition output : recipe.allOutputs()) {
+                    if (!output.isVanilla()) {
+                        continue;
+                    }
+                    Material outputMaterial = output.material();
+                    List<GuideRecipePage> pages = vanillaRecipePages(outputMaterial);
+                    int recipeIndex = -1;
+                    for (int index = 0; index < pages.size(); index++) {
+                        if (pages.get(index).recipeIds().contains(recipe.id())) {
+                            recipeIndex = index;
+                            break;
+                        }
+                    }
+                    if (recipeIndex < 0) {
+                        continue;
+                    }
+                    int targetIndex = recipeIndex;
+                    ItemStack icon = withLore(new ItemStack(outputMaterial, output.amount()), List.of(
+                            Component.empty(), Text.mm(tr("guide.actions.open-recipe"))));
+                    ClickHandler handler = click -> openVanillaRecipe(click.player(), mode, outputMaterial, targetIndex,
+                            preferences(click.player()).recordHistory() ? Navigation.OPEN : Navigation.REPLACE, List.of());
+                    targets.putIfAbsent("sfx-vanilla:" + outputMaterial.name() + "#" + recipe.id(),
+                            new UsageTarget(icon, handler));
+                }
             }
         }
 
@@ -1287,6 +1321,20 @@ public final class DefaultSfxGuide implements SfxGuide {
 
     private List<GuideRecipePage> loadVanillaRecipePages(Material material) {
         List<GuideRecipePage> pages = new ArrayList<>();
+        DefaultSfxRecipeRegistry compiledRecipes = recipeRegistry;
+        if (compiledRecipes != null) {
+            for (SfxRecipeDefinition recipe : compiledRecipes.definitions()) {
+                for (SfxRecipeOutputDefinition output : recipe.allOutputs()) {
+                    if (!output.isVanilla() || output.material() != material) {
+                        continue;
+                    }
+                    GuideRecipePage page = createCompiledVanillaRecipePage(recipe, output, pages.size());
+                    if (page != null) {
+                        pages.add(page);
+                    }
+                }
+            }
+        }
         var iterator = Bukkit.recipeIterator();
         while (iterator.hasNext()) {
             Recipe recipe = iterator.next();
@@ -1300,6 +1348,48 @@ public final class DefaultSfxGuide implements SfxGuide {
             }
         }
         return List.copyOf(mergeEquivalentSingleInputPages(mergeVanillaCookingPages(pages)));
+    }
+
+    private GuideRecipePage createCompiledVanillaRecipePage(SfxRecipeDefinition recipe, SfxRecipeOutputDefinition output, int index) {
+        List<SfxRecipeSlot> matrix = switch (recipe.operation()) {
+            case SHAPED -> recipe.inputs();
+            case SHAPELESS -> compiledShapelessMatrix(recipe.inputs());
+            case SINGLE, HAND -> compiledSingleMatrix(recipe.inputs().getFirst());
+        };
+        Optional<SfxItemDefinition> machine = registry.item(recipe.recipeType());
+        Optional<SfxManualMachineDefinition> manualMachine = manualMachines.machine(recipe.recipeType());
+        ItemStack sourceIcon;
+        String sourceName;
+        String machineTargetId = null;
+        if (machine.isPresent()) {
+            sourceIcon = withLore(items.create(machine.get(), 1), List.of(Component.empty(), Text.mm(tr("guide.actions.open-recipe"))));
+            sourceName = itemDisplayName(machine.get());
+            machineTargetId = machine.get().id();
+        } else if (manualMachine.isPresent()) {
+            sourceIcon = machineSourceIcon(manualMachine.get());
+            sourceName = machineDisplayName(manualMachine.get());
+            machineTargetId = manualMachine.get().id();
+        } else {
+            sourceIcon = ItemBuilder.of(Material.BOOK).name("<green>" + recipe.recipeType() + "</green>").build();
+            sourceName = recipe.recipeType();
+        }
+        return new GuideRecipePage(index, GuideRecipeOrigin.SFX, recipe.recipeType(), familyKey(recipe.recipeType()),
+                sourceName, machineTargetId, sourceIcon, normalizeMatrix(matrix), null, output.amount(), false,
+                List.of(recipe.id()), List.of());
+    }
+
+    private List<SfxRecipeSlot> compiledShapelessMatrix(List<SfxRecipeSlot> inputs) {
+        List<SfxRecipeSlot> matrix = emptyMatrix();
+        for (int index = 0; index < Math.min(inputs.size(), matrix.size()); index++) {
+            matrix.set(index, inputs.get(index));
+        }
+        return matrix;
+    }
+
+    private List<SfxRecipeSlot> compiledSingleMatrix(SfxRecipeSlot input) {
+        List<SfxRecipeSlot> matrix = emptyMatrix();
+        matrix.set(4, input);
+        return matrix;
     }
 
     private GuideRecipePage createVanillaRecipePage(Recipe recipe, int index) {
@@ -1712,13 +1802,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             return compiledBioFuelDisplayEntries(definition.id(), mode, 300);
         }
         return switch (definition.id()) {
-            case "sf:composter" -> pairedDisplayEntries(List.of(
-                    SfxRecipeSlot.vanilla(Material.OAK_LEAVES, 8), SfxRecipeSlot.vanilla(Material.DIRT),
-                    SfxRecipeSlot.vanilla(Material.OAK_SAPLING, 8), SfxRecipeSlot.vanilla(Material.DIRT),
-                    SfxRecipeSlot.vanilla(Material.STONE, 4), SfxRecipeSlot.vanilla(Material.NETHERRACK),
-                    SfxRecipeSlot.vanilla(Material.SAND, 2), SfxRecipeSlot.vanilla(Material.SOUL_SAND),
-                    SfxRecipeSlot.vanilla(Material.WHEAT, 4), SfxRecipeSlot.vanilla(Material.NETHER_WART)
-            ), mode);
+            case "sf:composter" -> compiledMachineProcessEntries("sf:composter", mode, List.of());
             case "sf:crucible", "sf:electrified_crucible", "sf:electrified_crucible_2", "sf:electrified_crucible_3" ->
                     crucibleDisplayEntries(mode);
             case "sf:auto_anvil", "sf:auto_anvil_2" -> autoAnvilDisplayEntries(mode);

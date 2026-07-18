@@ -102,6 +102,10 @@ public final class SfxManualMachineRecipe {
         return new SfxManualMachineRecipe(machineId, SfxManualMachineOperation.HAND_INPUT, List.of(input), outputs, note);
     }
 
+    public static SfxManualMachineRecipe randomHand(String machineId, SfxRecipeSlot input, List<SfxManualMachineOutput> randomOutputs, List<SfxManualMachineOutput> fixedOutputs, Component note) {
+        return new SfxManualMachineRecipe(machineId, SfxManualMachineOperation.HAND_INPUT, List.of(input), fixedOutputs, randomOutputs, note);
+    }
+
     private static int inferPriority(List<SfxRecipeSlot> input) {
         int nonEmpty = 0;
         int totalAmount = 0;

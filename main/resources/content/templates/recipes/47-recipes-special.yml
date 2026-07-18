@@ -151,6 +151,61 @@ recipes:
     - empty
     outputs:
     - sf:sifted_ore
+  classic:automated_pan_gravel:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: classic:automated_pan_gravel
+    recipe-type: sf:automated_panning_machine
+    operation: hand
+    guide-order: 9
+    source: slimefun-classic
+    runtime: true
+    runtime-machine-tags:
+    - automated-panning
+    input: GRAVEL
+    random-outputs:
+    - {type: vanilla, material: FLINT, amount: 1, chance: 0.40}
+    - {type: vanilla, material: CLAY_BALL, amount: 1, chance: 0.20}
+    - {type: sfx, id: sf:sifted_ore, amount: 1, chance: 0.35}
+    - {type: vanilla, material: IRON_NUGGET, amount: 1, chance: 0.05}
+  classic:automated_pan_soul_sand:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: classic:automated_pan_soul_sand
+    recipe-type: sf:automated_panning_machine
+    operation: hand
+    guide-order: 10
+    source: slimefun-classic
+    runtime: true
+    runtime-machine-tags:
+    - automated-panning
+    input: SOUL_SAND
+    random-outputs:
+    - {type: vanilla, material: QUARTZ, amount: 1, chance: 0.50}
+    - {type: vanilla, material: GOLD_NUGGET, amount: 1, chance: 0.25}
+    - {type: vanilla, material: NETHER_WART, amount: 1, chance: 0.10}
+    - {type: vanilla, material: BLAZE_POWDER, amount: 1, chance: 0.08}
+    - {type: vanilla, material: GLOWSTONE_DUST, amount: 1, chance: 0.05}
+    - {type: vanilla, material: GHAST_TEAR, amount: 1, chance: 0.02}
+  classic:automated_pan_soul_soil:
+    '@cf': templates.recipes.legacy-entry
+    '@io': true
+    id: classic:automated_pan_soul_soil
+    recipe-type: sf:automated_panning_machine
+    operation: hand
+    guide-order: 11
+    source: slimefun-classic
+    runtime: true
+    runtime-machine-tags:
+    - automated-panning
+    input: SOUL_SOIL
+    random-outputs:
+    - {type: vanilla, material: QUARTZ, amount: 1, chance: 0.50}
+    - {type: vanilla, material: GOLD_NUGGET, amount: 1, chance: 0.25}
+    - {type: vanilla, material: NETHER_WART, amount: 1, chance: 0.10}
+    - {type: vanilla, material: BLAZE_POWDER, amount: 1, chance: 0.08}
+    - {type: vanilla, material: GLOWSTONE_DUST, amount: 1, chance: 0.05}
+    - {type: vanilla, material: GHAST_TEAR, amount: 1, chance: 0.02}
   legacy:ender_lump_1:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -506,62 +561,40 @@ recipes:
   classic:crush_raw_gold: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_raw_gold', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 75, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: RAW_GOLD, outputs: ['sf:gold_dust'] }
   classic:crush_copper_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_copper_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 77, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: COPPER_ORE, outputs: ['sf:copper_dust*2'] }
   classic:crush_deepslate_copper_ore: { '@cf': templates.recipes.legacy-entry, '@io': true, id: 'classic:crush_deepslate_copper_ore', recipe-type: 'sf:ore_crusher', operation: single, guide-order: 78, source: slimefun-classic, runtime: true, runtime-machine-tags: [ore-crusher], input: DEEPSLATE_COPPER_ORE, outputs: ['sf:copper_dust*2'] }
-  legacy:aluminum_dust:
+  classic:compost_leaves:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: classic:compost_leaves, recipe-type: sf:composter, operation: single, guide-order: 80, source: slimefun-classic, runtime: false, input: 'OAK_LEAVES*8', outputs: [DIRT]}
+  classic:compost_saplings:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: classic:compost_saplings, recipe-type: sf:composter, operation: single, guide-order: 81, source: slimefun-classic, runtime: false, input: 'OAK_SAPLING*8', outputs: [DIRT]}
+  classic:compost_stone:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: classic:compost_stone, recipe-type: sf:composter, operation: single, guide-order: 82, source: slimefun-classic, runtime: false, input: 'STONE*4', outputs: [NETHERRACK]}
+  classic:compost_sand:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: classic:compost_sand, recipe-type: sf:composter, operation: single, guide-order: 83, source: slimefun-classic, runtime: false, input: 'SAND*2', outputs: [SOUL_SAND]}
+  classic:compost_wheat:
+    {'@cf': templates.recipes.legacy-entry, '@io': true, id: classic:compost_wheat, recipe-type: sf:composter, operation: single, guide-order: 84, source: slimefun-classic, runtime: false, input: 'WHEAT*4', outputs: [NETHER_WART]}
+  classic:wash_sifted_ore:
     '@cf': templates.recipes.legacy-entry
     '@io': true
-    id: legacy:aluminum_dust
+    id: classic:wash_sifted_ore
     recipe-type: sf:ore_washer
     operation: single
     guide-order: 27
-    source: slimefun-rc37
+    source: slimefun-classic
     runtime: true
     runtime-machine-tags:
     - ore-washer
     input: sf:sifted_ore
     outputs:
-    - sf:aluminum_dust
-  legacy:copper_dust:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:copper_dust
-    recipe-type: sf:ore_washer
-    operation: single
-    guide-order: 28
-    source: slimefun-rc37
-    runtime: true
-    runtime-machine-tags:
-    - ore-washer
-    input: sf:sifted_ore
-    outputs:
-    - sf:copper_dust
-  legacy:lead_dust:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:lead_dust
-    recipe-type: sf:ore_washer
-    operation: single
-    guide-order: 29
-    source: slimefun-rc37
-    runtime: true
-    runtime-machine-tags:
-    - ore-washer
-    input: sf:sifted_ore
-    outputs:
-    - sf:lead_dust
-  legacy:magnesium_dust:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:magnesium_dust
-    recipe-type: sf:ore_washer
-    operation: single
-    guide-order: 30
-    source: slimefun-rc37
-    runtime: true
-    runtime-machine-tags:
-    - ore-washer
-    input: sf:sifted_ore
-    outputs:
-    - sf:magnesium_dust
+    - sf:stone_chunk
+    random-outputs:
+    - {type: sfx, id: sf:iron_dust, amount: 1, chance: 0.1111111111111111}
+    - {type: sfx, id: sf:gold_dust, amount: 1, chance: 0.1111111111111111}
+    - {type: sfx, id: sf:copper_dust, amount: 1, chance: 0.1111111111111111}
+    - {type: sfx, id: sf:tin_dust, amount: 1, chance: 0.1111111111111111}
+    - {type: sfx, id: sf:zinc_dust, amount: 1, chance: 0.1111111111111111}
+    - {type: sfx, id: sf:aluminum_dust, amount: 1, chance: 0.1111111111111111}
+    - {type: sfx, id: sf:magnesium_dust, amount: 1, chance: 0.1111111111111111}
+    - {type: sfx, id: sf:lead_dust, amount: 1, chance: 0.1111111111111111}
+    - {type: sfx, id: sf:silver_dust, amount: 1, chance: 0.1111111111111111}
   legacy:pure_ore_cluster:
     '@cf': templates.recipes.legacy-entry
     '@io': true
@@ -593,62 +626,6 @@ recipes:
       amount: 2
     outputs:
     - sf:salt
-  legacy:silver_dust:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:silver_dust
-    recipe-type: sf:ore_washer
-    operation: single
-    guide-order: 33
-    source: slimefun-rc37
-    runtime: true
-    runtime-machine-tags:
-    - ore-washer
-    input: sf:sifted_ore
-    outputs:
-    - sf:silver_dust
-  legacy:stone_chunk:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:stone_chunk
-    recipe-type: sf:ore_washer
-    operation: single
-    guide-order: 34
-    source: slimefun-rc37
-    runtime: true
-    runtime-machine-tags:
-    - ore-washer
-    input: sf:sifted_ore
-    outputs:
-    - sf:stone_chunk
-  legacy:tin_dust:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:tin_dust
-    recipe-type: sf:ore_washer
-    operation: single
-    guide-order: 35
-    source: slimefun-rc37
-    runtime: true
-    runtime-machine-tags:
-    - ore-washer
-    input: sf:sifted_ore
-    outputs:
-    - sf:tin_dust
-  legacy:zinc_dust:
-    '@cf': templates.recipes.legacy-entry
-    '@io': true
-    id: legacy:zinc_dust
-    recipe-type: sf:ore_washer
-    operation: single
-    guide-order: 36
-    source: slimefun-rc37
-    runtime: true
-    runtime-machine-tags:
-    - ore-washer
-    input: sf:sifted_ore
-    outputs:
-    - sf:zinc_dust
   legacy:bucket_of_fuel:
     '@cf': templates.recipes.legacy-entry
     '@io': true
