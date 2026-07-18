@@ -4,6 +4,7 @@ import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
 import cc.theends6.sfx.internal.research.SfxResearchDefinition;
 import cc.theends6.sfx.api.text.Text;
+import cc.theends6.sfx.api.research.SfxResearchPaymentResult;
 import org.bukkit.entity.Player;
 
 
@@ -18,17 +19,22 @@ final class SfxGuideResearchUnlockController {
             onSuccess.run();
             return;
         }
-        if (!guide.canAffordResearch(player, research)) {
-            player.sendMessage(Text.prefixed(guide.plugin, guide.tr("messages.not-enough-xp")));
-            onFailure.run();
-            return;
-        }
         if (!guide.researchingPlayers.add(player.getUniqueId())) {
             return;
         }
 
+        SfxResearchPaymentResult payment = guide.chargeResearch(player, research);
+        if (!payment.paid()) {
+            guide.researchingPlayers.remove(player.getUniqueId());
+            String message = payment.failureMessage().isBlank()
+                    ? guide.tr("messages.not-enough-xp")
+                    : payment.failureMessage();
+            player.sendMessage(Text.prefixed(guide.plugin, message));
+            onFailure.run();
+            return;
+        }
+
         String researchName = guide.displayResearchName(research, definition);
-        guide.consumeResearchCost(player, research);
         GuidePreferences preferences = guide.preferences(player);
 
         if (!preferences.unlockAnimation()) {

@@ -1,0 +1,20 @@
+
+defaults:
+  
+  mode: points
+  multiplier: 1.0
+  rounding:
+    
+    unit: 100
+    
+    mode: up
+
+
+
+researches: {}
+
+
+
+
+
+

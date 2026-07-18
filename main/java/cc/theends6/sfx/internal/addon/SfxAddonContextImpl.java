@@ -4,6 +4,7 @@ import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.addon.SfxAddonContext;
 import cc.theends6.sfx.api.behavior.SfxBehaviorRegistrar;
 import cc.theends6.sfx.api.feature.SfxFeatureRegistrar;
+import cc.theends6.sfx.api.override.SfxComponentOverrideRegistrar;
 import java.io.File;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -14,15 +15,18 @@ final class SfxAddonContextImpl implements SfxAddonContext {
     private final SfxApi api;
     private final SfxFeatureRegistrar features;
     private final SfxBehaviorRegistrar behaviors;
+    private final SfxComponentOverrideRegistrar overrides;
     private final File dataDirectory;
     private final FileConfiguration config;
 
     SfxAddonContextImpl(JavaPlugin plugin, SfxApi api, SfxFeatureRegistrar features, SfxBehaviorRegistrar behaviors,
+                        SfxComponentOverrideRegistrar overrides,
                         File dataDirectory, FileConfiguration config) {
         this.plugin = plugin;
         this.api = api;
         this.features = features;
         this.behaviors = behaviors;
+        this.overrides = overrides;
         this.dataDirectory = dataDirectory;
         this.config = config;
     }
@@ -40,6 +44,11 @@ final class SfxAddonContextImpl implements SfxAddonContext {
     @Override
     public SfxBehaviorRegistrar behaviors() {
         return behaviors;
+    }
+
+    @Override
+    public SfxComponentOverrideRegistrar overrides() {
+        return overrides;
     }
 
     @Override

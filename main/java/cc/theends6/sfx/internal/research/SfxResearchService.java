@@ -10,10 +10,13 @@ import org.bukkit.entity.Player;
 public final class SfxResearchService {
     private final SfxResearchRegistry registry;
     private final SfxPlayerDataService profiles;
+    private final SfxResearchPaymentRouter payments;
 
-    public SfxResearchService(SfxResearchRegistry registry, SfxPlayerDataService profiles) {
+    public SfxResearchService(SfxResearchRegistry registry, SfxPlayerDataService profiles,
+                              SfxResearchPaymentRouter payments) {
         this.registry = registry;
         this.profiles = profiles;
+        this.payments = payments;
     }
 
     public SfxResearchRegistry registry() {
@@ -55,11 +58,8 @@ public final class SfxResearchService {
         if (profile.hasUnlocked(research.id())) {
             return UnlockResult.ALREADY_UNLOCKED;
         }
-        if (player.getGameMode() != org.bukkit.GameMode.CREATIVE && player.getLevel() < research.cost()) {
-            return UnlockResult.NOT_ENOUGH_LEVELS;
-        }
-        if (player.getGameMode() != org.bukkit.GameMode.CREATIVE) {
-            player.setLevel(player.getLevel() - research.cost());
+        if (!payments.charge(player, research).paid()) {
+            return UnlockResult.PAYMENT_REJECTED;
         }
         profile.unlock(research.id());
         profiles.saveAsync(profile);
@@ -99,7 +99,7 @@ public final class SfxResearchService {
     public enum UnlockResult {
         PROFILE_NOT_LOADED,
         ALREADY_UNLOCKED,
-        NOT_ENOUGH_LEVELS,
+        PAYMENT_REJECTED,
         UNLOCKED
     }
 }

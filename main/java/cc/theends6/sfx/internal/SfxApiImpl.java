@@ -13,6 +13,7 @@ import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.api.feature.SfxFeatureRegistry;
 import cc.theends6.sfx.internal.behavior.DefaultSfxBehaviorRegistry;
+import cc.theends6.sfx.internal.research.SfxResearchPaymentRouter;
 import cc.theends6.sfx.internal.chat.DefaultSfxChatInputService;
 import cc.theends6.sfx.internal.guide.DefaultSfxGuide;
 import cc.theends6.sfx.internal.guide.PermissionGuideAccessPolicy;
@@ -68,14 +69,17 @@ public final class SfxApiImpl implements SfxApi {
         this.machineRuntime = machineRuntime;
     }
 
-    public static SfxApiImpl bootstrap(JavaPlugin plugin, SfxLocalization localization, SfxPlayerDataService profiles, SfxResearchService researches, DefaultSfxFeatureRegistry features, DefaultSfxBehaviorRegistry behaviors) {
+    public static SfxApiImpl bootstrap(JavaPlugin plugin, SfxLocalization localization, SfxPlayerDataService profiles,
+                                       SfxResearchService researches, SfxResearchPaymentRouter researchPayments,
+                                       DefaultSfxFeatureRegistry features, DefaultSfxBehaviorRegistry behaviors) {
         PaperSfxRuntime runtime = new PaperSfxRuntime(plugin);
         DefaultSfxItemRegistry itemRegistry = new DefaultSfxItemRegistry();
         DefaultManualMachineRegistry manualMachines = new DefaultManualMachineRegistry();
         DefaultSfxItems items = new DefaultSfxItems(plugin, itemRegistry, localization);
         DefaultSfxMenus menus = new DefaultSfxMenus(runtime);
         DefaultSfxChatInputService chatInput = new DefaultSfxChatInputService(runtime);
-        DefaultSfxGuide guide = new DefaultSfxGuide(plugin, runtime, itemRegistry, items, menus, chatInput, new PermissionGuideAccessPolicy(), manualMachines, localization, profiles, researches);
+        DefaultSfxGuide guide = new DefaultSfxGuide(plugin, runtime, itemRegistry, items, menus, chatInput,
+                new PermissionGuideAccessPolicy(), manualMachines, localization, profiles, researches, researchPayments);
         return new SfxApiImpl(runtime, itemRegistry, items, menus, chatInput, localization, guide, features, behaviors,
                 manualMachines, new DefaultSfxMachineRuntimeApi());
     }

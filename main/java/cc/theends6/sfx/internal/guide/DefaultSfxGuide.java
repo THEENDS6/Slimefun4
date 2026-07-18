@@ -32,6 +32,8 @@ import cc.theends6.sfx.api.machine.manual.SfxManualMachineRecipe;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerProfile;
 import cc.theends6.sfx.internal.research.SfxResearchDefinition;
+import cc.theends6.sfx.api.research.SfxResearchPaymentResult;
+import cc.theends6.sfx.internal.research.SfxResearchPaymentRouter;
 import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.recipe.DefaultSfxRecipeRegistry;
 import cc.theends6.sfx.internal.recipe.SfxRecipeDefinition;
@@ -174,6 +176,7 @@ public final class DefaultSfxGuide implements SfxGuide {
     private final SfxLocalization localization;
     final SfxPlayerDataService profiles;
     final SfxResearchService researches;
+    private final SfxResearchPaymentRouter researchPayments;
     private final Map<UUID, GuidePreferences> preferencesByPlayer = new ConcurrentHashMap<>();
     private final Map<UUID, Map<String, AggregatedRecipeView>> aggregatedRecipeViews = new ConcurrentHashMap<>();
     private final Map<UUID, Map<String, DisplaySection>> displaySectionsByPlayer = new ConcurrentHashMap<>();
@@ -196,7 +199,8 @@ public final class DefaultSfxGuide implements SfxGuide {
             DefaultManualMachineRegistry manualMachines,
             SfxLocalization localization,
             SfxPlayerDataService profiles,
-            SfxResearchService researches
+            SfxResearchService researches,
+            SfxResearchPaymentRouter researchPayments
     ) {
         this.plugin = plugin;
         this.runtime = runtime;
@@ -210,6 +214,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         this.localization = localization;
         this.profiles = profiles;
         this.researches = researches;
+        this.researchPayments = Objects.requireNonNull(researchPayments, "researchPayments");
     }
 
     public void bindRecipeRegistry(DefaultSfxRecipeRegistry recipeRegistry) {
@@ -754,7 +759,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                 .name(tr("guide.research.unlock.name"))
                 .lore(
                         tr("guide.research.unlock.lore.1"),
-                        tr("guide.research.cost").replace("{cost}", Integer.toString(research.cost()))
+                        researchCostDisplay(research)
                 )
                 .build(), click -> unlockResearchAndOpen(click.player(), mode, definition, research)));
         showMenu(player, builder, navigation);
@@ -2887,7 +2892,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                         "",
                         tr("guide.research.click-unlock"),
                         "",
-                        tr("guide.research.cost").replace("{cost}", Integer.toString(research.cost()))
+                        researchCostDisplay(research)
                 )
                 .build();
     }
@@ -3298,14 +3303,12 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
     }
 
-    boolean canAffordResearch(Player player, SfxResearchDefinition research) {
-        return player.getGameMode() == org.bukkit.GameMode.CREATIVE || player.getLevel() >= research.cost();
+    String researchCostDisplay(SfxResearchDefinition research) {
+        return researchPayments.displayCost(research);
     }
 
-    void consumeResearchCost(Player player, SfxResearchDefinition research) {
-        if (player.getGameMode() != org.bukkit.GameMode.CREATIVE) {
-            player.setLevel(player.getLevel() - research.cost());
-        }
+    SfxResearchPaymentResult chargeResearch(Player player, SfxResearchDefinition research) {
+        return researchPayments.charge(player, research);
     }
 
     void playResearchSound(Player player) {

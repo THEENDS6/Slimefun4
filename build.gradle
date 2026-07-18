@@ -106,6 +106,12 @@ sourceSets {
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
         runtimeClasspath += output + compileClasspath
     }
+    researchExpansion {
+        java.srcDirs = ['addons/research-expansion/src/main/java']
+        resources.srcDirs = ['addons/research-expansion/src/main/resources']
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
     exampleAddon {
         java.srcDirs = ['addons/sfx-example-addon/src/main/java']
         resources.srcDirs = ['addons/sfx-example-addon/src/main/resources']
@@ -136,7 +142,7 @@ processResources {
 }
 
 tasks.named('jar') {
-    dependsOn 'validateSfxTemplateCompile', 'basicExpansionJar', 'contentExpansionJar', 'exampleAddonJar'
+    dependsOn 'validateSfxTemplateCompile', 'basicExpansionJar', 'contentExpansionJar', 'researchExpansionJar', 'exampleAddonJar'
     archiveBaseName.set('SlimeFunX')
     archiveVersion.set('')
     from {
@@ -149,6 +155,9 @@ tasks.named('jar') {
         into 'bundled-addons'
     }
     from(tasks.named('contentExpansionJar').flatMap { it.archiveFile }) {
+        into 'bundled-addons'
+    }
+    from(tasks.named('researchExpansionJar').flatMap { it.archiveFile }) {
         into 'bundled-addons'
     }
     from(tasks.named('exampleAddonJar').flatMap { it.archiveFile }) {
@@ -165,6 +174,16 @@ tasks.register('contentExpansionJar', Jar) {
     archiveFileName.set('sfx-content-expansion.jar')
     destinationDirectory.set(layout.buildDirectory.dir('addons'))
     from(sourceSets.contentExpansion.output)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register('researchExpansionJar', Jar) {
+    group = 'build'
+    description = 'Packages the SFX Research Expansion addon as a standalone addon jar.'
+    dependsOn 'researchExpansionClasses'
+    archiveFileName.set('sfx-research-expansion.jar')
+    destinationDirectory.set(layout.buildDirectory.dir('addons'))
+    from(sourceSets.researchExpansion.output)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
@@ -191,9 +210,10 @@ tasks.register('exampleAddonJar', Jar) {
 tasks.register('validateSfxAddonPublicApiBoundary') {
     group = 'verification'
     description = 'Rejects public API and bundled addon references to cc.theends6.sfx.internal.'
-    dependsOn 'basicExpansionJar', 'contentExpansionJar', 'exampleAddonJar'
+    dependsOn 'basicExpansionJar', 'contentExpansionJar', 'researchExpansionJar', 'exampleAddonJar'
     inputs.dir(layout.projectDirectory.dir('addons/basic-expansion/src/main/java'))
     inputs.dir(layout.projectDirectory.dir('addons/content-expansion/src/main/java'))
+    inputs.dir(layout.projectDirectory.dir('addons/research-expansion/src/main/java'))
     inputs.dir(layout.projectDirectory.dir('addons/sfx-example-addon/src/main/java'))
     inputs.dir(layout.projectDirectory.dir('main/java/cc/theends6/sfx/api'))
     doLast {
@@ -202,6 +222,7 @@ tasks.register('validateSfxAddonPublicApiBoundary') {
                 layout.projectDirectory.dir('main/java/cc/theends6/sfx/api').asFile,
                 layout.projectDirectory.dir('addons/basic-expansion/src/main/java').asFile,
                 layout.projectDirectory.dir('addons/content-expansion/src/main/java').asFile,
+                layout.projectDirectory.dir('addons/research-expansion/src/main/java').asFile,
                 layout.projectDirectory.dir('addons/sfx-example-addon/src/main/java').asFile
         ].each { root ->
             fileTree(root).matching { include '**/*.java' }.files.each { source ->
@@ -212,6 +233,7 @@ tasks.register('validateSfxAddonPublicApiBoundary') {
         }
         [tasks.named('basicExpansionJar').get().archiveFile.get().asFile,
          tasks.named('contentExpansionJar').get().archiveFile.get().asFile,
+         tasks.named('researchExpansionJar').get().archiveFile.get().asFile,
          tasks.named('exampleAddonJar').get().archiveFile.get().asFile].each { addonJar ->
             def zip = new java.util.zip.ZipFile(addonJar)
             try {
@@ -258,6 +280,25 @@ tasks.register('validateSfxContentExpansionClassLinkage', JavaExec) {
     doFirst { args = [tasks.named('contentExpansionJar').get().archiveFile.get().asFile.absolutePath] }
 }
 
+tasks.register('validateSfxResearchExpansionClassLinkage', JavaExec) {
+    group = 'verification'
+    description = 'Links every Research Expansion class through an isolated addon classloader.'
+    dependsOn 'classes', 'researchExpansionJar'
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.addon.SfxAddonClassLinkageSmokeCli')
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) })
+    doFirst { args = [tasks.named('researchExpansionJar').get().archiveFile.get().asFile.absolutePath] }
+}
+
+tasks.register('validateSfxComponentOverrides', JavaExec) {
+    group = 'verification'
+    description = 'Validates exclusive component override claims, installation and owner cleanup.'
+    dependsOn 'classes'
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.addon.SfxComponentOverrideRegistrySmokeCli')
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) })
+}
+
 tasks.register('validateSfxExampleAddonClassLinkage', JavaExec) {
     group = 'verification'
     description = 'Links every official Example Addon class through an isolated addon classloader.'
@@ -270,7 +311,8 @@ tasks.register('validateSfxExampleAddonClassLinkage', JavaExec) {
 
 tasks.named('check') {
     dependsOn 'validateSfxBasicExpansionClassLinkage', 'validateSfxContentExpansionClassLinkage',
-            'validateSfxExampleAddonClassLinkage', 'validateSfxAddonPublicApiBoundary'
+            'validateSfxResearchExpansionClassLinkage', 'validateSfxExampleAddonClassLinkage',
+            'validateSfxAddonPublicApiBoundary', 'validateSfxComponentOverrides'
 }
 
 def sameFileContent = { File left, File right ->
@@ -1229,13 +1271,16 @@ tasks.register('validateSfxAddonApiDocs') {
                 'default-enabled: true',
                 'api-version: 1',
                 'onDisable()',
+                'Exclusive Component Overrides',
+                'sfx:research-payment',
                 'cc.theends6.sfx.internal'
         ].each { token ->
             if (!docs.contains(token)) {
                 violations << "docs/addon-api.md is missing ${token}"
             }
         }
-        ['SFX Addon API（中文版）', '独立数据目录', 'Folia', 'onDisable', 'cc.theends6.sfx.internal'].each { token ->
+        ['SFX Addon API（中文版）', '独立数据目录', 'Folia', 'onDisable', '独占组件 Override',
+         'sfx:research-payment', 'cc.theends6.sfx.internal'].each { token ->
             if (!chineseDocs.contains(token)) {
                 violations << "docs/addon-api.zh-CN.md is missing ${token}"
             }
@@ -1659,6 +1704,10 @@ tasks.register('validateSfxCompiledContent') {
             include '**/lang/*.yml'
         }.files.sort { it.path }
         addonLanguageFiles.addAll(contentAddonLanguageFiles)
+        def researchAddonLanguageFiles = fileTree(layout.projectDirectory.dir('addons/research-expansion/src/main/resources')) {
+            include '**/lang/*.yml'
+        }.files.sort { it.path }
+        addonLanguageFiles.addAll(researchAddonLanguageFiles)
         def exampleAddonLanguageFiles = fileTree(layout.projectDirectory.dir('addons/sfx-example-addon/src/main/resources')) {
             include '**/lang/*.yml'
         }.files.sort { it.path }

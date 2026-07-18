@@ -3,6 +3,7 @@ package cc.theends6.sfx.api.addon;
 import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.api.behavior.SfxBehaviorRegistrar;
 import cc.theends6.sfx.api.feature.SfxFeatureRegistrar;
+import cc.theends6.sfx.api.override.SfxComponentOverrideRegistrar;
 import java.io.File;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -12,6 +13,9 @@ public interface SfxAddonContext {
     SfxFeatureRegistrar features();
 
     SfxBehaviorRegistrar behaviors();
+
+    
+    SfxComponentOverrideRegistrar overrides();
 
     
     File dataDirectory();

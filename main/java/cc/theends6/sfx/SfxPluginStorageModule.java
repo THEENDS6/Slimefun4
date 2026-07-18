@@ -8,9 +8,11 @@ import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.playerdata.SqliteSfxPlayerDataRepository;
 import cc.theends6.sfx.internal.research.SfxResearchRegistry;
 import cc.theends6.sfx.internal.research.SfxResearchService;
+import cc.theends6.sfx.internal.research.SfxResearchPaymentRouter;
 import cc.theends6.sfx.internal.runtime.PaperSfxRuntime;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.behavior.DefaultSfxBehaviorRegistry;
+import cc.theends6.sfx.internal.addon.DefaultSfxComponentOverrideRegistry;
 import cc.theends6.sfx.internal.feature.DefaultSfxFeatureRegistry;
 
 
@@ -33,13 +35,17 @@ final class SfxPluginStorageModule {
         }
 
         plugin.researchRegistry = new SfxResearchRegistry();
-        plugin.researchService = new SfxResearchService(plugin.researchRegistry, plugin.playerDataService);
         plugin.localization = new SfxLocalization(plugin);
+        plugin.componentOverrideRegistry = new DefaultSfxComponentOverrideRegistry();
+        plugin.researchPaymentRouter = new SfxResearchPaymentRouter(plugin.componentOverrideRegistry, plugin.localization);
+        plugin.researchService = new SfxResearchService(plugin.researchRegistry, plugin.playerDataService,
+                plugin.researchPaymentRouter);
         plugin.legacyItemBehaviorConfig = new SfxLegacyItemBehaviorConfig(plugin);
         plugin.legacyItemBehaviorConfig.ensureDefaultFile();
         plugin.legacyItemBehaviorConfig.reload();
         plugin.featureRegistry = new DefaultSfxFeatureRegistry(plugin);
         plugin.behaviorRegistry = new DefaultSfxBehaviorRegistry();
-        plugin.api = SfxApiImpl.bootstrap(plugin, plugin.localization, plugin.playerDataService, plugin.researchService, plugin.featureRegistry, plugin.behaviorRegistry);
+        plugin.api = SfxApiImpl.bootstrap(plugin, plugin.localization, plugin.playerDataService, plugin.researchService,
+                plugin.researchPaymentRouter, plugin.featureRegistry, plugin.behaviorRegistry);
     }
 }

@@ -1,0 +1,11 @@
+id: sfx:research_expansion
+name: SFX Research Expansion
+version: 1.0.0
+api-version: 1
+main: cc.theends6.sfx.addons.research.SfxResearchExpansionAddon
+enabled: true
+java:
+  jar: sfx-research-expansion.jar
+overrides:
+  - target: sfx:research-payment
+    contract-version: 1

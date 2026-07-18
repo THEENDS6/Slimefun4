@@ -23,6 +23,7 @@ import cc.theends6.sfx.internal.core.SfxAuditSink;
 import cc.theends6.sfx.internal.core.SfxListenerRegistrar;
 import cc.theends6.sfx.internal.core.SfxModuleManager;
 import cc.theends6.sfx.internal.addon.SfxAddonManager;
+import cc.theends6.sfx.internal.addon.DefaultSfxComponentOverrideRegistry;
 import cc.theends6.sfx.internal.behavior.DefaultSfxBehaviorRegistry;
 import cc.theends6.sfx.internal.feature.DefaultSfxFeatureRegistry;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
@@ -66,6 +67,7 @@ import cc.theends6.sfx.internal.recipe.DefaultSfxRecipeRegistry;
 import cc.theends6.sfx.internal.recipe.SfxRecipeYamlLoader;
 import cc.theends6.sfx.internal.research.SfxResearchRegistry;
 import cc.theends6.sfx.internal.research.SfxResearchService;
+import cc.theends6.sfx.internal.research.SfxResearchPaymentRouter;
 import cc.theends6.sfx.internal.radiation.SfxRadiationService;
 import cc.theends6.sfx.internal.technical.SfxTechnicalGadgetService;
 import cc.theends6.sfx.internal.research.SfxResearchYamlLoader;
@@ -93,6 +95,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     SfxBlockPersistenceListener blockPersistenceListener;
     SfxResearchRegistry researchRegistry;
     SfxResearchService researchService;
+    SfxResearchPaymentRouter researchPaymentRouter;
     SfxBackpackListener backpackListener;
     SfxBasicMachineBlockListener basicMachineBlockListener;
     SfxElectricMachineService electricMachineService;
@@ -116,6 +119,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     SfxModuleManager moduleManager;
     DefaultSfxFeatureRegistry featureRegistry;
     DefaultSfxBehaviorRegistry behaviorRegistry;
+    DefaultSfxComponentOverrideRegistry componentOverrideRegistry;
     SfxAddonManager addonManager;
     SfxMachineRuntimeEngine machineRuntime;
     SfxMachinePhaseLedger machinePhaseLedger;
@@ -327,9 +331,11 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         }
         featureRegistry = null;
         behaviorRegistry = null;
+        componentOverrideRegistry = null;
         machineRuntime = null;
         machinePhaseLedger = null;
         researchService = null;
+        researchPaymentRouter = null;
         researchRegistry = null;
         legacyItemBehaviorConfig = null;
         localization = null;
