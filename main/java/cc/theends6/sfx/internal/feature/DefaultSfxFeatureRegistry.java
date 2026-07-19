@@ -21,6 +21,13 @@ public final class DefaultSfxFeatureRegistry implements SfxFeatureRegistry {
         features.clear();
     }
 
+    public synchronized void removeOwner(String addonId) {
+        if (addonId == null || addonId.isBlank()) {
+            return;
+        }
+        features.entrySet().removeIf(entry -> addonId.equals(entry.getValue().addonId()));
+    }
+
     public synchronized void registerBoolean(String addonId, String featureId, String configPath, boolean defaultEnabled,
                                              FileConfiguration addonConfig) {
         if (addonId == null || addonId.isBlank()) {

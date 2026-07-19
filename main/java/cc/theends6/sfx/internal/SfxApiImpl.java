@@ -28,6 +28,13 @@ import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.runtime.PaperSfxRuntime;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.internal.feature.DefaultSfxFeatureRegistry;
+import cc.theends6.sfx.api.time.SfxServerActiveClock;
+import cc.theends6.sfx.internal.time.DefaultSfxServerActiveClock;
+import cc.theends6.sfx.api.power.SfxInventoryPowerRouter;
+import cc.theends6.sfx.internal.power.DefaultSfxInventoryPowerRouter;
+import cc.theends6.sfx.api.world.SfxProtectionService;
+import cc.theends6.sfx.api.world.SfxWorldActionService;
+import cc.theends6.sfx.internal.world.DefaultSfxWorldActions;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxApiImpl implements SfxApi {
@@ -42,6 +49,9 @@ public final class SfxApiImpl implements SfxApi {
     private final SfxBehaviorRegistry behaviors;
     private final DefaultManualMachineRegistry manualMachines;
     private final DefaultSfxMachineRuntimeApi machineRuntime;
+    private final DefaultSfxServerActiveClock activeClock;
+    private final SfxInventoryPowerRouter powerRouter;
+    private final DefaultSfxWorldActions worldActions;
 
     private SfxApiImpl(
             SfxRuntime runtime,
@@ -54,7 +64,10 @@ public final class SfxApiImpl implements SfxApi {
             SfxFeatureRegistry features,
             SfxBehaviorRegistry behaviors,
             DefaultManualMachineRegistry manualMachines,
-            DefaultSfxMachineRuntimeApi machineRuntime
+            DefaultSfxMachineRuntimeApi machineRuntime,
+            DefaultSfxServerActiveClock activeClock,
+            SfxInventoryPowerRouter powerRouter,
+            DefaultSfxWorldActions worldActions
     ) {
         this.runtime = runtime;
         this.itemRegistry = itemRegistry;
@@ -67,6 +80,9 @@ public final class SfxApiImpl implements SfxApi {
         this.behaviors = behaviors;
         this.manualMachines = manualMachines;
         this.machineRuntime = machineRuntime;
+        this.activeClock = activeClock;
+        this.powerRouter = powerRouter;
+        this.worldActions = worldActions;
     }
 
     public static SfxApiImpl bootstrap(JavaPlugin plugin, SfxLocalization localization, SfxPlayerDataService profiles,
@@ -80,8 +96,13 @@ public final class SfxApiImpl implements SfxApi {
         DefaultSfxChatInputService chatInput = new DefaultSfxChatInputService(runtime);
         DefaultSfxGuide guide = new DefaultSfxGuide(plugin, runtime, itemRegistry, items, menus, chatInput,
                 new PermissionGuideAccessPolicy(), manualMachines, localization, profiles, researches, researchPayments);
+        DefaultSfxServerActiveClock activeClock = new DefaultSfxServerActiveClock(plugin,
+                plugin.getDataFolder().toPath().resolve("data/server-active-ticks.dat"));
+        activeClock.start();
+        DefaultSfxWorldActions worldActions = new DefaultSfxWorldActions(plugin, runtime);
         return new SfxApiImpl(runtime, itemRegistry, items, menus, chatInput, localization, guide, features, behaviors,
-                manualMachines, new DefaultSfxMachineRuntimeApi());
+                manualMachines, new DefaultSfxMachineRuntimeApi(), activeClock,
+                new DefaultSfxInventoryPowerRouter(), worldActions);
     }
 
     @Override
@@ -139,12 +160,23 @@ public final class SfxApiImpl implements SfxApi {
         return machineRuntime;
     }
 
+    @Override public SfxServerActiveClock activeClock() { return activeClock; }
+    @Override public SfxInventoryPowerRouter powerRouter() { return powerRouter; }
+    @Override public SfxWorldActionService worldActions() { return worldActions; }
+    @Override public SfxProtectionService protection() { return worldActions; }
+
+    public void shutdown() { activeClock.close(); }
+
     public void bindMachineRuntime(SfxMachineRuntimeEngine engine) {
         machineRuntime.bind(engine);
     }
 
     public DefaultManualMachineRegistry internalManualMachines() {
         return manualMachines;
+    }
+
+    public DefaultSfxItemRegistry internalItemRegistry() {
+        return itemRegistry;
     }
 
     public DefaultSfxGuide internalGuide() {

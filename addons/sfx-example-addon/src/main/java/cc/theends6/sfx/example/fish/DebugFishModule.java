@@ -23,7 +23,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -80,7 +79,7 @@ public final class DebugFishModule implements Listener, AutoCloseable {
         groundBounceTangentRetention = clamp(
                 context.configDouble("debug-fish.ground-bounce-tangent-retention", 0.94), 0.0, 1.0);
         slideNormalSpeed = clamp(context.configDouble("debug-fish.slide-normal-speed", 0.45), 0.0, 2.0);
-        Bukkit.getPluginManager().registerEvents(this, context.api().runtime().plugin());
+        context.resources().registerListener(this);
         cleanupLoadedProjectiles();
     }
 
@@ -417,7 +416,6 @@ public final class DebugFishModule implements Listener, AutoCloseable {
     @Override
     public void close() {
         closed = true;
-        HandlerList.unregisterAll(this);
         for (Flight flight : flights.values()) {
             context.api().runtime().executeAt(flight.fish().getLocation(), flight.fish()::remove);
         }

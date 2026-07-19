@@ -1,6 +1,6 @@
 # SFX Addon API
 
-Chinese version: [addon-api.zh-CN.md](addon-api.zh-CN.md). The current addon API version is `1`.
+Chinese version: [addon-api.zh-CN.md](addon-api.zh-CN.md). The current addon API version is `2`; API v1 addons remain supported through the scoped compatibility adapter.
 
 SFX addons are split into configuration content and Java capabilities.
 
@@ -61,9 +61,13 @@ Each Java addon jar must contain `addon.yml`:
 id: example:demo
 name: Example Demo
 version: 1.0.0
-api-version: 1
+api-version: 2
 enabled: true
 main: com.example.sfxaddon.ExampleAddon
+depends: []
+soft-depends: []
+load-after: []
+conflicts: []
 java:
   jar: example-demo.jar
 ```
@@ -78,7 +82,7 @@ public final class ExampleAddon implements SfxAddon {
     }
 
     @Override
-    public void onLoad(SfxAddonContext context) {
+    public void onRegister(SfxAddonContext context) {
         context.features().registerBoolean(
                 "example:demo_feature",
                 "addons.example.demo-feature",
@@ -94,6 +98,10 @@ public final class ExampleAddon implements SfxAddon {
 - `features()` for feature registration.
 - `behaviors()` for behavior/capability providers.
 - `overrides()` for complete, exclusive component replacements declared by the addon manifest.
+- `resources()` for addon-owned listeners, Folia tasks, and closeable runtime resources; `scheduler()` is its scheduling-only view.
+- `items()`, `machines()`, and `cargo()` for owner-scoped domain registration.
+- `blocks()`, `randomTicks()`, `displays()`, `containers()`, `continuousMachines()`, and `power()` for owner-scoped domain definitions.
+- `worldActions()` and `protection()` for region-safe protected world mutation; `components()` aliases declared component overrides.
 - `dataDirectory()` for `plugins/SlimeFunX/addons/<addon-id>/`.
 - `config()` plus `configBoolean`, `configInt`, `configDouble`, and `configString` for the addon's own `config.yml`; these never read the core config.
 
@@ -190,7 +198,7 @@ Feature-gated content is rejected unless the feature is registered and enabled. 
 
 Java addons can register behavior providers for runtime capability points, including enhanced furnace fuel scaling, Android woodcutter behavior, entity-drop chances, radiation rules, cargo input transfer, GPS transmitter interaction, technical gadget rules, rechargeable item definitions, energy balance rules, area-machine rules, utility rules, and localized list post-processing.
 
-API version 1 also exposes three composable contracts used by the official `sfx:example` addon:
+The public API also exposes three composable contracts used by the official `sfx:example` addon:
 
 - `SfxCyclingBlockDefinition` declares a material sequence and interval; the shared decoration service owns scheduling, chunks, persistence, destruction, and custom-item drops.
 - `SfxCargoNodeDefinition` registers cargo managers/connectors/terminals. Area managers resolve their X/Y/Z range from the SFX block index during topology rebuilds, never by scanning world blocks each tick.
@@ -227,9 +235,9 @@ Localized list post-processors can adjust generated item lore and other language
 
 ## Lifecycle
 
-`onLoad(context)` runs once after manifest and configuration validation. `onDisable()` runs once in reverse load order, while the core services exposed during `onLoad` are still available and before addon classloaders close. Addons must cancel tasks, unregister listeners, close input/GUI sessions, remove temporary entities and previews, detach network nodes, and clear owned caches. Cleanup must be idempotent.
+`onRegister(context)` runs after every manifest has been scanned and dependency order has been resolved. Registrations are owner-scoped and are rolled back together if the callback fails. `onEnable(context)` starts runtime resources only after declarations commit. `onDisable()` runs in reverse load order before core-owned resources are automatically released. API v1 `onLoad(context)` is bridged into the same registration transaction.
 
-Plain `/slimefunx reload` only reloads core configuration and language. `/slimefunx reload runtime` and `/slimefunx reload all` perform a complete runtime reload: addons receive `onDisable()`, old provider and feature registrations are discarded, core runtime modules stop, and fresh addon instances/classloaders are created before content and services restart. API version 1 does not support installing, removing, or reloading one Java addon independently.
+Plain `/slimefunx reload` only reloads core configuration and language. `/slimefunx reload runtime` and `/slimefunx reload all` perform a complete runtime reload: addons receive `onDisable()`, core runs `unregisterAll(addonId)`, runtime modules stop, and fresh addon instances/classloaders are created before content and services restart. Independent hot installation/removal of one Java addon is not supported yet.
 
 An addon-defined cargo manager may attach an `SfxCargoManagerProvider` through `SfxCargoNodeDefinition` to supply a custom menu plus network enable and speed controls. A manager declared with `coexistsWithManagers=true` does not create a multiple-controller conflict with a normal Cargo Manager: the normal manager remains the network anchor when present, while the compatible manager remains a control surface and can also dispatch by itself.
 
@@ -238,9 +246,9 @@ Dynamic energy providers may fully own the top inventory with `customMenuLayout(
 ## Manifest And Identity
 
 - `id` must be lowercase `namespace:name` and must equal `SfxAddon.id()`.
-- `api-version` must be `1`; unsupported versions are rejected before `onLoad`.
+- `api-version` may be `1` or `2`; unsupported versions are rejected before Java class loading.
 - Java addons require `main`; ids, features, providers, items, language, permissions, and PDC keys must be namespace-owned and globally unique.
-- API version 1 does not support addon dependency ordering or version ranges. Check a required capability explicitly during `onLoad`.
+- `depends`, `soft-depends`, `load-after`, and `conflicts` are resolved before Java class loading. Missing hard dependencies, conflicts, and cycles fail with the involved addon ids. Version ranges are not supported yet.
 
 ## Public API Boundary
 
@@ -266,4 +274,4 @@ World, entity, inventory and player work must use the scheduler for the owning r
 
 Package `addon.yml`, optional `config.yml`, `content/`, and `lang/` at the jar root and install the jar under `plugins/SlimeFunX/addons/`. Verify load, content compilation, interaction, chunk unload/reload, shutdown, and a second startup. Bundled tasks are `basicExpansionJar`, `contentExpansionJar`, and `exampleAddonJar`; `check` runs contract and isolated linkage validation for all three.
 
-API version 1 does not yet promise stable binary compatibility, independent per-addon hot loading, dependency graphs, or a complete public extension surface for every specialized world-interaction machine family.
+API version 2 remains experimental and does not yet promise long-term binary compatibility or independent per-addon hot loading. Persistent block/player data is retained when an addon unloads; `unregisterAll` removes runtime ownership, not world saves.

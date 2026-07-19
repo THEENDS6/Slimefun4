@@ -26,34 +26,36 @@ import cc.theends6.sfx.api.behavior.SfxRechargeableItemProvider;
 import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetBehaviorProvider;
 import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxUtilityRuleProvider;
-import java.util.ArrayList;
-import java.util.Collections;
+import cc.theends6.sfx.internal.core.SfxOwnedEntries;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Objects;
 
 public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, SfxBehaviorRegistrar {
-    private final List<SfxEnhancedFurnaceFuelPolicy> enhancedFurnaceFuelPolicies = new ArrayList<>();
-    private final List<SfxAndroidWoodcutterPolicy> androidWoodcutterPolicies = new ArrayList<>();
-    private final List<SfxEntityDropChancePolicy> entityDropChancePolicies = new ArrayList<>();
-    private final List<SfxIndustrialMinerTargetPolicy> industrialMinerTargetPolicies = new ArrayList<>();
-    private final List<SfxRadiationRuleProvider> radiationRuleProviders = new ArrayList<>();
-    private final List<SfxCargoInputTransferPolicy> cargoInputTransferPolicies = new ArrayList<>();
-    private final List<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies = new ArrayList<>();
-    private final List<SfxGpsTransmitterStatusViewProvider> gpsTransmitterStatusViewProviders = new ArrayList<>();
-    private final List<SfxRadiationSymptomHandler> radiationSymptomHandlers = new ArrayList<>();
-    private final List<SfxTechnicalGadgetRuleProvider> technicalGadgetRuleProviders = new ArrayList<>();
-    private final List<SfxTechnicalGadgetBehaviorProvider> technicalGadgetBehaviorProviders = new ArrayList<>();
-    private final List<SfxRechargeableItemProvider> rechargeableItemProviders = new ArrayList<>();
-    private final List<SfxEnergyBalanceRuleProvider> energyBalanceRuleProviders = new ArrayList<>();
-    private final List<SfxAreaMachineRuleProvider> areaMachineRuleProviders = new ArrayList<>();
-    private final List<SfxUtilityRuleProvider> utilityRuleProviders = new ArrayList<>();
-    private final List<SfxElectricMachineProviderKeyPolicy> electricMachineProviderKeyPolicies = new ArrayList<>();
-    private final List<SfxElectricMachineProviderRegistration> electricMachineProviders = new ArrayList<>();
-    private final List<SfxEnergyGeneratorProviderRegistration> energyGeneratorProviders = new ArrayList<>();
-    private final List<SfxAutoBrewerBehaviorProvider> autoBrewerBehaviorProviders = new ArrayList<>();
-    private final List<SfxLocalizedListPostProcessor> localizedListPostProcessors = new ArrayList<>();
-    private final List<SfxCyclingBlockDefinition> cyclingBlocks = new ArrayList<>();
-    private final List<SfxCargoNodeDefinition> cargoNodes = new ArrayList<>();
+    private final ThreadLocal<String> registrationOwner = ThreadLocal.withInitial(() -> SfxOwnedEntries.CORE_OWNER);
+    private final SfxOwnedEntries<SfxEnhancedFurnaceFuelPolicy> enhancedFurnaceFuelPolicies = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxAndroidWoodcutterPolicy> androidWoodcutterPolicies = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxEntityDropChancePolicy> entityDropChancePolicies = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxIndustrialMinerTargetPolicy> industrialMinerTargetPolicies = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxRadiationRuleProvider> radiationRuleProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxCargoInputTransferPolicy> cargoInputTransferPolicies = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxGpsTransmitterStatusViewProvider> gpsTransmitterStatusViewProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxRadiationSymptomHandler> radiationSymptomHandlers = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxTechnicalGadgetRuleProvider> technicalGadgetRuleProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxTechnicalGadgetBehaviorProvider> technicalGadgetBehaviorProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxRechargeableItemProvider> rechargeableItemProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxEnergyBalanceRuleProvider> energyBalanceRuleProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxAreaMachineRuleProvider> areaMachineRuleProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxUtilityRuleProvider> utilityRuleProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxElectricMachineProviderKeyPolicy> electricMachineProviderKeyPolicies = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxElectricMachineProviderRegistration> electricMachineProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxEnergyGeneratorProviderRegistration> energyGeneratorProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxAutoBrewerBehaviorProvider> autoBrewerBehaviorProviders = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxLocalizedListPostProcessor> localizedListPostProcessors = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxCyclingBlockDefinition> cyclingBlocks = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxCargoNodeDefinition> cargoNodes = new SfxOwnedEntries<>();
 
     public synchronized void clear() {
         enhancedFurnaceFuelPolicies.clear();
@@ -80,17 +82,64 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         cargoNodes.clear();
     }
 
+    public synchronized void removeOwner(String owner) {
+        enhancedFurnaceFuelPolicies.removeOwner(owner);
+        androidWoodcutterPolicies.removeOwner(owner);
+        entityDropChancePolicies.removeOwner(owner);
+        industrialMinerTargetPolicies.removeOwner(owner);
+        radiationRuleProviders.removeOwner(owner);
+        cargoInputTransferPolicies.removeOwner(owner);
+        gpsTransmitterInteractionPolicies.removeOwner(owner);
+        gpsTransmitterStatusViewProviders.removeOwner(owner);
+        radiationSymptomHandlers.removeOwner(owner);
+        technicalGadgetRuleProviders.removeOwner(owner);
+        technicalGadgetBehaviorProviders.removeOwner(owner);
+        rechargeableItemProviders.removeOwner(owner);
+        energyBalanceRuleProviders.removeOwner(owner);
+        areaMachineRuleProviders.removeOwner(owner);
+        utilityRuleProviders.removeOwner(owner);
+        electricMachineProviderKeyPolicies.removeOwner(owner);
+        electricMachineProviders.removeOwner(owner);
+        energyGeneratorProviders.removeOwner(owner);
+        autoBrewerBehaviorProviders.removeOwner(owner);
+        localizedListPostProcessors.removeOwner(owner);
+        cyclingBlocks.removeOwner(owner);
+        cargoNodes.removeOwner(owner);
+    }
+
+    public SfxBehaviorRegistrar registrarFor(String owner) {
+        Objects.requireNonNull(owner, "owner");
+        return (SfxBehaviorRegistrar) Proxy.newProxyInstance(
+                SfxBehaviorRegistrar.class.getClassLoader(),
+                new Class<?>[] {SfxBehaviorRegistrar.class},
+                (proxy, method, args) -> {
+                    String previous = registrationOwner.get();
+                    registrationOwner.set(owner);
+                    try {
+                        return method.invoke(this, args);
+                    } catch (InvocationTargetException exception) {
+                        throw exception.getCause();
+                    } finally {
+                        registrationOwner.set(previous);
+                    }
+                });
+    }
+
+    private String currentOwner() {
+        return registrationOwner.get();
+    }
+
     @Override
     public synchronized void registerEnhancedFurnaceFuelPolicy(SfxEnhancedFurnaceFuelPolicy policy) {
         if (policy == null) {
             throw new IllegalArgumentException("Enhanced furnace fuel policy must not be null.");
         }
-        enhancedFurnaceFuelPolicies.add(policy);
+        enhancedFurnaceFuelPolicies.add(currentOwner(), policy);
     }
 
     @Override
     public synchronized List<SfxEnhancedFurnaceFuelPolicy> enhancedFurnaceFuelPolicies() {
-        return Collections.unmodifiableList(new ArrayList<>(enhancedFurnaceFuelPolicies));
+        return enhancedFurnaceFuelPolicies.values();
     }
 
     @Override
@@ -98,32 +147,32 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (policy == null) {
             throw new IllegalArgumentException("Android woodcutter policy must not be null.");
         }
-        androidWoodcutterPolicies.add(policy);
+        androidWoodcutterPolicies.add(currentOwner(), policy);
     }
 
     @Override
     public synchronized List<SfxAndroidWoodcutterPolicy> androidWoodcutterPolicies() {
-        return Collections.unmodifiableList(new ArrayList<>(androidWoodcutterPolicies));
+        return androidWoodcutterPolicies.values();
     }
 
     @Override
     public synchronized void registerEntityDropChancePolicy(SfxEntityDropChancePolicy policy) {
-        entityDropChancePolicies.add(Objects.requireNonNull(policy, "policy"));
+        entityDropChancePolicies.add(currentOwner(), Objects.requireNonNull(policy, "policy"));
     }
 
     @Override
     public synchronized List<SfxEntityDropChancePolicy> entityDropChancePolicies() {
-        return Collections.unmodifiableList(new ArrayList<>(entityDropChancePolicies));
+        return entityDropChancePolicies.values();
     }
 
     @Override
     public synchronized void registerIndustrialMinerTargetPolicy(SfxIndustrialMinerTargetPolicy policy) {
-        industrialMinerTargetPolicies.add(Objects.requireNonNull(policy, "policy"));
+        industrialMinerTargetPolicies.add(currentOwner(), Objects.requireNonNull(policy, "policy"));
     }
 
     @Override
     public synchronized List<SfxIndustrialMinerTargetPolicy> industrialMinerTargetPolicies() {
-        return Collections.unmodifiableList(new ArrayList<>(industrialMinerTargetPolicies));
+        return industrialMinerTargetPolicies.values();
     }
 
     @Override
@@ -131,22 +180,22 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (provider == null) {
             throw new IllegalArgumentException("Radiation rule provider must not be null.");
         }
-        radiationRuleProviders.add(provider);
+        radiationRuleProviders.add(currentOwner(), provider);
     }
 
     @Override
     public synchronized List<SfxRadiationRuleProvider> radiationRuleProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(radiationRuleProviders));
+        return radiationRuleProviders.values();
     }
 
     @Override
     public synchronized void registerRadiationSymptomHandler(SfxRadiationSymptomHandler handler) {
-        radiationSymptomHandlers.add(Objects.requireNonNull(handler, "handler"));
+        radiationSymptomHandlers.add(currentOwner(), Objects.requireNonNull(handler, "handler"));
     }
 
     @Override
     public synchronized List<SfxRadiationSymptomHandler> radiationSymptomHandlers() {
-        return Collections.unmodifiableList(new ArrayList<>(radiationSymptomHandlers));
+        return radiationSymptomHandlers.values();
     }
 
     @Override
@@ -154,12 +203,12 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (policy == null) {
             throw new IllegalArgumentException("Cargo input transfer policy must not be null.");
         }
-        cargoInputTransferPolicies.add(policy);
+        cargoInputTransferPolicies.add(currentOwner(), policy);
     }
 
     @Override
     public synchronized List<SfxCargoInputTransferPolicy> cargoInputTransferPolicies() {
-        return Collections.unmodifiableList(new ArrayList<>(cargoInputTransferPolicies));
+        return cargoInputTransferPolicies.values();
     }
 
     @Override
@@ -167,22 +216,22 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (policy == null) {
             throw new IllegalArgumentException("GPS transmitter interaction policy must not be null.");
         }
-        gpsTransmitterInteractionPolicies.add(policy);
+        gpsTransmitterInteractionPolicies.add(currentOwner(), policy);
     }
 
     @Override
     public synchronized List<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies() {
-        return Collections.unmodifiableList(new ArrayList<>(gpsTransmitterInteractionPolicies));
+        return gpsTransmitterInteractionPolicies.values();
     }
 
     @Override
     public synchronized void registerGpsTransmitterStatusViewProvider(SfxGpsTransmitterStatusViewProvider provider) {
-        gpsTransmitterStatusViewProviders.add(Objects.requireNonNull(provider, "provider"));
+        gpsTransmitterStatusViewProviders.add(currentOwner(), Objects.requireNonNull(provider, "provider"));
     }
 
     @Override
     public synchronized List<SfxGpsTransmitterStatusViewProvider> gpsTransmitterStatusViewProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(gpsTransmitterStatusViewProviders));
+        return gpsTransmitterStatusViewProviders.values();
     }
 
     @Override
@@ -190,22 +239,22 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (provider == null) {
             throw new IllegalArgumentException("Technical gadget rule provider must not be null.");
         }
-        technicalGadgetRuleProviders.add(provider);
+        technicalGadgetRuleProviders.add(currentOwner(), provider);
     }
 
     @Override
     public synchronized List<SfxTechnicalGadgetRuleProvider> technicalGadgetRuleProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(technicalGadgetRuleProviders));
+        return technicalGadgetRuleProviders.values();
     }
 
     @Override
     public synchronized void registerTechnicalGadgetBehaviorProvider(SfxTechnicalGadgetBehaviorProvider provider) {
-        technicalGadgetBehaviorProviders.add(Objects.requireNonNull(provider, "provider"));
+        technicalGadgetBehaviorProviders.add(currentOwner(), Objects.requireNonNull(provider, "provider"));
     }
 
     @Override
     public synchronized List<SfxTechnicalGadgetBehaviorProvider> technicalGadgetBehaviorProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(technicalGadgetBehaviorProviders));
+        return technicalGadgetBehaviorProviders.values();
     }
 
     @Override
@@ -213,12 +262,12 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (provider == null) {
             throw new IllegalArgumentException("Rechargeable item provider must not be null.");
         }
-        rechargeableItemProviders.add(provider);
+        rechargeableItemProviders.add(currentOwner(), provider);
     }
 
     @Override
     public synchronized List<SfxRechargeableItemProvider> rechargeableItemProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(rechargeableItemProviders));
+        return rechargeableItemProviders.values();
     }
 
     @Override
@@ -226,12 +275,12 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (provider == null) {
             throw new IllegalArgumentException("Energy balance rule provider must not be null.");
         }
-        energyBalanceRuleProviders.add(provider);
+        energyBalanceRuleProviders.add(currentOwner(), provider);
     }
 
     @Override
     public synchronized List<SfxEnergyBalanceRuleProvider> energyBalanceRuleProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(energyBalanceRuleProviders));
+        return energyBalanceRuleProviders.values();
     }
 
     @Override
@@ -239,12 +288,12 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (provider == null) {
             throw new IllegalArgumentException("Area machine rule provider must not be null.");
         }
-        areaMachineRuleProviders.add(provider);
+        areaMachineRuleProviders.add(currentOwner(), provider);
     }
 
     @Override
     public synchronized List<SfxAreaMachineRuleProvider> areaMachineRuleProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(areaMachineRuleProviders));
+        return areaMachineRuleProviders.values();
     }
 
     @Override
@@ -252,12 +301,12 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (provider == null) {
             throw new IllegalArgumentException("Utility rule provider must not be null.");
         }
-        utilityRuleProviders.add(provider);
+        utilityRuleProviders.add(currentOwner(), provider);
     }
 
     @Override
     public synchronized List<SfxUtilityRuleProvider> utilityRuleProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(utilityRuleProviders));
+        return utilityRuleProviders.values();
     }
 
     @Override
@@ -265,42 +314,42 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (policy == null) {
             throw new IllegalArgumentException("Electric machine provider key policy must not be null.");
         }
-        electricMachineProviderKeyPolicies.add(policy);
+        electricMachineProviderKeyPolicies.add(currentOwner(), policy);
     }
 
     @Override
     public synchronized List<SfxElectricMachineProviderKeyPolicy> electricMachineProviderKeyPolicies() {
-        return Collections.unmodifiableList(new ArrayList<>(electricMachineProviderKeyPolicies));
+        return electricMachineProviderKeyPolicies.values();
     }
 
     @Override
     public synchronized void registerElectricMachineProvider(String key, SfxElectricMachineProviderFactory factory) {
-        electricMachineProviders.add(new SfxElectricMachineProviderRegistration(key, factory));
+        electricMachineProviders.add(currentOwner(), new SfxElectricMachineProviderRegistration(key, factory));
     }
 
     @Override
     public synchronized List<SfxElectricMachineProviderRegistration> electricMachineProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(electricMachineProviders));
+        return electricMachineProviders.values();
     }
 
     @Override
     public synchronized void registerEnergyGeneratorProvider(String key, SfxEnergyGeneratorProviderFactory factory) {
-        energyGeneratorProviders.add(new SfxEnergyGeneratorProviderRegistration(key, factory));
+        energyGeneratorProviders.add(currentOwner(), new SfxEnergyGeneratorProviderRegistration(key, factory));
     }
 
     @Override
     public synchronized List<SfxEnergyGeneratorProviderRegistration> energyGeneratorProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(energyGeneratorProviders));
+        return energyGeneratorProviders.values();
     }
 
     @Override
     public synchronized void registerAutoBrewerBehaviorProvider(SfxAutoBrewerBehaviorProvider provider) {
-        autoBrewerBehaviorProviders.add(Objects.requireNonNull(provider, "provider"));
+        autoBrewerBehaviorProviders.add(currentOwner(), Objects.requireNonNull(provider, "provider"));
     }
 
     @Override
     public synchronized List<SfxAutoBrewerBehaviorProvider> autoBrewerBehaviorProviders() {
-        return Collections.unmodifiableList(new ArrayList<>(autoBrewerBehaviorProviders));
+        return autoBrewerBehaviorProviders.values();
     }
 
     @Override
@@ -308,39 +357,39 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         if (processor == null) {
             throw new IllegalArgumentException("Localized list post processor must not be null.");
         }
-        localizedListPostProcessors.add(processor);
+        localizedListPostProcessors.add(currentOwner(), processor);
     }
 
     @Override
     public synchronized List<SfxLocalizedListPostProcessor> localizedListPostProcessors() {
-        return Collections.unmodifiableList(new ArrayList<>(localizedListPostProcessors));
+        return localizedListPostProcessors.values();
     }
 
     @Override
     public synchronized void registerCyclingBlock(SfxCyclingBlockDefinition definition) {
         Objects.requireNonNull(definition, "definition");
-        if (cyclingBlocks.stream().anyMatch(existing -> existing.itemId().equals(definition.itemId()))) {
+        if (cyclingBlocks.anyMatch(existing -> existing.itemId().equals(definition.itemId()))) {
             throw new IllegalArgumentException("Cycling block already registered: " + definition.itemId());
         }
-        cyclingBlocks.add(definition);
+        cyclingBlocks.add(currentOwner(), definition);
     }
 
     @Override
     public synchronized List<SfxCyclingBlockDefinition> cyclingBlocks() {
-        return Collections.unmodifiableList(new ArrayList<>(cyclingBlocks));
+        return cyclingBlocks.values();
     }
 
     @Override
     public synchronized void registerCargoNode(SfxCargoNodeDefinition definition) {
         Objects.requireNonNull(definition, "definition");
-        if (cargoNodes.stream().anyMatch(existing -> existing.itemId().equals(definition.itemId()))) {
+        if (cargoNodes.anyMatch(existing -> existing.itemId().equals(definition.itemId()))) {
             throw new IllegalArgumentException("Cargo node already registered: " + definition.itemId());
         }
-        cargoNodes.add(definition);
+        cargoNodes.add(currentOwner(), definition);
     }
 
     @Override
     public synchronized List<SfxCargoNodeDefinition> cargoNodes() {
-        return Collections.unmodifiableList(new ArrayList<>(cargoNodes));
+        return cargoNodes.values();
     }
 }

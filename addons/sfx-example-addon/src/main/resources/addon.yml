@@ -1,7 +1,7 @@
 id: sfx:example
 name: SFX Example Addon
 version: 1.0.0
-api-version: 1
+api-version: 2
 main: cc.theends6.sfx.example.SfxExampleAddon
 enabled: true
 java:

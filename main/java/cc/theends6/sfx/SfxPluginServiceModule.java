@@ -25,6 +25,7 @@ import cc.theends6.sfx.internal.machine.SfxIndustrialMinerService;
 import cc.theends6.sfx.internal.radiation.SfxRadiationService;
 import cc.theends6.sfx.internal.technical.SfxTechnicalGadgetService;
 import cc.theends6.sfx.internal.virtualcontainer.SfxVirtualContainerService;
+import cc.theends6.sfx.internal.addon.SfxAddonRandomTickService;
 
 
 
@@ -55,9 +56,11 @@ final class SfxPluginServiceModule {
         plugin.hologramProjectorService = new SfxHologramProjectorService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.floatingTextDisplayService, plugin.machineRuntime);
         plugin.blockPlacerService = new SfxBlockPlacerService(plugin.api.runtime(), plugin.api.items(), plugin.blockDataService, plugin.spawnerService, plugin.hologramProjectorService, plugin.infusedHopperService, plugin.machineRuntime);
         plugin.industrialMinerService = new SfxIndustrialMinerService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.behaviors(), plugin.localization, plugin.blockDataService, plugin.machineRuntime);
+        plugin.addonRandomTickService = new SfxAddonRandomTickService(plugin, plugin.api.runtime(),
+                plugin.blockDataService, plugin.addonManager);
 
         SfxPluginFrameworkWiring.Stats frameworkStats = SfxPluginFrameworkWiring.wire(plugin);
-        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(plugin.api.items(), plugin.blockDataService, plugin.basicMachineBlockListener, plugin.electricMachineService, plugin.configurableMachineService, plugin.energyService, plugin.cargoService, plugin.decorationService, plugin.gpsService, plugin.ancientAltarService, plugin.androidService, plugin.spawnerService, plugin.blockPlacerService, plugin.infusedHopperService, plugin.hologramProjectorService, plugin.api.runtime(), plugin.machineRuntime, plugin.localization);
+        SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(plugin.api.items(), plugin.blockDataService, plugin.basicMachineBlockListener, plugin.electricMachineService, plugin.configurableMachineService, plugin.energyService, plugin.cargoService, plugin.decorationService, plugin.gpsService, plugin.ancientAltarService, plugin.androidService, plugin.spawnerService, plugin.blockPlacerService, plugin.infusedHopperService, plugin.hologramProjectorService, plugin.api.runtime(), plugin.machineRuntime, plugin.addonManager, plugin.localization);
         plugin.blockPersistenceListener = new SfxBlockPersistenceListener(plugin, plugin.api.runtime(), plugin.blockDataService, plugin.gpsService);
         plugin.radiationService = new SfxRadiationService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.itemRegistry(), plugin.localization, plugin.playerDataService);
         plugin.listenerRegistrar = new SfxListenerRegistrar(plugin);

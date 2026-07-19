@@ -11,6 +11,10 @@ import cc.theends6.sfx.api.menu.SfxMenus;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.api.feature.SfxFeatureRegistry;
 import cc.theends6.sfx.api.localization.SfxLocalizationView;
+import cc.theends6.sfx.api.time.SfxServerActiveClock;
+import cc.theends6.sfx.api.power.SfxInventoryPowerRouter;
+import cc.theends6.sfx.api.world.SfxProtectionService;
+import cc.theends6.sfx.api.world.SfxWorldActionService;
 
 public interface SfxApi {
     SfxRuntime runtime();
@@ -37,5 +41,21 @@ public interface SfxApi {
 
     default SfxMachineRuntime machineRuntime() {
         throw new UnsupportedOperationException("This SfxApi implementation does not expose the machine runtime API.");
+    }
+
+    default SfxServerActiveClock activeClock() {
+        throw new UnsupportedOperationException("This SfxApi implementation does not expose the server active clock.");
+    }
+
+    default SfxInventoryPowerRouter powerRouter() {
+        throw new UnsupportedOperationException("This SfxApi implementation does not expose the inventory power router.");
+    }
+
+    default SfxWorldActionService worldActions() {
+        throw new UnsupportedOperationException("This SfxApi implementation does not expose world actions.");
+    }
+
+    default SfxProtectionService protection() {
+        throw new UnsupportedOperationException("This SfxApi implementation does not expose protection checks.");
     }
 }

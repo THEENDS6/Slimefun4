@@ -37,6 +37,12 @@ public record SfxBlockInstanceRecord(
         return new SfxBlockInstanceRecord(instanceId, typeId, anchorKey, newLifecycleState, version, ownerId, newStateBlob, now, energyPriorityDistance);
     }
 
+    public SfxBlockInstanceRecord withState(byte[] newStateBlob, SfxBlockLifecycleState newLifecycleState,
+                                            int newVersion, long now) {
+        return new SfxBlockInstanceRecord(instanceId, typeId, anchorKey, newLifecycleState,
+                newVersion, ownerId, newStateBlob, now, energyPriorityDistance);
+    }
+
     public SfxBlockInstanceRecord withEnergyPriorityDistance(int newEnergyPriorityDistance, long now) {
         return new SfxBlockInstanceRecord(instanceId, typeId, anchorKey, lifecycleState, version, ownerId, stateBlob, now, newEnergyPriorityDistance);
     }

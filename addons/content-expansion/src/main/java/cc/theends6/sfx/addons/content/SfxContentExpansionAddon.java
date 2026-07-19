@@ -20,7 +20,7 @@ public final class SfxContentExpansionAddon implements SfxAddon {
     }
 
     @Override
-    public void onLoad(SfxAddonContext context) {
+    public void onRegister(SfxAddonContext context) {
         context.features().registerBoolean(FEATURE, "addons.content-expansion.enabled", true);
         SfxContentExpansionElectricProviders.register(context);
         context.behaviors().registerEnergyGeneratorProvider("sfx:oxidizing_generator",

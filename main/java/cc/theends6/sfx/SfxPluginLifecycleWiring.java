@@ -30,6 +30,8 @@ final class SfxPluginLifecycleWiring {
         modules.register(module("industrial-miner", null, () -> plugin.industrialMinerService.shutdown()));
         modules.register(module("block-persistence-listener", List.of("cargo-network", "energy-grid", "virtual-container"), () -> plugin.blockPersistenceListener.start(), () -> plugin.blockPersistenceListener.shutdown()));
         modules.register(module("radiation", () -> plugin.radiationService.start(), () -> plugin.radiationService.shutdown()));
+        modules.register(module("addon-random-ticks", List.of("block-persistence-listener"),
+                () -> plugin.addonRandomTickService.start(), () -> plugin.addonRandomTickService.shutdown()));
         return modules;
     }
 

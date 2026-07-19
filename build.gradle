@@ -1286,7 +1286,8 @@ tasks.register('validateSfxAddonApiDocs') {
                 'Technical gadget behavior providers',
                 'id: example:config_pack',
                 'default-enabled: true',
-                'api-version: 1',
+                'api-version: 2',
+                'onRegister',
                 'onDisable()',
                 'Exclusive Component Overrides',
                 'sfx:research-payment',
@@ -1352,6 +1353,17 @@ tasks.register('validateSfxAddonLifecycle') {
         }
         logger.lifecycle('Validated SFX addon shutdown and complete runtime reload ordering.')
     }
+}
+
+tasks.register('validateSfxAddonLifecycleSmoke', JavaExec) {
+    group = 'verification'
+    description = 'Runs owner cleanup, duplicate rejection, state migration and power transaction smoke checks.'
+    dependsOn 'classes'
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.internal.addon.SfxAddonLifecycleSmokeCli')
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
 }
 
 tasks.register('validateSfxElectricProviderAddonPolicy') {

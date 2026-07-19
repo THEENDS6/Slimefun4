@@ -38,6 +38,9 @@ final class SfxPluginShutdown {
         if (plugin.featureRegistry != null) {
             plugin.featureRegistry.clear();
         }
+        if (plugin.api != null) {
+            plugin.api.shutdown();
+        }
         if (plugin.packetEventsLoaded) {
             plugin.packetEventsLoaded = false;
             plugin.packetEventsApi = null;
@@ -96,6 +99,9 @@ final class SfxPluginShutdown {
         }
         if (plugin.radiationService != null) {
             plugin.radiationService.shutdown();
+        }
+        if (plugin.addonRandomTickService != null) {
+            plugin.addonRandomTickService.shutdown();
         }
     }
 }

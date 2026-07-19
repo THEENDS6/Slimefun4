@@ -63,6 +63,7 @@ final class SfxPluginListenerWiring {
         plugin.listenerRegistrar.register(plugin.hologramProjectorService);
         plugin.listenerRegistrar.register(plugin.industrialMinerService);
         plugin.listenerRegistrar.register(plugin.technicalGadgetService);
+        plugin.listenerRegistrar.register(plugin.addonRandomTickService);
         plugin.listenerRegistrar.register(plugin.backpackListener);
         plugin.listenerRegistrar.register(utilityListener);
         plugin.listenerRegistrar.register(combatToolListener);

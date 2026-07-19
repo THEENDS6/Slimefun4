@@ -23,6 +23,7 @@ import cc.theends6.sfx.internal.core.SfxAuditSink;
 import cc.theends6.sfx.internal.core.SfxListenerRegistrar;
 import cc.theends6.sfx.internal.core.SfxModuleManager;
 import cc.theends6.sfx.internal.addon.SfxAddonManager;
+import cc.theends6.sfx.internal.addon.SfxAddonRandomTickService;
 import cc.theends6.sfx.internal.addon.DefaultSfxComponentOverrideRegistry;
 import cc.theends6.sfx.internal.behavior.DefaultSfxBehaviorRegistry;
 import cc.theends6.sfx.internal.feature.DefaultSfxFeatureRegistry;
@@ -124,6 +125,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     DefaultSfxRecipeRegistry recipeRegistry;
     DefaultSfxComponentOverrideRegistry componentOverrideRegistry;
     SfxAddonManager addonManager;
+    SfxAddonRandomTickService addonRandomTickService;
     SfxMachineRuntimeEngine machineRuntime;
     SfxMachinePhaseLedger machinePhaseLedger;
     Object packetEventsApi;
@@ -345,6 +347,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
         api = null;
         playerDataService = null;
         blockDataService = null;
+        addonRandomTickService = null;
     }
 
     private void cancelScheduledRuntimeTasks(String reason) {

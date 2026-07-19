@@ -31,7 +31,6 @@ import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRuleContext;
 import cc.theends6.sfx.api.behavior.SfxTechnicalGadgetRules;
 import cc.theends6.sfx.api.behavior.SfxUtilityRuleContext;
 import cc.theends6.sfx.api.behavior.SfxUtilityRules;
-import cc.theends6.sfx.addons.basic.electric.SfxBasicExpansionElectricProviders;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,27 +47,32 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 public final class SfxBasicExpansionAddon implements SfxAddon {
-    private static final String ENHANCED_FURNACE_SPEED_FUEL = "sfx:enhanced_furnace_speed_fuel";
-    private static final String ANDROID_WOODCUTTER_BATCH_REPLANT = "sfx:android_woodcutter_batch_replant";
-    private static final String RADIATION_REWORK = "sfx:radiation_rework";
-    private static final String ADVANCED_INPUT_INTERFACE = "sfx:advanced_input_interface";
-    private static final String GPS_TRANSMITTER_STATUS_UI = "sfx:gps_transmitter_status_ui";
-    private static final String JETPACKS_AND_JETBOOTS_REWORK = "sfx:jetpacks_and_jetboots_rework";
-    private static final String TECHNICAL_GADGET_BALANCE = "sfx:technical_gadget_balance";
-    private static final String GENERATOR_BALANCE = "sfx:generator_balance";
-    private static final String PAUSE_GENERATORS_WHEN_GRID_FULL = "sfx:pause_generators_when_grid_full";
-    private static final String CROP_GROWTH_ACCELERATOR_BALANCE = "sfx:crop_growth_accelerator_balance";
-    private static final String TREE_GROWTH_ACCELERATOR_BALANCE = "sfx:tree_growth_accelerator_balance";
-    private static final String AUTO_BREEDER_BALANCE = "sfx:auto_breeder_balance";
-    private static final String ANIMAL_GROWTH_ACCELERATOR_BALANCE = "sfx:animal_growth_accelerator_balance";
-    private static final String PRODUCE_COLLECTOR_BALANCE = "sfx:produce_collector_balance";
-    private static final String ELECTRIC_ORE_GRINDER_3_BALANCE = "sfx:electric_ore_grinder_3_balance";
-    private static final String XP_COLLECTOR_BALANCE = "sfx:xp_collector_balance";
-    private static final String FLUID_PUMP_OPTIMIZATION = "sfx:fluid_pump_optimization";
-    private static final String AUTO_BREWER = "sfx:auto_brewer";
-    private static final String ENHANCED_MULTIMETER = "sfx:enhanced_multimeter";
-    private static final String BASIC_CIRCUIT_BOARD_DROP_BALANCE = "sfx:basic_circuit_board_drop_balance";
-    private static final String INDUSTRIAL_MINER_ACCURACY = "sfx:industrial_miner_accuracy";
+    static final String ENHANCED_FURNACE_SPEED_FUEL = "sfx:enhanced_furnace_speed_fuel";
+    static final String ANDROID_WOODCUTTER_BATCH_REPLANT = "sfx:android_woodcutter_batch_replant";
+    static final String RADIATION_REWORK = "sfx:radiation_rework";
+    static final String ADVANCED_INPUT_INTERFACE = "sfx:advanced_input_interface";
+    static final String GPS_TRANSMITTER_STATUS_UI = "sfx:gps_transmitter_status_ui";
+    static final String JETPACKS_AND_JETBOOTS_REWORK = "sfx:jetpacks_and_jetboots_rework";
+    static final String TECHNICAL_GADGET_BALANCE = "sfx:technical_gadget_balance";
+    static final String GENERATOR_BALANCE = "sfx:generator_balance";
+    static final String PAUSE_GENERATORS_WHEN_GRID_FULL = "sfx:pause_generators_when_grid_full";
+    static final String CROP_GROWTH_ACCELERATOR_BALANCE = "sfx:crop_growth_accelerator_balance";
+    static final String TREE_GROWTH_ACCELERATOR_BALANCE = "sfx:tree_growth_accelerator_balance";
+    static final String AUTO_BREEDER_BALANCE = "sfx:auto_breeder_balance";
+    static final String ANIMAL_GROWTH_ACCELERATOR_BALANCE = "sfx:animal_growth_accelerator_balance";
+    static final String PRODUCE_COLLECTOR_BALANCE = "sfx:produce_collector_balance";
+    static final String ELECTRIC_ORE_GRINDER_3_BALANCE = "sfx:electric_ore_grinder_3_balance";
+    static final String XP_COLLECTOR_BALANCE = "sfx:xp_collector_balance";
+    static final String FLUID_PUMP_OPTIMIZATION = "sfx:fluid_pump_optimization";
+    static final String AUTO_BREWER = "sfx:auto_brewer";
+    static final String ENHANCED_MULTIMETER = "sfx:enhanced_multimeter";
+    static final String BASIC_CIRCUIT_BOARD_DROP_BALANCE = "sfx:basic_circuit_board_drop_balance";
+    static final String INDUSTRIAL_MINER_ACCURACY = "sfx:industrial_miner_accuracy";
+
+    private final List<BasicExpansionModule> modules = List.of(
+            new BasicExpansionFeatureModule(),
+            new BasicExpansionBehaviorModule(),
+            new BasicExpansionElectricModule());
 
     public static final String ID = "sfx:basic_expansion";
 
@@ -83,78 +87,23 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
     }
 
     @Override
-    public void onLoad(SfxAddonContext context) {
-        context.features().registerBoolean(GPS_TRANSMITTER_STATUS_UI, "gps.sfx-extensions.transmitter-gui.enabled", true);
-        context.features().registerBoolean(ENHANCED_FURNACE_SPEED_FUEL, "plugin-blocks.enhanced-furnace.speed-affects-fuel-consumption", true);
-        context.features().registerBoolean(JETPACKS_AND_JETBOOTS_REWORK, "technical-gadgets.sfx-extensions.jetpacks-and-jetboots.enabled", true);
-        context.features().registerBoolean(TECHNICAL_GADGET_BALANCE, "technical-gadgets.sfx-balance.enabled", true);
-        context.features().registerBoolean(CROP_GROWTH_ACCELERATOR_BALANCE, "electric-machines.sfx-balance.crop-growth-accelerator", true);
-        context.features().registerBoolean(TREE_GROWTH_ACCELERATOR_BALANCE, "electric-machines.sfx-balance.tree-growth-accelerator", true);
-        context.features().registerBoolean(AUTO_BREEDER_BALANCE, "electric-machines.sfx-balance.auto-breeder", true);
-        context.features().registerBoolean(ANIMAL_GROWTH_ACCELERATOR_BALANCE, "electric-machines.sfx-balance.animal-growth-accelerator", true);
-        context.features().registerBoolean(PRODUCE_COLLECTOR_BALANCE, "electric-machines.sfx-balance.produce-collector", true);
-        context.features().registerBoolean(ELECTRIC_ORE_GRINDER_3_BALANCE, "electric-machines.sfx-balance.electric-ore-grinder-3", true);
-        context.features().registerBoolean(XP_COLLECTOR_BALANCE, "electric-machines.sfx-balance.xp-collector.enabled", true);
-        context.features().registerBoolean(FLUID_PUMP_OPTIMIZATION, "electric-machines.sfx-extensions.fluid-pump-optimization.enabled", true);
-        context.features().registerBoolean(AUTO_BREWER, "electric-machines.sfx-extensions.auto-brewer.enabled", true);
-        context.features().registerBoolean(GENERATOR_BALANCE, "energy.generator-balance.use-sfx-balance", true);
-        context.features().registerBoolean(PAUSE_GENERATORS_WHEN_GRID_FULL, "energy.generator-balance.pause-generators-when-grid-full", true);
-        context.features().registerBoolean(ENHANCED_MULTIMETER, "tools.multimeter.use-sfx-enhanced", true);
-        context.features().registerBoolean(ADVANCED_INPUT_INTERFACE, "cargo.sfx-extensions.advanced-input-interface.enabled", true);
-        context.features().registerBoolean(RADIATION_REWORK, "radiation.sfx-rework.enabled", true);
-        context.features().registerBoolean(ANDROID_WOODCUTTER_BATCH_REPLANT, "androids.woodcutter.batch-replant-bottom-layer", true);
-        context.features().registerBoolean(BASIC_CIRCUIT_BOARD_DROP_BALANCE, "entity-drops.basic-circuit-board.enabled", true);
-        context.features().registerBoolean(INDUSTRIAL_MINER_ACCURACY, "industrial-miner.accuracy.enabled", false);
-        context.behaviors().registerEnhancedFurnaceFuelPolicy((fuelContext, currentMultiplier) ->
-                speedScaledEnhancedFurnaceFuel(context, fuelContext, currentMultiplier));
-        context.behaviors().registerAndroidWoodcutterPolicy((woodcutterContext, currentDecision) ->
-                batchReplantBottomLayer(context, woodcutterContext, currentDecision));
-        context.behaviors().registerEntityDropChancePolicy((dropContext, currentChance) ->
-                basicCircuitBoardDropChance(context, dropContext, currentChance));
-        context.behaviors().registerIndustrialMinerTargetPolicy((targetContext, currentTarget) ->
-                industrialMinerTarget(context, targetContext, currentTarget));
-        context.behaviors().registerRadiationRuleProvider((ruleContext, currentRules) ->
-                sfxRadiationRules(context, ruleContext, currentRules));
-        context.behaviors().registerRadiationSymptomHandler(symptomContext ->
-                radiationSymptoms(context, symptomContext));
-        context.behaviors().registerCargoInputTransferPolicy((transferContext, currentDecision) ->
-                advancedInputTransfer(context, transferContext, currentDecision));
-        context.behaviors().registerGpsTransmitterInteractionPolicy((transmitterContext, currentDecision) ->
-                gpsTransmitterInteraction(context, currentDecision));
-        context.behaviors().registerGpsTransmitterStatusViewProvider((transmitterContext, currentView) ->
-                gpsTransmitterStatusView(context, transmitterContext, currentView));
-        context.behaviors().registerTechnicalGadgetRuleProvider((ruleContext, currentRules) ->
-                technicalGadgetRules(context, ruleContext, currentRules));
-        context.behaviors().registerTechnicalGadgetBehaviorProvider(new BasicTechnicalGadgetBehavior());
-        context.behaviors().registerRechargeableItemProvider(() ->
-                rechargeableItems(context));
-        context.behaviors().registerEnergyBalanceRuleProvider((ruleContext, currentRules) ->
-                energyBalanceRules(context, ruleContext, currentRules));
-        context.behaviors().registerAreaMachineRuleProvider((ruleContext, currentRules) ->
-                areaMachineRules(context, ruleContext, currentRules));
-        context.behaviors().registerUtilityRuleProvider((ruleContext, currentRules) ->
-                utilityRules(context, ruleContext, currentRules));
-        context.behaviors().registerElectricMachineProviderKeyPolicy((providerContext, currentProviderKey) ->
-                electricMachineProviderKey(context, providerContext.providerKey(), currentProviderKey));
-        SfxBasicExpansionElectricProviders.register(context);
-        context.behaviors().registerAutoBrewerBehaviorProvider(new BasicAutoBrewerBehavior());
-        context.behaviors().registerLocalizedListPostProcessor((listContext, currentValues) ->
-                localizedList(context, listContext, currentValues));
+    public void onRegister(SfxAddonContext context) {
+        modules.forEach(module -> module.register(context));
     }
 
     @Override
     public void onDisable() {
-        SfxBasicExpansionElectricProviders.disable();
+        modules.reversed().forEach(BasicExpansionModule::disable);
     }
 
-    private static double speedScaledEnhancedFurnaceFuel(SfxAddonContext context, SfxEnhancedFurnaceFuelContext fuelContext, double currentMultiplier) {
+    static double speedScaledEnhancedFurnaceFuel(SfxAddonContext context, SfxEnhancedFurnaceFuelContext fuelContext, double currentMultiplier) {
         if (!context.api().features().enabled(ENHANCED_FURNACE_SPEED_FUEL) || fuelContext.processingSpeed() <= 0) {
             return currentMultiplier;
         }
         return currentMultiplier / fuelContext.processingSpeed();
     }
 
-    private static Block industrialMinerTarget(SfxAddonContext context,
+    static Block industrialMinerTarget(SfxAddonContext context,
                                                SfxIndustrialMinerTargetContext targetContext,
                                                Block currentTarget) {
         if (!context.api().features().enabled(INDUSTRIAL_MINER_ACCURACY)) {
@@ -173,14 +122,14 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
     }
 
-    private static boolean batchReplantBottomLayer(SfxAddonContext context, SfxAndroidWoodcutterContext woodcutterContext, boolean currentDecision) {
+    static boolean batchReplantBottomLayer(SfxAddonContext context, SfxAndroidWoodcutterContext woodcutterContext, boolean currentDecision) {
         return currentDecision
                 || context.api().features().enabled(ANDROID_WOODCUTTER_BATCH_REPLANT)
                 && woodcutterContext.onlyBottomLayerLogsRemain()
                 && woodcutterContext.bottomLayerLogCount() > 0;
     }
 
-    private static double basicCircuitBoardDropChance(SfxAddonContext context, SfxEntityDropContext dropContext,
+    static double basicCircuitBoardDropChance(SfxAddonContext context, SfxEntityDropContext dropContext,
                                                        double currentChance) {
         if (!context.api().features().enabled(BASIC_CIRCUIT_BOARD_DROP_BALANCE)
                 || !"sf:basic_circuit_board".equals(dropContext.outputItemId())) {
@@ -202,7 +151,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         return Double.isFinite(value) ? Math.max(0.0D, Math.min(1.0D, value)) : fallback;
     }
 
-    private static SfxRadiationRules sfxRadiationRules(SfxAddonContext context, SfxRadiationRuleContext ruleContext, SfxRadiationRules currentRules) {
+    static SfxRadiationRules sfxRadiationRules(SfxAddonContext context, SfxRadiationRuleContext ruleContext, SfxRadiationRules currentRules) {
         if (!context.api().features().enabled(RADIATION_REWORK)) {
             return currentRules;
         }
@@ -217,7 +166,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         );
     }
 
-    private static boolean radiationSymptoms(SfxAddonContext context, SfxRadiationSymptomContext symptomContext) {
+    static boolean radiationSymptoms(SfxAddonContext context, SfxRadiationSymptomContext symptomContext) {
         if (!context.api().features().enabled(RADIATION_REWORK) || symptomContext.stageLevel() <= 0) {
             return false;
         }
@@ -268,7 +217,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         }
     }
 
-    private static SfxCargoInputTransferDecision advancedInputTransfer(SfxAddonContext context, SfxCargoInputTransferContext transferContext, SfxCargoInputTransferDecision currentDecision) {
+    static SfxCargoInputTransferDecision advancedInputTransfer(SfxAddonContext context, SfxCargoInputTransferContext transferContext, SfxCargoInputTransferDecision currentDecision) {
         if (!context.api().features().enabled(ADVANCED_INPUT_INTERFACE) || !transferContext.advancedInputNode()) {
             return currentDecision;
         }
@@ -280,14 +229,14 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         );
     }
 
-    private static SfxGpsTransmitterInteractionDecision gpsTransmitterInteraction(SfxAddonContext context, SfxGpsTransmitterInteractionDecision currentDecision) {
+    static SfxGpsTransmitterInteractionDecision gpsTransmitterInteraction(SfxAddonContext context, SfxGpsTransmitterInteractionDecision currentDecision) {
         if (!context.api().features().enabled(GPS_TRANSMITTER_STATUS_UI)) {
             return currentDecision;
         }
         return SfxGpsTransmitterInteractionDecision.OPEN_STATUS_UI;
     }
 
-    private static SfxGpsTransmitterStatusView gpsTransmitterStatusView(
+    static SfxGpsTransmitterStatusView gpsTransmitterStatusView(
             SfxAddonContext context,
             cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionContext transmitterContext,
             SfxGpsTransmitterStatusView currentView
@@ -334,7 +283,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 ));
     }
 
-    private static SfxTechnicalGadgetRules technicalGadgetRules(SfxAddonContext context, SfxTechnicalGadgetRuleContext ruleContext, SfxTechnicalGadgetRules currentRules) {
+    static SfxTechnicalGadgetRules technicalGadgetRules(SfxAddonContext context, SfxTechnicalGadgetRuleContext ruleContext, SfxTechnicalGadgetRules currentRules) {
         if (!context.api().features().enabled(JETPACKS_AND_JETBOOTS_REWORK)) {
             return currentRules;
         }
@@ -351,7 +300,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         );
     }
 
-    private static List<SfxRechargeableItemDefinition> rechargeableItems(SfxAddonContext context) {
+    static List<SfxRechargeableItemDefinition> rechargeableItems(SfxAddonContext context) {
         if (!context.api().features().enabled(JETPACKS_AND_JETBOOTS_REWORK)) {
             return List.of();
         }
@@ -392,7 +341,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         return SfxRechargeableItemDefinition.electric(itemId, SfxRechargeableItemKind.JETBOOTS, level, capacity, speed, useCost, heightLimit, false);
     }
 
-    private static SfxEnergyBalanceRules energyBalanceRules(SfxAddonContext context, SfxEnergyBalanceRuleContext ruleContext, SfxEnergyBalanceRules currentRules) {
+    static SfxEnergyBalanceRules energyBalanceRules(SfxAddonContext context, SfxEnergyBalanceRuleContext ruleContext, SfxEnergyBalanceRules currentRules) {
         boolean generatorBalance = context.api().features().enabled(GENERATOR_BALANCE);
         boolean pauseFull = context.api().features().enabled(PAUSE_GENERATORS_WHEN_GRID_FULL);
         if (!generatorBalance) {
@@ -410,7 +359,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         );
     }
 
-    private static SfxAreaMachineRules areaMachineRules(SfxAddonContext context, SfxAreaMachineRuleContext ruleContext, SfxAreaMachineRules currentRules) {
+    static SfxAreaMachineRules areaMachineRules(SfxAddonContext context, SfxAreaMachineRuleContext ruleContext, SfxAreaMachineRules currentRules) {
         return new SfxAreaMachineRules(
                 context.api().features().enabled(PRODUCE_COLLECTOR_BALANCE),
                 context.api().features().enabled(AUTO_BREEDER_BALANCE),
@@ -427,14 +376,14 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         );
     }
 
-    private static SfxUtilityRules utilityRules(SfxAddonContext context, SfxUtilityRuleContext ruleContext, SfxUtilityRules currentRules) {
+    static SfxUtilityRules utilityRules(SfxAddonContext context, SfxUtilityRuleContext ruleContext, SfxUtilityRules currentRules) {
         return new SfxUtilityRules(
                 context.api().features().enabled(AUTO_BREWER),
                 context.api().features().enabled(ENHANCED_MULTIMETER)
         );
     }
 
-    private static String electricMachineProviderKey(SfxAddonContext context, String originalProviderKey, String currentProviderKey) {
+    static String electricMachineProviderKey(SfxAddonContext context, String originalProviderKey, String currentProviderKey) {
         if ("sf:auto_brewer".equals(originalProviderKey) && context.api().features().enabled(AUTO_BREWER)) {
             return "sfx:advanced_auto_brewer";
         }
@@ -465,7 +414,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         return currentProviderKey;
     }
 
-    private static List<String> localizedList(SfxAddonContext context, SfxLocalizedListContext listContext, List<String> values) {
+    static List<String> localizedList(SfxAddonContext context, SfxLocalizedListContext listContext, List<String> values) {
         String path = listContext.path();
         if ("items.sf.industrial_miner.lore".equals(path)
                 || "items.sf.advanced_industrial_miner.lore".equals(path)) {
@@ -734,7 +683,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         return copy;
     }
 
-    private static final class BasicTechnicalGadgetBehavior implements SfxTechnicalGadgetBehaviorProvider {
+    static final class BasicTechnicalGadgetBehavior implements SfxTechnicalGadgetBehaviorProvider {
         private static final double JETPACK_VERTICAL_MULTIPLIER = 2.0D;
         private static final double JETPACK_HORIZONTAL_FACTOR = 0.20D;
         private static final double JETPACK_MAX_HORIZONTAL_SPEED = 0.85D;
@@ -929,7 +878,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         }
     }
 
-    private static final class BasicAutoBrewerBehavior implements SfxAutoBrewerBehaviorProvider {
+    static final class BasicAutoBrewerBehavior implements SfxAutoBrewerBehaviorProvider {
         private static final int BLAZE_SLOT = 10;
         private static final int PROGRESS_SLOT = 13;
         private static final int INGREDIENT_SLOT = 16;

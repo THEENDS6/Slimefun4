@@ -1,6 +1,6 @@
 # SFX Addon API（中文版）
 
-当前 Addon API 版本为 `1`。Java API 仍处于实验阶段，但本文规则是版本 1 的正式边界。
+当前 Addon API 版本为 `2`，运行时继续兼容 API v1 Addon。v2 引入 owner-scoped 注册、失败回滚、依赖排序和领域化基础设施。
 
 ## 定位与边界
 
@@ -42,18 +42,22 @@ JAR 安装在 `plugins/SlimeFunX/addons/*.jar`。运行时独立数据目录为 
 id: example:demo
 name: Example Demo
 version: 1.0.0
-api-version: 1
+api-version: 2
 enabled: true
 main: com.example.sfxaddon.ExampleAddon
+depends: []
+soft-depends: []
+load-after: []
+conflicts: []
 java:
   jar: example-demo.jar
 ```
 
 - `id` 必须是小写 `namespace:name`，并与 Java `id()` 完全一致；
 - Java Addon 必须提供实现 `SfxAddon` 的 `main`；
-- 不支持的 `api-version` 会在 `onLoad` 前被拒绝；
+- 不支持的 `api-version` 会在 Java 类加载前被拒绝；
 - feature、provider、物品、语言、权限和 PDC key 都必须使用自己的命名空间；
-- 版本 1 暂无依赖排序和版本范围，需要时必须在 `onLoad` 明确检查。
+- `depends` 是硬依赖，缺失时拒绝加载；`soft-depends` 与 `load-after` 在目标存在时建立顺序；`conflicts` 命中时拒绝双方同时加载；循环依赖会直接失败。
 
 ## 生命周期
 
@@ -61,19 +65,24 @@ java:
 public final class ExampleAddon implements SfxAddon {
     public String id() { return "example:demo"; }
 
-    public void onLoad(SfxAddonContext context) {
-        // 注册 feature 和 provider。
+    public void onRegister(SfxAddonContext context) {
+        // 只声明 feature、provider、方块类型等 owner-scoped 定义。
+    }
+
+    public void onEnable(SfxAddonContext context) {
+        // 声明提交成功后再启动运行时资源。
+        context.resources().registerListener(new ExampleListener());
     }
 
     public void onDisable() {
-        // 清理任务、监听器、实体、会话、网络节点和缓存。
+        // 只清理未交给 context.resources() 的外部资源。
     }
 }
 ```
 
-`onLoad` 在 manifest 与配置校验后调用。`onDisable` 在 classloader 关闭前按加载逆序调用，此时 `onLoad` 期间可用的核心服务仍然有效；清理逻辑必须可重复执行。
+`onRegister` 在全部 manifest 预检与依赖拓扑排序后调用。所有注册都记录 Addon owner；回调失败时核心统一撤销。声明验证成功后调用 `onEnable`。`onDisable` 在 classloader 关闭前按加载逆序调用，之后核心自动取消 owner 任务、注销监听器并移除运行时注册；清理逻辑仍应可重复执行。API v1 的 `onLoad` 会由 v2 适配器转发到同一注册事务。
 
-普通 `/slimefunx reload` 只刷新核心配置和语言。`/slimefunx reload runtime` 与 `/slimefunx reload all` 会执行完整运行时重载：先调用 Addon 的 `onDisable()`，丢弃旧 Provider 与 Feature 注册，再关闭核心运行时模块，随后创建新的 Addon 实例和 classloader，并重建内容与服务。版本 1 不支持单独安装、卸载或热重载某一个 Java Addon。
+普通 `/slimefunx reload` 只刷新核心配置和语言。`/slimefunx reload runtime` 与 `/slimefunx reload all` 会执行完整运行时重载：先调用 Addon 的 `onDisable()` 和核心 `unregisterAll(addonId)`，再关闭运行时模块，随后创建新的 Addon 实例和 classloader，并重建内容与服务。当前仍不支持单独热装卸某一个 Java Addon。
 
 Addon 可通过 `SfxCargoNodeDefinition` 为运输调度器提供 `SfxCargoManagerProvider` 自定义菜单和启停、速度倍率控制。`coexistsWithManagers=true` 的调度器不会与普通调度器形成多控制器冲突：有普通调度器时由普通调度器承担网络锚点，自定义调度器仍可作为控制面；只有它自身时也可独立调度。
 
@@ -85,6 +94,14 @@ Addon 可通过 `SfxCargoNodeDefinition` 为运输调度器提供 `SfxCargoManag
 - `features()`：注册和查询功能；
 - `behaviors()`：注册运行时 Provider，包括实体掉落概率策略；
 - `overrides()`：安装已在 Addon manifest 中声明的完整独占组件替换；
+- `resources()`、`scheduler()`：注册自动归属 Addon 的 Listener、Folia 任务和 `AutoCloseable`；
+- `items()`、`machines()`、`cargo()`：注册物品、手动机器和运输节点；
+- `blocks()`、`randomTicks()`：注册带 Schema 的自定义方块和索引式随机刻；
+- `displays()`、`containers()`：注册客户端显示分类、显示类型以及虚拟物品/流体容器；
+- `continuousMachines()`、`power()`：注册连续型手动机器与通用电力物品；
+- `worldActions()`、`protection()`：执行经过区域调度和 Bukkit 保护事件的世界操作；
+- `components()`：`overrides()` 的领域化别名，安装清单中声明的组件替换；
+- `api().activeClock()`、`powerRouter()`：读取持久服务器活动 Tick，并执行模拟后提交的统一电力结算；
 - `dataDirectory()`：独立数据目录；
 - `config()` 与 `configBoolean/Int/Double/String()`：读取 Addon 自己的 `config.yml`，不会读取核心配置。
 
@@ -98,7 +115,7 @@ overrides:
     contract-version: 2
 ```
 
-然后在 `onLoad` 中安装完整实现：
+然后在 `onRegister` 中安装完整实现：
 
 ```java
 context.overrides().replace(
@@ -151,4 +168,4 @@ Paper 与 SFX API 使用 `compileOnly`，不要把 SFX API 类打进 Addon JAR�
 
 至少验证加载、内容编译、权限、交互、区块卸载/加载、状态恢复、Folia 调度、插件关闭和第二次启动。
 
-版本 1 尚不承诺长期二进制兼容、单个 Addon 独立热装卸、依赖图，也未提供每一种特殊世界交互机器所需的完整公开扩展面。
+API v2 仍处于实验阶段，暂不承诺长期二进制兼容或单个 Addon 独立热装卸；持久方块状态在 Addon 暂时缺失时保留，不会被 `unregisterAll` 当作运行时资源删除。

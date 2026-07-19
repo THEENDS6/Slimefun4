@@ -16,7 +16,7 @@ public final class SfxResearchExpansionAddon implements SfxAddon {
     }
 
     @Override
-    public void onLoad(SfxAddonContext context) {
+    public void onRegister(SfxAddonContext context) {
         context.overrides().replace(
                 SfxComponentOverrideTargets.RESEARCH_PAYMENT,
                 new SfxResearchExpansionPayment(context.config(), context.api().localization())

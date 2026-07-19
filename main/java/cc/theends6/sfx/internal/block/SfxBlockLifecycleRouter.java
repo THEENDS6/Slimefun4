@@ -52,6 +52,7 @@ public final class SfxBlockLifecycleRouter {
     private final SfxHologramProjectorService hologramProjectorService;
     private final SfxMachineRuntimeEngine machineRuntime;
     private final Logger logger;
+    private final cc.theends6.sfx.internal.addon.SfxAddonManager addonManager;
     private final SfxBlockLifecycleRegistry lifecycleRegistry = new SfxBlockLifecycleRegistry();
 
     public SfxBlockLifecycleRouter(
@@ -71,6 +72,7 @@ public final class SfxBlockLifecycleRouter {
             SfxInfusedHopperService infusedHopperService,
             SfxHologramProjectorService hologramProjectorService,
             SfxMachineRuntimeEngine machineRuntime,
+            cc.theends6.sfx.internal.addon.SfxAddonManager addonManager,
             Logger logger
     ) {
         this.items = items;
@@ -89,6 +91,7 @@ public final class SfxBlockLifecycleRouter {
         this.infusedHopperService = infusedHopperService;
         this.hologramProjectorService = hologramProjectorService;
         this.machineRuntime = machineRuntime;
+        this.addonManager = addonManager;
         this.logger = logger == null ? Logger.getLogger("SlimeFunX") : logger;
         registerDomainHandlers();
     }
@@ -146,6 +149,51 @@ public final class SfxBlockLifecycleRouter {
             @Override public boolean supports(String typeId) { return hologramProjectorService.supportsType(typeId); }
             @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) { hologramProjectorService.destroyAnchoredBlock(block, instanceId, typeId); }
         });
+        lifecycleRegistry.register(new SfxBlockLifecycleHandler() {
+            @Override public boolean supports(String typeId) {
+                return addonManager != null && addonManager.blockType(typeId).isPresent();
+            }
+            @Override public void destroy(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) {
+                invokeAddonDestruction(block, instanceId, typeId, options);
+                commitGenericDestruction(block, instanceId, typeId);
+            }
+        });
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void invokeAddonDestruction(Block block, UUID instanceId, String typeId, SfxBlockDestructionOptions options) {
+        cc.theends6.sfx.api.block.SfxBlockType blockType = addonManager.blockType(typeId).orElse(null);
+        cc.theends6.sfx.api.block.SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (blockType == null || instance == null || block == null) return;
+        Object decoded = blockType.stateSchema().decode(instance.version(), instance.stateBlob());
+        AddonBlockContext context = new AddonBlockContext(instanceId, typeId, block.getLocation(),
+                options == null ? null : options.actor(), decoded);
+        if (options != null && options.cause() == SfxBlockDestructionCause.EXPLOSION) {
+            blockType.lifecycle().onExplosion(context);
+        } else if (options != null && options.cause() == SfxBlockDestructionCause.FLUID_BREAK) {
+            blockType.lifecycle().onFluidBreak(context);
+        } else {
+            blockType.lifecycle().onBreak(context);
+        }
+    }
+
+    private static final class AddonBlockContext implements cc.theends6.sfx.api.block.SfxBlockEventContext<Object> {
+        private final UUID instanceId;
+        private final String typeId;
+        private final org.bukkit.Location location;
+        private final org.bukkit.entity.Player actor;
+        private Object state;
+        private AddonBlockContext(UUID instanceId, String typeId, org.bukkit.Location location,
+                                  org.bukkit.entity.Player actor, Object state) {
+            this.instanceId = instanceId; this.typeId = typeId; this.location = location.clone();
+            this.actor = actor; this.state = state;
+        }
+        @Override public UUID instanceId() { return instanceId; }
+        @Override public String blockTypeId() { return typeId; }
+        @Override public org.bukkit.Location location() { return location.clone(); }
+        @Override public org.bukkit.entity.Player actor() { return actor; }
+        @Override public Object state() { return state; }
+        @Override public void state(Object state) { this.state = state; }
     }
 
     public void destroyAnchoredBlock(Block block, UUID instanceId, String typeId) {

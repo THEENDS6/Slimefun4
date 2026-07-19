@@ -34,7 +34,7 @@ public final class SfxExampleAddon implements SfxAddon {
     }
 
     @Override
-    public void onLoad(SfxAddonContext context) {
+    public void onRegister(SfxAddonContext context) {
         if (Bukkit.getPluginManager().getPermission(ExamplePermissions.DEBUG) == null) {
             Bukkit.getPluginManager().addPermission(new Permission(
                     ExamplePermissions.DEBUG,
@@ -62,7 +62,7 @@ public final class SfxExampleAddon implements SfxAddon {
                 List.of(Material.SLIME_BLOCK, Material.HONEY_BLOCK),
                 context.configInt("magic-slime-block.interval-ticks", 20)
         ));
-        debugFish = new DebugFishModule(context);
+        debugFish = context.resources().own(new DebugFishModule(context));
     }
 
     @Override

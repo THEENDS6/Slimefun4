@@ -6,6 +6,9 @@ import cc.theends6.sfx.api.machine.manual.SfxManualMachineOperation;
 
 import cc.theends6.sfx.api.item.SfxItemDefinition;
 import cc.theends6.sfx.api.machine.SfxManualMachineRegistry;
+import cc.theends6.sfx.internal.core.SfxOwnedEntries;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -14,24 +17,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.IdentityHashMap;
 
 public final class DefaultManualMachineRegistry implements SfxManualMachineRegistry {
     private final Map<String, SfxManualMachineDefinition> machines = new LinkedHashMap<>();
+    private final Map<String, String> machineOwners = new LinkedHashMap<>();
     private final Map<String, List<SfxManualMachineRecipe>> recipes = new LinkedHashMap<>();
+    private final Map<SfxManualMachineRecipe, String> recipeOwners = new IdentityHashMap<>();
     private final Map<String, Map<ManualRecipeHash, List<SfxManualMachineRecipe>>> orderedRecipeIndex = new LinkedHashMap<>();
     private final Map<String, Map<ManualRecipeHash, List<SfxManualMachineRecipe>>> unorderedRecipeIndex = new LinkedHashMap<>();
     private volatile long revision;
+    private final ThreadLocal<String> registrationOwner = ThreadLocal.withInitial(() -> SfxOwnedEntries.CORE_OWNER);
 
     @Override
-    public void registerMachine(SfxManualMachineDefinition definition) {
+    public synchronized void registerMachine(SfxManualMachineDefinition definition) {
         if (machines.containsKey(definition.id())) {
             throw new IllegalArgumentException("Duplicate SFX manual machine: " + definition.id());
         }
         machines.put(definition.id(), definition);
+        machineOwners.put(definition.id(), registrationOwner.get());
     }
 
     @Override
-    public void registerRecipe(SfxManualMachineRecipe recipe) {
+    public synchronized void registerRecipe(SfxManualMachineRecipe recipe) {
         if (!machines.containsKey(recipe.machineId())) {
             throw new IllegalArgumentException("Unknown manual machine for recipe: " + recipe.machineId());
         }
@@ -40,6 +48,7 @@ public final class DefaultManualMachineRegistry implements SfxManualMachineRegis
             throw new IllegalArgumentException("Recipe operation does not match manual machine: " + recipe.machineId());
         }
         recipes.computeIfAbsent(recipe.machineId(), ignored -> new ArrayList<>()).add(recipe);
+        recipeOwners.put(recipe, registrationOwner.get());
         if (recipe.operation() == SfxManualMachineOperation.SHAPED_3X3) {
             index(orderedRecipeIndex, recipe.machineId(), ManualRecipeHash.orderedRecipe(recipe.input()), recipe);
         } else if (recipe.operation() == SfxManualMachineOperation.SHAPELESS_INPUT) {
@@ -50,10 +59,58 @@ public final class DefaultManualMachineRegistry implements SfxManualMachineRegis
 
     public void clear() {
         machines.clear();
+        machineOwners.clear();
         recipes.clear();
+        recipeOwners.clear();
         orderedRecipeIndex.clear();
         unorderedRecipeIndex.clear();
         revision++;
+    }
+
+    public synchronized void removeOwner(String owner) {
+        recipes.values().forEach(list -> list.removeIf(recipe -> owner.equals(recipeOwners.get(recipe))));
+        recipes.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+        recipeOwners.entrySet().removeIf(entry -> owner.equals(entry.getValue()));
+        machineOwners.entrySet().removeIf(entry -> {
+            if (!owner.equals(entry.getValue())) {
+                return false;
+            }
+            machines.remove(entry.getKey());
+            return true;
+        });
+        rebuildIndexes();
+        revision++;
+    }
+
+    public SfxManualMachineRegistry registrarFor(String owner) {
+        return (SfxManualMachineRegistry) Proxy.newProxyInstance(
+                SfxManualMachineRegistry.class.getClassLoader(),
+                new Class<?>[] {SfxManualMachineRegistry.class},
+                (proxy, method, args) -> {
+                    String previous = registrationOwner.get();
+                    registrationOwner.set(owner);
+                    try {
+                        return method.invoke(this, args);
+                    } catch (InvocationTargetException exception) {
+                        throw exception.getCause();
+                    } finally {
+                        registrationOwner.set(previous);
+                    }
+                });
+    }
+
+    private void rebuildIndexes() {
+        orderedRecipeIndex.clear();
+        unorderedRecipeIndex.clear();
+        for (List<SfxManualMachineRecipe> values : recipes.values()) {
+            for (SfxManualMachineRecipe recipe : values) {
+                if (recipe.operation() == SfxManualMachineOperation.SHAPED_3X3) {
+                    index(orderedRecipeIndex, recipe.machineId(), ManualRecipeHash.orderedRecipe(recipe.input()), recipe);
+                } else if (recipe.operation() == SfxManualMachineOperation.SHAPELESS_INPUT) {
+                    index(unorderedRecipeIndex, recipe.machineId(), ManualRecipeHash.unorderedRecipe(recipe.input()), recipe);
+                }
+            }
+        }
     }
 
     private void index(Map<String, Map<ManualRecipeHash, List<SfxManualMachineRecipe>>> index, String machineId,

@@ -63,7 +63,8 @@ public final class SfxBlockExplosionService {
         if (isWitherProof(instance.typeId())) {
             return;
         }
-        lifecycleRouter.destroyAnchoredBlock(block, instance.instanceId(), instance.typeId());
+        lifecycleRouter.destroyAnchoredBlock(block, instance.instanceId(), instance.typeId(),
+                new SfxBlockDestructionOptions(false, SfxBlockDestructionCause.EXPLOSION, null));
         SfxWorldMutationBridge.setType(machineRuntime, instance.typeId(), block, Material.AIR, false, "block-lifecycle", "entity-change:wither");
     }
 
@@ -93,7 +94,8 @@ public final class SfxBlockExplosionService {
                 SfxWorldMutationBridge.setType(machineRuntime, "sf:unknown", block, Material.AIR, false, "block-lifecycle", "explode:orphan");
                 continue;
             }
-            lifecycleRouter.destroyAnchoredBlock(block, instance.instanceId(), instance.typeId());
+            lifecycleRouter.destroyAnchoredBlock(block, instance.instanceId(), instance.typeId(),
+                    new SfxBlockDestructionOptions(false, SfxBlockDestructionCause.EXPLOSION, null));
             SfxWorldMutationBridge.setType(machineRuntime, instance.typeId(), block, Material.AIR, false, "block-lifecycle", "explode:destroy");
         }
     }

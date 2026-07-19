@@ -5,6 +5,14 @@ import cc.theends6.sfx.api.addon.SfxAddonContext;
 import cc.theends6.sfx.api.behavior.SfxBehaviorRegistrar;
 import cc.theends6.sfx.api.feature.SfxFeatureRegistrar;
 import cc.theends6.sfx.api.override.SfxComponentOverrideRegistrar;
+import cc.theends6.sfx.api.addon.SfxAddonResources;
+import cc.theends6.sfx.api.block.SfxBlockType;
+import cc.theends6.sfx.api.container.SfxVirtualContainerType;
+import cc.theends6.sfx.api.display.SfxDisplayRegistrar;
+import cc.theends6.sfx.api.machine.continuous.SfxContinuousManualMachine;
+import cc.theends6.sfx.api.power.SfxPoweredItem;
+import cc.theends6.sfx.api.randomtick.SfxRandomTickType;
+import cc.theends6.sfx.api.registry.SfxDefinitionRegistry;
 import java.io.File;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -16,17 +24,22 @@ final class SfxAddonContextImpl implements SfxAddonContext {
     private final SfxFeatureRegistrar features;
     private final SfxBehaviorRegistrar behaviors;
     private final SfxComponentOverrideRegistrar overrides;
+    private final SfxAddonResources resources;
+    private final SfxAddonDomainRegistries.Views domains;
     private final File dataDirectory;
     private final FileConfiguration config;
 
     SfxAddonContextImpl(JavaPlugin plugin, SfxApi api, SfxFeatureRegistrar features, SfxBehaviorRegistrar behaviors,
-                        SfxComponentOverrideRegistrar overrides,
+                        SfxComponentOverrideRegistrar overrides, SfxAddonResources resources,
+                        SfxAddonDomainRegistries.Views domains,
                         File dataDirectory, FileConfiguration config) {
         this.plugin = plugin;
         this.api = api;
         this.features = features;
         this.behaviors = behaviors;
         this.overrides = overrides;
+        this.resources = resources;
+        this.domains = domains;
         this.dataDirectory = dataDirectory;
         this.config = config;
     }
@@ -50,6 +63,18 @@ final class SfxAddonContextImpl implements SfxAddonContext {
     public SfxComponentOverrideRegistrar overrides() {
         return overrides;
     }
+
+    @Override
+    public SfxAddonResources resources() {
+        return resources;
+    }
+
+    @Override public SfxDefinitionRegistry<SfxBlockType<?>> blocks() { return domains.blocks(); }
+    @Override public SfxDefinitionRegistry<SfxRandomTickType<?>> randomTicks() { return domains.randomTicks(); }
+    @Override public SfxDisplayRegistrar displays() { return domains.displays(); }
+    @Override public SfxDefinitionRegistry<SfxVirtualContainerType> containers() { return domains.containers(); }
+    @Override public SfxDefinitionRegistry<SfxContinuousManualMachine> continuousMachines() { return domains.continuousMachines(); }
+    @Override public SfxDefinitionRegistry<SfxPoweredItem> power() { return domains.poweredItems(); }
 
     @Override
     public File dataDirectory() {

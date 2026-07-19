@@ -75,6 +75,7 @@ public final class SfxPlaceableBlockListener implements Listener {
             SfxHologramProjectorService hologramProjectorService,
             SfxRuntime runtime,
             SfxMachineRuntimeEngine machineRuntime,
+            cc.theends6.sfx.internal.addon.SfxAddonManager addonManager,
             SfxLocalization localization
     ) {
         this.items = Objects.requireNonNull(items, "items");
@@ -99,6 +100,7 @@ public final class SfxPlaceableBlockListener implements Listener {
                 Objects.requireNonNull(infusedHopperService, "infusedHopperService"),
                 Objects.requireNonNull(hologramProjectorService, "hologramProjectorService"),
                 machineRuntime,
+                addonManager,
                 LOGGER);
         this.placementRouter = new SfxBlockPlacementRouter(
                 this.items,
@@ -190,7 +192,8 @@ public final class SfxPlaceableBlockListener implements Listener {
         boolean containment = items.readMarker(event.getPlayer().getInventory().getItemInMainHand())
                 .map(marker -> "sf:pickaxe_of_containment".equals(marker.itemId()))
                 .orElse(false);
-        lifecycleRouter.destroyAnchoredBlock(event.getBlock(), instance.instanceId(), instance.typeId(), new SfxBlockDestructionOptions(containment));
+        lifecycleRouter.destroyAnchoredBlock(event.getBlock(), instance.instanceId(), instance.typeId(),
+                new SfxBlockDestructionOptions(containment, SfxBlockDestructionCause.PLAYER_BREAK, event.getPlayer()));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
