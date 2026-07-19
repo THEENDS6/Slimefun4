@@ -11,11 +11,13 @@ import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.item.SfxRecipeSlot;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxBasicMachineBlockListener;
+import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +57,7 @@ public final class ManualMachineService {
     private final SfxItems items;
     private final SfxLocalization localization;
     private final SfxBasicMachineBlockListener basicBlockMachines;
+    private final SfxResearchService researches;
     private final Map<MatchCacheKey, List<SfxManualMachineRecipe>> matchCache = new LinkedHashMap<>(64, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<MatchCacheKey, List<SfxManualMachineRecipe>> eldest) {
@@ -62,13 +65,16 @@ public final class ManualMachineService {
         }
     };
 
-    public ManualMachineService(JavaPlugin plugin, SfxRuntime runtime, DefaultManualMachineRegistry registry, SfxItems items, SfxLocalization localization, SfxBasicMachineBlockListener basicBlockMachines) {
+    public ManualMachineService(JavaPlugin plugin, SfxRuntime runtime, DefaultManualMachineRegistry registry,
+                                SfxItems items, SfxLocalization localization,
+                                SfxBasicMachineBlockListener basicBlockMachines, SfxResearchService researches) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.registry = Objects.requireNonNull(registry, "registry");
         this.items = Objects.requireNonNull(items, "items");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.basicBlockMachines = Objects.requireNonNull(basicBlockMachines, "basicBlockMachines");
+        this.researches = Objects.requireNonNull(researches, "researches");
     }
 
     public boolean tryInteract(Player player, Block clickedBlock) {
@@ -178,16 +184,27 @@ public final class ManualMachineService {
         }
 
         if (!shapedCraftable.isEmpty()) {
-            craftShaped(clickedBlock, input, output, shapedCraftable.getFirst(), definition);
+            ShapedMatchPlan plan = shapedCraftable.getFirst();
+            if (!canUseRecipe(player, plan.recipe())) {
+                return;
+            }
+            craftShaped(clickedBlock, input, output, plan, definition);
             return;
         }
         if (!singleCraftable.isEmpty()) {
-            craftSingle(clickedBlock, input, output, singleCraftable.get(ThreadLocalRandom.current().nextInt(singleCraftable.size())), definition);
+            SfxManualMachineRecipe recipe = singleCraftable.get(ThreadLocalRandom.current().nextInt(singleCraftable.size()));
+            if (!canUseRecipe(player, recipe)) {
+                return;
+            }
+            craftSingle(clickedBlock, input, output, recipe, definition);
             return;
         }
 
         ShapelessMatchPlan shapeless = findShapelessMatch(definition.id(), inputContents, recipes);
         if (shapeless != null) {
+            if (!canUseRecipe(player, shapeless.recipe())) {
+                return;
+            }
             if (!canFitAfterShapelessConsume(input, output, shapeless)) {
                 message(player, localization.text("machines.output-full"));
                 return;
@@ -417,6 +434,9 @@ public final class ManualMachineService {
         }
 
         SfxManualMachineRecipe recipe = craftable.get(ThreadLocalRandom.current().nextInt(craftable.size()));
+        if (!canUseRecipe(player, recipe)) {
+            return;
+        }
         Inventory output = resolveHandOutputInventory(definition, clickedBlock);
         if (output != null && recipe.hasRandomOutputs() && !canFitRandomRecipe(cloneContents(output), recipe)) {
             message(player, localization.text("machines.output-full"));
@@ -438,6 +458,35 @@ public final class ManualMachineService {
             dropOutputs(clickedBlock, outputs);
         }
         success(clickedBlock, definition);
+    }
+
+    private boolean canUseRecipe(Player player, SfxManualMachineRecipe recipe) {
+        LinkedHashSet<String> researchedItemIds = new LinkedHashSet<>();
+        for (SfxRecipeSlot input : recipe.input()) {
+            if (input != null && input.isSfxItem()
+                    && researches.researchForItem(input.sfxItemId()).isPresent()) {
+                researchedItemIds.add(input.sfxItemId());
+            }
+        }
+        for (SfxManualMachineOutput output : recipe.outputs()) {
+            if (output.isSfxItem() && researches.researchForItem(output.sfxItemId()).isPresent()) {
+                researchedItemIds.add(output.sfxItemId());
+            }
+        }
+        if (researchedItemIds.isEmpty()) {
+            return true;
+        }
+        if (researches.findProfile(player).isEmpty()) {
+            message(player, localization.text("messages.profile.loading"));
+            return false;
+        }
+        for (String itemId : researchedItemIds) {
+            if (!researches.canUse(player, itemId)) {
+                message(player, localization.text("messages.not-researched-item"));
+                return false;
+            }
+        }
+        return true;
     }
 
     private List<SfxManualMachineOutput> selectedOutputs(SfxManualMachineRecipe recipe) {

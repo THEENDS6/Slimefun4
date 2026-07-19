@@ -35,7 +35,7 @@ final class SfxPluginServiceModule {
 
     static SfxPluginServices create(SlimeFunXPlugin plugin) {
         plugin.basicMachineBlockListener = new SfxBasicMachineBlockListener(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.machineRuntime);
-        ManualMachineService manualMachineService = new ManualMachineService(plugin, plugin.api.runtime(), plugin.api.internalManualMachines(), plugin.api.items(), plugin.localization, plugin.basicMachineBlockListener);
+        ManualMachineService manualMachineService = new ManualMachineService(plugin, plugin.api.runtime(), plugin.api.internalManualMachines(), plugin.api.items(), plugin.localization, plugin.basicMachineBlockListener, plugin.researchService);
         plugin.floatingTextDisplayService = new SfxFloatingTextDisplayService(plugin, plugin.api.runtime());
         plugin.virtualContainerService = new SfxVirtualContainerService(plugin, plugin.api.runtime());
         plugin.electricMachineService = new SfxElectricMachineService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.playerDataService, plugin.api.internalManualMachines(), plugin.virtualContainerService, plugin.floatingTextDisplayService, plugin.machineRuntime);
@@ -48,7 +48,7 @@ final class SfxPluginServiceModule {
         plugin.gpsService = new SfxGpsService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.menus(), plugin.localization, plugin.blockDataService, plugin.decorationService, plugin.electricMachineService, new SqliteSfxGpsDataRepository(plugin, plugin.gpsDataFile()), plugin.machineRuntime);
         plugin.androidService = new SfxAndroidService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.itemRegistry(), plugin.localization, plugin.blockDataService, new SqliteSfxAndroidScriptRepository(plugin, plugin.androidScriptsFile()), plugin.machineRuntime);
         plugin.entityDropService = new SfxEntityDropService(plugin, plugin.api.items(), plugin.api.behaviors(),
-                plugin.researchService, plugin.recipeRegistry);
+                plugin.recipeRegistry);
         plugin.ancientAltarService = new SfxAncientAltarService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.itemRegistry(), plugin.localization, plugin.blockDataService, plugin.machineRuntime);
         plugin.spawnerService = new SfxSpawnerService(plugin, plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.machineRuntime);
         plugin.infusedHopperService = new SfxInfusedHopperService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.blockDataService, plugin.machineRuntime);

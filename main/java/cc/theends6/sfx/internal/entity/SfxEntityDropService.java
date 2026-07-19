@@ -5,7 +5,6 @@ import cc.theends6.sfx.api.behavior.SfxEntityDeathSource;
 import cc.theends6.sfx.api.behavior.SfxEntityDropChancePolicy;
 import cc.theends6.sfx.api.behavior.SfxEntityDropContext;
 import cc.theends6.sfx.api.item.SfxItems;
-import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.recipe.DefaultSfxRecipeRegistry;
 import cc.theends6.sfx.internal.recipe.SfxRecipeDefinition;
 import cc.theends6.sfx.internal.recipe.SfxRecipeOutputDefinition;
@@ -30,15 +29,13 @@ public final class SfxEntityDropService implements Listener {
     private final JavaPlugin plugin;
     private final SfxItems items;
     private final SfxBehaviorRegistry behaviors;
-    private final SfxResearchService researches;
     private final List<DropDefinition> definitions = new ArrayList<>();
 
     public SfxEntityDropService(JavaPlugin plugin, SfxItems items, SfxBehaviorRegistry behaviors,
-                                SfxResearchService researches, DefaultSfxRecipeRegistry recipes) {
+                                DefaultSfxRecipeRegistry recipes) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.items = Objects.requireNonNull(items, "items");
         this.behaviors = Objects.requireNonNull(behaviors, "behaviors");
-        this.researches = Objects.requireNonNull(researches, "researches");
         Objects.requireNonNull(recipes, "recipes").definitions().stream()
                 .filter(SfxRecipeDefinition::runtimeEnabled)
                 .filter(definition -> "sf:mob_drop".equals(definition.recipeType()))
@@ -84,7 +81,6 @@ public final class SfxEntityDropService implements Listener {
             SfxEntityDropContext context = new SfxEntityDropContext(
                     definition.id(), definition.outputItemId(), definition.entityType(), source, killer, lootingLevel);
             double chance = source == SfxEntityDeathSource.PLAYER
-                    && researches.canUse(killer, definition.outputItemId())
                     ? definition.basePlayerChance()
                     : 0.0D;
             for (SfxEntityDropChancePolicy policy : behaviors.entityDropChancePolicies()) {
