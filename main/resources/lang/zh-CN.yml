@@ -9,6 +9,7 @@ machines:
   no-recipes: <gray>这台机器已经识别，但当前还没有注册可执行配方。</gray>
   inventory-empty: <gray>发射器中没有 3x3 配方输入。</gray>
   empty: <gray>发射器里没有可处理的物品。</gray>
+  hand-empty: <gray>请手持可处理的物品右键这台机器。</gray>
   pattern-not-found: <red>输入物品存在，但没有匹配的 3x3 配方。</red>
   unknown-material: <red>没有找到这台机器可以处理的材料。</red>
   output-full: <red>输出位置空间不足，无法产出物品。</red>

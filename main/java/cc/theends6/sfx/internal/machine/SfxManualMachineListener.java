@@ -24,7 +24,8 @@ public final class SfxManualMachineListener implements Listener {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getHand() != EquipmentSlot.HAND || event.getClickedBlock() == null) {
             return;
         }
-        if (SfxInteractionRules.prefersBlockPlacement(items, event)) {
+        if (SfxInteractionRules.prefersBlockPlacement(items, event)
+                && !service.isHandInputMachine(event.getClickedBlock())) {
             return;
         }
         if (service.tryInteract(event.getPlayer(), event.getClickedBlock())) {

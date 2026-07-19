@@ -9,6 +9,7 @@ machines:
   no-recipes: <gray>This machine is recognized, but no executable recipes are registered yet.</gray>
   inventory-empty: <gray>The dispenser does not contain a valid 3x3 input.</gray>
   empty: <gray>The dispenser does not contain a valid input.</gray>
+  hand-empty: <gray>Right-click this machine while holding a valid input.</gray>
   pattern-not-found: <red>Items were found, but no matching 3x3 recipe exists.</red>
   unknown-material: <red>No processable material was found for this machine.</red>
   output-full: <red>The output inventory does not have enough room.</red>

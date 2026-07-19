@@ -75,19 +75,30 @@ public final class ManualMachineService {
         if (clickedBlock == null) {
             return false;
         }
-        SfxManualMachineDefinition matched = null;
-        for (SfxManualMachineDefinition definition : registry.machines()) {
-            if (definition.matches(clickedBlock)) {
-                matched = definition;
-                break;
-            }
-        }
+        SfxManualMachineDefinition matched = matchingDefinition(clickedBlock);
         if (matched == null) {
             return false;
         }
         SfxManualMachineDefinition definition = matched;
         runtime.executeAt(clickedBlock.getLocation(), () -> runMachine(player, clickedBlock, definition));
         return true;
+    }
+
+    boolean isHandInputMachine(Block clickedBlock) {
+        SfxManualMachineDefinition definition = matchingDefinition(clickedBlock);
+        return definition != null && definition.operation() == SfxManualMachineOperation.HAND_INPUT;
+    }
+
+    private SfxManualMachineDefinition matchingDefinition(Block clickedBlock) {
+        if (clickedBlock == null) {
+            return null;
+        }
+        for (SfxManualMachineDefinition definition : registry.machines()) {
+            if (definition.matches(clickedBlock)) {
+                return definition;
+            }
+        }
+        return null;
     }
 
     private void runMachine(Player player, Block clickedBlock, SfxManualMachineDefinition definition) {
@@ -283,7 +294,7 @@ public final class ManualMachineService {
             return localization.text("machines.inventory-empty");
         }
         if (definition.operation() == SfxManualMachineOperation.HAND_INPUT) {
-            return localization.text("machines.empty");
+            return localization.text("machines.hand-empty");
         }
         return localization.text("machines.empty");
     }
