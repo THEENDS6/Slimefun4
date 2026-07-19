@@ -4,6 +4,9 @@ import cc.theends6.sfx.api.machine.runtime.*;
 
 import cc.theends6.sfx.api.item.SfxItemMarker;
 import cc.theends6.sfx.api.item.SfxItems;
+import cc.theends6.sfx.api.behavior.SfxBehaviorRegistry;
+import cc.theends6.sfx.api.behavior.SfxIndustrialMinerTargetContext;
+import cc.theends6.sfx.api.behavior.SfxIndustrialMinerTargetPolicy;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
@@ -32,6 +35,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
+import org.bukkit.block.TileState;
 import org.bukkit.block.data.type.Piston;
 import org.bukkit.block.data.type.PistonHead;
 import org.bukkit.entity.Player;
@@ -62,15 +66,19 @@ public final class SfxIndustrialMinerService implements Listener {
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final SfxItems items;
+    private final SfxBehaviorRegistry behaviors;
     private final SfxLocalization localization;
     private final SfxBlockDataService blockData;
     private final SfxMachineRuntimeEngine machineRuntime;
     private final Map<String, MiningTask> active = new ConcurrentHashMap<>();
 
-    public SfxIndustrialMinerService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxLocalization localization, SfxBlockDataService blockData, SfxMachineRuntimeEngine machineRuntime) {
+    public SfxIndustrialMinerService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items,
+                                     SfxBehaviorRegistry behaviors, SfxLocalization localization,
+                                     SfxBlockDataService blockData, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.runtime = Objects.requireNonNull(runtime, "runtime");
         this.items = Objects.requireNonNull(items, "items");
+        this.behaviors = Objects.requireNonNull(behaviors, "behaviors");
         this.localization = Objects.requireNonNull(localization, "localization");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.machineRuntime = machineRuntime == null ? new SfxMachineRuntimeEngine() : machineRuntime;
@@ -319,7 +327,9 @@ public final class SfxIndustrialMinerService implements Listener {
                 }
                 return;
             }
-            List<ItemStack> drops = dropsFor(ore, task.structure().profile());
+            Block minedBlock = selectMiningTarget(task, ore);
+            Material minedType = minedBlock.getType();
+            List<ItemStack> drops = dropsFor(minedBlock, task.structure().profile());
             if (!canInsertAll(inventory, drops)) {
                 stop(task, "machines.industrial-miner.chest-full");
                 return;
@@ -329,11 +339,13 @@ public final class SfxIndustrialMinerService implements Listener {
             }
             framework.put("miner.drops", drops.size());
             Block furnace = task.structure().blastFurnace();
-            furnace.getWorld().playEffect(furnace.getLocation(), Effect.STEP_SOUND, ore.getType());
+            furnace.getWorld().playEffect(furnace.getLocation(), Effect.STEP_SOUND, minedType);
             furnace.getWorld().playSound(furnace.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, SoundCategory.BLOCKS, 0.2F, 1.0F);
-            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, frameworkInstance == null ? "sf:industrial_miner" : frameworkInstance.typeId(), ore, Material.AIR, true, "industrial-miner", "extract-ore");
+            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, frameworkInstance == null ? "sf:industrial_miner" : frameworkInstance.typeId(), minedBlock, Material.AIR, true, "industrial-miner", "extract-target");
             task.fuelRemaining(task.fuelRemaining() - 1);
-            task.oresMined(task.oresMined() + 1);
+            if (ORES.contains(minedType)) {
+                task.oresMined(task.oresMined() + 1);
+            }
             if (frameworkInstance != null) {
                 if (SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.ON_COMPLETE, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework), framework, SfxMachinePhase.ON_COMPLETE.name())) {
                     SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(frameworkInstance.typeId(), SfxMachinePhase.AFTER_OUTPUT, frameworkInstance.instanceId(), task.structure().blastFurnace().getLocation(), tickContext, null, SfxMachineStatus.RUNNING, framework), framework, SfxMachinePhase.AFTER_OUTPUT.name());
@@ -393,6 +405,40 @@ public final class SfxIndustrialMinerService implements Listener {
             }
         }
         return null;
+    }
+
+    private Block selectMiningTarget(MiningTask task, Block ore) {
+        List<Block> adjacentCandidates = safeAdjacentTargets(ore);
+        SfxIndustrialMinerTargetContext context = new SfxIndustrialMinerTargetContext(
+                task.structure().profile().advanced(), ore, adjacentCandidates);
+        Block target = ore;
+        for (SfxIndustrialMinerTargetPolicy policy : behaviors.industrialMinerTargetPolicies()) {
+            try {
+                Block selected = policy.selectTarget(context, target);
+                if (selected != null && (selected.equals(ore) || adjacentCandidates.contains(selected))) {
+                    target = selected;
+                }
+            } catch (RuntimeException exception) {
+                plugin.getLogger().warning("Industrial Miner target policy failed: " + exception.getMessage());
+            }
+        }
+        return target;
+    }
+
+    private List<Block> safeAdjacentTargets(Block ore) {
+        List<Block> candidates = new ArrayList<>(6);
+        for (BlockFace face : List.of(BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH,
+                BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST)) {
+            Block candidate = ore.getRelative(face);
+            Material type = candidate.getType();
+            if (!type.isBlock() || !type.isSolid() || type.getHardness() < 0.0F
+                    || candidate.getState() instanceof TileState
+                    || blockData.findAnchor(candidate.getLocation()).isPresent()) {
+                continue;
+            }
+            candidates.add(candidate);
+        }
+        return List.copyOf(candidates);
     }
 
     private List<ItemStack> dropsFor(Block ore, MinerProfile profile) {

@@ -68,3 +68,11 @@ entity-drops:
     player-base-chance: 0.50
     looting-chance-per-level: 0.10
     android-chance: 0.50
+
+industrial-miner:
+  accuracy:
+    
+    enabled: false
+    
+    normal: 0.40
+    advanced: 0.60

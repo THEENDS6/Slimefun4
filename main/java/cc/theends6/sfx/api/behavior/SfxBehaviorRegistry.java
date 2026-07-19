@@ -11,6 +11,8 @@ public interface SfxBehaviorRegistry {
 
     List<SfxEntityDropChancePolicy> entityDropChancePolicies();
 
+    List<SfxIndustrialMinerTargetPolicy> industrialMinerTargetPolicies();
+
     List<SfxRadiationRuleProvider> radiationRuleProviders();
 
     List<SfxRadiationSymptomHandler> radiationSymptomHandlers();

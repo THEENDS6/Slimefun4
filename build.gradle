@@ -358,10 +358,27 @@ tasks.register('sourcePackage', Zip) {
     archiveFileName.set('SlimeFunX-src.zip')
 }
 
+tasks.register('configOverridePackage', Zip) {
+    group = 'build'
+    description = 'Packages the current server Basic Expansion config as a directly extractable override.'
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    def runtimeConfig = layout.projectDirectory.file('run-paper-slimefunx-survive-1.21.8/plugins/SlimeFunX/addons/basic_expansion/config.yml').asFile
+    def defaultConfig = layout.projectDirectory.file('addons/basic-expansion/src/main/resources/config.yml').asFile
+    def selectedConfig = runtimeConfig.isFile() ? runtimeConfig : defaultConfig
+    inputs.file(selectedConfig)
+    from(selectedConfig) {
+        into 'plugins/SlimeFunX/addons/basic_expansion'
+        rename { 'config.yml' }
+    }
+    destinationDirectory.set(layout.projectDirectory.dir(rootProject.ext.outputDirName))
+    archiveFileName.set('SlimeFunX-config-overrides.zip')
+}
+
 tasks.register('exportPluginArtifacts') {
     group = 'build'
     description = 'Copies SlimeFunX.jar and SlimeFunX-src.zip into the output directory.'
-    dependsOn 'jar', 'sourcePackage'
+    dependsOn 'jar', 'sourcePackage', 'configOverridePackage'
     doLast {
         def outputDir = layout.projectDirectory.dir(rootProject.ext.outputDirName).asFile
         outputDir.mkdirs()

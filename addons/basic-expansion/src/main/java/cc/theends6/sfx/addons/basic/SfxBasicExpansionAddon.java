@@ -15,6 +15,7 @@ import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRules;
 import cc.theends6.sfx.api.behavior.SfxEntityDropContext;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionDecision;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterStatusView;
+import cc.theends6.sfx.api.behavior.SfxIndustrialMinerTargetContext;
 import cc.theends6.sfx.api.behavior.SfxJetBootsDriveMode;
 import cc.theends6.sfx.api.behavior.SfxLocalizedListContext;
 import cc.theends6.sfx.api.behavior.SfxRadiationRuleContext;
@@ -34,11 +35,13 @@ import cc.theends6.sfx.addons.basic.electric.SfxBasicExpansionElectricProviders;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -65,6 +68,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
     private static final String AUTO_BREWER = "sfx:auto_brewer";
     private static final String ENHANCED_MULTIMETER = "sfx:enhanced_multimeter";
     private static final String BASIC_CIRCUIT_BOARD_DROP_BALANCE = "sfx:basic_circuit_board_drop_balance";
+    private static final String INDUSTRIAL_MINER_ACCURACY = "sfx:industrial_miner_accuracy";
 
     public static final String ID = "sfx:basic_expansion";
 
@@ -100,12 +104,15 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         context.features().registerBoolean(RADIATION_REWORK, "radiation.sfx-rework.enabled", true);
         context.features().registerBoolean(ANDROID_WOODCUTTER_BATCH_REPLANT, "androids.woodcutter.batch-replant-bottom-layer", true);
         context.features().registerBoolean(BASIC_CIRCUIT_BOARD_DROP_BALANCE, "entity-drops.basic-circuit-board.enabled", true);
+        context.features().registerBoolean(INDUSTRIAL_MINER_ACCURACY, "industrial-miner.accuracy.enabled", false);
         context.behaviors().registerEnhancedFurnaceFuelPolicy((fuelContext, currentMultiplier) ->
                 speedScaledEnhancedFurnaceFuel(context, fuelContext, currentMultiplier));
         context.behaviors().registerAndroidWoodcutterPolicy((woodcutterContext, currentDecision) ->
                 batchReplantBottomLayer(context, woodcutterContext, currentDecision));
         context.behaviors().registerEntityDropChancePolicy((dropContext, currentChance) ->
                 basicCircuitBoardDropChance(context, dropContext, currentChance));
+        context.behaviors().registerIndustrialMinerTargetPolicy((targetContext, currentTarget) ->
+                industrialMinerTarget(context, targetContext, currentTarget));
         context.behaviors().registerRadiationRuleProvider((ruleContext, currentRules) ->
                 sfxRadiationRules(context, ruleContext, currentRules));
         context.behaviors().registerRadiationSymptomHandler(symptomContext ->
@@ -145,6 +152,25 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
             return currentMultiplier;
         }
         return currentMultiplier / fuelContext.processingSpeed();
+    }
+
+    private static Block industrialMinerTarget(SfxAddonContext context,
+                                               SfxIndustrialMinerTargetContext targetContext,
+                                               Block currentTarget) {
+        if (!context.api().features().enabled(INDUSTRIAL_MINER_ACCURACY)) {
+            return currentTarget;
+        }
+        String path = targetContext.advanced()
+                ? "industrial-miner.accuracy.advanced"
+                : "industrial-miner.accuracy.normal";
+        double fallback = targetContext.advanced() ? 0.60D : 0.40D;
+        double accuracy = Math.max(0.0D, Math.min(1.0D, context.configDouble(path, fallback)));
+        if (ThreadLocalRandom.current().nextDouble() < accuracy
+                || targetContext.adjacentCandidates().isEmpty()) {
+            return currentTarget;
+        }
+        List<Block> candidates = targetContext.adjacentCandidates();
+        return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
     }
 
     private static boolean batchReplantBottomLayer(SfxAddonContext context, SfxAndroidWoodcutterContext woodcutterContext, boolean currentDecision) {
@@ -441,6 +467,11 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
 
     private static List<String> localizedList(SfxAddonContext context, SfxLocalizedListContext listContext, List<String> values) {
         String path = listContext.path();
+        if ("items.sf.industrial_miner.lore".equals(path)
+                || "items.sf.advanced_industrial_miner.lore".equals(path)) {
+            return industrialMinerLore(context, listContext, values,
+                    "items.sf.advanced_industrial_miner.lore".equals(path));
+        }
         boolean generatorBalance = context.api().features().enabled(GENERATOR_BALANCE);
         if ("items.sf.combustion_reactor.lore".equals(path)) {
             return combustionReactorLore(values, generatorBalance);
@@ -474,6 +505,31 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
             return produceCollectorLore(context, listContext, values);
         }
         return values;
+    }
+
+    private static List<String> industrialMinerLore(SfxAddonContext context,
+                                                    SfxLocalizedListContext listContext,
+                                                    List<String> values, boolean advanced) {
+        if (!context.api().features().enabled(INDUSTRIAL_MINER_ACCURACY)) {
+            return values;
+        }
+        double fallback = advanced ? 0.60D : 0.40D;
+        String path = advanced ? "industrial-miner.accuracy.advanced" : "industrial-miner.accuracy.normal";
+        double accuracy = Math.max(0.0D, Math.min(1.0D, context.configDouble(path, fallback)));
+        String line = listContext.rawText("sfx-basic-expansion.lore.industrial-miner-accuracy");
+        if (line == null || line.isBlank()) {
+            return values;
+        }
+        line = listContext.applyPlaceholders(line, Map.of(
+                "accuracy", String.valueOf(Math.round(accuracy * 100.0D))
+        ));
+        if (values.contains(line)) {
+            return values;
+        }
+        List<String> copy = new ArrayList<>(values.size() + 1);
+        copy.addAll(values);
+        copy.add(line);
+        return copy;
     }
 
     private static boolean isGrowthAcceleratorLore(String path) {

@@ -18,6 +18,7 @@ import cc.theends6.sfx.api.behavior.SfxEnergyGeneratorProviderRegistration;
 import cc.theends6.sfx.api.behavior.SfxEntityDropChancePolicy;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionPolicy;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterStatusViewProvider;
+import cc.theends6.sfx.api.behavior.SfxIndustrialMinerTargetPolicy;
 import cc.theends6.sfx.api.behavior.SfxLocalizedListPostProcessor;
 import cc.theends6.sfx.api.behavior.SfxRadiationRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxRadiationSymptomHandler;
@@ -34,6 +35,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     private final List<SfxEnhancedFurnaceFuelPolicy> enhancedFurnaceFuelPolicies = new ArrayList<>();
     private final List<SfxAndroidWoodcutterPolicy> androidWoodcutterPolicies = new ArrayList<>();
     private final List<SfxEntityDropChancePolicy> entityDropChancePolicies = new ArrayList<>();
+    private final List<SfxIndustrialMinerTargetPolicy> industrialMinerTargetPolicies = new ArrayList<>();
     private final List<SfxRadiationRuleProvider> radiationRuleProviders = new ArrayList<>();
     private final List<SfxCargoInputTransferPolicy> cargoInputTransferPolicies = new ArrayList<>();
     private final List<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies = new ArrayList<>();
@@ -57,6 +59,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         enhancedFurnaceFuelPolicies.clear();
         androidWoodcutterPolicies.clear();
         entityDropChancePolicies.clear();
+        industrialMinerTargetPolicies.clear();
         radiationRuleProviders.clear();
         cargoInputTransferPolicies.clear();
         gpsTransmitterInteractionPolicies.clear();
@@ -111,6 +114,16 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     @Override
     public synchronized List<SfxEntityDropChancePolicy> entityDropChancePolicies() {
         return Collections.unmodifiableList(new ArrayList<>(entityDropChancePolicies));
+    }
+
+    @Override
+    public synchronized void registerIndustrialMinerTargetPolicy(SfxIndustrialMinerTargetPolicy policy) {
+        industrialMinerTargetPolicies.add(Objects.requireNonNull(policy, "policy"));
+    }
+
+    @Override
+    public synchronized List<SfxIndustrialMinerTargetPolicy> industrialMinerTargetPolicies() {
+        return Collections.unmodifiableList(new ArrayList<>(industrialMinerTargetPolicies));
     }
 
     @Override

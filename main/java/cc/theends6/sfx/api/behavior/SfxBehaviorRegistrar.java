@@ -10,6 +10,8 @@ public interface SfxBehaviorRegistrar {
 
     void registerEntityDropChancePolicy(SfxEntityDropChancePolicy policy);
 
+    void registerIndustrialMinerTargetPolicy(SfxIndustrialMinerTargetPolicy policy);
+
     void registerRadiationRuleProvider(SfxRadiationRuleProvider provider);
 
     void registerRadiationSymptomHandler(SfxRadiationSymptomHandler handler);
