@@ -109,7 +109,7 @@ recipes:
     - WATER_BUCKET
     - sf:medium_capacitor
     - COPPER_BLOCK
-    - sf:electric_motor
+    - sf:magnesium_generator
     - COPPER_BLOCK
     - sf:electro_magnet
     - sf:basic_circuit_board

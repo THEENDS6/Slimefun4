@@ -81,12 +81,12 @@ public final class SfxEntityDropService implements Listener {
             if (definition.entityType() != event.getEntityType()) {
                 continue;
             }
-            if (source == SfxEntityDeathSource.PLAYER && !researches.canUse(killer, definition.outputItemId())) {
-                continue;
-            }
             SfxEntityDropContext context = new SfxEntityDropContext(
                     definition.id(), definition.outputItemId(), definition.entityType(), source, killer, lootingLevel);
-            double chance = source == SfxEntityDeathSource.PLAYER ? definition.basePlayerChance() : 0.0D;
+            double chance = source == SfxEntityDeathSource.PLAYER
+                    && researches.canUse(killer, definition.outputItemId())
+                    ? definition.basePlayerChance()
+                    : 0.0D;
             for (SfxEntityDropChancePolicy policy : behaviors.entityDropChancePolicies()) {
                 try {
                     chance = policy.chance(context, chance);

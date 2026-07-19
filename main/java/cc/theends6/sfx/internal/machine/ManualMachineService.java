@@ -80,7 +80,12 @@ public final class ManualMachineService {
             return false;
         }
         SfxManualMachineDefinition definition = matched;
-        runtime.executeAt(clickedBlock.getLocation(), () -> runMachine(player, clickedBlock, definition));
+        if (definition.operation() == SfxManualMachineOperation.HAND_INPUT) {
+            
+            runMachine(player, clickedBlock, definition);
+        } else {
+            runtime.executeAt(clickedBlock.getLocation(), () -> runMachine(player, clickedBlock, definition));
+        }
         return true;
     }
 

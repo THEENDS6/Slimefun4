@@ -45,6 +45,14 @@ content-expansion:
       - <gray>Water Buckets provide 1000 mB and Bottles provide 100 mB, returning the empty container immediately.</gray>
       - <gray>Consumes <aqua>5 mB/t</aqua>, quadruples generation, and increases processing speed to 1.25x.</gray>
 
+researches:
+  content_expansion_oxidizing_generator:
+    name: Oxidizing Power Technology
+  content_expansion_waxing_machine:
+    name: Automated Copper Waxing
+  content_expansion_cutting_machine:
+    name: Automated Copper Cutting
+
 items:
   sfx.oxidizing_generator:
     name: '&2Oxidizing Generator'

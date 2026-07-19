@@ -1,0 +1,25 @@
+researches:
+  - id: content_expansion_oxidizing_generator
+    order: 282
+    name-key: researches.content_expansion_oxidizing_generator.name
+    cost: 35
+    items:
+      - sfx:oxidizing_generator
+    item-feature-gates:
+      sfx:oxidizing_generator: sfx:content_expansion
+  - id: content_expansion_waxing_machine
+    order: 283
+    name-key: researches.content_expansion_waxing_machine.name
+    cost: 16
+    items:
+      - sfx:waxing_machine
+    item-feature-gates:
+      sfx:waxing_machine: sfx:content_expansion
+  - id: content_expansion_cutting_machine
+    order: 284
+    name-key: researches.content_expansion_cutting_machine.name
+    cost: 24
+    items:
+      - sfx:cutting_machine
+    item-feature-gates:
+      sfx:cutting_machine: sfx:content_expansion
