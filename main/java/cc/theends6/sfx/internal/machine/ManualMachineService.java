@@ -299,7 +299,7 @@ public final class ManualMachineService {
     }
 
     private Inventory adjacentInventory(Block center, Block inventoryBlock, Block inputBlock) {
-        for (Block origin : List.of(inputBlock, inventoryBlock, center)) {
+        for (Block origin : new Block[]{inputBlock, inventoryBlock, center}) {
             if (origin == null) {
                 continue;
             }
