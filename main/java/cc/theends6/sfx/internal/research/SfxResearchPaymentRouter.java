@@ -20,8 +20,8 @@ public final class SfxResearchPaymentRouter {
         this.defaultPayment = new DefaultSfxResearchPaymentComponent(localization);
     }
 
-    public String displayCost(SfxResearchDefinition research) {
-        return active().displayCost(context(research));
+    public String displayCost(Player player, SfxResearchDefinition research) {
+        return active().displayCost(player, context(research));
     }
 
     public SfxResearchPaymentResult charge(Player player, SfxResearchDefinition research) {

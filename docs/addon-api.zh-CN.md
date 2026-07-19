@@ -95,7 +95,7 @@ Addon 可通过 `SfxCargoNodeDefinition` 为运输调度器提供 `SfxCargoManag
 ```yaml
 overrides:
   - target: sfx:research-payment
-    contract-version: 1
+    contract-version: 2
 ```
 
 然后在 `onLoad` 中安装完整实现：
@@ -109,7 +109,7 @@ context.overrides().replace(
 
 组件 Override 是独占的。两个启用的 Addon 声明同一个目标时，Addon 加载会直接失败并列出双方 ID，不会按加载顺序选择胜者。只声明目标却没有安装实现同样会失败。完整运行时重载会先移除旧实现，再关闭旧 Addon classloader。
 
-实现正确性由 Addon 作者负责。对于 `sfx:research-payment`，完整职责包括费用展示、支付能力判断和原子扣费；研究存档和指南的其他部分仍在该组件边界之外。Addon 不能通过放置同名 class 覆盖核心类，也仍然不得引用 `cc.theends6.sfx.internal`。
+实现正确性由 Addon 作者负责。对于 `sfx:research-payment` 合约版本 2，完整职责包括根据当前玩家生成费用展示、支付能力判断和原子扣费；研究存档和指南的其他部分仍在该组件边界之外。Addon 不能通过放置同名 class 覆盖核心类，也仍然不得引用 `cc.theends6.sfx.internal`。
 
 内容可使用 `requires-feature` 和 `excludes-feature`。普通物品、配方、名称、Lore 和固定数值优先写 YAML；只有世界、实体、网络、动态 GUI 和复杂状态使用 Java。
 

@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 
 
 public interface SfxResearchPaymentComponent {
-    String displayCost(SfxResearchPaymentContext context);
+    String displayCost(Player player, SfxResearchPaymentContext context);
 
     SfxResearchPaymentResult charge(Player player, SfxResearchPaymentContext context);
 }

@@ -2,5 +2,8 @@ sfx-research-expansion:
   payment:
     points: '<gray>花费：</gray><aqua>{cost} 经验值</aqua>'
     levels: '<gray>花费：</gray><aqua>{cost} 级经验</aqua>'
+    status:
+      points: '<gray>经验值：</gray><white>{current}</white><gray>/</gray><{status}>{required}</{status}>'
+      levels: '<gray>经验等级：</gray><white>{current}</white><gray>/</gray><{status}>{required}</{status}>'
     not-enough-points: '<red>你需要至少 {cost} 经验值才能解锁这项研究。</red>'
     not-enough-levels: '<red>你需要至少 {cost} 级经验才能解锁这项研究。</red>'

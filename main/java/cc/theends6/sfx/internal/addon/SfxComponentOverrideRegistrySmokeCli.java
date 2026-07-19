@@ -12,14 +12,14 @@ public final class SfxComponentOverrideRegistrySmokeCli {
 
     public static void main(String[] args) {
         DefaultSfxComponentOverrideRegistry registry = new DefaultSfxComponentOverrideRegistry();
-        registry.claim("example:first", SfxComponentOverrideTargets.RESEARCH_PAYMENT.id(), 1);
-        expectFailure(() -> registry.claim("example:second", SfxComponentOverrideTargets.RESEARCH_PAYMENT.id(), 1),
+        registry.claim("example:first", SfxComponentOverrideTargets.RESEARCH_PAYMENT.id(), 2);
+        expectFailure(() -> registry.claim("example:second", SfxComponentOverrideTargets.RESEARCH_PAYMENT.id(), 2),
                 "target conflict");
         expectFailure(registry::validateImplementations, "missing implementation");
 
         SfxResearchPaymentComponent implementation = new SfxResearchPaymentComponent() {
             @Override
-            public String displayCost(SfxResearchPaymentContext context) {
+            public String displayCost(Player player, SfxResearchPaymentContext context) {
                 return Integer.toString(context.configuredLevelCost());
             }
 

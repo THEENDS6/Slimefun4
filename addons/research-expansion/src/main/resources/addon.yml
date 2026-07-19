@@ -8,4 +8,4 @@ java:
   jar: sfx-research-expansion.jar
 overrides:
   - target: sfx:research-payment
-    contract-version: 1
+    contract-version: 2

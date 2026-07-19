@@ -9,6 +9,10 @@ defaults:
     
     mode: up
 
+display:
+  
+  compact-numbers: true
+
 
 
 researches: {}

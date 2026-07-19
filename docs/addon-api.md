@@ -104,7 +104,7 @@ An addon may replace a complete component only when SFX publishes that component
 ```yaml
 overrides:
   - target: sfx:research-payment
-    contract-version: 1
+    contract-version: 2
 ```
 
 It then installs the full implementation during `onLoad`:
@@ -118,7 +118,7 @@ context.overrides().replace(
 
 Component overrides are exclusive. If two enabled addons claim the same target, addon loading fails with both addon ids instead of selecting an implementation by load order. A declared target without an installed implementation also fails loading. SFX removes the implementation before closing the old addon classloader during a complete runtime reload.
 
-The implementation owns the entire published contract. For `sfx:research-payment`, this includes the displayed price, affordability decision and atomic charge. Research persistence and the rest of the guide remain outside that component boundary. Addons cannot replace core classes by shipping the same class name and still may not reference `cc.theends6.sfx.internal`.
+The implementation owns the entire published contract. For `sfx:research-payment` contract version 2, this includes the player-aware displayed price, affordability decision and atomic charge. Research persistence and the rest of the guide remain outside that component boundary. Addons cannot replace core classes by shipping the same class name and still may not reference `cc.theends6.sfx.internal`.
 
 ## Content And Language
 

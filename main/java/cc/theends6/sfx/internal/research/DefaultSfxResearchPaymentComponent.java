@@ -16,7 +16,7 @@ public final class DefaultSfxResearchPaymentComponent implements SfxResearchPaym
     }
 
     @Override
-    public String displayCost(SfxResearchPaymentContext context) {
+    public String displayCost(Player player, SfxResearchPaymentContext context) {
         return localization.requiredText("guide.research.cost")
                 .replace("{cost}", Integer.toString(context.configuredLevelCost()));
     }

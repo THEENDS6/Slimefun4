@@ -325,7 +325,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             int slot = CONTENT_SLOTS[i - from];
             SfxResearchDefinition research = researches.researchForItem(definition.id()).orElse(null);
             boolean locked = mode == GuideMode.SURVIVAL && research != null && !isUnlocked(player, research);
-            ItemStack icon = locked ? lockedItemIcon(definition, research) : items.create(definition, 1);
+            ItemStack icon = locked ? lockedItemIcon(player, definition, research) : items.create(definition, 1);
             if (mode == GuideMode.CHEAT) {
                 Optional<SfxManualMachineDefinition> manualMachine = manualMachines.machine(definition.id())
                         .or(() -> cc.theends6.sfx.internal.machine.ExtraDeployStructures.machine(definition.id()));
@@ -420,7 +420,7 @@ public final class DefaultSfxGuide implements SfxGuide {
             SfxItemDefinition definition = results.get(i);
             SfxResearchDefinition research = researches.researchForItem(definition.id()).orElse(null);
             boolean locked = mode == GuideMode.SURVIVAL && research != null && !isUnlocked(player, research);
-            ItemStack icon = locked ? lockedItemIcon(definition, research) : searchResultIcon(definition);
+            ItemStack icon = locked ? lockedItemIcon(player, definition, research) : searchResultIcon(definition);
             int slot = CONTENT_SLOTS[i - from];
             if (mode == GuideMode.CHEAT) {
                 icon = withLore(icon, List.of(
@@ -788,12 +788,12 @@ public final class DefaultSfxGuide implements SfxGuide {
         builder.button(0, new SfxMenuButton(backIcon(tr("guide.actions.back-category")), click -> goBack(click.player(), mode)));
         builder.button(1, new SfxMenuButton(settingsIcon(), click -> openSettingsView(click.player(), mode, Navigation.OPEN)));
         builder.button(8, new SfxMenuButton(closeIcon(), click -> closeGuide(click.player())));
-        builder.button(13, new SfxMenuButton(lockedItemIcon(definition, research), click -> unlockResearchAndOpen(click.player(), mode, definition, research)));
+        builder.button(13, new SfxMenuButton(lockedItemIcon(player, definition, research), click -> unlockResearchAndOpen(click.player(), mode, definition, research)));
         builder.button(15, new SfxMenuButton(ItemBuilder.of(Material.EXPERIENCE_BOTTLE)
                 .name(tr("guide.research.unlock.name"))
                 .lore(
                         tr("guide.research.unlock.lore.1"),
-                        researchCostDisplay(research)
+                        researchCostDisplay(player, research)
                 )
                 .build(), click -> unlockResearchAndOpen(click.player(), mode, definition, research)));
         showMenu(player, builder, navigation);
@@ -2966,7 +2966,7 @@ public final class DefaultSfxGuide implements SfxGuide {
         return SfxGuideIconLibrary.back("<yellow>" + text + "</yellow>");
     }
 
-    private ItemStack lockedItemIcon(SfxItemDefinition definition, SfxResearchDefinition research) {
+    private ItemStack lockedItemIcon(Player player, SfxItemDefinition definition, SfxResearchDefinition research) {
         return ItemBuilder.of(Material.BARRIER)
                 .name("<white>" + itemDisplayName(definition) + "</white>")
                 .lore(
@@ -2976,7 +2976,7 @@ public final class DefaultSfxGuide implements SfxGuide {
                         "",
                         tr("guide.research.click-unlock"),
                         "",
-                        researchCostDisplay(research)
+                        researchCostDisplay(player, research)
                 )
                 .build();
     }
@@ -3387,8 +3387,8 @@ public final class DefaultSfxGuide implements SfxGuide {
         }
     }
 
-    String researchCostDisplay(SfxResearchDefinition research) {
-        return researchPayments.displayCost(research);
+    String researchCostDisplay(Player player, SfxResearchDefinition research) {
+        return researchPayments.displayCost(player, research);
     }
 
     SfxResearchPaymentResult chargeResearch(Player player, SfxResearchDefinition research) {

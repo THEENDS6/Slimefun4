@@ -4,6 +4,8 @@ import cc.theends6.sfx.api.localization.SfxLocalizationView;
 import cc.theends6.sfx.api.research.SfxResearchPaymentComponent;
 import cc.theends6.sfx.api.research.SfxResearchPaymentContext;
 import cc.theends6.sfx.api.research.SfxResearchPaymentResult;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Locale;
 import java.util.Objects;
 import org.bukkit.GameMode;
@@ -18,6 +20,7 @@ final class SfxResearchExpansionPayment implements SfxResearchPaymentComponent {
     private final double multiplier;
     private final long roundingUnit;
     private final Rounding rounding;
+    private final boolean compactNumbers;
 
     SfxResearchExpansionPayment(FileConfiguration config, SfxLocalizationView localization) {
         this.config = Objects.requireNonNull(config, "config");
@@ -32,16 +35,26 @@ final class SfxResearchExpansionPayment implements SfxResearchPaymentComponent {
             throw new IllegalArgumentException("defaults.rounding.unit must be at least 1");
         }
         this.rounding = Rounding.parse(config.getString("defaults.rounding.mode", "up"));
+        this.compactNumbers = config.getBoolean("display.compact-numbers", true);
         validateOverrides(config.getConfigurationSection("researches"));
     }
 
     @Override
-    public String displayCost(SfxResearchPaymentContext context) {
+    public String displayCost(Player player, SfxResearchPaymentContext context) {
+        Objects.requireNonNull(player, "player");
         Cost cost = resolve(context);
+        boolean creative = player.getGameMode() == GameMode.CREATIVE;
+        long current = cost.unit() == Unit.POINTS
+                ? Math.max(0, player.calculateTotalExperiencePoints())
+                : Math.max(0, player.getLevel());
+        boolean sufficient = creative || current >= cost.amount();
         String key = cost.unit() == Unit.POINTS
-                ? "sfx-research-expansion.payment.points"
-                : "sfx-research-expansion.payment.levels";
-        return localization.requiredText(key).replace("{cost}", Long.toString(cost.amount()));
+                ? "sfx-research-expansion.payment.status.points"
+                : "sfx-research-expansion.payment.status.levels";
+        return localization.requiredText(key)
+                .replace("{current}", creative ? "∞" : displayNumber(current))
+                .replace("{required}", displayNumber(cost.amount()))
+                .replace("{status}", sufficient ? "green" : "red");
     }
 
     @Override
@@ -73,6 +86,34 @@ final class SfxResearchExpansionPayment implements SfxResearchPaymentComponent {
                 : "sfx-research-expansion.payment.not-enough-levels";
         return SfxResearchPaymentResult.rejected(
                 localization.requiredText(key).replace("{cost}", Long.toString(cost.amount())));
+    }
+
+    private String displayNumber(long value) {
+        return compactNumbers ? compactNumber(value) : Long.toString(value);
+    }
+
+    static String compactNumber(long value) {
+        if (value < 1_000L) {
+            return Long.toString(value);
+        }
+        String[] suffixes = {"", "K", "M", "B", "T", "P", "E"};
+        double scaled = value;
+        int suffix = 0;
+        while (scaled >= 1_000.0D && suffix < suffixes.length - 1) {
+            scaled /= 1_000.0D;
+            suffix++;
+        }
+        while (true) {
+            int decimals = scaled >= 100.0D ? 0 : scaled >= 10.0D ? 1 : 2;
+            BigDecimal rounded = BigDecimal.valueOf(scaled).setScale(decimals, RoundingMode.HALF_UP)
+                    .stripTrailingZeros();
+            if (rounded.compareTo(BigDecimal.valueOf(1_000L)) >= 0 && suffix < suffixes.length - 1) {
+                scaled = rounded.doubleValue() / 1_000.0D;
+                suffix++;
+                continue;
+            }
+            return rounded.toPlainString() + suffixes[suffix];
+        }
     }
 
     private Cost resolve(SfxResearchPaymentContext context) {

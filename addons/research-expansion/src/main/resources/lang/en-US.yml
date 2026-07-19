@@ -2,5 +2,8 @@ sfx-research-expansion:
   payment:
     points: '<gray>Cost: </gray><aqua>{cost} experience points</aqua>'
     levels: '<gray>Cost: </gray><aqua>{cost} levels</aqua>'
+    status:
+      points: '<gray>Experience: </gray><white>{current}</white><gray>/</gray><{status}>{required}</{status}>'
+      levels: '<gray>Experience levels: </gray><white>{current}</white><gray>/</gray><{status}>{required}</{status}>'
     not-enough-points: '<red>You need at least {cost} experience points to unlock this research.</red>'
     not-enough-levels: '<red>You need at least {cost} levels to unlock this research.</red>'
