@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -49,6 +50,9 @@ public final class ManualMachineService {
     private static final long COMPRESSOR_COMPLETE_TICKS = 60L;
     private static final long ARMOR_FORGE_WORK_TICKS = 20L;
     private static final long ARMOR_FORGE_COMPLETE_TICKS = 60L;
+    private static final long PANNING_STEP_INTERVAL_TICKS = 20L;
+    private static final int PANNING_STEP_COUNT = 5;
+    private static final long PANNING_COMPLETE_TICKS = PANNING_STEP_INTERVAL_TICKS * (PANNING_STEP_COUNT + 1L);
     private static final int MATCH_CACHE_LIMIT = 512;
 
     private final JavaPlugin plugin;
@@ -437,6 +441,17 @@ public final class ManualMachineService {
         if (!canUseRecipe(player, recipe)) {
             return;
         }
+        if (AUTOMATED_PANNING_MACHINE.equals(definition.id())) {
+            Material inputMaterial = held.getType();
+            List<SfxManualMachineOutput> outputs = selectedOutputs(recipe);
+            SfxRecipeSlot required = recipe.input().get(0);
+            if (player.getGameMode() != GameMode.CREATIVE) {
+                consume(held, required.amount());
+            }
+            startAutomatedPanning(clickedBlock, inputMaterial, outputs);
+            return;
+        }
+
         Inventory output = resolveHandOutputInventory(definition, clickedBlock);
         if (output != null && recipe.hasRandomOutputs() && !canFitRandomRecipe(cloneContents(output), recipe)) {
             message(player, localization.text("machines.output-full"));
@@ -458,6 +473,36 @@ public final class ManualMachineService {
             dropOutputs(clickedBlock, outputs);
         }
         success(clickedBlock, definition);
+    }
+
+    private void startAutomatedPanning(Block clickedBlock, Material inputMaterial,
+                                       List<SfxManualMachineOutput> outputs) {
+        Location origin = clickedBlock.getLocation().clone();
+        Location effectLocation = origin.clone().add(0.0, -1.0, 0.0);
+        for (int step = 1; step <= PANNING_STEP_COUNT; step++) {
+            runDelayedAt(origin, PANNING_STEP_INTERVAL_TICKS * step,
+                    () -> playPanningStep(effectLocation, inputMaterial));
+        }
+        runDelayedAt(origin, PANNING_COMPLETE_TICKS,
+                () -> completeAutomatedPanning(origin, outputs));
+    }
+
+    private void playPanningStep(Location location, Material inputMaterial) {
+        World world = location.getWorld();
+        if (world != null) {
+            world.playEffect(location, Effect.STEP_SOUND, inputMaterial);
+        }
+    }
+
+    private void completeAutomatedPanning(Location origin, List<SfxManualMachineOutput> outputs) {
+        Block cauldron = origin.getBlock().getRelative(BlockFace.DOWN);
+        Optional<Inventory> output = basicBlockMachines.findAnyOutputChestFor(cauldron);
+        if (output.isPresent()) {
+            addOutputsOrDrop(origin, output.get(), outputs);
+        } else {
+            dropOutputs(origin, outputs);
+        }
+        playBlockSound(origin, Sound.ENTITY_ARROW_HIT_PLAYER, 1.0f, 1.0f);
     }
 
     private boolean canUseRecipe(Player player, SfxManualMachineRecipe recipe) {
