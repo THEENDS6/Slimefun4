@@ -35,6 +35,7 @@ machines:
     hold-item: <red>Hold an item to place it on the Ancient Pedestal.</red>
   deploy-pack-unsupported: <yellow>This machine does not support deploy packs yet, a full structure kit was given instead:</yellow><gray>{item}</gray>
   industrial-miner:
+    target-blocked: <red>The target block could not be mined safely. The Industrial Miner has stopped.</red>
     started: <green>Industrial Miner started.</green>
     started-advanced: <green>Advanced Industrial Miner started.</green>
     already-running: <yellow>This Industrial Miner is already running.</yellow>

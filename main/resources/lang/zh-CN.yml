@@ -35,6 +35,7 @@ machines:
     hold-item: <red>请手持一个物品放到远古基座上。</red>
   deploy-pack-unsupported: <yellow>这台基础机器当前不支持部署包，已发放整套结构材料：</yellow><gray>{item}</gray>
   industrial-miner:
+    target-blocked: <red>目标方块无法安全开采，工业采矿机已停止。</red>
     started: <green>工业采矿机已启动。</green>
     started-advanced: <green>高级工业采矿机已启动。</green>
     already-running: <yellow>这台工业采矿机已经在运行。</yellow>

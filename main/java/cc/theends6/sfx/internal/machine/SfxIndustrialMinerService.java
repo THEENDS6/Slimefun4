@@ -334,6 +334,12 @@ public final class SfxIndustrialMinerService implements Listener {
                 stop(task, "machines.industrial-miner.chest-full");
                 return;
             }
+            String machineId = frameworkInstance == null ? "sf:industrial_miner" : frameworkInstance.typeId();
+            if (!SfxWorldMutationBridge.setType(machineRuntime, machineId, minedBlock, Material.AIR,
+                    true, "industrial-miner", "extract-target")) {
+                stop(task, "machines.industrial-miner.target-blocked");
+                return;
+            }
             for (ItemStack drop : drops) {
                 cc.theends6.sfx.internal.inventory.SfxInventoryMutationBridge.insertAll(inventory, drop, false, "industrial-miner:ore-drop");
             }
@@ -341,7 +347,6 @@ public final class SfxIndustrialMinerService implements Listener {
             Block furnace = task.structure().blastFurnace();
             furnace.getWorld().playEffect(furnace.getLocation(), Effect.STEP_SOUND, minedType);
             furnace.getWorld().playSound(furnace.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, SoundCategory.BLOCKS, 0.2F, 1.0F);
-            cc.theends6.sfx.internal.machine.SfxWorldMutationBridge.setType(machineRuntime, frameworkInstance == null ? "sf:industrial_miner" : frameworkInstance.typeId(), minedBlock, Material.AIR, true, "industrial-miner", "extract-target");
             task.fuelRemaining(task.fuelRemaining() - 1);
             if (ORES.contains(minedType)) {
                 task.oresMined(task.oresMined() + 1);
