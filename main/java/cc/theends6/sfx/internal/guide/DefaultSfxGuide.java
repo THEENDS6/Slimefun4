@@ -3352,7 +3352,9 @@ public final class DefaultSfxGuide implements SfxGuide {
             return;
         }
         beginResearchUnlock(player, optional.get(), definition, research,
-                () -> openCategory(player, mode, categoryId, page, Navigation.REPLACE),
+                
+                
+                () -> openCategory(player, mode, categoryId, page, Navigation.ROOT),
                 () -> openCategory(player, mode, categoryId, page, Navigation.REPLACE));
     }
 
@@ -3364,7 +3366,9 @@ public final class DefaultSfxGuide implements SfxGuide {
             return;
         }
         beginResearchUnlock(player, optional.get(), definition, research,
-                () -> openRecipe(player, mode, definition.id(), 0, Navigation.REPLACE),
+                
+                
+                () -> openRecipe(player, mode, definition.id(), 0, Navigation.ROOT),
                 () -> openLockedResearchView(player, mode, definition, research, Navigation.REPLACE));
     }
 
