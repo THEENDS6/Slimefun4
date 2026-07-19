@@ -56,6 +56,7 @@ final class SfxPluginListenerWiring {
         plugin.listenerRegistrar.register(plugin.decorationService);
         plugin.listenerRegistrar.register(plugin.gpsService);
         plugin.listenerRegistrar.register(plugin.androidService);
+        plugin.listenerRegistrar.register(plugin.entityDropService);
         plugin.listenerRegistrar.register(plugin.ancientAltarService);
         plugin.listenerRegistrar.register(plugin.blockPlacerService);
         plugin.listenerRegistrar.register(plugin.infusedHopperService);

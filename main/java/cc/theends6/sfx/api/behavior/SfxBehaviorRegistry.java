@@ -9,6 +9,8 @@ public interface SfxBehaviorRegistry {
 
     List<SfxAndroidWoodcutterPolicy> androidWoodcutterPolicies();
 
+    List<SfxEntityDropChancePolicy> entityDropChancePolicies();
+
     List<SfxRadiationRuleProvider> radiationRuleProviders();
 
     List<SfxRadiationSymptomHandler> radiationSymptomHandlers();

@@ -188,7 +188,7 @@ Feature-gated content is rejected unless the feature is registered and enabled. 
 
 ## Behavior Providers
 
-Java addons can register behavior providers for runtime capability points, including enhanced furnace fuel scaling, Android woodcutter behavior, radiation rules, cargo input transfer, GPS transmitter interaction, technical gadget rules, rechargeable item definitions, energy balance rules, area-machine rules, utility rules, and localized list post-processing.
+Java addons can register behavior providers for runtime capability points, including enhanced furnace fuel scaling, Android woodcutter behavior, entity-drop chances, radiation rules, cargo input transfer, GPS transmitter interaction, technical gadget rules, rechargeable item definitions, energy balance rules, area-machine rules, utility rules, and localized list post-processing.
 
 API version 1 also exposes three composable contracts used by the official `sfx:example` addon:
 
@@ -206,6 +206,8 @@ components:
 ```
 
 Providers receive the current rule or decision and may return an adjusted one. The core runtime supplies classic defaults; addons layer their behavior through these APIs.
+
+Entity-drop chance policies receive the drop definition, output item, entity type, attributed death source, player killer, and Looting level. The core clamps the final chance, performs exactly one roll, and inserts a successful result into `EntityDeathEvent#getDrops()`. `SFX_ANDROID` is transient attribution for the damage call that actually caused death; it does not persist on surviving entities. Basic Expansion uses this policy to rebalance the Basic Circuit Board while core retains the classic player-only 75% default.
 
 Rechargeable item providers may register new rechargeable items or override classic SF rechargeable definitions. Basic Expansion uses this to provide the SFX jetpack and jetboots rework, plus the fuel jetpack definition, while core keeps the classic SF definitions.
 

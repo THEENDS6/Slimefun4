@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import org.bukkit.entity.EntityType;
 
 public final class SfxRecipeDefinition {
     private final String id;
@@ -22,6 +23,7 @@ public final class SfxRecipeDefinition {
     private final String source;
     private final String note;
     private final boolean runtimeEnabled;
+    private final EntityType entityType;
 
     private SfxRecipeDefinition(Builder builder) {
         this.id = normalizeRecipeId(builder.id);
@@ -50,6 +52,7 @@ public final class SfxRecipeDefinition {
         this.source = builder.source == null || builder.source.isBlank() ? "custom" : builder.source.trim().toLowerCase();
         this.note = builder.note;
         this.runtimeEnabled = builder.runtimeEnabled;
+        this.entityType = builder.entityType;
 
         validateShape();
     }
@@ -84,6 +87,9 @@ public final class SfxRecipeDefinition {
         }
         if (outputs.isEmpty() && randomOutputs.isEmpty()) {
             throw new IllegalArgumentException("Recipe must define at least one output.");
+        }
+        if (runtimeEnabled && "sf:mob_drop".equals(recipeType) && entityType == null) {
+            throw new IllegalArgumentException("Runtime mob-drop recipe must declare entity-type.");
         }
     }
 
@@ -150,6 +156,10 @@ public final class SfxRecipeDefinition {
         return runtimeEnabled;
     }
 
+    public EntityType entityType() {
+        return entityType;
+    }
+
     public static final class Builder {
         private final String id;
         private final String recipeType;
@@ -165,6 +175,7 @@ public final class SfxRecipeDefinition {
         private String source;
         private String note;
         private boolean runtimeEnabled;
+        private EntityType entityType;
 
         private Builder(String id, String recipeType, SfxRecipeOperation operation) {
             this.id = id;
@@ -241,6 +252,11 @@ public final class SfxRecipeDefinition {
 
         public Builder runtimeEnabled(boolean runtimeEnabled) {
             this.runtimeEnabled = runtimeEnabled;
+            return this;
+        }
+
+        public Builder entityType(EntityType entityType) {
+            this.entityType = entityType;
             return this;
         }
 

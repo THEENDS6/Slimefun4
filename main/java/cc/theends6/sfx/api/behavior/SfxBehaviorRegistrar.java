@@ -8,6 +8,8 @@ public interface SfxBehaviorRegistrar {
 
     void registerAndroidWoodcutterPolicy(SfxAndroidWoodcutterPolicy policy);
 
+    void registerEntityDropChancePolicy(SfxEntityDropChancePolicy policy);
+
     void registerRadiationRuleProvider(SfxRadiationRuleProvider provider);
 
     void registerRadiationSymptomHandler(SfxRadiationSymptomHandler handler);

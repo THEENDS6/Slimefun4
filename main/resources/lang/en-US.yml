@@ -4343,7 +4343,7 @@ recipe-notes:
   legacy:
     multiblock-structure: Multiblock structure.
     piglin-bartering: Obtained from Piglin bartering.
-    iron-golem-drop: Dropped by Iron Golems.
+    iron-golem-drop: <gray>May drop from Iron Golems; chance depends on the active entity-drop rules.</gray>
 materials:
   crafting_table: Crafting Table
   dispenser: Dispenser

@@ -12,6 +12,7 @@ import cc.theends6.sfx.api.behavior.SfxCargoInputTransferDecision;
 import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelContext;
 import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRuleContext;
 import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRules;
+import cc.theends6.sfx.api.behavior.SfxEntityDropContext;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterInteractionDecision;
 import cc.theends6.sfx.api.behavior.SfxGpsTransmitterStatusView;
 import cc.theends6.sfx.api.behavior.SfxJetBootsDriveMode;
@@ -63,6 +64,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
     private static final String FLUID_PUMP_OPTIMIZATION = "sfx:fluid_pump_optimization";
     private static final String AUTO_BREWER = "sfx:auto_brewer";
     private static final String ENHANCED_MULTIMETER = "sfx:enhanced_multimeter";
+    private static final String BASIC_CIRCUIT_BOARD_DROP_BALANCE = "sfx:basic_circuit_board_drop_balance";
 
     public static final String ID = "sfx:basic_expansion";
 
@@ -97,10 +99,13 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         context.features().registerBoolean(ADVANCED_INPUT_INTERFACE, "cargo.sfx-extensions.advanced-input-interface.enabled", true);
         context.features().registerBoolean(RADIATION_REWORK, "radiation.sfx-rework.enabled", true);
         context.features().registerBoolean(ANDROID_WOODCUTTER_BATCH_REPLANT, "androids.woodcutter.batch-replant-bottom-layer", true);
+        context.features().registerBoolean(BASIC_CIRCUIT_BOARD_DROP_BALANCE, "entity-drops.basic-circuit-board.enabled", true);
         context.behaviors().registerEnhancedFurnaceFuelPolicy((fuelContext, currentMultiplier) ->
                 speedScaledEnhancedFurnaceFuel(context, fuelContext, currentMultiplier));
         context.behaviors().registerAndroidWoodcutterPolicy((woodcutterContext, currentDecision) ->
                 batchReplantBottomLayer(context, woodcutterContext, currentDecision));
+        context.behaviors().registerEntityDropChancePolicy((dropContext, currentChance) ->
+                basicCircuitBoardDropChance(context, dropContext, currentChance));
         context.behaviors().registerRadiationRuleProvider((ruleContext, currentRules) ->
                 sfxRadiationRules(context, ruleContext, currentRules));
         context.behaviors().registerRadiationSymptomHandler(symptomContext ->
@@ -147,6 +152,28 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 || context.api().features().enabled(ANDROID_WOODCUTTER_BATCH_REPLANT)
                 && woodcutterContext.onlyBottomLayerLogsRemain()
                 && woodcutterContext.bottomLayerLogCount() > 0;
+    }
+
+    private static double basicCircuitBoardDropChance(SfxAddonContext context, SfxEntityDropContext dropContext,
+                                                       double currentChance) {
+        if (!context.api().features().enabled(BASIC_CIRCUIT_BOARD_DROP_BALANCE)
+                || !"sf:basic_circuit_board".equals(dropContext.outputItemId())) {
+            return currentChance;
+        }
+        return switch (dropContext.deathSource()) {
+            case OTHER -> chance(context, "entity-drops.basic-circuit-board.natural-chance", 0.05D);
+            case SFX_ANDROID -> chance(context, "entity-drops.basic-circuit-board.android-chance", 0.50D);
+            case PLAYER -> {
+                double base = chance(context, "entity-drops.basic-circuit-board.player-base-chance", 0.50D);
+                double perLevel = chance(context, "entity-drops.basic-circuit-board.looting-chance-per-level", 0.10D);
+                yield Math.min(1.0D, base + perLevel * dropContext.lootingLevel());
+            }
+        };
+    }
+
+    private static double chance(SfxAddonContext context, String path, double fallback) {
+        double value = context.configDouble(path, fallback);
+        return Double.isFinite(value) ? Math.max(0.0D, Math.min(1.0D, value)) : fallback;
     }
 
     private static SfxRadiationRules sfxRadiationRules(SfxAddonContext context, SfxRadiationRuleContext ruleContext, SfxRadiationRules currentRules) {

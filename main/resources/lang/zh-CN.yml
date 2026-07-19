@@ -4300,7 +4300,7 @@ recipe-notes:
   legacy:
     multiblock-structure: Multiblock structure.
     piglin-bartering: Obtained from Piglin bartering.
-    iron-golem-drop: Dropped by Iron Golems.
+    iron-golem-drop: <gray>铁傀儡死亡时可能掉落；概率由当前实体掉落规则决定。</gray>
 materials:
   crafting_table: 工作台
   dispenser: 发射器

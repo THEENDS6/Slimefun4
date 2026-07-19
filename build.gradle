@@ -634,8 +634,8 @@ tasks.register('validateSfxMachineYaml') {
         if (electricRecipeGroupCount != 13) {
             electricRecipeViolations << "electric recipe group count expected 13, got ${electricRecipeGroupCount}"
         }
-        if (electricRecipeEntryCount != 139) {
-            electricRecipeViolations << "electric recipe entry count expected 139, got ${electricRecipeEntryCount}"
+        if (electricRecipeEntryCount != 135) {
+            electricRecipeViolations << "electric recipe entry count expected 135, got ${electricRecipeEntryCount}"
         }
         if (electricExpansionCount != 4) {
             electricRecipeViolations << "electric recipe expansion count expected 4, got ${electricExpansionCount}"
@@ -1852,8 +1852,14 @@ tasks.register('validateSfxCompiledContent') {
                 violations << "${rel}: recipe ${recipe.key} outputs/random-outputs must contain at least one entry"
             }
             if (recipe.runtime == 'true'
+                    && recipe.recipeType != 'sf:mob_drop'
                     && !recipe.fields.contains('runtime-machine-tags')) {
                 violations << "${rel}: recipe ${recipe.key} runtime recipe missing runtime-machine-tags"
+            }
+            if (recipe.runtime == 'true'
+                    && recipe.recipeType == 'sf:mob_drop'
+                    && !recipe.fields.contains('entity-type')) {
+                violations << "${rel}: recipe ${recipe.key} runtime mob-drop recipe missing entity-type"
             }
             if (recipe.fields.contains('runtime-machine-tags') && recipe.machineTagRefs.isEmpty()) {
                 violations << "${rel}: recipe ${recipe.key} runtime-machine-tags must list at least one tag"

@@ -397,6 +397,8 @@ recipes:
     operation: shaped
     guide-order: 20
     source: slimefun-rc37
+    runtime: true
+    entity-type: IRON_GOLEM
     note-key: recipe-notes.legacy.iron-golem-drop
     matrix:
     - empty
@@ -409,7 +411,7 @@ recipes:
     - empty
     - empty
     outputs:
-    - sf:basic_circuit_board
+    - {type: sfx, id: sf:basic_circuit_board, amount: 1, chance: 0.75}
   legacy:crushed_ore:
     '@cf': templates.recipes.legacy-entry
     '@io': true

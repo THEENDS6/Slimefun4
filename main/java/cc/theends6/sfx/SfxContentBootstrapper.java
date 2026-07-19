@@ -39,6 +39,7 @@ final class SfxContentBootstrapper {
         recipeYamlLoader.ensureDefaultFiles(plugin.syncBundledRecipeFiles());
         DefaultSfxRecipeRegistry recipeRegistry = new DefaultSfxRecipeRegistry();
         recipeYamlLoader.loadInto(recipeRegistry);
+        plugin.recipeRegistry = recipeRegistry;
         DefaultSfxRecipeRegistry.AuditResult recipeAudit = recipeRegistry.apply(itemRegistry, api.internalManualMachines());
         SfxRecipeRoutingAuditWriter.write(plugin.getDataFolder().toPath(), recipeRegistry,
                 api.internalManualMachines(), plugin.getLogger());

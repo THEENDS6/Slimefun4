@@ -17,6 +17,7 @@ import cc.theends6.sfx.internal.decoration.SfxDecorationService;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
+import cc.theends6.sfx.internal.entity.SfxEntityDropService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.gps.SqliteSfxGpsDataRepository;
 import cc.theends6.sfx.internal.machine.ManualMachineService;
@@ -46,6 +47,8 @@ final class SfxPluginServiceModule {
         plugin.decorationService = new SfxDecorationService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.blockDataService, plugin.machineRuntime, plugin.api.behaviors());
         plugin.gpsService = new SfxGpsService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.menus(), plugin.localization, plugin.blockDataService, plugin.decorationService, plugin.electricMachineService, new SqliteSfxGpsDataRepository(plugin, plugin.gpsDataFile()), plugin.machineRuntime);
         plugin.androidService = new SfxAndroidService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.itemRegistry(), plugin.localization, plugin.blockDataService, new SqliteSfxAndroidScriptRepository(plugin, plugin.androidScriptsFile()), plugin.machineRuntime);
+        plugin.entityDropService = new SfxEntityDropService(plugin, plugin.api.items(), plugin.api.behaviors(),
+                plugin.researchService, plugin.recipeRegistry);
         plugin.ancientAltarService = new SfxAncientAltarService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.itemRegistry(), plugin.localization, plugin.blockDataService, plugin.machineRuntime);
         plugin.spawnerService = new SfxSpawnerService(plugin, plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.machineRuntime);
         plugin.infusedHopperService = new SfxInfusedHopperService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.blockDataService, plugin.machineRuntime);

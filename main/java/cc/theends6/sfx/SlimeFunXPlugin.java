@@ -39,6 +39,7 @@ import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayListener;
 import cc.theends6.sfx.internal.electric.SfxElectricMachineService;
 import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.energy.SfxMultimeterListener;
+import cc.theends6.sfx.internal.entity.SfxEntityDropService;
 import cc.theends6.sfx.internal.item.DefaultSfxItemRegistry;
 import cc.theends6.sfx.internal.listener.SfxArmorEffectListener;
 import cc.theends6.sfx.internal.listener.SfxBackpackListener;
@@ -108,6 +109,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     SfxAndroidService androidService;
     SfxRadiationService radiationService;
     SfxTechnicalGadgetService technicalGadgetService;
+    SfxEntityDropService entityDropService;
     SfxFloatingTextDisplayService floatingTextDisplayService;
     SfxAncientAltarService ancientAltarService;
     SfxSpawnerService spawnerService;
@@ -119,6 +121,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     SfxModuleManager moduleManager;
     DefaultSfxFeatureRegistry featureRegistry;
     DefaultSfxBehaviorRegistry behaviorRegistry;
+    DefaultSfxRecipeRegistry recipeRegistry;
     DefaultSfxComponentOverrideRegistry componentOverrideRegistry;
     SfxAddonManager addonManager;
     SfxMachineRuntimeEngine machineRuntime;

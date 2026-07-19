@@ -59,3 +59,12 @@ radiation:
 androids:
   woodcutter:
     batch-replant-bottom-layer: true
+
+entity-drops:
+  basic-circuit-board:
+    enabled: true
+    
+    natural-chance: 0.05
+    player-base-chance: 0.50
+    looting-chance-per-level: 0.10
+    android-chance: 0.50

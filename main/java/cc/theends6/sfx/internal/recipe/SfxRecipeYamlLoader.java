@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -210,7 +211,9 @@ public final class SfxRecipeYamlLoader {
         if (entry.containsKey("machine") || entry.containsKey("runtime-machines")) {
             throw new IllegalArgumentException("compiled recipe must use runtime-machine-tags instead of direct machine references");
         }
-        if (Boolean.TRUE.equals(entry.get("runtime")) && !entry.containsKey("runtime-machine-tags")) {
+        if (Boolean.TRUE.equals(entry.get("runtime"))
+                && !entry.containsKey("runtime-machine-tags")
+                && !"sf:mob_drop".equalsIgnoreCase(optionalString(entry.get("recipe-type")))) {
             throw new IllegalArgumentException("compiled runtime recipe must declare runtime-machine-tags");
         }
     }
@@ -240,7 +243,8 @@ public final class SfxRecipeYamlLoader {
                 .durationTicks(entry.containsKey("time") ? integer(entry.get("time")) : null)
                 .source(requiredString(entry, "source"))
                 .note(optionalNote(entry))
-                .runtimeEnabled(requiredBoolean(entry, "runtime"));
+                .runtimeEnabled(requiredBoolean(entry, "runtime"))
+                .entityType(parseEntityType(optionalString(entry.get("entity-type"))));
 
         List<String> runtimeMachines = stringList(entry.get("runtime-machines"));
         if (!runtimeMachines.isEmpty()) {
@@ -253,7 +257,8 @@ public final class SfxRecipeYamlLoader {
         if (Boolean.TRUE.equals(entry.get("runtime"))
                 && runtimeMachines.isEmpty()
                 && optionalString(entry.get("machine")) == null
-                && runtimeMachineTags.isEmpty()) {
+                && runtimeMachineTags.isEmpty()
+                && !"sf:mob_drop".equalsIgnoreCase(recipeType)) {
             throw new IllegalArgumentException("runtime recipe must declare machine, runtime-machines, or runtime-machine-tags");
         }
 
@@ -371,6 +376,17 @@ public final class SfxRecipeYamlLoader {
             throw new IllegalArgumentException("required string value missing: " + key);
         }
         return value;
+    }
+
+    private static EntityType parseEntityType(String input) {
+        if (input == null) {
+            return null;
+        }
+        try {
+            return EntityType.valueOf(input.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Unknown entity type: " + input, exception);
+        }
     }
 
     private static int requiredInteger(Map<?, ?> map, String key) {

@@ -14,6 +14,7 @@ import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.block.SfxBlockLifecycleRouter;
+import cc.theends6.sfx.internal.entity.SfxEntityKillAttribution;
 import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.machine.SfxMachineEffectDispatcher;
@@ -986,7 +987,7 @@ public final class SfxAndroidService implements Listener {
             return true;
         }
         LivingEntity target = (LivingEntity) targets.get(0);
-        target.damage(damage);
+        SfxEntityKillAttribution.damageAsAndroid(plugin, target, damage);
         if (target.isDead()) {
             collectNearbyDrops(state, target.getLocation());
         }

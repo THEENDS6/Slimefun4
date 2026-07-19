@@ -83,7 +83,7 @@ Addon 可通过 `SfxCargoNodeDefinition` 为运输调度器提供 `SfxCargoManag
 
 - `api()`：公开 SFX API；
 - `features()`：注册和查询功能；
-- `behaviors()`：注册运行时 Provider；
+- `behaviors()`：注册运行时 Provider，包括实体掉落概率策略；
 - `overrides()`：安装已在 Addon manifest 中声明的完整独占组件替换；
 - `dataDirectory()`：独立数据目录；
 - `config()` 与 `configBoolean/Int/Double/String()`：读取 Addon 自己的 `config.yml`，不会读取核心配置。
@@ -127,6 +127,8 @@ components:
     seconds: 1.0
     group: example:shared_tool
 ```
+
+实体掉落概率策略会收到掉落定义、输出物品、实体类型、死亡归属、玩家击杀者和抢夺等级。核心会把最终概率限制到 `0..1`、只掷一次随机数，并把成功产物加入 `EntityDeathEvent#getDrops()`。`SFX_ANDROID` 只在真正造成死亡的同步伤害调用期间存在，不会残留到存活实体上。基础扩展通过该策略调整基础电路板概率；关闭基础扩展后，核心保留 Classic 的“仅玩家击杀、75%”默认行为。
 
 ## Folia、权限与数据安全
 
