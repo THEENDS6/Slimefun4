@@ -14,6 +14,7 @@ final class BasicExpansionFeatureModule implements BasicExpansionModule {
         context.features().registerBoolean(SfxBasicExpansionAddon.ANIMAL_GROWTH_ACCELERATOR_BALANCE, "electric-machines.sfx-balance.animal-growth-accelerator", true);
         context.features().registerBoolean(SfxBasicExpansionAddon.PRODUCE_COLLECTOR_BALANCE, "electric-machines.sfx-balance.produce-collector", true);
         context.features().registerBoolean(SfxBasicExpansionAddon.ELECTRIC_ORE_GRINDER_3_BALANCE, "electric-machines.sfx-balance.electric-ore-grinder-3", true);
+        context.features().registerBoolean(SfxBasicExpansionAddon.ELECTRIC_INGOT_PULVERIZER_BALANCE, "electric-machines.sfx-balance.electric-ingot-pulverizer", true);
         context.features().registerBoolean(SfxBasicExpansionAddon.XP_COLLECTOR_BALANCE, "electric-machines.sfx-balance.xp-collector.enabled", true);
         context.features().registerBoolean(SfxBasicExpansionAddon.FLUID_PUMP_OPTIMIZATION, "electric-machines.sfx-extensions.fluid-pump-optimization.enabled", true);
         context.features().registerBoolean(SfxBasicExpansionAddon.AUTO_BREWER, "electric-machines.sfx-extensions.auto-brewer.enabled", true);

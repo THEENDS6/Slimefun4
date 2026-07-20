@@ -270,6 +270,22 @@ tasks.register('validateSfxBasicExpansionClassLinkage', JavaExec) {
     }
 }
 
+tasks.register('validateSfxIngotPulverizerBalance', JavaExec) {
+    group = 'verification'
+    description = 'Validates Basic Expansion ingot pulverizer timing and lossless carat-gold recovery.'
+    dependsOn 'classes', 'basicExpansionClasses', 'validateSfxTemplateCompile'
+    classpath = sourceSets.basicExpansion.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass.set('cc.theends6.sfx.addons.basic.electric.SfxIngotPulverizerBalanceSmokeCli')
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) })
+    doFirst {
+        def source = layout.projectDirectory.file('main/resources/content/templates/recipes/47-recipes-special.yml').asFile.getText('UTF-8')
+        def gate = "excludes-feature: 'sfx:electric_ingot_pulverizer_balance'"
+        if ((source.readLines().count { it.contains('classic:crush_gold_') && it.contains(gate) }) != 11) {
+            throw new GradleException('Every classic K-gold crusher recipe must be excluded by the Basic Expansion balance feature.')
+        }
+    }
+}
+
 tasks.register('validateSfxContentExpansionClassLinkage', JavaExec) {
     group = 'verification'
     description = 'Links every Content Expansion class through an isolated addon classloader.'
@@ -312,7 +328,8 @@ tasks.register('validateSfxExampleAddonClassLinkage', JavaExec) {
 tasks.named('check') {
     dependsOn 'validateSfxBasicExpansionClassLinkage', 'validateSfxContentExpansionClassLinkage',
             'validateSfxResearchExpansionClassLinkage', 'validateSfxExampleAddonClassLinkage',
-            'validateSfxAddonPublicApiBoundary', 'validateSfxComponentOverrides'
+            'validateSfxAddonPublicApiBoundary', 'validateSfxComponentOverrides',
+            'validateSfxIngotPulverizerBalance'
 }
 
 def sameFileContent = { File left, File right ->
@@ -1561,6 +1578,7 @@ tasks.register('validateSfxCompiledContent') {
         def basicMachineIds = [] as Set
         def electricMachineRuntimeTagsById = [:]
         def electricMachineRuntimeExecutorById = [:]
+        def electricMachineRuntimeProviderById = [:]
         def cleanScalar = { value ->
             value == null ? null : value.trim().replaceAll(/^['"]|['"]$/, '')
         }
@@ -2898,6 +2916,7 @@ tasks.register('validateSfxCompiledContent') {
         def specialElectricProviders = [
                 'sf:vanilla_furnace',
                 'sf:classic_ore_grinder',
+                'sf:classic_ingot_pulverizer',
                 'sf:electric_smeltery',
                 'sf:auto_brewer',
                 'sf:auto_brewer_legacy',
@@ -2985,6 +3004,7 @@ tasks.register('validateSfxCompiledContent') {
             if (runtimeExecutor != null || runtimeProvider != null || !runtimeTags.isEmpty() || !runtimeIncludes.isEmpty() || !runtimeExcludes.isEmpty()) {
                 electricMachineRuntimeExecutorById[machineId] = runtimeExecutor
                 electricMachineRuntimeTagsById[machineId] = runtimeTags
+                electricMachineRuntimeProviderById[machineId] = runtimeProvider
                 def runtimeConflict = [] as Set
                 runtimeConflict.addAll(runtimeIncludes)
                 runtimeConflict.retainAll(runtimeExcludes)
@@ -3108,6 +3128,9 @@ tasks.register('validateSfxCompiledContent') {
             tags.each { tag ->
                 def accepted = electricMachineRuntimeTagsById.any { machineId, runtimeTags ->
                     electricMachineRuntimeExecutorById[machineId] == recipeType && runtimeTags.contains(tag)
+                }
+                if (!accepted && recipeType == 'sf:electric_processing' && tag == 'ingot-pulverizing') {
+                    accepted = electricMachineRuntimeProviderById.values().contains('sf:classic_ingot_pulverizer')
                 }
                 if (!accepted) {
                     violations << "compiled electric recipe ${recipeId} recipe-tag ${tag} has no accepting machine runtime for recipe-type ${recipeType}"

@@ -38,6 +38,7 @@ machines:
 sfx-basic-expansion:
   lore:
     industrial-miner-accuracy: '&8⇨ &7Accuracy: &b{accuracy}%'
+    electric-ingot-pulverizer-time: '&8⇨ &b⚡&7Normal ingot time: &b{seconds}s'
     produce-collector:
     - '&7SFX: supports shears, bottles and brushes.'
     crop-growth-accelerator:

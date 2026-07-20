@@ -62,6 +62,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
     static final String ANIMAL_GROWTH_ACCELERATOR_BALANCE = "sfx:animal_growth_accelerator_balance";
     static final String PRODUCE_COLLECTOR_BALANCE = "sfx:produce_collector_balance";
     static final String ELECTRIC_ORE_GRINDER_3_BALANCE = "sfx:electric_ore_grinder_3_balance";
+    static final String ELECTRIC_INGOT_PULVERIZER_BALANCE = "sfx:electric_ingot_pulverizer_balance";
     static final String XP_COLLECTOR_BALANCE = "sfx:xp_collector_balance";
     static final String FLUID_PUMP_OPTIMIZATION = "sfx:fluid_pump_optimization";
     static final String AUTO_BREWER = "sfx:auto_brewer";
@@ -417,6 +418,10 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         if ("sf:fluid_pump".equals(originalProviderKey) && context.api().features().enabled(FLUID_PUMP_OPTIMIZATION)) {
             return "sfx:fluid_pump";
         }
+        if ("sf:classic_ingot_pulverizer".equals(originalProviderKey)
+                && context.api().features().enabled(ELECTRIC_INGOT_PULVERIZER_BALANCE)) {
+            return "sfx:balanced_ingot_pulverizer";
+        }
         return currentProviderKey;
     }
 
@@ -446,6 +451,10 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
         }
         if ("items.sf.electric_ore_grinder_3.lore".equals(path) && context.api().features().enabled(ELECTRIC_ORE_GRINDER_3_BALANCE)) {
             return replaceEnergyPerTick(values, 75);
+        }
+        if ("items.sf.electric_ingot_pulverizer.lore".equals(path)
+                && context.api().features().enabled(ELECTRIC_INGOT_PULVERIZER_BALANCE)) {
+            return ingotPulverizerLore(listContext, replaceEnergyPerTick(values, 18));
         }
         if (generatorBalance && ("items.sf.coal_generator_2.lore".equals(path) || "items.sf.lava_generator_2.lore".equals(path))) {
             return tierTwoGeneratorLore(listContext, values);
@@ -568,6 +577,22 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 copy.add(line.contains("&7")
                         ? line.replaceFirst("(?<=&7)[\\d']+\\s*J", replacement)
                         : line.replaceFirst("[\\d']+\\s*J", replacement));
+            } else {
+                copy.add(line);
+            }
+        }
+        return copy;
+    }
+
+    private static List<String> ingotPulverizerLore(SfxLocalizedListContext context, List<String> values) {
+        String replacement = context.rawText("sfx-basic-expansion.lore.electric-ingot-pulverizer-time");
+        if (replacement == null || replacement.isBlank()) {
+            return values;
+        }
+        List<String> copy = new ArrayList<>(values.size());
+        for (String line : values) {
+            if (line != null && (line.contains("Speed:") || line.contains("速度："))) {
+                copy.add(context.applyPlaceholders(replacement, Map.of("seconds", "2")));
             } else {
                 copy.add(line);
             }

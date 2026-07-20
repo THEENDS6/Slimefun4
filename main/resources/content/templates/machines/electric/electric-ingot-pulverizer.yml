@@ -15,4 +15,4 @@ machines:
     @cf: templates.machines.standard-electric-definition
     @io: true
     @d: {name-key: items.sf.electric_ingot_pulverizer.name, speed: 1, capacity: 10240, consumption: 14, progress-material: IRON_PICKAXE, working-name-key: electric-ui.action.crushing.name}
-    runtime: {executor: sf:electric_processing, accepts: {recipe-tags: [ingot-pulverizing]}, include-recipes: [], exclude-recipes: []}
+    runtime: {executor: sf:provider, provider: sf:classic_ingot_pulverizer}

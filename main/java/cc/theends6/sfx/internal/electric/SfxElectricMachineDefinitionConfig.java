@@ -213,6 +213,10 @@ final class SfxElectricMachineDefinitionConfig {
                 && SfxFeatureSwitch.requirementEnabled(plugin, "sfx:electric_ore_grinder_3_balance")) {
             return 75;
         }
+        if ("sf:electric_ingot_pulverizer".equals(entryId)
+                && SfxFeatureSwitch.requirementEnabled(plugin, "sfx:electric_ingot_pulverizer_balance")) {
+            return 18;
+        }
         return classicConsumption;
     }
 

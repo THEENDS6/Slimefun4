@@ -11,6 +11,8 @@ public final class SfxBasicExpansionElectricProviders {
         SfxBasicExpansionAreaElectricMachineProviders.bindRuntime(context.api().runtime());
         context.behaviors().registerElectricMachineProvider("sfx:advanced_auto_brewer",
                 hook -> new SfxAdvancedAutoBrewerRecipeProvider(hook.plugin()));
+        context.behaviors().registerElectricMachineProvider("sfx:balanced_ingot_pulverizer",
+                hook -> new SfxBalancedIngotPulverizerRecipeProvider());
         context.behaviors().registerElectricMachineProvider("sfx:produce_collector",
                 hook -> SfxBasicExpansionAreaElectricMachineProviders.produceCollector(true));
         context.behaviors().registerElectricMachineProvider("sfx:auto_breeder",

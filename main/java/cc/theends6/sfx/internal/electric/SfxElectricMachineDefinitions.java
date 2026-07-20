@@ -31,6 +31,9 @@ final class SfxElectricMachineDefinitions {
                 manualMachines.recipesFor("sf:grind_stone"),
                 manualMachines.recipesFor("sf:ore_crusher"),
                 4);
+        SfxElectricRecipeProvider ingotPulverizerRecipes = staticRecipes.provider(new SfxElectricMachineRuntimeBinding(
+                "sf:electric_processing", null, java.util.Set.of("ingot-pulverizing"),
+                java.util.Set.of(), java.util.Set.of(), java.util.Set.of()));
         SfxElectricRecipeProvider electricSmelteryRecipes = new SfxElectricSmelteryRecipeProvider(manualMachines.recipesFor("sf:smeltery"), 6);
         SfxElectricRecipeProvider autoEnchanterRecipes = SfxSpecialElectricRecipeProviders.autoEnchanter(plugin, items);
         SfxElectricRecipeProvider autoDisenchanterRecipes = SfxSpecialElectricRecipeProviders.autoDisenchanter(plugin, items);
@@ -62,6 +65,7 @@ final class SfxElectricMachineDefinitions {
         Map<String, SfxElectricRecipeProvider> providers = new LinkedHashMap<>();
         providers.put("sf:vanilla_furnace", furnaceRecipes);
         providers.put("sf:classic_ore_grinder", grinderRecipes);
+        providers.put("sf:classic_ingot_pulverizer", ingotPulverizerRecipes);
         providers.put("sf:electric_smeltery", electricSmelteryRecipes);
         providers.put("sf:auto_brewer", classicAutoBrewerRecipes);
         providers.put("sf:auto_brewer_legacy", classicAutoBrewerRecipes);

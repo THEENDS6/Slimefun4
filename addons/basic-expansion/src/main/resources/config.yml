@@ -25,6 +25,8 @@ electric-machines:
     animal-growth-accelerator: true
     produce-collector: true
     electric-ore-grinder-3: true
+    
+    electric-ingot-pulverizer: true
     xp-collector:
       enabled: true
       flask-energy-cost: 4096
