@@ -22,6 +22,7 @@ final class BasicExpansionFeatureModule implements BasicExpansionModule {
         context.features().registerBoolean(SfxBasicExpansionAddon.PAUSE_GENERATORS_WHEN_GRID_FULL, "energy.generator-balance.pause-generators-when-grid-full", true);
         context.features().registerBoolean(SfxBasicExpansionAddon.ENHANCED_MULTIMETER, "tools.multimeter.use-sfx-enhanced", true);
         context.features().registerBoolean(SfxBasicExpansionAddon.ADVANCED_INPUT_INTERFACE, "cargo.sfx-extensions.advanced-input-interface.enabled", true);
+        context.features().registerBoolean(SfxBasicExpansionAddon.CARGO_GHOST_FILTER_INTERFACE, "cargo.sfx-extensions.ghost-filter-interface.enabled", true);
         context.features().registerBoolean(SfxBasicExpansionAddon.RADIATION_REWORK, "radiation.sfx-rework.enabled", true);
         context.features().registerBoolean(SfxBasicExpansionAddon.ANDROID_WOODCUTTER_BATCH_REPLANT, "androids.woodcutter.batch-replant-bottom-layer", true);
         context.features().registerBoolean(SfxBasicExpansionAddon.BASIC_CIRCUIT_BOARD_DROP_BALANCE, "entity-drops.basic-circuit-board.enabled", true);

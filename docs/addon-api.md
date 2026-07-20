@@ -8,7 +8,7 @@ Configuration content declares items, recipes, machines, UI, energy entries, res
 
 ## Built-in Basic Expansion
 
-`sfx:basic_expansion` is the default bundled addon. It owns SFX-specific additions that are not classic Slimefun4 behavior, including the fuel jetpack, Auto Brewer II, Bio Reactor II, advanced cargo input, generator and machine balance changes, GPS transmitter UI behavior, jetpack and jetboots rework, radiation rework, and Android woodcutter batch replant behavior.
+`sfx:basic_expansion` is the default bundled addon. It owns SFX-specific additions that are not classic Slimefun4 behavior, including the fuel jetpack, Auto Brewer II, Bio Reactor II, advanced cargo input, non-owning cargo filter markers, generator and machine balance changes, GPS transmitter UI behavior, jetpack and jetboots rework, radiation rework, and Android woodcutter batch replant behavior.
 
 The core runtime must not hard-code Basic Expansion item ids, language keys, or SFX-specific config paths. Those belong under:
 
@@ -198,7 +198,7 @@ Feature-gated content is rejected unless the feature is registered and enabled. 
 
 ## Behavior Providers
 
-Java addons can register behavior providers for runtime capability points, including enhanced furnace fuel scaling, Android woodcutter behavior, entity-drop chances, radiation rules, cargo input transfer, GPS transmitter interaction, technical gadget rules, rechargeable item definitions, energy balance rules, area-machine rules, utility rules, and localized list post-processing.
+Java addons can register behavior providers for runtime capability points, including enhanced furnace fuel scaling, Android woodcutter behavior, entity-drop chances, radiation rules, cargo input transfer, cargo filter-interface rules, GPS transmitter interaction, technical gadget rules, rechargeable item definitions, energy balance rules, area-machine rules, utility rules, and localized list post-processing.
 
 The public API also exposes three composable contracts used by the official `sfx:example` addon:
 

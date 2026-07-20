@@ -18,6 +18,8 @@ public interface SfxBehaviorRegistrar {
 
     void registerCargoInputTransferPolicy(SfxCargoInputTransferPolicy policy);
 
+    void registerCargoFilterRuleProvider(SfxCargoFilterRuleProvider provider);
+
     void registerGpsTransmitterInteractionPolicy(SfxGpsTransmitterInteractionPolicy policy);
 
     void registerGpsTransmitterStatusViewProvider(SfxGpsTransmitterStatusViewProvider provider);

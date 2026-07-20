@@ -37,6 +37,11 @@ machines:
 
 sfx-basic-expansion:
   lore:
+    cargo-ghost-filter:
+    - ''
+    - '&bClick a filter slot with an item to mark it'
+    - '&bShift-click an inventory item to mark it quickly'
+    - '&7Markers never consume or store real items'
     industrial-miner-accuracy: '&8⇨ &7Accuracy: &b{accuracy}%'
     electric-ingot-pulverizer-time: '&8⇨ &b⚡&7Normal ingot time: &b{seconds}s'
     produce-collector:

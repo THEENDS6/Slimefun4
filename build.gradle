@@ -1383,6 +1383,45 @@ tasks.register('validateSfxAddonLifecycleSmoke', JavaExec) {
     })
 }
 
+tasks.register('validateSfxCargoGhostFilters') {
+    group = 'verification'
+    description = 'Validates cargo ghost markers, click guards and legacy real-filter ownership migration.'
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/cargo/SfxCargoNodeState.java'))
+    inputs.file(layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/cargo/SfxCargoService.java'))
+    inputs.file(layout.projectDirectory.file('addons/basic-expansion/src/main/resources/config.yml'))
+    doLast {
+        def state = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/cargo/SfxCargoNodeState.java').asFile.getText('UTF-8')
+        def service = layout.projectDirectory.file('main/java/cc/theends6/sfx/internal/cargo/SfxCargoService.java').asFile.getText('UTF-8')
+        def config = layout.projectDirectory.file('addons/basic-expansion/src/main/resources/config.yml').asFile.getText('UTF-8')
+        def requiredState = [
+                'output.writeInt(6)',
+                'boolean ghostFilterMode',
+                'boolean[] ownedFilterItems',
+                'state.ownedFilterItems[i] = stack != null',
+                'output.writeBoolean(ghostFilterMode)',
+                'void setGhostFilter(int index, ItemStack stack)'
+        ]
+        def requiredService = [
+                'handleGhostFilterClick',
+                'event.getClick() == ClickType.DOUBLE_CLICK',
+                'event.setCancelled(true)',
+                'state.ownsFilterItem(i)',
+                'reclaimLegacyFilter',
+                'state.setGhostFilter(index, event.getCursor())'
+        ]
+        def missing = []
+        requiredState.findAll { !state.contains(it) }.each { missing << "state contract: ${it}" }
+        requiredService.findAll { !service.contains(it) }.each { missing << "service contract: ${it}" }
+        if (!(config =~ /(?m)^\s{4}ghost-filter-interface:\r?\n\s{6}enabled:\s*true\s*$/)) {
+            missing << 'default Basic Expansion ghost-filter-interface config'
+        }
+        if (!missing.isEmpty()) {
+            throw new GradleException("Cargo ghost-filter validation failed:\n" + missing.join('\n'))
+        }
+        logger.lifecycle('Validated cargo ghost-filter click guards, ownership migration and default addon config.')
+    }
+}
+
 tasks.register('validateSfxElectricProviderAddonPolicy') {
     group = 'verification'
     description = 'Validates SFX electric machine provider overrides are routed through addon behavior policies.'
@@ -3389,6 +3428,7 @@ tasks.register('validateSfxCoreLocalizationCalls') {
 
 
 lang
+
 
 
 

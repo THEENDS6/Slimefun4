@@ -53,6 +53,9 @@ cargo:
   sfx-extensions:
     advanced-input-interface:
       enabled: true
+    
+    ghost-filter-interface:
+      enabled: true
 
 radiation:
   sfx-rework:

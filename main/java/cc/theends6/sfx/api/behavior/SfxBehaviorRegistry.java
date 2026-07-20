@@ -19,6 +19,8 @@ public interface SfxBehaviorRegistry {
 
     List<SfxCargoInputTransferPolicy> cargoInputTransferPolicies();
 
+    List<SfxCargoFilterRuleProvider> cargoFilterRuleProviders();
+
     List<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies();
 
     List<SfxGpsTransmitterStatusViewProvider> gpsTransmitterStatusViewProviders();

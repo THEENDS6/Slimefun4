@@ -30,6 +30,8 @@ final class SfxCargoNodeState {
     double managerWorkIntervalTicks = Double.NaN;
     String selectedRecipeKey = "";
     ItemStack[] filterItems = new ItemStack[FILTER_SIZE];
+    boolean ghostFilterMode;
+    boolean[] ownedFilterItems = new boolean[FILTER_SIZE];
 
     static SfxCargoNodeState defaultFor(SfxCargoComponentType type, BlockFace attachedFace) {
         SfxCargoNodeState state = new SfxCargoNodeState();
@@ -83,6 +85,7 @@ final class SfxCargoNodeState {
             }
             int filterLength = input.readInt();
             state.filterItems = new ItemStack[FILTER_SIZE];
+            state.ownedFilterItems = new boolean[FILTER_SIZE];
             for (int i = 0; i < filterLength; i++) {
                 boolean present = input.readBoolean();
                 ItemStack stack = null;
@@ -96,6 +99,18 @@ final class SfxCargoNodeState {
                 }
                 if (i < FILTER_SIZE) {
                     state.filterItems[i] = stack;
+                    state.ownedFilterItems[i] = stack != null && !stack.getType().isAir();
+                }
+            }
+            if (version >= 6) {
+                state.ghostFilterMode = input.readBoolean();
+                int ownershipLength = input.readInt();
+                for (int i = 0; i < ownershipLength; i++) {
+                    boolean owned = input.readBoolean();
+                    if (i < FILTER_SIZE) {
+                        state.ownedFilterItems[i] = owned && state.filterItems[i] != null
+                                && !state.filterItems[i].getType().isAir();
+                    }
                 }
             }
             return state;
@@ -108,7 +123,7 @@ final class SfxCargoNodeState {
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             try (DataOutputStream output = new DataOutputStream(buffer)) {
-                output.writeInt(5);
+                output.writeInt(6);
                 output.writeUTF(attachedFace.name());
                 output.writeInt(clamp(channel, 0, 15));
                 output.writeUTF(filterMode.name());
@@ -140,11 +155,42 @@ final class SfxCargoNodeState {
                         output.write(payload);
                     }
                 }
+                output.writeBoolean(ghostFilterMode);
+                output.writeInt(ownedFilterItems.length);
+                for (int i = 0; i < ownedFilterItems.length; i++) {
+                    output.writeBoolean(ownedFilterItems[i]
+                            && i < filterItems.length
+                            && filterItems[i] != null
+                            && !filterItems[i].getType().isAir());
+                }
             }
             return buffer.toByteArray();
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to encode cargo node state", exception);
         }
+    }
+
+    void enableGhostFilterMode() {
+        ghostFilterMode = true;
+    }
+
+    boolean ownsFilterItem(int index) {
+        return index >= 0 && index < ownedFilterItems.length && ownedFilterItems[index];
+    }
+
+    void setGhostFilter(int index, ItemStack stack) {
+        if (index < 0 || index >= FILTER_SIZE) {
+            return;
+        }
+        if (stack == null || stack.getType().isAir()) {
+            filterItems[index] = null;
+            ownedFilterItems[index] = false;
+            return;
+        }
+        ItemStack marker = stack.clone();
+        marker.setAmount(1);
+        filterItems[index] = marker;
+        ownedFilterItems[index] = false;
     }
 
     static double normalizeWorkInterval(double value, double fallback) {

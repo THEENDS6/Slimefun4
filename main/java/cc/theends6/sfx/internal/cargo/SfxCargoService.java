@@ -19,6 +19,7 @@ import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxAnchoredInteraction;
 import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
+import cc.theends6.sfx.internal.behavior.SfxCargoFilterRulesResolver;
 import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.internal.display.SfxFloatingTextDisplayService;
@@ -329,7 +330,12 @@ public final class SfxCargoService implements Listener {
             return;
         }
 
-        if (usesFilter(holder.type())) {
+        SfxCargoNodeState state = currentState(holder.instanceId());
+        if (usesFilter(holder.type()) && ghostFilterMode(state)) {
+            if (handleGhostFilterClick(event, player, top, holder, state)) {
+                return;
+            }
+        } else if (usesFilter(holder.type())) {
             if (event.getClickedInventory() == top && FILTER_SLOT_SET.contains(event.getRawSlot())) {
                 boolean changed = false;
                 if (event.isShiftClick()) {
@@ -372,7 +378,6 @@ public final class SfxCargoService implements Listener {
         if (event.getClickedInventory() != top) {
             return;
         }
-        SfxCargoNodeState state = currentState(holder.instanceId());
         int slot = event.getRawSlot();
         ClickType click = event.getClick();
         SfxCargoManagerProvider managerProvider = definition.managerProvider();
@@ -420,7 +425,9 @@ public final class SfxCargoService implements Listener {
         if (!changed) {
             return;
         }
-        syncFilterFromInventory(top, state);
+        if (!ghostFilterMode(state)) {
+            syncFilterFromInventory(top, state);
+        }
         persistState(holder.instanceId(), state);
         renderMenu(top, holder.instanceId(), holder.typeId(), holder.type(), state);
     }
@@ -445,8 +452,18 @@ public final class SfxCargoService implements Listener {
         if (!(top.getHolder() instanceof SfxCargoSessionHolder holder)) {
             return;
         }
+        SfxCargoNodeState state = currentState(holder.instanceId());
         if (!usesFilter(holder.type())) {
             event.setCancelled(true);
+            return;
+        }
+        if (ghostFilterMode(state)) {
+            for (int raw : event.getRawSlots()) {
+                if (raw < top.getSize()) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
             return;
         }
         for (int raw : event.getRawSlots()) {
@@ -471,7 +488,9 @@ public final class SfxCargoService implements Listener {
                 SfxMachineLegacyHookBridge.menuClose(machineRuntime, closeDefinition.id(), holder.instanceId(), null, "cargo", "SfxCargoService.onInventoryClose");
             }
             SfxCargoNodeState state = currentState(holder.instanceId());
-            syncFilterFromInventory(top, state);
+            if (!ghostFilterMode(state)) {
+                syncFilterFromInventory(top, state);
+            }
             persistState(holder.instanceId(), state);
             openMenus.remove(holder.instanceId());
         } else if (top.getHolder() instanceof SfxTrashCanHolder holder) {
@@ -511,8 +530,10 @@ public final class SfxCargoService implements Listener {
         }
         SfxCargoComponentDefinition definition = definitions.get(typeId);
         if (definition != null && usesFilter(definition.type())) {
-            for (ItemStack stack : state.filterItems) {
-                dropStack(block, stack);
+            for (int i = 0; i < state.filterItems.length; i++) {
+                if (state.ownsFilterItem(i)) {
+                    dropStack(block, state.filterItems[i]);
+                }
             }
         }
         dropPluginBlock(block, typeId);
@@ -1206,6 +1227,12 @@ public final class SfxCargoService implements Listener {
 
     private void openMenu(Player player, SfxBlockInstanceRecord instance, SfxCargoComponentType type) {
         SfxCargoNodeState state = currentState(instance.instanceId());
+        if (usesFilter(type)
+                && SfxCargoFilterRulesResolver.rules(plugin).ghostFilterInterfaceEnabled()
+                && !state.ghostFilterMode) {
+            state.enableGhostFilterMode();
+            persistState(instance.instanceId(), state);
+        }
         int size = type == SfxCargoComponentType.OUTPUT_NODE ? OUTPUT_INVENTORY_SIZE : FILTER_INVENTORY_SIZE;
         SfxCargoComponentDefinition definition = definitions.get(instance.typeId());
         SfxCargoManagerProvider managerProvider = definition == null ? null : definition.managerProvider();
@@ -1259,7 +1286,11 @@ public final class SfxCargoService implements Listener {
         if (usesFilter(type)) {
             inventory.setItem(2, uiItem(Material.PAPER, "cargo.ui.items.name", "cargo.ui.items.lore", Map.of()));
             for (int i = 0; i < FILTER_SLOTS.length; i++) {
-                inventory.setItem(FILTER_SLOTS[i], cloneOrNull(state.filterItems[i]));
+                ItemStack display = cloneOrNull(state.filterItems[i]);
+                if (state.ghostFilterMode && !isEmpty(display)) {
+                    display.setAmount(1);
+                }
+                inventory.setItem(FILTER_SLOTS[i], display);
             }
             inventory.setItem(15, modeItem(state));
             inventory.setItem(25, loreToggleItem(state.matchLore));
@@ -1632,10 +1663,90 @@ public final class SfxCargoService implements Listener {
             ItemStack stack = inventory.getItem(FILTER_SLOTS[i]);
             if (isEmpty(stack)) {
                 state.filterItems[i] = null;
+                state.ownedFilterItems[i] = false;
             } else {
                 state.filterItems[i] = stack.clone();
+                state.ownedFilterItems[i] = true;
             }
         }
+    }
+
+    private boolean ghostFilterMode(SfxCargoNodeState state) {
+        return state != null && (state.ghostFilterMode
+                || SfxCargoFilterRulesResolver.rules(plugin).ghostFilterInterfaceEnabled());
+    }
+
+    private boolean handleGhostFilterClick(InventoryClickEvent event, Player player, Inventory top,
+                                           SfxCargoSessionHolder holder, SfxCargoNodeState state) {
+        if (!state.ghostFilterMode) {
+            state.enableGhostFilterMode();
+            persistState(holder.instanceId(), state);
+        }
+        if (event.getClickedInventory() != top) {
+            if (event.isShiftClick()) {
+                event.setCancelled(true);
+                ItemStack clicked = event.getCurrentItem();
+                if (!isEmpty(clicked)) {
+                    int index = firstEmptyFilterIndex(state);
+                    if (index >= 0) {
+                        state.setGhostFilter(index, clicked);
+                        persistState(holder.instanceId(), state);
+                        renderMenu(top, holder.instanceId(), holder.typeId(), holder.type(), state);
+                    }
+                }
+            } else if (event.getClick() == ClickType.DOUBLE_CLICK) {
+                event.setCancelled(true);
+            }
+            return true;
+        }
+        int index = filterIndex(event.getRawSlot());
+        if (index < 0) {
+            return false;
+        }
+        event.setCancelled(true);
+        if (state.ownsFilterItem(index)) {
+            reclaimLegacyFilter(player, state, index);
+        } else {
+            state.setGhostFilter(index, event.getCursor());
+        }
+        persistState(holder.instanceId(), state);
+        renderMenu(top, holder.instanceId(), holder.typeId(), holder.type(), state);
+        return true;
+    }
+
+    private int firstEmptyFilterIndex(SfxCargoNodeState state) {
+        for (int i = 0; i < state.filterItems.length; i++) {
+            if (isEmpty(state.filterItems[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private int filterIndex(int rawSlot) {
+        for (int i = 0; i < FILTER_SLOTS.length; i++) {
+            if (FILTER_SLOTS[i] == rawSlot) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void reclaimLegacyFilter(Player player, SfxCargoNodeState state, int index) {
+        ItemStack owned = state.filterItems[index];
+        if (isEmpty(owned)) {
+            state.setGhostFilter(index, null);
+            return;
+        }
+        ItemStack marker = owned.clone();
+        marker.setAmount(1);
+        Map<Integer, ItemStack> leftovers = player.getInventory().addItem(owned.clone());
+        for (ItemStack leftover : leftovers.values()) {
+            if (!isEmpty(leftover)) {
+                player.getWorld().dropItemNaturally(player.getLocation(), leftover);
+            }
+        }
+        state.setGhostFilter(index, marker);
     }
 
     private void adjustChannel(SfxCargoNodeState state, int delta, boolean shift) {

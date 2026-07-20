@@ -37,6 +37,11 @@ machines:
 
 sfx-basic-expansion:
   lore:
+    cargo-ghost-filter:
+    - ''
+    - '&b指针持有物品点击过滤槽即可标记'
+    - '&b也可 Shift+点击背包物品快速标记'
+    - '&7标记不会消耗或储存真实物品'
     industrial-miner-accuracy: '&8⇨ &7精准度：&b{accuracy}%'
     electric-ingot-pulverizer-time: '&8⇨ &b⚡ &7普通锭耗时：&b{seconds} 秒'
     produce-collector:

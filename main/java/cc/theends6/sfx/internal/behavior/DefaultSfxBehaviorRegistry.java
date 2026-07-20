@@ -8,6 +8,7 @@ import cc.theends6.sfx.api.behavior.SfxAndroidWoodcutterPolicy;
 import cc.theends6.sfx.api.behavior.SfxAreaMachineRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxAutoBrewerBehaviorProvider;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferPolicy;
+import cc.theends6.sfx.api.behavior.SfxCargoFilterRuleProvider;
 import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderKeyPolicy;
 import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderFactory;
 import cc.theends6.sfx.api.behavior.SfxElectricMachineProviderRegistration;
@@ -40,6 +41,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     private final SfxOwnedEntries<SfxIndustrialMinerTargetPolicy> industrialMinerTargetPolicies = new SfxOwnedEntries<>();
     private final SfxOwnedEntries<SfxRadiationRuleProvider> radiationRuleProviders = new SfxOwnedEntries<>();
     private final SfxOwnedEntries<SfxCargoInputTransferPolicy> cargoInputTransferPolicies = new SfxOwnedEntries<>();
+    private final SfxOwnedEntries<SfxCargoFilterRuleProvider> cargoFilterRuleProviders = new SfxOwnedEntries<>();
     private final SfxOwnedEntries<SfxGpsTransmitterInteractionPolicy> gpsTransmitterInteractionPolicies = new SfxOwnedEntries<>();
     private final SfxOwnedEntries<SfxGpsTransmitterStatusViewProvider> gpsTransmitterStatusViewProviders = new SfxOwnedEntries<>();
     private final SfxOwnedEntries<SfxRadiationSymptomHandler> radiationSymptomHandlers = new SfxOwnedEntries<>();
@@ -64,6 +66,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         industrialMinerTargetPolicies.clear();
         radiationRuleProviders.clear();
         cargoInputTransferPolicies.clear();
+        cargoFilterRuleProviders.clear();
         gpsTransmitterInteractionPolicies.clear();
         gpsTransmitterStatusViewProviders.clear();
         radiationSymptomHandlers.clear();
@@ -89,6 +92,7 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
         industrialMinerTargetPolicies.removeOwner(owner);
         radiationRuleProviders.removeOwner(owner);
         cargoInputTransferPolicies.removeOwner(owner);
+        cargoFilterRuleProviders.removeOwner(owner);
         gpsTransmitterInteractionPolicies.removeOwner(owner);
         gpsTransmitterStatusViewProviders.removeOwner(owner);
         radiationSymptomHandlers.removeOwner(owner);
@@ -209,6 +213,16 @@ public final class DefaultSfxBehaviorRegistry implements SfxBehaviorRegistry, Sf
     @Override
     public synchronized List<SfxCargoInputTransferPolicy> cargoInputTransferPolicies() {
         return cargoInputTransferPolicies.values();
+    }
+
+    @Override
+    public synchronized void registerCargoFilterRuleProvider(SfxCargoFilterRuleProvider provider) {
+        cargoFilterRuleProviders.add(currentOwner(), Objects.requireNonNull(provider, "provider"));
+    }
+
+    @Override
+    public synchronized List<SfxCargoFilterRuleProvider> cargoFilterRuleProviders() {
+        return cargoFilterRuleProviders.values();
     }
 
     @Override

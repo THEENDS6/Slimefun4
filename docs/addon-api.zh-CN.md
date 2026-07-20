@@ -131,6 +131,8 @@ context.overrides().replace(
 
 内容可使用 `requires-feature` 和 `excludes-feature`。普通物品、配方、名称、Lore 和固定数值优先写 YAML；只有世界、实体、网络、动态 GUI 和复杂状态使用 Java。
 
+运输过滤界面可通过 `SfxCargoFilterRuleProvider` 组合规则。基础扩展默认启用非占有式过滤标记：点击或 Shift 点击只保存用于匹配的物品模板，不移动真实物品；核心仍负责旧真实过滤物品的所有权迁移与安全返还。
+
 官方 `sfx:example` 同时验证三个可组合公开能力：
 
 - `SfxCyclingBlockDefinition` 只声明材质序列与间隔，核心统一负责调度、区块、持久化、破坏和自定义掉落；

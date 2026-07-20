@@ -9,6 +9,8 @@ import cc.theends6.sfx.api.behavior.SfxAutoBrewerBehaviorProvider;
 import cc.theends6.sfx.api.behavior.SfxAutoBrewerInputContext;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferContext;
 import cc.theends6.sfx.api.behavior.SfxCargoInputTransferDecision;
+import cc.theends6.sfx.api.behavior.SfxCargoFilterRuleContext;
+import cc.theends6.sfx.api.behavior.SfxCargoFilterRules;
 import cc.theends6.sfx.api.behavior.SfxEnhancedFurnaceFuelContext;
 import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRuleContext;
 import cc.theends6.sfx.api.behavior.SfxEnergyBalanceRules;
@@ -51,6 +53,7 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
     static final String ANDROID_WOODCUTTER_BATCH_REPLANT = "sfx:android_woodcutter_batch_replant";
     static final String RADIATION_REWORK = "sfx:radiation_rework";
     static final String ADVANCED_INPUT_INTERFACE = "sfx:advanced_input_interface";
+    static final String CARGO_GHOST_FILTER_INTERFACE = "sfx:cargo_ghost_filter_interface";
     static final String GPS_TRANSMITTER_STATUS_UI = "sfx:gps_transmitter_status_ui";
     static final String JETPACKS_AND_JETBOOTS_REWORK = "sfx:jetpacks_and_jetboots_rework";
     static final String TECHNICAL_GADGET_BALANCE = "sfx:technical_gadget_balance";
@@ -234,6 +237,13 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
                 transferContext.allowMultipleSlots(),
                 transferContext.distribution()
         );
+    }
+
+    static SfxCargoFilterRules cargoFilterRules(SfxAddonContext context,
+                                                 SfxCargoFilterRuleContext ruleContext,
+                                                 SfxCargoFilterRules currentRules) {
+        return new SfxCargoFilterRules(currentRules.ghostFilterInterfaceEnabled()
+                || context.api().features().enabled(CARGO_GHOST_FILTER_INTERFACE));
     }
 
     static SfxGpsTransmitterInteractionDecision gpsTransmitterInteraction(SfxAddonContext context, SfxGpsTransmitterInteractionDecision currentDecision) {
@@ -427,6 +437,11 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
 
     static List<String> localizedList(SfxAddonContext context, SfxLocalizedListContext listContext, List<String> values) {
         String path = listContext.path();
+        if ("cargo.ui.items.lore".equals(path)
+                && context.api().features().enabled(CARGO_GHOST_FILTER_INTERFACE)) {
+            List<String> ghostLore = listContext.rawList("sfx-basic-expansion.lore.cargo-ghost-filter");
+            return ghostLore.isEmpty() ? values : ghostLore;
+        }
         if ("items.sf.industrial_miner.lore".equals(path)
                 || "items.sf.advanced_industrial_miner.lore".equals(path)) {
             return industrialMinerLore(context, listContext, values,
