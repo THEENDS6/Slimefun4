@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -250,6 +251,20 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
                 Math.max(1, schemaVersion), Instant.now().toEpochMilli());
         instances.put(instanceId, updated);
         markDirty(updated);
+    }
+
+    
+    public synchronized Optional<SfxBlockInstanceRecord> updateInstanceAtomic(
+            UUID instanceId, java.util.function.UnaryOperator<SfxBlockInstanceRecord> update) {
+        SfxBlockInstanceRecord existing = instances.get(instanceId);
+        if (existing == null || update == null) return Optional.empty();
+        SfxBlockInstanceRecord changed = Objects.requireNonNull(update.apply(existing), "updated instance");
+        if (!existing.instanceId().equals(changed.instanceId()) || !existing.anchorKey().equals(changed.anchorKey())) {
+            throw new IllegalArgumentException("Atomic state update cannot change instance identity or anchor");
+        }
+        instances.put(instanceId, changed);
+        markDirty(changed);
+        return Optional.of(changed);
     }
 
     public synchronized boolean replaceInstanceType(UUID instanceId, String typeId, Material material,

@@ -152,6 +152,27 @@ public final class SfxAddonLifecycleSmokeCli {
             if (mode == SfxTransactionMode.COMMIT) stored += moved;
             return moved;
         }
+        @Override public java.util.Optional<cc.theends6.sfx.api.container.SfxTransactionReservation> prepareExtract(double amount) {
+            double moved = Math.min(amount, stored);
+            if (moved + 1.0E-9D < amount) return java.util.Optional.empty();
+            double before = stored;
+            return java.util.Optional.of(reservation(() -> stored = before - moved, () -> stored = before));
+        }
+        @Override public java.util.Optional<cc.theends6.sfx.api.container.SfxTransactionReservation> prepareInsert(double amount) {
+            double moved = Math.min(amount, demand());
+            if (moved + 1.0E-9D < amount) return java.util.Optional.empty();
+            double before = stored;
+            return java.util.Optional.of(reservation(() -> {
+                if (rejectCommitInsert) throw new IllegalStateException("changed port");
+                stored = before + moved;
+            }, () -> stored = before));
+        }
+        private static cc.theends6.sfx.api.container.SfxTransactionReservation reservation(Runnable commit, Runnable rollback) {
+            return new cc.theends6.sfx.api.container.SfxTransactionReservation() {
+                @Override public void commit() { commit.run(); }
+                @Override public void rollback() { rollback.run(); }
+            };
+        }
     }
 
     private static final class FluidPort implements SfxVirtualFluidContainer {
@@ -178,6 +199,27 @@ public final class SfxAddonLifecycleSmokeCli {
             long moved = "minecraft:water".equals(fluidType) ? Math.min(requested, amount) : 0L;
             if (mode == SfxTransactionMode.COMMIT) amount -= moved;
             return moved;
+        }
+        @Override public java.util.Optional<cc.theends6.sfx.api.container.SfxTransactionReservation> prepareInsert(SfxFluidStack fluid) {
+            long moved = Math.min(fluid.amount(), capacity - amount);
+            if (moved != fluid.amount()) return java.util.Optional.empty();
+            long before = amount;
+            return java.util.Optional.of(new cc.theends6.sfx.api.container.SfxTransactionReservation() {
+                @Override public void commit() {
+                    if (rejectCommitInsert) throw new IllegalStateException("changed fluid port");
+                    amount = before + moved;
+                }
+                @Override public void rollback() { amount = before; }
+            });
+        }
+        @Override public java.util.Optional<cc.theends6.sfx.api.container.SfxTransactionReservation> prepareExtract(String fluidType, long requested) {
+            long moved = "minecraft:water".equals(fluidType) ? Math.min(requested, amount) : 0L;
+            if (moved != requested) return java.util.Optional.empty();
+            long before = amount;
+            return java.util.Optional.of(new cc.theends6.sfx.api.container.SfxTransactionReservation() {
+                @Override public void commit() { amount = before - moved; }
+                @Override public void rollback() { amount = before; }
+            });
         }
     }
 }

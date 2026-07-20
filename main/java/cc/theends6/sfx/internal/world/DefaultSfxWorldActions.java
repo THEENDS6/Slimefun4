@@ -3,6 +3,15 @@ package cc.theends6.sfx.internal.world;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.api.world.SfxWorldActionResult;
 import cc.theends6.sfx.api.world.SfxWorldActionService;
+import cc.theends6.sfx.api.world.SfxRangeBlockBreakRequest;
+import cc.theends6.sfx.api.world.SfxRangeWorldActionResult;
+import cc.theends6.sfx.api.container.SfxTransactionReservation;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -19,6 +28,7 @@ import org.bukkit.potion.PotionEffect;
 
 
 public final class DefaultSfxWorldActions implements SfxWorldActionService {
+    private static final int MAX_RANGE_BLOCKS = 256;
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final DefaultSfxProtectionService protection;
@@ -107,6 +117,91 @@ public final class DefaultSfxWorldActions implements SfxWorldActionService {
             return SfxWorldActionResult.succeeded();
         });
     }
+
+    @Override public CompletableFuture<SfxRangeWorldActionResult> breakBlocks(SfxRangeBlockBreakRequest request) {
+        if (request == null) return CompletableFuture.completedFuture(range(
+                SfxRangeWorldActionResult.Status.INVALID, 0, 0, "request is required"));
+        List<Location> raw = request.locations();
+        if (raw.isEmpty() || raw.size() > MAX_RANGE_BLOCKS || raw.stream().anyMatch(location ->
+                location == null || location.getWorld() == null)) {
+            return CompletableFuture.completedFuture(range(SfxRangeWorldActionResult.Status.INVALID,
+                    raw.size(), 0, "between 1 and " + MAX_RANGE_BLOCKS + " world locations are required"));
+        }
+        Map<String, Location> unique = new LinkedHashMap<>();
+        UUID worldId = raw.get(0).getWorld().getUID();
+        for (Location location : raw) {
+            if (!worldId.equals(location.getWorld().getUID())) return CompletableFuture.completedFuture(range(
+                    SfxRangeWorldActionResult.Status.CROSS_REGION, raw.size(), 0,
+                    "range actions cannot span worlds"));
+            String key = location.getBlockX() + ":" + location.getBlockY() + ":" + location.getBlockZ();
+            unique.putIfAbsent(key, location);
+        }
+        List<Location> locations = List.copyOf(unique.values());
+        return runtime.supplyAtAsync(locations.get(0), () -> executeRangeBreak(request, locations));
+    }
+
+    private SfxRangeWorldActionResult executeRangeBreak(SfxRangeBlockBreakRequest request,
+                                                         List<Location> locations) {
+        if (locations.stream().anyMatch(location -> !plugin.getServer().isOwnedByCurrentRegion(location))) {
+            return range(SfxRangeWorldActionResult.Status.CROSS_REGION, locations.size(), 0,
+                    "targets span scheduler regions; split the request by region");
+        }
+        List<PreparedBreak> prepared = new ArrayList<>();
+        for (Location location : locations) {
+            Block block = location.getBlock();
+            if (block.getType().isAir()) continue;
+            if (Boolean.FALSE.equals(protection.breakAdapterDecision(request.actor(), block))) {
+                return range(SfxRangeWorldActionResult.Status.PROTECTED, locations.size(), 0,
+                        "protection adapter rejected a target");
+            }
+            Material before = block.getType();
+            BlockBreakEvent event = new BlockBreakEvent(block, request.actor());
+            event.setDropItems(request.drops());
+            plugin.getServer().getPluginManager().callEvent(event);
+            if (event.isCancelled() || block.getType() != before) return range(
+                    SfxRangeWorldActionResult.Status.PROTECTED, locations.size(), 0,
+                    "a block break event rejected or changed a target");
+            prepared.add(new PreparedBreak(block, event.isDropItems()));
+        }
+        if (prepared.isEmpty()) return range(SfxRangeWorldActionResult.Status.SUCCESS,
+                locations.size(), 0, null);
+        Optional<SfxTransactionReservation> resource;
+        try { resource = request.resourceReservation().apply(prepared.size()); }
+        catch (RuntimeException exception) {
+            return range(SfxRangeWorldActionResult.Status.RESOURCE_REJECTED, locations.size(), 0,
+                    exception.getMessage());
+        }
+        if (resource.isEmpty()) return range(SfxRangeWorldActionResult.Status.RESOURCE_REJECTED,
+                locations.size(), 0, "resource reservation was rejected");
+        try { resource.get().commit(); }
+        catch (RuntimeException exception) {
+            safeRollback(resource.get());
+            return range(SfxRangeWorldActionResult.Status.RESOURCE_REJECTED, locations.size(), 0,
+                    exception.getMessage());
+        }
+        int changed = 0;
+        ItemStack tool = request.tool() == null ? request.actor().getInventory().getItemInMainHand() : request.tool();
+        for (PreparedBreak target : prepared) {
+            boolean success = target.drops() ? target.block().breakNaturally(tool) : setAir(target.block());
+            if (!success) break;
+            changed++;
+        }
+        if (changed == prepared.size()) return range(SfxRangeWorldActionResult.Status.SUCCESS,
+                locations.size(), changed, null);
+        return range(changed == 0 ? SfxRangeWorldActionResult.Status.FAILED : SfxRangeWorldActionResult.Status.PARTIAL,
+                locations.size(), changed, "world mutation stopped after an unexpected block failure");
+    }
+
+    private static void safeRollback(SfxTransactionReservation reservation) {
+        try { reservation.rollback(); } catch (RuntimeException ignored) { }
+    }
+
+    private static SfxRangeWorldActionResult range(SfxRangeWorldActionResult.Status status,
+                                                    int requested, int succeeded, String message) {
+        return new SfxRangeWorldActionResult(status, requested, succeeded, message);
+    }
+
+    private record PreparedBreak(Block block, boolean drops) { }
 
     private static boolean setAir(Block block) {
         if (block.getType().isAir()) return false;

@@ -102,7 +102,7 @@ Addon 可通过 `SfxCargoNodeDefinition` 为运输调度器提供 `SfxCargoManag
 - `worldActions()`、`protection()`：执行经过区域调度和 Bukkit 保护事件的世界操作；
 - `components()`：`overrides()` 的领域化别名，安装清单中声明的组件替换；
 - `api().activeClock()`、`powerRouter()`：读取持久服务器活动 Tick，并执行模拟后提交的统一电力结算；
-- `api().addonRuntime()`：消费已经注册的定义，创建虚拟容器、推进连续机器、执行电力物品规则；其中 `displays()` 管理纯客户端 PacketEvents `ITEM_DISPLAY` 会话；
+- `api().addonRuntime()`：消费已经注册的定义，创建虚拟容器、推进连续机器、执行电力物品规则；其中 `displays()` 管理纯客户端 PacketEvents 物品/方块 Display 会话；
 - `dataDirectory()`：独立数据目录；
 - `config()` 与 `configBoolean/Int/Double/String()`：读取 Addon 自己的 `config.yml`，不会读取核心配置。
 
@@ -160,11 +160,13 @@ components:
 
 注册使用真正的暂存事务：声明、Listener 和任务在提交前对外不可见且不会启动；注册回调失败时直接丢弃暂存内容，提交或启用失败时再由核心执行 `unregisterAll(addonId)`。自定义方块的放置、交互、物理/邻居更新、活塞、流体、原版转化、区块/世界边界和破坏均由核心派发生命周期；状态解码或回调异常会隔离单个实例，避免每 Tick 重复报错。
 
-`api().addonRuntime().displays()` 分配虚拟实体 ID，按显示类型的视距和节流策略更新，持久保存每名玩家的分类开关，并在离开视距、切换世界或 Addon 运行时卸载时销毁投影。Display 只表示客户端视觉，不能作为机器或方块真实状态。
+`api().addonRuntime().displays()` 分配虚拟实体 ID，支持带完整平移、缩放和四元数旋转的物品/方块 Display，按显示类型的视距和节流策略更新，持久保存每名玩家的分类开关，并在离开视距、切换世界或 Addon 运行时卸载时销毁投影。Display 只表示客户端视觉，不能作为机器或方块真实状态。跨方块读取和类型化原子状态更新统一使用 `addonRuntime().blockStates()`，Addon 不接触核心数据库或内部实现。
 
-注册后的电力物品通过 `addonRuntime().poweredItems()` 统一读写 PDC 电量状态并执行充电、使用和超频规则。`addonRuntime().inventoryPower()` 每个服务器 Tick 最多扫描一次玩家背包，在物品栏变化时让缓存失效，并按“便携电源优先、再由电池放电”的顺序走事务式电力结算；动作失败不耗电，提交中途失败会回滚此前转移。
+注册后的电力物品通过 `addonRuntime().poweredItems()` 统一读写 PDC 电量状态并执行充电、使用和超频规则。`addonRuntime().inventoryPower()` 每个服务器 Tick 最多扫描一次玩家背包，在物品栏变化时让缓存失效，并按“便携电源优先、再由电池放电”的顺序走事务式电力结算。事务端口和容器通过 `prepareInsert`/`prepareExtract` 提供实现自己持有的精确快照；核心在提交前准备全部参与者，失败时恢复快照，不再对单向端口调用反向操作。
 
-第三方 Addon 可直接使用公开的 `api.testkit.SfxAddonTestKit` 做无服务器契约断言；核心的 `validateSfxAddonLifecycleSmoke` 还会验证暂存提交/回滚、所有者清理和事务回滚。
+`addonRuntime().continuousMachines().createManaged(...)` 创建由核心持久化和调度的连续机器实例：只在所在区块已加载时按区域线程推进，结算使用持久服务器活动 Tick，停服时间不会推进，并通过 `applyManagedInput(...)` 统一执行输入限流。`api().worldActions().breakBlocks(...)` 是电力范围工具的安全批处理边界：去重并限制目标数量，拒绝跨世界/跨区域请求，先完成保护事件预检，再按实际目标数预留和提交能源；若世界突变意外失败会明确返回部分完成结果。
+
+第三方 Addon 可直接使用公开的 `api.testkit.SfxAddonTestKit` 做无服务器契约断言，包括精确的预备事务回滚；核心的 `validateSfxAddonLifecycleSmoke` 还会验证暂存提交/回滚、所有者清理和事务回滚。
 
 Paper 与 SFX API 使用 `compileOnly`，不要把 SFX API 类打进 Addon JAR。内置 Addon 构建任务：
 

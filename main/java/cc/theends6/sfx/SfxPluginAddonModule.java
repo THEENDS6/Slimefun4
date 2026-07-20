@@ -23,11 +23,11 @@ final class SfxPluginAddonModule {
         plugin.componentOverrideRegistry.clear();
         plugin.addonManager = new SfxAddonManager(plugin, plugin.getLogger(), plugin.api, plugin.featureRegistry,
                 plugin.behaviorRegistry, plugin.componentOverrideRegistry);
+        plugin.api.bindAddonManager(plugin.addonManager);
         plugin.addonManager.loadConfiguredAddons(
                 plugin.getConfig().getBoolean("addons.basic-expansion.enabled", true),
                 plugin.getConfig().getBoolean("addons.research-expansion.enabled", true),
                 plugin.getConfig().getBoolean("addons.example.enabled", true),
                 new java.io.File(plugin.getDataFolder(), "addons"));
-        plugin.api.bindAddonManager(plugin.addonManager);
     }
 }

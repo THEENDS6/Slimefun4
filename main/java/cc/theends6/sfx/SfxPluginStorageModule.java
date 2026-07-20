@@ -46,6 +46,6 @@ final class SfxPluginStorageModule {
         plugin.featureRegistry = new DefaultSfxFeatureRegistry(plugin);
         plugin.behaviorRegistry = new DefaultSfxBehaviorRegistry();
         plugin.api = SfxApiImpl.bootstrap(plugin, plugin.localization, plugin.playerDataService, plugin.researchService,
-                plugin.researchPaymentRouter, plugin.featureRegistry, plugin.behaviorRegistry);
+                plugin.researchPaymentRouter, plugin.featureRegistry, plugin.behaviorRegistry, plugin.blockDataService);
     }
 }

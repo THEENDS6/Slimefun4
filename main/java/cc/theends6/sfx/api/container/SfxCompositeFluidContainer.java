@@ -45,21 +45,10 @@ public final class SfxCompositeFluidContainer implements SfxVirtualFluidContaine
             remaining -= moved;
         }
         if (mode == SfxTransactionMode.SIMULATE) return accepted;
-        remaining = accepted;
-        long committed = 0L;
-        java.util.ArrayList<Move> moves = new java.util.ArrayList<>();
-        for (SfxVirtualFluidContainer child : children) {
-            if (remaining <= 0L) break;
-            long moved = child.insert(new SfxFluidStack(fluid.fluidType(), remaining), SfxTransactionMode.COMMIT);
-            committed = Math.addExact(committed, moved);
-            remaining -= moved;
-            if (moved > 0L) moves.add(new Move(child, moved));
-        }
-        if (committed != accepted) {
-            rollbackInsert(fluid.fluidType(), moves);
-            throw new IllegalStateException("Fluid container changed after simulation; insert was rolled back");
-        }
-        return committed;
+        SfxTransactionReservation reservation = prepareInsert(fluid).orElseThrow(
+                () -> new IllegalStateException("Fluid child does not support prepared rollback"));
+        commit(reservation);
+        return accepted;
     }
 
     @Override public synchronized long extract(String fluidType, long amount, SfxTransactionMode mode) {
@@ -74,42 +63,69 @@ public final class SfxCompositeFluidContainer implements SfxVirtualFluidContaine
             remaining -= moved;
         }
         if (mode == SfxTransactionMode.SIMULATE) return available;
-        remaining = available;
-        long committed = 0L;
-        java.util.ArrayList<Move> moves = new java.util.ArrayList<>();
+        SfxTransactionReservation reservation = prepareExtract(fluidType, amount).orElseThrow(
+                () -> new IllegalStateException("Fluid child does not support prepared rollback"));
+        commit(reservation);
+        return available;
+    }
+
+    @Override public synchronized java.util.Optional<SfxTransactionReservation> prepareInsert(SfxFluidStack fluid) {
+        Objects.requireNonNull(fluid, "fluid");
+        long remaining = fluid.amount();
+        List<java.util.function.Supplier<java.util.Optional<SfxTransactionReservation>>> preparations = new java.util.ArrayList<>();
         for (SfxVirtualFluidContainer child : children) {
             if (remaining <= 0L) break;
-            long moved = child.extract(fluidType, remaining, SfxTransactionMode.COMMIT);
-            committed = Math.addExact(committed, moved);
-            remaining -= moved;
-            if (moved > 0L) moves.add(new Move(child, moved));
-        }
-        if (committed != available) {
-            rollbackExtract(fluidType, moves);
-            throw new IllegalStateException("Fluid container changed after simulation; extraction was rolled back");
-        }
-        return committed;
-    }
-
-    private static void rollbackInsert(String fluidType, List<Move> moves) {
-        for (int index = moves.size() - 1; index >= 0; index--) {
-            Move move = moves.get(index);
-            long restored = move.container().extract(fluidType, move.amount(), SfxTransactionMode.COMMIT);
-            if (restored != move.amount()) {
-                throw new IllegalStateException("Failed to roll back composite fluid insert");
+            long moved = child.insert(new SfxFluidStack(fluid.fluidType(), remaining), SfxTransactionMode.SIMULATE);
+            if (moved > 0L) {
+                long reserved = moved;
+                preparations.add(() -> child.prepareInsert(new SfxFluidStack(fluid.fluidType(), reserved)));
+                remaining -= moved;
             }
         }
+        return prepare(preparations);
     }
 
-    private static void rollbackExtract(String fluidType, List<Move> moves) {
-        for (int index = moves.size() - 1; index >= 0; index--) {
-            Move move = moves.get(index);
-            long restored = move.container().insert(new SfxFluidStack(fluidType, move.amount()), SfxTransactionMode.COMMIT);
-            if (restored != move.amount()) {
-                throw new IllegalStateException("Failed to roll back composite fluid extraction");
+    @Override public synchronized java.util.Optional<SfxTransactionReservation> prepareExtract(String fluidType, long amount) {
+        if (fluidType == null || fluidType.isBlank() || amount <= 0L) return java.util.Optional.of(new CompositeReservation(List.of()));
+        long remaining = amount;
+        List<java.util.function.Supplier<java.util.Optional<SfxTransactionReservation>>> preparations = new java.util.ArrayList<>();
+        for (SfxVirtualFluidContainer child : children) {
+            if (remaining <= 0L) break;
+            long moved = child.extract(fluidType, remaining, SfxTransactionMode.SIMULATE);
+            if (moved > 0L) {
+                long reserved = moved;
+                preparations.add(() -> child.prepareExtract(fluidType, reserved));
+                remaining -= moved;
             }
         }
+        return prepare(preparations);
     }
 
-    private record Move(SfxVirtualFluidContainer container, long amount) {}
+    private static java.util.Optional<SfxTransactionReservation> prepare(
+            List<java.util.function.Supplier<java.util.Optional<SfxTransactionReservation>>> preparations) {
+        List<SfxTransactionReservation> reservations = new java.util.ArrayList<>();
+        for (java.util.function.Supplier<java.util.Optional<SfxTransactionReservation>> preparation : preparations) {
+            java.util.Optional<SfxTransactionReservation> reservation = preparation.get();
+            if (reservation.isEmpty()) {
+                for (int index = reservations.size() - 1; index >= 0; index--) reservations.get(index).rollback();
+                return java.util.Optional.empty();
+            }
+            reservations.add(reservation.get());
+        }
+        return java.util.Optional.of(new CompositeReservation(reservations));
+    }
+
+    private static void commit(SfxTransactionReservation reservation) {
+        try { reservation.commit(); }
+        catch (RuntimeException failure) { reservation.rollback(); throw failure; }
+    }
+
+    private static final class CompositeReservation implements SfxTransactionReservation {
+        private final List<SfxTransactionReservation> children;
+        private CompositeReservation(List<SfxTransactionReservation> children) { this.children = List.copyOf(children); }
+        @Override public void commit() { for (SfxTransactionReservation child : children) child.commit(); }
+        @Override public void rollback() {
+            for (int index = children.size() - 1; index >= 0; index--) children.get(index).rollback();
+        }
+    }
 }

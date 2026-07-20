@@ -1,16 +1,20 @@
 package cc.theends6.sfx.internal.display;
 
 import cc.theends6.sfx.api.display.SfxDisplayCategory;
+import cc.theends6.sfx.api.display.SfxDisplayKind;
 import cc.theends6.sfx.api.display.SfxDisplayProjection;
 import cc.theends6.sfx.api.display.SfxDisplaySessionService;
 import cc.theends6.sfx.api.display.SfxDisplayType;
 import cc.theends6.sfx.api.display.SfxDisplayUpdateStrategy;
+import cc.theends6.sfx.api.display.SfxDisplayTransform;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.util.Vector3f;
+import com.github.retrooper.packetevents.util.Quaternion4f;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
@@ -41,10 +45,16 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class DefaultSfxDisplaySessionService implements SfxDisplaySessionService, AutoCloseable {
     private static final int ITEM_STACK_METADATA_INDEX = 23;
+    private static final int BLOCK_STATE_METADATA_INDEX = 23;
     private static final int ITEM_DISPLAY_TRANSFORM_INDEX = 24;
     private static final byte ITEM_DISPLAY_TRANSFORM_FIXED = 4;
     private static final int REFRESH_TICKS = 10;
     private static final byte ENTITY_FLAGS = 0;
+    private static final int TRANSFORM_INTERPOLATION_DURATION = 9;
+    private static final int TRANSFORM_TRANSLATION = 11;
+    private static final int TRANSFORM_SCALE = 12;
+    private static final int TRANSFORM_LEFT_ROTATION = 13;
+    private static final int TRANSFORM_RIGHT_ROTATION = 14;
 
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
@@ -88,7 +98,6 @@ public final class DefaultSfxDisplaySessionService implements SfxDisplaySessionS
             }
             current.projection = projection;
             current.lastUpdateTick = tick;
-            current.dirty = true;
             return current;
         });
         refreshAllPlayers();
@@ -139,7 +148,6 @@ public final class DefaultSfxDisplaySessionService implements SfxDisplaySessionS
             state.projection = pending;
             state.pending = null;
             state.lastUpdateTick = tick;
-            state.dirty = true;
         }
     }
 
@@ -166,31 +174,71 @@ public final class DefaultSfxDisplaySessionService implements SfxDisplaySessionS
         }
         UUID playerId = player.getUniqueId();
         if (state.viewers.add(playerId)) {
-            WrapperPlayServerSpawnEntity spawn = new WrapperPlayServerSpawnEntity(state.entityId,
-                    Optional.of(state.entityUuid), EntityTypes.ITEM_DISPLAY,
-                    new Vector3d(location.getX(), location.getY(), location.getZ()),
-                    0, 0, 0, 0, Optional.of(new Vector3d(0.0D, 0.0D, 0.0D)));
-            PacketEvents.getAPI().getPlayerManager().sendPacket(player, spawn);
-            sendMetadata(player, state);
-        } else if (state.dirty) {
-            
-            destroyForPlayer(player, state);
-            updateForPlayer(player, state);
+            spawn(player, state, type);
+        } else {
+            SfxDisplayProjection sent = state.sent.get(playerId);
+            if (!projection.equals(sent)) {
+                if (sent != null && sent.kind() == projection.kind() && sent.location().equals(projection.location())) {
+                    sendMetadata(player, state, type);
+                    state.sent.put(playerId, projection);
+                } else {
+                    destroyForPlayer(player, state);
+                    updateForPlayer(player, state);
+                }
+            }
         }
-        if (state.viewers.size() >= plugin.getServer().getOnlinePlayers().size()) state.dirty = false;
+    }
+
+    private void spawn(Player player, ProjectionState state, SfxDisplayType type) {
+        Location location = state.projection.location();
+        WrapperPlayServerSpawnEntity spawn = new WrapperPlayServerSpawnEntity(state.entityId,
+                Optional.of(state.entityUuid), state.projection.kind() == SfxDisplayKind.BLOCK
+                ? EntityTypes.BLOCK_DISPLAY : EntityTypes.ITEM_DISPLAY,
+                new Vector3d(location.getX(), location.getY(), location.getZ()),
+                0, 0, 0, 0, Optional.of(new Vector3d(0.0D, 0.0D, 0.0D)));
+        PacketEvents.getAPI().getPlayerManager().sendPacket(player, spawn);
+        sendMetadata(player, state, type);
+        state.sent.put(player.getUniqueId(), state.projection);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private void sendMetadata(Player player, ProjectionState state) {
-        List<EntityData<?>> metadata = List.of(
-                new EntityData(0, EntityDataTypes.BYTE, ENTITY_FLAGS),
-                new EntityData(5, EntityDataTypes.BOOLEAN, true),
-                new EntityData(ITEM_STACK_METADATA_INDEX, EntityDataTypes.ITEMSTACK,
-                        toPacketItemStack(state.projection.item())),
-                new EntityData(ITEM_DISPLAY_TRANSFORM_INDEX, EntityDataTypes.BYTE,
-                        ITEM_DISPLAY_TRANSFORM_FIXED));
+    private void sendMetadata(Player player, ProjectionState state, SfxDisplayType type) {
+        SfxDisplayTransform transform = state.projection.transform();
+        List<EntityData<?>> metadata = new ArrayList<>();
+        metadata.add(new EntityData(0, EntityDataTypes.BYTE, ENTITY_FLAGS));
+        metadata.add(new EntityData(5, EntityDataTypes.BOOLEAN, true));
+        metadata.add(new EntityData(TRANSFORM_INTERPOLATION_DURATION, EntityDataTypes.INT,
+                Math.max(0, type.minimumUpdateTicks())));
+        metadata.add(new EntityData(TRANSFORM_TRANSLATION, EntityDataTypes.VECTOR3F,
+                new Vector3f(transform.translationX(), transform.translationY(), transform.translationZ())));
+        metadata.add(new EntityData(TRANSFORM_SCALE, EntityDataTypes.VECTOR3F,
+                new Vector3f(transform.scaleX(), transform.scaleY(), transform.scaleZ())));
+        metadata.add(new EntityData(TRANSFORM_LEFT_ROTATION, EntityDataTypes.QUATERNION,
+                new Quaternion4f(transform.leftX(), transform.leftY(), transform.leftZ(), transform.leftW())));
+        metadata.add(new EntityData(TRANSFORM_RIGHT_ROTATION, EntityDataTypes.QUATERNION,
+                new Quaternion4f(transform.rightX(), transform.rightY(), transform.rightZ(), transform.rightW())));
+        if (state.projection.kind() == SfxDisplayKind.BLOCK) {
+            metadata.add(new EntityData(BLOCK_STATE_METADATA_INDEX, EntityDataTypes.BLOCK_STATE,
+                    toPacketBlockState(state.projection.blockData())));
+        } else {
+            metadata.add(new EntityData(ITEM_STACK_METADATA_INDEX, EntityDataTypes.ITEMSTACK,
+                    toPacketItemStack(state.projection.item())));
+            metadata.add(new EntityData(ITEM_DISPLAY_TRANSFORM_INDEX, EntityDataTypes.BYTE,
+                    ITEM_DISPLAY_TRANSFORM_FIXED));
+        }
         PacketEvents.getAPI().getPlayerManager().sendPacket(player,
                 new WrapperPlayServerEntityMetadata(state.entityId, metadata));
+    }
+
+    private int toPacketBlockState(org.bukkit.block.data.BlockData blockData) {
+        try {
+            Class<?> converter = Class.forName("io.github.retrooper.packetevents.util.SpigotConversionUtil");
+            Method method = converter.getMethod("fromBukkitBlockData", org.bukkit.block.data.BlockData.class);
+            Object wrapped = method.invoke(null, blockData.clone());
+            return ((Number) wrapped.getClass().getMethod("getGlobalId").invoke(wrapped)).intValue();
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Could not convert Bukkit block data for PacketEvents", exception);
+        }
     }
 
     private Object toPacketItemStack(ItemStack item) {
@@ -205,6 +253,7 @@ public final class DefaultSfxDisplaySessionService implements SfxDisplaySessionS
 
     private void destroyForPlayer(Player player, ProjectionState state) {
         if (!state.viewers.remove(player.getUniqueId())) return;
+        state.sent.remove(player.getUniqueId());
         if (player.isOnline()) PacketEvents.getAPI().getPlayerManager().sendPacket(player,
                 new WrapperPlayServerDestroyEntities(new int[] {state.entityId}));
     }
@@ -270,10 +319,10 @@ public final class DefaultSfxDisplaySessionService implements SfxDisplaySessionS
         private final int entityId;
         private final UUID entityUuid;
         private final Set<UUID> viewers = ConcurrentHashMap.newKeySet();
+        private final Map<UUID, SfxDisplayProjection> sent = new ConcurrentHashMap<>();
         private volatile SfxDisplayProjection projection;
         private volatile SfxDisplayProjection pending;
         private volatile long lastUpdateTick;
-        private volatile boolean dirty;
 
         private ProjectionState(int entityId, UUID entityUuid, SfxDisplayProjection projection, long tick) {
             this.entityId = entityId;

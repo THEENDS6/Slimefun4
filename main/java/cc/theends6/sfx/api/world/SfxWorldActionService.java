@@ -20,4 +20,10 @@ public interface SfxWorldActionService {
     CompletableFuture<SfxWorldActionResult> damageEntity(Player actor, LivingEntity target, double damage);
     CompletableFuture<SfxWorldActionResult> spawnEntity(Player actor, Location location, EntityType type);
     CompletableFuture<SfxWorldActionResult> applyEffect(Player actor, LivingEntity target, PotionEffect effect);
+
+    
+
+
+
+    CompletableFuture<SfxRangeWorldActionResult> breakBlocks(SfxRangeBlockBreakRequest request);
 }

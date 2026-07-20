@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.power;
 
 import cc.theends6.sfx.api.container.SfxTransactionMode;
+import cc.theends6.sfx.api.container.SfxTransactionCoordinator;
 import cc.theends6.sfx.api.power.SfxInventoryPowerRouter;
 import cc.theends6.sfx.api.power.SfxPowerPort;
 import cc.theends6.sfx.api.power.SfxPowerRoute;
@@ -43,46 +44,32 @@ public final class DefaultSfxInventoryPowerRouter implements SfxInventoryPowerRo
                 remainingLimit -= amount;
             }
         }
-        List<SfxPowerRoute> committed = new ArrayList<>();
-        List<Applied> applied = new ArrayList<>();
+        List<PortAmount> extracts = new ArrayList<>();
+        List<PortAmount> inserts = new ArrayList<>();
         for (Plan plan : plans) {
-            double extracted = plan.source().extract(plan.amount(), SfxTransactionMode.COMMIT);
-            if (extracted + 1.0E-9D < plan.amount()) {
-                Applied partial = new Applied(plan, extracted, 0.0D);
-                if (extracted > 0.0D) applied.add(partial);
-                throw rollback(applied, new IllegalStateException(
-                        "Power source changed after simulation: " + plan.source().id()));
-            }
-            double inserted = plan.consumer().insert(plan.amount(), SfxTransactionMode.COMMIT);
-            applied.add(new Applied(plan, extracted, inserted));
-            if (inserted + 1.0E-9D < plan.amount()) {
-                throw rollback(applied, new IllegalStateException(
-                        "Power consumer changed after simulation: " + plan.consumer().id()));
-            }
-            committed.add(new SfxPowerRoute(plan.source().id(), plan.consumer().id(), plan.amount()));
+            add(extracts, plan.source(), plan.amount());
+            add(inserts, plan.consumer(), plan.amount());
         }
-        return List.copyOf(committed);
+        List<java.util.function.Supplier<java.util.Optional<cc.theends6.sfx.api.container.SfxTransactionReservation>>> participants
+                = new ArrayList<>();
+        extracts.forEach(move -> participants.add(() -> move.port().prepareExtract(move.amount())));
+        inserts.forEach(move -> participants.add(() -> move.port().prepareInsert(move.amount())));
+        SfxTransactionCoordinator.commit(participants);
+        return plans.stream().map(plan -> new SfxPowerRoute(
+                plan.source().id(), plan.consumer().id(), plan.amount())).toList();
     }
 
-    private static IllegalStateException rollback(List<Applied> applied, IllegalStateException failure) {
-        for (int index = applied.size() - 1; index >= 0; index--) {
-            Applied move = applied.get(index);
-            try {
-                double removed = move.inserted() <= 0.0D ? 0.0D
-                        : move.plan().consumer().extract(move.inserted(), SfxTransactionMode.COMMIT);
-                double restored = move.extracted() <= 0.0D ? 0.0D
-                        : move.plan().source().insert(move.extracted(), SfxTransactionMode.COMMIT);
-                if (removed + 1.0E-9D < move.inserted() || restored + 1.0E-9D < move.extracted()) {
-                    failure.addSuppressed(new IllegalStateException("Power rollback was incomplete for "
-                            + move.plan().source().id() + " -> " + move.plan().consumer().id()));
-                }
-            } catch (RuntimeException rollbackFailure) {
-                failure.addSuppressed(rollbackFailure);
+    private static void add(List<PortAmount> amounts, SfxPowerPort port, double amount) {
+        for (int index = 0; index < amounts.size(); index++) {
+            PortAmount existing = amounts.get(index);
+            if (existing.port() == port) {
+                amounts.set(index, new PortAmount(port, existing.amount() + amount));
+                return;
             }
         }
-        return failure;
+        amounts.add(new PortAmount(port, amount));
     }
 
     private record Plan(SfxPowerPort source, SfxPowerPort consumer, double amount) {}
-    private record Applied(Plan plan, double extracted, double inserted) {}
+    private record PortAmount(SfxPowerPort port, double amount) {}
 }

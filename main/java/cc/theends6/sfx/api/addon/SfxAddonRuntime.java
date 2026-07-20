@@ -1,6 +1,8 @@
 package cc.theends6.sfx.api.addon;
 
 import cc.theends6.sfx.api.container.SfxVirtualFluidContainer;
+import cc.theends6.sfx.api.block.SfxBlockStateService;
+import cc.theends6.sfx.api.block.SfxBlockType;
 import cc.theends6.sfx.api.container.SfxVirtualItemContainer;
 import cc.theends6.sfx.api.display.SfxDisplayCategory;
 import cc.theends6.sfx.api.display.SfxDisplayType;
@@ -13,6 +15,8 @@ import org.bukkit.Location;
 
 
 public interface SfxAddonRuntime {
+    Optional<SfxBlockType<?>> blockType(String id);
+    SfxBlockStateService blockStates();
     Optional<SfxDisplayCategory> displayCategory(String id);
     Optional<SfxDisplayType> displayType(String id);
     SfxDisplaySessionService displays();

@@ -3,6 +3,8 @@ package cc.theends6.sfx.api.testkit;
 import cc.theends6.sfx.api.block.SfxBlockStateSchema;
 import cc.theends6.sfx.api.container.SfxFluidStack;
 import cc.theends6.sfx.api.container.SfxTransactionMode;
+import cc.theends6.sfx.api.container.SfxTransactionCoordinator;
+import cc.theends6.sfx.api.container.SfxTransactionReservation;
 import cc.theends6.sfx.api.container.SfxVirtualFluidContainer;
 import cc.theends6.sfx.api.power.SfxInventoryPowerRouter;
 import cc.theends6.sfx.api.power.SfxPowerPort;
@@ -12,6 +14,8 @@ import cc.theends6.sfx.api.time.SfxServerActiveClock;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 
 
@@ -68,5 +72,24 @@ public final class SfxAddonTestKit {
     public static long elapsedActiveTicks(SfxServerActiveClock clock, long lastSettledActiveTick) {
         Objects.requireNonNull(clock, "clock");
         return Math.max(0L, clock.activeTicks() - Math.max(0L, lastSettledActiveTick));
+    }
+
+    
+    public static <T> void assertPreparedRollback(
+            Collection<? extends Supplier<Optional<SfxTransactionReservation>>> participants,
+            Supplier<T> snapshot, T expectedAfterRollback) {
+        Objects.requireNonNull(participants, "participants");
+        Objects.requireNonNull(snapshot, "snapshot");
+        try {
+            SfxTransactionCoordinator.commit(participants);
+        } catch (RuntimeException expectedFailure) {
+            T actual = snapshot.get();
+            if (!Objects.equals(expectedAfterRollback, actual)) {
+                throw new AssertionError("Prepared rollback mismatch: expected=" + expectedAfterRollback
+                        + ", actual=" + actual, expectedFailure);
+            }
+            return;
+        }
+        throw new AssertionError("Prepared transaction unexpectedly committed; include a rejecting participant");
     }
 }

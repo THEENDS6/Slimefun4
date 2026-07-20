@@ -96,7 +96,8 @@ public final class SfxApiImpl implements SfxApi {
 
     public static SfxApiImpl bootstrap(JavaPlugin plugin, SfxLocalization localization, SfxPlayerDataService profiles,
                                        SfxResearchService researches, SfxResearchPaymentRouter researchPayments,
-                                       DefaultSfxFeatureRegistry features, DefaultSfxBehaviorRegistry behaviors) {
+                                       DefaultSfxFeatureRegistry features, DefaultSfxBehaviorRegistry behaviors,
+                                       cc.theends6.sfx.internal.block.SfxBlockDataService blockData) {
         PaperSfxRuntime runtime = new PaperSfxRuntime(plugin);
         DefaultSfxItemRegistry itemRegistry = new DefaultSfxItemRegistry();
         DefaultManualMachineRegistry manualMachines = new DefaultManualMachineRegistry();
@@ -111,7 +112,8 @@ public final class SfxApiImpl implements SfxApi {
         DefaultSfxProtectionService protection = new DefaultSfxProtectionService(plugin);
         DefaultSfxWorldActions worldActions = new DefaultSfxWorldActions(plugin, runtime, protection);
         DefaultSfxInventoryPowerRouter powerRouter = new DefaultSfxInventoryPowerRouter();
-        DefaultSfxAddonRuntime addonRuntime = new DefaultSfxAddonRuntime(plugin, runtime, items, activeClock, powerRouter);
+        DefaultSfxAddonRuntime addonRuntime = new DefaultSfxAddonRuntime(plugin, runtime, items, activeClock,
+                powerRouter, blockData);
         return new SfxApiImpl(runtime, itemRegistry, items, menus, chatInput, localization, guide, features, behaviors,
                 manualMachines, new DefaultSfxMachineRuntimeApi(), activeClock,
                 powerRouter, worldActions, protection, addonRuntime);
