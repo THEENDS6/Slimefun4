@@ -9,6 +9,7 @@ run-paper-26.1/
 run-folia-1.21.8/
 run-legacy-slimefun-1.21.8/
 ClassicVersion/
+classic/
 *.zip
 tmp_test.txt
 build-log*.txt
