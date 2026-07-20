@@ -9,4 +9,5 @@ public interface SfxContinuousMachineContext {
     Location location();
     long elapsedTicks();
     Map<String, Double> variables();
+    default String lockedRecipeId() { return null; }
 }

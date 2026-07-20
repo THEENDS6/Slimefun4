@@ -1,10 +1,12 @@
 package cc.theends6.sfx.internal.block;
 
 import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
+import cc.theends6.sfx.api.block.SfxBlockTransformDecision;
 
 import cc.theends6.sfx.api.item.SfxItems;
 import cc.theends6.sfx.api.runtime.SfxRuntime;
 import cc.theends6.sfx.internal.altar.SfxAncientAltarService;
+import cc.theends6.sfx.internal.addon.SfxAddonBlockLifecycleService;
 import cc.theends6.sfx.internal.android.SfxAndroidService;
 import cc.theends6.sfx.internal.cargo.SfxCargoService;
 import cc.theends6.sfx.internal.configurable.SfxConfigurableMachineService;
@@ -14,10 +16,13 @@ import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.util.SfxLocalization;
+import cc.theends6.sfx.internal.world.SfxProtectionProbe;
 import cc.theends6.sfx.api.text.Text;
 import java.util.Objects;
 import java.util.logging.Logger;
 import org.bukkit.Material;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
@@ -43,6 +48,9 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
+import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.inventory.ItemStack;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 
@@ -55,6 +63,8 @@ public final class SfxPlaceableBlockListener implements Listener {
     private final SfxBlockPlacementRouter placementRouter;
     private final SfxBlockExplosionService explosionService;
     private final SfxAnchoredBlockEnvironmentalGuard environmentalGuard;
+    private final SfxAddonBlockLifecycleService addonLifecycle;
+    private final SfxRuntime runtime;
     private final SfxLocalization localization;
 
     public SfxPlaceableBlockListener(
@@ -81,7 +91,7 @@ public final class SfxPlaceableBlockListener implements Listener {
         this.items = Objects.requireNonNull(items, "items");
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.localization = Objects.requireNonNull(localization, "localization");
-        Objects.requireNonNull(runtime, "runtime");
+        this.runtime = Objects.requireNonNull(runtime, "runtime");
         Objects.requireNonNull(machineRuntime, "machineRuntime");
         this.lifecycleRouter = new SfxBlockLifecycleRouter(
                 this.items,
@@ -125,10 +135,12 @@ public final class SfxPlaceableBlockListener implements Listener {
         androidService.bindBlockLifecycleRouter(this.lifecycleRouter);
         this.explosionService = new SfxBlockExplosionService(this.blockData, this.lifecycleRouter, machineRuntime);
         this.environmentalGuard = new SfxAnchoredBlockEnvironmentalGuard(this.blockData, runtime);
+        this.addonLifecycle = new SfxAddonBlockLifecycleService(this.blockData, addonManager, LOGGER);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
+        if (SfxProtectionProbe.active()) return;
         String itemId = items.readMarker(event.getItemInHand()).map(marker -> marker.itemId()).orElse(null);
         if (itemId != null && !items.canUse(event.getPlayer(), itemId)) {
             event.setCancelled(true);
@@ -138,6 +150,16 @@ public final class SfxPlaceableBlockListener implements Listener {
             return;
         }
         placementRouter.handlePlace(event);
+        if (!event.isCancelled() && !addonLifecycle.initializePlaced(event.getBlockPlaced(), event.getPlayer())) {
+            blockData.unregisterAt(event.getBlockPlaced().getLocation());
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onAddonInteract(PlayerInteractEvent event) {
+        if (SfxProtectionProbe.active()) return;
+        if (event.getClickedBlock() != null) addonLifecycle.onInteract(event.getClickedBlock(), event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -179,6 +201,7 @@ public final class SfxPlaceableBlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
+        if (SfxProtectionProbe.active()) return;
         SfxAnchorRecord anchor = blockData.findAnchor(event.getBlock().getLocation()).orElse(null);
         if (anchor == null) {
             return;
@@ -213,21 +236,34 @@ public final class SfxPlaceableBlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
+        addonLifecycle.onPistonMove(event.getBlocks());
         environmentalGuard.handlePistonExtend(event);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPistonRetract(BlockPistonRetractEvent event) {
+        addonLifecycle.onPistonMove(event.getBlocks());
         environmentalGuard.handlePistonRetract(event);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onFluidFlow(BlockFromToEvent event) {
+        Block target = event.getToBlock();
+        SfxBlockInstanceRecord instance = addonLifecycle.managedInstance(target).orElse(null);
+        if (instance != null) {
+            event.setCancelled(true);
+            lifecycleRouter.destroyAnchoredBlock(target, instance.instanceId(), instance.typeId(),
+                    new SfxBlockDestructionOptions(false, SfxBlockDestructionCause.FLUID_BREAK, null));
+            target.setType(Material.AIR, false);
+            return;
+        }
         environmentalGuard.handleFluidFlow(event);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockPhysics(BlockPhysicsEvent event) {
+        addonLifecycle.onPhysics(event.getBlock());
+        addonLifecycle.onNeighborUpdate(event.getBlock());
         environmentalGuard.handleBlockPhysics(event);
     }
 
@@ -238,47 +274,86 @@ public final class SfxPlaceableBlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockBurn(BlockBurnEvent event) {
+        if (handleAddonTransform(event, event.getBlock(), Material.AIR)) return;
         environmentalGuard.cancelIfAnchored(event, event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockFade(BlockFadeEvent event) {
+        if (handleAddonTransform(event, event.getBlock(), event.getNewState().getType())) return;
         environmentalGuard.cancelIfAnchored(event, event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockSpread(BlockSpreadEvent event) {
+        if (handleAddonTransform(event, event.getBlock(), event.getNewState().getType())) return;
         environmentalGuard.cancelIfAnchored(event, event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockForm(BlockFormEvent event) {
+        if (handleAddonTransform(event, event.getBlock(), event.getNewState().getType())) return;
         environmentalGuard.cancelIfAnchored(event, event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntityBlockForm(EntityBlockFormEvent event) {
+        if (handleAddonTransform(event, event.getBlock(), event.getNewState().getType())) return;
         environmentalGuard.cancelIfAnchored(event, event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockGrow(BlockGrowEvent event) {
+        if (handleAddonTransform(event, event.getBlock(), event.getNewState().getType())) return;
         environmentalGuard.cancelIfAnchored(event, event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onLeavesDecay(LeavesDecayEvent event) {
+        if (handleAddonTransform(event, event.getBlock(), Material.AIR)) return;
         environmentalGuard.cancelIfAnchored(event, event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockIgnite(BlockIgniteEvent event) {
+        if (handleAddonTransform(event, event.getBlock(), Material.FIRE)) return;
         environmentalGuard.cancelIfAnchored(event, event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onSpongeAbsorb(SpongeAbsorbEvent event) {
         environmentalGuard.handleSpongeAbsorb(event);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onChunkLoad(ChunkLoadEvent event) {
+        addonLifecycle.onLoad(event.getChunk());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onChunkUnload(ChunkUnloadEvent event) {
+        addonLifecycle.onUnload(event.getChunk());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onWorldUnload(WorldUnloadEvent event) {
+        addonLifecycle.onWorldUnload(event.getWorld());
+    }
+
+    private boolean handleAddonTransform(org.bukkit.event.Cancellable event, Block block, Material to) {
+        SfxBlockTransformDecision decision = addonLifecycle.onVanillaTransform(block, to).orElse(null);
+        if (decision == null) return false;
+        if (decision.action() == SfxBlockTransformDecision.Action.ALLOW) {
+            Location anchor = block.getLocation();
+            runtime.executeAtLater(anchor, 1L,
+                    () -> addonLifecycle.reconcileAllowedTransform(anchor.getBlock(), to));
+            return true;
+        }
+        event.setCancelled(true);
+        if (decision.action() == SfxBlockTransformDecision.Action.REPLACE_WITH_CUSTOM_BLOCK) {
+            addonLifecycle.replaceWithCustom(block, null, decision);
+        }
+        return true;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

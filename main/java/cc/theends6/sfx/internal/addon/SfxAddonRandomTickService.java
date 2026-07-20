@@ -38,6 +38,7 @@ public final class SfxAddonRandomTickService implements Listener {
     private final SfxAddonManager addons;
     private final Map<String, List<SfxAnchorRecord>> loadedByType = new ConcurrentHashMap<>();
     private final Set<cc.theends6.sfx.api.block.SfxBlockAnchorKey> inFlight = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> quarantined = ConcurrentHashMap.newKeySet();
     private volatile long indexedRevision = -1L;
     private volatile boolean running;
 
@@ -60,6 +61,7 @@ public final class SfxAddonRandomTickService implements Listener {
         running = false;
         loadedByType.clear();
         inFlight.clear();
+        quarantined.clear();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -113,9 +115,19 @@ public final class SfxAddonRandomTickService implements Listener {
                 if (currentAnchor == null || !currentAnchor.instanceId().equals(anchor.instanceId())) return;
                 SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
                 if (instance == null || !definition.blockTypeId().equals(instance.typeId())) return;
+                if (instance.lifecycleState() == SfxBlockLifecycleState.INVALID) return;
+                if (quarantined.contains(instance.instanceId())) return;
                 SfxBlockType<?> blockType = addons.blockType(instance.typeId()).orElse(null);
                 if (blockType == null) return;
-                invoke(definition, blockType, instance, location, speed);
+                try {
+                    invoke(definition, blockType, instance, location, speed);
+                } catch (RuntimeException exception) {
+                    quarantined.add(instance.instanceId());
+                    blockData.updateInstanceState(instance.instanceId(), instance.stateBlob(),
+                            SfxBlockLifecycleState.INVALID, instance.version());
+                    plugin.getLogger().log(java.util.logging.Level.SEVERE,
+                            "Quarantined random-tick state for " + instance.typeId() + " at " + location, exception);
+                }
             } finally {
                 inFlight.remove(anchor.key());
             }
@@ -125,7 +137,8 @@ public final class SfxAddonRandomTickService implements Listener {
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void invoke(SfxRandomTickType definition, SfxBlockType blockType,
                         SfxBlockInstanceRecord instance, Location location, int speed) {
-        Object state = blockType.stateSchema().decode(instance.version(), instance.stateBlob());
+        Object state = instance.stateBlob().length == 0 ? blockType.initialState().get()
+                : blockType.stateSchema().decode(instance.version(), instance.stateBlob());
         MutableContext context = new MutableContext(instance.instanceId(), instance.typeId(), location, state, speed);
         definition.handler().accept(context);
         byte[] encoded = blockType.stateSchema().codec().encode(context.state());

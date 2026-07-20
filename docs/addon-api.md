@@ -102,6 +102,8 @@ public final class ExampleAddon implements SfxAddon {
 - `items()`, `machines()`, and `cargo()` for owner-scoped domain registration.
 - `blocks()`, `randomTicks()`, `displays()`, `containers()`, `continuousMachines()`, and `power()` for owner-scoped domain definitions.
 - `worldActions()` and `protection()` for region-safe protected world mutation; `components()` aliases declared component overrides.
+- `api().addonRuntime()` consumes registered definitions: it creates virtual containers, advances continuous machines,
+  applies powered-item charge/use rules, and exposes `displays()` for PacketEvents client-only `ITEM_DISPLAY` sessions.
 - `dataDirectory()` for `plugins/SlimeFunX/addons/<addon-id>/`.
 - `config()` plus `configBoolean`, `configInt`, `configDouble`, and `configString` for the addon's own `config.yml`; these never read the core config.
 
@@ -237,6 +239,12 @@ Localized list post-processors can adjust generated item lore and other language
 
 `onRegister(context)` runs after every manifest has been scanned and dependency order has been resolved. Registrations are owner-scoped and are rolled back together if the callback fails. `onEnable(context)` starts runtime resources only after declarations commit. `onDisable()` runs in reverse load order before core-owned resources are automatically released. API v1 `onLoad(context)` is bridged into the same registration transaction.
 
+The registration transaction is staged, not compensating: declarations and owned listeners/tasks remain invisible and inactive until commit. A callback failure discards the staged entries; a commit or enable failure additionally invokes `unregisterAll(addonId)`. Custom block lifecycle callbacks are dispatched by the core for placement, interaction, physics, neighbours, piston/fluid/vanilla transforms, chunk/world load boundaries and destruction. State decoding or lifecycle failures quarantine the affected instance instead of repeatedly crashing the tick loop.
+
+`api().addonRuntime().displays()` owns client-only display sessions. It allocates virtual entity ids, observes registered view distance and update throttling, persists per-player category switches, destroys projections when players leave range or change world, and clears every projection during addon runtime unload. Display data is a projection only; machine and block state remains authoritative elsewhere.
+
+Registered powered items use `addonRuntime().poweredItems()` for normalized PDC state and consistent charge/use rules. `addonRuntime().inventoryPower()` scans a player's storage inventory at most once per server tick, invalidates that snapshot on inventory mutations, and settles portable generators before battery discharge through the transactional power router. Failed actions do not consume energy and failed route commits roll back prior transfers.
+
 Plain `/slimefunx reload` only reloads core configuration and language. `/slimefunx reload runtime` and `/slimefunx reload all` perform a complete runtime reload: addons receive `onDisable()`, core runs `unregisterAll(addonId)`, runtime modules stop, and fresh addon instances/classloaders are created before content and services restart. Independent hot installation/removal of one Java addon is not supported yet.
 
 An addon-defined cargo manager may attach an `SfxCargoManagerProvider` through `SfxCargoNodeDefinition` to supply a custom menu plus network enable and speed controls. A manager declared with `coexistsWithManagers=true` does not create a multiple-controller conflict with a normal Cargo Manager: the normal manager remains the network anchor when present, while the compatible manager remains a control surface and can also dispatch by itself.
@@ -260,6 +268,7 @@ Runtime SPI packages are split by responsibility:
 - `api.machine.manual`: manual-machine definitions, operations, recipes, and outputs used by `SfxManualMachineRegistry`.
 - `api.energy.runtime`: energy definitions and state, generator access, provider contracts, and energy UI models.
 - `api.block`: block instance, anchor, lifecycle value objects, and cycling-block declarations.
+- `api.testkit.SfxAddonTestKit`: server-free assertions for duplicate ids, state migration, virtual-fluid simulation, power routing, and active-tick settlement. The core `validateSfxAddonLifecycleSmoke` task additionally exercises staged commit/rollback, owner cleanup and transactional rollback.
 - `api.cargo`: public cargo node kinds and indexed area-topology declarations.
 - `api.runtime.SfxRuntime`: Folia-aware scheduling and audited block mutations.
 - `api.localization.SfxLocalizationView`: read-only access to the active merged core/addon language layer.

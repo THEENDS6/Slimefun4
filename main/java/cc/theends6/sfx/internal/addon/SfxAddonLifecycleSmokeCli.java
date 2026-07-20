@@ -7,6 +7,7 @@ import cc.theends6.sfx.api.container.SfxCompositeFluidContainer;
 import cc.theends6.sfx.api.container.SfxFluidStack;
 import cc.theends6.sfx.api.container.SfxVirtualFluidContainer;
 import cc.theends6.sfx.api.power.SfxPowerPort;
+import cc.theends6.sfx.api.testkit.SfxAddonTestKit;
 import cc.theends6.sfx.internal.behavior.DefaultSfxBehaviorRegistry;
 import cc.theends6.sfx.internal.core.SfxOwnedEntries;
 import cc.theends6.sfx.internal.power.DefaultSfxInventoryPowerRouter;
@@ -19,10 +20,12 @@ public final class SfxAddonLifecycleSmokeCli {
 
     public static void main(String[] args) {
         ownerRegistryRollback();
+        stagedRegistrationAtomicity();
         behaviorOwnerCleanup();
         schemaMigration();
         fluidTransactionRollback();
         powerSettlement();
+        powerSelfRouteGuard();
         powerTransactionRollback();
         System.out.println("SFX addon lifecycle smoke checks passed.");
     }
@@ -49,12 +52,29 @@ public final class SfxAddonLifecycleSmokeCli {
         require(registry.utilityRuleProviders().isEmpty(), "owned behavior survived cleanup");
     }
 
+    private static void stagedRegistrationAtomicity() {
+        DefaultSfxDefinitionRegistry<String> backing = new DefaultSfxDefinitionRegistry<>();
+        SfxStagedAddonRegistration transaction = new SfxStagedAddonRegistration("test:staged");
+        var staged = transaction.definitions(backing.view("test:staged"));
+        staged.register("test:value", "pending");
+        require(backing.definitions().isEmpty(), "staged definition leaked before commit");
+        require(staged.find("test:value").orElseThrow().equals("pending"), "staged definition was not visible inside session");
+        transaction.commit();
+        require(backing.find("test:value").orElseThrow().equals("pending"), "staged definition did not publish on commit");
+
+        SfxStagedAddonRegistration rolledBack = new SfxStagedAddonRegistration("test:rollback");
+        var discarded = rolledBack.definitions(backing.view("test:rollback"));
+        discarded.register("test:discarded", "discarded");
+        rolledBack.rollbackPending();
+        require(backing.find("test:discarded").isEmpty(), "rolled back definition reached backing registry");
+    }
+
     private static void schemaMigration() {
         SfxBlockStateSchema<Integer> schema = new SfxBlockStateSchema<>(2, new SfxBlockStateCodec<>() {
             @Override public byte[] encode(Integer state) { return ByteBuffer.allocate(4).putInt(state).array(); }
             @Override public Integer decode(byte[] payload) { return ByteBuffer.wrap(payload).getInt(); }
         }, (oldVersion, payload) -> ByteBuffer.allocate(4).putInt(payload[0]).array());
-        require(schema.decode(1, new byte[] {7}) == 7, "state migration did not run");
+        SfxAddonTestKit.assertStateMigration(schema, 1, new byte[] {7}, 7);
     }
 
     private static void powerSettlement() {
@@ -73,6 +93,16 @@ public final class SfxAddonLifecycleSmokeCli {
         expectFailure(() -> composite.insert(new SfxFluidStack("minecraft:water", 10L), SfxTransactionMode.COMMIT));
         require(first.amount == 0L && changed.amount == 0L,
                 "composite fluid insert left a partial commit behind");
+    }
+
+    private static void powerSelfRouteGuard() {
+        Port battery = new Port("battery", 0, 50.0D, 50.0D);
+        Port device = new Port("device", 1, 0.0D, 50.0D);
+        var routes = new DefaultSfxInventoryPowerRouter().route(
+                List.of(battery), List.of(battery, device), 50.0D);
+        require(routes.size() == 1 && "device".equals(routes.getFirst().consumerId())
+                        && battery.stored == 0.0D && device.stored == 50.0D,
+                "power router allowed a port to charge itself");
     }
 
     private static void powerTransactionRollback() {

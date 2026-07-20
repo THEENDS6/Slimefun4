@@ -165,15 +165,21 @@ public final class SfxBlockLifecycleRouter {
         cc.theends6.sfx.api.block.SfxBlockType blockType = addonManager.blockType(typeId).orElse(null);
         cc.theends6.sfx.api.block.SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         if (blockType == null || instance == null || block == null) return;
-        Object decoded = blockType.stateSchema().decode(instance.version(), instance.stateBlob());
-        AddonBlockContext context = new AddonBlockContext(instanceId, typeId, block.getLocation(),
-                options == null ? null : options.actor(), decoded);
-        if (options != null && options.cause() == SfxBlockDestructionCause.EXPLOSION) {
-            blockType.lifecycle().onExplosion(context);
-        } else if (options != null && options.cause() == SfxBlockDestructionCause.FLUID_BREAK) {
-            blockType.lifecycle().onFluidBreak(context);
-        } else {
-            blockType.lifecycle().onBreak(context);
+        try {
+            Object decoded = instance.stateBlob().length == 0 ? blockType.initialState().get()
+                    : blockType.stateSchema().decode(instance.version(), instance.stateBlob());
+            AddonBlockContext context = new AddonBlockContext(instanceId, typeId, block.getLocation(),
+                    options == null ? null : options.actor(), decoded);
+            if (options != null && options.cause() == SfxBlockDestructionCause.EXPLOSION) {
+                blockType.lifecycle().onExplosion(context);
+            } else if (options != null && options.cause() == SfxBlockDestructionCause.FLUID_BREAK) {
+                blockType.lifecycle().onFluidBreak(context);
+            } else {
+                blockType.lifecycle().onBreak(context);
+            }
+        } catch (RuntimeException exception) {
+            logger.log(Level.SEVERE, "Addon block lifecycle failed during destruction of " + typeId
+                    + " at " + block.getLocation() + "; continuing core cleanup", exception);
         }
     }
 

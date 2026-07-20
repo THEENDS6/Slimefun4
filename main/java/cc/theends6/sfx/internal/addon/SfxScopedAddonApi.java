@@ -16,6 +16,7 @@ import cc.theends6.sfx.api.time.SfxServerActiveClock;
 import cc.theends6.sfx.api.power.SfxInventoryPowerRouter;
 import cc.theends6.sfx.api.world.SfxProtectionService;
 import cc.theends6.sfx.api.world.SfxWorldActionService;
+import cc.theends6.sfx.api.addon.SfxAddonRuntime;
 
 
 final class SfxScopedAddonApi implements SfxApi {
@@ -44,4 +45,5 @@ final class SfxScopedAddonApi implements SfxApi {
     @Override public SfxInventoryPowerRouter powerRouter() { return delegate.powerRouter(); }
     @Override public SfxWorldActionService worldActions() { return delegate.worldActions(); }
     @Override public SfxProtectionService protection() { return delegate.protection(); }
+    @Override public SfxAddonRuntime addonRuntime() { return delegate.addonRuntime(); }
 }

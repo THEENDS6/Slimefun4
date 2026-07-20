@@ -15,6 +15,7 @@ import cc.theends6.sfx.api.time.SfxServerActiveClock;
 import cc.theends6.sfx.api.power.SfxInventoryPowerRouter;
 import cc.theends6.sfx.api.world.SfxProtectionService;
 import cc.theends6.sfx.api.world.SfxWorldActionService;
+import cc.theends6.sfx.api.addon.SfxAddonRuntime;
 
 public interface SfxApi {
     SfxRuntime runtime();
@@ -57,5 +58,9 @@ public interface SfxApi {
 
     default SfxProtectionService protection() {
         throw new UnsupportedOperationException("This SfxApi implementation does not expose protection checks.");
+    }
+
+    default SfxAddonRuntime addonRuntime() {
+        throw new UnsupportedOperationException("This SfxApi implementation does not expose the addon runtime.");
     }
 }

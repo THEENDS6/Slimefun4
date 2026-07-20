@@ -43,6 +43,11 @@ final class SfxAddonDomainRegistries {
 
     java.util.Optional<SfxBlockType<?>> block(String id) { return blocks.find(id); }
     java.util.Collection<SfxRandomTickType<?>> randomTickTypes() { return randomTicks.definitions(); }
+    java.util.Optional<SfxDisplayCategory> displayCategory(String id) { return displayCategories.find(id); }
+    java.util.Optional<SfxDisplayType> displayType(String id) { return displayTypes.find(id); }
+    java.util.Optional<SfxVirtualContainerType> containerType(String id) { return containers.find(id); }
+    java.util.Optional<SfxContinuousManualMachine> continuousMachine(String id) { return continuousMachines.find(id); }
+    java.util.Optional<SfxPoweredItem> poweredItem(String id) { return poweredItems.find(id); }
 
     record Views(SfxDefinitionRegistry<SfxBlockType<?>> blocks,
                  SfxDefinitionRegistry<SfxRandomTickType<?>> randomTicks,

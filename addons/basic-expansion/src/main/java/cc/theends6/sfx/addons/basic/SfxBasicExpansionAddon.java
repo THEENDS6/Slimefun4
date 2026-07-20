@@ -71,7 +71,13 @@ public final class SfxBasicExpansionAddon implements SfxAddon {
 
     private final List<BasicExpansionModule> modules = List.of(
             new BasicExpansionFeatureModule(),
-            new BasicExpansionBehaviorModule(),
+            new EquipmentModule(),
+            new GeneratorModule(),
+            new MachineBalanceModule(),
+            new CargoModule(),
+            new RadiationModule(),
+            new IndustrialMinerModule(),
+            new EntityDropModule(),
             new BasicExpansionElectricModule());
 
     public static final String ID = "sfx:basic_expansion";

@@ -252,6 +252,24 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
         markDirty(updated);
     }
 
+    public synchronized boolean replaceInstanceType(UUID instanceId, String typeId, Material material,
+                                                     byte[] stateBlob, int schemaVersion) {
+        SfxBlockInstanceRecord existing = instances.get(instanceId);
+        SfxAnchorRecord anchor = existing == null ? null : anchors.get(existing.anchorKey());
+        if (existing == null || anchor == null || typeId == null || typeId.isBlank()
+                || material == null || !material.isBlock()) {
+            return false;
+        }
+        long now = Instant.now().toEpochMilli();
+        SfxBlockInstanceRecord updatedInstance = existing.withTypeAndState(typeId, stateBlob, schemaVersion, now);
+        SfxAnchorRecord updatedAnchor = anchor.withMaterial(material.key().toString(), now);
+        instances.put(instanceId, updatedInstance);
+        anchors.put(anchor.key(), updatedAnchor);
+        markDirty(updatedAnchor, updatedInstance);
+        revision.incrementAndGet();
+        return true;
+    }
+
     public synchronized void markAnchorIntegrity(Location location, SfxBlockIntegrityState integrityState) {
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(location);
         SfxAnchorRecord existing = anchors.get(key);

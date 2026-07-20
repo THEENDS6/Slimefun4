@@ -168,8 +168,15 @@ public final class SfxAddonManager implements AutoCloseable {
         File[] files = addonsDir.listFiles((dir, name) -> name.toLowerCase(java.util.Locale.ROOT).endsWith(".jar"));
         if (files != null && files.length > 0) {
             java.util.Arrays.sort(files, java.util.Comparator.comparing(File::getName));
+            List<AddonJarCandidate> accepted = new ArrayList<>();
+            java.util.Set<String> discoveredAddonIds = new java.util.LinkedHashSet<>();
             for (File file : files) {
-                loadAddonJar(file, "external", true);
+                if (preflightAddonJar(file, discoveredAddonIds)) {
+                    accepted.add(new AddonJarCandidate(file, "external", true));
+                }
+            }
+            for (AddonJarCandidate candidate : sortByDependencies(accepted)) {
+                loadAddonJar(candidate.file(), candidate.source(), candidate.exposeJarResources());
             }
         }
         loadConfigAddons(addonsDir);
@@ -480,11 +487,12 @@ public final class SfxAddonManager implements AutoCloseable {
         org.bukkit.configuration.file.FileConfiguration addonConfig = SfxAddonContextImpl.loadConfig(dataDirectory);
         boolean callbackStarted = false;
         try (SfxAddonRegistrationSession registration = new SfxAddonRegistrationSession(
-                addon.id(), api, features, behaviors, componentOverrides, addonConfig)) {
+                addon.id(), api, features, behaviors, componentOverrides,
+                addonResources.view(addon.id()), addonDomains.views(addon.id()), addonConfig)) {
             callbackStarted = true;
             SfxAddonContextImpl context = new SfxAddonContextImpl(plugin, registration.api(), registration.features(),
-                    registration.behaviors(), registration.overrides(), addonResources.view(addon.id()),
-                    addonDomains.views(addon.id()),
+                    registration.behaviors(), registration.overrides(), registration.resources(),
+                    registration.domains(),
                     dataDirectory, addonConfig);
             addon.onRegister(context);
             registration.commit();
@@ -571,6 +579,26 @@ public final class SfxAddonManager implements AutoCloseable {
         return addonDomains.randomTickTypes();
     }
 
+    public java.util.Optional<cc.theends6.sfx.api.display.SfxDisplayCategory> displayCategory(String id) {
+        return addonDomains.displayCategory(id);
+    }
+
+    public java.util.Optional<cc.theends6.sfx.api.display.SfxDisplayType> displayType(String id) {
+        return addonDomains.displayType(id);
+    }
+
+    public java.util.Optional<cc.theends6.sfx.api.container.SfxVirtualContainerType> containerType(String id) {
+        return addonDomains.containerType(id);
+    }
+
+    public java.util.Optional<cc.theends6.sfx.api.machine.continuous.SfxContinuousManualMachine> continuousMachine(String id) {
+        return addonDomains.continuousMachine(id);
+    }
+
+    public java.util.Optional<cc.theends6.sfx.api.power.SfxPoweredItem> poweredItem(String id) {
+        return addonDomains.poweredItem(id);
+    }
+
     private static void validateManifest(YamlConfiguration manifest, String source, boolean javaAddon) {
         String id = manifest.getString("id", "").trim();
         if (!id.matches("[a-z0-9][a-z0-9_.-]*:[a-z0-9][a-z0-9_.-]*")) {
@@ -652,6 +680,10 @@ public final class SfxAddonManager implements AutoCloseable {
     }
 
     private List<AddonJarCandidate> sortByDependencies(List<AddonJarCandidate> candidates) {
+        java.util.Set<String> alreadyLoaded;
+        synchronized (this) {
+            alreadyLoaded = java.util.Set.copyOf(loaded.keySet());
+        }
         Map<String, ManifestOrder> manifests = new LinkedHashMap<>();
         Map<String, AddonJarCandidate> byId = new LinkedHashMap<>();
         for (AddonJarCandidate candidate : candidates) {
@@ -671,13 +703,19 @@ public final class SfxAddonManager implements AutoCloseable {
         }
 
         for (Map.Entry<String, ManifestOrder> entry : manifests.entrySet()) {
+            java.util.LinkedHashSet<String> declaredOrder = new java.util.LinkedHashSet<>(entry.getValue().depends());
+            declaredOrder.addAll(entry.getValue().softDepends());
+            declaredOrder.addAll(entry.getValue().loadAfter());
+            if (declaredOrder.contains(entry.getKey())) {
+                throw new IllegalStateException("Addon " + entry.getKey() + " cannot depend on or load after itself");
+            }
             for (String dependency : entry.getValue().depends()) {
-                if (!manifests.containsKey(dependency)) {
+                if (!manifests.containsKey(dependency) && !alreadyLoaded.contains(dependency)) {
                     throw new IllegalStateException("Addon " + entry.getKey() + " requires missing addon " + dependency);
                 }
             }
             for (String conflict : entry.getValue().conflicts()) {
-                if (manifests.containsKey(conflict)) {
+                if (manifests.containsKey(conflict) || alreadyLoaded.contains(conflict)) {
                     throw new IllegalStateException("Addon conflict: " + entry.getKey() + " conflicts with " + conflict);
                 }
             }
@@ -718,10 +756,7 @@ public final class SfxAddonManager implements AutoCloseable {
             }
         }
         if (result.size() != candidates.size()) {
-            List<String> cycle = indegree.entrySet().stream()
-                    .filter(entry -> entry.getValue() > 0)
-                    .map(Map.Entry::getKey)
-                    .toList();
+            List<String> cycle = dependencyCycle(manifests);
             throw new IllegalStateException("Addon dependency cycle: " + String.join(" -> ", cycle));
         }
         return List.copyOf(result);
@@ -733,6 +768,42 @@ public final class SfxAddonManager implements AutoCloseable {
                 .filter(value -> !value.isEmpty())
                 .distinct()
                 .toList();
+    }
+
+    private static List<String> dependencyCycle(Map<String, ManifestOrder> manifests) {
+        Map<String, Integer> state = new LinkedHashMap<>();
+        List<String> path = new ArrayList<>();
+        for (String id : manifests.keySet()) {
+            List<String> cycle = dependencyCycleFrom(id, manifests, state, path);
+            if (!cycle.isEmpty()) return cycle;
+        }
+        return List.copyOf(manifests.keySet());
+    }
+
+    private static List<String> dependencyCycleFrom(String id, Map<String, ManifestOrder> manifests,
+                                                    Map<String, Integer> state, List<String> path) {
+        int current = state.getOrDefault(id, 0);
+        if (current == 2) return List.of();
+        if (current == 1) {
+            int start = path.indexOf(id);
+            List<String> cycle = new ArrayList<>(path.subList(Math.max(0, start), path.size()));
+            cycle.add(id);
+            return List.copyOf(cycle);
+        }
+        state.put(id, 1);
+        path.add(id);
+        ManifestOrder order = manifests.get(id);
+        java.util.LinkedHashSet<String> predecessors = new java.util.LinkedHashSet<>(order.depends());
+        predecessors.addAll(order.softDepends());
+        predecessors.addAll(order.loadAfter());
+        for (String predecessor : predecessors) {
+            if (!manifests.containsKey(predecessor)) continue;
+            List<String> cycle = dependencyCycleFrom(predecessor, manifests, state, path);
+            if (!cycle.isEmpty()) return cycle;
+        }
+        path.remove(path.size() - 1);
+        state.put(id, 2);
+        return List.of();
     }
 
     private record ManifestOrder(List<String> depends, List<String> softDepends,

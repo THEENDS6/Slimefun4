@@ -102,6 +102,7 @@ Addon 可通过 `SfxCargoNodeDefinition` 为运输调度器提供 `SfxCargoManag
 - `worldActions()`、`protection()`：执行经过区域调度和 Bukkit 保护事件的世界操作；
 - `components()`：`overrides()` 的领域化别名，安装清单中声明的组件替换；
 - `api().activeClock()`、`powerRouter()`：读取持久服务器活动 Tick，并执行模拟后提交的统一电力结算；
+- `api().addonRuntime()`：消费已经注册的定义，创建虚拟容器、推进连续机器、执行电力物品规则；其中 `displays()` 管理纯客户端 PacketEvents `ITEM_DISPLAY` 会话；
 - `dataDirectory()`：独立数据目录；
 - `config()` 与 `configBoolean/Int/Double/String()`：读取 Addon 自己的 `config.yml`，不会读取核心配置。
 
@@ -156,6 +157,14 @@ components:
 - 配置、持久化数据和用户输入均不可信，范围、速度、容量和持续时间必须重新限制。
 
 ## 构建与验证
+
+注册使用真正的暂存事务：声明、Listener 和任务在提交前对外不可见且不会启动；注册回调失败时直接丢弃暂存内容，提交或启用失败时再由核心执行 `unregisterAll(addonId)`。自定义方块的放置、交互、物理/邻居更新、活塞、流体、原版转化、区块/世界边界和破坏均由核心派发生命周期；状态解码或回调异常会隔离单个实例，避免每 Tick 重复报错。
+
+`api().addonRuntime().displays()` 分配虚拟实体 ID，按显示类型的视距和节流策略更新，持久保存每名玩家的分类开关，并在离开视距、切换世界或 Addon 运行时卸载时销毁投影。Display 只表示客户端视觉，不能作为机器或方块真实状态。
+
+注册后的电力物品通过 `addonRuntime().poweredItems()` 统一读写 PDC 电量状态并执行充电、使用和超频规则。`addonRuntime().inventoryPower()` 每个服务器 Tick 最多扫描一次玩家背包，在物品栏变化时让缓存失效，并按“便携电源优先、再由电池放电”的顺序走事务式电力结算；动作失败不耗电，提交中途失败会回滚此前转移。
+
+第三方 Addon 可直接使用公开的 `api.testkit.SfxAddonTestKit` 做无服务器契约断言；核心的 `validateSfxAddonLifecycleSmoke` 还会验证暂存提交/回滚、所有者清理和事务回滚。
 
 Paper 与 SFX API 使用 `compileOnly`，不要把 SFX API 类打进 Addon JAR。内置 Addon 构建任务：
 

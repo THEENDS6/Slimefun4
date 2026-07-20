@@ -8,9 +8,11 @@ final class SfxPluginAddonModule {
 
     static void unloadAddons(SlimeFunXPlugin plugin) {
         if (plugin.addonManager == null) {
+            plugin.api.bindAddonManager(null);
             return;
         }
         plugin.addonManager.close();
+        plugin.api.bindAddonManager(null);
         plugin.addonManager = null;
     }
 
@@ -26,5 +28,6 @@ final class SfxPluginAddonModule {
                 plugin.getConfig().getBoolean("addons.research-expansion.enabled", true),
                 plugin.getConfig().getBoolean("addons.example.enabled", true),
                 new java.io.File(plugin.getDataFolder(), "addons"));
+        plugin.api.bindAddonManager(plugin.addonManager);
     }
 }

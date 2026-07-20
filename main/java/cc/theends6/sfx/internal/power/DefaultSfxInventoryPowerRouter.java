@@ -31,6 +31,7 @@ public final class DefaultSfxInventoryPowerRouter implements SfxInventoryPowerRo
             double demand = Math.min(Math.max(0.0D, consumer.demand()), remainingLimit);
             for (SfxPowerPort source : orderedSources) {
                 if (demand <= 0.0D || remainingLimit <= 0.0D) break;
+                if (source == consumer || source.id().equals(consumer.id())) continue;
                 double candidate = Math.min(Math.min(demand, remainingLimit), sourceRemaining.getOrDefault(source, 0.0D));
                 double extractable = source.extract(candidate, SfxTransactionMode.SIMULATE);
                 double insertable = consumer.insert(extractable, SfxTransactionMode.SIMULATE);

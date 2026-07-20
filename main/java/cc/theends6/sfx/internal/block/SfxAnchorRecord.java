@@ -30,4 +30,8 @@ public record SfxAnchorRecord(
     public SfxAnchorRecord withIntegrity(SfxBlockIntegrityState state, long now) {
         return new SfxAnchorRecord(key, materialKey, instanceId, anchorKind, state, now);
     }
+
+    public SfxAnchorRecord withMaterial(String newMaterialKey, long now) {
+        return new SfxAnchorRecord(key, newMaterialKey, instanceId, anchorKind, SfxBlockIntegrityState.VALID, now);
+    }
 }

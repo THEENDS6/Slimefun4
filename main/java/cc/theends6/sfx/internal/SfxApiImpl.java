@@ -35,6 +35,9 @@ import cc.theends6.sfx.internal.power.DefaultSfxInventoryPowerRouter;
 import cc.theends6.sfx.api.world.SfxProtectionService;
 import cc.theends6.sfx.api.world.SfxWorldActionService;
 import cc.theends6.sfx.internal.world.DefaultSfxWorldActions;
+import cc.theends6.sfx.internal.world.DefaultSfxProtectionService;
+import cc.theends6.sfx.api.addon.SfxAddonRuntime;
+import cc.theends6.sfx.internal.addon.DefaultSfxAddonRuntime;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SfxApiImpl implements SfxApi {
@@ -52,6 +55,8 @@ public final class SfxApiImpl implements SfxApi {
     private final DefaultSfxServerActiveClock activeClock;
     private final SfxInventoryPowerRouter powerRouter;
     private final DefaultSfxWorldActions worldActions;
+    private final SfxProtectionService protection;
+    private final DefaultSfxAddonRuntime addonRuntime;
 
     private SfxApiImpl(
             SfxRuntime runtime,
@@ -67,7 +72,9 @@ public final class SfxApiImpl implements SfxApi {
             DefaultSfxMachineRuntimeApi machineRuntime,
             DefaultSfxServerActiveClock activeClock,
             SfxInventoryPowerRouter powerRouter,
-            DefaultSfxWorldActions worldActions
+            DefaultSfxWorldActions worldActions,
+            SfxProtectionService protection,
+            DefaultSfxAddonRuntime addonRuntime
     ) {
         this.runtime = runtime;
         this.itemRegistry = itemRegistry;
@@ -83,6 +90,8 @@ public final class SfxApiImpl implements SfxApi {
         this.activeClock = activeClock;
         this.powerRouter = powerRouter;
         this.worldActions = worldActions;
+        this.protection = protection;
+        this.addonRuntime = addonRuntime;
     }
 
     public static SfxApiImpl bootstrap(JavaPlugin plugin, SfxLocalization localization, SfxPlayerDataService profiles,
@@ -99,10 +108,13 @@ public final class SfxApiImpl implements SfxApi {
         DefaultSfxServerActiveClock activeClock = new DefaultSfxServerActiveClock(plugin,
                 plugin.getDataFolder().toPath().resolve("data/server-active-ticks.dat"));
         activeClock.start();
-        DefaultSfxWorldActions worldActions = new DefaultSfxWorldActions(plugin, runtime);
+        DefaultSfxProtectionService protection = new DefaultSfxProtectionService(plugin);
+        DefaultSfxWorldActions worldActions = new DefaultSfxWorldActions(plugin, runtime, protection);
+        DefaultSfxInventoryPowerRouter powerRouter = new DefaultSfxInventoryPowerRouter();
+        DefaultSfxAddonRuntime addonRuntime = new DefaultSfxAddonRuntime(plugin, runtime, items, activeClock, powerRouter);
         return new SfxApiImpl(runtime, itemRegistry, items, menus, chatInput, localization, guide, features, behaviors,
                 manualMachines, new DefaultSfxMachineRuntimeApi(), activeClock,
-                new DefaultSfxInventoryPowerRouter(), worldActions);
+                powerRouter, worldActions, protection, addonRuntime);
     }
 
     @Override
@@ -163,9 +175,17 @@ public final class SfxApiImpl implements SfxApi {
     @Override public SfxServerActiveClock activeClock() { return activeClock; }
     @Override public SfxInventoryPowerRouter powerRouter() { return powerRouter; }
     @Override public SfxWorldActionService worldActions() { return worldActions; }
-    @Override public SfxProtectionService protection() { return worldActions; }
+    @Override public SfxProtectionService protection() { return protection; }
+    @Override public SfxAddonRuntime addonRuntime() { return addonRuntime; }
 
-    public void shutdown() { activeClock.close(); }
+    public void shutdown() {
+        addonRuntime.close();
+        activeClock.close();
+    }
+
+    public void bindAddonManager(cc.theends6.sfx.internal.addon.SfxAddonManager manager) {
+        addonRuntime.bind(manager);
+    }
 
     public void bindMachineRuntime(SfxMachineRuntimeEngine engine) {
         machineRuntime.bind(engine);
