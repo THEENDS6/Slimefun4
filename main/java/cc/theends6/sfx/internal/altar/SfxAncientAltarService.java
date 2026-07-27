@@ -302,7 +302,7 @@ public final class SfxAncientAltarService implements Listener {
         destroyAnchoredBlock(event.getBlock(), instance.instanceId(), instance.typeId());
     }
 
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlaceAbovePedestal(BlockPlaceEvent event) {
         Block below = event.getBlockPlaced().getRelative(0, -1, 0);
         SfxBlockInstanceRecord instance = instanceAt(below.getLocation());

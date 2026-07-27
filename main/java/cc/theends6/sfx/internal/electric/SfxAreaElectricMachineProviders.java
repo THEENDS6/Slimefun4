@@ -136,7 +136,7 @@ final class SfxAreaElectricMachineProviders {
                 }
                 int totalWork = Math.max(1, state.activeBaseTicks());
                 if (state.progressWork() >= totalWork) {
-                    return completeAssembler(definition, state, location, spawnType);
+                    return completeAssembler(plugin, definition, state, location, spawnType);
                 }
                 if (state.storedEnergy() < definition.energyConsumptionPerTick()) {
                     return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_POWER, true);
@@ -145,7 +145,7 @@ final class SfxAreaElectricMachineProviders {
                 int progressed = Math.min(totalWork, state.progressWork() + definition.speed());
                 state.progressWork(progressed);
                 if (progressed >= totalWork) {
-                    SfxElectricMachineTickResult complete = completeAssembler(definition, state, location, spawnType);
+                    SfxElectricMachineTickResult complete = completeAssembler(plugin, definition, state, location, spawnType);
                     return new SfxElectricMachineTickResult(complete.status(), definition.energyConsumptionPerTick(), true, complete.keepActive());
                 }
                 return SfxElectricMachineTickResult.changed(SfxElectricMachineRenderStatus.WORKING, definition.energyConsumptionPerTick(), true);
@@ -1306,11 +1306,17 @@ final class SfxAreaElectricMachineProviders {
         }
     }
 
-    private static SfxElectricMachineTickResult completeAssembler(SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, EntityType spawnType) {
+    private static SfxElectricMachineTickResult completeAssembler(JavaPlugin plugin, SfxElectricMachineDefinition definition, SfxElectricMachineState state, Location location, EntityType spawnType) {
         if (location == null || location.getWorld() == null) {
             return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
         }
         Location spawn = location.clone().add(0.5D, assemblerOffsetTenths(state) / 10.0D, 0.5D);
+        
+        
+        
+        if (!assemblerCanSpawn(plugin, spawn, spawnType)) {
+            return SfxElectricMachineTickResult.status(SfxElectricMachineRenderStatus.NO_TARGET, true);
+        }
         if (spawnType == EntityType.IRON_GOLEM) {
             IronGolem golem = (IronGolem) location.getWorld().spawnEntity(spawn, EntityType.IRON_GOLEM);
             golem.setPlayerCreated(true);
@@ -1323,6 +1329,14 @@ final class SfxAreaElectricMachineProviders {
         }
         state.resetProgress();
         return SfxElectricMachineTickResult.changed(state.hasAnyInput() ? SfxElectricMachineRenderStatus.WORKING : SfxElectricMachineRenderStatus.IDLE, 0, state.hasAnyInput());
+    }
+
+    private static boolean assemblerCanSpawn(JavaPlugin plugin, Location spawn, EntityType spawnType) {
+        if (!(plugin instanceof cc.theends6.sfx.SlimeFunXPlugin sfx)) {
+            return true;
+        }
+        return sfx.api().permissions().canSpawn(
+                cc.theends6.sfx.api.permission.SfxActionActor.system(), spawn, spawnType);
     }
 
 }

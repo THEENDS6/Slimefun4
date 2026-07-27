@@ -2,18 +2,17 @@ name: SlimeFunX
 main: cc.theends6.sfx.SlimeFunXPlugin
 version: SFX-20260714a1
 api-version: '1.21'
-folia-supported: true
 authors: [THEENDS6]
 description: Restored Slimefun-style content and guide runtime for Paper 1.21.8.
 load: POSTWORLD
 depend: [packetevents]
-softdepend: [ProtocolLib, ProtocolSupport, ViaVersion, ViaBackwards, ViaRewind, Geyser-Spigot]
+softdepend: [ProtocolLib, ProtocolSupport, ViaVersion, ViaBackwards, ViaRewind, Geyser-Spigot, Towny]
 
 commands:
   slimefunx:
     description: SlimeFunX main command
     usage: /slimefunx <guide|cheatguide|book|give|research|backpack|inspect|list|reload [config|runtime|all]|addon list>
-    aliases: [sfx, sf, x]
+    aliases: [sfx]
 
 permissions:
   sfx.command.guide:

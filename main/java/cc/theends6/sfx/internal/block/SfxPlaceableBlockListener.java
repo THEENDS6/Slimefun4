@@ -16,7 +16,6 @@ import cc.theends6.sfx.internal.energy.SfxEnergyService;
 import cc.theends6.sfx.internal.gps.SfxGpsService;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.util.SfxLocalization;
-import cc.theends6.sfx.internal.world.SfxProtectionProbe;
 import cc.theends6.sfx.api.text.Text;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -140,7 +139,6 @@ public final class SfxPlaceableBlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
-        if (SfxProtectionProbe.active()) return;
         String itemId = items.readMarker(event.getItemInHand()).map(marker -> marker.itemId()).orElse(null);
         if (itemId != null && !items.canUse(event.getPlayer(), itemId)) {
             event.setCancelled(true);
@@ -158,7 +156,6 @@ public final class SfxPlaceableBlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onAddonInteract(PlayerInteractEvent event) {
-        if (SfxProtectionProbe.active()) return;
         if (event.getClickedBlock() != null) addonLifecycle.onInteract(event.getClickedBlock(), event.getPlayer());
     }
 
@@ -201,7 +198,6 @@ public final class SfxPlaceableBlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
-        if (SfxProtectionProbe.active()) return;
         SfxAnchorRecord anchor = blockData.findAnchor(event.getBlock().getLocation()).orElse(null);
         if (anchor == null) {
             return;

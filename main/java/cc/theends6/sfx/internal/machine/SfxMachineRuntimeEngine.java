@@ -16,6 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import java.util.logging.Level;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
 
@@ -36,22 +38,24 @@ public final class SfxMachineRuntimeEngine {
     private final AtomicLong stoppedPipelines = new AtomicLong();
 
     public synchronized void registerDefinition(SfxMachineDefinition definition) {
-        if (definition != null && definition.id() != null && !definition.id().isBlank()) {
-            definition = SfxMachineSpecialProfiles.apply(definition);
-            definitions.put(definition.id(), definition);
-            ensureDefaultProcessor(definition);
-            ensureDeclaredEffectHooks(definition);
+        if (definition == null || definition.id() == null || definition.id().isBlank()) {
+            throw new IllegalArgumentException("Machine definition and non-blank id are required");
         }
+        definition = SfxMachineSpecialProfiles.apply(definition);
+        definitions.put(definition.id(), definition);
+        ensureDefaultProcessor(definition);
+        ensureDeclaredEffectHooks(definition);
     }
 
     public synchronized void registerDefinitionIfAbsent(SfxMachineDefinition definition) {
-        if (definition != null && definition.id() != null && !definition.id().isBlank()) {
-            definition = SfxMachineSpecialProfiles.apply(definition);
-            definitions.putIfAbsent(definition.id(), definition);
-            SfxMachineDefinition registered = definitions.get(definition.id());
-            ensureDefaultProcessor(registered);
-            ensureDeclaredEffectHooks(registered);
+        if (definition == null || definition.id() == null || definition.id().isBlank()) {
+            throw new IllegalArgumentException("Machine definition and non-blank id are required");
         }
+        definition = SfxMachineSpecialProfiles.apply(definition);
+        definitions.putIfAbsent(definition.id(), definition);
+        SfxMachineDefinition registered = definitions.get(definition.id());
+        ensureDefaultProcessor(registered);
+        ensureDeclaredEffectHooks(registered);
     }
 
     public synchronized void enrichDefinition(String machineId, java.util.function.UnaryOperator<SfxMachineDefinition> enricher) {
@@ -214,7 +218,8 @@ public final class SfxMachineRuntimeEngine {
     public SfxMachineExecution beginTick(UUID instanceId, String machineId, Location location, SfxMachineTickContext context, SfxMachineState state, Map<String, Object> attributes) {
         Map<String, Object> mutableAttributes = attributes == null ? new HashMap<>() : attributes;
         SfxMachineExecution execution = new SfxMachineExecution(this, instanceId, machineId, location, context, state, mutableAttributes);
-        runPhase(machineId, SfxMachinePhase.BEFORE_TICK, instanceId, location, context, state, SfxMachineStatus.IDLE, mutableAttributes);
+        execution.beforeTick(runPhase(machineId, SfxMachinePhase.BEFORE_TICK, instanceId, location,
+                context, state, SfxMachineStatus.IDLE, mutableAttributes));
         return execution;
     }
 
@@ -236,6 +241,9 @@ public final class SfxMachineRuntimeEngine {
 
     public SfxResult<SfxMachineStatus> executeTick(UUID instanceId, String machineId, Location location, SfxMachineTickContext context, Supplier<SfxMachineStatus> action) {
         try (SfxMachineExecution execution = beginTick(instanceId, machineId, location, context)) {
+            if (!execution.canProceed()) {
+                return SfxResult.ok(execution.status());
+            }
             try {
                 SfxMachineStatus status = action == null ? SfxMachineStatus.IDLE : action.get();
                 status = status == null ? SfxMachineStatus.ERROR : status;
@@ -300,6 +308,12 @@ public final class SfxMachineRuntimeEngine {
                 }
             } catch (RuntimeException exception) {
                 phaseContext.put("framework.exception", exception);
+                Bukkit.getLogger().log(Level.SEVERE,
+                        "SFX machine effect failed: machine=" + machineId
+                                + ", effect=" + effect.name()
+                                + ", phase=" + phase
+                                + ", instance=" + instanceId,
+                        exception);
                 return SfxMachinePhaseResult.failed("machine effect failed: " + effect.name());
             }
         }
@@ -337,13 +351,13 @@ public final class SfxMachineRuntimeEngine {
     public Optional<SfxMachineRuntimeSnapshot> snapshot(UUID instanceId) { return Optional.ofNullable(snapshots.get(instanceId)); }
     public Collection<SfxMachineRuntimeSnapshot> snapshots() { return java.util.List.copyOf(snapshots.values()); }
     public void forget(UUID instanceId) { if (instanceId != null) snapshots.remove(instanceId); }
-    public void clear() {
+    public synchronized void clear() {
         snapshots.clear();
         processors.clear();
         effectHooks.clear();
         phaseObservers.clear();
         phaseInvocations.set(0L);
         stoppedPipelines.set(0L);
-        synchronized (this) { definitions.clear(); }
+        definitions.clear();
     }
 }

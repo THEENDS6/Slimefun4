@@ -25,6 +25,7 @@ public final class SfxBlockPersistenceListener implements Listener {
     private final SfxFlushCoordinator flushCoordinator;
     private final long autosaveIntervalTicks;
     private volatile boolean running;
+    private volatile long lastWorldSaveFlushMillis;
 
     public SfxBlockPersistenceListener(JavaPlugin plugin, SfxRuntime runtime, SfxBlockDataService blockData, SfxDirtyPersistenceService... dirtyServices) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -40,6 +41,14 @@ public final class SfxBlockPersistenceListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldSave(WorldSaveEvent event) {
+        
+        
+        
+        long now = System.currentTimeMillis();
+        if (now - lastWorldSaveFlushMillis < 1000L) {
+            return;
+        }
+        lastWorldSaveFlushMillis = now;
         flushAllDirtyBlocking();
     }
 
@@ -109,7 +118,11 @@ public final class SfxBlockPersistenceListener implements Listener {
         if (configured > 0L) {
             return configured;
         }
-        File bukkitConfigFile = new File("bukkit.yml");
+        File pluginsDirectory = plugin.getDataFolder().getParentFile();
+        File serverDirectory = pluginsDirectory == null ? null : pluginsDirectory.getParentFile();
+        File bukkitConfigFile = serverDirectory == null
+                ? new File("bukkit.yml").getAbsoluteFile()
+                : new File(serverDirectory, "bukkit.yml");
         if (bukkitConfigFile.isFile()) {
             int bukkitAutosave = YamlConfiguration.loadConfiguration(bukkitConfigFile).getInt("ticks-per.autosave", 6000);
             if (bukkitAutosave > 0) {

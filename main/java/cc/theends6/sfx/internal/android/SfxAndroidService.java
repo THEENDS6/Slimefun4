@@ -393,19 +393,19 @@ public final class SfxAndroidService implements Listener {
                 yield true;
             }
             case GO_FORWARD, GO_UP, GO_DOWN -> moveAccepted && moveAndroid(instance, state, block, targetBlock(block, face, instruction));
-            case DIG_FORWARD, DIG_UP, DIG_DOWN -> dig(state, block, targetBlock(block, face, instruction), false, instance.typeId());
+            case DIG_FORWARD, DIG_UP, DIG_DOWN -> dig(state, block, targetBlock(block, face, instruction), false, instance.typeId(), instance.instanceId(), instance.ownerId());
             case MOVE_AND_DIG_FORWARD, MOVE_AND_DIG_UP, MOVE_AND_DIG_DOWN -> {
                 Block target = targetBlock(block, face, instruction);
-                boolean dug = dig(state, block, target, false, instance.typeId());
+                boolean dug = dig(state, block, target, false, instance.typeId(), instance.instanceId(), instance.ownerId());
                 yield dug && moveAccepted && moveAndroid(instance, state, block, target);
             }
-            case FARM_FORWARD, FARM_DOWN, FARM_EXOTIC_FORWARD, FARM_EXOTIC_DOWN -> farm(state, targetBlock(block, face, instruction), type);
-            case CHOP_TREE -> chopTree(state, targetBlock(block, face, instruction));
+            case FARM_FORWARD, FARM_DOWN, FARM_EXOTIC_FORWARD, FARM_EXOTIC_DOWN -> farm(state, targetBlock(block, face, instruction), type, instance.instanceId(), instance.ownerId());
+            case CHOP_TREE -> chopTree(state, targetBlock(block, face, instruction), instance.instanceId(), instance.ownerId());
             case CATCH_FISH -> catchFish(state, block, type);
-            case ATTACK_MOBS_ANIMALS -> attack(block, state, type, living -> true);
-            case ATTACK_MOBS -> attack(block, state, type, living -> living instanceof Monster);
-            case ATTACK_ANIMALS -> attack(block, state, type, living -> living instanceof Animals);
-            case ATTACK_ANIMALS_ADULT -> attack(block, state, type, living -> living instanceof Animals animal && animal.isAdult());
+            case ATTACK_MOBS_ANIMALS -> attack(block, state, type, living -> true, instance.instanceId(), instance.ownerId());
+            case ATTACK_MOBS -> attack(block, state, type, living -> living instanceof Monster, instance.instanceId(), instance.ownerId());
+            case ATTACK_ANIMALS -> attack(block, state, type, living -> living instanceof Animals, instance.instanceId(), instance.ownerId());
+            case ATTACK_ANIMALS_ADULT -> attack(block, state, type, living -> living instanceof Animals animal && animal.isAdult(), instance.instanceId(), instance.ownerId());
             case INTERFACE_ITEMS -> depositItems(state, block, face);
             case INTERFACE_FUEL -> pullFuel(state, block, face, type);
         };
@@ -560,8 +560,13 @@ public final class SfxAndroidService implements Listener {
         return true;
     }
 
-    private boolean dig(SfxAndroidState state, Block androidBlock, Block target, boolean moveAfter, String typeId) {
+    private boolean dig(SfxAndroidState state, Block androidBlock, Block target, boolean moveAfter, String typeId, UUID instanceId, UUID ownerId) {
         if (target == null || target.getType().isAir() || isUnbreakable(target.getType())) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            return false;
+        }
+        if (!androidCanModify(instanceId, ownerId, target)) {
+            
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
@@ -627,8 +632,12 @@ public final class SfxAndroidService implements Listener {
         return material == Material.BEDROCK || material == Material.BARRIER || material == Material.COMMAND_BLOCK || material == Material.CHAIN_COMMAND_BLOCK || material == Material.REPEATING_COMMAND_BLOCK || material == Material.STRUCTURE_BLOCK || material == Material.JIGSAW;
     }
 
-    private boolean farm(SfxAndroidState state, Block target, SfxAndroidType type) {
+    private boolean farm(SfxAndroidState state, Block target, SfxAndroidType type, UUID instanceId, UUID ownerId) {
         if (target == null || !(target.getBlockData() instanceof Ageable ageable) || ageable.getAge() < ageable.getMaximumAge()) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            return false;
+        }
+        if (!androidCanModify(instanceId, ownerId, target)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
@@ -657,8 +666,12 @@ public final class SfxAndroidService implements Listener {
         };
     }
 
-    private boolean chopTree(SfxAndroidState state, Block target) {
+    private boolean chopTree(SfxAndroidState state, Block target, UUID instanceId, UUID ownerId) {
         if (target == null || !Tag.LOGS.isTagged(target.getType())) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            return false;
+        }
+        if (!androidCanModify(instanceId, ownerId, target)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
@@ -670,10 +683,14 @@ public final class SfxAndroidService implements Listener {
         List<Block> bottomLogs = bottomLayerLogs(target, logs, actionFacing(state));
         boolean onlyBottomLayerLogsRemain = onlyBottomLayerLogsRemain(logs, bottomLogs);
         if (batchReplantBottomLayer(logs, bottomLogs, onlyBottomLayerLogsRemain)) {
-            return chopAndReplantBottomLayer(state, bottomLogs);
+            return chopAndReplantBottomLayer(state, bottomLogs, instanceId, ownerId);
         }
         Block log = nextLogToChop(target, logs, bottomLogs, actionFacing(state));
         if (log == null) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            return false;
+        }
+        if (!androidCanModify(instanceId, ownerId, log)) {
             state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
             return false;
         }
@@ -708,6 +725,34 @@ public final class SfxAndroidService implements Listener {
 
     private SfxApi sfxApi() {
         return plugin instanceof SlimeFunXPlugin sfx ? sfx.api() : null;
+    }
+
+    private cc.theends6.sfx.api.permission.SfxWorldPermissionService permissions() {
+        SfxApi api = sfxApi();
+        return api == null ? null : api.permissions();
+    }
+
+    private cc.theends6.sfx.api.permission.SfxActionActor androidActor(UUID instanceId, UUID ownerId) {
+        
+        
+        Player owner = ownerId == null ? null : plugin.getServer().getPlayer(ownerId);
+        return cc.theends6.sfx.api.permission.SfxActionActor.machine(instanceId, ownerId, owner);
+    }
+
+    private boolean androidCanModify(UUID instanceId, UUID ownerId, Block target) {
+        cc.theends6.sfx.api.permission.SfxWorldPermissionService perms = permissions();
+        if (perms == null) {
+            return true;
+        }
+        return perms.canBreak(androidActor(instanceId, ownerId), target);
+    }
+
+    private boolean androidCanDamage(UUID instanceId, UUID ownerId, org.bukkit.entity.Entity target) {
+        cc.theends6.sfx.api.permission.SfxWorldPermissionService perms = permissions();
+        if (perms == null) {
+            return true;
+        }
+        return perms.canDamage(androidActor(instanceId, ownerId), target);
     }
 
     private Block nextLogToChop(Block root, List<Block> logs, List<Block> bottomLogs, BlockFace face) {
@@ -794,10 +839,19 @@ public final class SfxAndroidService implements Listener {
         return true;
     }
 
-    private boolean chopAndReplantBottomLayer(SfxAndroidState state, List<Block> bottomLogs) {
+    private boolean chopAndReplantBottomLayer(
+            SfxAndroidState state,
+            List<Block> bottomLogs,
+            UUID instanceId,
+            UUID ownerId
+    ) {
         List<ItemStack> drops = new ArrayList<>();
         for (Block block : bottomLogs) {
             if (Tag.LOGS.isTagged(block.getType())) {
+                if (!androidCanModify(instanceId, ownerId, block)) {
+                    state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+                    return false;
+                }
                 drops.add(new ItemStack(block.getType()));
             }
         }
@@ -968,7 +1022,7 @@ public final class SfxAndroidService implements Listener {
         return weight;
     }
 
-    private boolean attack(Block block, SfxAndroidState state, SfxAndroidType type, java.util.function.Predicate<LivingEntity> filter) {
+    private boolean attack(Block block, SfxAndroidState state, SfxAndroidType type, java.util.function.Predicate<LivingEntity> filter, UUID instanceId, UUID ownerId) {
         double damage = type.tier() >= 3 ? 20D : 4D * type.tier();
         double radius = 4D + type.tier();
         Location origin = block.getLocation().add(0.5, 0.5, 0.5);
@@ -987,6 +1041,10 @@ public final class SfxAndroidService implements Listener {
             return true;
         }
         LivingEntity target = (LivingEntity) targets.get(0);
+        if (!androidCanDamage(instanceId, ownerId, target)) {
+            state.runtimeState(SfxAndroidRuntimeState.DORMANT_BLOCKED);
+            return true;
+        }
         SfxEntityKillAttribution.damageAsAndroid(plugin, target, damage);
         if (target.isDead()) {
             collectNearbyDrops(state, target.getLocation());

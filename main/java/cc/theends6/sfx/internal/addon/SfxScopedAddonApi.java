@@ -45,5 +45,6 @@ final class SfxScopedAddonApi implements SfxApi {
     @Override public SfxInventoryPowerRouter powerRouter() { return delegate.powerRouter(); }
     @Override public SfxWorldActionService worldActions() { return delegate.worldActions(); }
     @Override public SfxProtectionService protection() { return delegate.protection(); }
+    @Override public cc.theends6.sfx.api.permission.SfxWorldPermissionService permissions() { return delegate.permissions(); }
     @Override public SfxAddonRuntime addonRuntime() { return delegate.addonRuntime(); }
 }

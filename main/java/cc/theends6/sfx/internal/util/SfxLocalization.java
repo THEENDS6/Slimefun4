@@ -37,9 +37,11 @@ public final class SfxLocalization implements cc.theends6.sfx.api.localization.S
 
     private final JavaPlugin plugin;
     private final Set<String> warnedMissingPaths = ConcurrentHashMap.newKeySet();
+    private static final String DEFAULT_LANGUAGE = "zh-CN";
     private YamlConfiguration bundled;
     private YamlConfiguration addon;
     private YamlConfiguration custom;
+    private YamlConfiguration fallbackBundled;
 
     public SfxLocalization(JavaPlugin plugin) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -51,6 +53,7 @@ public final class SfxLocalization implements cc.theends6.sfx.api.localization.S
         this.bundled = loadBundled(language);
         this.addon = loadAddonOverlay(language);
         this.custom = loadCustom(language);
+        this.fallbackBundled = DEFAULT_LANGUAGE.equals(language) ? null : loadBundled(DEFAULT_LANGUAGE);
     }
 
     public String language() {
@@ -240,6 +243,14 @@ public final class SfxLocalization implements cc.theends6.sfx.api.localization.S
         }
         if (bundled != null) {
             String value = string(bundled, path);
+            if (value != null) {
+                return value;
+            }
+        }
+        
+        
+        if (fallbackBundled != null) {
+            String value = string(fallbackBundled, path);
             if (value != null) {
                 return value;
             }

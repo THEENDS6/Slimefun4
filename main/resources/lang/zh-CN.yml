@@ -5224,6 +5224,7 @@ gps:
     target-world-not-loaded: '&c目标世界未加载。'
     teleporting: '&b正在传送到 &f{waypoint}&b...'
     teleport-cancelled-moved: '&c你移动了，传送已取消。'
+    teleport-unsafe: '&c目标落点已不安全，传送已取消。'
     no-elevator-target: '&c没有在{direction}找到电梯板。'
     waypoint-limit: '&c你已达到 GPS 路径点数量上限。'
     waypoint-created: '&a已创建路径点：&f{name}'

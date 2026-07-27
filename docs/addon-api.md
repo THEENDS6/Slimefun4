@@ -281,6 +281,12 @@ Provider implementations belong to the addon's own package. Bundled implementati
 
 World, entity, inventory and player work must use the scheduler for the owning region/entity. Revalidate state after asynchronous work, make shared state thread-safe, and avoid one repeating task per placed block. Hiding guide content is not authorization: check permission at every command, use, placement, GUI, chat-input, and network effect. Treat configuration, persisted state, and user input as untrusted and clamp values again before applying them.
 
+The core does not currently declare Folia support in `plugin.yml`: cross-region cargo and energy networks and runtime reload still need a complete region-ownership migration. Addons must nevertheless use the public scheduler API and must not access Bukkit objects across regions directly.
+
+Programmatic world changes must go through `api().permissions()` or the higher-level `worldActions()` service. `SfxActionActor` represents online players, offline owners, machines, and ownerless system actions without forging a Bukkit player identity. Resolution checks registered `SfxProtectionAdapter` providers first (any `DENY` wins), then fires the purpose-built `SfxWorldActionPermissionEvent`, and only then applies configured fallback policy. Never forge vanilla `BlockBreakEvent` or `BlockPlaceEvent` instances to probe protection plugins.
+
+Adapters are registered through Bukkit's `ServicesManager`. New adapters should implement the actor-aware `canPerform(...)` method; legacy `Player` hooks remain supported for online-player actions. The core includes a Towny adapter. Offline owners, unowned machines, and `SYSTEM` actions are denied by default and require the respective `permissions.allow-when-owner-offline`, `allow-unowned-machines`, or `allow-system-actions` opt-in. `permissions.fallback-allow` is the undecided baseline for normal online-player actions.
+
 ## Build And Verification
 
 Package `addon.yml`, optional `config.yml`, `content/`, and `lang/` at the jar root and install the jar under `plugins/SlimeFunX/addons/`. Verify load, content compilation, interaction, chunk unload/reload, shutdown, and a second startup. Bundled tasks are `basicExpansionJar`, `contentExpansionJar`, and `exampleAddonJar`; `check` runs contract and isolated linkage validation for all three.

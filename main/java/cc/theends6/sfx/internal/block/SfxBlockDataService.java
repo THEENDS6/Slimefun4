@@ -34,6 +34,7 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
     private final SfxBlockDataRepository repository;
     private final Map<SfxBlockAnchorKey, SfxAnchorRecord> anchors = new ConcurrentHashMap<>();
     private final Map<UUID, SfxBlockInstanceRecord> instances = new ConcurrentHashMap<>();
+    private final Map<ChunkIndexKey, Set<SfxBlockAnchorKey>> anchorsByChunk = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> materialVariants = new ConcurrentHashMap<>();
     private final Set<SfxBlockAnchorKey> dirtyAnchorKeys = ConcurrentHashMap.newKeySet();
     private final Set<UUID> dirtyInstanceIds = ConcurrentHashMap.newKeySet();
@@ -53,11 +54,15 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
         SfxBlockDataSnapshot snapshot = repository.loadAll();
         anchors.clear();
         instances.clear();
+        anchorsByChunk.clear();
         dirtyAnchorKeys.clear();
         dirtyInstanceIds.clear();
         pendingAnchorDeletes.clear();
         pendingInstanceDeletes.clear();
-        snapshot.anchors().forEach(anchor -> anchors.put(anchor.key(), anchor));
+        snapshot.anchors().forEach(anchor -> {
+            anchors.put(anchor.key(), anchor);
+            indexAnchor(anchor.key());
+        });
         snapshot.instances().forEach(instance -> instances.put(instance.instanceId(), instance));
         revision.incrementAndGet();
         reconcileLoadedAnchors();
@@ -181,6 +186,37 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
         return results;
     }
 
+    public List<SfxAnchorRecord> anchorsNear(SfxBlockAnchorKey origin, int rangeX, int rangeZ) {
+        if (origin == null) {
+            return List.of();
+        }
+        int normalizedX = Math.max(0, rangeX);
+        int normalizedZ = Math.max(0, rangeZ);
+        int minChunkX = Math.floorDiv(origin.x() - normalizedX, 16);
+        int maxChunkX = Math.floorDiv(origin.x() + normalizedX, 16);
+        int minChunkZ = Math.floorDiv(origin.z() - normalizedZ, 16);
+        int maxChunkZ = Math.floorDiv(origin.z() + normalizedZ, 16);
+        List<SfxAnchorRecord> results = new ArrayList<>();
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                Set<SfxBlockAnchorKey> keys = anchorsByChunk.get(
+                        new ChunkIndexKey(origin.worldId(), chunkX, chunkZ));
+                if (keys == null) {
+                    continue;
+                }
+                for (SfxBlockAnchorKey key : keys) {
+                    SfxAnchorRecord anchor = anchors.get(key);
+                    if (anchor != null && anchor.integrityState() == SfxBlockIntegrityState.VALID
+                            && Math.abs((long) key.x() - origin.x()) <= normalizedX
+                            && Math.abs((long) key.z() - origin.z()) <= normalizedZ) {
+                        results.add(anchor);
+                    }
+                }
+            }
+        }
+        return results;
+    }
+
     public UUID registerSingleBlock(String typeId, Location location, Material material, UUID ownerId) {
         return registerSingleBlock(typeId, location, material, ownerId, SfxBlockInstanceRecord.DEFAULT_ENERGY_PRIORITY_DISTANCE);
     }
@@ -216,6 +252,7 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
         pendingAnchorDeletes.remove(key);
         instances.put(instanceId, instance);
         anchors.put(key, anchor);
+        indexAnchor(key);
         markDirty(anchor, instance);
         revision.incrementAndGet();
         return instanceId;
@@ -303,6 +340,7 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
             return;
         }
         UUID instanceId = anchor.instanceId();
+        unindexAnchor(key);
         instances.remove(instanceId);
         dirtyAnchorKeys.remove(key);
         dirtyInstanceIds.remove(instanceId);
@@ -351,10 +389,42 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
         }
         if (success) {
             synchronized (this) {
-                dirtyAnchorKeys.clear();
-                dirtyInstanceIds.clear();
-                pendingAnchorDeletes.clear();
-                pendingInstanceDeletes.clear();
+                clearPersistedBatch(batch);
+            }
+        }
+    }
+
+    private void clearPersistedBatch(PersistenceBatch batch) {
+        Map<SfxBlockAnchorKey, SfxAnchorRecord> persistedAnchors = new HashMap<>();
+        for (SfxAnchorRecord anchor : batch.anchorUpserts()) {
+            persistedAnchors.put(anchor.key(), anchor);
+        }
+        for (SfxBlockAnchorKey key : batch.dirtyAnchorKeys()) {
+            if (Objects.equals(anchors.get(key), persistedAnchors.get(key))) {
+                dirtyAnchorKeys.remove(key);
+            }
+        }
+
+        Map<UUID, SfxBlockInstanceRecord> persistedInstances = new HashMap<>();
+        for (SfxBlockInstanceRecord instance : batch.instanceUpserts()) {
+            persistedInstances.put(instance.instanceId(), instance);
+        }
+        for (UUID instanceId : batch.dirtyInstanceIds()) {
+            if (Objects.equals(instances.get(instanceId), persistedInstances.get(instanceId))) {
+                dirtyInstanceIds.remove(instanceId);
+            }
+        }
+
+        for (SfxBlockAnchorKey key : batch.anchorDeleteKeys()) {
+            if (!anchors.containsKey(key)) {
+                pendingAnchorDeletes.remove(key);
+            }
+        }
+        for (UUID instanceId : batch.instanceDeleteIds()) {
+            if (!instances.containsKey(instanceId)
+                    && Objects.equals(pendingInstanceDeletes.get(instanceId),
+                    batch.instanceDeleteAnchorKeys().get(instanceId))) {
+                pendingInstanceDeletes.remove(instanceId);
             }
         }
     }
@@ -404,6 +474,7 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
         repository.close();
         anchors.clear();
         instances.clear();
+        anchorsByChunk.clear();
         dirtyAnchorKeys.clear();
         dirtyInstanceIds.clear();
         pendingAnchorDeletes.clear();
@@ -664,6 +735,29 @@ public final class SfxBlockDataService implements SfxDirtyPersistenceService {
     private record ChunkSelector(UUID worldId, int chunkX, int chunkZ) {
         boolean matches(SfxBlockAnchorKey key) {
             return key.worldId().equals(worldId) && (key.x() >> 4) == chunkX && (key.z() >> 4) == chunkZ;
+        }
+    }
+
+    private void indexAnchor(SfxBlockAnchorKey key) {
+        anchorsByChunk.computeIfAbsent(ChunkIndexKey.of(key), ignored -> ConcurrentHashMap.newKeySet())
+                .add(key);
+    }
+
+    private void unindexAnchor(SfxBlockAnchorKey key) {
+        ChunkIndexKey chunk = ChunkIndexKey.of(key);
+        Set<SfxBlockAnchorKey> keys = anchorsByChunk.get(chunk);
+        if (keys == null) {
+            return;
+        }
+        keys.remove(key);
+        if (keys.isEmpty()) {
+            anchorsByChunk.remove(chunk, keys);
+        }
+    }
+
+    private record ChunkIndexKey(UUID worldId, int chunkX, int chunkZ) {
+        static ChunkIndexKey of(SfxBlockAnchorKey key) {
+            return new ChunkIndexKey(key.worldId(), key.x() >> 4, key.z() >> 4);
         }
     }
 

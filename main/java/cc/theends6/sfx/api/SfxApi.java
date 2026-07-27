@@ -28,9 +28,7 @@ public interface SfxApi {
 
     SfxChatInputService chatInput();
 
-    default SfxLocalizationView localization() {
-        throw new UnsupportedOperationException("This SfxApi implementation does not expose localization.");
-    }
+    SfxLocalizationView localization();
 
     SfxGuide guide();
 
@@ -40,27 +38,17 @@ public interface SfxApi {
 
     SfxManualMachineRegistry manualMachines();
 
-    default SfxMachineRuntime machineRuntime() {
-        throw new UnsupportedOperationException("This SfxApi implementation does not expose the machine runtime API.");
-    }
+    SfxMachineRuntime machineRuntime();
 
-    default SfxServerActiveClock activeClock() {
-        throw new UnsupportedOperationException("This SfxApi implementation does not expose the server active clock.");
-    }
+    SfxServerActiveClock activeClock();
 
-    default SfxInventoryPowerRouter powerRouter() {
-        throw new UnsupportedOperationException("This SfxApi implementation does not expose the inventory power router.");
-    }
+    SfxInventoryPowerRouter powerRouter();
 
-    default SfxWorldActionService worldActions() {
-        throw new UnsupportedOperationException("This SfxApi implementation does not expose world actions.");
-    }
+    SfxWorldActionService worldActions();
 
-    default SfxProtectionService protection() {
-        throw new UnsupportedOperationException("This SfxApi implementation does not expose protection checks.");
-    }
+    SfxProtectionService protection();
 
-    default SfxAddonRuntime addonRuntime() {
-        throw new UnsupportedOperationException("This SfxApi implementation does not expose the addon runtime.");
-    }
+    cc.theends6.sfx.api.permission.SfxWorldPermissionService permissions();
+
+    SfxAddonRuntime addonRuntime();
 }

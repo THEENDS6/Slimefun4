@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.logging.Logger;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -56,7 +55,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
 final class SfxBasicExpansionAreaElectricMachineProviders {
-    private static final Logger LOGGER = Logger.getLogger("SlimeFunX");
     private static final String PRODUCE_DEBUG_PREFIX = "[SFX Debug][BasicProduceCollector] ";
     private static final int PRODUCE_RANGE = 2;
     private static final int ACTION_WORK_TICKS = 10;
@@ -1588,7 +1586,7 @@ final class SfxBasicExpansionAreaElectricMachineProviders {
     }
 
     private static void debugProduce(String message) {
-        LOGGER.warning(PRODUCE_DEBUG_PREFIX + message);
+        runtime().plugin().getLogger().fine(PRODUCE_DEBUG_PREFIX + message);
     }
 
     private static String describeActiveState(SfxElectricMachineState state) {

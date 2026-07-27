@@ -76,8 +76,37 @@ final class SfxResearchExpansionPayment implements SfxResearchPaymentComponent {
         if (available < cost.amount()) {
             return rejected(cost);
         }
-        player.setExperienceLevelAndProgress((int) (available - cost.amount()));
+        
+        
+        
+        setTotalExperiencePoints(player, available - cost.amount());
         return SfxResearchPaymentResult.success();
+    }
+
+    private static void setTotalExperiencePoints(Player player, long remainingTotal) {
+        long total = Math.max(0L, remainingTotal);
+        int level = 0;
+        long consumed = 0L;
+        while (consumed + experienceToNextLevel(level) <= total) {
+            consumed += experienceToNextLevel(level);
+            level++;
+        }
+        long intoLevel = total - consumed;
+        long span = experienceToNextLevel(level);
+        float progress = span <= 0L ? 0.0F : (float) intoLevel / (float) span;
+        player.setLevel(level);
+        player.setExp(Math.max(0.0F, Math.min(0.9999F, progress)));
+    }
+
+    
+    private static long experienceToNextLevel(int level) {
+        if (level >= 31) {
+            return 9L * level - 158L;
+        }
+        if (level >= 16) {
+            return 5L * level - 38L;
+        }
+        return 2L * level + 7L;
     }
 
     private SfxResearchPaymentResult rejected(Cost cost) {

@@ -125,6 +125,8 @@ dependencies {
     compileOnly "com.github.retrooper:packetevents-spigot:2.12.1"
     compileOnly "org.xerial:sqlite-jdbc:3.50.3.0"
     compileOnly "com.github.houbb:pinyin:0.4.0"
+    testImplementation "io.papermc.paper:paper-api:${rootProject.ext.paperApiVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
     shade "org.xerial:sqlite-jdbc:3.50.3.0"
     shade "com.github.houbb:pinyin:0.4.0"
 }
@@ -132,6 +134,10 @@ dependencies {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release = 21
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
 
 processResources {
@@ -4013,8 +4019,13 @@ def sendRconPacket = { OutputStream output, int requestId, int type, String payl
     body.write(payload.getBytes(StandardCharsets.UTF_8))
     body.write(0)
     body.write(0)
-    writeLittleEndianInt(output, body.size())
-    body.writeTo(output)
+    // Vanilla's RCON reader assumes one socket read contains the complete frame.
+    
+    
+    def packet = new ByteArrayOutputStream(body.size() + 4)
+    writeLittleEndianInt(packet, body.size())
+    body.writeTo(packet)
+    output.write(packet.toByteArray())
     output.flush()
 }
 
@@ -4032,7 +4043,8 @@ def readRconPacket = { InputStream input ->
 }
 
 def sendPaperRconCommand = { String commandText, int responseTimeoutMs = 5000 ->
-    def socket = new java.net.Socket()
+    
+    def socket = new java.net.Socket(java.net.Proxy.NO_PROXY)
     try {
         socket.connect(new java.net.InetSocketAddress(
                 rootProject.ext.paperRuntimeRconHost,
@@ -4064,7 +4076,7 @@ def sendPaperRconCommand = { String commandText, int responseTimeoutMs = 5000 ->
         try {
             socket.close()
         } catch (IOException ignored) {
-            // Nothing else can be recovered when closing a local verification socket.
+            
         }
     }
 }
@@ -4205,7 +4217,7 @@ tasks.register('plugmanReloadPaperRuntime') {
             if (reloadLog.contains('The server has not responded for')) {
                 logger.warn('PlugManX reload completed, but Paper Watchdog observed a main-thread stall. Use a full restart for stable or production servers.')
             }
-            sendPaperRconCommandWithRetry('list', 5, 1000L)
+            sendPaperRconCommandWithRetry('list', 5, 1000)
             logger.lifecycle('Requested PlugManX unload/load for SlimeFunX on Paper 1.21.8.')
         } catch (IOException exception) {
             throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled. Start it with runPaper first.', exception)
@@ -4423,231 +4435,236 @@ tasks.register('prepareGuguJustEnoughGuideRuntimeJar', Jar) {
     archiveFileName = rootProject.ext.guguJustEnoughGuideJarName
     destinationDirectory = layout.buildDirectory.dir('legacy-runtime/patched')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    exclude 'META-INF
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
+    from({ zipTree(layout.buildDirectory.file("legacy-runtime/${rootProject.ext.guguJustEnoughGuideUpstreamJarName}").get().asFile) })
+    from({ zipTree(layout.buildDirectory.file("legacy-runtime/${rootProject.ext.guguHeavenJarName}").get().asFile) })
+    from({ zipTree(layout.buildDirectory.file("legacy-runtime/${rootProject.ext.guguNlpCommonJarName}").get().asFile) })
+    doLast {
+        def jar = archiveFile.get().asFile
+        def zip = new java.util.zip.ZipFile(jar)
+        try {
+            [
+                    'plugin.yml',
+                    'com/github/houbb/heaven/support/instance/impl/Instances.class',
+                    'com/github/houbb/nlp/common/util/CharUtils.class'
+            ].each { entry ->
+                if (zip.getEntry(entry) == null) {
+                    throw new GradleException("Prepared JEG runtime jar is missing ${entry}: ${jar}")
+                }
+            }
+        } finally {
+            zip.close()
+        }
+        logger.lifecycle("Prepared JEG 2.1.27 runtime jar with verified transitive libraries: ${jar}")
+    }
+}
+
+tasks.register('prepareLegacySlimefunRuntime') {
+    group = 'deployment'
+    description = 'Prepares the existing Paper 1.21.8 runtime directory for the GuGu Slimefun stack.'
+    dependsOn 'prepareRuntimeDirs'
+    doLast {
+        def sourceDir = layout.projectDirectory.dir('run-paper-1.21.8').asFile
+        def targetDir = layout.projectDirectory.dir(rootProject.ext.legacyRuntimeDirName).asFile
+        def sourcePaperJar = new File(sourceDir, rootProject.ext.paperRuntimeJarName)
+        if (!sourcePaperJar.exists()) {
+            throw new GradleException("Missing Paper runtime jar: ${sourcePaperJar}. Prepare run-paper-1.21.8 first.")
+        }
+
+        copy {
+            from sourcePaperJar
+            into targetDir
+        }
+
+        [
+                'eula.txt',
+                'server.properties',
+                'ops.json',
+                'bukkit.yml',
+                'spigot.yml',
+                'commands.yml',
+                'help.yml',
+                'permissions.yml'
+        ].each { fileName ->
+            def sourceFile = new File(sourceDir, fileName)
+            def targetFile = new File(targetDir, fileName)
+            if (sourceFile.exists() && !targetFile.exists()) {
+                copy {
+                    from sourceFile
+                    into targetDir
+                }
+            }
+        }
+
+        new File(targetDir, 'plugins').mkdirs()
+        new File(targetDir, 'logs').mkdirs()
+    }
+}
+
+tasks.register('deployLegacySlimefunRuntime', Copy) {
+    group = 'deployment'
+    description = 'Deploys pinned GuGu Slimefun Build 254, JEG 2.1.27, and GuizhanLibPlugin Build 62 to Paper 1.21.8.'
+    dependsOn 'fetchLegacySlimefun', 'prepareGuguJustEnoughGuideRuntimeJar', 'prepareLegacySlimefunRuntime'
+    from(layout.buildDirectory.file("legacy-runtime/${rootProject.ext.legacySlimefunJarName}")) {
+        rename { rootProject.ext.legacySlimefunJarName }
+    }
+    from(tasks.named('prepareGuguJustEnoughGuideRuntimeJar').flatMap { it.archiveFile })
+    from(layout.buildDirectory.file("legacy-runtime/${rootProject.ext.guizhanLibPluginJarName}"))
+    into(layout.projectDirectory.dir("${rootProject.ext.legacyRuntimeDirName}/plugins"))
+    doLast {
+        def pluginsDir = layout.projectDirectory.dir("${rootProject.ext.legacyRuntimeDirName}/plugins").asFile
+        pluginsDir.listFiles()?.findAll { it.isFile() && it.name.toLowerCase(Locale.ROOT).startsWith('slimefun') && it.name != rootProject.ext.legacySlimefunJarName }?.each { jarFile ->
+            jarFile.delete()
+        }
+
+        def sfxJar = new File(pluginsDir, rootProject.ext.pluginJarName)
+        if (sfxJar.exists()) {
+            sfxJar.delete()
+        }
+
+        def sfxDataDir = new File(pluginsDir, 'SlimeFunX')
+        if (sfxDataDir.exists()) {
+            delete(sfxDataDir)
+        }
+
+        pluginsDir.listFiles()?.findAll {
+            it.isFile()
+                    && it.name.toLowerCase(Locale.ROOT).startsWith('justenoughguide')
+                    && it.name != rootProject.ext.guguJustEnoughGuideJarName
+        }?.each { it.delete() }
+        pluginsDir.listFiles()?.findAll {
+            it.isFile()
+                    && it.name.toLowerCase(Locale.ROOT).startsWith('guizhanlibplugin')
+                    && it.name != rootProject.ext.guizhanLibPluginJarName
+        }?.each { it.delete() }
+    }
+}
+
+def preferredJavaExecutable = {
+    def java21 = file('D:/Tools/runtimes/java/zulu21/bin/java.exe')
+    java21.exists() ? java21.absolutePath : 'java'
+}
+
+def preferredJava25Executable = {
+    def java25Candidates = [
+            file('D:/Tools/runtimes/java/zulu25/bin/java.exe')
+    ]
+    def java25 = java25Candidates.find { it.exists() }
+    java25 != null ? java25.absolutePath : 'java'
+}
+
+tasks.register('runPaper') {
+    group = 'application'
+    description = 'Builds the plugin, deploys it to the Paper runtime, and starts Paper 1.21.8.'
+    dependsOn 'ensurePaperRuntimeTestConfig', 'deployToPaperRuntime'
+    doLast {
+        def workingDirFile = layout.projectDirectory.dir('run-paper-1.21.8').asFile
+        def sqliteTempDir = new File(workingDirFile, '.sqlite-native')
+        if (!sqliteTempDir.isDirectory() && !sqliteTempDir.mkdirs()) {
+            throw new GradleException("Unable to create SQLite native temp directory: ${sqliteTempDir}")
+        }
+        def command = [preferredJavaExecutable()]
+        command.addAll(rootProject.ext.serverEncodingJvmArgs)
+        command.add("-Dorg.sqlite.tmpdir=${sqliteTempDir.absolutePath}".toString())
+        command.addAll(['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui'])
+
+        logger.lifecycle('Starting Paper 1.21.8 with heartbeat output to avoid idle timeout false positives.')
+
+        def process = new ProcessBuilder(command)
+                .directory(workingDirFile)
+                .redirectErrorStream(true)
+                .start()
+
+        def inputThread = Thread.startDaemon('runPaper-input-forwarder') {
+            def processInput = process.outputStream
+            try {
+                byte[] buffer = new byte[1024]
+                int read
+                while (process.isAlive() && (read = System.in.read(buffer)) != -1) {
+                    processInput.write(buffer, 0, read)
+                    processInput.flush()
+                }
+            } catch (IOException ignored) {
+                
+            } finally {
+                try {
+                    processInput.close()
+                } catch (IOException ignored) {
+                    
+                }
+            }
+        }
+
+        def forwardThread = Thread.startDaemon('runPaper-output-forwarder') {
+            process.inputStream.withReader(StandardCharsets.UTF_8.name()) { reader ->
+                String line
+                while ((line = reader.readLine()) != null) {
+                    println line
+                }
+            }
+        }
+
+        try {
+            while (process.isAlive()) {
+                if (!process.waitFor(30, TimeUnit.SECONDS)) {
+                    logger.lifecycle('[runPaper] still running...')
+                }
+            }
+            inputThread.join(1000)
+            forwardThread.join(1000)
+        } finally {
+            if (process.isAlive()) {
+                process.destroy()
+            }
+        }
+
+        def exitCode = process.exitValue()
+        if (exitCode != 0) {
+            throw new GradleException("Paper 1.21.8 exited with code ${exitCode}.")
+        }
+    }
+}
+
+tasks.register('runPaper261', Exec) {
+    group = 'application'
+    description = 'Builds the plugin, deploys it to the Paper 26.1 runtime, and starts Paper 26.1 using Java 25 when available.'
+    dependsOn 'deployToPaper261Runtime'
+    workingDir layout.projectDirectory.dir(rootProject.ext.paper261RuntimeDirName).asFile
+    executable preferredJava25Executable()
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paper261RuntimeJarName, 'nogui']
+}
+
+tasks.register('runFolia', Exec) {
+    group = 'application'
+    description = 'Builds the plugin, deploys it to the Folia runtime, and starts Folia 1.21.8.'
+    dependsOn 'deployToFoliaRuntime'
+    workingDir layout.projectDirectory.dir('run-folia-1.21.8').asFile
+    executable preferredJavaExecutable()
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.foliaRuntimeJarName, 'nogui']
+}
+
+tasks.register('runLegacySlimefun', Exec) {
+    group = 'application'
+    description = 'Deploys the pinned GuGu Slimefun/JEG stack and starts the existing Paper 1.21.8 runtime.'
+    dependsOn 'deployLegacySlimefunRuntime'
+    workingDir layout.projectDirectory.dir(rootProject.ext.legacyRuntimeDirName).asFile
+    executable preferredJavaExecutable()
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui']
+}
+
+tasks.register('runLegacySlimefunWithJustEnoughGuide', Exec) {
+    group = 'just-enough-guide'
+    description = 'Deploys GuGu Slimefun Build 254, JEG 2.1.27, and GuizhanLibPlugin Build 62, then starts Paper 1.21.8.'
+    dependsOn 'deployLegacySlimefunRuntime'
+    workingDir layout.projectDirectory.dir(rootProject.ext.legacyRuntimeDirName).asFile
+    executable preferredJavaExecutable()
+    standardInput = System.in
+    args rootProject.ext.serverEncodingJvmArgs + ['-Xms1G', '-Xmx2G', '-jar', rootProject.ext.paperRuntimeJarName, 'nogui']
+}
+
+apply from: 'gradle/survive-runtime.gradle'
+apply from: 'gradle/basic-teleporter-runtime.gradle'
 

@@ -886,6 +886,9 @@ public final class SfxConfigurableMachineService implements Listener {
         Map<String, Object> frameworkAttributes = configurableFrameworkAttributes(instance, definition, state, session);
         SfxMachineState frameworkState = new SfxMachineState();
         try (SfxMachineExecution machineExecution = machineRuntime.beginTick(instanceId, definition.id(), location, context, frameworkState, frameworkAttributes)) {
+        if (!machineExecution.canProceed()) {
+            return;
+        }
         boolean changed = runFrameworkConfigurableTick(instanceId, instance, definition, state, session, location, context, frameworkAttributes);
         if (changed) {
             if (blockData.findInstance(instanceId).isEmpty()) {

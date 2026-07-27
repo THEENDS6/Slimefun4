@@ -142,6 +142,8 @@ public final class SfxCargoService implements Listener {
     private final Map<UUID, CargoTransferStats> managerStats = new ConcurrentHashMap<>();
     private final Map<UUID, SfxCargoEndpoint.TransientInventory> transientMachineInventories = new ConcurrentHashMap<>();
     private final Set<UUID> pendingTransientInventoryClears = ConcurrentHashMap.newKeySet();
+    private volatile VisualizerSettings cachedVisualizerSettings;
+    private volatile long visualizerSettingsLoadedAtNanos;
     private long cargoSchedulerTick;
     private volatile boolean running;
 
@@ -808,42 +810,44 @@ public final class SfxCargoService implements Listener {
     }
 
     private void renderVisualizerFor(Player player, UUID managerId) {
-        if (player == null || !player.isOnline() || managerId == null || !visualizerAllowed(managerId)) {
+        VisualizerSettings settings = visualizerSettings();
+        if (player == null || !player.isOnline() || managerId == null
+                || !visualizerAllowed(managerId, settings.enabled())) {
             return;
         }
         SfxTopologyComponent component = topology.componentForMember(managerId).orElse(null);
         if (component == null) {
             return;
         }
-        boolean includeManager = plugin.getConfig().getBoolean("cargo.visualizer.include-manager", false);
         for (UUID memberId : component.members()) {
-            if (!includeManager && memberId.equals(managerId)) {
+            if (!settings.includeManager() && memberId.equals(managerId)) {
                 continue;
             }
             SfxBlockInstanceRecord member = blockData.findInstance(memberId).orElse(null);
             if (member == null || !definitions.containsKey(member.typeId())) {
                 continue;
             }
-            spawnVisualizerParticle(player, member.anchorKey());
+            spawnVisualizerParticle(player, member.anchorKey(), settings);
         }
     }
 
-    private void spawnVisualizerParticle(Player player, SfxBlockAnchorKey key) {
+    private void spawnVisualizerParticle(
+            Player player,
+            SfxBlockAnchorKey key,
+            VisualizerSettings settings
+    ) {
         World world = Bukkit.getWorld(key.worldId());
         if (world == null || player.getWorld() != world) {
             return;
         }
         Location location = new Location(world, key.x() + 0.5D, key.y() + 0.5D, key.z() + 0.5D);
-        if (location.distanceSquared(player.getLocation()) > plugin.getConfig().getInt("cargo.visualizer.view-distance-squared", 32 * 32)) {
+        if (location.distanceSquared(player.getLocation()) > settings.viewDistanceSquared()) {
             return;
         }
-        Particle particle = visualizerParticle();
+        Particle particle = settings.particle();
         if (particle == Particle.DUST) {
-            int red = SfxCargoNodeState.clamp(plugin.getConfig().getInt("cargo.visualizer.dust.red", 255), 0, 255);
-            int green = SfxCargoNodeState.clamp(plugin.getConfig().getInt("cargo.visualizer.dust.green", 0), 0, 255);
-            int blue = SfxCargoNodeState.clamp(plugin.getConfig().getInt("cargo.visualizer.dust.blue", 0), 0, 255);
-            float size = (float) Math.max(0.1D, plugin.getConfig().getDouble("cargo.visualizer.dust.size", 1.0D));
-            player.spawnParticle(Particle.DUST, location, 1, 0.0D, 0.0D, 0.0D, 0.0D, new Particle.DustOptions(Color.fromRGB(red, green, blue), size));
+            player.spawnParticle(Particle.DUST, location, 1,
+                    0.0D, 0.0D, 0.0D, 0.0D, settings.dustOptions());
             return;
         }
         try {
@@ -853,17 +857,41 @@ public final class SfxCargoService implements Listener {
         }
     }
 
-    private Particle visualizerParticle() {
+    private VisualizerSettings visualizerSettings() {
+        long now = System.nanoTime();
+        VisualizerSettings cached = cachedVisualizerSettings;
+        if (cached != null && now - visualizerSettingsLoadedAtNanos < 1_000_000_000L) {
+            return cached;
+        }
         String raw = plugin.getConfig().getString("cargo.visualizer.particle", "dust");
         String normalized = raw == null ? "dust" : raw.trim().toUpperCase(java.util.Locale.ROOT).replace('-', '_');
         if (normalized.isBlank() || "REDSTONE".equals(normalized)) {
             normalized = "DUST";
         }
+        Particle particle;
         try {
-            return Particle.valueOf(normalized);
+            particle = Particle.valueOf(normalized);
         } catch (IllegalArgumentException ignored) {
-            return Particle.DUST;
+            particle = Particle.DUST;
         }
+        int red = SfxCargoNodeState.clamp(
+                plugin.getConfig().getInt("cargo.visualizer.dust.red", 255), 0, 255);
+        int green = SfxCargoNodeState.clamp(
+                plugin.getConfig().getInt("cargo.visualizer.dust.green", 0), 0, 255);
+        int blue = SfxCargoNodeState.clamp(
+                plugin.getConfig().getInt("cargo.visualizer.dust.blue", 0), 0, 255);
+        float size = (float) Math.max(
+                0.1D, plugin.getConfig().getDouble("cargo.visualizer.dust.size", 1.0D));
+        VisualizerSettings loaded = new VisualizerSettings(
+                plugin.getConfig().getBoolean("cargo.visualizer.enabled", true),
+                plugin.getConfig().getBoolean("cargo.visualizer.include-manager", false),
+                Math.max(0, plugin.getConfig().getInt(
+                        "cargo.visualizer.view-distance-squared", 32 * 32)),
+                particle,
+                new Particle.DustOptions(Color.fromRGB(red, green, blue), size));
+        cachedVisualizerSettings = loaded;
+        visualizerSettingsLoadedAtNanos = now;
+        return loaded;
     }
 
     private void updateManagerDisplays() {
@@ -1009,8 +1037,16 @@ public final class SfxCargoService implements Listener {
             refund.setAmount(planned - inserted);
             ItemStack failedRefund = source.insert(refund, false);
             if (!isEmpty(failedRefund)) {
-                plugin.getLogger().warning("Cargo refund could not be fully restored for input " + input.instance().instanceId()
-                        + "; lost remainder=" + failedRefund.getAmount() + " of " + failedRefund.getType());
+                
+                
+                Location dropLocation = toLocation(input.instance().anchorKey());
+                if (dropLocation != null && dropLocation.getWorld() != null) {
+                    SfxBlockDrops.dropItem(dropLocation.getBlock(), failedRefund.clone());
+                } else {
+                    plugin.getLogger().warning("Cargo refund could not be restored or dropped for input "
+                            + input.instance().instanceId() + "; lost remainder=" + failedRefund.getAmount()
+                            + " of " + failedRefund.getType());
+                }
             }
         }
         SfxMachineLegacyHookBridge.afterTransfer(machineRuntime, input.instance().typeId(), input.instance().instanceId(), toLocation(input.instance().anchorKey()), "cargo", "SfxCargoService.commitPlannedTransfer");
@@ -1353,7 +1389,11 @@ public final class SfxCargoService implements Listener {
     }
 
     private boolean visualizerAllowed(UUID managerId) {
-        if (plugin.getConfig().getBoolean("cargo.visualizer.enabled", true)) {
+        return visualizerAllowed(managerId, visualizerSettings().enabled());
+    }
+
+    private boolean visualizerAllowed(UUID managerId, boolean globallyEnabled) {
+        if (globallyEnabled) {
             return true;
         }
         SfxCargoManagerProvider provider = managerProvider(managerId);
@@ -1391,6 +1431,15 @@ public final class SfxCargoService implements Listener {
                 persistState(instanceId, currentState(instanceId));
             }
         };
+    }
+
+    private record VisualizerSettings(
+            boolean enabled,
+            boolean includeManager,
+            int viewDistanceSquared,
+            Particle particle,
+            Particle.DustOptions dustOptions
+    ) {
     }
 
     private void resetManagerSchedule(UUID instanceId) {

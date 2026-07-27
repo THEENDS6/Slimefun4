@@ -480,19 +480,29 @@ final class SfxBasicExpansionPotionBrewEngine {
         if (mapped == null) {
             return null;
         }
-        PotionEffectType direct = PotionEffectType.getByName(mapped);
-        if (direct != null) {
-            return direct;
-        }
-        String fallback = switch (mapped) {
-            case "JUMP" -> "JUMP_BOOST";
-            case "INCREASE_DAMAGE" -> "STRENGTH";
-            case "HEAL" -> "INSTANT_HEALTH";
-            case "HARM" -> "INSTANT_DAMAGE";
-            case "SLOW" -> "SLOWNESS";
-            default -> mapped;
+        
+        
+        
+        
+        String modern = switch (mapped) {
+            case "JUMP" -> "jump_boost";
+            case "INCREASE_DAMAGE" -> "strength";
+            case "HEAL" -> "instant_health";
+            case "HARM" -> "instant_damage";
+            case "SLOW" -> "slowness";
+            case "FAST_DIGGING" -> "haste";
+            case "SLOW_DIGGING" -> "mining_fatigue";
+            case "CONFUSION" -> "nausea";
+            case "DAMAGE_RESISTANCE" -> "resistance";
+            default -> mapped.toLowerCase(Locale.ROOT);
         };
-        return PotionEffectType.getByName(fallback);
+        PotionEffectType byRegistry = org.bukkit.Registry.EFFECT.get(NamespacedKey.minecraft(modern));
+        if (byRegistry != null) {
+            return byRegistry;
+        }
+        
+        PotionEffectType legacy = PotionEffectType.getByName(mapped);
+        return legacy != null ? legacy : PotionEffectType.getByName(modern.toUpperCase(Locale.ROOT));
     }
 
     private PotionType type(String name) {

@@ -194,12 +194,21 @@ public final class SfxAddonManager implements AutoCloseable {
             File tempJar = File.createTempFile("sfx-bundled-addon-", ".jar", addonsDir);
             Files.copy(input, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
             YamlConfiguration manifest = readManifest(tempJar);
-            String id = manifest.getString("id", BASIC_EXPANSION_ID).trim();
+            String id = manifest.getString("id");
+            if (id == null || id.isBlank()) {
+                throw new IllegalStateException("Bundled addon manifest is missing required id: " + resourcePath);
+            }
+            id = id.trim();
             File addonDirectory = new File(addonsDir, folderName(id));
             if (!addonDirectory.isDirectory() && !addonDirectory.mkdirs()) {
                 throw new IOException("Failed to create bundled addon directory " + addonDirectory.getPath());
             }
-            String jarName = manifest.getString("java.jar", "sfx-basic-expansion.jar").trim();
+            String jarName = manifest.getString("java.jar");
+            if (jarName == null || jarName.isBlank()) {
+                throw new IllegalStateException(
+                        "Bundled addon manifest is missing required java.jar: " + resourcePath);
+            }
+            jarName = jarName.trim();
             File addonJar = new File(addonsDir, jarName);
             replaceFileIfChanged(tempJar, addonJar);
             if (!tempJar.delete() && tempJar.exists() && logger != null) {

@@ -2,6 +2,8 @@ package cc.theends6.sfx.internal.machine;
 
 import cc.theends6.sfx.api.machine.manual.SfxManualMachineDefinition;
 
+import cc.theends6.sfx.SlimeFunXPlugin;
+import cc.theends6.sfx.api.SfxApi;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.api.text.Text;
@@ -55,7 +57,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         BlockFace playerFacing = playerFacing(event.getPlayer());
         BlockFace sideDirection = sideDirection(playerFacing);
         DeploymentPlan plan = deploymentPlan(anchor, definition, sideDirection);
-        if (!canDeploy(plan.placements(), anchor, true)) {
+        if (!canDeploy(plan.placements(), anchor, true, event.getPlayer())) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-no-space")));
             return;
@@ -92,7 +94,7 @@ public final class SfxManualMachineDeployListener implements Listener {
         BlockFace playerFacing = playerFacing(event.getPlayer());
         BlockFace sideDirection = sideDirection(playerFacing);
         DeploymentPlan plan = deploymentPlan(anchor, definition, sideDirection);
-        if (!canDeploy(plan.placements(), anchor, false)) {
+        if (!canDeploy(plan.placements(), anchor, false, event.getPlayer())) {
             event.getPlayer().sendMessage(Text.prefixed(plugin, localization.text("machines.deploy-no-space")));
             event.setCancelled(true);
             return;
@@ -113,7 +115,7 @@ public final class SfxManualMachineDeployListener implements Listener {
                 .orElse(null);
     }
 
-    private boolean canDeploy(Map<Block, Material> deployment, Block anchor, boolean allowAnchorOccupied) {
+    private boolean canDeploy(Map<Block, Material> deployment, Block anchor, boolean allowAnchorOccupied, Player player) {
         for (Map.Entry<Block, Material> entry : deployment.entrySet()) {
             Material expected = entry.getValue();
             if (expected == null || expected.isAir()) {
@@ -127,12 +129,29 @@ public final class SfxManualMachineDeployListener implements Listener {
                 continue;
             }
             Material actual = block.getType();
-            if (actual == expected || actual.isAir()) {
-                continue;
+            if (actual != expected && !actual.isAir()) {
+                return false;
             }
-            return false;
+            
+            
+            
+            if (!block.equals(anchor) && !deployCanPlace(player, block, expected)) {
+                return false;
+            }
         }
         return true;
+    }
+
+    private boolean deployCanPlace(Player player, Block block, Material material) {
+        if (player == null) {
+            return true;
+        }
+        SfxApi api = plugin instanceof SlimeFunXPlugin sfx ? sfx.api() : null;
+        if (api == null) {
+            return true;
+        }
+        return api.permissions().canPlace(
+                cc.theends6.sfx.api.permission.SfxActionActor.player(player), block, new ItemStack(material));
     }
 
     private boolean isSfxAnchored(Block block) {

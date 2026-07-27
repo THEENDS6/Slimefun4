@@ -276,6 +276,9 @@ public final class SfxDecorationService implements Listener {
         Map<String, Object> attributes = frameworkAttributes(definition, states.getOrDefault(instance.instanceId(), SfxDecorationState.DEFAULT), location, phase);
         SfxMachineTickContext tickContext = new SfxMachineTickContext(phase, 10L, false);
         try (SfxMachineExecution execution = machineRuntime.beginTick(instance.instanceId(), liveInstance.typeId(), location, tickContext, null, attributes)) {
+            if (!execution.canProceed()) {
+                return;
+            }
             machineRuntime.runPhase(liveInstance.typeId(), SfxMachinePhase.BEFORE_PROGRESS, instance.instanceId(), location, tickContext, null, SfxMachineStatus.IDLE, attributes);
             Material next = definition.materialFor(states.getOrDefault(instance.instanceId(), SfxDecorationState.DEFAULT), phase);
             attributes.put("decoration.previousMaterial", block.getType().name());

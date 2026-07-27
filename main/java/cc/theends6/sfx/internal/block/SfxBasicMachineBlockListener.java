@@ -955,6 +955,9 @@ public final class SfxBasicMachineBlockListener implements Listener {
         frameworkAttributes.put("basic.furnaceState", state);
         frameworkAttributes.put("framework.effect.dispatcher", (SfxMachineEffectDispatcher) this::frameworkBasicEffect);
         try (SfxMachineExecution machineExecution = machineRuntime.beginTick(blockData.findAnchor(block.getLocation()).map(SfxAnchorRecord::instanceId).orElse(null), frameworkMachineId, block.getLocation(), context, new SfxMachineState(), frameworkAttributes)) {
+            if (!machineExecution.canProceed()) {
+                return;
+            }
             Object status = frameworkAttributes.get("basic.furnace.status");
             machineExecution.status(status instanceof cc.theends6.sfx.internal.machine.SfxMachineStatus machineStatus
                     ? machineStatus

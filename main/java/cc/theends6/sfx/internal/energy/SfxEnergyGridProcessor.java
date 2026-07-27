@@ -110,15 +110,19 @@ final class SfxEnergyGridProcessor {
         }
 
         List<SfxBlockInstanceRecord> configurableRuntimeMachines = service.join(configurableConsumers, configurableProducers);
-        int requestedConsumption = service.electricMachines.requestedEnergyConsumption(electricConsumerIds)
-                + service.configurableMachines.requestedEnergyConsumption(configurableConsumerIds)
-                + service.requestedChargerEnergy(chargerRefs)
-                + service.requestedDynamicGeneratorEnergy(generatorRefs);
-        int totalStoredBefore = service.totalStoredEnergy(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
-                + service.configurableMachines.totalStoredEnergy(configurableRuntimeMachines);
-        int totalCapacityBefore = service.totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
-                + service.configurableMachines.totalCapacity(configurableRuntimeMachines);
-        int totalEffectiveCapacityBefore = totalCapacityBefore + service.hiddenBufferCapacity(service.hiddenStorageBaseCapacity(capacitorRefs, generatorRefs));
+        int requestedConsumption = service.saturatedAdd(
+                service.electricMachines.requestedEnergyConsumption(electricConsumerIds),
+                service.configurableMachines.requestedEnergyConsumption(configurableConsumerIds),
+                service.requestedChargerEnergy(chargerRefs),
+                service.requestedDynamicGeneratorEnergy(generatorRefs));
+        int totalStoredBefore = service.saturatedAdd(
+                service.totalStoredEnergy(capacitorRefs, generatorRefs, chargerRefs, electricConsumers),
+                service.configurableMachines.totalStoredEnergy(configurableRuntimeMachines));
+        int totalCapacityBefore = service.saturatedAdd(
+                service.totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers),
+                service.configurableMachines.totalCapacity(configurableRuntimeMachines));
+        int totalEffectiveCapacityBefore = service.saturatedAdd(totalCapacityBefore,
+                service.hiddenBufferCapacity(service.hiddenStorageBaseCapacity(capacitorRefs, generatorRefs)));
         boolean autoPauseEnabled = SfxEnergyBalance.rules(service.plugin).pauseGeneratorsWhenGridFull();
         int potentialSupply = service.potentialGeneration(generatorRefs, configurableProducers);
         if (autoPauseEnabled) {
@@ -140,7 +144,7 @@ final class SfxEnergyGridProcessor {
             }
             boolean consuming = service.dynamicGeneratorDemand(generator) > 0;
             if (!consuming && !service.dynamicGeneratorManagesStorage(generator) && generator.state().storedEnergy() > 0) {
-                available += generator.state().storedEnergy();
+                available = service.saturatedAdd(available, generator.state().storedEnergy());
                 generator.state().storedEnergy(0);
                 service.dirtyNodes.add(generator.instance().instanceId());
             }
@@ -148,18 +152,18 @@ final class SfxEnergyGridProcessor {
                     ? 0 : service.generate(generator.instance(), generator.definition(), generator.state());
             generatorFramework.put("energy.generated", produced);
             SfxMachinePipelineGuard.proceed(service.machineRuntime.runPhase(generator.instance().typeId(), SfxMachinePhase.AFTER_PROGRESS, generator.instance().instanceId(), service.toLocation(generator.instance().anchorKey()), energyTick, null, produced > 0 ? cc.theends6.sfx.internal.machine.SfxMachineStatus.RUNNING : cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, generatorFramework), generatorFramework, SfxMachinePhase.AFTER_PROGRESS.name());
-            available += produced;
-            supply += produced;
+            available = service.saturatedAdd(available, produced);
+            supply = service.saturatedAdd(supply, produced);
         }
 
         for (SfxBlockInstanceRecord producer : configurableProducers) {
             int produced = service.configurableMachines.generateProducerEnergy(producer.instanceId());
             if (produced > 0) {
-                supply += produced;
+                supply = service.saturatedAdd(supply, produced);
             }
             int cached = service.configurableMachines.drainProducerEnergy(producer.instanceId());
             if (cached > 0) {
-                available += cached;
+                available = service.saturatedAdd(available, cached);
             }
         }
 
@@ -314,13 +318,15 @@ final class SfxEnergyGridProcessor {
 
         service.electricMachines.drainRecentEnergyConsumption(loadedRuntimeMembers);
         service.configurableMachines.drainRecentEnergyConsumption(new ArrayList<>(loadedRuntimeMembers));
-        int totalStored = service.totalStoredEnergy(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
-                + service.configurableMachines.totalStoredEnergy(configurableRuntimeMachines);
-        int totalCapacity = service.totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers)
-                + service.configurableMachines.totalCapacity(configurableRuntimeMachines);
+        int totalStored = service.saturatedAdd(
+                service.totalStoredEnergy(capacitorRefs, generatorRefs, chargerRefs, electricConsumers),
+                service.configurableMachines.totalStoredEnergy(configurableRuntimeMachines));
+        int totalCapacity = service.saturatedAdd(
+                service.totalCapacity(capacitorRefs, generatorRefs, chargerRefs, electricConsumers),
+                service.configurableMachines.totalCapacity(configurableRuntimeMachines));
         int displayStored = service.displayedEnergy(totalStored, totalCapacity);
         int displaySupply = autoPauseEnabled ? potentialSupply : supply;
-        int net = displaySupply - requestedConsumption;
+        int net = service.saturatedSubtract(displaySupply, requestedConsumption);
         service.displayStatus(grid.regulatorKey(), SfxEnergyGridStatus.ONLINE, displaySupply, requestedConsumption, net, displayStored, totalCapacity);
         service.refreshOpenSfxEnergyGeneratorSessions();
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {

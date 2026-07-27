@@ -89,7 +89,7 @@ final class SfxEnergyGridBuilder {
 
     private List<SfxBlockInstanceRecord> registeredEnergyNeighbours(SfxBlockAnchorKey origin) {
         List<SfxBlockInstanceRecord> neighbours = new ArrayList<>();
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
+        for (SfxAnchorRecord anchor : blockData.anchorsNear(origin, range, range)) {
             if (!anchor.key().worldId().equals(origin.worldId()) || anchor.key().equals(origin)) {
                 continue;
             }

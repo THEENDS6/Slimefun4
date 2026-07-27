@@ -5261,6 +5261,7 @@ gps:
     target-world-not-loaded: '&cThe target world is not loaded.'
     teleporting: '&bTeleporting to &f{waypoint}&b...'
     teleport-cancelled-moved: '&cTeleport cancelled because you moved.'
+    teleport-unsafe: '&cTeleport cancelled because the destination is no longer safe.'
     no-elevator-target: '&cNo elevator plate found {direction}.'
     waypoint-limit: '&cYou have reached the GPS waypoint limit.'
     waypoint-created: '&aWaypoint created: &f{name}'

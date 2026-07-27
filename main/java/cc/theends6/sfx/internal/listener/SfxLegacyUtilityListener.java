@@ -345,15 +345,29 @@ public final class SfxLegacyUtilityListener implements Listener {
             send(player, "messages.tape-measure.no-anchor");
             return;
         }
-        UUID worldId = UUID.fromString(parts[0]);
+        UUID worldId;
+        int anchorX;
+        int anchorY;
+        int anchorZ;
+        try {
+            worldId = UUID.fromString(parts[0]);
+            anchorX = Integer.parseInt(parts[1]);
+            anchorY = Integer.parseInt(parts[2]);
+            anchorZ = Integer.parseInt(parts[3]);
+        } catch (IllegalArgumentException exception) {
+            meta.getPersistentDataContainer().remove(tapeAnchorKey);
+            item.setItemMeta(meta);
+            send(player, "messages.tape-measure.no-anchor");
+            return;
+        }
         if (!block.getWorld().getUID().equals(worldId)) {
             send(player, "messages.tape-measure.wrong-world");
             return;
         }
 
-        double dx = block.getX() - Integer.parseInt(parts[1]);
-        double dy = block.getY() - Integer.parseInt(parts[2]);
-        double dz = block.getZ() - Integer.parseInt(parts[3]);
+        double dx = block.getX() - anchorX;
+        double dy = block.getY() - anchorY;
+        double dz = block.getZ() - anchorZ;
         double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
         player.playSound(block.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 1.2f);
         send(player, "messages.tape-measure.distance",

@@ -71,6 +71,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -283,6 +284,16 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
             SfxBlockDrops.dropPluginBlock(block, items, typeId);
             blockData.unregisterAt(block.getLocation());
         }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        
+        
+        
+        java.util.UUID playerId = event.getPlayer().getUniqueId();
+        activeTeleports.remove(playerId);
+        activeTeleporterMenus.remove(playerId);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -1032,16 +1043,30 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         }
         if (elapsedTicks >= totalTicks) {
             activeTeleports.remove(player.getUniqueId());
-            player.teleportAsync(target).thenRun(() -> runtime.executeForPlayer(player, () -> {
-                if (target.getWorld() != null) {
-                    target.getWorld().spawnParticle(Particle.PORTAL, target.clone().add(0, 1, 0), 80, 0.3D, 0.8D, 0.3D, 0.1D);
-                    target.getWorld().playSound(target, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 1.0F);
-                }
-                showTeleportEndTitle(player, "gps.ui.teleport.complete.title", "gps.ui.teleport.complete.subtitle", 100);
-                if (matrixLocation != null) {
-                    updateTeleporterDecorations(matrixLocation, true, false);
-                }
-            }));
+            runtime.supplyAtAsync(target, () -> isSafeTeleportTarget(target)).thenAccept(safe ->
+                    runtime.executeForPlayer(player, () -> {
+                        if (!safe) {
+                            showTeleportEndTitle(player, "gps.ui.teleport.cancelled.title",
+                                    "gps.ui.teleport.cancelled.subtitle", 0);
+                            send(player, "gps.messages.teleport-unsafe");
+                            if (matrixLocation != null) {
+                                updateTeleporterDecorations(matrixLocation, true, true);
+                            }
+                            return;
+                        }
+                        player.teleportAsync(target).thenRun(() -> runtime.executeForPlayer(player, () -> {
+                            if (target.getWorld() != null) {
+                                target.getWorld().spawnParticle(Particle.PORTAL, target.clone().add(0, 1, 0),
+                                        80, 0.3D, 0.8D, 0.3D, 0.1D);
+                                target.getWorld().playSound(target, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 1.0F);
+                            }
+                            showTeleportEndTitle(player, "gps.ui.teleport.complete.title",
+                                    "gps.ui.teleport.complete.subtitle", 100);
+                            if (matrixLocation != null) {
+                                updateTeleporterDecorations(matrixLocation, true, false);
+                            }
+                        }));
+                    }));
             return;
         }
         int progress = Math.max(0, Math.min(99, (int) Math.floor((elapsedTicks * 100.0D) / Math.max(1, totalTicks))));
@@ -1052,6 +1077,28 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
             source.getWorld().playSound(source, Sound.BLOCK_PORTAL_AMBIENT, 0.25F, 1.8F);
         }
         runtime.executeForPlayerLater(player, 1L, () -> updateTeleportProgress(player, source, target, matrixLocation, portable, totalTicks, elapsedTicks + 1));
+    }
+
+    private boolean isSafeTeleportTarget(Location target) {
+        if (target == null || target.getWorld() == null) {
+            return false;
+        }
+        Block feet = target.getBlock();
+        Block head = feet.getRelative(BlockFace.UP);
+        Block floor = feet.getRelative(BlockFace.DOWN);
+        Material feetType = feet.getType();
+        Material headType = head.getType();
+        Material floorType = floor.getType();
+        return feet.isPassable()
+                && head.isPassable()
+                && floorType.isSolid()
+                && !floor.isLiquid()
+                && feetType != Material.FIRE
+                && feetType != Material.SOUL_FIRE
+                && feetType != Material.LAVA
+                && headType != Material.LAVA
+                && floorType != Material.MAGMA_BLOCK
+                && floorType != Material.CACTUS;
     }
 
     private boolean playerRemainedAtSource(Player player, Location source) {

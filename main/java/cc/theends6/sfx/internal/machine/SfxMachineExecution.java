@@ -16,6 +16,7 @@ public final class SfxMachineExecution implements AutoCloseable {
     private final Map<String, Object> attributes;
     private final long startedNanos = System.nanoTime();
     private SfxMachineStatus status = SfxMachineStatus.IDLE;
+    private SfxMachinePhaseResult beforeTick = SfxMachinePhaseResult.cont();
     private boolean closed;
 
     SfxMachineExecution(SfxMachineRuntimeEngine engine, UUID instanceId, String machineId, Location location, SfxMachineTickContext context) {
@@ -37,6 +38,23 @@ public final class SfxMachineExecution implements AutoCloseable {
             this.status = status;
             engine.runStatusPhase(machineId, instanceId, location, context, state, this.status, attributes);
         }
+    }
+
+    void beforeTick(SfxMachinePhaseResult result) {
+        this.beforeTick = result == null ? SfxMachinePhaseResult.cont() : result;
+        if (this.beforeTick.stopsPipeline()) {
+            this.status = this.beforeTick.status() == null
+                    ? SfxMachineStatus.BLOCKED
+                    : this.beforeTick.status();
+        }
+    }
+
+    public boolean canProceed() {
+        return !beforeTick.stopsPipeline();
+    }
+
+    public SfxMachinePhaseResult beforeTickResult() {
+        return beforeTick;
     }
 
     public Map<String, Object> attributes() { return attributes; }

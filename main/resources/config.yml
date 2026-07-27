@@ -299,6 +299,16 @@ radiation:
     
     reduction-per-piece: 0.25
 
+permissions:
+  
+  fallback-allow: true
+  
+  allow-when-owner-offline: false
+  
+  allow-unowned-machines: false
+  
+  allow-system-actions: false
+
 
 
 legacy:

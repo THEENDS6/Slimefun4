@@ -215,13 +215,36 @@ public final class SqliteSfxPlayerDataRepository implements SfxPlayerDataReposit
                     statement.executeUpdate();
                 }
 
-                try (PreparedStatement deleteResearches = connection.prepareStatement("DELETE FROM sfx_player_researches WHERE owner_uuid = ?")) {
-                    deleteResearches.setString(1, profile.ownerId().toString());
-                    deleteResearches.executeUpdate();
+                
+                
+                
+                
+                
+                java.util.Set<String> unlocked = profile.unlockedResearchesCopy();
+                if (unlocked.isEmpty()) {
+                    try (PreparedStatement deleteResearches = connection.prepareStatement("DELETE FROM sfx_player_researches WHERE owner_uuid = ?")) {
+                        deleteResearches.setString(1, profile.ownerId().toString());
+                        deleteResearches.executeUpdate();
+                    }
+                } else {
+                    StringBuilder placeholders = new StringBuilder();
+                    for (int i = 0; i < unlocked.size(); i++) {
+                        placeholders.append(i == 0 ? "?" : ", ?");
+                    }
+                    try (PreparedStatement deleteStale = connection.prepareStatement(
+                            "DELETE FROM sfx_player_researches WHERE owner_uuid = ? AND research_id NOT IN (" + placeholders + ")")) {
+                        deleteStale.setString(1, profile.ownerId().toString());
+                        int index = 2;
+                        for (String researchId : unlocked) {
+                            deleteStale.setString(index++, researchId);
+                        }
+                        deleteStale.executeUpdate();
+                    }
                 }
                 try (PreparedStatement insertResearch = connection.prepareStatement(
-                        "INSERT INTO sfx_player_researches(owner_uuid, research_id, unlocked_at) VALUES(?, ?, ?)")) {
-                    for (String researchId : profile.unlockedResearchesCopy()) {
+                        "INSERT INTO sfx_player_researches(owner_uuid, research_id, unlocked_at) VALUES(?, ?, ?) "
+                                + "ON CONFLICT(owner_uuid, research_id) DO NOTHING")) {
+                    for (String researchId : unlocked) {
                         insertResearch.setString(1, profile.ownerId().toString());
                         insertResearch.setString(2, researchId);
                         insertResearch.setLong(3, now);

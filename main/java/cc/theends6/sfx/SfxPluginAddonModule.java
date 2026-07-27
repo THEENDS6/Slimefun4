@@ -8,11 +8,17 @@ final class SfxPluginAddonModule {
 
     static void unloadAddons(SlimeFunXPlugin plugin) {
         if (plugin.addonManager == null) {
-            plugin.api.bindAddonManager(null);
+            
+            
+            if (plugin.api != null) {
+                plugin.api.bindAddonManager(null);
+            }
             return;
         }
         plugin.addonManager.close();
-        plugin.api.bindAddonManager(null);
+        if (plugin.api != null) {
+            plugin.api.bindAddonManager(null);
+        }
         plugin.addonManager = null;
     }
 

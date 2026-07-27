@@ -12,6 +12,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.Event.Result;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
@@ -49,6 +50,9 @@ public final class SfxItemUseDispatcher implements Listener {
             return;
         }
         if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+        if (event.useItemInHand() == Result.DENY) {
             return;
         }
 

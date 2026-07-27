@@ -56,6 +56,7 @@ public final class SfxApiImpl implements SfxApi {
     private final SfxInventoryPowerRouter powerRouter;
     private final DefaultSfxWorldActions worldActions;
     private final SfxProtectionService protection;
+    private final cc.theends6.sfx.api.permission.SfxWorldPermissionService permissions;
     private final DefaultSfxAddonRuntime addonRuntime;
 
     private SfxApiImpl(
@@ -74,6 +75,7 @@ public final class SfxApiImpl implements SfxApi {
             SfxInventoryPowerRouter powerRouter,
             DefaultSfxWorldActions worldActions,
             SfxProtectionService protection,
+            cc.theends6.sfx.api.permission.SfxWorldPermissionService permissions,
             DefaultSfxAddonRuntime addonRuntime
     ) {
         this.runtime = runtime;
@@ -91,6 +93,7 @@ public final class SfxApiImpl implements SfxApi {
         this.powerRouter = powerRouter;
         this.worldActions = worldActions;
         this.protection = protection;
+        this.permissions = permissions;
         this.addonRuntime = addonRuntime;
     }
 
@@ -109,14 +112,16 @@ public final class SfxApiImpl implements SfxApi {
         DefaultSfxServerActiveClock activeClock = new DefaultSfxServerActiveClock(plugin,
                 plugin.getDataFolder().toPath().resolve("data/server-active-ticks.dat"));
         activeClock.start();
-        DefaultSfxProtectionService protection = new DefaultSfxProtectionService(plugin);
-        DefaultSfxWorldActions worldActions = new DefaultSfxWorldActions(plugin, runtime, protection);
+        cc.theends6.sfx.internal.permission.DefaultSfxWorldPermissionService permissions =
+                new cc.theends6.sfx.internal.permission.DefaultSfxWorldPermissionService(plugin);
+        DefaultSfxProtectionService protection = new DefaultSfxProtectionService(permissions);
+        DefaultSfxWorldActions worldActions = new DefaultSfxWorldActions(plugin, runtime, permissions);
         DefaultSfxInventoryPowerRouter powerRouter = new DefaultSfxInventoryPowerRouter();
         DefaultSfxAddonRuntime addonRuntime = new DefaultSfxAddonRuntime(plugin, runtime, items, activeClock,
                 powerRouter, blockData);
         return new SfxApiImpl(runtime, itemRegistry, items, menus, chatInput, localization, guide, features, behaviors,
                 manualMachines, new DefaultSfxMachineRuntimeApi(), activeClock,
-                powerRouter, worldActions, protection, addonRuntime);
+                powerRouter, worldActions, protection, permissions, addonRuntime);
     }
 
     @Override
@@ -178,6 +183,7 @@ public final class SfxApiImpl implements SfxApi {
     @Override public SfxInventoryPowerRouter powerRouter() { return powerRouter; }
     @Override public SfxWorldActionService worldActions() { return worldActions; }
     @Override public SfxProtectionService protection() { return protection; }
+    @Override public cc.theends6.sfx.api.permission.SfxWorldPermissionService permissions() { return permissions; }
     @Override public SfxAddonRuntime addonRuntime() { return addonRuntime; }
 
     public void shutdown() {

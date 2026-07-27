@@ -167,11 +167,6 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
         if (isEmpty(anchors) && isEmpty(instances) && isEmpty(anchorDeletes) && isEmpty(instanceDeletes)) {
             return CompletableFuture.completedFuture(null);
         }
-        if (closed) {
-            CompletableFuture<Void> failed = new CompletableFuture<>();
-            failed.completeExceptionally(new IllegalStateException("SFX block data repository is already closed"));
-            return failed;
-        }
         WriteBatch batch = new WriteBatch(
                 anchors == null ? List.of() : List.copyOf(anchors),
                 instances == null ? List.of() : List.copyOf(instances),
@@ -179,6 +174,11 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
                 instanceDeletes == null ? List.of() : List.copyOf(instanceDeletes));
         CompletableFuture<Void> next;
         synchronized (writeLock) {
+            if (closed) {
+                CompletableFuture<Void> failed = new CompletableFuture<>();
+                failed.completeExceptionally(new IllegalStateException("SFX block data repository is already closed"));
+                return failed;
+            }
             next = writeTail.handle((ignored, previousError) -> null).thenRunAsync(() -> {
                 try {
                     persistChangesDirect(batch.anchors(), batch.instances(), batch.anchorDeletes(), batch.instanceDeletes());
@@ -233,7 +233,14 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
 
     @Override
     public void close() {
-        closed = true;
+        synchronized (writeLock) {
+            if (closed) {
+                return;
+            }
+            
+            
+            closed = true;
+        }
         try {
             awaitPendingWrites();
         } catch (Exception exception) {
@@ -260,25 +267,26 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
         if (isEmpty(anchors) && isEmpty(instances) && isEmpty(anchorDeletes) && isEmpty(instanceDeletes)) {
             return;
         }
+        
+        
+        
         Connection connection = writerConnection();
-        synchronized (writeLock) {
-            connection.setAutoCommit(false);
+        connection.setAutoCommit(false);
+        try {
+            batchUpsertInstances(connection, instances);
+            batchUpsertAnchors(connection, anchors);
+            batchDeleteAnchors(connection, anchorDeletes);
+            batchDeleteInstances(connection, instanceDeletes);
+            connection.commit();
+        } catch (Exception exception) {
             try {
-                batchUpsertInstances(connection, instances);
-                batchUpsertAnchors(connection, anchors);
-                batchDeleteAnchors(connection, anchorDeletes);
-                batchDeleteInstances(connection, instanceDeletes);
-                connection.commit();
-            } catch (Exception exception) {
-                try {
-                    connection.rollback();
-                } catch (SQLException rollbackException) {
-                    exception.addSuppressed(rollbackException);
-                }
-                throw exception;
-            } finally {
-                connection.setAutoCommit(true);
+                connection.rollback();
+            } catch (SQLException rollbackException) {
+                exception.addSuppressed(rollbackException);
             }
+            throw exception;
+        } finally {
+            connection.setAutoCommit(true);
         }
     }
 

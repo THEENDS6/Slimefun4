@@ -43,6 +43,10 @@ final class SfxElectricMachineTickController {
         Map<String, Object> frameworkAttributes = service.electricFrameworkAttributes(definition, state, session);
         SfxMachineState frameworkState = new SfxMachineState();
         try (SfxMachineExecution machineExecution = service.machineRuntime.beginTick(instanceId, definition.id(), frameworkLocation, context, frameworkState, frameworkAttributes)) {
+        if (!machineExecution.canProceed()) {
+            service.activeInstances.add(instanceId);
+            return;
+        }
         if (!state.enabled()) {
             SfxElectricMachineRenderStatus paused = SfxElectricMachineRenderStatus.PAUSED;
             if (session != null && service.shouldRenderSession(session, paused)) {

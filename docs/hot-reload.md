@@ -8,7 +8,7 @@
 .\gradlew.bat runPaper --console=plain
 ```
 
-`runPaper` 会构建并部署 `SlimeFunX.jar`，准备测试服配置，然后启动 Paper。测试配置会启用本机 RCON：`127.0.0.1:25575`。RCON 数据包由 Gradle 直接发送，不依赖未提交的本地脚本。
+`runPaper` 会构建并部署 `SlimeFunX.jar`，准备测试服配置，然后启动 Paper。测试配置会启用本机 RCON：`127.0.0.1:25575`。Gradle 客户端强制使用 `Proxy.NO_PROXY` 直连，避免 JVM 全局代理截获二进制 RCON 数据包；它不依赖未提交的本地脚本。
 
 ## 选择正确的加载方式
 

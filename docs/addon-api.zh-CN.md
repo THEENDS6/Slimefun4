@@ -158,6 +158,23 @@ components:
 - 隐藏分类不能代替权限校验，命令、物品使用、放置、GUI、聊天输入和网络操作都在生效点检查权限；
 - 配置、持久化数据和用户输入均不可信，范围、速度、容量和持续时间必须重新限制。
 
+当前核心没有在 `plugin.yml` 中声明 Folia 支持：跨区域货运、能源网络和运行时重载仍需完成区域所有权改造。Addon 仍须使用公开调度 API，不应据此直接调用 Bukkit 的跨区域对象。
+
+程序化世界操作统一通过 `api().permissions()` 或更高层的 `worldActions()`。权限主体使用 `SfxActionActor` 表达在线玩家、离线主人、机器和无主系统动作；不要伪造 `BlockBreakEvent`、`BlockPlaceEvent` 等原版事件来探测保护插件。核心会先检查注册的 `SfxProtectionAdapter`（任一 `DENY` 都会阻止操作），再派发真实的 `SfxWorldActionPermissionEvent`，最后才使用配置中的兜底策略。
+
+保护适配器可通过 Bukkit `ServicesManager` 注册：
+
+```java
+server.getServicesManager().register(
+        SfxProtectionAdapter.class,
+        new MyProtectionAdapter(),
+        plugin,
+        ServicePriority.Normal
+);
+```
+
+新适配器应实现 actor-aware 的 `canPerform(...)`；只实现旧版 `Player` 方法的适配器仍可处理在线玩家。核心内置 Towny 适配器。离线主人、无主机器和 `SYSTEM` 操作默认拒绝，分别由 `permissions.allow-when-owner-offline`、`allow-unowned-machines`、`allow-system-actions` 显式放行；普通在线玩家在无人表态时使用 `permissions.fallback-allow`。
+
 ## 构建与验证
 
 注册使用真正的暂存事务：声明、Listener 和任务在提交前对外不可见且不会启动；注册回调失败时直接丢弃暂存内容，提交或启用失败时再由核心执行 `unregisterAll(addonId)`。自定义方块的放置、交互、物理/邻居更新、活塞、流体、原版转化、区块/世界边界和破坏均由核心派发生命周期；状态解码或回调异常会隔离单个实例，避免每 Tick 重复报错。

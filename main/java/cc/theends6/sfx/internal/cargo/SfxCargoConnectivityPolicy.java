@@ -15,11 +15,23 @@ final class SfxCargoConnectivityPolicy implements SfxTopologyConnectivityPolicy 
     private final int range;
     private final SfxBlockDataService blockData;
     private final Map<String, SfxCargoComponentDefinition> definitions;
+    private final int maxAreaRangeX;
+    private final int maxAreaRangeZ;
 
     SfxCargoConnectivityPolicy(int range, SfxBlockDataService blockData, Map<String, SfxCargoComponentDefinition> definitions) {
         this.range = Math.max(1, range);
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.definitions = Objects.requireNonNull(definitions, "definitions");
+        this.maxAreaRangeX = definitions.values().stream()
+                .filter(SfxCargoComponentDefinition::hasAreaRange)
+                .mapToInt(SfxCargoComponentDefinition::rangeX)
+                .max()
+                .orElse(this.range);
+        this.maxAreaRangeZ = definitions.values().stream()
+                .filter(SfxCargoComponentDefinition::hasAreaRange)
+                .mapToInt(SfxCargoComponentDefinition::rangeZ)
+                .max()
+                .orElse(this.range);
     }
 
     @Override
@@ -31,7 +43,8 @@ final class SfxCargoConnectivityPolicy implements SfxTopologyConnectivityPolicy 
     @Override
     public Collection<SfxBlockAnchorKey> findAttachableBackbones(SfxBlockAnchorKey terminal) {
         List<SfxBlockAnchorKey> keys = new ArrayList<>(axialKeys(terminal));
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
+        for (SfxAnchorRecord anchor : blockData.anchorsNear(
+                terminal, maxAreaRangeX, maxAreaRangeZ)) {
             SfxCargoComponentDefinition definition = definitionAt(anchor.key());
             if (definition != null && definition.hasAreaRange() && inside(anchor.key(), terminal, definition)) {
                 keys.add(anchor.key());
@@ -42,7 +55,8 @@ final class SfxCargoConnectivityPolicy implements SfxTopologyConnectivityPolicy 
 
     private List<SfxBlockAnchorKey> areaCargoKeys(SfxBlockAnchorKey origin, SfxCargoComponentDefinition manager) {
         List<SfxBlockAnchorKey> keys = new ArrayList<>();
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
+        for (SfxAnchorRecord anchor : blockData.anchorsNear(
+                origin, manager.rangeX(), manager.rangeZ())) {
             if (!anchor.key().equals(origin) && inside(origin, anchor.key(), manager) && definitionAt(anchor.key()) != null) {
                 keys.add(anchor.key());
             }

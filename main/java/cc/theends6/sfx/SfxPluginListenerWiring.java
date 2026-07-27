@@ -70,7 +70,7 @@ final class SfxPluginListenerWiring {
         plugin.listenerRegistrar.register(foodListener);
         plugin.listenerRegistrar.register(talismanListener);
         plugin.listenerRegistrar.register(new SfxAncientRuneEffectListener(plugin, plugin.api.runtime(), plugin.api.items()));
-        plugin.listenerRegistrar.register(new SfxSoulboundListener(plugin, plugin.api.items(), plugin.researchService));
+        plugin.listenerRegistrar.register(new SfxSoulboundListener(plugin, plugin.api.items()));
         plugin.listenerRegistrar.register(new SfxResearchFireworksListener());
         plugin.listenerRegistrar.register(new SfxVanillaGuardListener(plugin, plugin.api.items()));
         plugin.listenerRegistrar.register(new SfxArmorEffectListener(plugin.api.items()));

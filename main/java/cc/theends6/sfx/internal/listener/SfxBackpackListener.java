@@ -11,13 +11,13 @@ import cc.theends6.sfx.internal.research.SfxResearchService;
 import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.api.text.Text;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
@@ -67,8 +67,8 @@ public final class SfxBackpackListener implements Listener {
     private final SfxResearchService researches;
     private final NamespacedKey backpackIdKey;
     private final NamespacedKey backpackOwnerKey;
-    private final Map<UUID, OpenBackpackSession> sessions = new HashMap<>();
-    private final Map<String, UUID> openBackpacks = new HashMap<>();
+    private final Map<UUID, OpenBackpackSession> sessions = new ConcurrentHashMap<>();
+    private final Map<String, UUID> openBackpacks = new ConcurrentHashMap<>();
 
     public SfxBackpackListener(
             JavaPlugin plugin,
@@ -453,13 +453,25 @@ public final class SfxBackpackListener implements Listener {
                 return;
             }
             Player existingViewer = plugin.getServer().getPlayer(viewer);
-            OpenBackpackSession existingSession = sessions.remove(viewer);
-            if (existingSession != null) {
-                openBackpacks.remove(existingSession.uniqueKey());
-                persistSession(existingSession);
+            OpenBackpackSession existingSession = sessions.get(viewer);
+            if (existingViewer != null && existingSession != null) {
+                
+                
+                runtime.executeForPlayer(existingViewer, () -> {
+                    if (sessions.remove(viewer, existingSession)) {
+                        openBackpacks.remove(existingSession.uniqueKey(), viewer);
+                        persistSession(existingSession);
+                        existingSession.inventory().clear();
+                        existingViewer.closeInventory();
+                    }
+                    runtime.executeForPlayer(player, () -> openProfileBackpack(
+                            player, ownerProfile, backpackId, itemId, title, true, createIfMissing));
+                });
+                return;
             }
-            if (existingViewer != null) {
-                runtime.executeForPlayer(existingViewer, existingViewer::closeInventory);
+            if (existingSession != null && sessions.remove(viewer, existingSession)) {
+                openBackpacks.remove(existingSession.uniqueKey(), viewer);
+                persistSession(existingSession);
             }
         }
 

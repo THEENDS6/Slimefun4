@@ -544,18 +544,18 @@ public final class SfxEnergyService implements Listener {
 
 
     int potentialGeneration(List<SfxEnergyNodeRef> generatorRefs, List<SfxBlockInstanceRecord> configurableProducers) {
-        int total = 0;
+        long total = 0L;
         for (SfxEnergyNodeRef generator : generatorRefs) {
             total += generatorPotentialGeneration(generator.instance(), generator.definition(), generator.state());
         }
         for (SfxBlockInstanceRecord producer : configurableProducers) {
             total += configurableMachines.producerPotentialGeneration(producer.instanceId());
         }
-        return total;
+        return saturatedEnergy(total);
     }
 
     int requestedDynamicGeneratorEnergy(List<SfxEnergyNodeRef> generatorRefs) {
-        int total = 0;
+        long total = 0L;
         for (SfxEnergyNodeRef generator : generatorRefs) {
             SfxDynamicEnergyGeneratorProvider provider = dynamicGenerator(generator.definition());
             if (provider == null) {
@@ -564,7 +564,7 @@ public final class SfxEnergyService implements Listener {
             Location location = toLocation(generator.instance().anchorKey());
             total += Math.max(0, provider.requestedConsumption(plugin, items, generator.definition(), generator.state(), location));
         }
-        return total;
+        return saturatedEnergy(total);
     }
 
     int dynamicGeneratorDemand(SfxEnergyNodeRef generator) {
@@ -905,14 +905,14 @@ public final class SfxEnergyService implements Listener {
 
 
     int hiddenStorageBaseCapacity(List<SfxEnergyNodeRef> capacitorRefs, List<SfxEnergyNodeRef> generatorRefs) {
-        int total = 0;
+        long total = 0L;
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {
             total += Math.max(0, capacitor.definition().capacity());
         }
         for (SfxEnergyNodeRef generator : generatorRefs) {
             total += energyNodeCapacity(generator);
         }
-        return total;
+        return saturatedEnergy(total);
     }
 
     int displayedEnergy(int stored, int capacity) {
@@ -920,7 +920,7 @@ public final class SfxEnergyService implements Listener {
     }
 
     int totalStoredEnergy(List<SfxEnergyNodeRef> capacitorRefs, List<SfxEnergyNodeRef> generatorRefs, List<SfxEnergyNodeRef> chargerRefs, List<SfxBlockInstanceRecord> consumers) {
-        int total = 0;
+        long total = 0L;
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {
             total += capacitor.state().storedEnergy();
         }
@@ -933,11 +933,11 @@ public final class SfxEnergyService implements Listener {
         for (SfxBlockInstanceRecord consumer : consumers) {
             total += electricMachines.consumerStoredEnergy(consumer.instanceId());
         }
-        return total;
+        return saturatedEnergy(total);
     }
 
     int totalCapacity(List<SfxEnergyNodeRef> capacitorRefs, List<SfxEnergyNodeRef> generatorRefs, List<SfxEnergyNodeRef> chargerRefs, List<SfxBlockInstanceRecord> consumers) {
-        int total = 0;
+        long total = 0L;
         for (SfxEnergyNodeRef capacitor : capacitorRefs) {
             total += capacitor.definition().capacity();
         }
@@ -950,7 +950,7 @@ public final class SfxEnergyService implements Listener {
         for (SfxBlockInstanceRecord consumer : consumers) {
             total += electricMachines.consumerCapacity(consumer.typeId());
         }
-        return total;
+        return saturatedEnergy(total);
     }
 
     int energyNodeCapacity(SfxEnergyNodeRef node) {
@@ -964,7 +964,7 @@ public final class SfxEnergyService implements Listener {
     }
 
     int requestedChargerEnergy(List<SfxEnergyNodeRef> chargerRefs) {
-        int total = 0;
+        long total = 0L;
         for (SfxEnergyNodeRef charger : chargerRefs) {
             if (!canChargeAnyInput(charger.definition(), charger.state())) {
                 continue;
@@ -972,7 +972,29 @@ public final class SfxEnergyService implements Listener {
             int demand = Math.max(0, charger.definition().capacity() - charger.state().storedEnergy());
             total += Math.min(charger.definition().energyPerTick(), demand);
         }
-        return total;
+        return saturatedEnergy(total);
+    }
+
+    int saturatedAdd(int... values) {
+        long total = 0L;
+        for (int value : values) {
+            total += Math.max(0, value);
+            if (total >= Integer.MAX_VALUE) {
+                return Integer.MAX_VALUE;
+            }
+        }
+        return (int) total;
+    }
+
+    int saturatedSubtract(int minuend, int subtrahend) {
+        long result = (long) minuend - subtrahend;
+        return result > Integer.MAX_VALUE
+                ? Integer.MAX_VALUE
+                : result < Integer.MIN_VALUE ? Integer.MIN_VALUE : (int) result;
+    }
+
+    private int saturatedEnergy(long value) {
+        return value <= 0L ? 0 : value >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) value;
     }
 
     boolean canChargeAnyInput(SfxEnergyComponentDefinition definition, SfxEnergyNodeState state) {
