@@ -213,8 +213,8 @@ tasks.register('runSurvivePaper', Exec) {
     description = 'Builds SFX, deploys it and starts the isolated Paper 1.21.8 survival test server.'
     dependsOn 'deployToSurviveRuntime'
     workingDir surviveRuntimeDir.asFile
-    executable file('C:/Program Files/Java/jdk-21/bin/java.exe').exists()
-            ? file('C:/Program Files/Java/jdk-21/bin/java.exe').absolutePath
+    executable file('D:/Tools/runtimes/java/zulu21/bin/java.exe').exists()
+            ? file('D:/Tools/runtimes/java/zulu21/bin/java.exe').absolutePath
             : 'java'
     standardInput = System.in
     args rootProject.ext.serverEncodingJvmArgs + ['-Xms2G', '-Xmx4G', '-jar', survivePaperJarName, 'nogui']

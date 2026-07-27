@@ -3789,14 +3789,6 @@ lang
 
 
 
-
-
-
-
-
-
-
-
 *.jar'
         }.files.sort { it.absolutePath }
         if (libraryJars.isEmpty()) {
@@ -3872,8 +3864,7 @@ tasks.register('buildJustEnoughGuideClassic') {
         }
 
         def java21Home = [
-                file('C:/Program Files/Java/jdk-21'),
-                file('D:/MyApp/java/jdk-21')
+                file('D:/Tools/runtimes/java/zulu21')
         ].find { new File(it, 'bin/java.exe').isFile() }
         if (java21Home == null) {
             throw new GradleException('Java 21 is required because JEG en-master targets Java 16, which Java 25 no longer compiles.')
@@ -4433,9 +4424,6 @@ tasks.register('prepareGuguJustEnoughGuideRuntimeJar', Jar) {
     destinationDirectory = layout.buildDirectory.dir('legacy-runtime/patched')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude 'META-INF
-
-
-
 
 
 
