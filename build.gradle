@@ -1,6 +1,8 @@
 import java.nio.charset.StandardCharsets
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import org.gradle.api.tasks.bundling.Zip
 
 plugins {
@@ -16,9 +18,7 @@ ext {
     paperApiVersion = '1.21.8-R0.1-SNAPSHOT'
     pluginJarName = 'SlimeFunX.jar'
     paperRuntimeJarName = 'paper-1.21.8-60.jar'
-    paperRuntimeRconHost = '127.0.0.1'
-    paperRuntimeRconPort = 25575
-    paperRuntimeRconPassword = 'sfx-dev'
+    paperRuntimeMrcHost = '127.0.0.1'
     plugManXVersion = '3.0.4'
     plugManXDownloadUrl = 'https://cdn.modrinth.com/data/yro4niHu/versions/hrMAp7Ww/PlugManX-3.0.4.jar'
     plugManXJarName = 'PlugManX.jar'
@@ -3969,9 +3969,9 @@ def configurePaperTestServerProperties = {
     }
     properties.setProperty('pause-when-empty-seconds', '-1')
     properties.setProperty('player-idle-timeout', '0')
-    properties.setProperty('enable-rcon', 'true')
-    properties.setProperty('rcon.port', rootProject.ext.paperRuntimeRconPort.toString())
-    properties.setProperty('rcon.password', rootProject.ext.paperRuntimeRconPassword)
+    properties.setProperty('enable-rcon', 'false')
+    properties.remove('rcon.port')
+    properties.remove('rcon.password')
     properties.setProperty('enable-command-block', 'true')
     properties.setProperty('online-mode', 'false')
     properties.setProperty('motd', 'SlimeFunX Paper 1.21.8')
@@ -3982,11 +3982,11 @@ def configurePaperTestServerProperties = {
 
 tasks.register('ensurePaperRuntimeTestConfig') {
     group = 'verification'
-    description = 'Keeps the Paper 1.21.8 test server alive when empty and enables local RCON for SFX reload commands.'
+    description = 'Keeps the Paper 1.21.8 test server alive when empty and disables legacy RCON; runtime control uses MRC.'
     dependsOn 'prepareRuntimeDirs'
     doLast {
         configurePaperTestServerProperties()
-        logger.lifecycle("Paper 1.21.8 test config ready: pause-when-empty-seconds=-1, player-idle-timeout=0, RCON ${rootProject.ext.paperRuntimeRconHost}:${rootProject.ext.paperRuntimeRconPort}")
+        logger.lifecycle('Paper 1.21.8 test config ready: pause-when-empty-seconds=-1, player-idle-timeout=0, RCON disabled; runtime control uses MRC.')
     }
 }
 
@@ -3999,102 +3999,121 @@ tasks.register('stagePaperRuntimeUpdate', Copy) {
     rename { rootProject.ext.pluginJarName }
 }
 
-def readLittleEndianInt = { InputStream input ->
-    byte[] data = new byte[4]
-    new DataInputStream(input).readFully(data)
-    java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN).getInt()
+def readPaperMrcSettings = {
+    def configFile = layout.projectDirectory.file(
+            'run-paper-1.21.8/plugins/MinecraftRemoteConsole/config.yml').asFile
+    if (!configFile.isFile()) {
+        throw new GradleException("MRC plugin config is missing: ${configFile}. "
+                + 'Install MinecraftRemoteConsole.jar and start the test server once.')
+    }
+    boolean serverSection = false
+    Integer port = null
+    String token = null
+    configFile.readLines(StandardCharsets.UTF_8.name()).each { rawLine ->
+        if (rawLine ==~ /^server:\s*$/) {
+            serverSection = true
+            return
+        }
+        if (serverSection && rawLine ==~ /^\S.*$/) {
+            serverSection = false
+        }
+        if (!serverSection) {
+            return
+        }
+        def match = rawLine =~ /^\s{2}(port|token):\s*(.*?)\s*$/
+        if (!match.matches()) {
+            return
+        }
+        def value = match.group(2).replaceAll(/^['"]|['"]$/, '')
+        if (match.group(1) == 'port') {
+            try {
+                port = Integer.parseInt(value)
+            } catch (NumberFormatException exception) {
+                throw new GradleException("Invalid MRC server.port in ${configFile}: ${value}", exception)
+            }
+        } else {
+            token = value
+        }
+    }
+    if (port == null || port < 1 || port > 65535 || token == null || token.isBlank()) {
+        throw new GradleException("MRC server.port/server.token is missing or invalid in ${configFile}.")
+    }
+    [baseUrl: "http://${rootProject.ext.paperRuntimeMrcHost}:${port}", token: token]
 }
 
-def writeLittleEndianInt = { OutputStream output, int value ->
-    output.write(value & 0xff)
-    output.write((value >>> 8) & 0xff)
-    output.write((value >>> 16) & 0xff)
-    output.write((value >>> 24) & 0xff)
-}
-
-def sendRconPacket = { OutputStream output, int requestId, int type, String payload ->
-    def body = new ByteArrayOutputStream()
-    writeLittleEndianInt(body, requestId)
-    writeLittleEndianInt(body, type)
-    body.write(payload.getBytes(StandardCharsets.UTF_8))
-    body.write(0)
-    body.write(0)
-    // Vanilla's RCON reader assumes one socket read contains the complete frame.
-    
-    
-    def packet = new ByteArrayOutputStream(body.size() + 4)
-    writeLittleEndianInt(packet, body.size())
-    body.writeTo(packet)
-    output.write(packet.toByteArray())
-    output.flush()
-}
-
-def readRconPacket = { InputStream input ->
-    int length = readLittleEndianInt(input)
-    byte[] data = new byte[length]
-    new DataInputStream(input).readFully(data)
-    def buffer = java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN)
-    int requestId = buffer.getInt()
-    int type = buffer.getInt()
-    int payloadLength = Math.max(0, length - 10)
-    byte[] payload = new byte[payloadLength]
-    buffer.get(payload)
-    [id: requestId, type: type, payload: new String(payload, StandardCharsets.UTF_8)]
-}
-
-def sendPaperRconCommand = { String commandText, int responseTimeoutMs = 5000 ->
-    
-    def socket = new java.net.Socket(java.net.Proxy.NO_PROXY)
+def invokePaperMrc = { String method, String path, Object requestBody = null, int timeoutMs = 35000 ->
+    def settings = readPaperMrcSettings()
+    def connection = (java.net.HttpURLConnection) new URL(settings.baseUrl + path)
+            .openConnection(java.net.Proxy.NO_PROXY)
     try {
-        socket.connect(new java.net.InetSocketAddress(
-                rootProject.ext.paperRuntimeRconHost,
-                rootProject.ext.paperRuntimeRconPort as int), 5000)
-        socket.setSoTimeout(responseTimeoutMs)
-        def input = socket.getInputStream()
-        def output = socket.getOutputStream()
-        int authId = 0x53465801
-        sendRconPacket(output, authId, 3, rootProject.ext.paperRuntimeRconPassword)
-        def auth = readRconPacket(input)
-        if (auth.id != authId && auth.id != -1) {
-            auth = readRconPacket(input)
+        connection.setRequestMethod(method)
+        connection.setConnectTimeout(5000)
+        connection.setReadTimeout(timeoutMs)
+        connection.setRequestProperty('Accept', 'application/json')
+        connection.setRequestProperty('Authorization', "Bearer ${settings.token}")
+        if (requestBody != null) {
+            byte[] body = JsonOutput.toJson(requestBody).getBytes(StandardCharsets.UTF_8)
+            connection.setDoOutput(true)
+            connection.setRequestProperty('Content-Type', 'application/json; charset=utf-8')
+            connection.setFixedLengthStreamingMode(body.length)
+            connection.outputStream.withCloseable { it.write(body) }
         }
-        if (auth.id == -1 || auth.id != authId) {
-            throw new IOException('Paper RCON authentication failed.')
+        int status = connection.responseCode
+        InputStream responseStream = status >= 200 && status < 300
+                ? connection.inputStream : connection.errorStream
+        String text = responseStream == null ? '' : responseStream.withCloseable {
+            new String(it.readAllBytes(), StandardCharsets.UTF_8)
         }
-        int commandId = 0x53465802
-        sendRconPacket(output, commandId, 2, commandText)
-        def response = readRconPacket(input)
-        if (response.id == -1 || response.id != commandId) {
-            throw new IOException("Invalid Paper RCON response for command: ${commandText}")
+        Object parsed = text.isBlank() ? [:] : new JsonSlurper().parseText(text)
+        if (status < 200 || status >= 300) {
+            def detail = parsed instanceof Map && parsed.error ? parsed.error : text
+            throw new GradleException("MRC HTTP ${status} for ${path}: ${detail}")
         }
-        def responseText = String.valueOf(response.payload).trim()
-        if (!responseText.isBlank()) {
-            logger.lifecycle(responseText)
-        }
-        return responseText
+        return parsed
     } finally {
-        try {
-            socket.close()
-        } catch (IOException ignored) {
-            
-        }
+        connection.disconnect()
     }
 }
 
-def sendPaperRconCommandWithRetry = { String commandText, int attempts = 3, int delayMs = 1000,
-                                      int responseTimeoutMs = 5000 ->
-    IOException lastIo = null
+def paperMrcHealth = {
+    def health = invokePaperMrc('GET', '/api/v1/health', null, 5000)
+    if (health.service != 'MinecraftRemoteConsole' || health.nodeType != 'plugin') {
+        throw new GradleException("Unexpected MRC health response: ${health}")
+    }
+    health
+}
+
+def sendPaperMrcCommand = { String commandText, int responseTimeoutMs = 60000 ->
+    paperMrcHealth()
+    def result = invokePaperMrc('POST', '/api/v1/commands',
+            [command: commandText, waitMs: responseTimeoutMs], responseTimeoutMs + 5000)
+    def command = result.command
+    if (!(command instanceof Map) || command.state != 'EXECUTED' || command.dispatchResult != true) {
+        throw new GradleException("MRC command failed: ${commandText}; state=${command?.state}; "
+                + "dispatchResult=${command?.dispatchResult}; error=${command?.error}")
+    }
+    def messages = result.terminal?.entries instanceof Collection
+            ? result.terminal.entries.collect { String.valueOf(it.message) }
+                    .findAll { !it.contains('[MRC] [') }
+            : []
+    messages.each { logger.lifecycle(it) }
+    [response: result, output: messages.join('\n')]
+}
+
+def sendPaperMrcCommandWithRetry = { String commandText, int attempts = 3, int delayMs = 1000,
+                                     int responseTimeoutMs = 60000 ->
+    Exception lastFailure = null
     for (int attempt = 1; attempt <= attempts; attempt++) {
         try {
-            return sendPaperRconCommand(commandText, responseTimeoutMs)
+            return sendPaperMrcCommand(commandText, responseTimeoutMs)
         } catch (IOException exception) {
-            lastIo = exception
+            lastFailure = exception
             if (attempt < attempts) {
                 Thread.sleep(delayMs)
             }
         }
     }
-    throw lastIo
+    throw lastFailure
 }
 
 def readNewLogText = { logFile, offset ->
@@ -4138,40 +4157,40 @@ def waitForSfxEnable = { logFile, offset, timeoutMs ->
     false
 }
 
-tasks.register('paperRcon') {
+tasks.register('paperMrc') {
     group = 'application'
-    description = 'Sends an arbitrary command to the running Paper 1.21.8 test server over local RCON. Use -Pcmd="command".'
+    description = 'Sends an arbitrary console command to the Paper 1.21.8 test server through MRC. Use -Pcmd="command".'
     dependsOn 'ensurePaperRuntimeTestConfig'
     doLast {
         def commandText = project.findProperty('cmd')?.toString()
         if (commandText == null || commandText.isBlank()) {
-            throw new GradleException('Missing command. Use: .\\gradlew.bat paperRcon -Pcmd="say test"')
+            throw new GradleException('Missing command. Use: .\\gradlew.bat paperMrc -Pcmd="say test"')
         }
         try {
-            sendPaperRconCommandWithRetry(commandText)
+            sendPaperMrcCommandWithRetry(commandText)
         } catch (IOException exception) {
-            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled yet. Start it with runPaper after ensurePaperRuntimeTestConfig.', exception)
+            throw new GradleException('Paper 1.21.8 test server or its MRC plugin is not reachable. Start it with runPaper.', exception)
         }
     }
 }
 
 tasks.register('reloadPaperRuntime') {
     group = 'application'
-    description = 'Sends /sfx reload runtime to the running Paper 1.21.8 test server over local RCON.'
+    description = 'Sends /sfx reload runtime to the running Paper 1.21.8 test server through MRC.'
     dependsOn 'ensurePaperRuntimeTestConfig'
     doLast {
         try {
-            sendPaperRconCommandWithRetry('sfx reload runtime')
-            logger.lifecycle('Requested SFX runtime reload on Paper 1.21.8.')
+            sendPaperMrcCommandWithRetry('sfx reload runtime')
+            logger.lifecycle('Requested SFX runtime reload through MRC on Paper 1.21.8.')
         } catch (IOException exception) {
-            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled yet. Start it with runPaper after ensurePaperRuntimeTestConfig.', exception)
+            throw new GradleException('Paper 1.21.8 test server or its MRC plugin is not reachable. Start it with runPaper.', exception)
         }
     }
 }
 
 tasks.register('stageAndReloadPaperRuntime') {
     group = 'application'
-    description = 'Stages the jar for the next restart and reloads the current SFX runtime/config over RCON. Bytecode changes still require restart or an external plugin loader.'
+    description = 'Stages the jar for the next restart and reloads the current SFX runtime/config through MRC. Bytecode changes still require restart or an external plugin loader.'
     dependsOn 'stagePaperRuntimeUpdate', 'reloadPaperRuntime'
 }
 
@@ -4181,12 +4200,12 @@ tasks.register('plugmanReloadPaperRuntime') {
     dependsOn 'ensurePaperRuntimeTestConfig', 'installPaperRuntimePlugManX', 'jar'
     doLast {
         try {
-            sendPaperRconCommandWithRetry('list')
+            sendPaperMrcCommandWithRetry('list')
             def logFile = layout.projectDirectory.file('run-paper-1.21.8/logs/latest.log').asFile
             long unloadLogOffset = logFile.exists() ? logFile.length() : 0L
-            def unloadResponse = sendPaperRconCommandWithRetry('plugman unload SlimeFunX', 1, 0, 60000)
-            if (!String.valueOf(unloadResponse).contains('SlimeFunX has been unloaded')
-                    && !String.valueOf(unloadResponse).contains('That is not a valid plugin')
+            def unloadResult = sendPaperMrcCommandWithRetry('plugman unload SlimeFunX', 1, 0, 60000)
+            if (!unloadResult.output.contains('SlimeFunX has been unloaded')
+                    && !unloadResult.output.contains('That is not a valid plugin')
                     && !waitForLogMatch(logFile, unloadLogOffset, ['[SlimeFunX] Disabling SlimeFunX'], 10000L)) {
                 throw new GradleException('PlugManX unload command was sent, but SlimeFunX disable was not observed in latest.log.')
             }
@@ -4199,7 +4218,7 @@ tasks.register('plugmanReloadPaperRuntime') {
             logger.lifecycle("Copied ${builtJar.name} to ${targetJar}")
             Thread.sleep(1500L)
             long loadLogOffset = logFile.exists() ? logFile.length() : 0L
-            sendPaperRconCommandWithRetry('plugman load SlimeFunX', 1, 0, 60000)
+            sendPaperMrcCommandWithRetry('plugman load SlimeFunX', 1, 0, 60000)
             if (!waitForSfxEnable(logFile, loadLogOffset, 20000L)) {
                 throw new GradleException('PlugManX load command was sent, but SlimeFunX enable was not observed in latest.log.')
             }
@@ -4217,10 +4236,10 @@ tasks.register('plugmanReloadPaperRuntime') {
             if (reloadLog.contains('The server has not responded for')) {
                 logger.warn('PlugManX reload completed, but Paper Watchdog observed a main-thread stall. Use a full restart for stable or production servers.')
             }
-            sendPaperRconCommandWithRetry('list', 5, 1000)
-            logger.lifecycle('Requested PlugManX unload/load for SlimeFunX on Paper 1.21.8.')
+            sendPaperMrcCommandWithRetry('list', 5, 1000)
+            logger.lifecycle('Requested PlugManX unload/load for SlimeFunX through MRC on Paper 1.21.8.')
         } catch (IOException exception) {
-            throw new GradleException('Paper 1.21.8 test server is not running or RCON is not enabled. Start it with runPaper first.', exception)
+            throw new GradleException('Paper 1.21.8 test server or its MRC plugin is not reachable. Start it with runPaper first.', exception)
         }
     }
 }

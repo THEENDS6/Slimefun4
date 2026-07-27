@@ -8,7 +8,13 @@
 .\gradlew.bat runPaper --console=plain
 ```
 
-`runPaper` 会构建并部署 `SlimeFunX.jar`，准备测试服配置，然后启动 Paper。测试配置会启用本机 RCON：`127.0.0.1:25575`。Gradle 客户端强制使用 `Proxy.NO_PROXY` 直连，避免 JVM 全局代理截获二进制 RCON 数据包；它不依赖未提交的本地脚本。
+`runPaper` 会构建并部署 `SlimeFunX.jar`，准备测试服配置，然后启动 Paper。测试配置会关闭 RCON；所有运行时控制都通过测试服内的 MinecraftRemoteConsole（MRC）HTTP API 完成。Gradle 从 `plugins/MinecraftRemoteConsole/config.yml` 动态读取端口和 Token，并用 `Proxy.NO_PROXY` 直连本机节点。
+
+测试服必须已安装 `MinecraftRemoteConsole.jar` 并至少启动过一次，以生成 MRC 配置。任意单条控制台命令使用：
+
+```powershell
+.\gradlew.bat paperMrc -Pcmd="list" --console=plain
+```
 
 ## 选择正确的加载方式
 
@@ -16,11 +22,11 @@
 
 | 变更内容 | 使用任务 | 原因 |
 | --- | --- | --- |
-| 外置配置、语言文件，且运行时 reload 会重新读取 | `reloadPaperRuntime` | 只需通过 RCON 执行 `/sfx reload runtime` |
+| 外置配置、语言文件，且运行时 reload 会重新读取 | `reloadPaperRuntime` | 只需通过 MRC 执行 `/sfx reload runtime` |
 | 新 JAR 只需为下次重启准备 | `stageAndReloadPaperRuntime` | 当前进程仍使用旧字节码 |
 | Java、公共 API、addon 类或 JAR 内嵌资源 | `plugmanReloadPaperRuntime` | 必须替换 JAR 并重新加载插件 |
 
-因此，能由 `/sfx reload runtime` 完整生效的修改只执行 RCON，也属于一次完整的 runtime 热加载操作；不要额外卸载插件。凡涉及 Java 或内嵌 addon 资源的修改，都不能降级为 RCON-only。
+因此，能由 `/sfx reload runtime` 完整生效的修改只通过 MRC 执行该命令，也属于一次完整的 runtime 热加载操作；不要额外卸载插件。凡涉及 Java 或内嵌 addon 资源的修改，都不能降级为 runtime-only reload。
 
 仅修改外置配置、语言或已加载字节码能够重新读取的内容：
 
@@ -47,12 +53,12 @@ Java、API、addon 类或内嵌资源发生变化，需要立即在测试服验�
 完整步骤为：
 
 1. 构建核心及所有内嵌 addon；
-2. 通过 RCON 确认服务器在线；
+2. 通过 MRC health 与 `list` 确认服务器在线；
 3. 使用 PlugManX 卸载 SlimeFunX，触发 addon 和核心关闭生命周期；
 4. 用新构建替换 `plugins/SlimeFunX.jar` 并校验文件一致；
 5. 重新加载 SlimeFunX，等待 `SFX enabled`；
 6. 检查启动失败、缺失语言键和 addon 语言错误；
-7. 再次执行 RCON `list`，确认主线程恢复响应。
+7. 再次通过 MRC 执行 `list`，确认主线程恢复响应。
 
 ## 风险与验收
 
@@ -62,13 +68,13 @@ PlugManX 的加载动作在服务器主线程执行。SlimeFunX 启动时需要�
 
 ```powershell
 Get-Content .\run-paper-1.21.8\logs\latest.log -Encoding UTF8 -Tail 200
-.\gradlew.bat paperRcon -Pcmd="list" --console=plain
+.\gradlew.bat paperMrc -Pcmd="list" --console=plain
 ```
 
 有效结果应满足：
 
 - 日志出现 `[SlimeFunX] SFX enabled.`；
-- RCON `list` 正常返回；
+- MRC 命令状态为 `EXECUTED`、`dispatchResult=true`，且 `list` 正常返回；
 - 没有 `SlimeFunX failed to start`；
 - 没有 `Missing language key`；
 - addon 的 `onDisable` 与重新加载均完成。
