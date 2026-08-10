@@ -30,6 +30,10 @@ final class SfxElectricMachineTickController {
             service.activeInstances.remove(instanceId);
             return;
         }
+        if (!service.isInstanceChunkLoaded(instance)) {
+            service.activeInstances.remove(instanceId);
+            return;
+        }
         SfxElectricMachineState state = service.currentState(instanceId, instance);
         SfxElectricMachineSession session = service.sessionsByInstance.get(instanceId);
         if (session != null && session.inventoryMutationPending()) {

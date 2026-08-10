@@ -1,6 +1,7 @@
 package cc.theends6.sfx.internal.addon;
 
 import cc.theends6.sfx.api.block.SfxBlockEventContext;
+import cc.theends6.sfx.api.block.SfxBlockAnchorKey;
 import cc.theends6.sfx.api.block.SfxBlockInstanceRecord;
 import cc.theends6.sfx.api.block.SfxBlockLifecycleState;
 import cc.theends6.sfx.api.block.SfxBlockType;
@@ -19,27 +20,22 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 
-public final class SfxAddonRandomTickService implements Listener {
+public final class SfxAddonRandomTickService implements SfxBlockDataService.AnchorChangeListener {
     private final JavaPlugin plugin;
     private final SfxRuntime runtime;
     private final SfxBlockDataService blockData;
     private final SfxAddonManager addons;
-    private final Map<String, List<SfxAnchorRecord>> loadedByType = new ConcurrentHashMap<>();
-    private final Set<cc.theends6.sfx.api.block.SfxBlockAnchorKey> inFlight = ConcurrentHashMap.newKeySet();
+    private final Map<String, Set<SfxBlockAnchorKey>> loadedByType = new ConcurrentHashMap<>();
+    private final Set<SfxBlockAnchorKey> inFlight = ConcurrentHashMap.newKeySet();
     private final Set<UUID> quarantined = ConcurrentHashMap.newKeySet();
-    private volatile long indexedRevision = -1L;
     private volatile boolean running;
 
     public SfxAddonRandomTickService(JavaPlugin plugin, SfxRuntime runtime,
@@ -48,6 +44,7 @@ public final class SfxAddonRandomTickService implements Listener {
         this.runtime = runtime;
         this.blockData = blockData;
         this.addons = addons;
+        blockData.addAnchorChangeListener(this);
     }
 
     public synchronized void start() {
@@ -59,16 +56,42 @@ public final class SfxAddonRandomTickService implements Listener {
 
     public synchronized void shutdown() {
         running = false;
+        blockData.removeAnchorChangeListener(this);
         loadedByType.clear();
         inFlight.clear();
         quarantined.clear();
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onChunkLoad(ChunkLoadEvent event) { indexedRevision = -1L; }
+    public void onChunkLoad(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        for (SfxAnchorRecord anchor : blockData.anchorsInChunk(chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            addAnchor(anchor);
+        }
+    }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onChunkUnload(ChunkUnloadEvent event) { indexedRevision = -1L; }
+    public void onChunkUnload(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        removeChunk(chunk.getWorld().getUID(), chunk.getX(), chunk.getZ());
+    }
+
+    @Override
+    public void onAnchorAdded(SfxAnchorRecord anchor) {
+        refreshAnchor(anchor == null ? null : anchor.key());
+    }
+
+    @Override
+    public void onAnchorUpdated(SfxAnchorRecord anchor) {
+        refreshAnchor(anchor == null ? null : anchor.key());
+    }
+
+    @Override
+    public void onAnchorRemoved(SfxBlockAnchorKey key) {
+        removeKey(key);
+    }
 
     private void scheduleNext() {
         if (!running) return;
@@ -80,40 +103,40 @@ public final class SfxAddonRandomTickService implements Listener {
     }
 
     private void tick() {
-        if (indexedRevision != blockData.revision()) rebuildLoadedIndex();
         Collection<SfxRandomTickType<?>> definitions = addons.randomTickTypes();
         for (SfxRandomTickType<?> definition : definitions) {
-            List<SfxAnchorRecord> candidates = loadedByType.getOrDefault(definition.blockTypeId(), List.of());
+            Set<SfxBlockAnchorKey> candidates = loadedByType.getOrDefault(definition.blockTypeId(), Set.of());
             if (candidates.isEmpty()) continue;
-            Map<World, List<SfxAnchorRecord>> byWorld = new LinkedHashMap<>();
-            for (SfxAnchorRecord candidate : candidates) {
-                World world = Bukkit.getWorld(candidate.key().worldId());
-                if (world != null && world.isChunkLoaded(candidate.key().x() >> 4, candidate.key().z() >> 4)) {
+            Map<World, List<SfxBlockAnchorKey>> byWorld = new LinkedHashMap<>();
+            for (SfxBlockAnchorKey candidate : candidates) {
+                World world = Bukkit.getWorld(candidate.worldId());
+                if (world != null && world.isChunkLoaded(candidate.x() >> 4, candidate.z() >> 4)) {
                     byWorld.computeIfAbsent(world, ignored -> new ArrayList<>()).add(candidate);
                 }
             }
-            for (Map.Entry<World, List<SfxAnchorRecord>> entry : byWorld.entrySet()) {
+            for (Map.Entry<World, List<SfxBlockAnchorKey>> entry : byWorld.entrySet()) {
                 int speed = randomTickSpeed(entry.getKey());
                 if (definition.affectedByGameRule() && speed <= 0) continue;
                 int attempts = Math.min(definition.perTickBudget(), Math.max(1,
                         (int) Math.round((definition.affectedByGameRule() ? speed : 1) * definition.weight())));
                 for (int attempt = 0; attempt < attempts; attempt++) {
-                    List<SfxAnchorRecord> worldCandidates = entry.getValue();
-                    SfxAnchorRecord selected = worldCandidates.get(ThreadLocalRandom.current().nextInt(worldCandidates.size()));
+                    List<SfxBlockAnchorKey> worldCandidates = entry.getValue();
+                    SfxBlockAnchorKey selected = worldCandidates.get(ThreadLocalRandom.current().nextInt(worldCandidates.size()));
                     dispatch(definition, selected, entry.getKey(), speed);
                 }
             }
         }
     }
 
-    private void dispatch(SfxRandomTickType<?> definition, SfxAnchorRecord anchor, World world, int speed) {
-        if (!inFlight.add(anchor.key())) return;
-        Location location = new Location(world, anchor.key().x(), anchor.key().y(), anchor.key().z());
+    private void dispatch(SfxRandomTickType<?> definition, SfxBlockAnchorKey key, World world, int speed) {
+        if (!inFlight.add(key)) return;
+        Location location = new Location(world, key.x(), key.y(), key.z());
         runtime.executeAt(location, () -> {
             try {
+                if (!world.isChunkLoaded(key.x() >> 4, key.z() >> 4)) return;
                 SfxAnchorRecord currentAnchor = blockData.findAnchorAndValidate(location).orElse(null);
-                if (currentAnchor == null || !currentAnchor.instanceId().equals(anchor.instanceId())) return;
-                SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+                if (currentAnchor == null || !key.equals(currentAnchor.key())) return;
+                SfxBlockInstanceRecord instance = blockData.findInstance(currentAnchor.instanceId()).orElse(null);
                 if (instance == null || !definition.blockTypeId().equals(instance.typeId())) return;
                 if (instance.lifecycleState() == SfxBlockLifecycleState.INVALID) return;
                 if (quarantined.contains(instance.instanceId())) return;
@@ -129,7 +152,7 @@ public final class SfxAddonRandomTickService implements Listener {
                             "Quarantined random-tick state for " + instance.typeId() + " at " + location, exception);
                 }
             } finally {
-                inFlight.remove(anchor.key());
+                inFlight.remove(key);
             }
         });
     }
@@ -137,7 +160,7 @@ public final class SfxAddonRandomTickService implements Listener {
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void invoke(SfxRandomTickType definition, SfxBlockType blockType,
                         SfxBlockInstanceRecord instance, Location location, int speed) {
-        Object state = instance.stateBlob().length == 0 ? blockType.initialState().get()
+        Object state = !instance.hasState() ? blockType.initialState().get()
                 : blockType.stateSchema().decode(instance.version(), instance.stateBlob());
         MutableContext context = new MutableContext(instance.instanceId(), instance.typeId(), location, state, speed);
         definition.handler().accept(context);
@@ -152,18 +175,62 @@ public final class SfxAddonRandomTickService implements Listener {
     }
 
     private synchronized void rebuildLoadedIndex() {
-        Map<String, List<SfxAnchorRecord>> rebuilt = new LinkedHashMap<>();
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            World world = Bukkit.getWorld(anchor.key().worldId());
-            if (world == null || !world.isChunkLoaded(anchor.key().x() >> 4, anchor.key().z() >> 4)) continue;
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance != null && addons.blockType(instance.typeId()).isPresent()) {
-                rebuilt.computeIfAbsent(instance.typeId(), ignored -> new ArrayList<>()).add(anchor);
+        loadedByType.clear();
+        for (World world : Bukkit.getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                onChunkLoad(chunk);
             }
         }
-        loadedByType.clear();
-        rebuilt.forEach((type, anchors) -> loadedByType.put(type, List.copyOf(anchors)));
-        indexedRevision = blockData.revision();
+    }
+
+    private void refreshAnchor(SfxBlockAnchorKey key) {
+        if (key == null) {
+            return;
+        }
+        removeKey(key);
+        SfxAnchorRecord anchor = blockData.findAnchorFast(key).orElse(null);
+        if (anchor != null) {
+            addAnchor(anchor);
+        }
+    }
+
+    private void addAnchor(SfxAnchorRecord anchor) {
+        if (anchor == null || anchor.integrityState() != cc.theends6.sfx.internal.block.SfxBlockIntegrityState.VALID) {
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+        if (instance == null || addons.blockType(instance.typeId()).isEmpty()) {
+            return;
+        }
+        World world = Bukkit.getWorld(anchor.key().worldId());
+        if (world == null || !world.isChunkLoaded(anchor.key().x() >> 4, anchor.key().z() >> 4)) {
+            return;
+        }
+        loadedByType.computeIfAbsent(instance.typeId(), ignored -> ConcurrentHashMap.newKeySet()).add(anchor.key());
+    }
+
+    private void removeKey(SfxBlockAnchorKey key) {
+        if (key == null) {
+            return;
+        }
+        for (Map.Entry<String, Set<SfxBlockAnchorKey>> entry : loadedByType.entrySet()) {
+            Set<SfxBlockAnchorKey> keys = entry.getValue();
+            keys.remove(key);
+            if (keys.isEmpty()) {
+                loadedByType.remove(entry.getKey(), keys);
+            }
+        }
+    }
+
+    private void removeChunk(UUID worldId, int chunkX, int chunkZ) {
+        for (Map.Entry<String, Set<SfxBlockAnchorKey>> entry : loadedByType.entrySet()) {
+            Set<SfxBlockAnchorKey> keys = entry.getValue();
+            keys.removeIf(key -> worldId.equals(key.worldId())
+                    && (key.x() >> 4) == chunkX && (key.z() >> 4) == chunkZ);
+            if (keys.isEmpty()) {
+                loadedByType.remove(entry.getKey(), keys);
+            }
+        }
     }
 
     private static final class MutableContext implements SfxRandomTickContext<Object> {

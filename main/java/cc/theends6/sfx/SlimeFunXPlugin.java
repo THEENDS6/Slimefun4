@@ -15,6 +15,7 @@ import cc.theends6.sfx.internal.block.SfxInfusedHopperService;
 import cc.theends6.sfx.internal.block.SfxBlockPlacerService;
 import cc.theends6.sfx.internal.block.SfxSpawnerService;
 import cc.theends6.sfx.internal.block.SfxBlockPersistenceListener;
+import cc.theends6.sfx.internal.block.SfxChunkRuntimeCoordinator;
 import cc.theends6.sfx.internal.block.SqliteSfxBlockDataRepository;
 import cc.theends6.sfx.internal.command.SfxCommand;
 import cc.theends6.sfx.internal.config.SfxLegacyItemBehaviorConfig;
@@ -95,6 +96,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
     SfxPlayerDataService playerDataService;
     SfxBlockDataService blockDataService;
     SfxBlockPersistenceListener blockPersistenceListener;
+    SfxChunkRuntimeCoordinator chunkRuntimeCoordinator;
     SfxResearchRegistry researchRegistry;
     SfxResearchService researchService;
     SfxResearchPaymentRouter researchPaymentRouter;
@@ -309,6 +311,7 @@ public final class SlimeFunXPlugin extends JavaPlugin {
 
     void clearRuntimeReferences() {
         blockPersistenceListener = null;
+        chunkRuntimeCoordinator = null;
         backpackListener = null;
         basicMachineBlockListener = null;
         electricMachineService = null;

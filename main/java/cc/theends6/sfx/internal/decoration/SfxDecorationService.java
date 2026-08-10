@@ -193,7 +193,7 @@ public final class SfxDecorationService implements Listener {
     public void rebuildIndex() {
         animatedInstances.clear();
         states.clear();
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
+        for (SfxAnchorRecord anchor : blockData.allAnchorsSnapshot()) {
             SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
             if (instance == null) {
                 continue;

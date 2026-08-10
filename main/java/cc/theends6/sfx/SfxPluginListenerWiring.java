@@ -46,6 +46,7 @@ final class SfxPluginListenerWiring {
         plugin.listenerRegistrar.register(new SfxMultimeterListener(plugin, plugin.api.items(), plugin.localization, plugin.blockDataService, plugin.electricMachineService, plugin.configurableMachineService, plugin.energyService));
         plugin.listenerRegistrar.register(placeableBlockListener);
         plugin.listenerRegistrar.register(plugin.blockPersistenceListener);
+        plugin.listenerRegistrar.register(plugin.chunkRuntimeCoordinator);
         plugin.listenerRegistrar.register(plugin.basicMachineBlockListener);
         plugin.listenerRegistrar.register(plugin.electricMachineService);
         plugin.listenerRegistrar.register(plugin.configurableMachineService);
@@ -63,7 +64,6 @@ final class SfxPluginListenerWiring {
         plugin.listenerRegistrar.register(plugin.hologramProjectorService);
         plugin.listenerRegistrar.register(plugin.industrialMinerService);
         plugin.listenerRegistrar.register(plugin.technicalGadgetService);
-        plugin.listenerRegistrar.register(plugin.addonRandomTickService);
         plugin.listenerRegistrar.register(plugin.backpackListener);
         plugin.listenerRegistrar.register(utilityListener);
         plugin.listenerRegistrar.register(combatToolListener);

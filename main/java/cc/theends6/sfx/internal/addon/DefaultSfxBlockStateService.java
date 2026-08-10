@@ -79,13 +79,11 @@ final class DefaultSfxBlockStateService implements SfxBlockStateService {
     @Override public List<SfxBlockStateView<?>> findLoaded(Chunk chunk, String blockTypeId) {
         if (chunk == null || blockTypeId == null || blockTypeId.isBlank()) return List.of();
         List<SfxBlockStateView<?>> result = new ArrayList<>();
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockAnchorKey key = anchor.key();
-            if (!chunk.getWorld().getUID().equals(key.worldId()) || chunk.getX() != (key.x() >> 4)
-                    || chunk.getZ() != (key.z() >> 4)) continue;
+        for (SfxAnchorRecord anchor : blockData.anchorsInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
             SfxBlockInstanceRecord record = blockData.findInstance(anchor.instanceId()).orElse(null);
             if (record == null || !blockTypeId.equals(record.typeId())) continue;
-            find(location(key)).ifPresent(result::add);
+            find(location(anchor.key())).ifPresent(result::add);
         }
         return List.copyOf(result);
     }
@@ -113,7 +111,7 @@ final class DefaultSfxBlockStateService implements SfxBlockStateService {
     }
 
     private static <S> S decode(SfxBlockType<S> type, SfxBlockInstanceRecord record) {
-        return record.stateBlob().length == 0 ? type.initialState().get()
+        return !record.hasState() ? type.initialState().get()
                 : type.stateSchema().decode(record.version(), record.stateBlob());
     }
 

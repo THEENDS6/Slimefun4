@@ -157,7 +157,7 @@ final class SfxElectricMachineDefinitions {
         java.util.UUID currentId = blockData.findAnchor(location).map(anchor -> anchor.instanceId()).orElse(null);
         cc.theends6.sfx.api.block.SfxBlockAnchorKey current =
                 cc.theends6.sfx.api.block.SfxBlockAnchorKey.fromLocation(location);
-        for (var anchor : blockData.anchors()) {
+        for (var anchor : blockData.anchorsNear(current, horizontalRadius, horizontalRadius)) {
             cc.theends6.sfx.api.block.SfxBlockInstanceRecord instance =
                     blockData.findInstance(anchor.instanceId()).orElse(null);
             if (instance == null || java.util.Objects.equals(instance.instanceId(), currentId)) {

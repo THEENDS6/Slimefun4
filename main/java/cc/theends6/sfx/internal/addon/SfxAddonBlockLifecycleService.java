@@ -7,7 +7,6 @@ import cc.theends6.sfx.api.block.SfxBlockTransformDecision;
 import cc.theends6.sfx.api.block.SfxBlockType;
 import cc.theends6.sfx.internal.block.SfxAnchorRecord;
 import cc.theends6.sfx.internal.block.SfxBlockDataService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -51,8 +50,7 @@ public final class SfxAddonBlockLifecycleService {
 
     public void onWorldUnload(World world) {
         if (world == null) return;
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            if (!world.getUID().equals(anchor.key().worldId())) continue;
+        for (SfxAnchorRecord anchor : blockData.anchorsInWorld(world.getUID())) {
             Location location = new Location(world, anchor.key().x(), anchor.key().y(), anchor.key().z());
             invoke(location, null, lifecycle -> lifecycle::onUnload);
         }
@@ -145,10 +143,7 @@ public final class SfxAddonBlockLifecycleService {
     private void forChunk(Chunk chunk, LifecycleActionFactory factory) {
         if (chunk == null) return;
         World world = chunk.getWorld();
-        List<SfxAnchorRecord> snapshot = new ArrayList<>(blockData.anchors());
-        for (SfxAnchorRecord anchor : snapshot) {
-            if (!world.getUID().equals(anchor.key().worldId()) || (anchor.key().x() >> 4) != chunk.getX()
-                    || (anchor.key().z() >> 4) != chunk.getZ()) continue;
+        for (SfxAnchorRecord anchor : blockData.anchorsInChunk(world.getUID(), chunk.getX(), chunk.getZ())) {
             Location location = new Location(world, anchor.key().x(), anchor.key().y(), anchor.key().z());
             invoke(location, null, factory);
         }
@@ -209,7 +204,7 @@ public final class SfxAddonBlockLifecycleService {
     }
 
     private Object decodeOrInitial(SfxBlockType<?> type, SfxBlockInstanceRecord instance) {
-        return instance.stateBlob().length == 0 ? type.initialState().get()
+        return !instance.hasState() ? type.initialState().get()
                 : type.stateSchema().decode(instance.version(), instance.stateBlob());
     }
 

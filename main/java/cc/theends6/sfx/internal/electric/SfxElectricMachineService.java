@@ -52,6 +52,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -633,14 +635,49 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     private void bootstrapLoadedStates() {
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance == null || !registry.contains(instance.typeId())) {
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                onChunkLoad(chunk);
+            }
+        }
+    }
+
+    public void onChunkLoad(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (!isRuntimeAnchorInChunk(instance, chunk) || !registry.contains(instance.typeId())) {
                 continue;
             }
-            SfxElectricMachineState state = SfxElectricMachineState.decode(instance.stateBlob());
-            stateCache.put(instance.instanceId(), state);
+            stateCache.putIfAbsent(instance.instanceId(), SfxElectricMachineState.decode(instance.stateBlob()));
             activeInstances.add(instance.instanceId());
+        }
+    }
+
+    public void onChunkUnload(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        flushDirtyChunk(chunk);
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (!isRuntimeAnchorInChunk(instance, chunk)) {
+                continue;
+            }
+            UUID instanceId = instance.instanceId();
+            stateCache.remove(instanceId);
+            dirtyInstances.remove(instanceId);
+            activeInstances.remove(instanceId);
+            lastLogicTicks.remove(instanceId);
+            recentEnergyConsumption.remove(instanceId);
+            supplementalEnergyThisSecond.remove(instanceId);
+            supplementalEnergyAveragePerTick.remove(instanceId);
+            SfxElectricMachineSession session = sessionsByInstance.remove(instanceId);
+            if (session != null) {
+                sessionsByViewer.remove(session.viewerId(), session);
+            }
         }
     }
 
@@ -784,26 +821,20 @@ public final class SfxElectricMachineService implements Listener {
         if (key == null) {
             return;
         }
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            if (anchor == null || anchor.key() == null) {
-                continue;
-            }
-            if (!key.worldId().equals(anchor.key().worldId())
-                    || key.chunkX() != (anchor.key().x() >> 4)
-                    || key.chunkZ() != (anchor.key().z() >> 4)) {
-                continue;
-            }
+        for (SfxAnchorRecord anchor : blockData.anchorsInChunk(key.worldId(), key.chunkX(), key.chunkZ())) {
             SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
             if (instance == null || (!"sf:geo_miner".equals(instance.typeId()) && !"sf:oil_pump".equals(instance.typeId()))) {
                 continue;
             }
             UUID instanceId = instance.instanceId();
-            activeInstances.add(instanceId);
-            lastLogicTicks.remove(instanceId);
             Location location = locationFor(instance);
-            if (location != null) {
+            if (location != null && isInstanceChunkLoaded(instance)) {
+                activeInstances.add(instanceId);
+                lastLogicTicks.remove(instanceId);
                 boolean hasViewers = sessionsByInstance.containsKey(instanceId);
                 runtime.executeAt(location, () -> tickMachine(instanceId, new SfxMachineTickContext(tickCounter, 1L, hasViewers)));
+            } else {
+                activeInstances.remove(instanceId);
             }
         }
     }
@@ -826,7 +857,9 @@ public final class SfxElectricMachineService implements Listener {
                     continue;
                 }
                 Location location = locationFor(instance);
-                if (location == null) {
+                if (location == null || !isInstanceChunkLoaded(instance)) {
+                    activeInstances.remove(instanceId);
+                    lastLogicTicks.remove(instanceId);
                     continue;
                 }
                 boolean hasViewers = sessionsByInstance.containsKey(instanceId);
@@ -856,16 +889,36 @@ public final class SfxElectricMachineService implements Listener {
 
     private void flushDirty() {
         for (UUID instanceId : List.copyOf(dirtyInstances)) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
-            SfxElectricMachineState state = stateCache.get(instanceId);
-            if (instance == null || state == null) {
-                dirtyInstances.remove(instanceId);
-                continue;
-            }
-            SfxBlockLifecycleState lifecycle = state.hasProgress() ? SfxBlockLifecycleState.ACTIVE : SfxBlockLifecycleState.IDLE;
-            blockData.updateInstanceState(instanceId, state.encode(), lifecycle);
-            dirtyInstances.remove(instanceId);
+            flushDirtyInstance(instanceId);
         }
+    }
+
+    private void flushDirtyChunk(Chunk chunk) {
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (isRuntimeAnchorInChunk(instance, chunk) && dirtyInstances.contains(instance.instanceId())) {
+                flushDirtyInstance(instance.instanceId());
+            }
+        }
+    }
+
+    private void flushDirtyInstance(UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        SfxElectricMachineState state = stateCache.get(instanceId);
+        if (instance == null || state == null) {
+            dirtyInstances.remove(instanceId);
+            return;
+        }
+        SfxBlockLifecycleState lifecycle = state.hasProgress() ? SfxBlockLifecycleState.ACTIVE : SfxBlockLifecycleState.IDLE;
+        blockData.updateInstanceState(instanceId, state.encode(), lifecycle);
+        dirtyInstances.remove(instanceId);
+    }
+
+    private boolean isRuntimeAnchorInChunk(SfxBlockInstanceRecord instance, Chunk chunk) {
+        return instance != null && chunk != null
+                && instance.anchorKey().worldId().equals(chunk.getWorld().getUID())
+                && (instance.anchorKey().x() >> 4) == chunk.getX()
+                && (instance.anchorKey().z() >> 4) == chunk.getZ();
     }
 
     private void tickMachine(UUID instanceId, SfxMachineTickContext context) {

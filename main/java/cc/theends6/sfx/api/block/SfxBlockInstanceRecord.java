@@ -33,6 +33,10 @@ public record SfxBlockInstanceRecord(
         return Arrays.copyOf(stateBlob, stateBlob.length);
     }
 
+    public boolean hasState() {
+        return stateBlob.length != 0;
+    }
+
     public SfxBlockInstanceRecord withState(byte[] newStateBlob, SfxBlockLifecycleState newLifecycleState, long now) {
         return new SfxBlockInstanceRecord(instanceId, typeId, anchorKey, newLifecycleState, version, ownerId, newStateBlob, now, energyPriorityDistance);
     }

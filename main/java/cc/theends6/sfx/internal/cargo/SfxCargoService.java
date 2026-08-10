@@ -76,6 +76,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -571,13 +572,50 @@ public final class SfxCargoService implements Listener {
     }
 
     private void bootstrapLoadedStates() {
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance == null || !definitions.containsKey(instance.typeId())) {
+        for (World world : Bukkit.getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                onChunkLoad(chunk);
+            }
+        }
+    }
+
+    public void onChunkLoad(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (isRuntimeAnchorInChunk(instance, chunk) && definitions.containsKey(instance.typeId())) {
+                states.putIfAbsent(instance.instanceId(), decodeState(instance));
+            }
+        }
+        runtimeNetworks.clear();
+    }
+
+    public void onChunkUnload(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        flushDirtyChunk(chunk);
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (!isRuntimeAnchorInChunk(instance, chunk)) {
                 continue;
             }
-            states.put(instance.instanceId(), decodeState(instance));
+            UUID instanceId = instance.instanceId();
+            states.remove(instanceId);
+            dirtyStates.remove(instanceId);
+            openMenus.remove(instanceId);
+            visualizers.entrySet().removeIf(entry -> instanceId.equals(entry.getValue()));
+            managerStats.remove(instanceId);
+            transientMachineInventories.remove(instanceId);
+            pendingTransientInventoryClears.remove(instanceId);
+            for (Map<UUID, Integer> debt : distributionDebt.values()) {
+                debt.remove(instanceId);
+            }
         }
+        runtimeNetworks.clear();
+        cargoStateRevision++;
     }
 
     private void scheduleTick() {
@@ -630,15 +668,20 @@ public final class SfxCargoService implements Listener {
             if (managerId == null) {
                 continue;
             }
+            SfxBlockInstanceRecord manager = blockData.findInstance(managerId).orElse(null);
+            Location managerLocation = manager == null ? null : toLocation(manager.anchorKey());
+            if (manager == null || managerLocation == null || !isInstanceChunkLoaded(manager)) {
+                continue;
+            }
             UUID controlId = customManagerController(component);
+            SfxBlockInstanceRecord controlInstance = controlId == null
+                    ? null : blockData.findInstance(controlId).orElse(null);
+            if (controlId != null && (controlInstance == null || !isInstanceChunkLoaded(controlInstance))) {
+                continue;
+            }
             SfxCargoNodeState controlState = controlId == null ? null : currentState(controlId);
             if (controlState != null && !controlState.enabled) {
                 networkWorkAccumulators.remove(component.componentId());
-                continue;
-            }
-            SfxBlockInstanceRecord manager = blockData.findInstance(managerId).orElse(null);
-            Location managerLocation = manager == null ? null : toLocation(manager.anchorKey());
-            if (managerLocation == null) {
                 continue;
             }
             SfxCargoRuntimeNetwork network = runtimeNetworkFor(component, managerId);
@@ -662,6 +705,9 @@ public final class SfxCargoService implements Listener {
                     SfxNetworkExecution.snapshot(component.componentId(), SfxNetworkDomain.CARGO, component.members(), component.topologyRevision()),
                     SfxNetworkReadiness.READY,
                     () -> {
+                        if (!isInstanceChunkLoaded(manager)) {
+                            return;
+                        }
                         SfxMachineLegacyHookBridge.beforeNetworkTick(machineRuntime, "sf:cargo_manager", managerId, managerLocation, "cargo", "SfxCargoService.tickCargo");
                         if (intervalTicks == 0.0D) {
                             for (int pass = 0; pass < passLimit; pass++) {
@@ -699,7 +745,7 @@ public final class SfxCargoService implements Listener {
         List<SfxCargoNodeRef> outputs = new ArrayList<>();
         for (UUID terminalId : component.terminals()) {
             SfxBlockInstanceRecord instance = blockData.findInstance(terminalId).orElse(null);
-            if (instance == null) {
+            if (instance == null || !isInstanceChunkLoaded(instance)) {
                 continue;
             }
             SfxCargoComponentDefinition definition = definitions.get(instance.typeId());
@@ -896,9 +942,8 @@ public final class SfxCargoService implements Listener {
 
     private void updateManagerDisplays() {
         Set<SfxFloatingTextKey> seen = new LinkedHashSet<>();
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance == null || !"sf:cargo_manager".equals(instance.typeId())) {
+        for (SfxBlockInstanceRecord instance : blockData.instancesOfType("sf:cargo_manager")) {
+            if (!isInstanceChunkLoaded(instance)) {
                 continue;
             }
             SfxTopologyComponent component = topology.componentForMember(instance.instanceId()).orElse(null);
@@ -1829,9 +1874,10 @@ public final class SfxCargoService implements Listener {
         if (instance == null) {
             return new SfxCargoNodeState();
         }
-        SfxCargoNodeState state = SfxCargoNodeState.decode(instance.stateBlob());
+        byte[] stateBlob = instance.stateBlob();
+        SfxCargoNodeState state = SfxCargoNodeState.decode(stateBlob);
         SfxCargoComponentDefinition definition = definitions.get(instance.typeId());
-        if (definition != null && definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE && stateVersion(instance.stateBlob()) < 3) {
+        if (definition != null && definition.type() == SfxCargoComponentType.ADVANCED_INPUT_NODE && stateVersion(stateBlob) < 3) {
             state.distributionMode = SfxCargoDistributionMode.SEQUENTIAL;
             state.allowMultipleSlots = true;
             state.batchLimit = 128;
@@ -1874,14 +1920,47 @@ public final class SfxCargoService implements Listener {
 
     private void flushDirty() {
         for (UUID instanceId : List.copyOf(dirtyStates)) {
-            SfxCargoNodeState state = states.get(instanceId);
-            if (state == null) {
-                dirtyStates.remove(instanceId);
-                continue;
-            }
-            blockData.updateInstanceState(instanceId, state.encode(), SfxBlockLifecycleState.IDLE);
-            dirtyStates.remove(instanceId);
+            flushDirtyInstance(instanceId);
         }
+    }
+
+    private void flushDirtyChunk(Chunk chunk) {
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (isRuntimeAnchorInChunk(instance, chunk) && dirtyStates.contains(instance.instanceId())) {
+                flushDirtyInstance(instance.instanceId());
+            }
+        }
+    }
+
+    private void flushDirtyInstance(UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null) {
+            dirtyStates.remove(instanceId);
+            return;
+        }
+        SfxCargoNodeState state = states.get(instanceId);
+        if (state == null) {
+            dirtyStates.remove(instanceId);
+            return;
+        }
+        blockData.updateInstanceState(instanceId, state.encode(), SfxBlockLifecycleState.IDLE);
+        dirtyStates.remove(instanceId);
+    }
+
+    private boolean isInstanceChunkLoaded(SfxBlockInstanceRecord instance) {
+        if (instance == null) {
+            return false;
+        }
+        World world = Bukkit.getWorld(instance.anchorKey().worldId());
+        return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);
+    }
+
+    private boolean isRuntimeAnchorInChunk(SfxBlockInstanceRecord instance, Chunk chunk) {
+        return instance != null && chunk != null
+                && instance.anchorKey().worldId().equals(chunk.getWorld().getUID())
+                && (instance.anchorKey().x() >> 4) == chunk.getX()
+                && (instance.anchorKey().z() >> 4) == chunk.getZ();
     }
 
     private BlockFace attachedFace(BlockPlaceEvent event) {

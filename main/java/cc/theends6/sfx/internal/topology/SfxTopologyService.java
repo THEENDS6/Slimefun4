@@ -54,7 +54,7 @@ public final class SfxTopologyService {
         Map<UUID, SfxBlockInstanceRecord> participants = new LinkedHashMap<>();
         Map<SfxBlockAnchorKey, UUID> instanceByKey = new LinkedHashMap<>();
         Map<UUID, SfxTopologyCapabilities> capabilitiesById = new LinkedHashMap<>();
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
+        for (SfxAnchorRecord anchor : blockData.allAnchorsSnapshot()) {
             SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
             if (instance == null) {
                 continue;

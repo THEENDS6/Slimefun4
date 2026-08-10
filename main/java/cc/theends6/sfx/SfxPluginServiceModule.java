@@ -5,6 +5,7 @@ import cc.theends6.sfx.internal.android.SfxAndroidService;
 import cc.theends6.sfx.internal.android.SqliteSfxAndroidScriptRepository;
 import cc.theends6.sfx.internal.block.SfxBasicMachineBlockListener;
 import cc.theends6.sfx.internal.block.SfxBlockPersistenceListener;
+import cc.theends6.sfx.internal.block.SfxChunkRuntimeCoordinator;
 import cc.theends6.sfx.internal.block.SfxBlockPlacerService;
 import cc.theends6.sfx.internal.block.SfxHologramProjectorService;
 import cc.theends6.sfx.internal.block.SfxInfusedHopperService;
@@ -62,6 +63,10 @@ final class SfxPluginServiceModule {
         SfxPluginFrameworkWiring.Stats frameworkStats = SfxPluginFrameworkWiring.wire(plugin);
         SfxPlaceableBlockListener placeableBlockListener = new SfxPlaceableBlockListener(plugin.api.items(), plugin.blockDataService, plugin.basicMachineBlockListener, plugin.electricMachineService, plugin.configurableMachineService, plugin.energyService, plugin.cargoService, plugin.decorationService, plugin.gpsService, plugin.ancientAltarService, plugin.androidService, plugin.spawnerService, plugin.blockPlacerService, plugin.infusedHopperService, plugin.hologramProjectorService, plugin.api.runtime(), plugin.machineRuntime, plugin.addonManager, plugin.localization);
         plugin.blockPersistenceListener = new SfxBlockPersistenceListener(plugin, plugin.api.runtime(), plugin.blockDataService, plugin.gpsService);
+        plugin.chunkRuntimeCoordinator = new SfxChunkRuntimeCoordinator(plugin.blockDataService,
+                plugin.blockPersistenceListener, placeableBlockListener, plugin.addonRandomTickService,
+                plugin.electricMachineService, plugin.configurableMachineService, plugin.energyService,
+                plugin.cargoService, plugin.infusedHopperService);
         plugin.radiationService = new SfxRadiationService(plugin, plugin.api.runtime(), plugin.api.items(), plugin.api.itemRegistry(), plugin.localization, plugin.playerDataService);
         plugin.listenerRegistrar = new SfxListenerRegistrar(plugin);
         plugin.moduleManager = SfxPluginLifecycleWiring.create(plugin);

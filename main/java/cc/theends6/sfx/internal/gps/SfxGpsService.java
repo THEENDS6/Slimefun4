@@ -1275,21 +1275,28 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         send(player, "gps.messages.waypoint-created", Map.of("name", escape(name)));
     }
 
+    private List<SfxBlockInstanceRecord> transmitterInstances() {
+        List<SfxBlockInstanceRecord> result = new ArrayList<>();
+        for (String typeId : TRANSMITTER_TYPES) {
+            result.addAll(blockData.instancesOfType(typeId));
+        }
+        return result;
+    }
+
     private int networkComplexity(UUID owner) {
         if (owner == null) {
             return 0;
         }
         int complexity = 0;
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance == null || !TRANSMITTER_TYPES.contains(instance.typeId()) || !owner.equals(instance.ownerId())) {
+        for (SfxBlockInstanceRecord instance : transmitterInstances()) {
+            if (!owner.equals(instance.ownerId())) {
                 continue;
             }
             int requiredEnergy = Math.max(1, TRANSMITTER_CONSUMPTION.getOrDefault(instance.typeId(), 1));
             if (electricMachines.consumerStoredEnergy(instance.instanceId()) < requiredEnergy) {
                 continue;
             }
-            int y = Math.max(1, anchor.key().y());
+            int y = Math.max(1, instance.anchorKey().y());
             complexity += y * TRANSMITTER_MULTIPLIERS.getOrDefault(instance.typeId(), 1)
                     + TRANSMITTER_BONUSES.getOrDefault(instance.typeId(), 0);
         }
@@ -1302,16 +1309,15 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
         if (owner == null) {
             return result;
         }
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance == null || !TRANSMITTER_TYPES.contains(instance.typeId()) || !owner.equals(instance.ownerId())) {
+        for (SfxBlockInstanceRecord instance : transmitterInstances()) {
+            if (!owner.equals(instance.ownerId())) {
                 continue;
             }
             int requiredEnergy = Math.max(1, TRANSMITTER_CONSUMPTION.getOrDefault(instance.typeId(), 1));
             if (electricMachines.consumerStoredEnergy(instance.instanceId()) < requiredEnergy) {
                 continue;
             }
-            result.add(anchor);
+            blockData.findAnchorFast(instance.anchorKey()).ifPresent(result::add);
         }
         result.sort(Comparator.comparingInt(anchor -> -transmitterStrength(blockData.findInstance(anchor.instanceId()).orElse(null), anchor)));
         return result;
@@ -1339,9 +1345,8 @@ public final class SfxGpsService implements Listener, SfxDirtyPersistenceService
             return 0;
         }
         int count = 0;
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance != null && TRANSMITTER_TYPES.contains(instance.typeId()) && owner.equals(instance.ownerId())) {
+        for (SfxBlockInstanceRecord instance : transmitterInstances()) {
+            if (owner.equals(instance.ownerId())) {
                 count++;
             }
         }

@@ -863,7 +863,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private void bootstrapEnhancedFurnaces() {
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
+        for (SfxAnchorRecord anchor : blockData.allAnchorsSnapshot()) {
             if (furnaceStatsAt(anchor) != null) {
                 enhancedFurnaces.add(anchor.key());
             }

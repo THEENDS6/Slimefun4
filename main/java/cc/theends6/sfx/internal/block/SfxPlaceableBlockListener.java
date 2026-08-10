@@ -19,8 +19,10 @@ import cc.theends6.sfx.internal.util.SfxLocalization;
 import cc.theends6.sfx.api.text.Text;
 import java.util.Objects;
 import java.util.logging.Logger;
+import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Event;
@@ -47,9 +49,6 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.event.world.ChunkUnloadEvent;
-import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.inventory.ItemStack;
 import io.papermc.paper.event.player.PlayerPickBlockEvent;
 
@@ -321,19 +320,16 @@ public final class SfxPlaceableBlockListener implements Listener {
         environmentalGuard.handleSpongeAbsorb(event);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onChunkLoad(ChunkLoadEvent event) {
-        addonLifecycle.onLoad(event.getChunk());
+    public void handleChunkLoad(Chunk chunk) {
+        addonLifecycle.onLoad(chunk);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onChunkUnload(ChunkUnloadEvent event) {
-        addonLifecycle.onUnload(event.getChunk());
+    public void handleChunkUnload(Chunk chunk) {
+        addonLifecycle.onUnload(chunk);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onWorldUnload(WorldUnloadEvent event) {
-        addonLifecycle.onWorldUnload(event.getWorld());
+    public void handleWorldUnload(World world) {
+        addonLifecycle.onWorldUnload(world);
     }
 
     private boolean handleAddonTransform(org.bukkit.event.Cancellable event, Block block, Material to) {

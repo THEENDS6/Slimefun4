@@ -166,7 +166,7 @@ public final class SfxBlockLifecycleRouter {
         cc.theends6.sfx.api.block.SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
         if (blockType == null || instance == null || block == null) return;
         try {
-            Object decoded = instance.stateBlob().length == 0 ? blockType.initialState().get()
+            Object decoded = !instance.hasState() ? blockType.initialState().get()
                     : blockType.stateSchema().decode(instance.version(), instance.stateBlob());
             AddonBlockContext context = new AddonBlockContext(instanceId, typeId, block.getLocation(),
                     options == null ? null : options.actor(), decoded);

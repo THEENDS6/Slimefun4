@@ -132,7 +132,7 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
         World world = Bukkit.getWorld(instance.anchorKey().worldId());
         Location location = world == null ? null : new Location(world, instance.anchorKey().x(), instance.anchorKey().y(), instance.anchorKey().z());
         machineRuntime.runPhase(typeId, SfxMachinePhase.ON_PLACE, instanceId, location, null, null, SfxMachineStatus.IDLE, framework);
-        if (instance.stateBlob().length == 0) {
+        if (!instance.hasState()) {
             blockData.updateInstanceState(instanceId, state.encode(), SfxBlockLifecycleState.IDLE);
         }
         updateProjection(instance, state);
@@ -140,7 +140,7 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
     }
 
     public void rebuildIndex() {
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
+        for (SfxAnchorRecord anchor : blockData.allAnchorsSnapshot()) {
             SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
             if (instance != null && supportsType(instance.typeId())) {
                 handlePlaced(instance.instanceId(), instance.typeId());

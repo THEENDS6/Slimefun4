@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -168,8 +169,26 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
     }
 
     private void tickAll(long nowTick) {
-        List<SfxAnchorRecord> anchors = blockData.anchors();
-        for (SfxAnchorRecord anchor : anchors) {
+        for (World world : Bukkit.getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                tickChunk(nowTick, chunk);
+            }
+        }
+    }
+
+    public void onChunkUnload(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        for (SfxAnchorRecord anchor : blockData.anchorsInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            tickStates.remove(anchor.key());
+        }
+    }
+
+    private void tickChunk(long nowTick, Chunk chunk) {
+        for (SfxAnchorRecord anchor : blockData.anchorsInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
             SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
             if (instance == null || !supportsType(instance.typeId())) {
                 continue;
@@ -185,6 +204,9 @@ public final class SfxInfusedHopperService implements SfxProgrammaticBlockPlacem
             }
             Location location = new Location(world, anchor.key().x(), anchor.key().y(), anchor.key().z());
             runtime.executeAt(location, () -> {
+                if (!world.isChunkLoaded(anchor.key().x() >> 4, anchor.key().z() >> 4)) {
+                    return;
+                }
                 Map<String, Object> framework = frameworkAttributes(instance, location, state);
                 SfxMachineTickContext tickContext = new SfxMachineTickContext(nowTick, baseIntervalTicks(), false);
                 if (!SfxMachinePipelineGuard.proceed(machineRuntime.runPhase(instance.typeId(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instance.instanceId(), location, tickContext, null, SfxMachineStatus.IDLE, framework), framework, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {

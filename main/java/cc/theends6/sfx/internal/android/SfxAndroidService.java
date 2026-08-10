@@ -256,7 +256,7 @@ public final class SfxAndroidService implements Listener {
     }
 
     private void rebuildIndex() {
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
+        for (SfxAnchorRecord anchor : blockData.allAnchorsSnapshot()) {
             SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
             if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
                 continue;

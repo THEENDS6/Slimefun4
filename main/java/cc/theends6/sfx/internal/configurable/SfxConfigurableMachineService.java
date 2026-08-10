@@ -49,6 +49,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -505,7 +507,7 @@ public final class SfxConfigurableMachineService implements Listener {
                 runtime.executeForPlayer(player, player::closeInventory);
             }
         }
-        for (SfxBlockInstanceRecord instance : List.copyOf(blockData.anchors()).stream()
+        for (SfxBlockInstanceRecord instance : List.copyOf(blockData.allAnchorsSnapshot()).stream()
                 .map(anchor -> blockData.findInstance(anchor.instanceId()).orElse(null))
                 .filter(Objects::nonNull)
                 .filter(instance -> isProducer(instance.typeId()))
@@ -784,13 +786,49 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private void bootstrapLoadedStates() {
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance == null || !definitions.containsKey(instance.typeId())) {
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                onChunkLoad(chunk);
+            }
+        }
+    }
+
+    public void onChunkLoad(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (!isRuntimeAnchorInChunk(instance, chunk) || !definitions.containsKey(instance.typeId())) {
                 continue;
             }
-            states.put(instance.instanceId(), SfxConfigurableMachineState.decode(instance.stateBlob()));
+            states.putIfAbsent(instance.instanceId(), SfxConfigurableMachineState.decode(instance.stateBlob()));
             activeInstances.add(instance.instanceId());
+        }
+    }
+
+    public void onChunkUnload(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        flushDirtyChunk(chunk);
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (!isRuntimeAnchorInChunk(instance, chunk)) {
+                continue;
+            }
+            UUID instanceId = instance.instanceId();
+            states.remove(instanceId);
+            dirtyInstances.remove(instanceId);
+            activeInstances.remove(instanceId);
+            lastLogicTicks.remove(instanceId);
+            recentEnergyConsumption.remove(instanceId);
+            recentGeneratedEnergy.remove(instanceId);
+            autoPausedProducers.remove(instanceId);
+            SfxConfigurableMachineSession session = sessionsByHost.remove(instanceId);
+            if (session != null) {
+                sessionsByViewer.remove(session.viewerId(), session);
+            }
         }
     }
 
@@ -822,16 +860,18 @@ public final class SfxConfigurableMachineService implements Listener {
                     lastLogicTicks.remove(instanceId);
                     continue;
                 }
+                Location location = locationFor(instance);
+                if (location == null || !isInstanceChunkLoaded(instance)) {
+                    activeInstances.remove(instanceId);
+                    lastLogicTicks.remove(instanceId);
+                    continue;
+                }
                 if (loopDefinition.kind() == SfxConfigurableMachineKind.REACTOR) {
                     SfxConfigurableMachineState loopState = currentState(instanceId, instance);
                     if (loopState.mode() == 0) {
                         
                         continue;
                     }
-                }
-                Location location = locationFor(instance);
-                if (location == null) {
-                    continue;
                 }
                 boolean hasViewers = sessionsByHost.containsKey(instanceId);
                 long lastTick = lastLogicTicks.getOrDefault(instanceId, 0L);
@@ -873,15 +913,16 @@ public final class SfxConfigurableMachineService implements Listener {
             activeInstances.remove(instanceId);
             return;
         }
+        Location location = locationFor(instance);
+        if (location == null || !isInstanceChunkLoaded(instance)) {
+            activeInstances.remove(instanceId);
+            lastLogicTicks.remove(instanceId);
+            return;
+        }
         SfxConfigurableMachineState state = currentState(instanceId, instance);
         SfxConfigurableMachineSession session = sessionsByHost.get(instanceId);
         if (session != null) {
             syncInventoryToState(session.inventory(), state, definition, session.panelType());
-        }
-        Location location = locationFor(instance);
-        if (location == null || !isInstanceChunkLoaded(instance)) {
-            activeInstances.add(instanceId);
-            return;
         }
         Map<String, Object> frameworkAttributes = configurableFrameworkAttributes(instance, definition, state, session);
         SfxMachineState frameworkState = new SfxMachineState();
@@ -1478,16 +1519,36 @@ public final class SfxConfigurableMachineService implements Listener {
 
     private void flushDirty() {
         for (UUID instanceId : List.copyOf(dirtyInstances)) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
-            SfxConfigurableMachineState state = states.get(instanceId);
-            if (instance == null || state == null) {
-                dirtyInstances.remove(instanceId);
-                continue;
-            }
-            SfxBlockLifecycleState lifecycle = state.isActive() ? SfxBlockLifecycleState.ACTIVE : SfxBlockLifecycleState.IDLE;
-            blockData.updateInstanceState(instanceId, state.encode(), lifecycle);
-            dirtyInstances.remove(instanceId);
+            flushDirtyInstance(instanceId);
         }
+    }
+
+    private void flushDirtyChunk(Chunk chunk) {
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (isRuntimeAnchorInChunk(instance, chunk) && dirtyInstances.contains(instance.instanceId())) {
+                flushDirtyInstance(instance.instanceId());
+            }
+        }
+    }
+
+    private void flushDirtyInstance(UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        SfxConfigurableMachineState state = states.get(instanceId);
+        if (instance == null || state == null) {
+            dirtyInstances.remove(instanceId);
+            return;
+        }
+        SfxBlockLifecycleState lifecycle = state.isActive() ? SfxBlockLifecycleState.ACTIVE : SfxBlockLifecycleState.IDLE;
+        blockData.updateInstanceState(instanceId, state.encode(), lifecycle);
+        dirtyInstances.remove(instanceId);
+    }
+
+    private boolean isRuntimeAnchorInChunk(SfxBlockInstanceRecord instance, Chunk chunk) {
+        return instance != null && chunk != null
+                && instance.anchorKey().worldId().equals(chunk.getWorld().getUID())
+                && (instance.anchorKey().x() >> 4) == chunk.getX()
+                && (instance.anchorKey().z() >> 4) == chunk.getZ();
     }
 
     private boolean isAssemblerWorking(SfxConfigurableMachineState state) {

@@ -47,6 +47,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -346,22 +348,59 @@ public final class SfxEnergyService implements Listener {
     }
 
     private void bootstrapLoadedStates() {
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance == null) {
+        for (World world : Bukkit.getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                onChunkLoad(chunk);
+            }
+        }
+    }
+
+    public void onChunkLoad(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (!isRuntimeAnchorInChunk(instance, chunk)) {
                 continue;
             }
-            if (!definitions.containsKey(instance.typeId())) {
-                continue;
-            }
-            SfxEnergyNodeState state = SfxEnergyNodeState.decode(instance.stateBlob());
-            nodeStates.put(instance.instanceId(), state);
-            activeNodes.add(instance.instanceId());
             SfxEnergyComponentDefinition definition = definitions.get(instance.typeId());
-            if (definition != null && definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
+            if (definition == null) {
+                continue;
+            }
+            SfxEnergyNodeState state = nodeStates.computeIfAbsent(
+                    instance.instanceId(), ignored -> SfxEnergyNodeState.decode(instance.stateBlob()));
+            activeNodes.add(instance.instanceId());
+            if (definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
                 scheduleCapacitorAppearanceUpdate(new SfxEnergyNodeRef(instance, definition, state));
             }
         }
+        runtimeGrids.clear();
+        nodeGridStatusTopologyRevision = Long.MIN_VALUE;
+    }
+
+    public void onChunkUnload(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        flushDirtyChunk(chunk);
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (!isRuntimeAnchorInChunk(instance, chunk)) {
+                continue;
+            }
+            UUID instanceId = instance.instanceId();
+            nodeStates.remove(instanceId);
+            dirtyNodes.remove(instanceId);
+            activeNodes.remove(instanceId);
+            autoPausedGenerators.remove(instanceId);
+            nodeGridStatuses.remove(instanceId);
+            solarExposureCache.remove(instance.anchorKey());
+            capacitorProjector.remove(instanceId);
+            displayController.remove(instance.anchorKey());
+        }
+        runtimeGrids.clear();
+        nodeGridStatusTopologyRevision = Long.MIN_VALUE;
     }
 
     private void scheduleTick() {
@@ -424,7 +463,7 @@ public final class SfxEnergyService implements Listener {
                 continue;
             }
             Location regulatorLocation = toLocation(regulator.anchorKey());
-            if (regulatorLocation == null) {
+            if (regulatorLocation == null || !isInstanceChunkLoaded(regulator)) {
                 runtimeGrids.remove(component.componentId());
                 continue;
             }
@@ -779,10 +818,7 @@ public final class SfxEnergyService implements Listener {
         }
         SfxBlockAnchorKey placed = SfxBlockAnchorKey.fromLocation(location);
         int best = SfxBlockInstanceRecord.DEFAULT_ENERGY_PRIORITY_DISTANCE;
-        for (SfxAnchorRecord anchor : blockData.anchors()) {
-            if (!anchor.key().worldId().equals(placed.worldId())) {
-                continue;
-            }
+        for (SfxAnchorRecord anchor : blockData.anchorsInWorld(placed.worldId())) {
             SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
             if (instance == null) {
                 continue;
@@ -1268,16 +1304,37 @@ public final class SfxEnergyService implements Listener {
 
     private void flushDirty() {
         for (UUID instanceId : List.copyOf(dirtyNodes)) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
-            SfxEnergyNodeState state = nodeStates.get(instanceId);
-            if (instance == null || state == null) {
-                dirtyNodes.remove(instanceId);
-                continue;
-            }
-            SfxBlockLifecycleState lifecycle = state.hasActiveFuel() || state.storedEnergy() > 0 ? SfxBlockLifecycleState.ACTIVE : SfxBlockLifecycleState.IDLE;
-            blockData.updateInstanceState(instanceId, state.encode(), lifecycle);
-            dirtyNodes.remove(instanceId);
+            flushDirtyInstance(instanceId);
         }
+    }
+
+    private void flushDirtyChunk(Chunk chunk) {
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (isRuntimeAnchorInChunk(instance, chunk) && dirtyNodes.contains(instance.instanceId())) {
+                flushDirtyInstance(instance.instanceId());
+            }
+        }
+    }
+
+    private void flushDirtyInstance(UUID instanceId) {
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        SfxEnergyNodeState state = nodeStates.get(instanceId);
+        if (instance == null || state == null) {
+            dirtyNodes.remove(instanceId);
+            return;
+        }
+        SfxBlockLifecycleState lifecycle = state.hasActiveFuel() || state.storedEnergy() > 0
+                ? SfxBlockLifecycleState.ACTIVE : SfxBlockLifecycleState.IDLE;
+        blockData.updateInstanceState(instanceId, state.encode(), lifecycle);
+        dirtyNodes.remove(instanceId);
+    }
+
+    private boolean isRuntimeAnchorInChunk(SfxBlockInstanceRecord instance, Chunk chunk) {
+        return instance != null && chunk != null
+                && instance.anchorKey().worldId().equals(chunk.getWorld().getUID())
+                && (instance.anchorKey().x() >> 4) == chunk.getX()
+                && (instance.anchorKey().z() >> 4) == chunk.getZ();
     }
 
     void scheduleCapacitorAppearanceUpdate(SfxEnergyNodeRef capacitor) {
