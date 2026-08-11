@@ -46,7 +46,7 @@ final class SfxAndroidBatchTickController {
             SfxAndroidInstruction instruction = state.currentInstruction();
             if (!instruction.validFor(type)) {
                 state.runtimeState(SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID);
-                service.activeAndroids.remove(instance.instanceId());
+                service.forgetAndroid(instance.instanceId());
                 service.persist(instance.instanceId(), state);
                 continue;
             }

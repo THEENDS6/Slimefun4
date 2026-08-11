@@ -5,6 +5,7 @@ import cc.theends6.sfx.api.machine.runtime.*;
 import cc.theends6.sfx.internal.core.SfxErrorCode;
 import cc.theends6.sfx.internal.core.SfxResult;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.LinkedHashSet;
@@ -30,6 +31,7 @@ import org.bukkit.Location;
 
 public final class SfxMachineRuntimeEngine {
     private final Map<String, SfxMachineDefinition> definitions = new LinkedHashMap<>();
+    private final Map<String, SfxMachineExecutionPlan> executionPlans = new ConcurrentHashMap<>();
     private final Map<String, SfxMachineProcessor> processors = new ConcurrentHashMap<>();
     private final Map<String, SfxMachineHook> effectHooks = new ConcurrentHashMap<>();
     private final CopyOnWriteArrayList<SfxMachinePhaseObserver> phaseObservers = new CopyOnWriteArrayList<>();
@@ -45,6 +47,7 @@ public final class SfxMachineRuntimeEngine {
         definitions.put(definition.id(), definition);
         ensureDefaultProcessor(definition);
         ensureDeclaredEffectHooks(definition);
+        rebuildExecutionPlan(definition.id());
     }
 
     public synchronized void registerDefinitionIfAbsent(SfxMachineDefinition definition) {
@@ -56,6 +59,7 @@ public final class SfxMachineRuntimeEngine {
         SfxMachineDefinition registered = definitions.get(definition.id());
         ensureDefaultProcessor(registered);
         ensureDeclaredEffectHooks(registered);
+        rebuildExecutionPlan(registered.id());
     }
 
     public synchronized void enrichDefinition(String machineId, java.util.function.UnaryOperator<SfxMachineDefinition> enricher) {
@@ -67,6 +71,7 @@ public final class SfxMachineRuntimeEngine {
             definitions.put(machineId, enriched);
             ensureDefaultProcessor(enriched);
             ensureDeclaredEffectHooks(enriched);
+            rebuildExecutionPlan(machineId);
         }
     }
 
@@ -87,12 +92,14 @@ public final class SfxMachineRuntimeEngine {
     public void registerEffectHook(String effectName, SfxMachineHook hook) {
         if (effectName != null && !effectName.isBlank() && hook != null) {
             effectHooks.put(effectName, hook);
+            rebuildExecutionPlans();
         }
     }
 
     public void registerEffectHookIfAbsent(String effectName, SfxMachineHook hook) {
         if (effectName != null && !effectName.isBlank() && hook != null) {
             effectHooks.putIfAbsent(effectName, hook);
+            rebuildExecutionPlans();
         }
     }
 
@@ -127,7 +134,10 @@ public final class SfxMachineRuntimeEngine {
     }
 
     public void unregisterEffectHook(String effectName) {
-        if (effectName != null) effectHooks.remove(effectName);
+        if (effectName != null) {
+            effectHooks.remove(effectName);
+            rebuildExecutionPlans();
+        }
     }
 
     public int effectHookCount() {
@@ -281,19 +291,19 @@ public final class SfxMachineRuntimeEngine {
     }
 
     public SfxMachinePhaseResult runPhase(String machineId, SfxMachinePhase phase, UUID instanceId, Location location, SfxMachineTickContext context, SfxMachineState state, SfxMachineStatus currentStatus, Map<String, Object> attributes) {
-        SfxMachineDefinition definition = definition(machineId).orElse(null);
+        SfxMachineExecutionPlan plan = executionPlans.get(machineId);
+        SfxMachineDefinition definition = plan == null ? definition(machineId).orElse(null) : plan.definition();
         phaseInvocations.incrementAndGet();
         Map<String, Object> mutableAttributes = attributes == null ? new HashMap<>() : attributes;
         mutableAttributes.put("framework.pipeline.machineId", machineId);
         mutableAttributes.put("framework.pipeline.phase", phase == null ? null : phase.name());
         mutableAttributes.put("framework.pipeline.category", definition == null || definition.category() == null ? null : definition.category().name());
         notifyPhaseObservers(machineId, phase, instanceId, location, currentStatus, mutableAttributes);
-        if (definition == null || definition.effects().isEmpty()) return SfxMachinePhaseResult.cont();
+        if (definition == null || plan == null || plan.effects(phase).isEmpty()) return SfxMachinePhaseResult.cont();
         SfxMachinePhaseContext phaseContext = new SfxMachinePhaseContext(definition, phase, instanceId, location == null ? null : location.clone(), context, state, currentStatus, mutableAttributes);
-        for (SfxMachineEffect effect : definition.effects()) {
-            if (effect.phase() != phase) continue;
+        for (SfxMachineExecutionPlan.CompiledEffect effect : plan.effects(phase)) {
             try {
-                SfxMachineHook registered = effectHooks.get(effect.name());
+                SfxMachineHook registered = effect.hook();
                 if (registered == null) {
                     phaseContext.put("framework.effect." + effect.name() + ".unbound", Boolean.TRUE);
                     stoppedPipelines.incrementAndGet();
@@ -359,5 +369,39 @@ public final class SfxMachineRuntimeEngine {
         phaseInvocations.set(0L);
         stoppedPipelines.set(0L);
         definitions.clear();
+        executionPlans.clear();
+    }
+
+    private synchronized void rebuildExecutionPlans() {
+        for (String machineId : definitions.keySet()) {
+            rebuildExecutionPlan(machineId);
+        }
+    }
+
+    private synchronized void rebuildExecutionPlan(String machineId) {
+        SfxMachineDefinition definition = definitions.get(machineId);
+        if (definition == null) {
+            executionPlans.remove(machineId);
+            return;
+        }
+        Map<SfxMachinePhase, java.util.List<SfxMachineExecutionPlan.CompiledEffect>> byPhase = new EnumMap<>(SfxMachinePhase.class);
+        for (SfxMachineEffect effect : definition.effects()) {
+            byPhase.computeIfAbsent(effect.phase(), ignored -> new java.util.ArrayList<>())
+                    .add(new SfxMachineExecutionPlan.CompiledEffect(effect.name(), effectHooks.get(effect.name())));
+        }
+        Map<SfxMachinePhase, java.util.List<SfxMachineExecutionPlan.CompiledEffect>> immutable = new EnumMap<>(SfxMachinePhase.class);
+        byPhase.forEach((phase, effects) -> immutable.put(phase, java.util.List.copyOf(effects)));
+        executionPlans.put(machineId, new SfxMachineExecutionPlan(definition, Map.copyOf(immutable)));
+    }
+
+    private record SfxMachineExecutionPlan(
+            SfxMachineDefinition definition,
+            Map<SfxMachinePhase, java.util.List<CompiledEffect>> effectsByPhase) {
+        java.util.List<CompiledEffect> effects(SfxMachinePhase phase) {
+            return phase == null ? java.util.List.of() : effectsByPhase.getOrDefault(phase, java.util.List.of());
+        }
+
+        private record CompiledEffect(String name, SfxMachineHook hook) {
+        }
     }
 }

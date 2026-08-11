@@ -127,12 +127,17 @@ public final class SfxHologramProjectorService implements Listener, SfxProgramma
         if (instance == null) {
             return;
         }
+        boolean needsInitialState = !instance.hasState();
+        if (needsInitialState) {
+            instance = blockData.materializeInstance(instanceId).orElseThrow(
+                    () -> new IllegalStateException("Missing SFX hologram projector record for " + instanceId));
+        }
         HologramState state = HologramState.decode(instance.stateBlob());
         Map<String, Object> framework = frameworkAttributes(instance, state);
         World world = Bukkit.getWorld(instance.anchorKey().worldId());
         Location location = world == null ? null : new Location(world, instance.anchorKey().x(), instance.anchorKey().y(), instance.anchorKey().z());
         machineRuntime.runPhase(typeId, SfxMachinePhase.ON_PLACE, instanceId, location, null, null, SfxMachineStatus.IDLE, framework);
-        if (!instance.hasState()) {
+        if (needsInitialState && !instance.hasState()) {
             blockData.updateInstanceState(instanceId, state.encode(), SfxBlockLifecycleState.IDLE);
         }
         updateProjection(instance, state);

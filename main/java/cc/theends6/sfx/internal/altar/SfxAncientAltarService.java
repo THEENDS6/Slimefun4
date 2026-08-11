@@ -203,6 +203,10 @@ public final class SfxAncientAltarService implements Listener {
             return;
         }
         if (ANCIENT_PEDESTAL.equals(typeId)) {
+            if (!instance.hasState()) {
+                instance = blockData.materializeInstance(instanceId).orElseThrow(
+                        () -> new IllegalStateException("Missing SFX pedestal record for " + instanceId));
+            }
             PedestalState state = PedestalState.decode(instance.stateBlob());
             SfxBlockAnchorKey key = instance.anchorKey();
             if (state.hasItem()) {

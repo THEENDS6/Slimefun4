@@ -14,7 +14,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -86,7 +88,6 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
                       energy_priority_distance INTEGER NOT NULL DEFAULT 2147483647
                     )
                     """);
-            ensureColumn(connection, "sfx_block_instances", "energy_priority_distance", "INTEGER NOT NULL DEFAULT 2147483647");
             statement.execute("""
                     CREATE TABLE IF NOT EXISTS sfx_block_anchors (
                       world_id TEXT NOT NULL,
@@ -102,6 +103,10 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
                       FOREIGN KEY (instance_id) REFERENCES sfx_block_instances(instance_id) ON DELETE CASCADE
                     )
                     """);
+            
+            
+            statement.execute("CREATE INDEX IF NOT EXISTS sfx_block_anchors_chunk_idx "
+                    + "ON sfx_block_anchors(world_id, x, z)");
         }
     }
 
@@ -156,6 +161,108 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
             }
         }
         return new SfxBlockDataSnapshot(anchors, instances);
+    }
+
+    @Override
+    public SfxBlockDataSnapshot loadIndex() throws Exception {
+        List<SfxAnchorRecord> anchors = new ArrayList<>();
+        List<SfxBlockInstanceRecord> instances = new ArrayList<>();
+        try (Connection connection = openTransientConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement("""
+                    SELECT world_id, x, y, z, material_key, instance_id, anchor_kind, integrity_state, updated_at
+                    FROM sfx_block_anchors
+                    ORDER BY world_id, y, x, z
+                    """);
+                 ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    anchors.add(readAnchor(result));
+                }
+            }
+            try (PreparedStatement statement = connection.prepareStatement("""
+                    SELECT instance_id, type_id, anchor_world, anchor_x, anchor_y, anchor_z,
+                           lifecycle_state, version, owner_uuid, updated_at, energy_priority_distance
+                    FROM sfx_block_instances
+                    ORDER BY updated_at DESC
+                    """);
+                 ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    instances.add(readInstance(result, new byte[0], "instance_id", "updated_at"));
+                }
+            }
+        }
+        return new SfxBlockDataSnapshot(anchors, instances);
+    }
+
+    @Override
+    public SfxBlockDataSnapshot loadChunk(UUID worldId, int chunkX, int chunkZ) throws Exception {
+        if (worldId == null) {
+            return new SfxBlockDataSnapshot(List.of(), List.of());
+        }
+        int minX = Math.multiplyExact(chunkX, 16);
+        int minZ = Math.multiplyExact(chunkZ, 16);
+        int maxX = Math.addExact(minX, 16);
+        int maxZ = Math.addExact(minZ, 16);
+        List<SfxAnchorRecord> anchors = new ArrayList<>();
+        Map<UUID, SfxBlockInstanceRecord> instances = new LinkedHashMap<>();
+        try (Connection connection = openTransientConnection();
+             PreparedStatement statement = connection.prepareStatement("""
+                    SELECT a.world_id, a.x, a.y, a.z, a.material_key, a.instance_id, a.anchor_kind,
+                           a.integrity_state, a.updated_at,
+                           i.instance_id AS i_instance_id, i.type_id, i.anchor_world, i.anchor_x,
+                           i.anchor_y, i.anchor_z, i.lifecycle_state, i.version, i.owner_uuid,
+                           i.state_blob, i.updated_at AS i_updated_at, i.energy_priority_distance
+                    FROM sfx_block_anchors a
+                    JOIN sfx_block_instances i ON i.instance_id = a.instance_id
+                    WHERE a.world_id = ? AND a.x >= ? AND a.x < ? AND a.z >= ? AND a.z < ?
+                    ORDER BY a.y, a.x, a.z
+                    """)) {
+            statement.setString(1, worldId.toString());
+            statement.setInt(2, minX);
+            statement.setInt(3, maxX);
+            statement.setInt(4, minZ);
+            statement.setInt(5, maxZ);
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    anchors.add(readAnchor(result));
+                    instances.putIfAbsent(UUID.fromString(result.getString("i_instance_id")),
+                            readInstance(result, result.getBytes("state_blob"), "i_instance_id", "i_updated_at"));
+                }
+            }
+        }
+        return new SfxBlockDataSnapshot(anchors, new ArrayList<>(instances.values()));
+    }
+
+    private SfxAnchorRecord readAnchor(ResultSet result) throws SQLException {
+        return new SfxAnchorRecord(
+                new SfxBlockAnchorKey(
+                        UUID.fromString(result.getString("world_id")),
+                        result.getInt("x"),
+                        result.getInt("y"),
+                        result.getInt("z")),
+                result.getString("material_key"),
+                UUID.fromString(result.getString("instance_id")),
+                SfxBlockAnchorKind.valueOf(result.getString("anchor_kind")),
+                SfxBlockIntegrityState.valueOf(result.getString("integrity_state")),
+                result.getLong("updated_at"));
+    }
+
+    private SfxBlockInstanceRecord readInstance(ResultSet result, byte[] stateBlob,
+                                                String instanceIdColumn, String updatedAtColumn) throws SQLException {
+        String owner = result.getString("owner_uuid");
+        return new SfxBlockInstanceRecord(
+                UUID.fromString(result.getString(instanceIdColumn)),
+                result.getString("type_id"),
+                new SfxBlockAnchorKey(
+                        UUID.fromString(result.getString("anchor_world")),
+                        result.getInt("anchor_x"),
+                        result.getInt("anchor_y"),
+                        result.getInt("anchor_z")),
+                SfxBlockLifecycleState.valueOf(result.getString("lifecycle_state")),
+                result.getInt("version"),
+                owner == null ? null : UUID.fromString(owner),
+                stateBlob,
+                result.getLong(updatedAtColumn),
+                result.getInt("energy_priority_distance"));
     }
 
     @Override
@@ -418,20 +525,6 @@ public final class SqliteSfxBlockDataRepository implements SfxBlockDataRepositor
             deleteInstanceStatement = connection.prepareStatement("DELETE FROM sfx_block_instances WHERE instance_id = ?");
         }
         return deleteInstanceStatement;
-    }
-
-    private void ensureColumn(Connection connection, String table, String column, String declaration) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("PRAGMA table_info(" + table + ")");
-             ResultSet result = statement.executeQuery()) {
-            while (result.next()) {
-                if (column.equalsIgnoreCase(result.getString("name"))) {
-                    return;
-                }
-            }
-        }
-        try (Statement statement = connection.createStatement()) {
-            statement.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + declaration);
-        }
     }
 
     private Connection writerConnection() throws SQLException {

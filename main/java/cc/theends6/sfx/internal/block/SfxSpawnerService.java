@@ -166,6 +166,9 @@ public final class SfxSpawnerService implements SfxProgrammaticBlockPlacement {
         if (instance == null) {
             return Optional.empty();
         }
+        if (!instance.hasState()) {
+            instance = blockData.materializeInstance(instanceId).orElse(instance);
+        }
         return decode(instance.stateBlob());
     }
 

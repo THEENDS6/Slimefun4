@@ -50,7 +50,7 @@ public final class SfxAddonBlockLifecycleService {
 
     public void onWorldUnload(World world) {
         if (world == null) return;
-        for (SfxAnchorRecord anchor : blockData.anchorsInWorld(world.getUID())) {
+        for (SfxAnchorRecord anchor : blockData.anchorsInLoadedWorld(world)) {
             Location location = new Location(world, anchor.key().x(), anchor.key().y(), anchor.key().z());
             invoke(location, null, lifecycle -> lifecycle::onUnload);
         }

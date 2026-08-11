@@ -25,6 +25,23 @@ public final class SfxTopologyService {
     private final Map<UUID, UUID> memberToComponent = new LinkedHashMap<>();
     private final Set<UUID> detachedTerminals = new LinkedHashSet<>();
     private final Set<UUID> conflictedTerminals = new LinkedHashSet<>();
+    private final SfxBlockDataService.AnchorChangeListener anchorChangeListener = new SfxBlockDataService.AnchorChangeListener() {
+        @Override
+        public void onAnchorAdded(SfxAnchorRecord anchor) {
+            invalidateIfRelevant(anchor);
+        }
+
+        @Override
+        public void onAnchorUpdated(SfxAnchorRecord anchor) {
+            invalidateIfRelevant(anchor);
+        }
+
+        @Override
+        public void onAnchorRemoved(SfxBlockAnchorKey key) {
+            invalidate();
+        }
+    };
+    private long topologyRevision;
     private long rebuiltAtRevision = Long.MIN_VALUE;
 
     public SfxTopologyService(
@@ -35,17 +52,18 @@ public final class SfxTopologyService {
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.domainPolicy = Objects.requireNonNull(domainPolicy, "domainPolicy");
         this.connectivityPolicy = Objects.requireNonNull(connectivityPolicy, "connectivityPolicy");
+        this.blockData.addAnchorChangeListener(anchorChangeListener);
     }
 
     public synchronized void rebuildIfStale() {
-        long revision = blockData.revision();
+        long revision = topologyRevision;
         if (revision != rebuiltAtRevision) {
             rebuild();
         }
     }
 
     public synchronized void rebuild() {
-        long revision = blockData.revision();
+        long revision = topologyRevision;
         components.clear();
         memberToComponent.clear();
         detachedTerminals.clear();
@@ -142,6 +160,21 @@ public final class SfxTopologyService {
             }
         }
         rebuiltAtRevision = revision;
+    }
+
+    private void invalidateIfRelevant(SfxAnchorRecord anchor) {
+        if (anchor == null) {
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
+        SfxTopologyCapabilities capabilities = instance == null ? null : domainPolicy.capabilities(instance);
+        if (capabilities != null && capabilities.participates()) {
+            invalidate();
+        }
+    }
+
+    private synchronized void invalidate() {
+        topologyRevision++;
     }
 
     public synchronized long revision() {

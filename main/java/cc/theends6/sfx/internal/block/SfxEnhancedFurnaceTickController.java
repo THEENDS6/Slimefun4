@@ -31,6 +31,7 @@ final class SfxEnhancedFurnaceTickController {
         }
         if (block.getType() != Material.FURNACE) {
             service.enhancedFurnaces.remove(key);
+            service.forgetEnhancedFurnace(key);
             service.virtualFurnaces.remove(key);
             service.viewedFurnaces.remove(key);
             phaseContext.put("basic.furnace.status", cc.theends6.sfx.internal.machine.SfxMachineStatus.ERROR);

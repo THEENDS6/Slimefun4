@@ -13,6 +13,12 @@ public interface SfxBlockDataRepository {
 
     SfxBlockDataSnapshot loadAll() throws Exception;
 
+    
+    SfxBlockDataSnapshot loadIndex() throws Exception;
+
+    
+    SfxBlockDataSnapshot loadChunk(UUID worldId, int chunkX, int chunkZ) throws Exception;
+
     CompletableFuture<Void> persistChangesAsync(
             Collection<SfxAnchorRecord> anchors,
             Collection<SfxBlockInstanceRecord> instances,

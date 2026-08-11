@@ -24,6 +24,7 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhase;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
+import cc.theends6.sfx.internal.machine.SfxTimingWheel;
 import cc.theends6.sfx.internal.machine.SfxOutputPolicies;
 import cc.theends6.sfx.internal.template.SfxCompiledYamlResolver;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
@@ -63,6 +64,7 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.Lightable;
 import org.bukkit.block.data.Waterlogged;
+import org.bukkit.Chunk;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -103,6 +105,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
     private final SfxBlockDataService blockData;
     private final Map<SfxBlockAnchorKey, ActiveCrucibleProcess> activeCrucibles = new ConcurrentHashMap<>();
     final Set<SfxBlockAnchorKey> enhancedFurnaces = ConcurrentHashMap.newKeySet();
+    private final SfxTimingWheel<SfxBlockAnchorKey> furnaceSchedule = new SfxTimingWheel<>();
     final Map<SfxBlockAnchorKey, VirtualFurnaceState> virtualFurnaces = new ConcurrentHashMap<>();
     final Set<SfxBlockAnchorKey> viewedFurnaces = ConcurrentHashMap.newKeySet();
     private final Map<Material, Optional<VirtualFurnaceRecipe>> furnaceRecipeCache = new ConcurrentHashMap<>();
@@ -272,7 +275,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             SfxMachineLegacyHookBridge.place(machineRuntime, marker.itemId(), instanceId, event.getBlockPlaced().getLocation(), "basic", "SfxBasicMachineBlockListener.onPlace");
             if (furnaceStats(marker.itemId()) != null) {
                 SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(event.getBlockPlaced().getLocation());
-                enhancedFurnaces.add(key);
+                wakeEnhancedFurnace(key);
                 markFurnaceExternalDirty(key);
             }
         });
@@ -303,6 +306,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(block.getLocation());
         clearActiveCrucible(key, true);
         enhancedFurnaces.remove(key);
+        furnaceSchedule.cancel(key);
         virtualFurnaces.remove(key);
         viewedFurnaces.remove(key);
         dropStoredContents(block);
@@ -327,7 +331,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
         if (furnaceStats(typeId) != null) {
             SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(clicked.getLocation());
-            enhancedFurnaces.add(key);
+            wakeEnhancedFurnace(key);
             VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
             state.sleeping(false);
             state.externalDirty(true);
@@ -365,7 +369,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
         event.setCancelled(true);
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(event.getBlock().getLocation());
-        enhancedFurnaces.add(key);
+        wakeEnhancedFurnace(key);
         markFurnaceExternalDirty(key);
     }
 
@@ -380,7 +384,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         }
         event.setCancelled(true);
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(event.getBlock().getLocation());
-        enhancedFurnaces.add(key);
+        wakeEnhancedFurnace(key);
         markFurnaceExternalDirty(key);
     }
 
@@ -394,7 +398,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         if (furnaceStats(furnace.getLocation()) == null) {
             return;
         }
-        enhancedFurnaces.add(key);
+        wakeEnhancedFurnace(key);
         viewedFurnaces.add(key);
         VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
         if (!state.initialized() || state.externalDirty()) {
@@ -448,7 +452,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
-        enhancedFurnaces.add(key);
+        wakeEnhancedFurnace(key);
         markFurnaceInventoryExternalLater(inventory);
         virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState()).sleeping(false);
     }
@@ -461,7 +465,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
             return;
         }
         SfxBlockAnchorKey key = SfxBlockAnchorKey.fromLocation(furnace.getLocation());
-        enhancedFurnaces.add(key);
+        wakeEnhancedFurnace(key);
         VirtualFurnaceState state = virtualFurnaces.computeIfAbsent(key, ignored -> new VirtualFurnaceState());
         state.externalDirty(true);
         state.sleeping(false);
@@ -863,9 +867,58 @@ public final class SfxBasicMachineBlockListener implements Listener {
     }
 
     private void bootstrapEnhancedFurnaces() {
-        for (SfxAnchorRecord anchor : blockData.allAnchorsSnapshot()) {
+        for (World world : plugin.getServer().getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                onChunkLoad(chunk);
+            }
+        }
+    }
+
+    private void wakeEnhancedFurnace(SfxBlockAnchorKey key) {
+        if (key == null) {
+            return;
+        }
+        enhancedFurnaces.add(key);
+        furnaceSchedule.wake(key, furnaceTickCounter);
+    }
+
+    void forgetEnhancedFurnace(SfxBlockAnchorKey key) {
+        if (key == null) {
+            return;
+        }
+        enhancedFurnaces.remove(key);
+        furnaceSchedule.cancel(key);
+    }
+
+    public void onChunkLoad(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        for (SfxAnchorRecord anchor : blockData.anchorsInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (furnaceStatsAt(anchor) == null) {
+                continue;
+            }
+            VirtualFurnaceState state = virtualFurnaces.get(anchor.key());
+            if (state != null) {
+                state.lastLogicTick(furnaceTickCounter);
+            }
+            wakeEnhancedFurnace(anchor.key());
+        }
+    }
+
+    public void onChunkUnload(Chunk chunk) {
+        if (chunk == null || !tickSettings.freezeUnloadedMachines()) {
+            return;
+        }
+        for (SfxAnchorRecord anchor : blockData.anchorsInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
             if (furnaceStatsAt(anchor) != null) {
-                enhancedFurnaces.add(anchor.key());
+                VirtualFurnaceState state = virtualFurnaces.get(anchor.key());
+                if (state != null) {
+                    state.lastLogicTick(furnaceTickCounter);
+                }
+                furnaceSchedule.cancel(anchor.key());
             }
         }
     }
@@ -883,6 +936,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
         furnaceTickCounter = 0L;
         activeCrucibles.clear();
         enhancedFurnaces.clear();
+        furnaceSchedule.clear();
         virtualFurnaces.clear();
         viewedFurnaces.clear();
         furnaceRecipeCache.clear();
@@ -898,10 +952,14 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 return;
             }
             long currentTick = ++furnaceTickCounter;
-            for (SfxBlockAnchorKey key : enhancedFurnaces) {
+            for (SfxBlockAnchorKey key : furnaceSchedule.poll(currentTick)) {
+                if (!enhancedFurnaces.contains(key)) {
+                    continue;
+                }
                 SfxAnchorRecord anchor = blockData.findAnchorFast(key).orElse(null);
                 if (anchor == null) {
                     enhancedFurnaces.remove(key);
+                    furnaceSchedule.cancel(key);
                     virtualFurnaces.remove(key);
                     viewedFurnaces.remove(key);
                     continue;
@@ -909,6 +967,7 @@ public final class SfxBasicMachineBlockListener implements Listener {
                 FurnaceStats stats = furnaceStatsAt(anchor);
                 if (stats == null) {
                     enhancedFurnaces.remove(key);
+                    furnaceSchedule.cancel(key);
                     virtualFurnaces.remove(key);
                     viewedFurnaces.remove(key);
                     continue;
@@ -920,20 +979,54 @@ public final class SfxBasicMachineBlockListener implements Listener {
                         : tickSettings.intervalFor(hasViewers);
                 long lastTick = state.lastLogicTick();
                 if (lastTick > 0L && currentTick - lastTick < interval) {
+                    scheduleEnhancedFurnace(key, currentTick, state, hasViewers);
+                    continue;
+                }
+                World world = plugin.getServer().getWorld(key.worldId());
+                if (world == null) {
+                    scheduleEnhancedFurnace(key, currentTick, state, hasViewers);
+                    continue;
+                }
+                if (tickSettings.freezeUnloadedMachines()
+                        && !world.isChunkLoaded(key.x() >> 4, key.z() >> 4)) {
+                    state.lastLogicTick(currentTick);
+                    furnaceSchedule.cancel(key);
                     continue;
                 }
                 long elapsedTicks = lastTick <= 0L ? 1L : Math.max(1L, currentTick - lastTick);
                 state.lastLogicTick(currentTick);
-                World world = plugin.getServer().getWorld(key.worldId());
-                if (world == null) {
-                    continue;
-                }
                 Location location = new Location(world, key.x(), key.y(), key.z());
                 SfxMachineTickContext context = new SfxMachineTickContext(currentTick, elapsedTicks, hasViewers);
-                runtime.executeAt(location, () -> tickEnhancedFurnace(location.getBlock(), key, stats, context));
+                runtime.executeAt(location, () -> {
+                    if (tickSettings.freezeUnloadedMachines()
+                            && !world.isChunkLoaded(key.x() >> 4, key.z() >> 4)) {
+                        state.lastLogicTick(furnaceTickCounter);
+                        furnaceSchedule.cancel(key);
+                        return;
+                    }
+                    tickEnhancedFurnace(location.getBlock(), key, stats, context);
+                    if (!enhancedFurnaces.contains(key)) {
+                        furnaceSchedule.cancel(key);
+                        return;
+                    }
+                    scheduleEnhancedFurnace(key, furnaceTickCounter, state, viewedFurnaces.contains(key));
+                });
             }
             scheduleEnhancedFurnaceTick();
         });
+    }
+
+    private void scheduleEnhancedFurnace(SfxBlockAnchorKey key, long currentTick,
+                                         VirtualFurnaceState state, boolean hasViewers) {
+        if (key == null || state == null || !enhancedFurnaces.contains(key)) {
+            return;
+        }
+        int interval = state.sleeping() && !hasViewers
+                ? tickSettings.sleepingProbeIntervalTicks()
+                : tickSettings.intervalFor(hasViewers);
+        long lastTick = state.lastLogicTick();
+        long dueTick = lastTick <= 0L ? currentTick + 1L : lastTick + interval;
+        furnaceSchedule.reschedule(key, Math.max(currentTick + 1L, dueTick));
     }
 
     private void tickEnhancedFurnace(Block block, SfxBlockAnchorKey key, FurnaceStats stats, SfxMachineTickContext context) {

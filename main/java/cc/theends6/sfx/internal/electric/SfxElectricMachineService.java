@@ -31,6 +31,7 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhaseContext;
 import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachineState;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
+import cc.theends6.sfx.internal.machine.SfxTimingWheel;
 import cc.theends6.sfx.internal.playerdata.SfxPlayerDataService;
 import cc.theends6.sfx.internal.util.SfxBlockDrops;
 import cc.theends6.sfx.internal.util.SfxEventGuards;
@@ -102,6 +103,7 @@ public final class SfxElectricMachineService implements Listener {
     private final Map<UUID, Long> lastLogicTicks = new ConcurrentHashMap<>();
     final Map<UUID, Integer> supplementalEnergyThisSecond = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> supplementalEnergyAveragePerTick = new ConcurrentHashMap<>();
+    private final SfxTimingWheel<UUID> machineSchedule = new SfxTimingWheel<>();
     private volatile long supplementalEnergyWindow = -1L;
     private final SfxMachineTickSettings tickSettings;
     final SfxMachineRuntimeEngine machineRuntime;
@@ -642,6 +644,60 @@ public final class SfxElectricMachineService implements Listener {
         }
     }
 
+    void wake(UUID instanceId) {
+        if (instanceId == null) {
+            return;
+        }
+        activeInstances.add(instanceId);
+        machineSchedule.wake(instanceId, tickCounter);
+    }
+
+    boolean freezeUnloadedMachines() {
+        return tickSettings.freezeUnloadedMachines();
+    }
+
+    public boolean allowsUnloadedMachines() {
+        return !tickSettings.freezeUnloadedMachines();
+    }
+
+    private void scheduleNext(UUID instanceId, long currentTick) {
+        if (instanceId == null || blockData.findInstance(instanceId).isEmpty()) {
+            machineSchedule.cancel(instanceId);
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null || (tickSettings.freezeUnloadedMachines() && !isInstanceChunkLoaded(instance))) {
+            machineSchedule.cancel(instanceId);
+            return;
+        }
+        boolean hasViewers = sessionsByInstance.containsKey(instanceId);
+        long delay = hasViewers ? tickSettings.viewerIntervalTicks() : nextMachineDelay(instanceId, instance);
+        machineSchedule.reschedule(instanceId, currentTick + Math.max(1L, delay));
+    }
+
+    private long nextMachineDelay(UUID instanceId, SfxBlockInstanceRecord instance) {
+        SfxElectricMachineState state = currentState(instanceId, instance);
+        SfxElectricMachineDefinition definition = registry.definition(instance.typeId()).orElse(null);
+        if (definition == null) {
+            return tickSettings.sleepingProbeIntervalTicks();
+        }
+        SfxElectricRecipe activeRecipe = recipeProcessor.activeRecipe(definition, state);
+        if (activeRecipe != null && state.hasReservedInput()) {
+            int totalWork = recipeProcessor.requiredWork(activeRecipe);
+            int remainingWork = Math.max(0, totalWork - state.progressWork());
+            int speed = Math.max(1, definition.speed());
+            long workTicks = Math.max(1L, (remainingWork + speed - 1L) / speed);
+            if (definition.energyConsumptionPerTick() > 0
+                    && state.storedEnergy() < definition.energyConsumptionPerTick()) {
+                return tickSettings.sleepingProbeIntervalTicks();
+            }
+            return Math.min(workTicks, 20L * 60L * 60L);
+        }
+        return activeInstances.contains(instanceId)
+                ? tickSettings.intervalFor(false)
+                : tickSettings.sleepingProbeIntervalTicks();
+    }
+
     public void onChunkLoad(Chunk chunk) {
         if (chunk == null) {
             return;
@@ -652,7 +708,7 @@ public final class SfxElectricMachineService implements Listener {
                 continue;
             }
             stateCache.putIfAbsent(instance.instanceId(), SfxElectricMachineState.decode(instance.stateBlob()));
-            activeInstances.add(instance.instanceId());
+            wake(instance.instanceId());
         }
     }
 
@@ -661,12 +717,16 @@ public final class SfxElectricMachineService implements Listener {
             return;
         }
         flushDirtyChunk(chunk);
+        if (!tickSettings.freezeUnloadedMachines()) {
+            return;
+        }
         for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
                 chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
             if (!isRuntimeAnchorInChunk(instance, chunk)) {
                 continue;
             }
             UUID instanceId = instance.instanceId();
+            machineSchedule.cancel(instanceId);
             stateCache.remove(instanceId);
             dirtyInstances.remove(instanceId);
             activeInstances.remove(instanceId);
@@ -703,7 +763,7 @@ public final class SfxElectricMachineService implements Listener {
         int updated = Math.max(0, Math.min(capacity, amount));
         state.storedEnergy(updated);
         dirtyInstances.add(instanceId);
-        activeInstances.add(instanceId);
+        wake(instanceId);
         return updated;
     }
 
@@ -813,7 +873,7 @@ public final class SfxElectricMachineService implements Listener {
         }
         state.storedEnergy(state.storedEnergy() + accepted);
         dirtyInstances.add(instanceId);
-        activeInstances.add(instanceId);
+        wake(instanceId);
         return accepted;
     }
 
@@ -829,7 +889,7 @@ public final class SfxElectricMachineService implements Listener {
             UUID instanceId = instance.instanceId();
             Location location = locationFor(instance);
             if (location != null && isInstanceChunkLoaded(instance)) {
-                activeInstances.add(instanceId);
+                wake(instanceId);
                 lastLogicTicks.remove(instanceId);
                 boolean hasViewers = sessionsByInstance.containsKey(instanceId);
                 runtime.executeAt(location, () -> tickMachine(instanceId, new SfxMachineTickContext(tickCounter, 1L, hasViewers)));
@@ -848,30 +908,36 @@ public final class SfxElectricMachineService implements Listener {
                 scheduleTick();
                 return;
             }
-            tickCounter++;
-            for (UUID instanceId : List.copyOf(activeInstances)) {
+            long currentTick = ++tickCounter;
+            for (UUID instanceId : machineSchedule.poll(currentTick)) {
                 SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
                 if (instance == null) {
                     activeInstances.remove(instanceId);
-                    lastLogicTicks.remove(instanceId);
+                    machineSchedule.cancel(instanceId);
                     continue;
                 }
                 Location location = locationFor(instance);
-                if (location == null || !isInstanceChunkLoaded(instance)) {
+                if (location == null || (tickSettings.freezeUnloadedMachines() && !isInstanceChunkLoaded(instance))) {
                     activeInstances.remove(instanceId);
                     lastLogicTicks.remove(instanceId);
+                    machineSchedule.cancel(instanceId);
                     continue;
                 }
                 boolean hasViewers = sessionsByInstance.containsKey(instanceId);
                 long lastTick = lastLogicTicks.getOrDefault(instanceId, 0L);
-                int interval = tickSettings.intervalFor(hasViewers);
-                if (lastTick > 0L && tickCounter - lastTick < interval) {
-                    continue;
-                }
-                long elapsedTicks = lastTick <= 0L ? 1L : Math.max(1L, tickCounter - lastTick);
-                lastLogicTicks.put(instanceId, tickCounter);
-                SfxMachineTickContext context = new SfxMachineTickContext(tickCounter, elapsedTicks, hasViewers);
-                runtime.executeAt(location, () -> tickMachine(instanceId, context));
+                long elapsedTicks = lastTick <= 0L ? 1L : Math.max(1L, currentTick - lastTick);
+                lastLogicTicks.put(instanceId, currentTick);
+                SfxMachineTickContext context = new SfxMachineTickContext(currentTick, elapsedTicks, hasViewers);
+                runtime.executeAt(location, () -> {
+                    if (tickSettings.freezeUnloadedMachines() && !isInstanceChunkLoaded(instance)) {
+                        activeInstances.remove(instanceId);
+                        lastLogicTicks.remove(instanceId);
+                        machineSchedule.cancel(instanceId);
+                        return;
+                    }
+                    tickMachine(instanceId, context);
+                    scheduleNext(instanceId, currentTick);
+                });
             }
             scheduleTick();
         });
@@ -941,7 +1007,7 @@ public final class SfxElectricMachineService implements Listener {
                 : state.activeOutputs();
         int[] outputSlots = recipeProcessor.findCompletionOutputSlots(definition, state, activeRecipe, recipeOutputs);
         if (outputSlots == null) {
-            activeInstances.add(instanceId);
+            wake(instanceId);
             return SfxElectricMachineRenderStatus.BLOCKED_OUTPUT;
         }
         recipeProcessor.pushOutputs(state, outputSlots, recipeOutputs);
@@ -949,7 +1015,7 @@ public final class SfxElectricMachineService implements Listener {
         runFrameworkOutputCommit(instanceId, definition, location, context, frameworkAttributes, SfxElectricMachineRenderStatus.WORKING);
         SfxElectricRecipeStart nextStart = recipeProcessor.tryStartNextRecipe(definition, state);
         if (nextStart != null) {
-            activeInstances.add(instanceId);
+            wake(instanceId);
             playCompleteSound(session);
             return SfxElectricMachineRenderStatus.WORKING;
         }
@@ -982,7 +1048,7 @@ public final class SfxElectricMachineService implements Listener {
         SfxElectricMachineSession session = new SfxElectricMachineSession(player.getUniqueId(), instance.instanceId(), inventory);
         sessionsByViewer.put(player.getUniqueId(), session);
         sessionsByInstance.put(instance.instanceId(), session);
-        activeInstances.add(instance.instanceId());
+        wake(instance.instanceId());
         render(session, definition, inventory, state, recipeProcessor.activeRecipe(definition, state), sessionRenderStatus(definition, state, session));
         player.openInventory(inventory);
     }
@@ -1003,7 +1069,7 @@ public final class SfxElectricMachineService implements Listener {
         SfxElectricMachineState state = currentState(instanceId, instance);
         syncInventoryToState(session.inventory(), state);
         dirtyInstances.add(instanceId);
-        activeInstances.add(instanceId);
+        wake(instanceId);
         render(session, definition, session.inventory(), state, recipeProcessor.activeRecipe(definition, state), sessionRenderStatus(definition, state, session));
     }
 
@@ -1037,7 +1103,18 @@ public final class SfxElectricMachineService implements Listener {
     }
 
     SfxElectricMachineState currentState(UUID instanceId, SfxBlockInstanceRecord instance) {
-        return stateCache.computeIfAbsent(instanceId, ignored -> SfxElectricMachineState.decode(instance.stateBlob()));
+        SfxElectricMachineState existing = stateCache.get(instanceId);
+        if (existing != null) {
+            return existing;
+        }
+        SfxBlockInstanceRecord materialized = instance != null && !instance.hasState()
+                ? blockData.materializeInstance(instanceId).orElseThrow()
+                : instance;
+        if (materialized == null) {
+            throw new IllegalStateException("Missing SFX electric machine record for " + instanceId);
+        }
+        return stateCache.computeIfAbsent(instanceId,
+                ignored -> SfxElectricMachineState.decode(materialized.stateBlob()));
     }
 
     private SfxElectricMachineRenderStatus retainedSpecialStatus(SfxElectricMachineDefinition definition, SfxElectricMachineState state, SfxElectricMachineSession session) {
@@ -1307,7 +1384,7 @@ public final class SfxElectricMachineService implements Listener {
 
     private void markCargoMutated(UUID instanceId) {
         dirtyInstances.add(instanceId);
-        activeInstances.add(instanceId);
+        wake(instanceId);
         refreshOpenSessionFromState(instanceId);
     }
 
@@ -1344,7 +1421,7 @@ public final class SfxElectricMachineService implements Listener {
         SfxElectricMachineState state = currentState(session.instanceId(), instance);
         syncInventoryToState(session.inventory(), state);
         dirtyInstances.add(session.instanceId());
-        activeInstances.add(session.instanceId());
+        wake(session.instanceId());
     }
 
     void syncInventoryToState(Inventory inventory, SfxElectricMachineState state) {
@@ -1554,7 +1631,7 @@ public final class SfxElectricMachineService implements Listener {
                 state.enabled(!state.enabled());
             }
             dirtyInstances.add(instanceId);
-            activeInstances.add(instanceId);
+            wake(instanceId);
         }
     }
 
@@ -1608,7 +1685,7 @@ public final class SfxElectricMachineService implements Listener {
         state.progressWork(0);
         state.activeBaseTicks(SfxAutoCrafterRecipeProvider.WORK_TICKS);
         dirtyInstances.add(instance.instanceId());
-        activeInstances.add(instance.instanceId());
+        wake(instance.instanceId());
         player.sendMessage(Text.prefixed(plugin, localization.text("electric-ui.auto-crafter.recipe-selected", Map.of("recipe", choice.key()))));
         player.closeInventory();
         openMachine(player, instance);
@@ -1629,14 +1706,14 @@ public final class SfxElectricMachineService implements Listener {
         if (slot == SfxElectricAssemblerMenuRenderer.ENABLE_SLOT) {
             state.enabled(!state.enabled());
             dirtyInstances.add(instanceId);
-            activeInstances.add(instanceId);
+            wake(instanceId);
             return;
         }
         if (slot == SfxElectricAssemblerMenuRenderer.OFFSET_SLOT) {
             int delta = click.isRightClick() ? -5 : 5;
             SfxAreaElectricMachineProviders.assemblerOffsetTenths(state, SfxAreaElectricMachineProviders.assemblerOffsetTenths(state) + delta);
             dirtyInstances.add(instanceId);
-            activeInstances.add(instanceId);
+            wake(instanceId);
         }
     }
 

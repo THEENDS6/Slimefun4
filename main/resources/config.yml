@@ -153,6 +153,8 @@ machines:
     viewer-interval-ticks: 1
     
     sleeping-probe-interval-ticks: 100
+    
+    freeze-unloaded-machines: true
 
 technical-gadgets:
   cleanup-legacy-attribute-base-values: true

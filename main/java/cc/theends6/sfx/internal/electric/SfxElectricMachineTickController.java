@@ -30,14 +30,14 @@ final class SfxElectricMachineTickController {
             service.activeInstances.remove(instanceId);
             return;
         }
-        if (!service.isInstanceChunkLoaded(instance)) {
+        if (service.freezeUnloadedMachines() && !service.isInstanceChunkLoaded(instance)) {
             service.activeInstances.remove(instanceId);
             return;
         }
         SfxElectricMachineState state = service.currentState(instanceId, instance);
         SfxElectricMachineSession session = service.sessionsByInstance.get(instanceId);
         if (session != null && session.inventoryMutationPending()) {
-            service.activeInstances.add(instanceId);
+            service.wake(instanceId);
             return;
         }
         if (session != null) {
@@ -48,7 +48,7 @@ final class SfxElectricMachineTickController {
         SfxMachineState frameworkState = new SfxMachineState();
         try (SfxMachineExecution machineExecution = service.machineRuntime.beginTick(instanceId, definition.id(), frameworkLocation, context, frameworkState, frameworkAttributes)) {
         if (!machineExecution.canProceed()) {
-            service.activeInstances.add(instanceId);
+            service.wake(instanceId);
             return;
         }
         if (!state.enabled()) {
@@ -57,7 +57,7 @@ final class SfxElectricMachineTickController {
                 service.render(session, definition, session.inventory(), state, service.recipeProcessor.activeRecipe(definition, state), paused);
             }
             if (session != null || state.hasProgress() || state.hasAnyInput()) {
-                service.activeInstances.add(instanceId);
+                service.wake(instanceId);
             } else {
                 service.activeInstances.remove(instanceId);
             }
@@ -66,8 +66,8 @@ final class SfxElectricMachineTickController {
         }
 
         Location location = frameworkLocation;
-        if (location == null || !service.isInstanceChunkLoaded(instance)) {
-            service.activeInstances.add(instanceId);
+        if (location == null || (service.freezeUnloadedMachines() && !service.isInstanceChunkLoaded(instance))) {
+            service.wake(instanceId);
             return;
         }
         SfxElectricMachineTickResult customResult = location == null ? null : service.runFrameworkSpecialOperation(instanceId, definition, state, session, location, context, frameworkAttributes);
@@ -97,7 +97,7 @@ final class SfxElectricMachineTickController {
                 service.render(session, definition, session.inventory(), state, renderRecipe, customResult.status());
             }
             if (customResult.keepActive() || state.hasAnyInput()) {
-                service.activeInstances.add(instanceId);
+                service.wake(instanceId);
             } else if (session == null && !state.hasProgress()) {
                 service.activeInstances.remove(instanceId);
             }
@@ -108,7 +108,7 @@ final class SfxElectricMachineTickController {
         SfxMachinePhaseResult beforeOperation = service.machineRuntime.runPhase(definition.id(), SfxMachinePhase.BEFORE_OPERATION_RESOLVE, instanceId, location, context, null, cc.theends6.sfx.internal.machine.SfxMachineStatus.IDLE, frameworkAttributes);
         if (!cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard.proceed(beforeOperation, frameworkAttributes, SfxMachinePhase.BEFORE_OPERATION_RESOLVE.name())) {
             machineExecution.status(beforeOperation.status() == null ? cc.theends6.sfx.internal.machine.SfxMachineStatus.BLOCKED : beforeOperation.status());
-            service.activeInstances.add(instanceId);
+            service.wake(instanceId);
             return;
         }
         SfxElectricRecipe activeRecipe = frameworkAttributes.get("electric.activeRecipe") instanceof SfxElectricRecipe frameworkActiveRecipe
@@ -129,14 +129,14 @@ final class SfxElectricMachineTickController {
                 if (nextStart != null) {
                     activeRecipe = nextStart.recipe();
                     status = SfxElectricMachineRenderStatus.WORKING;
-                    service.activeInstances.add(instanceId);
+                    service.wake(instanceId);
                 } else {
                     activeRecipe = null;
                     status = state.hasAnyInput() ? service.recipeProcessor.deriveStatus(definition, state) : SfxElectricMachineRenderStatus.IDLE;
                 }
             } else {
                 status = SfxElectricMachineRenderStatus.BLOCKED_OUTPUT;
-                service.activeInstances.add(instanceId);
+                service.wake(instanceId);
             }
         } else if (activeRecipe == null) {
             SfxElectricRecipeMatch match = frameworkAttributes.get("electric.recipeMatch") instanceof SfxElectricRecipeMatch frameworkMatch
@@ -161,7 +161,7 @@ final class SfxElectricMachineTickController {
                     if (start != null) {
                         activeRecipe = start.recipe();
                         status = SfxElectricMachineRenderStatus.WORKING;
-                        service.activeInstances.add(instanceId);
+                        service.wake(instanceId);
                     } else {
                         activeRecipe = null;
                         status = service.recipeProcessor.deriveStatus(definition, state);
@@ -170,7 +170,7 @@ final class SfxElectricMachineTickController {
                 }
             }
         } else {
-            service.activeInstances.add(instanceId);
+            service.wake(instanceId);
             if (!state.hasReservedInput()) {
                 state.resetProgress();
                 service.dirtyInstances.add(instanceId);

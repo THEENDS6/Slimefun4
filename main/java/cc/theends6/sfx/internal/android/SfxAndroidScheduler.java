@@ -19,19 +19,27 @@ final class SfxAndroidScheduler {
 
     static void tickAndroids(SfxAndroidService service, long tickId) {
         List<SfxBlockInstanceRecord> active = new ArrayList<>();
-        for (UUID instanceId : List.copyOf(service.activeAndroids)) {
+        for (UUID instanceId : service.androidSchedule.poll(tickId)) {
+            if (!service.activeAndroids.contains(instanceId)) {
+                continue;
+            }
             SfxBlockInstanceRecord instance = service.blockData.findInstance(instanceId).orElse(null);
             if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
-                service.activeAndroids.remove(instanceId);
+                service.forgetAndroid(instanceId);
                 service.states.remove(instanceId);
                 continue;
             }
             SfxAndroidState state = service.stateFor(instance.instanceId(), instance.typeId(), service.toLocation(instance.anchorKey()));
             if (state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED) {
-                service.activeAndroids.remove(instanceId);
+                service.forgetAndroid(instanceId);
+                continue;
+            }
+            if (service.freezeUnloadedMachines() && !service.isInstanceChunkLoaded(instance)) {
+                service.rescheduleAndroid(instanceId, tickId);
                 continue;
             }
             if (service.shouldSkipForBackoff(state, tickId)) {
+                service.rescheduleAndroid(instanceId, tickId);
                 continue;
             }
             active.add(instance);
@@ -49,13 +57,33 @@ final class SfxAndroidScheduler {
             SfxBlockInstanceRecord first = group.get(0);
             Location location = service.toLocation(first.anchorKey());
             if (location == null) {
+                for (SfxBlockInstanceRecord instance : group) {
+                    service.rescheduleAndroid(instance.instanceId(), tickId);
+                }
                 continue;
             }
-            List<SfxBlockInstanceRecord> snapshot = group.size() > service.maxActivePerRegion ? group.subList(0, service.maxActivePerRegion) : group;
+            List<SfxBlockInstanceRecord> snapshot = group.size() > service.maxActivePerRegion
+                    ? List.copyOf(group.subList(0, service.maxActivePerRegion))
+                    : List.copyOf(group);
+            for (SfxBlockInstanceRecord instance : group) {
+                if (!snapshot.contains(instance)) {
+                    service.rescheduleAndroid(instance.instanceId(), tickId);
+                }
+            }
             service.runtime.executeAt(location, () -> {
-                SfxMachineLegacyHookBridge.beforeNetworkTick(service.machineRuntime, "sf:android", first.instanceId(), location, "android", "SfxAndroidService.tickAndroids");
-                service.tickRegionBatch(List.copyOf(snapshot), tickId);
-                SfxMachineLegacyHookBridge.afterNetworkTick(service.machineRuntime, "sf:android", first.instanceId(), location, "android", "SfxAndroidService.tickAndroids");
+                boolean hookEntered = false;
+                try {
+                    SfxMachineLegacyHookBridge.beforeNetworkTick(service.machineRuntime, "sf:android", first.instanceId(), location, "android", "SfxAndroidService.tickAndroids");
+                    hookEntered = true;
+                    service.tickRegionBatch(snapshot, tickId);
+                } finally {
+                    for (SfxBlockInstanceRecord instance : snapshot) {
+                        service.rescheduleAndroid(instance.instanceId(), tickId);
+                    }
+                    if (hookEntered) {
+                        SfxMachineLegacyHookBridge.afterNetworkTick(service.machineRuntime, "sf:android", first.instanceId(), location, "android", "SfxAndroidService.tickAndroids");
+                    }
+                }
             });
         }
     

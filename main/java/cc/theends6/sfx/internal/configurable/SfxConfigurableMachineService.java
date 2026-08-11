@@ -27,6 +27,7 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachinePipelineGuard;
 import cc.theends6.sfx.internal.machine.SfxMachineState;
 import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
+import cc.theends6.sfx.internal.machine.SfxTimingWheel;
 import cc.theends6.sfx.internal.ui.SfxInventoryPainter;
 import cc.theends6.sfx.api.ui.SfxUiItems;
 import cc.theends6.sfx.internal.util.ItemBuilder;
@@ -105,6 +106,7 @@ public final class SfxConfigurableMachineService implements Listener {
     private final Map<UUID, Long> lastLogicTicks = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> recentGeneratedEnergy = new ConcurrentHashMap<>();
     private final Set<UUID> autoPausedProducers = ConcurrentHashMap.newKeySet();
+    private final SfxTimingWheel<UUID> machineSchedule = new SfxTimingWheel<>();
     private final SfxMachineStatusIconRenderer statusIcons;
     private final SfxMachineTickSettings tickSettings;
     private final SfxMachineRuntimeEngine machineRuntime;
@@ -320,7 +322,7 @@ public final class SfxConfigurableMachineService implements Listener {
                             event.getPlayer().getUniqueId()));
             states.putIfAbsent(instanceId, SfxConfigurableMachineState.empty());
             SfxMachineLegacyHookBridge.place(machineRuntime, marker.itemId(), instanceId, event.getBlockPlaced().getLocation(), "configurable", "SfxConfigurableMachineService.onPlace");
-            activeInstances.add(instanceId);
+            wake(instanceId);
         });
     }
 
@@ -593,7 +595,7 @@ public final class SfxConfigurableMachineService implements Listener {
         int updated = Math.max(0, Math.min(definition.capacity(), amount));
         state.storedEnergy(updated);
         dirtyInstances.add(instanceId);
-        activeInstances.add(instanceId);
+        wake(instanceId);
         return updated;
     }
 
@@ -611,7 +613,7 @@ public final class SfxConfigurableMachineService implements Listener {
         if (accepted > 0) {
             state.storedEnergy(state.storedEnergy() + accepted);
             dirtyInstances.add(instanceId);
-            activeInstances.add(instanceId);
+            wake(instanceId);
         }
         return accepted;
     }
@@ -707,7 +709,7 @@ public final class SfxConfigurableMachineService implements Listener {
         if (accepted > 0) {
             state.storedEnergy(state.storedEnergy() + accepted);
             dirtyInstances.add(instanceId);
-            activeInstances.add(instanceId);
+            wake(instanceId);
         }
         return accepted;
     }
@@ -726,7 +728,7 @@ public final class SfxConfigurableMachineService implements Listener {
         } else {
             autoPausedProducers.remove(instanceId);
         }
-        activeInstances.add(instanceId);
+        wake(instanceId);
     }
 
     public boolean canAutoPauseProducer(UUID instanceId) {
@@ -793,6 +795,55 @@ public final class SfxConfigurableMachineService implements Listener {
         }
     }
 
+    void wake(UUID instanceId) {
+        if (instanceId == null) {
+            return;
+        }
+        activeInstances.add(instanceId);
+        machineSchedule.wake(instanceId, tickCounter);
+    }
+
+    boolean freezeUnloadedMachines() {
+        return tickSettings.freezeUnloadedMachines();
+    }
+
+    public boolean allowsUnloadedMachines() {
+        return !tickSettings.freezeUnloadedMachines();
+    }
+
+    private void scheduleNext(UUID instanceId, long currentTick) {
+        if (instanceId == null || blockData.findInstance(instanceId).isEmpty()) {
+            machineSchedule.cancel(instanceId);
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null || (freezeUnloadedMachines() && !isInstanceChunkLoaded(instance))) {
+            machineSchedule.cancel(instanceId);
+            return;
+        }
+        boolean hasViewers = sessionsByHost.containsKey(instanceId);
+        long delay = hasViewers ? tickSettings.viewerIntervalTicks() : nextMachineDelay(instanceId, instance);
+        machineSchedule.reschedule(instanceId, currentTick + Math.max(1L, delay));
+    }
+
+    private long nextMachineDelay(UUID instanceId, SfxBlockInstanceRecord instance) {
+        SfxConfigurableMachineDefinition definition = definitions.get(instance.typeId());
+        SfxConfigurableMachineState state = states.get(instanceId);
+        if (definition == null || state == null) {
+            return tickSettings.sleepingProbeIntervalTicks();
+        }
+        if (definition.kind() == SfxConfigurableMachineKind.ASSEMBLER && isAssemblerWorking(state)) {
+            int remaining = Math.max(0, state.fuelTotalTicks() - state.fuelProgressTicks());
+            if (definition.energyPerAction() > 0 && state.storedEnergy() < definition.energyPerAction()) {
+                return tickSettings.sleepingProbeIntervalTicks();
+            }
+            return Math.max(1L, Math.min(remaining, 20L * 60L * 60L));
+        }
+        return activeInstances.contains(instanceId)
+                ? tickSettings.intervalFor(false)
+                : tickSettings.sleepingProbeIntervalTicks();
+    }
+
     public void onChunkLoad(Chunk chunk) {
         if (chunk == null) {
             return;
@@ -803,7 +854,7 @@ public final class SfxConfigurableMachineService implements Listener {
                 continue;
             }
             states.putIfAbsent(instance.instanceId(), SfxConfigurableMachineState.decode(instance.stateBlob()));
-            activeInstances.add(instance.instanceId());
+            wake(instance.instanceId());
         }
     }
 
@@ -812,12 +863,16 @@ public final class SfxConfigurableMachineService implements Listener {
             return;
         }
         flushDirtyChunk(chunk);
+        if (!freezeUnloadedMachines()) {
+            return;
+        }
         for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
                 chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
             if (!isRuntimeAnchorInChunk(instance, chunk)) {
                 continue;
             }
             UUID instanceId = instance.instanceId();
+            machineSchedule.cancel(instanceId);
             states.remove(instanceId);
             dirtyInstances.remove(instanceId);
             activeInstances.remove(instanceId);
@@ -841,29 +896,30 @@ public final class SfxConfigurableMachineService implements Listener {
                 scheduleTick();
                 return;
             }
-            tickCounter++;
-            for (UUID instanceId : List.copyOf(activeInstances)) {
+            long currentTick = ++tickCounter;
+            for (UUID instanceId : machineSchedule.poll(currentTick)) {
                 SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
                 if (instance == null) {
                     activeInstances.remove(instanceId);
-                    lastLogicTicks.remove(instanceId);
+                    machineSchedule.cancel(instanceId);
                     continue;
                 }
                 SfxConfigurableMachineDefinition loopDefinition = definitions.get(instance.typeId());
                 if (loopDefinition == null) {
                     activeInstances.remove(instanceId);
-                    lastLogicTicks.remove(instanceId);
+                    machineSchedule.cancel(instanceId);
                     continue;
                 }
                 if (loopDefinition.kind() == SfxConfigurableMachineKind.ACCESS_PORT) {
                     activeInstances.remove(instanceId);
-                    lastLogicTicks.remove(instanceId);
+                    machineSchedule.cancel(instanceId);
                     continue;
                 }
                 Location location = locationFor(instance);
-                if (location == null || !isInstanceChunkLoaded(instance)) {
+                if (location == null || (freezeUnloadedMachines() && !isInstanceChunkLoaded(instance))) {
                     activeInstances.remove(instanceId);
                     lastLogicTicks.remove(instanceId);
+                    machineSchedule.cancel(instanceId);
                     continue;
                 }
                 if (loopDefinition.kind() == SfxConfigurableMachineKind.REACTOR) {
@@ -875,14 +931,19 @@ public final class SfxConfigurableMachineService implements Listener {
                 }
                 boolean hasViewers = sessionsByHost.containsKey(instanceId);
                 long lastTick = lastLogicTicks.getOrDefault(instanceId, 0L);
-                int interval = tickSettings.intervalFor(hasViewers);
-                if (lastTick > 0L && tickCounter - lastTick < interval) {
-                    continue;
-                }
-                long elapsedTicks = lastTick <= 0L ? 1L : Math.max(1L, tickCounter - lastTick);
-                lastLogicTicks.put(instanceId, tickCounter);
-                SfxMachineTickContext context = new SfxMachineTickContext(tickCounter, elapsedTicks, hasViewers);
-                runtime.executeAt(location, () -> tickMachine(instanceId, context));
+                long elapsedTicks = lastTick <= 0L ? 1L : Math.max(1L, currentTick - lastTick);
+                lastLogicTicks.put(instanceId, currentTick);
+                SfxMachineTickContext context = new SfxMachineTickContext(currentTick, elapsedTicks, hasViewers);
+                runtime.executeAt(location, () -> {
+                    if (freezeUnloadedMachines() && !isInstanceChunkLoaded(instance)) {
+                        activeInstances.remove(instanceId);
+                        lastLogicTicks.remove(instanceId);
+                        machineSchedule.cancel(instanceId);
+                        return;
+                    }
+                    tickMachine(instanceId, context);
+                    scheduleNext(instanceId, currentTick);
+                });
             }
             scheduleTick();
         });
@@ -914,7 +975,7 @@ public final class SfxConfigurableMachineService implements Listener {
             return;
         }
         Location location = locationFor(instance);
-        if (location == null || !isInstanceChunkLoaded(instance)) {
+        if (location == null || (freezeUnloadedMachines() && !isInstanceChunkLoaded(instance))) {
             activeInstances.remove(instanceId);
             lastLogicTicks.remove(instanceId);
             return;
@@ -1204,7 +1265,7 @@ public final class SfxConfigurableMachineService implements Listener {
         SfxConfigurableMachineSession session = new SfxConfigurableMachineSession(player.getUniqueId(), panelInstanceId, hostInstanceId, panelType, inventory);
         sessionsByViewer.put(player.getUniqueId(), session);
         sessionsByHost.put(hostInstanceId, session);
-        activeInstances.add(hostInstanceId);
+        wake(hostInstanceId);
         render(session, host, definition, state);
         player.openInventory(inventory);
     }
@@ -1225,7 +1286,7 @@ public final class SfxConfigurableMachineService implements Listener {
         SfxConfigurableMachineState state = currentState(hostInstanceId, host);
         syncInventoryToState(session.inventory(), state, definition, session.panelType());
         dirtyInstances.add(hostInstanceId);
-        activeInstances.add(hostInstanceId);
+        wake(hostInstanceId);
         render(session, host, definition, state);
     }
 
@@ -1241,7 +1302,7 @@ public final class SfxConfigurableMachineService implements Listener {
         SfxConfigurableMachineState state = currentState(session.hostInstanceId(), host);
         syncInventoryToState(session.inventory(), state, definition, session.panelType());
         dirtyInstances.add(session.hostInstanceId());
-        activeInstances.add(session.hostInstanceId());
+        wake(session.hostInstanceId());
     }
 
     private void syncInventoryToState(Inventory inventory, SfxConfigurableMachineState state, SfxConfigurableMachineDefinition definition, SfxConfigurableMachineHolder.PanelType panelType) {
@@ -1487,7 +1548,7 @@ public final class SfxConfigurableMachineService implements Listener {
                 state.offsetTenths(state.offsetTenths() + delta);
             }
             dirtyInstances.add(host.instanceId());
-            activeInstances.add(host.instanceId());
+            wake(host.instanceId());
             refreshSession(host.instanceId());
             return;
         }
@@ -1497,7 +1558,7 @@ public final class SfxConfigurableMachineService implements Listener {
             state.mode(state.mode() == 0 ? 1 : 0);
             autoPausedProducers.remove(host.instanceId());
             dirtyInstances.add(host.instanceId());
-            activeInstances.add(host.instanceId());
+            wake(host.instanceId());
             refreshSession(host.instanceId());
             return;
         }
@@ -1514,7 +1575,18 @@ public final class SfxConfigurableMachineService implements Listener {
     }
 
     private SfxConfigurableMachineState currentState(UUID instanceId, SfxBlockInstanceRecord instance) {
-        return states.computeIfAbsent(instanceId, ignored -> SfxConfigurableMachineState.decode(instance.stateBlob()));
+        SfxConfigurableMachineState existing = states.get(instanceId);
+        if (existing != null) {
+            return existing;
+        }
+        SfxBlockInstanceRecord materialized = instance != null && !instance.hasState()
+                ? blockData.materializeInstance(instanceId).orElseThrow()
+                : instance;
+        if (materialized == null) {
+            throw new IllegalStateException("Missing SFX configurable machine record for " + instanceId);
+        }
+        return states.computeIfAbsent(instanceId,
+                ignored -> SfxConfigurableMachineState.decode(materialized.stateBlob()));
     }
 
     private void flushDirty() {

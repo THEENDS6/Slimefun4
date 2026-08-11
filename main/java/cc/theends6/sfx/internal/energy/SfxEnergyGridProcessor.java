@@ -53,9 +53,9 @@ final class SfxEnergyGridProcessor {
         Set<UUID> loadedRuntimeMembers = new LinkedHashSet<>();
 
         for (SfxBlockInstanceRecord instance : grid.capacitors()) {
-            if (!service.isInstanceChunkLoaded(instance)) {
-                continue;
-            }
+            
+            
+            
             SfxEnergyComponentDefinition definition = service.definitions.get(instance.typeId());
             if (definition == null) {
                 continue;
@@ -86,7 +86,7 @@ final class SfxEnergyGridProcessor {
             chargerRefs.add(new SfxEnergyNodeRef(instance, definition, service.currentState(instance.instanceId(), instance)));
         }
         for (SfxBlockInstanceRecord instance : grid.electricConsumers()) {
-            if (!service.isInstanceChunkLoaded(instance)) {
+            if (!service.isInstanceChunkLoaded(instance) && !service.electricMachines.allowsUnloadedMachines()) {
                 continue;
             }
             loadedRuntimeMembers.add(instance.instanceId());
@@ -94,7 +94,7 @@ final class SfxEnergyGridProcessor {
             electricConsumerIds.add(instance.instanceId());
         }
         for (SfxBlockInstanceRecord instance : grid.configurableConsumers()) {
-            if (!service.isInstanceChunkLoaded(instance)) {
+            if (!service.isInstanceChunkLoaded(instance) && !service.configurableMachines.allowsUnloadedMachines()) {
                 continue;
             }
             loadedRuntimeMembers.add(instance.instanceId());
@@ -102,7 +102,7 @@ final class SfxEnergyGridProcessor {
             configurableConsumerIds.add(instance.instanceId());
         }
         for (SfxBlockInstanceRecord instance : grid.configurableProducers()) {
-            if (!service.isInstanceChunkLoaded(instance)) {
+            if (!service.isInstanceChunkLoaded(instance) && !service.configurableMachines.allowsUnloadedMachines()) {
                 continue;
             }
             loadedRuntimeMembers.add(instance.instanceId());

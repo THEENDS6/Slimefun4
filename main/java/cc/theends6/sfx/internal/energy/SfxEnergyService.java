@@ -87,6 +87,7 @@ public final class SfxEnergyService implements Listener {
     final Map<UUID, SfxEnergyGridStatus> nodeGridStatuses = new ConcurrentHashMap<>();
     final Set<UUID> dirtyNodes = ConcurrentHashMap.newKeySet();
     private final Set<UUID> activeNodes = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> loadedRegulators = ConcurrentHashMap.newKeySet();
     final Set<UUID> autoPausedGenerators = ConcurrentHashMap.newKeySet();
     private final Map<UUID, EnergyRuntimeGrid> runtimeGrids = new ConcurrentHashMap<>();
     private final Map<SfxBlockAnchorKey, SolarExposureCache> solarExposureCache = new ConcurrentHashMap<>();
@@ -343,6 +344,7 @@ public final class SfxEnergyService implements Listener {
         nodeGridStatuses.clear();
         dirtyNodes.clear();
         activeNodes.clear();
+        loadedRegulators.clear();
         autoPausedGenerators.clear();
         solarExposureCache.clear();
     }
@@ -374,6 +376,9 @@ public final class SfxEnergyService implements Listener {
             if (definition.componentType() == SfxEnergyComponentType.CAPACITOR) {
                 scheduleCapacitorAppearanceUpdate(new SfxEnergyNodeRef(instance, definition, state));
             }
+            if (definition.componentType() == SfxEnergyComponentType.REGULATOR) {
+                loadedRegulators.add(instance.instanceId());
+            }
         }
         runtimeGrids.clear();
         nodeGridStatusTopologyRevision = Long.MIN_VALUE;
@@ -390,11 +395,10 @@ public final class SfxEnergyService implements Listener {
                 continue;
             }
             UUID instanceId = instance.instanceId();
-            nodeStates.remove(instanceId);
-            dirtyNodes.remove(instanceId);
-            activeNodes.remove(instanceId);
-            autoPausedGenerators.remove(instanceId);
-            nodeGridStatuses.remove(instanceId);
+            loadedRegulators.remove(instanceId);
+            
+            
+            
             solarExposureCache.remove(instance.anchorKey());
             capacitorProjector.remove(instanceId);
             displayController.remove(instance.anchorKey());
@@ -432,12 +436,17 @@ public final class SfxEnergyService implements Listener {
         Set<UUID> liveComponents = topologyChanged ? new LinkedHashSet<>() : Set.of();
         if (topologyChanged) {
             nodeGridStatuses.clear();
-        }
-
-        for (SfxTopologyComponent component : topology.components()) {
-            if (topologyChanged) {
+            for (SfxTopologyComponent component : topology.components()) {
                 liveComponents.add(component.componentId());
                 cacheGridStatus(component);
+            }
+        }
+
+        Set<UUID> processedComponents = new LinkedHashSet<>();
+        for (UUID loadedRegulatorId : loadedRegulators) {
+            SfxTopologyComponent component = topology.componentForMember(loadedRegulatorId).orElse(null);
+            if (component == null || !processedComponents.add(component.componentId())) {
+                continue;
             }
             SfxEnergyGridStatus status = gridStatusFor(component);
             if (status != SfxEnergyGridStatus.ONLINE) {
@@ -452,7 +461,10 @@ public final class SfxEnergyService implements Listener {
                 }
                 continue;
             }
-            UUID regulatorId = component.controllers().stream().findFirst().orElse(null);
+            UUID regulatorId = component.controllers().stream()
+                    .filter(loadedRegulators::contains)
+                    .findFirst()
+                    .orElse(null);
             if (regulatorId == null) {
                 runtimeGrids.remove(component.componentId());
                 continue;
@@ -1358,7 +1370,18 @@ public final class SfxEnergyService implements Listener {
     }
 
     SfxEnergyNodeState currentState(UUID instanceId, SfxBlockInstanceRecord instance) {
-        return nodeStates.computeIfAbsent(instanceId, ignored -> SfxEnergyNodeState.decode(instance.stateBlob()));
+        SfxEnergyNodeState existing = nodeStates.get(instanceId);
+        if (existing != null) {
+            return existing;
+        }
+        SfxBlockInstanceRecord materialized = instance != null && !instance.hasState()
+                ? blockData.materializeInstance(instanceId).orElseThrow()
+                : instance;
+        if (materialized == null) {
+            throw new IllegalStateException("Missing SFX energy node record for " + instanceId);
+        }
+        return nodeStates.computeIfAbsent(instanceId,
+                ignored -> SfxEnergyNodeState.decode(materialized.stateBlob()));
     }
 
     private SfxElectricStack consumeInput(SfxEnergyNodeState state, int slot, int amount) {

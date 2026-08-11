@@ -24,6 +24,8 @@ import cc.theends6.sfx.internal.machine.SfxMachinePhaseResult;
 import cc.theends6.sfx.internal.machine.SfxMachineRuntimeEngine;
 import cc.theends6.sfx.internal.machine.SfxMachineLegacyHookBridge;
 import cc.theends6.sfx.internal.machine.SfxMachineStatus;
+import cc.theends6.sfx.internal.machine.SfxMachineTickSettings;
+import cc.theends6.sfx.internal.machine.SfxTimingWheel;
 import cc.theends6.sfx.api.machine.runtime.SfxMachineTickContext;
 import cc.theends6.sfx.internal.ui.SfxMachineMenuTransactions;
 import cc.theends6.sfx.internal.util.HeadTextures;
@@ -51,6 +53,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -120,6 +123,8 @@ public final class SfxAndroidService implements Listener {
     private final SqliteSfxAndroidScriptRepository scripts;
     final Map<UUID, SfxAndroidState> states = new ConcurrentHashMap<>();
     final Set<UUID> activeAndroids = ConcurrentHashMap.newKeySet();
+    final SfxTimingWheel<UUID> androidSchedule = new SfxTimingWheel<>();
+    final SfxTimingWheel<UUID> fuelSchedule = new SfxTimingWheel<>();
     private final Map<UUID, ImportSession> pendingImports = new ConcurrentHashMap<>();
     private final Map<UUID, UploadSession> pendingUploads = new ConcurrentHashMap<>();
     private final Map<UUID, EditScriptSession> pendingScriptEdits = new ConcurrentHashMap<>();
@@ -131,6 +136,8 @@ public final class SfxAndroidService implements Listener {
     int maxActivePerRegion;
     private volatile SfxBlockLifecycleRouter blockLifecycleRouter;
     private boolean minerCanBreakSfxBlocks;
+    private final SfxMachineTickSettings tickSettings;
+    private volatile long fuelTick;
 
     public SfxAndroidService(JavaPlugin plugin, SfxRuntime runtime, SfxItems items, SfxItemRegistry itemRegistry, SfxLocalization localization, SfxBlockDataService blockData, SqliteSfxAndroidScriptRepository scripts, SfxMachineRuntimeEngine machineRuntime) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -141,6 +148,7 @@ public final class SfxAndroidService implements Listener {
         this.blockData = Objects.requireNonNull(blockData, "blockData");
         this.scripts = Objects.requireNonNull(scripts, "scripts");
         this.machineRuntime = Objects.requireNonNull(machineRuntime, "machineRuntime");
+        this.tickSettings = SfxMachineTickSettings.from(plugin.getConfig());
     }
 
     public void start() {
@@ -173,11 +181,89 @@ public final class SfxAndroidService implements Listener {
         flushAllStates();
         states.clear();
         activeAndroids.clear();
+        androidSchedule.clear();
+        fuelSchedule.clear();
+        fuelTick = 0L;
         scripts.close();
     }
 
     public boolean supportsType(String typeId) {
         return SfxAndroidType.isAndroidItem(typeId) || INTERFACE_FUEL.equals(typeId) || INTERFACE_ITEMS.equals(typeId);
+    }
+
+    void wakeAndroid(UUID instanceId) {
+        if (instanceId == null) {
+            return;
+        }
+        activeAndroids.add(instanceId);
+        androidSchedule.wake(instanceId, androidTick.get());
+        fuelSchedule.wake(instanceId, fuelTick);
+    }
+
+    void forgetAndroid(UUID instanceId) {
+        if (instanceId == null) {
+            return;
+        }
+        activeAndroids.remove(instanceId);
+        androidSchedule.cancel(instanceId);
+        fuelSchedule.cancel(instanceId);
+    }
+
+    boolean freezeUnloadedMachines() {
+        return tickSettings.freezeUnloadedMachines();
+    }
+
+    boolean isInstanceChunkLoaded(SfxBlockInstanceRecord instance) {
+        if (instance == null) {
+            return false;
+        }
+        World world = Bukkit.getWorld(instance.anchorKey().worldId());
+        return world != null && world.isChunkLoaded(instance.anchorKey().x() >> 4, instance.anchorKey().z() >> 4);
+    }
+
+    void rescheduleAndroid(UUID instanceId, long tickId) {
+        if (instanceId == null || !activeAndroids.contains(instanceId)) {
+            androidSchedule.cancel(instanceId);
+            return;
+        }
+        SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
+        if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+            forgetAndroid(instanceId);
+            states.remove(instanceId);
+            return;
+        }
+        SfxAndroidState state = stateFor(instanceId, instance.typeId(), toLocation(instance.anchorKey()));
+        if (state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED
+                || state.runtimeState() == SfxAndroidRuntimeState.DORMANT_SCRIPT_INVALID) {
+            forgetAndroid(instanceId);
+            return;
+        }
+        if (freezeUnloadedMachines() && !isInstanceChunkLoaded(instance)) {
+            state.sleepingUntilTick(tickId);
+            androidSchedule.cancel(instanceId);
+            return;
+        }
+        long nextTick = Math.max(tickId + 1L, state.sleepingUntilTick());
+        int divisor = backoffDivisor(state);
+        if (divisor > 1) {
+            nextTick = Math.max(nextTick, ((tickId / divisor) + 1L) * divisor);
+        }
+        androidSchedule.reschedule(instanceId, nextTick);
+    }
+
+    private int backoffDivisor(SfxAndroidState state) {
+        if (state == null || state.noEffectTicks() <= 0) {
+            return 1;
+        }
+        long threshold = Math.max(1L, Math.round(200.0D / Math.max(1L, tickInterval)));
+        int stage = (int) Math.min(4L, state.noEffectTicks() / threshold);
+        return switch (stage) {
+            case 0 -> 1;
+            case 1 -> 2;
+            case 2 -> 4;
+            case 3 -> 8;
+            default -> 16;
+        };
     }
 
 
@@ -227,6 +313,7 @@ public final class SfxAndroidService implements Listener {
         BlockFace placedRotation = rotation == null ? BlockFace.NORTH : rotation;
         SfxAndroidState state = SfxAndroidState.createDefault(placedRotation);
         states.put(instanceId, state);
+        wakeAndroid(instanceId);
         persist(instanceId, state);
         SfxAndroidBlockAppearance.apply(machineRuntime, itemRegistry, block, typeId, placedRotation);
         runtime.executeAtLater(block.getLocation(), 1L, () -> SfxAndroidBlockAppearance.apply(machineRuntime, itemRegistry, block, typeId, placedRotation));
@@ -244,7 +331,7 @@ public final class SfxAndroidService implements Listener {
             SfxBlockDrops.dropItem(block, state.fuelSlot());
             SfxBlockDrops.dropPluginBlock(block, items, typeId);
             states.remove(instanceId);
-            activeAndroids.remove(instanceId);
+            forgetAndroid(instanceId);
             blockData.unregisterAt(block.getLocation());
             return;
         }
@@ -256,17 +343,55 @@ public final class SfxAndroidService implements Listener {
     }
 
     private void rebuildIndex() {
-        for (SfxAnchorRecord anchor : blockData.allAnchorsSnapshot()) {
-            SfxBlockInstanceRecord instance = blockData.findInstance(anchor.instanceId()).orElse(null);
-            if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
-                continue;
-            }
-            SfxAndroidState state = SfxAndroidState.decode(instance.stateBlob(), BlockFace.NORTH);
-            states.put(instance.instanceId(), state);
-            if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.ACTIVE) {
-                activeAndroids.add(instance.instanceId());
+        for (World world : Bukkit.getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                onChunkLoad(chunk);
             }
         }
+    }
+
+    public void onChunkLoad(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (!isRuntimeAnchorInChunk(instance, chunk) || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+                continue;
+            }
+            SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), toLocation(instance.anchorKey()));
+            if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.ACTIVE) {
+                wakeAndroid(instance.instanceId());
+            }
+        }
+    }
+
+    public void onChunkUnload(Chunk chunk) {
+        if (chunk == null) {
+            return;
+        }
+        for (SfxBlockInstanceRecord instance : blockData.instancesInChunk(
+                chunk.getWorld().getUID(), chunk.getX(), chunk.getZ())) {
+            if (!isRuntimeAnchorInChunk(instance, chunk) || !SfxAndroidType.isAndroidItem(instance.typeId())) {
+                continue;
+            }
+            SfxAndroidState state = states.get(instance.instanceId());
+            if (state != null) {
+                persist(instance.instanceId(), state, false);
+            }
+            if (freezeUnloadedMachines()) {
+                androidSchedule.cancel(instance.instanceId());
+                fuelSchedule.cancel(instance.instanceId());
+                states.remove(instance.instanceId());
+            }
+        }
+    }
+
+    private boolean isRuntimeAnchorInChunk(SfxBlockInstanceRecord instance, Chunk chunk) {
+        return instance != null && chunk != null
+                && instance.anchorKey().worldId().equals(chunk.getWorld().getUID())
+                && (instance.anchorKey().x() >> 4) == chunk.getX()
+                && (instance.anchorKey().z() >> 4) == chunk.getZ();
     }
 
     private void scheduleTick() {
@@ -319,21 +444,30 @@ public final class SfxAndroidService implements Listener {
     }
 
     private void burnActiveFuelSeconds() {
-        for (UUID instanceId : List.copyOf(activeAndroids)) {
+        long currentFuelTick = ++fuelTick;
+        for (UUID instanceId : fuelSchedule.poll(currentFuelTick)) {
+            if (!activeAndroids.contains(instanceId)) {
+                continue;
+            }
             SfxBlockInstanceRecord instance = blockData.findInstance(instanceId).orElse(null);
             if (instance == null || !SfxAndroidType.isAndroidItem(instance.typeId())) {
-                activeAndroids.remove(instanceId);
+                forgetAndroid(instanceId);
                 states.remove(instanceId);
+                continue;
+            }
+            if (freezeUnloadedMachines() && !isInstanceChunkLoaded(instance)) {
+                fuelSchedule.cancel(instanceId);
                 continue;
             }
             Location location = toLocation(instance.anchorKey());
             SfxAndroidState state = stateFor(instance.instanceId(), instance.typeId(), location);
             if (state.paused() || state.runtimeState() == SfxAndroidRuntimeState.PAUSED) {
-                activeAndroids.remove(instanceId);
+                forgetAndroid(instanceId);
                 continue;
             }
             SfxAndroidType type = SfxAndroidType.fromItemId(instance.typeId());
             if (type == null) {
+                rescheduleFuel(instanceId, currentFuelTick);
                 continue;
             }
             boolean changed = false;
@@ -350,6 +484,13 @@ public final class SfxAndroidService implements Listener {
             if (changed) {
                 persist(instance.instanceId(), state, false);
             }
+            rescheduleFuel(instanceId, currentFuelTick);
+        }
+    }
+
+    private void rescheduleFuel(UUID instanceId, long currentFuelTick) {
+        if (instanceId != null && activeAndroids.contains(instanceId)) {
+            fuelSchedule.reschedule(instanceId, currentFuelTick + 1L);
         }
     }
 
@@ -510,18 +651,7 @@ public final class SfxAndroidService implements Listener {
 
 
     boolean shouldSkipForBackoff(SfxAndroidState state, long tickId) {
-        if (state == null || state.noEffectTicks() <= 0) {
-            return false;
-        }
-        long threshold = Math.max(1L, Math.round(200.0D / Math.max(1L, tickInterval)));
-        int stage = (int) Math.min(4L, state.noEffectTicks() / threshold);
-        int divisor = switch (stage) {
-            case 0 -> 1;
-            case 1 -> 2;
-            case 2 -> 4;
-            case 3 -> 8;
-            default -> 16;
-        };
+        int divisor = backoffDivisor(state);
         return divisor > 1 && Math.floorMod(tickId, divisor) != 0;
     }
 
@@ -553,9 +683,9 @@ public final class SfxAndroidService implements Listener {
         blockData.unregisterAt(from.getLocation());
         UUID newId = blockData.registerSingleBlock(instance.typeId(), to.getLocation(), Material.PLAYER_HEAD, instance.ownerId());
         states.remove(instance.instanceId());
-        activeAndroids.remove(instance.instanceId());
+        forgetAndroid(instance.instanceId());
         states.put(newId, state);
-        activeAndroids.add(newId);
+        wakeAndroid(newId);
         persist(newId, state);
         return true;
     }
@@ -1350,7 +1480,7 @@ public final class SfxAndroidService implements Listener {
         SfxAndroidState state = syncFuelSlotToState(instance, inventory);
         if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL && fuelValue(state.fuelSlot(), SfxAndroidType.fromItemId(instance.typeId())) > 0) {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
-            activeAndroids.add(instance.instanceId());
+            wakeAndroid(instance.instanceId());
         }
         persist(instance.instanceId(), state, false);
     }
@@ -1404,7 +1534,7 @@ public final class SfxAndroidService implements Listener {
             state.index(0);
             state.runtimeState(state.paused() ? SfxAndroidRuntimeState.PAUSED : SfxAndroidRuntimeState.ACTIVE);
             if (!state.paused()) {
-                activeAndroids.add(instance.instanceId());
+                wakeAndroid(instance.instanceId());
             }
             persist(instance.instanceId(), state);
             player.sendMessage(msg("android.messages.imported"));
@@ -1529,7 +1659,7 @@ public final class SfxAndroidService implements Listener {
         state.output(outputIndex, remaining.getAmount() <= 0 ? null : remaining);
         if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.DORMANT_OUTPUT_FULL && state.hasFreeOutputSpace()) {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
-            activeAndroids.add(instance.instanceId());
+            wakeAndroid(instance.instanceId());
         }
         persist(instance.instanceId(), state, true);
         refreshMainStatus(top, state, !isFuelSlotDirty(holder.instanceId(), player.getUniqueId()));
@@ -1625,7 +1755,7 @@ public final class SfxAndroidService implements Listener {
             clearFuelSlotDirty(instanceId, player.getUniqueId());
             if (!state.paused() && state.runtimeState() == SfxAndroidRuntimeState.DORMANT_NO_FUEL && fuelValue(state.fuelSlot(), SfxAndroidType.fromItemId(instance.typeId())) > 0) {
                 state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
-                activeAndroids.add(instance.instanceId());
+                wakeAndroid(instance.instanceId());
             }
             persist(instance.instanceId(), state, false);
         });
@@ -1703,7 +1833,7 @@ public final class SfxAndroidService implements Listener {
             state.runtimeState(SfxAndroidRuntimeState.ACTIVE);
             state.resetNoEffectTicks();
             state.sleepingUntilTick(0L);
-            activeAndroids.add(instance.instanceId());
+            wakeAndroid(instance.instanceId());
             persist(instance.instanceId(), state);
             refreshMainStatus(top, state);
             if (kickstart) {
@@ -1713,14 +1843,14 @@ public final class SfxAndroidService implements Listener {
         } else if (slot == 17) {
             state.paused(true);
             state.runtimeState(SfxAndroidRuntimeState.PAUSED);
-            activeAndroids.remove(instance.instanceId());
+            forgetAndroid(instance.instanceId());
             persist(instance.instanceId(), state);
             refreshMainStatus(top, state);
             player.sendMessage(msg("android.messages.paused"));
         } else if (slot == 16) {
             state.paused(true);
             state.runtimeState(SfxAndroidRuntimeState.PAUSED);
-            activeAndroids.remove(instance.instanceId());
+            forgetAndroid(instance.instanceId());
             persist(instance.instanceId(), state);
             refreshMainStatus(top, state);
             openEditor(player, instance.instanceId());
@@ -1739,7 +1869,7 @@ public final class SfxAndroidService implements Listener {
         runtime.executeAt(location, () -> {
             SfxBlockInstanceRecord current = blockData.findInstance(instanceId).orElse(null);
             if (current == null || !SfxAndroidType.isAndroidItem(current.typeId())) {
-                activeAndroids.remove(instanceId);
+                forgetAndroid(instanceId);
                 states.remove(instanceId);
                 return;
             }
@@ -1753,7 +1883,9 @@ public final class SfxAndroidService implements Listener {
             }
             state.resetNoEffectTicks();
             state.sleepingUntilTick(0L);
-            tickRegionBatch(List.of(current), androidTick.incrementAndGet());
+            long immediateTick = androidTick.incrementAndGet();
+            tickRegionBatch(List.of(current), immediateTick);
+            rescheduleAndroid(instanceId, immediateTick);
         });
     }
     private void pauseAndroidForScriptEditing(UUID instanceId) {
@@ -1765,7 +1897,7 @@ public final class SfxAndroidService implements Listener {
         if (!state.paused() || state.runtimeState() != SfxAndroidRuntimeState.PAUSED) {
             state.paused(true);
             state.runtimeState(SfxAndroidRuntimeState.PAUSED);
-            activeAndroids.remove(instance.instanceId());
+            forgetAndroid(instance.instanceId());
             persist(instance.instanceId(), state);
         }
     }
@@ -2325,6 +2457,10 @@ public final class SfxAndroidService implements Listener {
     SfxAndroidState stateFor(UUID instanceId, String typeId, Location location) {
         return states.computeIfAbsent(instanceId, id -> {
             SfxBlockInstanceRecord instance = blockData.findInstance(id).orElse(null);
+            if (instance != null && !instance.hasState()) {
+                instance = blockData.materializeInstance(id).orElseThrow(
+                        () -> new IllegalStateException("Missing SFX android record for " + id));
+            }
             return SfxAndroidState.decode(instance == null ? new byte[0] : instance.stateBlob(), BlockFace.NORTH);
         });
     }
