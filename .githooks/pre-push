@@ -1,0 +1,3 @@
+#!/bin/sh
+root=$(git rev-parse --show-toplevel)
+exec python "$root/scripts/publish_sanitized_history.py" --pre-push
